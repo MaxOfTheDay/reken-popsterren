@@ -31,7 +31,8 @@ const SCHERMEN = [
   { id: 'end',     label: 'Einde van een show' },
   { id: 'dress',   label: 'Kleedkamer' },
   { id: 'tro',     label: 'Trofeeën' },
-  { id: 'ouder',   label: 'Voor ouders' },
+  { id: 'ouder',   label: 'Voor ouders: één ster' },
+  { id: 'ouders',  label: 'Voor ouders: overzicht' },
 ];
 
 /* De voorkeuzes: één klik, een stand die ergens over gaat. Ze staan hier en niet

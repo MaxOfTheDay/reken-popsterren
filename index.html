@@ -8695,11 +8695,15 @@
 
 
 
-
-
   #screen-settings.met-ster .screen-header { display: flex; gap: 8px; }
   #screen-settings.met-ster .header-title { display: none; }
-  #screen-settings .screen-header .who-row { flex: 1; min-width: 0; }
+  .ouder-wie {
+    flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px;
+    font-size: var(--tx-sub); font-weight: 700; color: var(--c-white);
+  }
+  .ouder-wie .who-portrait { width: 40px; height: 40px; flex: none; }
+  .ouder-wie .who-portrait svg { top: -5px; width: 68px; }
+  .ouder-wie .wie-naam { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 
   #screen-settings.gescrold .hub-sticky { background: var(--kop-plaat-vol); box-shadow: var(--e-3); }
@@ -8716,10 +8720,9 @@
     #screen-settings .header-title { font-size: var(--tx-body); }
     #screen-settings .hub-sticky .icon-btn,
     #screen-settings .speel-als { width: 38px; height: 38px; font-size: 16px; }
-    #screen-settings .who-btn { min-height: 38px; }
-    #screen-settings .who-portrait { width: 28px; height: 28px; }
-    #screen-settings .who-portrait svg { top: -3px; width: 48px; }
-    #screen-settings .who-btn .tab-label { font-size: var(--tx-label); }
+    .ouder-wie { font-size: var(--tx-body); }
+    .ouder-wie .who-portrait { width: 32px; height: 32px; }
+    .ouder-wie .who-portrait svg { top: -4px; width: 54px; }
     #settings-subtabs { margin-top: 5px; }
     #screen-settings .segmented { padding: 3px; }
     #screen-settings .segmented button { padding: 7px 8px; min-height: 36px; font-size: var(--tx-label); }
@@ -8735,46 +8738,27 @@
 
 
 
-
-
-
-
-
-
-  .who-row {
-    display: flex; gap: 6px; padding: 1px 2px; width: 100%; max-width: var(--kolom, 640px);
-    overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+  .set-card.ster-lijst { padding: 6px 8px; }
+  .ster-rij {
+    font-family: inherit; color: var(--paper-ink); background: transparent; border: none; cursor: pointer;
+    width: 100%; text-align: left; display: flex; align-items: center; gap: 12px;
+    padding: 8px 10px; min-height: 64px; border-radius: var(--r-md);
+    transition: background var(--t-tik) ease;
   }
-  .who-row::-webkit-scrollbar { display: none; }
-
-  .who-btn { padding-left: 5px; gap: 8px; min-height: 44px; flex: none; }
-  .who-portrait { width: 34px; height: 34px; }
-  .who-portrait svg { top: -4px; width: 58px; }
-
-
-
-
-
-
-
-
-  .who-btn.active {
-    background: linear-gradient(180deg, var(--purple-light), var(--purple-mid));
-    color: var(--c-white);
-    box-shadow: 0 3px 10px rgba(var(--purple-mid-rgb), .38), inset 0 0 0 1.5px rgba(255,255,255,.45);
+  .ster-rij + .ster-rij { border-top: 1px solid var(--paper-border); border-radius: 0; }
+  .ster-rij:hover { background: var(--paper-tint); }
+  .ster-rij:active { background: var(--lavender-wash-3); }
+  .ster-rij .who-portrait { width: 46px; height: 46px; flex: none; border-color: var(--lavender-wash-3); }
+  .ster-rij .who-portrait svg { top: -6px; width: 78px; }
+  .sr-tekst { flex: 1; min-width: 0; }
+  .sr-tekst b { display: block; font-size: var(--tx-body); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sr-tekst small { display: block; font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); margin-top: 2px; }
+  .sr-pijl { font-size: 24px; font-weight: 700; color: var(--purple-mid); line-height: 1; padding-right: 2px; }
+  .sr-plus {
+    width: 46px; height: 46px; flex: none; border-radius: 50%; display: grid; place-items: center;
+    border: 2px dashed var(--purple-light); color: var(--purple-mid); font-size: 20px;
   }
-  .who-btn.active .who-portrait { border-color: var(--c-white); }
-
-
-
-
-
-  .who-btn.who-nieuw {
-    padding: 0 14px; background: transparent;
-    border: 1.5px dashed rgba(255,255,255,.4);
-  }
-  .who-btn.who-nieuw:hover { background: rgba(255,255,255,.1); }
-  .who-nieuw .wn-plus { font-size: 18px; line-height: 1; opacity: .9; }
+  .sr-nieuw .sr-tekst b { color: var(--purple-mid); }
   #settings-subtabs { margin-top: 12px; }
 
   .segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-md); background: rgba(0,0,0,.26); width: 100%; max-width: var(--kolom, 640px); }
@@ -8800,13 +8784,7 @@
 
 
 
-
-
-  .segmented button.st-meer { flex: 0 0 58px; position: relative; padding: 0; font-size: 22px; letter-spacing: 1px; }
-  .st-stip {
-    position: absolute; top: 7px; right: 10px; width: 9px; height: 9px; border-radius: 50%;
-    background: var(--practice-rand); box-shadow: 0 0 0 2px var(--purple-shadow);
-  }
+  .segmented button.st-meer { flex: 0 0 58px; position: relative; padding: 0; font-size: 20px; }
   .segmented button.on { background: var(--nav-sel); color: var(--c-white); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); text-shadow: var(--nav-ink); }
 
 
@@ -8835,7 +8813,11 @@
   .settings-panel { display: flex; flex-direction: column; gap: 14px; }
 
 
+
+
   .set-card.geluid-kaart { padding: 6px 8px; }
+  .geluid-kaart .gear-item + .gear-item { border-top: 1px solid var(--paper-border); border-radius: 0; }
+  .gear-item .gi-pijl { font-size: 24px; font-weight: 700; color: var(--purple-mid); line-height: 1; padding-right: 4px; }
   .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--e-2); }
   .set-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
   .set-card-head .ico { width: 34px; height: 34px; border-radius: var(--r-sm); flex-shrink: 0; display: grid; place-items: center; font-size: 18px; background: var(--paper-tint); border: 1px solid var(--paper-border); }
@@ -8892,8 +8874,6 @@
     background: var(--stat-green-bg); color: var(--stat-green-tekst); border: 1px solid var(--stat-green-rand);
   }
   .backup-stand.oud { background: var(--practice-bg); color: var(--practice-text); border-color: var(--practice-rand); }
-  .data-los { margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--paper-border); }
-  .data-los .note { margin-top: 8px; }
 
 
 
@@ -9414,6 +9394,9 @@
   }
   .settings-sheet input[type=text]:focus-visible { outline: none; border-color: var(--purple-light); background: var(--c-white); }
   .data-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .data-btns.naast { flex-wrap: nowrap; gap: 8px; }
+  .data-btns.naast .btn { flex: 1; min-width: 0; white-space: nowrap; padding-left: 8px; padding-right: 8px; }
 
   .danger-zone {
     background: var(--danger-bg); border: 1.5px dashed var(--danger-border); border-radius: var(--r-lg); padding: 15px 18px;
@@ -9974,7 +9957,7 @@
            wie midden in een show stilte wilde, moest de show uit. Dit venster is
            het ene pauzemoment dat een show heeft, en de ✕ is waar de hand van een
            ouder al naartoe gaat -- zo komt er op geen enkel kinderscherm een knop
-           bij. Dezelfde rij als in het ouderdeel (⋯), en renderGeluid zet ze
+           bij. Dezelfde rij als in het ouderdeel (het overzicht), en renderGeluid zet ze
            allebei goed. De show loopt gewoon door na "Doorspelen". -->
       <button class="gear-item quit-geluid" id="quit-sound" onclick="toggleSound()" role="switch" aria-checked="true">
         <span class="gi-ico" aria-hidden="true">🔊</span><span class="gi-label">Geluid</span><span class="gi-state" id="quit-sound-state">Aan</span>
@@ -10106,7 +10089,7 @@
   <div class="screen gebruik app-sfeer" id="screen-settings">
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="naTik(closeSettings)" aria-label="Terug" title="Terug"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
+        <button class="btn icon-btn header-left" onclick="naTik(ouderTerug)" aria-label="Terug" title="Terug"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
         <!-- FASE 5D.1 -- het gezins-emoji stond hier vóór de titel en werd door
              de meeste toestellen zwart-wit getekend: over een donkerpaarse balk
              een grijs blokje, het enige ruwe ding in een verder gepoetst scherm.
@@ -10114,11 +10097,11 @@
              onder het tandwiel blijft het staan -- daar ligt het op een licht
              tegeltje en wordt het wél in kleur getekend, en daar is het een
              rij-icoon naast twee andere. -->
-        <!-- De titel staat er alleen zonder ster (.met-ster, zie renderSettings):
-             mét sterren staat op zijn plek de rij sterren zelf, en zeggen de
-             tabbladen eronder al waar je bent. Eén regel in plaats van twee. -->
+        <!-- De titel staat er op het overzicht (en zonder sterren). Op de pagina
+             van één ster (.met-ster, zie renderSettings) staat op zijn plek haar
+             portret en naam, en zeggen de tabbladen eronder al waar je bent. -->
         <div class="header-title">Voor ouders</div>
-        <div class="who-row hscroll-fade" id="settings-profiles" aria-label="Kies een ster"></div>
+        <div class="ouder-wie" id="settings-wie"></div>
         <!-- ▶ = meteen spelen als de ster die links gekozen is (speelAlsGekozen):
              het spiegelbeeld van ←. Zonder naam erin, die staat er pal naast al. -->
         <div class="header-right"><button class="btn small speel-als" id="speel-als" onclick="naTik(speelAlsGekozen)" hidden><svg class="ico" aria-hidden="true"><use href="#ico-speel"/></svg></button></div>
@@ -10175,7 +10158,7 @@
 
 <!-- Het tandwiel is de deur naar Voor ouders, zonder menu ertussen. Daar stond
      eerst een menuutje met Geluid en Voor ouders: één tik extra, voor een
-     schakelaar die ook in het ouderdeel staat (⋯, "Voor alle sterren") en in
+     schakelaar die ook in het ouderdeel staat (het overzicht, "Voor alle sterren") en in
      "Show stoppen?" -- daar waar het geluid echt stoort. -->
 <div class="corner-btns" id="corner-btns">
   <button class="btn icon-btn" id="btn-gear" onclick="sndClick(); naTik(openSettings)" aria-label="Voor ouders" title="Voor ouders"><span class="gear-ico">⚙️</span></button>
@@ -15815,12 +15798,7 @@ function renderProfiles() {
 
 
 }
-
-
-
-
-let laatsteSter = null;
-function selectProfile(key) { cur = key; laatsteSter = key; goMap(); }
+function selectProfile(key) { cur = key; goMap(); }
 
 
 
@@ -24845,7 +24823,7 @@ function createStar() {
 
 
 
-  if (newStarReturn === 'settings') { setKey = key; renderSettings(); toonHub('screen-settings'); settingsToTop(); }
+  if (newStarReturn === 'settings') { setKey = key; setTab = 'voortgang'; renderSettings(); toonHub('screen-settings'); settingsToTop(); }
   else { kiesBezig = false; selectProfile(key); }
 
 
@@ -24864,7 +24842,20 @@ function createStar() {
 
 
 
-let setKey = 'p1';
+
+
+
+
+
+
+
+
+
+
+
+
+
+let setKey = null;
 
 let setTab = 'voortgang';
 function openSettings() {
@@ -24872,10 +24863,8 @@ function openSettings() {
 
 
 
-
-  const wie = [cur, laatsteSter].find(k => k && db.profiles[k]);
-  setKey = wie || profileKeys()[0] || null;
-  setTab = setKey ? 'voortgang' : 'beheer';
+  setKey = null;
+  setTab = 'voortgang';
   renderSettings();
   toonHub('screen-settings');
 
@@ -24886,6 +24875,21 @@ function openSettings() {
 function closeSettings() {
   save();
   goProfiles();
+}
+
+
+function ouderTerug() {
+  if (!setKey || !db.profiles[setKey]) return closeSettings();
+  setKey = null;
+  renderSettings();
+  settingsToTop();
+}
+function openSter(key) {
+  sndClick();
+  setKey = key;
+  setTab = 'voortgang';
+  renderSettings();
+  settingsToTop();
 }
 
 
@@ -25118,7 +25122,7 @@ function meerCijfersHtml(p) {
   </details>`;
 }
 function statsPanelHtml(p) {
-  return `<div class="settings-panel">${statusKaartHtml(p)}${leerpadHtml(p)}${oefentExtraHtml(p)}${meerCijfersHtml(p)}${ouderVoetHtml()}</div>`;
+  return `<div class="settings-panel">${statusKaartHtml(p)}${leerpadHtml(p)}${oefentExtraHtml(p)}${meerCijfersHtml(p)}</div>`;
 }
 
 
@@ -25463,44 +25467,39 @@ function oefenenPanelHtml(p, s) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-function geluidKaartHtml() {
+function geluidRijHtml() {
   return `
-    <div class="set-card geluid-kaart">
       <button class="gear-item" id="set-sound" role="switch" aria-checked="${db.sound ? 'true' : 'false'}">
         <span class="gi-ico" aria-hidden="true">${db.sound ? '🔊' : '🔇'}</span><span class="gi-label">Geluid<span class="gi-sub">Muziek en de stem die voorleest</span></span><span class="gi-state${db.sound ? '' : ' off'}" id="set-sound-state">${db.sound ? 'Aan' : 'Uit'}</span>
-      </button>
-    </div>`;
+      </button>`;
 }
-function appWideCardsHtml(hasStars) {
-  return `${geluidKaartHtml()}
+
+
+
+
+
+
+
+
+
+
+function appWideCardsHtml() {
+  const alsApp = (beginschermNetErop || speeltAlsApp()) ? '' : `
+      <button class="gear-item" id="set-alsapp" type="button">
+        <span class="gi-ico" aria-hidden="true">📲</span><span class="gi-label">Als app</span><span class="gi-pijl" aria-hidden="true">›</span>
+      </button>`;
+  return `
+    <div class="set-card geluid-kaart">${geluidRijHtml()}${alsApp}
+    </div>
     <div class="set-card">
-      <div class="set-card-head"><div class="ico">🗄️</div><div><h2>Back-up &amp; herstel</h2><div class="sub">Alle sterren, en de instellingen van de app</div></div></div>
-      <!-- de zin die een ouder het meest moet weten, en die er nergens stond: er
-           is geen cloud, dus zonder back-up is een nieuw toestel een lege start -->
-      <div class="note" style="margin-bottom:11px">Alles staat alleen op dit toestel. Een back-up is één bestand om veilig te bewaren of mee te nemen naar een ander toestel.</div>
+      <div class="set-card-head"><div class="ico">🗄️</div><div><h2>Back-up</h2><div class="sub">Alles staat alleen op dit toestel</div></div></div>
       ${backupStandHtml()}
-      <div class="data-btns">
-        <button class="btn small purple" id="set-export">💾 Back-up maken</button>
-      </div>
-      <div class="data-los">
-        <button class="btn small paper" id="set-import">📂 Back-up terugzetten…</button>
-        <div class="note">Vervángt alles wat er nu op dit toestel staat, van álle sterren. Er wordt eerst gevraagd of je het zeker weet.</div>
+      <div class="data-btns naast">
+        <button class="btn small purple" id="set-export">💾 Maken</button>
+        <button class="btn small paper" id="set-import">📂 Terugzetten</button>
       </div>
       ${importInvoerHtml()}
-    </div>${beginschermKaartHtml(hasStars)}`;
+    </div>`;
 }
 
 
@@ -25511,7 +25510,6 @@ function backupDagen(nu) {
   const t = db.backupAt ? Date.parse(db.backupAt) : NaN;
   return isNaN(t) ? null : Math.max(0, Math.floor(((nu || Date.now()) - t) / 86400000));
 }
-
 function backupOud(nu) {
   const dagen = backupDagen(nu);
   return dagen === null || dagen > BACKUP_OUD_DAGEN;
@@ -25671,8 +25669,33 @@ function beheerPanelHtml(p) {
         </div>
       </details>
     </div>
+  </div>`;
+}
+
+
+
+
+
+
+
+function overzichtHtml() {
+  const rij = key => {
+    const p = db.profiles[key], u = uitdagingStand(p);
+    const { ico, kop } = u ? STAND_TEKST[u.stand] : { ico: '🌱', kop: 'Net begonnen' };
+    const shows = playedCount(p);
+    return `<button class="ster-rij" type="button" data-key="${key}">`
+      + `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
+      + `<span class="sr-tekst"><b>${esc(p.name)}</b><small><span aria-hidden="true">${ico}</span> ${kop}`
+      + `${shows ? ` · ${shows} ${mv(shows, 'show', 'shows')}` : ''}</small></span>`
+      + `<span class="sr-pijl" aria-hidden="true">›</span></button>`;
+  };
+  const nieuw = profileKeys().length < MAX_PROFILES
+    ? `<button class="ster-rij sr-nieuw" type="button" id="set-newstar"><span class="sr-plus" aria-hidden="true">＋</span><span class="sr-tekst"><b>Nieuwe ster</b></span></button>`
+    : '';
+  return `<div class="settings-panel">
+    <div class="set-card ster-lijst" id="set-sterren">${profileKeys().map(rij).join('')}${nieuw}</div>
     <div class="sheet-rule"><span>Voor alle sterren</span></div>
-    ${appWideCardsHtml(true)}
+    ${appWideCardsHtml()}${ouderVoetHtml()}
   </div>`;
 }
 
@@ -25727,9 +25750,7 @@ function speelAlsKnop(p) {
 }
 
 
-const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefeningen'], ['beheer', 'Beheer']];
-
-let lastWhoRendered = null;
+const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefeningen'], ['beheer', 'Aanpassen']];
 
 
 
@@ -25738,79 +25759,14 @@ let lastWhoRendered = null;
 
 
 
-
-
-
-
-
-let lastWhoHtml = null;
-function renderWhoRow() {
-  const row = $('settings-profiles');
-  const keys = profileKeys();
-  const delen = keys.map(key => `<span class="who-portrait" aria-hidden="true">${avatarSVG(db.profiles[key], 65)}</span>`
-    + `<span class="tab-label">${esc(db.profiles[key].name)}</span>`);
-
-
-
-  const handtekening = delen.join('|');
-  if (handtekening === lastWhoHtml && row.childElementCount) {
-    let active = null;
-    row.querySelectorAll('.who-btn[data-key]').forEach(b => {
-      const on = b.dataset.key === setKey;
-      b.classList.toggle('active', on);
-      b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      if (on) active = b;
-    });
-    whoInBeeld(row, active);
-    return;
-  }
-  lastWhoHtml = handtekening;
-  const keep = row.scrollLeft;
-  row.innerHTML = '';
-  let active = null;
-  keys.forEach((key, k) => {
-    const on = key === setKey;
-    const b = document.createElement('button');
-    b.className = 'tab-btn who-btn' + (on ? ' active' : '');
-    b.dataset.key = key;
-    b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    b.innerHTML = delen[k];
-    b.onclick = () => { sndClick(); setKey = key; renderSettings(); };
-    row.appendChild(b);
-    if (on) active = b;
-  });
-
-
-
-
-
-  if (profileKeys().length < MAX_PROFILES) {
-    const add = document.createElement('button');
-    add.className = 'tab-btn who-btn who-nieuw';
-    add.id = 'set-newstar';
-    add.setAttribute('aria-label', 'Nieuwe ster maken');
-    add.title = 'Nieuwe ster';
-    add.innerHTML = '<span class="wn-plus" aria-hidden="true">＋</span>';
-    add.onclick = () => openNewStar('settings');
-    row.appendChild(add);
-  }
-  fadesVolgen(row);
-  row.scrollLeft = keep;
-  updateFades(row);
-  whoInBeeld(row, active);
+let lastWieHtml = null;
+function renderWie(p) {
+  const html = `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 65)}</span>`
+    + `<span class="wie-naam">${esc(p.name)}</span>`;
+  if (html === lastWieHtml && $('settings-wie').childElementCount) return;
+  lastWieHtml = html;
+  $('settings-wie').innerHTML = html;
 }
-
-function whoInBeeld(row, active) {
-  if (active && lastWhoRendered !== setKey) requestAnimationFrame(() => {
-    if (!active.isConnected) return;
-    active.scrollIntoView({ block: 'nearest', inline: 'center' });
-    updateFades(row);
-  });
-  lastWhoRendered = setKey;
-}
-
-
-
 
 
 
@@ -25825,10 +25781,9 @@ function whoInBeeld(row, active) {
 
 function renderSectionTabs() {
   const t = $('settings-subtabs');
-  const oud = backupOud();
   t.innerHTML = SET_TABS.map(([v, label]) => v === 'beheer'
-    ? `<button class="st-meer${setTab === v ? ' on' : ''}" role="tab" aria-selected="${setTab === v}" data-t="${v}" aria-label="${label}${oud ? ', back-up nodig' : ''}" title="${label}">`
-      + `<span aria-hidden="true">⋯</span>${oud ? '<span class="st-stip" aria-hidden="true"></span>' : ''}</button>`
+    ? `<button class="st-meer${setTab === v ? ' on' : ''}" role="tab" aria-selected="${setTab === v}" data-t="${v}" aria-label="${label}" title="${label}">`
+      + `<span aria-hidden="true">✏️</span></button>`
     : `<button class="${setTab === v ? 'on' : ''}" role="tab" aria-selected="${setTab === v}" data-t="${v}">${label}</button>`).join('');
   t.querySelectorAll('button').forEach(b => b.onclick = () => {
     if (b.dataset.t === setTab) return;
@@ -25839,26 +25794,24 @@ function renderSectionTabs() {
 function renderSettings() {
 
 
-  if (!setKey || !db.profiles[setKey]) setKey = profileKeys()[0] || null;
+  if (setKey && !db.profiles[setKey]) setKey = null;
   const p = setKey ? db.profiles[setKey] : null;
 
 
-  $('settings-profiles').style.display = p ? '' : 'none';
-
   $('screen-settings').classList.toggle('met-ster', !!p);
+  $('settings-wie').style.display = p ? '' : 'none';
   $('settings-subtabs').style.display = p ? '' : 'none';
+  speelAlsKnop(p);
   if (!p) {
-    setTab = 'beheer';
-    $('settings-profiles').innerHTML = '';
+    lastWieHtml = null;
+    $('settings-wie').innerHTML = '';
     $('settings-subtabs').innerHTML = '';
-    $('settings-body').innerHTML = beheerEmptyHtml();
-    speelAlsKnop(null);
+    $('settings-body').innerHTML = profileKeys().length ? overzichtHtml() : beheerEmptyHtml();
     bindSettings(null, null);
     return;
   }
-  renderWhoRow();
+  renderWie(p);
   renderSectionTabs();
-  speelAlsKnop(p);
   const s = p.settings;
   $('settings-body').innerHTML =
       setTab === 'oefenen' ? oefenenPanelHtml(p, s)
@@ -25990,8 +25943,9 @@ function bindSettings(p, s) {
     save();
 
 
-    const lbl = $('settings-profiles').querySelector('.active .tab-label');
+    const lbl = $('settings-wie').querySelector('.wie-naam');
     if (lbl) lbl.textContent = p.name;
+    lastWieHtml = null;
 
     document.querySelectorAll('#settings-body .set-naam').forEach(n => { n.textContent = p.name; });
 
@@ -26096,10 +26050,9 @@ function bindSettings(p, s) {
         const naam = p.name;
         delete db.profiles[setKey];
         if (cur === setKey) cur = null;
-        setKey = profileKeys()[0] || null;
-        lastWhoRendered = null;
+        setKey = null;
         save();
-        if (setKey) renderSettings();
+        if (profileKeys().length) { renderSettings(); settingsToTop(); }
         else closeSettings();
         showToast(`✓ ${esc(naam)} is verwijderd`);
         toastWeg(1800);
@@ -26110,6 +26063,11 @@ function bindSettings(p, s) {
 
   on('stem-aan', 'onclick', () => { if (!db.sound) toggleSound(); renderSettings(); });
   on('set-sound', 'onclick', toggleSound);
+  on('set-alsapp', 'onclick', () => openAppBlad(false));
+
+  document.querySelectorAll('#set-sterren .ster-rij[data-key]').forEach(b => {
+    b.onclick = () => openSter(b.dataset.key);
+  });
   on('set-export', 'onclick', exportData);
   on('set-deel', 'onclick', deelOver);
   on('set-over', 'onclick', naarOver);
@@ -26145,7 +26103,6 @@ function exportData() {
 
   const stand = $('set-backup-stand');
   if (stand) stand.outerHTML = backupStandHtml();
-  if ($('settings-subtabs').childElementCount) renderSectionTabs();
 }
 
 
@@ -26191,8 +26148,7 @@ function importData(file) {
         db = next;
         normalizeProfiles();
         cur = null;
-        setKey = profileKeys()[0] || null;
-        lastWhoRendered = null;
+        setKey = null;
         save();
         renderSettings();
 
@@ -26292,6 +26248,9 @@ function beginschermUitleg(soort, hasStars) {
 
 
 let beginschermNetErop = false;
+
+
+
 function beginschermKaartHtml(hasStars) {
   if (beginschermNetErop || speeltAlsApp()) return '';
   const [uitleg, tweede] = beginschermUitleg(beginschermSoort(), hasStars);
@@ -26304,8 +26263,7 @@ function beginschermKaartHtml(hasStars) {
 }
 addEventListener('appinstalled', () => {
   beginschermNetErop = true;
-  const k = $('set-beginscherm');
-  if (k) k.remove();
+  ['set-beginscherm', 'set-alsapp'].forEach(id => { const k = $(id); if (k) k.remove(); });
   installVoorstel = null;
   appKnopZet();
   renderGeluid();
@@ -26447,7 +26405,7 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
         + stap(2, `Kies ${erbij}`);
     }
     html += stap(3, `Tik op ${kbd('Voeg toe')}`);
-    if (hasStars) html += '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ → ⋯, en zet hem daar in de app terug.</div>';
+    if (hasStars) html += '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ Voor ouders, en zet hem daar in de app terug.</div>';
     return { html, installeer: false };
   }
   if (soort === 'android' && kanInstalleren) {
@@ -26516,7 +26474,7 @@ function backTarget() {
   if ($('screen-game').classList.contains('active')) return askQuit;
   if ($('screen-end').classList.contains('active')) return goMapNaShow;
   if ($('screen-memory').classList.contains('active')) return exitMemory;
-  if ($('screen-settings').classList.contains('active')) return closeSettings;
+  if ($('screen-settings').classList.contains('active')) return ouderTerug;
   if ($('screen-newstar').classList.contains('active')) return closeNewStar;
   if ($('screen-dress').classList.contains('active')) return dressBack;
   if ($('screen-trophies').classList.contains('active')) return goMap;
@@ -26790,7 +26748,9 @@ if (location.search.indexOf('debug') !== -1) {
       P().equipped.stage = forced;
     }
     const go = { map: goMap, dress: openKleedkamer, tro: openTrophies,
-                 profile: goProfiles, ouder: () => { goMap(); openSettings(); },
+
+                 profile: goProfiles, ouder: () => { goMap(); openSettings(); setKey = cur; renderSettings(); },
+                 ouders: () => { goMap(); openSettings(); },
                  reis: () => { goMap(); openReis(); },
                  game: () => startLevel(P().level),
                  end: () => { startLevel(P().level); endLevel(true); } };

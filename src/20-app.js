@@ -3251,8 +3251,8 @@ document.addEventListener('pointerdown', keepAwake, { passive: true });   // fal
 keepAwake();
 
 /* ---- De geluidsschakelaar ----
-   Op twee plekken dezelfde rij: in het ouderdeel (⋯, "Voor alle sterren", zie
-   geluidKaartHtml) en in het stopvenster van een show. Dit zet ze allebei goed;
+   Op twee plekken dezelfde rij: in het ouderdeel (het overzicht, "Voor alle
+   sterren", zie geluidRijHtml) en in het stopvenster van een show. Dit zet ze allebei goed;
    staat er een niet, dan wordt hij overgeslagen. Onder het tandwiel stond hij
    ook, toen daar nog een menuutje zat -- het tandwiel opent nu meteen Voor ouders. */
 function renderGeluid() {
@@ -4614,12 +4614,7 @@ function renderProfiles() {
      geen plek: hier staan zes poppen naast elkaar en er is er één van jou. De
      tegels staan daarom stil -- ook geen .idle, dat stond er al niet op. */
 }
-/* laatsteSter: wie er deze keer het laatst speelde. goProfiles wist cur, maar
-   een ouder die na het spelen het tandwiel opent, wil meestal net dát kind zien
-   (zie openSettings). Alleen in het geheugen: na herladen begint het ouderdeel
-   gewoon weer bij de eerste ster. */
-let laatsteSter = null;
-function selectProfile(key) { cur = key; laatsteSter = key; goMap(); }
+function selectProfile(key) { cur = key; goMap(); }
 
 /* ================= Wat er geladen wordt, en wanneer =========================
    Drie soorten spullen, en ze horen op drie verschillende momenten binnen te
@@ -13644,7 +13639,7 @@ function createStar() {
      dan is meteen wegspringen naar de kaart van de nieuwe ster juist verkeerd.
      Het onderdeel blijft staan: de "+" staat boven alle drie de tabbladen, dus
      wie hem vanuit Oefenen indrukte, ziet nu meteen hoe de nieuwe ster oefent. */
-  if (newStarReturn === 'settings') { setKey = key; renderSettings(); toonHub('screen-settings'); settingsToTop(); }
+  if (newStarReturn === 'settings') { setKey = key; setTab = 'voortgang'; renderSettings(); toonHub('screen-settings'); settingsToTop(); }
   else { kiesBezig = false; selectProfile(key); }
   /* Alleen dat ze er staat. Hier stond eronder "Jouw eerste show begint!", maar er
      begint niets tot ze zelf op halte 1 tikt -- en die gouden halte pulst al en de
@@ -13655,26 +13650,37 @@ function createStar() {
 }
 
 /* ================= Instellingen ================= */
-/* Het ouderdeel: wit papier, rustige letters, geen feest. Drie onderdelen
-   (Voortgang, Oefeningen, Beheer) over één gekozen ster, met de sterrenrij erboven.
+/* Het ouderdeel: wit papier, rustige letters, geen feest. Twee niveaus:
+
+     HET OVERZICHT  -- waar ⚙️ opent. Elke ster als één rij (portret, naam, hoe
+                       het gaat), "Nieuwe ster", en daaronder wat voor álle
+                       sterren geldt: geluid, als app, de back-up.
+     ÉÉN STER       -- tik op een rij. ← gaat terug naar het overzicht, en de
+                       drie onderdelen (Voortgang, Oefeningen, ✏️) gaan alleen
+                       over haar.
+
+   Hiervoor was er alleen het tweede niveau, met een rij sterren in de kop en
+   "⋯" als derde tabblad. Onder ⋯ stonden dan haar naam en het wissen náást het
+   geluid en de back-up, en met haar ster gemarkeerd erboven las alles daar als
+   "van Lotte" -- ook het amber stipje van de back-up. Nu staat wat over één kind
+   gaat bij dat kind, en wat over de app gaat op een pagina zonder kind erboven.
 
    Deze kop stond eerder boven "Nieuwe ster" hierboven, en dat was geen kleine
    slordigheid: de README zegt dat je op sectienaam zoekt om ergens te komen, dus
    wie "= Instellingen" zocht kwam tweehonderd regels te vroeg uit, midden in een
    formulier dat over iets anders gaat. Een inhoudsopgave die je op de verkeerde
    plek afzet is erger dan geen. */
-let setKey = 'p1';
-// 'voortgang' (lezen) | 'oefenen' (hoe dit kind oefent) | 'beheer' (profiel + data).
+// null = het overzicht; anders de sleutel van de ster waar je naar kijkt.
+let setKey = null;
+// 'voortgang' (lezen) | 'oefenen' (hoe dit kind oefent) | 'beheer' (✏️: wie ze is, wissen).
 let setTab = 'voortgang';
 function openSettings() {
-  // cur is hier bijna altijd null (het tandwiel staat alleen op het keuzescherm,
-  // en goProfiles wist cur). Dan de ster die net speelde (laatsteSter), en pas
-  // daarna de eerste: wie na het spelen kijkt, kijkt naar dat kind. Nul
-  // sterren mag ook: dan is Beheer het enige onderdeel, want dáár zit
-  // "Back-up terugzetten" -- de reden dat een nieuw toestel hier komt.
-  const wie = [cur, laatsteSter].find(k => k && db.profiles[k]);
-  setKey = wie || profileKeys()[0] || null;
-  setTab = setKey ? 'voortgang' : 'beheer';
+  // Altijd het overzicht: daar staat elk kind met hoe het gaat, dus wie even wil
+  // kijken heeft aan één scherm genoeg. Nul sterren mag ook: dan is er alleen de
+  // lege pagina, want dáár zit "Back-up terugzetten" -- de reden dat een nieuw
+  // toestel hier komt.
+  setKey = null;
+  setTab = 'voortgang';
   renderSettings();
   toonHub('screen-settings');
   // één keer aanhangen (een tweede toewijzing aan onscroll vervángt de vorige,
@@ -13685,6 +13691,21 @@ function openSettings() {
 function closeSettings() {
   save();
   goProfiles();
+}
+/* ← linksboven, en de terugknop van Android (zie backAction): van één ster
+   terug naar het overzicht, en van het overzicht het ouderdeel uit. */
+function ouderTerug() {
+  if (!setKey || !db.profiles[setKey]) return closeSettings();
+  setKey = null;
+  renderSettings();
+  settingsToTop();
+}
+function openSter(key) {
+  sndClick();
+  setKey = key;
+  setTab = 'voortgang';
+  renderSettings();
+  settingsToTop();
 }
 /* Tabblad "Voortgang" -- het ouderrapport, alleen-lezen.
 
@@ -13917,7 +13938,7 @@ function meerCijfersHtml(p) {
   </details>`;
 }
 function statsPanelHtml(p) {
-  return `<div class="settings-panel">${statusKaartHtml(p)}${leerpadHtml(p)}${oefentExtraHtml(p)}${meerCijfersHtml(p)}${ouderVoetHtml()}</div>`;
+  return `<div class="settings-panel">${statusKaartHtml(p)}${leerpadHtml(p)}${oefentExtraHtml(p)}${meerCijfersHtml(p)}</div>`;
 }
 /* Kan dit toestel de stem laten horen? Een ouder ziet dat anders nergens: zonder
    stem blijft de telmodus speelbaar, maar valt de luisteroefening (fase 5) stil
@@ -14237,69 +14258,64 @@ function oefenenPanelHtml(p, s) {
 
 /* ---- Beheer: alles wat géén oefeninstelling is ----
    Twee soorten dingen, en het verschil moet te zien zijn:
-     - kindgebonden : naam, en opnieuw beginnen (raakt alleen deze ster)
-     - app-breed    : back-up (exportData schrijft de héle db weg -- alle sterren
-                      plus geluid/trillen -- en importData vervángt die helemaal)
-   De back-up stond hiervoor ín de kindcontext, met een tekst die niet zei over
-   wie hij ging, terwijl "wissen" er vlak onder wél "van Anna" zei: precies de
-   verkeerde kant op. Daarom staat back-up nu ná een streepje "Voor alle sterren",
-   buiten de kindkaarten (appWideCardsHtml). Terugzetten bestaat óók als er nog
-   geen enkele ster is, en dat is niet theoretisch: een familie met een nieuwe
-   telefoon heeft nul sterren en wil juist dán bij "Back-up terugzetten" -- zie
-   beheerEmptyHtml, dat daar zijn eigen, kortere kaart voor heeft. */
-/* FASE 5D -- hiërarchie in de knoppen.
-   Vier knoppen in dit blok stonden alle vier als dezelfde volle paarse knop:
-   "Nieuwe ster maken", "Back-up maken" en "Back-up terugzetten" vroegen even hard
-   om een tik, terwijl de derde de enige is die iets kán overschrijven. Nu:
+     - kindgebonden : naam, meisje of jongen, opnieuw beginnen, verwijderen.
+                      Die staan onder ✏️ op de pagina van die ster (beheerPanelHtml).
+     - app-breed    : geluid, als app, back-up (exportData schrijft de héle db weg
+                      -- alle sterren plus geluid -- en importData vervángt die
+                      helemaal). Die staan op het overzicht, onder "Voor alle
+                      sterren" (appWideCardsHtml).
+   Eerst stonden de twee samen onder één tabblad, met een streepje ertussen. Dat
+   streepje hielp niet: de gekozen ster stond erboven, dus las de back-up als de
+   hare. Nu staat er boven het app-brede deel geen ster meer.
+   Terugzetten bestaat óók als er nog geen enkele ster is, en dat is niet
+   theoretisch: een familie met een nieuwe telefoon heeft nul sterren en wil
+   juist dán bij "Back-up terugzetten" -- zie beheerEmptyHtml, dat daar zijn
+   eigen, kortere kaart voor heeft.
 
+   HIËRARCHIE IN DE KNOPPEN.
      vol paars  -- de knop die iets maakt en niets kan kwijtmaken (back-up maken;
                    dat is bovendien wat je hier het vaakst komt doen)
      .paper     -- de knoppen die iets vervángen (terugzetten). De bevestiging
                    erachter is ongewijzigd -- dit is de vindbaarheid, niet de
                    beveiliging.
-
-   DE ORDE VAN BEHEER. Dit tabblad was de la geworden waar alles in belandde wat
-   nergens anders paste: naast de back-up ook een kaart om een ster te maken en
-   een kaart over de over-pagina, met een volle paarse knop die even hard riep als
-   "Back-up maken". Die back-up -- zonder cloud de enige manier om voortgang te
-   redden -- stond daardoor op een telefoon van 844 net onder de vouw. Nu:
-     * "Nieuwe ster" is de "+" achter de sterren in de kiezer (renderWhoRow), waar
-       hij hoort: bij wie er zijn, en op dezelfde plek als op de sterrenkeuze;
-     * "Over Rekensterren" is een voetregel zonder kaart (ouderVoetHtml), en
-       sinds hij hier onvindbaar onderaan stond, staat hij onder Voortgang
-       (alleen zonder sterren nog hier). Op dit tabblad staat nog maar één volle knop.
-   Wat hier blijft is wat over dit toestel gaat: de back-up, en zolang het spel
-   nog in de browser draait de uitleg om hem op het beginscherm te zetten. Komt er
-   ooit een account of een cloud bij, dan groeit dát uit de back-upkaart -- geen
-   eigen kaart of eigen kopje ernaast. */
+   Komt er ooit een account of een cloud bij, dan groeit dát uit de back-upkaart
+   -- geen eigen kaart of eigen kopje ernaast. */
 /* Geluid: één rij, de eerste onder "Voor alle sterren" -- het geldt voor het
    hele toestel, niet voor één kind. Dezelfde rij als in "Show stoppen?" (zie
    renderGeluid); de hele rij is de schakelaar. */
-function geluidKaartHtml() {
+function geluidRijHtml() {
   return `
-    <div class="set-card geluid-kaart">
       <button class="gear-item" id="set-sound" role="switch" aria-checked="${db.sound ? 'true' : 'false'}">
         <span class="gi-ico" aria-hidden="true">${db.sound ? '🔊' : '🔇'}</span><span class="gi-label">Geluid<span class="gi-sub">Muziek en de stem die voorleest</span></span><span class="gi-state${db.sound ? '' : ' off'}" id="set-sound-state">${db.sound ? 'Aan' : 'Uit'}</span>
-      </button>
-    </div>`;
+      </button>`;
 }
-function appWideCardsHtml(hasStars) {
-  return `${geluidKaartHtml()}
+/* Wat voor alle sterren geldt, onderaan het overzicht. Twee kaarten:
+
+     * de stille rijen -- Geluid, en "Als app ›" zolang het spel nog in de
+       browser draait. Die tweede opent hetzelfde blad als het knopje op de
+       sterrenkeuze (openAppBlad); hier stond eerst een eigen kaart met de
+       uitleg in zinnen, en het blad zegt het beter, met de stappen erbij.
+     * de back-up -- de enige kaart waar een ouder voor terug moet komen, want
+       er is geen cloud. De ondertitel is de zin die een ouder het meest moet
+       weten: alles staat alleen op dit toestel. Maken en terugzetten staan naast
+       elkaar; wat terugzetten vervangt, zegt de vraag die erna komt. */
+function appWideCardsHtml() {
+  const alsApp = (beginschermNetErop || speeltAlsApp()) ? '' : `
+      <button class="gear-item" id="set-alsapp" type="button">
+        <span class="gi-ico" aria-hidden="true">📲</span><span class="gi-label">Als app</span><span class="gi-pijl" aria-hidden="true">›</span>
+      </button>`;
+  return `
+    <div class="set-card geluid-kaart">${geluidRijHtml()}${alsApp}
+    </div>
     <div class="set-card">
-      <div class="set-card-head"><div class="ico">🗄️</div><div><h2>Back-up &amp; herstel</h2><div class="sub">Alle sterren, en de instellingen van de app</div></div></div>
-      <!-- de zin die een ouder het meest moet weten, en die er nergens stond: er
-           is geen cloud, dus zonder back-up is een nieuw toestel een lege start -->
-      <div class="note" style="margin-bottom:11px">Alles staat alleen op dit toestel. Een back-up is één bestand om veilig te bewaren of mee te nemen naar een ander toestel.</div>
+      <div class="set-card-head"><div class="ico">🗄️</div><div><h2>Back-up</h2><div class="sub">Alles staat alleen op dit toestel</div></div></div>
       ${backupStandHtml()}
-      <div class="data-btns">
-        <button class="btn small purple" id="set-export">💾 Back-up maken</button>
-      </div>
-      <div class="data-los">
-        <button class="btn small paper" id="set-import">📂 Back-up terugzetten…</button>
-        <div class="note">Vervángt alles wat er nu op dit toestel staat, van álle sterren. Er wordt eerst gevraagd of je het zeker weet.</div>
+      <div class="data-btns naast">
+        <button class="btn small purple" id="set-export">💾 Maken</button>
+        <button class="btn small paper" id="set-import">📂 Terugzetten</button>
       </div>
       ${importInvoerHtml()}
-    </div>${beginschermKaartHtml(hasStars)}`;
+    </div>`;
 }
 /* Wanneer de laatste back-up was. Amber zolang er nooit een was of de laatste
    langer dan vier weken geleden is -- vier weken spelen is te veel om kwijt te
@@ -14310,7 +14326,6 @@ function backupDagen(nu) {
   const t = db.backupAt ? Date.parse(db.backupAt) : NaN;
   return isNaN(t) ? null : Math.max(0, Math.floor(((nu || Date.now()) - t) / 86400000));
 }
-// ook het stipje op "⋯" (zie renderSectionTabs)
 function backupOud(nu) {
   const dagen = backupDagen(nu);
   return dagen === null || dagen > BACKUP_OUD_DAGEN;
@@ -14337,10 +14352,10 @@ function importInvoerHtml() {
 /* De weg naar over/: de pagina die in twintig seconden zegt wat dit spel is,
    met het filmpje erop. Voor de ouder die het aan iemand anders wil laten zien --
    daarom staat hij hier en niet in het spel: een kind komt er zo nooit per
-   ongeluk. Hij staat onderaan Voortgang, het tabblad waar ⚙️ opent: daar zie je
-   hem op een telefoon zonder te scrollen. Onder ⋯ stond hij eerst als
-   allerlaatste, twee schermen diep achter de back-up, en dan vond geen ouder
-   hem. Zonder sterren is er geen Voortgang en staat hij in ⋯ (beheerEmptyHtml).
+   ongeluk. Hij staat onderaan het overzicht, waar ⚙️ opent (en zonder sterren
+   onder de lege pagina, beheerEmptyHtml). Eerder stond hij als allerlaatste
+   onder ⋯, twee schermen diep achter de back-up, en dan vond geen ouder hem;
+   daarna onder Voortgang, toen ⚙️ daar nog opende.
    Hij is een voetregel zonder kaart: het is geen
    instelling maar een verwijzing, en een witte kaart met een volle paarse knop
    vroeg even hard om aandacht als de back-up erboven. Het filmpje zit niet in de
@@ -14364,7 +14379,7 @@ function ouderVoetHtml() {
     </div>`;
 }
 // Naar over/: eerst bewaren (we verlaten de pagina), en zonder net niet weg.
-// Twee ingangen met dezelfde handler: de voetregel onder Voortgang (set-over) en de
+// Twee ingangen met dezelfde handler: de voetregel onder het overzicht (set-over) en de
 // stille regel op het lege beginscherm (over-hint, in de markup van index.html).
 function naarOver(e) {
   if (navigator.onLine === false) {
@@ -14470,8 +14485,33 @@ function beheerPanelHtml(p) {
         </div>
       </details>
     </div>
+  </div>`;
+}
+/* Het overzicht: waar ⚙️ opent. Bovenaan elke ster als één rij, met hoe het
+   gaat in dezelfde woorden als de statuskaart van Voortgang (STAND_TEKST) -- wie
+   alleen even wil kijken, ziet het hier al voor alle kinderen tegelijk. Een tik
+   opent haar pagina. "Nieuwe ster" is de laatste rij, met dezelfde gestreepte
+   cirkel als de "+"-tegel op de sterrenkeuze; bij zes sterren is er geen plek
+   meer, en dan staat hij er niet (openNewStar weigert dan toch).
+   Daaronder, na het streepje, wat voor álle sterren geldt. */
+function overzichtHtml() {
+  const rij = key => {
+    const p = db.profiles[key], u = uitdagingStand(p);
+    const { ico, kop } = u ? STAND_TEKST[u.stand] : { ico: '🌱', kop: 'Net begonnen' };
+    const shows = playedCount(p);
+    return `<button class="ster-rij" type="button" data-key="${key}">`
+      + `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
+      + `<span class="sr-tekst"><b>${esc(p.name)}</b><small><span aria-hidden="true">${ico}</span> ${kop}`
+      + `${shows ? ` · ${shows} ${mv(shows, 'show', 'shows')}` : ''}</small></span>`
+      + `<span class="sr-pijl" aria-hidden="true">›</span></button>`;
+  };
+  const nieuw = profileKeys().length < MAX_PROFILES
+    ? `<button class="ster-rij sr-nieuw" type="button" id="set-newstar"><span class="sr-plus" aria-hidden="true">＋</span><span class="sr-tekst"><b>Nieuwe ster</b></span></button>`
+    : '';
+  return `<div class="settings-panel">
+    <div class="set-card ster-lijst" id="set-sterren">${profileKeys().map(rij).join('')}${nieuw}</div>
     <div class="sheet-rule"><span>Voor alle sterren</span></div>
-    ${appWideCardsHtml(true)}
+    ${appWideCardsHtml()}${ouderVoetHtml()}
   </div>`;
 }
 
@@ -14524,110 +14564,42 @@ function speelAlsKnop(p) {
   b.setAttribute('aria-label', 'Speel als ' + p.name);
   b.title = 'Speel als ' + p.name;
 }
-// De drie onderdelen van het ouderdeel. Waarde = staat, label = wat er staat.
-// Beheer staat er als "⋯": zie renderSectionTabs.
-const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefeningen'], ['beheer', 'Beheer']];
-// Alleen naar boven springen als het ónderdeel wisselt, niet bij elke chip-tik.
-let lastWhoRendered = null;
+// De drie onderdelen van één ster. Waarde = staat, label = wat er staat.
+// Beheer staat er als "✏️": zie renderSectionTabs.
+const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefeningen'], ['beheer', 'Aanpassen']];
 
-/* Niveau 1 -- wíé: open rij portretten, geen omsloten spoor. Dit is dezelfde
-   scrollende pil-rij als de kleedkamer (.tab-btn + hscroll-fade + updateFades),
-   met het echte avatar-portret erin i.p.v. voor elk kind hetzelfde sterretje.
-   Niveau 2 (het onderdeel) blijft een .segmented-spoor; twee vormen, twee
-   betekenissen -- hiervoor stonden er twee identieke sporen op elkaar. */
-/* renderSettings loopt bij élke tik op een schakelaar of chip, en dan stond deze
-   rij er elke keer opnieuw: zes portretten weggooien en tekenen, plus twee keer de
-   opmaak opmeten (scrollLeft lezen, schrijven, en updateFades leest weer). Wat er
-   staat verandert alleen als er een ster bij komt, weggaat, anders heet of anders
-   gekozen wordt. Dus wordt de inhoud eerst als tekst opgebouwd, en alleen als die
-   anders is dan de vorige keer wordt de rij echt vervangen. Tekst vergelijken is
-   goedkoop; de DOM en de metingen waren het dure deel. */
-let lastWhoHtml = null;
-function renderWhoRow() {
-  const row = $('settings-profiles');
-  const keys = profileKeys();
-  const delen = keys.map(key => `<span class="who-portrait" aria-hidden="true">${avatarSVG(db.profiles[key], 65)}</span>`
-    + `<span class="tab-label">${esc(db.profiles[key].name)}</span>`);
-  /* Dezelfde sterren als de vorige keer? Dan blijft de rij staan en verhuist alleen
-     de markering. Een ander kind kiezen tekende hier eerst alle poppen opnieuw, en
-     dat was op een trage tablet de traagste tik van het ouderdeel. */
-  const handtekening = delen.join('|');
-  if (handtekening === lastWhoHtml && row.childElementCount) {
-    let active = null;
-    row.querySelectorAll('.who-btn[data-key]').forEach(b => {
-      const on = b.dataset.key === setKey;
-      b.classList.toggle('active', on);
-      b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      if (on) active = b;
-    });
-    whoInBeeld(row, active);
-    return;
-  }
-  lastWhoHtml = handtekening;
-  const keep = row.scrollLeft;          // niet terugspringen bij elke hertekening
-  row.innerHTML = '';
-  let active = null;
-  keys.forEach((key, k) => {
-    const on = key === setKey;
-    const b = document.createElement('button');
-    b.className = 'tab-btn who-btn' + (on ? ' active' : '');
-    b.dataset.key = key;
-    b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    b.innerHTML = delen[k];
-    b.onclick = () => { sndClick(); setKey = key; renderSettings(); };
-    row.appendChild(b);
-    if (on) active = b;
-  });
-  /* De "+" staat achter de laatste ster, net als op de sterrenkeuze: daar leert
-     een ouder al dat een nieuwe ster na de rij komt. Hiervoor was het een eigen
-     kaart in Beheer, en dan stond "iemand erbij" op een ander tabblad dan "wie" --
-     en duwde hij de back-up onder de vouw. Bij zes sterren is er geen plek meer,
-     dus dan is er ook geen "+" (openNewStar weigert dan toch). */
-  if (profileKeys().length < MAX_PROFILES) {
-    const add = document.createElement('button');
-    add.className = 'tab-btn who-btn who-nieuw';
-    add.id = 'set-newstar';
-    add.setAttribute('aria-label', 'Nieuwe ster maken');
-    add.title = 'Nieuwe ster';
-    add.innerHTML = '<span class="wn-plus" aria-hidden="true">＋</span>';
-    add.onclick = () => openNewStar('settings');
-    row.appendChild(add);
-  }
-  fadesVolgen(row);
-  row.scrollLeft = keep;
-  updateFades(row);
-  whoInBeeld(row, active);
-}
-// alleen bij een échte wissel het gekozen kind in beeld trekken
-function whoInBeeld(row, active) {
-  if (active && lastWhoRendered !== setKey) requestAnimationFrame(() => {
-    if (!active.isConnected) return;
-    active.scrollIntoView({ block: 'nearest', inline: 'center' });
-    updateFades(row);
-  });
-  lastWhoRendered = setKey;
+/* De kop van één ster: haar portret en haar naam, tussen ← en ▶ in. Hier stond
+   eerst een scrollende rij met álle sterren plus een "+", om van kind te
+   wisselen zonder terug te gaan. Dat wisselen doet nu het overzicht, één ← terug,
+   en de kop zegt nog maar één ding: over wie dit gaat.
+   renderSettings loopt bij élke tik op een schakelaar of chip; de pop wordt
+   alleen opnieuw getekend als er iets aan veranderde (zelfde reden als vroeger
+   bij de rij: op een trage tablet was dat het dure deel). */
+let lastWieHtml = null;
+function renderWie(p) {
+  const html = `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 65)}</span>`
+    + `<span class="wie-naam">${esc(p.name)}</span>`;
+  if (html === lastWieHtml && $('settings-wie').childElementCount) return;
+  lastWieHtml = html;
+  $('settings-wie').innerHTML = html;
 }
 
-/* Niveau 2 -- wát: Voortgang | Oefenen | ⋯. Bewust zonder emoji: drie
+/* Niveau 2 -- wát: Voortgang | Oefeningen | ✏️. Bewust zonder emoji: drie
    labels mét icoon passen niet in het 460px-spoor op een 320px-telefoon (~333px
    nodig, 288px beschikbaar), en zonder is het bovendien rustiger. De iconen
    blijven wél op de kaartkoppen staan, waar ze iets betekenen.
 
-   BEHEER IS EEN UITZONDERING, GEEN DERDE HOOFDZAAK. Naam, meisje of jongen,
-   wissen, verwijderen, back-up: allemaal dingen die een ouder zelden doet,
-   terwijl het tabblad even breed was als Voortgang en Oefenen, waar je elke keer
-   komt. Nu is het een smal vakje "⋯" achteraan; de inhoud is dezelfde, en een
-   schermlezer hoort nog gewoon "Beheer".
-   Het enige in Beheer waar een ouder voor terug moet komen is de back-up -- er is
-   geen cloud. Dus krijgt "⋯" een amber stipje zolang er nooit een back-up was of
-   de laatste te oud is (backupOud, dezelfde regel als de amber regel in de
-   back-upkaart). Verder nooit een signaal op dit vakje. */
+   ✏️ IS EEN UITZONDERING, GEEN DERDE HOOFDZAAK. Naam, meisje of jongen, wissen,
+   verwijderen: dingen die een ouder zelden doet, terwijl een tabblad even breed
+   als Voortgang en Oefenen evenveel aandacht vroeg. Dus een smal vakje
+   achteraan; een schermlezer hoort "Aanpassen". Hier stond eerst "⋯", met de
+   back-up eronder en een amber stipje als die te oud was -- de back-up staat nu
+   op het overzicht, en het stipje is daar de amber regel in de kaart zelf. */
 function renderSectionTabs() {
   const t = $('settings-subtabs');
-  const oud = backupOud();
   t.innerHTML = SET_TABS.map(([v, label]) => v === 'beheer'
-    ? `<button class="st-meer${setTab === v ? ' on' : ''}" role="tab" aria-selected="${setTab === v}" data-t="${v}" aria-label="${label}${oud ? ', back-up nodig' : ''}" title="${label}">`
-      + `<span aria-hidden="true">⋯</span>${oud ? '<span class="st-stip" aria-hidden="true"></span>' : ''}</button>`
+    ? `<button class="st-meer${setTab === v ? ' on' : ''}" role="tab" aria-selected="${setTab === v}" data-t="${v}" aria-label="${label}" title="${label}">`
+      + `<span aria-hidden="true">✏️</span></button>`
     : `<button class="${setTab === v ? 'on' : ''}" role="tab" aria-selected="${setTab === v}" data-t="${v}">${label}</button>`).join('');
   t.querySelectorAll('button').forEach(b => b.onclick = () => {
     if (b.dataset.t === setTab) return;
@@ -14637,27 +14609,25 @@ function renderSectionTabs() {
 
 function renderSettings() {
   // De selectie kan naar een verdwenen ster wijzen (net verwijderd, of een import
-  // met andere sleutels): altijd eerst terugvallen op wie er wél is.
-  if (!setKey || !db.profiles[setKey]) setKey = profileKeys()[0] || null;
+  // met andere sleutels): dan terug naar het overzicht.
+  if (setKey && !db.profiles[setKey]) setKey = null;
   const p = setKey ? db.profiles[setKey] : null;
-  // Zonder ster is er niets om "wiens" of "wat daarover" mee te kiezen; die twee
-  // rijen verdwijnen dan in plaats van leeg te blijven staan.
-  $('settings-profiles').style.display = p ? '' : 'none';
-  // mét ster staat de rij sterren op de plek van de titel (zie de kop in index.html)
+  // Op het overzicht (en zonder sterren) is er geen "wie" en geen "wat daarover";
+  // dan staat de titel er, zonder tabbladen en zonder ▶.
   $('screen-settings').classList.toggle('met-ster', !!p);
+  $('settings-wie').style.display = p ? '' : 'none';
   $('settings-subtabs').style.display = p ? '' : 'none';
+  speelAlsKnop(p);
   if (!p) {
-    setTab = 'beheer';
-    $('settings-profiles').innerHTML = '';
+    lastWieHtml = null;
+    $('settings-wie').innerHTML = '';
     $('settings-subtabs').innerHTML = '';
-    $('settings-body').innerHTML = beheerEmptyHtml();
-    speelAlsKnop(null);
+    $('settings-body').innerHTML = profileKeys().length ? overzichtHtml() : beheerEmptyHtml();
     bindSettings(null, null);
     return;
   }
-  renderWhoRow();
+  renderWie(p);
   renderSectionTabs();
-  speelAlsKnop(p);
   const s = p.settings;
   $('settings-body').innerHTML =
       setTab === 'oefenen' ? oefenenPanelHtml(p, s)
@@ -14787,10 +14757,11 @@ function bindSettings(p, s) {
   on('set-name', 'oninput', e => {
     p.name = e.target.value.trim() || p.name;
     save();
-    // de naam staat ook in de kiezer hierboven: die meteen laten meelopen, zonder
-    // hertekenen (dat zou de focus uit het invulveld halen)
-    const lbl = $('settings-profiles').querySelector('.active .tab-label');
+    // de naam staat ook in de kop: die meteen laten meelopen, zonder hertekenen
+    // (dat zou de focus uit het invulveld halen)
+    const lbl = $('settings-wie').querySelector('.wie-naam');
     if (lbl) lbl.textContent = p.name;
+    lastWieHtml = null;
     // en in de wiskaart eronder, die haar ook bij naam noemt (.set-naam)
     document.querySelectorAll('#settings-body .set-naam').forEach(n => { n.textContent = p.name; });
     // en in wat ▶ rechtsboven voorleest
@@ -14895,10 +14866,9 @@ function bindSettings(p, s) {
         const naam = p.name;
         delete db.profiles[setKey];
         if (cur === setKey) cur = null;      // niet met een verdwenen ster verder spelen
-        setKey = profileKeys()[0] || null;
-        lastWhoRendered = null;              // de kiezer moet opnieuw naar de nieuwe keuze scrollen
+        setKey = null;                       // terug naar het overzicht, waar de anderen staan
         save();
-        if (setKey) renderSettings();
+        if (profileKeys().length) { renderSettings(); settingsToTop(); }
         else closeSettings();                // laatste ster weg -> terug naar het welkomscherm
         showToast(`✓ ${esc(naam)} is verwijderd`);
         toastWeg(1800);
@@ -14909,6 +14879,11 @@ function bindSettings(p, s) {
   // schakelaar als onder ⋯, en dan staat de notitie er niet meer
   on('stem-aan', 'onclick', () => { if (!db.sound) toggleSound(); renderSettings(); });
   on('set-sound', 'onclick', toggleSound);
+  on('set-alsapp', 'onclick', () => openAppBlad(false));
+  // het overzicht: een tik op een ster opent haar pagina
+  document.querySelectorAll('#set-sterren .ster-rij[data-key]').forEach(b => {
+    b.onclick = () => openSter(b.dataset.key);
+  });
   on('set-export', 'onclick', exportData);
   on('set-deel', 'onclick', deelOver);
   on('set-over', 'onclick', naarOver);
@@ -14944,7 +14919,6 @@ function exportData() {
   // de regel bovenaan de kaart meteen bijwerken, zonder het hele paneel te herbouwen
   const stand = $('set-backup-stand');
   if (stand) stand.outerHTML = backupStandHtml();
-  if ($('settings-subtabs').childElementCount) renderSectionTabs();   // het stipje op "⋯" gaat weg
 }
 
 // Een eerder opgeslagen back-upbestand inlezen en terugzetten. Overschrijft
@@ -14990,8 +14964,7 @@ function importData(file) {
         db = next;             // normalizeProfiles leest de globale db
         normalizeProfiles();
         cur = null;
-        setKey = profileKeys()[0] || null;   // selectie kan naar een verdwenen sleutel wijzen
-        lastWhoRendered = null;
+        setKey = null;         // naar het overzicht: daar staan alle teruggezette sterren
         save();
         renderSettings();
         // gelukt is geen vraag: een melding, geen venster om weg te tikken
@@ -15091,6 +15064,9 @@ function beginschermUitleg(soort, hasStars) {
    nee -- maar de kaart heeft haar werk gedaan. Bij de volgende start wordt het
    gewoon weer aan de browser gevraagd. */
 let beginschermNetErop = false;
+/* De uitleg als kaart staat alleen nog op de lege pagina (beheerEmptyHtml). Met
+   sterren is het de rij "Als app ›" op het overzicht, die het blad hieronder
+   opent (appWideCardsHtml). */
 function beginschermKaartHtml(hasStars) {
   if (beginschermNetErop || speeltAlsApp()) return '';
   const [uitleg, tweede] = beginschermUitleg(beginschermSoort(), hasStars);
@@ -15103,8 +15079,7 @@ function beginschermKaartHtml(hasStars) {
 }
 addEventListener('appinstalled', () => {
   beginschermNetErop = true;
-  const k = $('set-beginscherm');
-  if (k) k.remove();
+  ['set-beginscherm', 'set-alsapp'].forEach(id => { const k = $(id); if (k) k.remove(); });
   installVoorstel = null;
   appKnopZet();
   renderGeluid();
@@ -15112,8 +15087,8 @@ addEventListener('appinstalled', () => {
 });
 
 /* ================= Speel als app ============================================
-   De kaart hierboven staat in Beheer, en daar komt een ouder zelden. Dit is de
-   weg ernaartoe die je wél ziet: een knopje "⊞ Als app" linksboven op de
+   In het ouderdeel is het een rij op het overzicht, en daar komt een ouder
+   zelden. Dit is de weg ernaartoe die je wél ziet: een knopje "⊞ Als app" linksboven op de
    sterrenkeuze, het spiegelbeeld van het tandwiel. Een tik opent een blad met
    de stappen voor déze browser.
 
@@ -15246,7 +15221,7 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
         + stap(2, `Kies ${erbij}`);
     }
     html += stap(3, `Tik op ${kbd('Voeg toe')}`);
-    if (hasStars) html += '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ → ⋯, en zet hem daar in de app terug.</div>';
+    if (hasStars) html += '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ Voor ouders, en zet hem daar in de app terug.</div>';
     return { html, installeer: false };
   }
   if (soort === 'android' && kanInstalleren) {
@@ -15315,7 +15290,7 @@ function backTarget() {
   if ($('screen-game').classList.contains('active')) return askQuit;
   if ($('screen-end').classList.contains('active')) return goMapNaShow;
   if ($('screen-memory').classList.contains('active')) return exitMemory;
-  if ($('screen-settings').classList.contains('active')) return closeSettings;
+  if ($('screen-settings').classList.contains('active')) return ouderTerug;
   if ($('screen-newstar').classList.contains('active')) return closeNewStar;
   if ($('screen-dress').classList.contains('active')) return dressBack;
   if ($('screen-trophies').classList.contains('active')) return goMap;
@@ -15589,7 +15564,9 @@ if (location.search.indexOf('debug') !== -1) {
       P().equipped.stage = forced;
     }
     const go = { map: goMap, dress: openKleedkamer, tro: openTrophies,
-                 profile: goProfiles, ouder: () => { goMap(); openSettings(); },
+                 // ouder = de pagina van deze ster (met ▶); ouders = het overzicht
+                 profile: goProfiles, ouder: () => { goMap(); openSettings(); setKey = cur; renderSettings(); },
+                 ouders: () => { goMap(); openSettings(); },
                  reis: () => { goMap(); openReis(); },
                  game: () => startLevel(P().level),
                  end: () => { startLevel(P().level); endLevel(true); } };

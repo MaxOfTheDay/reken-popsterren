@@ -277,7 +277,7 @@
   /* ---- De rij van een schakelaar (.gear-item) --------------------------
      Heette zo naar het menuutje onder het tandwiel, waar hij begon. Dat menu is
      weg (het tandwiel opent meteen Voor ouders); de rij staat nu in het ouderdeel
-     (Geluid, onder ⋯) en in "Show stoppen?". Icoon, woord, stand -- de hele rij
+     (Geluid en Als app, op het overzicht) en in "Show stoppen?". Icoon, woord, stand -- de hele rij
      is de knop. */
   .gear-item {
     font-family: inherit; font-size: var(--tx-body); font-weight: 600; color: var(--paper-ink);

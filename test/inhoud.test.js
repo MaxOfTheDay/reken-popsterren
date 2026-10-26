@@ -681,8 +681,10 @@ zaak('J', () => {
   };
   const html = (a, ua, extra) => {
     a.run(`navigator = Object.assign({ userAgent: ${JSON.stringify(ua)}, maxTouchPoints: 0 }, ${JSON.stringify(extra || {})});`);
-    return a.run('appWideCardsHtml(true)');
+    return a.run('beginschermKaartHtml(true)');
   };
+  // het overzicht van het ouderdeel: daar is het een rij die het blad opent
+  const overzicht = (a, ua, extra) => { html(a, ua, extra); return a.run('appWideCardsHtml()'); };
   const UA = {
     android: 'Mozilla/5.0 (Linux; Android 16; Pixel 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
     iphone: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
@@ -713,10 +715,13 @@ zaak('J', () => {
     check(is === wil, `J · ${naam} krijgt de uitleg voor '${wil}'`, is);
   });
 
-  // De kaart staat ná de back-up, en is het laatste van het app-brede blok.
-  const and = html(a, UA.android);
-  const back = and.indexOf('Back-up &amp; herstel'), kaart = and.indexOf('id="set-beginscherm"');
-  check(back > -1 && kaart > back, 'J · de kaart staat direct na Back-up & herstel', `${back} / ${kaart}`);
+  // Op het overzicht: een rij "Als app" onder Geluid, vóór de back-up, die het blad opent.
+  const ov = overzicht(a, UA.android);
+  const geluid = ov.indexOf('id="set-sound"'), rij = ov.indexOf('id="set-alsapp"'), back = ov.indexOf('<h2>Back-up</h2>');
+  check(geluid > -1 && rij > geluid && back > rij, 'J · overzicht: Geluid, dan Als app, dan de back-up', `${geluid} / ${rij} / ${back}`);
+  check(!ov.includes('set-beginscherm'), 'J · overzicht: de uitleg staat in het blad, niet in een kaart', '');
+  // De kaart zelf (alleen nog op de lege pagina, zie beheerEmptyHtml).
+  const and = html(a, UA.android), kaart = 0;
   check(/class="set-card secundair" id="set-beginscherm"/.test(and), 'J · als stille secundaire kaart', '');
   check(and.includes('Op het beginscherm') && and.includes('Rekensterren als app op dit toestel'),
     'J · met de kop en de ondertitel', '');
@@ -732,7 +737,7 @@ zaak('J', () => {
   check(ios.includes('Heb je al gespeeld in Safari? Maak dan hierboven eerst een back-up.'),
     'J · iPhone: met sterren komt de back-upwaarschuwing erbij', ios.slice(kaart));
   a.run(`navigator = { userAgent: ${JSON.stringify(UA.iphone)}, maxTouchPoints: 5 };`);
-  check(!a.run('appWideCardsHtml(false)').includes('Heb je al gespeeld'),
+  check(!a.run('beginschermKaartHtml(false)').includes('Heb je al gespeeld'),
     'J · zonder sterren valt er niets te redden, en blijft de waarschuwing weg', '');
   check(html(a, UA.ipad, { maxTouchPoints: 5 }).includes('Tik in Safari op Deel'), 'J · een iPad die zich als Mac voordoet krijgt de iPad-uitleg', '');
   check(html(a, UA.iosInApp).includes('Open deze pagina in Safari'), 'J · iOS buiten Safari: eerst naar Safari', '');
@@ -745,6 +750,7 @@ zaak('J', () => {
     const b = vers();
     b.run(`matchMedia = q => ({ matches: q === '(display-mode: ${stand})' });`);
     check(!html(b, UA.android).includes('set-beginscherm'), `J · weg in display-mode: ${stand}`, '');
+    check(!overzicht(b, UA.android).includes('set-alsapp'), `J · ook de rij weg in display-mode: ${stand}`, '');
   });
   const iosApp = vers();
   check(!html(iosApp, UA.iphone, { standalone: true }).includes('set-beginscherm'), 'J · weg met navigator.standalone (iOS)', '');

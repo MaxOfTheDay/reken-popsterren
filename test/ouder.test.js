@@ -91,7 +91,7 @@ function check(ok, label, detail) {
   /* ================= A · Het tandwiel en het geluid ================= */
   /* Het tandwiel opent meteen Voor ouders (geen menu ertussen). Het geluid is
      app-breed (het staat náást de profielen in db), staat in het ouderdeel als
-     eerste rij onder "Voor alle sterren" (⋯), en moet een herstart overleven. */
+     eerste rij onder "Voor alle sterren" (op het overzicht), en moet een herstart overleven. */
   {
     const { ctx, page } = await fresh();
     await page.click('#btn-gear');
@@ -102,8 +102,6 @@ function check(ok, label, detail) {
       weg: ['gear-sound', 'gear-haptics', 'gear-app', 'gear-over'].filter(id => document.getElementById(id)),
     }));
     check(r.scherm === 'screen-settings' && !r.menu && !r.weg.length, 'het tandwiel opent meteen Voor ouders, zonder menu', JSON.stringify(r));
-    await page.click('#settings-subtabs button[data-t="beheer"]');
-    await page.waitForTimeout(200);
     r = await page.evaluate(() => {
       const regel = [...document.querySelectorAll('#settings-body .sheet-rule')].pop();
       const kaart = regel && regel.nextElementSibling;
@@ -186,11 +184,11 @@ function check(ok, label, detail) {
     r = await page.evaluate(() => ({
       gekozenMax: document.querySelector('#set-max .chip.on').dataset.v,
       gekozenMode: document.querySelector('#set-mode .chip.on').dataset.v,
-      kop: document.querySelector('#settings-profiles .active .tab-label').textContent,
+      kop: document.querySelector('#settings-wie .wie-naam').textContent,
     }));
     check(r.gekozenMax === '20' && r.gekozenMode === 'kies',
       'de velden tonen de waarden van het gekozen kind', JSON.stringify(r));
-    check(/Bas/.test(r.kop), 'en de kiezer erboven zegt over wie het gaat', r.kop);
+    check(/Bas/.test(r.kop), 'en de kop zegt over wie het gaat', r.kop);
     // Bas naar de telmodus: dat mag Anna niet raken
     await page.click('#set-track .chip[data-v="count"]');
     await page.waitForTimeout(150);
@@ -213,44 +211,70 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
-  /* ================= C · De kiezer wisselt de context ================= */
+  /* ================= C · Het overzicht en één ster ================= */
+  /* ⚙️ opent het overzicht: elke ster één rij, "Nieuwe ster" als laatste, en
+     daaronder wat voor alle sterren geldt. Een tik op een rij opent haar pagina;
+     ← gaat terug naar het overzicht, en pas van daar het ouderdeel uit. */
   {
     const { ctx, page } = await fresh(['Anna', 'Bas', 'Cato']);
-    await open(page, 'p1', 'oefenen');
-    await page.waitForTimeout(150);
+    await page.click('#btn-gear');
+    await page.waitForTimeout(300);
     let r = await page.evaluate(() => ({
-      // de "+" achter de rij is geen kind: die telt hier niet mee (zie verderop)
-      chips: [...document.querySelectorAll('#settings-profiles .who-btn:not(.who-nieuw)')].map(b => b.textContent.trim()),
-      plus: [...document.querySelectorAll('#settings-profiles .who-btn')].pop().id,
-      actief: document.querySelector('#settings-profiles .who-btn.active').textContent.trim(),
-      pressed: [...document.querySelectorAll('#settings-profiles .who-btn:not(.who-nieuw)')].map(b => b.getAttribute('aria-pressed')),
-      tab: document.querySelector('#settings-subtabs button.on').dataset.t,
+      setKey: setKey,
+      rijen: [...document.querySelectorAll('#set-sterren .ster-rij[data-key]')].map(b => b.querySelector('b').textContent),
+      laatste: [...document.querySelectorAll('#set-sterren .ster-rij')].pop().id,
+      titel: getComputedStyle(document.querySelector('#screen-settings .header-title')).display !== 'none',
+      tabs: getComputedStyle(document.getElementById('settings-subtabs')).display === 'none',
+      speel: document.getElementById('speel-als').hidden,
+      alle: !!document.getElementById('set-sound') && !!document.getElementById('set-export'),
+      naam: !!document.getElementById('set-name'),
     }));
-    check(r.chips.length === 3, 'elk kind krijgt een eigen kaartje in de kiezer', JSON.stringify(r.chips));
-    check(/Anna/.test(r.actief), 'en het gekozen kind is te zien', r.actief);
-    check(r.pressed.join(',') === 'true,false,false', 'een schermlezer hoort hetzelfde', r.pressed.join(','));
-    check(r.plus === 'set-newstar', 'en achter de laatste ster staat de "+" voor een nieuwe', r.plus);
-    // een ander kind kiezen: het ónderdeel blijft waar het was
-    await page.evaluate(() => [...document.querySelectorAll('#settings-profiles .who-btn')][2].click());
-    await page.waitForTimeout(200);
+    check(r.setKey === null && r.rijen.join(',') === 'Anna,Bas,Cato', 'het tandwiel opent het overzicht, met elk kind als rij', JSON.stringify(r));
+    check(r.laatste === 'set-newstar', 'en als laatste rij "Nieuwe ster"', r.laatste);
+    check(r.titel && r.tabs && r.speel, 'het overzicht heeft een titel, geen tabbladen en geen ▶', JSON.stringify(r));
+    check(r.alle && !r.naam, 'en daaronder wat voor alle sterren geldt -- niets van één kind', JSON.stringify(r));
+    // een rij opent de pagina van dat kind, op Voortgang
+    await page.click('#set-sterren .ster-rij[data-key="p3"]');
+    await page.waitForTimeout(250);
     r = await page.evaluate(() => ({
       setKey: setKey, tab: setTab,
-      actief: document.querySelector('#settings-profiles .who-btn.active').textContent.trim(),
+      kop: document.querySelector('#settings-wie .wie-naam').textContent,
       tabAan: document.querySelector('#settings-subtabs button.on').dataset.t,
+      speel: document.getElementById('speel-als').getAttribute('aria-label'),
+      alle: !!document.getElementById('set-export'),
     }));
-    check(r.setKey === 'p3' && /Cato/.test(r.actief),
-      'een ander kind kiezen wisselt de context', JSON.stringify(r));
-    check(r.tab === 'oefenen' && r.tabAan === 'oefenen',
-      'en laat je op hetzelfde onderdeel staan', JSON.stringify(r));
+    check(r.setKey === 'p3' && r.tab === 'voortgang' && r.tabAan === 'voortgang' && r.kop === 'Cato',
+      'een tik op een rij opent dat kind, op Voortgang', JSON.stringify(r));
+    check(r.speel === 'Speel als Cato' && !r.alle, 'met ▶ voor haar, en zonder de app-brede kaarten', JSON.stringify(r));
     // van onderdeel wisselen houdt het kind vast
     await page.click('#settings-subtabs button[data-t="beheer"]');
     await page.waitForTimeout(200);
     r = await page.evaluate(() => ({
       setKey: setKey, tab: setTab,
       naam: document.getElementById('set-name').value,
+      knop: document.querySelector('#settings-subtabs .st-meer').textContent.trim(),
+      label: document.querySelector('#settings-subtabs .st-meer').getAttribute('aria-label'),
     }));
     check(r.setKey === 'p3' && r.tab === 'beheer' && r.naam === 'Cato',
       'van onderdeel wisselen houdt hetzelfde kind vast', JSON.stringify(r));
+    check(r.knop === '✏️' && r.label === 'Aanpassen', 'het derde vakje is ✏️, en heet voor een schermlezer Aanpassen', JSON.stringify(r));
+    // ← terug: eerst naar het overzicht, dan het ouderdeel uit
+    await page.click('#screen-settings .header-left');
+    await page.waitForTimeout(250);
+    r = await page.evaluate(() => ({ setKey: setKey, scherm: document.querySelector('.screen.active').id,
+      rijen: document.querySelectorAll('#set-sterren .ster-rij[data-key]').length }));
+    check(r.setKey === null && r.scherm === 'screen-settings' && r.rijen === 3, '← brengt je van een kind terug naar het overzicht', JSON.stringify(r));
+    await page.click('#screen-settings .header-left');
+    await page.waitForTimeout(400);
+    r = await page.evaluate(() => document.querySelector('.screen.active').id);
+    check(r === 'screen-profile', 'en van het overzicht het ouderdeel uit', r);
+    // de terugknop van Android doet hetzelfde als ←
+    await page.click('#btn-gear');
+    await page.waitForTimeout(300);
+    await page.click('#set-sterren .ster-rij[data-key="p2"]');
+    await page.waitForTimeout(250);
+    r = await page.evaluate(() => backTarget() === ouderTerug);
+    check(r, 'en de terugknop van Android ook', String(r));
     await ctx.close();
   }
 
@@ -568,7 +592,7 @@ function check(ok, label, detail) {
     await page.waitForTimeout(300);
     const meet = () => page.evaluate(() => {
       const kop = document.querySelector('#screen-settings .hub-sticky');
-      const wie = document.querySelector('#settings-profiles .who-btn.active');
+      const wie = document.getElementById('settings-wie');
       const wat = document.querySelector('#settings-subtabs button.on');
       const zichtbaar = el => { const r = el.getBoundingClientRect(); return r.height > 0 && r.bottom <= kop.getBoundingClientRect().bottom + 1; };
       return {
@@ -610,18 +634,18 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
-  /* ================= J · Vanuit Beheer een ster maken ================= */
+  /* ================= J · Vanuit het overzicht een ster maken ================= */
   /* Uit het ouderdeel is een ster maken iets wat een ouder doet terwijl er
      misschien een ánder kind aan het spelen is: dan hoort ze terug te komen waar
      ze was, en niet in de wereld van de nieuwe ster te belanden. */
   {
     const { ctx, page } = await fresh();
-    await open(page, 'p1', 'beheer');
+    await open(page, null, null);
     await page.waitForTimeout(150);
     await page.click('#set-newstar');
     await page.waitForTimeout(250);
     let r = await page.evaluate(() => document.querySelector('.screen.active').id);
-    check(r === 'screen-newstar', 'Beheer heeft een weg naar het maakformulier', r);
+    check(r === 'screen-newstar', 'het overzicht heeft een weg naar het maakformulier', r);
     await page.click('#newstar-base .chip[data-v="jongen"]');
     await page.fill('#newstar-name', 'Daan');
     await page.click('#newstar-go');
@@ -632,17 +656,20 @@ function check(ok, label, detail) {
       n: Object.keys(db.profiles).length,
       naam: db.profiles[setKey] ? db.profiles[setKey].name : null,
     }));
-    check(r.scherm === 'screen-settings' && r.tab === 'beheer',
-      'na het maken sta je terug in Beheer', JSON.stringify(r));
+    check(r.scherm === 'screen-settings' && r.tab === 'voortgang',
+      'na het maken sta je terug in het ouderdeel', JSON.stringify(r));
     check(r.n === 3 && r.naam === 'Daan', 'bij de nieuwe ster', JSON.stringify(r));
     check(r.cur !== 'p3', 'en er wordt niet stilletjes met de nieuwe ster verder gespeeld', String(r.cur));
-    // en teruggaan uit het formulier komt ook in Beheer uit
+    // en teruggaan uit het formulier komt in het overzicht uit
+    await page.evaluate(() => ouderTerug());
+    await page.waitForTimeout(200);
     await page.click('#set-newstar');
     await page.waitForTimeout(250);
     await page.click('#screen-newstar .icon-btn');
     await page.waitForTimeout(300);
-    r = await page.evaluate(() => ({ scherm: document.querySelector('.screen.active').id, n: Object.keys(db.profiles).length }));
-    check(r.scherm === 'screen-settings' && r.n === 3,
+    r = await page.evaluate(() => ({ scherm: document.querySelector('.screen.active').id, n: Object.keys(db.profiles).length,
+      overzicht: !!document.getElementById('set-sterren') }));
+    check(r.scherm === 'screen-settings' && r.n === 3 && r.overzicht,
       'en afbreken brengt je terug zonder een ster te maken', JSON.stringify(r));
     await ctx.close();
   }
@@ -847,8 +874,9 @@ function check(ok, label, detail) {
   }
 
   /* ================= O · Op het beginscherm ================= */
-  /* De uitlegkaart in Beheer, in een echte browser en op de maat van een Pixel
-     (412×920). Het toestel wordt nagedaan met een user agent en een scriptje
+  /* Met sterren: de rij "Als app ›" op het overzicht, die het blad opent. Zonder
+     sterren: de uitlegkaart op de lege pagina. In een echte browser en op de maat
+     van een Pixel (412×920). Het toestel wordt nagedaan met een user agent en een scriptje
      dat vóór de app draait: matchMedia voor de display-mode, navigator.standalone
      en maxTouchPoints voor iOS. Zie "= Op het beginscherm". */
   {
@@ -879,70 +907,77 @@ function check(ok, label, detail) {
       return {
         er: !!k,
         vorige: i > 0 ? kaarten[i - 1].querySelector('h2').textContent : null,
-        // de laatste kaart; 'Over Rekensterren' staat met sterren onder Voortgang, niet hier
-        laatste: i === kaarten.length - 1,
         secundair: !!k && k.classList.contains('secundair'),
         kop: k ? k.querySelector('h2').textContent : '',
         tekst: k ? k.textContent.replace(/\s+/g, ' ') : '',
         knoppen: k ? k.querySelectorAll('button, a, input').length : -1,
-        noten: k ? [...k.querySelectorAll('.note')].map(n => getComputedStyle(n).fontSize) : [],
       };
     });
+    const rij = page => page.evaluate(() => {
+      const r = document.getElementById('set-alsapp');
+      return { er: !!r, naGeluid: !!r && r.previousElementSibling === document.getElementById('set-sound'),
+        backup: !!document.getElementById('set-export') };
+    });
+    const leeg = page => page.evaluate(() => { db.profiles = {}; save(); openSettings(); });
 
-    // Android (Pixel): na de back-up, stil, zonder knop, met het ⋮-menu.
+    // Android (Pixel): de rij onder Geluid opent het blad; zonder sterren de kaart.
     {
       const { ctx, page } = await fresh(null, toestel(UA.android));
-      await open(page, 'p1', 'beheer');
+      await open(page, null, null);
       await page.waitForTimeout(200);
-      const r = await kaart(page);
-      check(r.er && r.vorige === 'Back-up & herstel' && r.laatste,
-        'O · de kaart staat direct na Back-up & herstel, als laatste kaart', JSON.stringify(r));
-      check(r.secundair && r.kop === 'Op het beginscherm' && r.knoppen === 0,
-        'O · een stille secundaire kaart, uitleg zonder knop', JSON.stringify(r));
-      check(/Chrome stelt soms zelf voor/.test(r.tekst) && /Tik op ⋮ en kies ‘App installeren’/.test(r.tekst),
-        'O · Android: het voorstel van Chrome, en anders het ⋮-menu', r.tekst);
-      // Nul sterren: de kaart staat er óók, zonder waarschuwing -- direct na de
-      // ene kaart die dan het terugzetten draagt (zie beheerEmptyHtml).
-      await page.evaluate(() => { db.profiles = {}; save(); openSettings(); });
+      let r = await rij(page);
+      check(r.er && r.naGeluid, 'O · op het overzicht staat "Als app" direct onder Geluid', JSON.stringify(r));
+      check(!(await kaart(page)).er, 'O · en geen uitlegkaart meer -- die staat in het blad', '');
+      await page.click('#set-alsapp');
       await page.waitForTimeout(200);
-      const leeg = await kaart(page);
-      check(leeg.er && leeg.vorige === 'Nog geen sterren', 'O · ook zonder sterren, na het terugzetten', JSON.stringify(leeg));
+      const blad = await page.evaluate(() => ({ open: document.getElementById('confirm-modal').classList.contains('open'),
+        blad: !!document.getElementById('app-blad') }));
+      check(blad.open && blad.blad, 'O · een tik opent het blad "Rekensterren als app"', JSON.stringify(blad));
+      await page.evaluate(() => closeConfirmModal());
       // appinstalled: meteen weg, en niets bewaard.
-      await open(page, null, 'beheer');
       const voor = await page.evaluate(() => JSON.stringify(Object.assign({}, localStorage)));
       await page.evaluate(() => window.dispatchEvent(new Event('appinstalled')));
       await page.waitForTimeout(100);
-      check(!(await kaart(page)).er, 'O · appinstalled haalt de kaart meteen weg', '');
+      check(!(await rij(page)).er, 'O · appinstalled haalt de rij meteen weg', '');
       await page.evaluate(() => renderSettings());
-      check(!(await kaart(page)).er, 'O · en ze blijft weg in deze sessie', '');
+      check(!(await rij(page)).er, 'O · en ze blijft weg in deze sessie', '');
       const na = await page.evaluate(() => JSON.stringify(Object.assign({}, localStorage)));
       check(voor === na, 'O · appinstalled schrijft niets weg', na.slice(0, 120));
       await page.reload();
       await page.waitForTimeout(250);
-      await open(page, null, 'beheer');
-      check((await kaart(page)).er, 'O · een nieuwe start vraagt het weer aan de browser', '');
+      await open(page, null, null);
+      check((await rij(page)).er, 'O · een nieuwe start vraagt het weer aan de browser', '');
+      // Nul sterren: de kaart, direct na de ene kaart die het terugzetten draagt
+      // (zie beheerEmptyHtml), stil en zonder knop.
+      await leeg(page);
+      await page.waitForTimeout(200);
+      r = await kaart(page);
+      check(r.er && r.vorige === 'Nog geen sterren', 'O · zonder sterren: de kaart, na het terugzetten', JSON.stringify(r));
+      check(r.secundair && r.kop === 'Op het beginscherm' && r.knoppen === 0,
+        'O · een stille secundaire kaart, uitleg zonder knop', JSON.stringify(r));
+      check(/Chrome stelt soms zelf voor/.test(r.tekst) && /Tik op ⋮ en kies ‘App installeren’/.test(r.tekst),
+        'O · Android: het voorstel van Chrome, en anders het ⋮-menu', r.tekst);
       await ctx.close();
     }
 
-    // iPhone en iPad: Safari → Deel, en de back-upwaarschuwing blijft een stille noot.
+    // iPhone en iPad: het blad zegt Safari → Deel, en met sterren: eerst een back-up.
     for (const [naam, ua, o] of [['iPhone', UA.iphone, {}], ['iPad', UA.ipad, { aanraak: 5 }]]) {
       const { ctx, page } = await fresh(null, toestel(ua, o));
-      await open(page, 'p1', 'beheer');
+      await open(page, null, null);
       await page.waitForTimeout(200);
-      const r = await kaart(page);
-      check(/Tik in Safari op Deel en kies ‘Zet op beginscherm’/.test(r.tekst), `O · ${naam}: Deel → Zet op beginscherm`, r.tekst);
-      check(/Heb je al gespeeld in Safari\? Maak dan hierboven eerst een back-up/.test(r.tekst),
-        `O · ${naam}: met de back-upwaarschuwing`, r.tekst);
-      check(r.noten.length === 2 && r.noten[0] === r.noten[1],
-        `O · ${naam}: de waarschuwing is een gewone noot, niet groter dan de uitleg`, JSON.stringify(r.noten));
+      await page.click('#set-alsapp');
+      await page.waitForTimeout(200);
+      const tekst = await page.evaluate(() => document.getElementById('app-blad').textContent.replace(/\s+/g, ' '));
+      check(/Zet op beginscherm/.test(tekst), `O · ${naam}: Deel → Zet op beginscherm`, tekst);
+      check(/Al gespeeld in Safari\? .*back-up via ⚙️ Voor ouders/.test(tekst), `O · ${naam}: met de back-upwaarschuwing`, tekst);
       await ctx.close();
     }
 
-    // Computer en de rest.
+    // Computer en de rest: de kaart op de lege pagina.
     for (const [naam, ua, zin] of [['computer', UA.desktop, /installeer-icoon in de adresbalk/],
       ['Firefox', UA.firefox, /Open de pagina dan in Chrome/]]) {
       const { ctx, page } = await fresh(null, toestel(ua));
-      await open(page, 'p1', 'beheer');
+      await leeg(page);
       await page.waitForTimeout(200);
       const r = await kaart(page);
       check(r.er && zin.test(r.tekst), `O · ${naam}: de juiste uitleg`, r.tekst);
@@ -954,11 +989,10 @@ function check(ok, label, detail) {
       ['standalone', UA.android, { stand: 'standalone' }], ['minimal-ui', UA.desktop, { stand: 'minimal-ui' }],
       ['navigator.standalone', UA.iphone, { standalone: true }]]) {
       const { ctx, page } = await fresh(null, toestel(ua, o));
-      await open(page, 'p1', 'beheer');
+      await open(page, null, null);
       await page.waitForTimeout(200);
-      const r = await kaart(page);
-      const backup = await page.evaluate(() => !!document.getElementById('set-export'));
-      check(!r.er && backup, `O · als app (${naam}) is de kaart weg, en de back-up staat er nog`, JSON.stringify(r));
+      const r = await rij(page);
+      check(!r.er && r.backup, `O · als app (${naam}) is de rij weg, en de back-up staat er nog`, JSON.stringify(r));
       await ctx.close();
     }
   }
@@ -1014,7 +1048,8 @@ function check(ok, label, detail) {
   /* ================= Q · Opstarten en instellingen ================= */
   /* De ronde "opstarten en instellingen" (oktober 2026). Vijf kleine dingen die
      elk één tik of één misverstand schelen:
-       - Voor ouders opent op de ster die net speelde, niet altijd op de eerste
+       - Voor ouders opent op het overzicht (sinds de ronde "overzicht eerst"; eerder
+         op de ster die net speelde)
        - "het geluid staat uit" in Voortgang heeft zelf de knop om het aan te zetten
        - meisje of jongen is in Beheer nog te veranderen (de voortgang blijft)
        - gekozen = paarse vulling, zonder vinkje erachter
@@ -1029,8 +1064,10 @@ function check(ok, label, detail) {
     await page.waitForTimeout(400);
     await page.click('#btn-gear');
     await page.waitForTimeout(300);
-    let r = await page.evaluate(() => ({ key: setKey, tab: setTab }));
-    check(r.key === 'p2' && r.tab === 'voortgang', 'Q · Voor ouders opent op wie net speelde', JSON.stringify(r));
+    let r = await page.evaluate(() => ({ key: setKey, rijen: document.querySelectorAll('#set-sterren .ster-rij[data-key]').length }));
+    check(r.key === null && r.rijen === 2, 'Q · Voor ouders opent op het overzicht', JSON.stringify(r));
+    await page.click('#set-sterren .ster-rij[data-key="p2"]');
+    await page.waitForTimeout(200);
 
     // Geluid uit, Bas telt (dan leest de stem voor): de notitie heeft een knop
     await page.evaluate(() => {
@@ -1075,7 +1112,9 @@ function check(ok, label, detail) {
     });
     check(r.bg === 'none' && r.kleur === 'rgb(255, 255, 255)', 'Q · het gekozen onderdeel heeft het materiaal van de tabbalk', JSON.stringify(r));
 
-    // Het maakformulier
+    // Het maakformulier (vanaf het overzicht)
+    await page.click('#screen-settings .header-left');
+    await page.waitForTimeout(200);
     await page.click('#set-newstar');
     await page.waitForTimeout(300);
     r = await page.evaluate(() => ({
@@ -1099,30 +1138,33 @@ function check(ok, label, detail) {
 
   /* R -- ▶ rechtsboven: meteen spelen als het kind dat je bekeek, in plaats van
      terug naar het keuzescherm en het daar opnieuw zoeken. Wat hij voorleest
-     loopt mee met de kiezer en met het naamveld; zonder ster is er geen ▶ (en
-     dan staat de titel er wél). ← · sterren · ▶ staan op één regel. En het
+     loopt mee met het gekozen kind en met het naamveld; op het overzicht en
+     zonder ster is er geen ▶ (en dan staat de titel er wél). ← · zij · ▶ staan
+     op één regel. En het
      groene "Opgeslagen" dat er eerst stond is weg. */
   {
     const { ctx, page } = await fresh();
     await page.click('#btn-gear');
     await page.waitForTimeout(300);
-    await page.click('#settings-profiles .who-btn[data-key="p2"]');
+    await page.click('#set-sterren .ster-rij[data-key="p2"]');
     await page.waitForTimeout(150);
     let r = await page.evaluate(() => {
       const b = document.getElementById('speel-als');
       const kop = document.querySelector('#screen-settings .screen-header');
       return { zicht: !!b && !b.hidden && b.offsetWidth > 0, label: b && b.getAttribute('aria-label'),
         oud: !!document.getElementById('settings-saved'),
-        eenRegel: kop.contains(document.getElementById('settings-profiles')) && kop.contains(b),
+        eenRegel: kop.contains(document.getElementById('settings-wie')) && kop.contains(b),
+        naam: document.querySelector('#settings-wie .wie-naam').textContent,
         titel: getComputedStyle(kop.querySelector('.header-title')).display };
     });
-    check(r.zicht && r.label === 'Speel als Bas', 'R · ▶ zegt wie er in de kiezer gekozen is', JSON.stringify(r));
-    check(r.eenRegel && r.titel === 'none', 'R · ← · de sterren · ▶ op één regel, zonder titel', JSON.stringify(r));
+    check(r.zicht && r.label === 'Speel als Bas', 'R · ▶ zegt wie er gekozen is', JSON.stringify(r));
+    check(r.eenRegel && r.titel === 'none' && r.naam === 'Bas', 'R · ← · zij · ▶ op één regel, zonder titel', JSON.stringify(r));
     check(!r.oud, 'R · het opslagpilletje is weg', JSON.stringify(r));
     await page.click('#settings-subtabs button[data-t="beheer"]');
     await page.fill('#set-name', 'Basje');
-    r = await page.evaluate(() => document.getElementById('speel-als').getAttribute('aria-label'));
-    check(r === 'Speel als Basje', 'R · een nieuwe naam staat meteen in ▶', r);
+    r = await page.evaluate(() => [document.getElementById('speel-als').getAttribute('aria-label'),
+      document.querySelector('#settings-wie .wie-naam').textContent]);
+    check(r[0] === 'Speel als Basje' && r[1] === 'Basje', 'R · een nieuwe naam staat meteen in ▶ en in de kop', JSON.stringify(r));
     await page.click('#speel-als');
     await page.waitForTimeout(900);
     r = await page.evaluate(() => ({ cur, kaart: document.getElementById('screen-map').classList.contains('active'),
@@ -1141,11 +1183,11 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
-  /* ================= S · Eén leerpad, en Beheer als "⋯" ================= */
+  /* ================= S · Eén leerpad, en Beheer als "✏️" ================= */
   /* Voortgang en Oefeningen tekenen het leerpad met dezelfde rijen, en zeggen
      hetzelfde over waar het kind staat -- ook voorbij de laatste stap, waar
-     Oefenen eerst haar pop op "Drie getallen" zette. Beheer is een smal "⋯"
-     met een stipje zolang er geen recente back-up is. */
+     Oefenen eerst haar pop op "Drie getallen" zette. Beheer is een smal "✏️";
+     of de back-up te oud is, zegt de amber regel op het overzicht. */
   {
     const { ctx, page } = await fresh();
     await page.evaluate(() => {
@@ -1166,14 +1208,12 @@ function check(ok, label, detail) {
       ladder: !!document.querySelector('.niveau-blok .fase-ladder'),
       meer: document.querySelector('#settings-subtabs .st-meer').textContent.trim(),
       label: document.querySelector('#settings-subtabs .st-meer').getAttribute('aria-label'),
-      stip: !!document.querySelector('#settings-subtabs .st-stip'),
       breed: document.querySelector('#settings-subtabs [data-t="oefenen"]').offsetWidth,
       smal: document.querySelector('#settings-subtabs .st-meer').offsetWidth,
     }));
     check(r.oudPad === 0 && r.ladder, 'S · Voortgang tekent het leerpad als de ladder', JSON.stringify(r));
     check(vg === 'Alles door elkaar', 'S · voorbij de laatste stap staat ze op "Alles door elkaar"', vg);
-    check(/⋯/.test(r.meer) && /^Beheer/.test(r.label) && r.smal < r.breed / 2, 'S · Beheer is een smal "⋯"', JSON.stringify(r));
-    check(r.stip, 'S · zonder back-up een stipje op "⋯"', JSON.stringify(r));
+    check(r.meer === '✏️' && r.label === 'Aanpassen' && r.smal < r.breed / 2, 'S · Beheer is een smal "✏️"', JSON.stringify(r));
     // Aanpassen › brengt je naar Oefenen, en daar staat ze op dezelfde stap
     await page.click('#leerpad-aanpas');
     await page.waitForTimeout(300);
@@ -1183,42 +1223,15 @@ function check(ok, label, detail) {
       knoppen: document.querySelectorAll('#set-startstap .chip').length }));
     check(r.tab === 'oefenen' && oe === vg && r.eind && r.knoppen === 5,
       'S · "Aanpassen ›" opent Oefeningen, en die zegt hetzelfde', JSON.stringify({ ...r, oe }));
-    // een verse back-up: het stipje gaat weg
+    // de back-up: amber op het overzicht zolang er geen is, groen na een verse
+    await open(page, null, null);
+    await page.waitForTimeout(100);
+    r = await page.evaluate(() => document.getElementById('set-backup-stand').classList.contains('oud'));
+    check(r, 'S · zonder back-up een amber regel op het overzicht', String(r));
     await page.evaluate(() => { db.backupAt = new Date().toISOString(); save(); renderSettings(); });
     await page.waitForTimeout(100);
-    r = await page.evaluate(() => !!document.querySelector('#settings-subtabs .st-stip'));
-    check(!r, 'S · met een verse back-up geen stipje', String(r));
-    await ctx.close();
-  }
-
-  /* T -- de vervaagde rand van de sterrenrij. Werd de rij bijgewerkt terwijl Voor
-     ouders verborgen stond (▶ spelen en terugkomen, terug van het maakformulier)
-     of veranderde het venster, dan stond er een harde snede bij ▶ tot iemand de
-     rij een duw gaf. Nu meet hij opnieuw zodra de rij een (andere) maat krijgt. */
-  {
-    const { ctx, page } = await fresh(['Anna', 'Bas', 'Noor', 'Jules']);
-    const rand = () => page.evaluate(() => {
-      const r = document.getElementById('settings-profiles');
-      return { rechts: r.classList.contains('can-right'), meer: r.scrollWidth - r.clientWidth - r.scrollLeft > 2 };
-    });
-    await page.click('#btn-gear');
-    await page.waitForTimeout(400);
-    let r = await rand();
-    check(r.meer && r.rechts, 'T · vier sterren: rechts vervaagt de rij', JSON.stringify(r));
-    await page.click('#speel-als');
-    await page.waitForTimeout(900);
-    await page.evaluate(() => goProfiles());
-    await page.waitForTimeout(400);
-    await page.click('#btn-gear');
-    await page.waitForTimeout(400);
-    r = await rand();
-    check(r.meer && r.rechts, 'T · ook na ▶ spelen en terugkomen', JSON.stringify(r));
-    await page.setViewportSize({ width: 820, height: 1180 });
-    await page.waitForTimeout(300);
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.waitForTimeout(400);
-    r = await rand();
-    check(r.meer && r.rechts, 'T · en na draaien', JSON.stringify(r));
+    r = await page.evaluate(() => document.getElementById('set-backup-stand').classList.contains('oud'));
+    check(!r, 'S · met een verse back-up niet meer', String(r));
     await ctx.close();
   }
 

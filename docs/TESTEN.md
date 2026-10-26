@@ -93,8 +93,9 @@ geeft een foutmelding.
   worker helemaal niet), de cache heeft een versienummer, en het manifest wijst
   naar bestaande iconen.
 - **op het beginscherm** — niets in de code luistert naar `beforeinstallprompt`
-  of vraagt het voorstel op: installeren is van de browser. De uitlegkaart in
-  Beheer staat direct na *Back-up & herstel*, geeft per browser de juiste zin
+  of vraagt het voorstel op: installeren is van de browser. Met sterren is het de
+  rij *Als app ›* onder Geluid op het overzicht, die het blad opent; zonder
+  sterren de uitlegkaart op de lege pagina. Die geeft per browser de juiste zin
   (Android-Chrome, Safari op iPhone en iPad, iOS buiten Safari, Chrome of Edge
   op een computer, een ingebouwde browser, de rest), verdwijnt in alle vier de
   app-standen (`fullscreen`, `standalone`, `minimal-ui`, `navigator.standalone`)
@@ -227,14 +228,16 @@ reset die de oefeninstellingen meesleept, merkt een ouder pas als haar kind
 vastloopt.
 
 - **het tandwiel en het geluid** — het tandwiel opent meteen Voor ouders; de
-  geluidsrij (⋯, "Voor alle sterren", en in "Show stoppen?") zet `db.sound` om,
+  geluidsrij (het overzicht, "Voor alle sterren", en in "Show stoppen?") zet `db.sound` om,
   zegt in woorden én in `aria-checked` welke stand dat is, en overleeft een
   herstart;
 - **oefeninstellingen zijn van één kind** — instellen bij Anna laat Bas byte voor
   byte staan, het paneel toont bij een wissel de waarden van het gekozen kind, van
   modus wisselen schakelt alleen dát kind om, en na heropenen klopt het nog;
-- **de kiezer wisselt de context, niet de plek** — een ander kind kiezen laat je op
-  hetzelfde onderdeel staan en andersom;
+- **het overzicht en één ster** — ⚙️ opent het overzicht (elk kind een rij, dan
+  wat voor alle sterren geldt); een rij opent dat kind op Voortgang, van onderdeel
+  wisselen houdt het kind vast, en ← (of Android-terug) gaat eerst naar het
+  overzicht en pas dan het ouderdeel uit;
 - **startfase en hoogste fase** — een start boven het plafond duwt het plafond mee
   omhoog, een plafond onder de start trekt de start mee omlaag, de zichtbare band
   (`.chip.bereik`) loopt in béide rijen precies van start tot plafond, en cijfers
@@ -253,8 +256,9 @@ vastloopt.
 - **de plakkende kop** — krimpt bij scrollen en wordt bovenaan weer ruim, maar
   welk kind gekozen is, welk onderdeel je leest en de weg terug blijven alle drie
   in beeld;
-- **een ster maken vanuit Beheer** — komt terug in Beheer, bij de nieuwe ster, en
-  begint niet stilletjes háár spel; afbreken maakt niets.
+- **een ster maken vanuit het overzicht** — komt terug in het ouderdeel, bij de
+  nieuwe ster, en begint niet stilletjes háár spel; afbreken brengt je terug op
+  het overzicht en maakt niets.
 
 Fase 5D.1 heeft er vier zaken bij gezet:
 
