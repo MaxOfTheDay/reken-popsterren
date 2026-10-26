@@ -687,10 +687,14 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     const bundel = await p2.evaluate(() => {
       startLevel(P().level);
       const b = document.querySelector('#screen-game .venue-bundel');
-      return { filter: getComputedStyle(b).filter, aan: b.getAnimations().length };
+      return { filter: getComputedStyle(b).filter, aan: b.getAnimations().length, breed: Math.round(b.getBoundingClientRect().width) };
     });
     check(bundel.filter === 'none' && bundel.aan === 1,
       'de lichtbundel tekent zonder filter en gaat aan bij het begin van een show', JSON.stringify(bundel));
+    // op een hoge telefoon groeit haar paneel mee, de bundel niet onbeperkt:
+    // breder dan ~480 vallen beide randen buiten beeld en is het licht "weg"
+    check(bundel.breed > 300 && bundel.breed <= 480,
+      'de lichtbundel blijft smal genoeg dat zijn randen in beeld staan', JSON.stringify(bundel));
     // het Stoppen?-venster: de klok staat stil zolang het openstaat
     const pauze = await p2.evaluate(async () => {
       startLevel(P().level);
