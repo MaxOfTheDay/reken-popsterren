@@ -633,9 +633,11 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     await ctx.close();
   }
 
-  /* ---- De spotlight-balk wacht eerst ----
-     De eerste SPOT_RUST staat de balk vol, daarna dooft hij over de rest. Alleen
-     het beeld wacht: G.spot loopt vanaf het begin, dus "vlot" meet hetzelfde. */
+  /* ---- De spotlight-balk vult zich, wacht, en zet zacht aan ----
+     Bij een nieuwe som loopt de balk eerst vol (SPOT_VUL), staat dan tot
+     SPOT_RUST stil, en dooft daarna met een zachte aanzet (spotZicht). Alleen
+     het beeld doet dat: G.spot loopt vanaf het begin rechtlijnig, dus "vlot"
+     meet hetzelfde. Het Stoppen?-venster zet de klok stil. */
   {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
     await cacheFonts(ctx);
@@ -646,20 +648,20 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     const balk = await p2.evaluate(async () => {
       P().settings.mode = 'kies';
       startLevel(P().level);
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 150));
       /* wat er te zien ís: de balk loopt als animatie (spotAnim), dus de
          berekende stand, niet de stijl op het element */
       const staat = () => { const b = document.getElementById('spotlight-bar');
         const m = new DOMMatrix(getComputedStyle(b).transform);
         return `translateX(${Math.round(m.m41 / b.offsetWidth * 100)}%)`; };
       const nu = { golden: document.getElementById('question-card').classList.contains('golden'), begin: staat() };
-      await new Promise(r => setTimeout(r, 2500));
+      await new Promise(r => setTimeout(r, 2650));
       nu.naTweeEnHalf = staat(); nu.spotNaTweeEnHalf = Math.round(spotNu());
       // na de rust staat hij al te dimmen: de animatie verder zetten en kijken
       nu.loopt = !!spotAnim;
       if (spotAnim) { const t = spotAnim.currentTime; spotAnim.currentTime = 8000; nu.naAcht = staat(); spotAnim.currentTime = t; }
       stopSpot(); nu.spotGestopt = Math.round(G.spot); nu.gestopt = !spotAnim;
-      // zetSpot zelf: de stijl die hij neerzet (de berekende stand glijdt er in .1s heen)
+      // zetSpot zelf: de stijl die hij neerzet, op dezelfde curve als de animatie
       const stijl = () => document.getElementById('spotlight-bar').style.transform;
       zetSpot(50); nu.half = stijl();
       zetSpot(0); nu.leeg = stijl();
@@ -668,16 +670,32 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     });
     const x = t => parseFloat((/translateX\((-?[\d.]+)%\)/.exec(t || '') || [0, NaN])[1]);
     if (!balk.golden) {
-      check(x(balk.begin) === 0 && x(balk.naTweeEnHalf) === 0 && balk.spotNaTweeEnHalf < 90,
+      check(x(balk.begin) < -5 && x(balk.begin) > -100,
+        'bij een nieuwe som vult de balk zich eerst (het begin van de klok is te zien)', JSON.stringify(balk));
+      check(x(balk.naTweeEnHalf) === 0 && balk.spotNaTweeEnHalf < 90,
         'de spotlight-balk staat de eerste seconden vol, terwijl de meting al loopt', JSON.stringify(balk));
-      check(balk.loopt && x(balk.naAcht) === -50,
-        'de balk loopt als één animatie (na 8 van de 12 seconden halfvol)', JSON.stringify(balk));
+      check(balk.loopt && x(balk.naAcht) <= -36 && x(balk.naAcht) >= -39,
+        'de balk loopt als één animatie en zet zacht aan (na 8 van de 12 seconden nog ruim 60% vol)', JSON.stringify(balk));
       check(balk.gestopt && balk.spotGestopt > 70 && balk.spotGestopt < 90,
         'stoppen zet G.spot vast op de verstreken tijd en haalt de animatie weg', JSON.stringify(balk));
-      check(x(balk.half) === -25 && x(balk.leeg) === -100,
-        'daarna dooft hij over de rest (halverwege de meting nog driekwart vol)', JSON.stringify(balk));
+      check(x(balk.half) > -12 && x(balk.half) < -10 && x(balk.leeg) === -100,
+        'zetSpot volgt dezelfde zachte curve (halverwege de meting nog bijna 90% vol)', JSON.stringify(balk));
     }
     check(balk.rail !== 'none', 'in de rekenmodus is de spotlight-balk er gewoon', balk.rail);
+    // het Stoppen?-venster: de klok staat stil zolang het openstaat
+    const pauze = await p2.evaluate(async () => {
+      startLevel(P().level);
+      G.misses = 1;   // er is iets te verliezen, dus het venster komt echt
+      await new Promise(r => setTimeout(r, 300));
+      askQuit();
+      const voor = G.spot, loopt = !!G.timer;
+      await new Promise(r => setTimeout(r, 1200));
+      const tijdens = Math.round(spotNu());
+      closeQuitModal();
+      return { open: loopt, verschil: Math.round(voor) - tijdens, weer: !!G.timer && !!spotAnim };
+    });
+    check(!pauze.open && pauze.verschil === 0 && pauze.weer,
+      'het Stoppen?-venster zet het spotlicht stil, en sluiten laat het verder lopen', JSON.stringify(pauze));
     await ctx.close();
   }
 
