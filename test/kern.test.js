@@ -475,7 +475,7 @@ zaak('L', () => {
   const actief = app.activeTrophies();
   const vast = actief.filter(t => !t.perfect);
   const perfect = actief.filter(t => t.perfect);
-  check(vast.length === 18,   // 12 -> 18 in oktober 2026, zie inhoud.test.js zaak F
+  check(vast.length === 27,   // 12 -> 18 -> 27 in oktober 2026, zie inhoud.test.js zaak F
     'L · het vaste deel van de kast groeit niet mee', vast.length);
   check(perfect.length === app.WORLDS.length && perfect.length === voorErbij + 1,
     'L · en het perfecte deel precies wel', perfect.length + '/' + app.WORLDS.length);
@@ -1325,6 +1325,16 @@ zaak('ZA', () => {
   p.trophies = ['sums25']; p.readyTrophies = ['sums100'];
   const st = app.ladderStand(reken, p);
   check(st.niveau === 1 && st.klaar && st.klaar.id === 'sums100' && st.volgende.id === 'sums500', 'ZA · ladder: brons in de kast, zilver klaar, goud is de volgende', JSON.stringify({ n: st.niveau, k: st.klaar && st.klaar.id, v: st.volgende && st.volgende.id }));
+  /* Elke ladder heeft vier trappen, brons tot diamant, op volgorde: zonder de
+     stipjes zegt alleen het metaal hoe ver je bent, en dan moet diamant overal de
+     top zijn. Elke trap heeft een voortgang (de boog leest hem). */
+  app.TROPHY_LADDERS.forEach(l => {
+    const tr = l.ids.map(t);
+    check(tr.length === 4 && tr.every((x, i) => x && x.trap === i && typeof x.progress === 'function'),
+      `ZA · ${l.name}: vier trappen, brons tot diamant, elk met voortgang`, JSON.stringify(tr.map(x => x && x.trap)));
+    const doelen = tr.map(x => x.progress(p).target);
+    check(doelen.every((d, i) => !i || d >= doelen[i - 1]), `ZA · ${l.name}: elke trap vraagt minstens zoveel als de vorige`, JSON.stringify(doelen));
+  });
   // Wereldtournee: behalve een lege boog achter de mist
   const wt = t('worldtour');
   const w = verseSter(), q = w.p;

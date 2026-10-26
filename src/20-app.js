@@ -2142,17 +2142,29 @@ function rebuildWorldBadges() {
    perfecte show) hebben er geen -- "0 / 1" is geen voortgang,
    dat is alleen de mededeling dat het nog niet gebeurd is. */
 const TROPHIES = [
-  // 🎤 Avontuur — de momenten die je je herinnert
+  // 🎤 Wat je meemaakt. In de kast staan ze in twee groepen, Eerste keer en Medailles (zie TROPHY_SHELVES)
   { id: 'first',      emoji: '🎫', name: 'Eerste optreden', desc: 'Je allereerste show',   has: p => playedCount(p) >= 1 },
   /* (Hier stond 'toegift', "Applaus!": de publieksmeter één keer vol. Met pensioen
      sinds oktober 2026 -- die meter loopt in bijna elke show vol, dus lag hij
      samen met Eerste optreden en Sterrenhit al na show 1 klaar: drie cadeautjes
      tegelijk, en dit was er geen prestatie. Het applaus zelf beloont al, met
      geluid en 5 💎. Zie RETIRED_TROPHIES.) */
-  { id: 'perfect1',   emoji: '⭐', name: 'Sterrenhit',      desc: 'Je eerste show met 3 sterren', has: p => perfectCount(p) >= 1 },
-  // Het vervolg op Sterrenhit, dus ernaast: 1 perfecte show, dan 10. Stond eerst
-  // op Sterrenleven, naast een kooptrofee waar hij niets mee te maken had.
-  { id: 'perfect10',  emoji: '💿', name: 'Platina plaat', desc: '10 shows met 3 sterren', has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
+  /* ⭐ Sterrenhit en 🌍 Wereldreiziger groeien mee (zie TROPHY_LADDERS), net als
+     de rekenmedaille. Het waren losse trofeeën -- Sterrenhit (1 perfecte show),
+     Platina plaat (10) en de Wereldtournee (alle werelden) -- en tussen de tiende
+     perfecte show en de laatste wereld lag er maanden niets. Nu komt er onderweg
+     elke paar werelden een metaal bij. perfect1, perfect10 en worldtour houden hun
+     id, dus wie ze had, heeft nu brons, zilver of diamant. */
+  { id: 'perfect1',   emoji: '⭐', name: 'Sterrenhit · Brons',   trap: 0, desc: 'Je eerste show met 3 sterren', has: p => perfectCount(p) >= 1, progress: p => trophyProgress(perfectCount(p), 1, 'perfecte shows') },
+  { id: 'perfect10',  emoji: '⭐', name: 'Sterrenhit · Zilver',  trap: 1, desc: '10 shows met 3 sterren', has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
+  { id: 'perfect25',  emoji: '⭐', name: 'Sterrenhit · Goud',    trap: 2, desc: '25 shows met 3 sterren', has: p => perfectCount(p) >= 25, progress: p => trophyProgress(perfectCount(p), 25, 'perfecte shows') },
+  { id: 'perfect50',  emoji: '⭐', name: 'Sterrenhit · Diamant', trap: 3, desc: '50 shows met 3 sterren', has: p => perfectCount(p) >= 50, progress: p => trophyProgress(perfectCount(p), 50, 'perfecte shows') },
+  /* De eerste drie trappen van de Wereldreiziger. Met min(): zijn er ooit minder
+     werelden uitgebracht dan de drempel, dan ligt de trap op "allemaal" en is hij
+     toch te halen. */
+  { id: 'worlds3', emoji: '🌍', name: 'Wereldreiziger · Brons',  trap: 0, desc: '3 werelden uitgespeeld', has: p => doneWorldCount(p) >= Math.min(3, WORLD_AVAIL), progress: p => trophyProgress(doneWorldCount(p), Math.min(3, WORLD_AVAIL), 'werelden uit') },
+  { id: 'worlds6', emoji: '🌍', name: 'Wereldreiziger · Zilver', trap: 1, desc: '6 werelden uitgespeeld', has: p => doneWorldCount(p) >= Math.min(6, WORLD_AVAIL), progress: p => trophyProgress(doneWorldCount(p), Math.min(6, WORLD_AVAIL), 'werelden uit') },
+  { id: 'worlds9', emoji: '🌍', name: 'Wereldreiziger · Goud',   trap: 2, desc: '9 werelden uitgespeeld', has: p => doneWorldCount(p) >= Math.min(9, WORLD_AVAIL), progress: p => trophyProgress(doneWorldCount(p), Math.min(9, WORLD_AVAIL), 'werelden uit') },
   /* Was "alle 12 steden", daarna "elke geschreven wereld uitgespeeld", en nu
      elke uitgebrachte. De enige trofee die weer onwaar kan worden: komt er een
      wereld bij, dan is de tournee niet meer uit. Wat er dan gebeurt:
@@ -2163,7 +2175,7 @@ const TROPHIES = [
          een kind "Alle werelden uitgespeeld — Open!" aan terwijl er net een
          wereld bij kwam die ze nog nooit gezien heeft. Zie het einde van migrate();
          telWerelden is de vlag die zegt dat deze trofee daaronder valt. */
-  { id: 'worldtour',  emoji: '🌍', name: 'Wereldtournee',   desc: 'Alle werelden uitgespeeld', telWerelden: true, has: p => allWorldsDone(p), progress: p => trophyProgress(doneWorldCount(p), WORLD_AVAIL, 'werelden uit') },
+  { id: 'worldtour',  emoji: '🌍', name: 'Wereldreiziger · Diamant', trap: 3, desc: 'Alle werelden uitgespeeld', telWerelden: true, has: p => allWorldsDone(p), progress: p => trophyProgress(doneWorldCount(p), WORLD_AVAIL, 'werelden uit') },
   /* 🧮 Rekenkracht — twee medailles die meegroeien (zie TROPHY_LADDERS). Elke trap
      is nog altijd een eigen trofee met een eigen id, een eigen 🎁 en een eigen
      plek in p.trophies: wie "Rekenritme" al had, heeft nu de bronzen
@@ -2179,6 +2191,8 @@ const TROPHIES = [
   // Nieuw in oktober 2026: de derde trap, zodat ook deze medaille tot goud groeit.
   // Een gouden vraag staat in ongeveer de helft van de shows; 50 is rond wereld 11.
   { id: 'gold50',   emoji: '🌟', name: 'Goudzoeker · Goud',   trap: 2, desc: '50 gouden vragen', has: p => p.goldHits >= 50, progress: p => trophyProgress(p.goldHits, 50, 'gouden vragen goed') },
+  // en de vierde, zodat elke medaille die meegroeit vier trappen heeft en diamant overal de top is
+  { id: 'gold100',  emoji: '🌟', name: 'Goudzoeker · Diamant', trap: 3, desc: '100 gouden vragen', has: p => p.goldHits >= 100, progress: p => trophyProgress(p.goldHits, 100, 'gouden vragen goed') },
   /* 💡 Nieuwe sommen — wat ze leert, gevierd. Elke wereld leert iets nieuws (zie
      "De leerstap"), en dát is de echte vooruitgang in het spel: over het tiental
      in wereld 3, zoek het getal in wereld 4, drie getallen in wereld 5. Tien
@@ -2206,14 +2220,21 @@ const TROPHIES = [
   { id: 'leer-telsom', emoji: '➕', name: 'Eerste sommen',  desc: 'Je maakt je eerste sommen',
     voor: p => telModus(p) && countMaxStage(p.settings) >= 9,
     has: p => telModus(p) && telFase(p) >= 9 },
-  /* ✨ Sterrenleven — de kleedkamer. De twee trofeeën die je ergens anders in de
-     app verdient; `naar` is de lade die de knop in de balk opent (zie kastBalk). */
-  /* De enige koop-trofee die overblijft, en met opzet de láágste drempel van de
-     twee die er stonden (10, niet 25): een vrolijke "je hebt je eigen stijl"-tik,
-     geen winkelopdracht. Zelfde id en zelfde voorwaarde als voorheen, dus wie hem
-     al had houdt hem. boughtCount telt startspullen en wereldbeloningen niet mee. */
-  { id: 'shopper',    emoji: '🛍️', name: 'Verzamelaar',  desc: '10 spulletjes gekocht',  naar: 'dress',
+  /* 👕 Kleedkamer — de trofeeën die je ergens anders in de app verdient; `naar`
+     is de lade die de knop in de balk opent (zie kastBalk). De plank heette
+     Sterrenleven, en dat zei niet wat erop stond. */
+  /* Verzamelaar groeit mee (zie TROPHY_LADDERS): 10, 25, 50, 100 spulletjes. Hij
+     hield op bij 10 terwijl de winkel er ruim honderd heeft. shopper houdt zijn
+     id en voorwaarde, dus wie hem al had heeft nu brons. boughtCount telt
+     startspullen en wereldbeloningen niet mee. */
+  { id: 'shopper',    emoji: '🛍️', name: 'Verzamelaar · Brons',   trap: 0, desc: '10 spulletjes gekocht',  naar: 'dress',
     has: p => boughtCount(p) >= 10, progress: p => trophyProgress(boughtCount(p), 10, 'spulletjes gekocht') },
+  { id: 'shop25',     emoji: '🛍️', name: 'Verzamelaar · Zilver',  trap: 1, desc: '25 spulletjes gekocht',  naar: 'dress',
+    has: p => boughtCount(p) >= 25, progress: p => trophyProgress(boughtCount(p), 25, 'spulletjes gekocht') },
+  { id: 'shop50',     emoji: '🛍️', name: 'Verzamelaar · Goud',    trap: 2, desc: '50 spulletjes gekocht',  naar: 'dress',
+    has: p => boughtCount(p) >= 50, progress: p => trophyProgress(boughtCount(p), 50, 'spulletjes gekocht') },
+  { id: 'shop100',    emoji: '🛍️', name: 'Verzamelaar · Diamant', trap: 3, desc: '100 spulletjes gekocht', naar: 'dress',
+    has: p => boughtCount(p) >= 100, progress: p => trophyProgress(boughtCount(p), 100, 'spulletjes gekocht') },
   // Je eerste eigen podium: alle drie de stukken van een podium van jou (het
   // Parelpodium waar iedereen op begint telt niet). Zie podiumVanJou.
   { id: 'eigenpodium', emoji: '🎪', name: 'Eigen podium', desc: 'Je eerste eigen podium', naar: 'stage',
@@ -2229,27 +2250,40 @@ const TROPHIES = [
    en 5, 20 gouden vragen -- en zo las de plank als een lijst getallen. "Mijn
    medaille is goud geworden" zegt meer dan "ik heb kaartje 3 van 4". */
 const TRAP_NAMEN = ['Brons', 'Zilver', 'Goud', 'Diamant'];
+/* Elke ladder heeft vier trappen, brons tot diamant: zo betekent diamant overal
+   "de top", en zie je aan het metaal alleen al hoe ver je bent (de stipjes eronder
+   zijn weg). `naar`: zie kastBalk. */
 const TROPHY_LADDERS = [
-  { key: 'reken', emoji: '🧮', name: 'Rekenmedaille', ids: ['sums25', 'sums100', 'sums500', 'sums1000'] },
-  { key: 'goud',  emoji: '🌟', name: 'Goudzoeker',    ids: ['gold5', 'gold20', 'gold50'] },
+  { key: 'hit',   emoji: '⭐', name: 'Sterrenhit',     ids: ['perfect1', 'perfect10', 'perfect25', 'perfect50'] },
+  { key: 'reis',  emoji: '🌍', name: 'Wereldreiziger', ids: ['worlds3', 'worlds6', 'worlds9', 'worldtour'] },
+  { key: 'reken', emoji: '🧮', name: 'Rekenmedaille',  ids: ['sums25', 'sums100', 'sums500', 'sums1000'] },
+  { key: 'goud',  emoji: '🌟', name: 'Goudzoeker',     ids: ['gold5', 'gold20', 'gold50', 'gold100'] },
+  { key: 'kast',  emoji: '🛍️', name: 'Verzamelaar',    ids: ['shopper', 'shop25', 'shop50', 'shop100'], naar: 'dress' },
 ];
-/* De kast heeft vijf planken, en niet meer. Elke plank is één soort prestatie, zodat
-   een kind aan de kop al ziet waar ze naar kijkt -- en zodat er geen plank is die
+/* De kast heeft vier groepen, en niet meer. Elke groep is één soort prestatie, zodat
+   een kind aan de kop al ziet waar ze naar kijkt -- en zodat er geen groep is die
    bestaat omdat er nog trofeeën over waren.
 
-   De volgorde is de volgorde waarin je ze tegenkomt: eerst wat je meemaakt, dan de
-   lange rekenweg en wat je leert, dan de grote prijzen, en helemaal onderaan de
-   kleedkamer. */
+   Oktober 2026: van vijf naar vier. Sinds Sterrenhit, Wereldreiziger en
+   Verzamelaar meegroeien stonden er medailles die meegroeien op drie planken, en
+   Rekenkracht en Kleedkamer hielden er elk twee over: halflege groepen. Nu staan
+   alle vijf medailles samen (één rij metaal, één manier van lezen), en de twee
+   eerste keren -- je eerste show, je eerste eigen podium -- samen eronder.
+
+   De volgorde: eerst wat je verzamelt en meemaakt, dan wat je leert, en
+   onderaan de grote prijzen. */
 /* `ico` staat los van `name` sinds de kopregel van een groep uit drie cellen
    bestaat (icoon | naam + regeltje | stand). Stond het emoji nog vóór de naam in
    dezelfde string, dan zou het meeschuiven met de tekst en niet op één lijn staan
    met de iconen van de andere groepen -- en dat is nu juist wat de kolom rustig
    maakt. Een groep erbij heeft dus één veld meer, en verder niets. */
 const TROPHY_SHELVES = [
-  { key: 'avontuur', ico: '🎤', name: 'Avontuur',          note: 'De momenten die je je blijft herinneren',
-    ids: ['first', 'perfect1', 'perfect10', 'worldtour'] },
-  { key: 'rekenen',  ico: '🧮', name: 'Rekenkracht',       note: 'Elke goede som telt mee, je hele leven lang',
-    ids: ['sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20', 'gold50'] },
+  { key: 'medailles', ico: '🎖️', name: 'Medailles',      note: 'Medailles die meegroeien: brons, zilver, goud, diamant',
+    ids: ['perfect1', 'perfect10', 'perfect25', 'perfect50', 'worlds3', 'worlds6', 'worlds9', 'worldtour',
+          'sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20', 'gold50', 'gold100',
+          'shopper', 'shop25', 'shop50', 'shop100'] },
+  { key: 'eerst',    ico: '🎤', name: 'Eerste keer',       note: 'De momenten die je je blijft herinneren',
+    ids: ['first', 'eigenpodium'] },
   { key: 'leren',    ico: '💡', name: 'Nieuwe sommen',     note: 'Wat je nieuw geleerd hebt',
     ids: ['leer-brug', 'leer-zoek', 'leer-drie', 'leer-cijfers', 'leer-telsom'] },
   /* De grote prijzen. De lijst wordt gevuld door rebuildWorldBadges() -- de werelden
@@ -2257,8 +2291,6 @@ const TROPHY_SHELVES = [
      meteen uit de pas lopen. De `key` is waar die functie deze plank aan herkent. */
   { key: 'perfect',  ico: '🥇', name: 'Perfecte werelden', note: 'Overal drie sterren: de grootste prijs van het spel',
     ids: [] },
-  { key: 'sterren',  ico: '✨', name: 'Sterrenleven',      note: 'Je eigen stijl in de kleedkamer',
-    ids: ['shopper', 'eigenpodium'] },
 ];
 /* Trofeeën met pensioen.
    Een kind dat zo'n trofee ooit behaald heeft, heeft die id nog in p.trophies
@@ -8826,13 +8858,32 @@ function runTravel(t) {
 }
 /* ================= Trofeeën-scherm ================= */
 // Verse start (o.a. nogmaals op het al-actieve Trofeeën-tabblad tikken):
-// altijd terug naar boven.
+// terug naar boven -- tenzij er een cadeautje klaarligt, dan daarheen.
 function openTrophies() {
   renderShelves();
   toonHub('screen-trophies');
   kopKrimpMeten($('screen-trophies'), 'kast');
   $('screen-trophies').scrollTop = 0;
-  kastScroll();   // verse start = bovenaan = de ruime kop
+  /* Wie binnenkomt via "🎁 Nieuwe trofee" (eindscherm, toast, het stipje op het
+     tabblad) komt voor dat cadeautje. Dat kon overal liggen, tot tweeënhalf
+     scherm diep (Verzamelaar staat onderaan), en de kast ging altijd bovenaan
+     open, zonder hint. Nu opent hij bij het eerste cadeautje. */
+  naarCadeau(false);
+  kastScroll();
+}
+/* Naar het volgende cadeautje in de kast: het eerste onder het midden van het
+   scherm, of weer het eerste als je onderaan bent. De 🎁-pil in de kop doet dit
+   (zie renderShelves); openTrophies ook, zonder te glijden. */
+function naarCadeau(glij) {
+  const kast = $('screen-trophies');
+  const klaar = [...document.querySelectorAll('#trophy-shelves .trophy-card.ready')];
+  if (!klaar.length) return;
+  const midden = kast.clientHeight / 2;
+  const plek = c => c.getBoundingClientRect().top - kast.getBoundingClientRect().top;
+  const volgende = (glij && klaar.find(c => plek(c) > midden + 8)) || klaar[0];
+  const top = Math.max(0, kast.scrollTop + plek(volgende) - midden + 40);
+  if (glij && !motionOff() && kast.scrollTo) kast.scrollTo({ top, behavior: 'smooth' });
+  else kast.scrollTop = top;
 }
 /* De kop van de kast heeft twee standen (zie .gescrold in het stijlblad): ruim
    bovenaan, krap en dekkend zodra er kaarten onderdoor schuiven. Hier wordt alleen
@@ -8927,6 +8978,17 @@ function renderShelves() {
   const teller = $('trophy-count');
   teller.innerHTML = `<span aria-hidden="true">🏆</span> <b>${earned}</b>`;
   teller.setAttribute('aria-label', `${earned} verzameld`);
+  /* De 🎁-pil naast de stand: zolang er iets klaarligt, met hoeveel. Een tik
+     brengt je naar het volgende cadeautje (zie naarCadeau). Geen cadeautje,
+     geen pil. Dezelfde gouden pil als "🎁 Nieuwe trofee" op het eindscherm. */
+  const klaar = (p.readyTrophies || []).filter(id => !isRetiredTrophy(id)).length;
+  const cadeau = $('kast-cadeau');
+  if (cadeau) {
+    cadeau.hidden = !klaar;
+    cadeau.innerHTML = `<span aria-hidden="true">🎁</span> <b>${klaar}</b>`;
+    cadeau.setAttribute('aria-label', klaar === 1 ? 'Naar je cadeautje' : `Naar je ${klaar} cadeautjes`);
+    cadeau.onclick = () => { sndClick(); naarCadeau(true); };
+  }
   const wrap = $('trophy-shelves');
   wrap.innerHTML = '';
   TROPHY_SHELVES.forEach(shelf => {
@@ -9071,7 +9133,10 @@ function trophyCard(t, p) {
      anders    het icoon van de ladder op een vlak van het metaal dat je al hebt
                (nog niets: het gewone donkere vlak), met in de rand een boog in
                het metaal van de volgende trap: zo ver ben je op weg naar zilver
-     eronder   de naam en een stipje per trap, gekleurd voor wat je al hebt
+     eronder   alleen de naam. Hier stond ook een stipje per trap, maar het
+               metaal zegt al hoe ver je bent: brons, zilver, goud, en diamant
+               (ijsblauw, met facetten en twee vonkjes) is de top. Eén signaal
+               en niet twee (Max, oktober 2026).
    Alles uit wat er al bewaard is: welke trap-id's in p.trophies staan. */
 function ladderStand(ladder, p) {
   const trappen = ladder.ids.map(id => TROPHIES.find(t => t.id === id)).filter(Boolean);
@@ -9087,10 +9152,8 @@ function ladderCard(ladder, p) {
   const nu = niveau ? trappen[niveau - 1].trap : null;
   card.className = `trophy-card ladder ${status}` + (nu != null ? ` nu-${nu}` : '') + (niveau === trappen.length ? ' top' : '');
   if (trappen.some(t => t.id === justClaimed)) card.classList.add('just-claimed');
-  const stippen = '<div class="trap-stippen" aria-hidden="true">'
-    + trappen.map((t, i) => `<i class="${i < niveau ? 'm-' + t.trap : ''}"></i>`).join('') + '</div>';
   if (klaar) {
-    card.innerHTML = giftMedaille(ladder) + stippen;
+    card.innerHTML = giftMedaille(ladder);
     card.setAttribute('aria-label', `Open ${klaar.name}`);
   } else {
     /* De boog telt vanaf de trap die je al hebt, niet vanaf nul: een net
@@ -9099,16 +9162,29 @@ function ladderCard(ladder, p) {
     let boog = 0;
     if (volgende) {
       const pr = volgende.progress(p), vorig = niveau ? trappen[niveau - 1].progress(p).target : 0;
-      boog = Math.max(0, Math.min(100, Math.round(100 * (pr.now - vorig) / (pr.target - vorig))));
+      const doel = trapDoel(volgende, p);
+      boog = doel > vorig ? Math.max(0, Math.min(100, Math.round(100 * (pr.now - vorig) / (doel - vorig)))) : 0;
     }
     const stijl = `--p:${boog}` + (volgende ? `;--straks:var(--m-${volgende.trap})` : '');
-    card.innerHTML = `<div class="temoji" style="${stijl}"><span class="tico">${ladder.emoji}</span></div>`
-      + `<div class="tname">${ladder.name}</div>` + stippen;
+    card.innerHTML = `<div class="temoji" style="${stijl}">${nu === 3 ? DIAMANT_VONKJES : ''}<span class="tico">${ladder.emoji}</span></div>`
+      + `<div class="tname">${ladder.name}</div>`;
     card.setAttribute('aria-label', niveau ? `${trappen[niveau - 1].name}` : `${ladder.name}: ${trappen[0].desc}`);
   }
   card.onclick = () => tapLadder(ladder, card);
   return card;
 }
+/* Het doel van een trap voor de boog. De laatste trap van de Wereldreiziger telt
+   alle werelden, en dat totaal verbergt de horizon (zie trophyBoog): zolang er
+   mist ligt, telt hij tegen de werelden die ze kan zien. */
+function trapDoel(t, p) {
+  const doel = t.progress(p).target;
+  return t.telWerelden && meerWereldenVooruit(p) ? Math.min(doel, laatsteZichtbareWereld(p) + 1) : doel;
+}
+/* Diamant is de top, en dat moet je zien zonder te tikken: twee witte vonkjes op
+   het ijsblauw, bij de facetten in het stijlblad (.nu-3). Getekend en niet als
+   teken, net als het nootje (zie KAST_NOOT). */
+const DIAMANT_VONK = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0 6 4 10 5 6 6 5 10 4 6 0 5 4 4Z"/></svg>';
+const DIAMANT_VONKJES = `<i class="vonkje">${DIAMANT_VONK}</i><i class="vonkje">${DIAMANT_VONK}</i>`;
 function tapLadder(ladder, card) {
   const p = P();
   const { trappen, klaar, niveau, volgende } = ladderStand(ladder, p);
@@ -9116,10 +9192,14 @@ function tapLadder(ladder, card) {
   // een medaille met al een metaal klinkt in dat metaal; nog geen metaal zegt "tok"
   if (niveau) kastKlink(card, trappen[niveau - 1].trap); else kastDof(card);
   if (card.classList.contains('kies')) return;   // nog eens: alleen spelen, de balk staat er al
-  const kop = { emoji: ladder.emoji, name: ladder.name };
+  const kop = { emoji: ladder.emoji, name: ladder.name, naar: ladder.naar };
   const metaal = niveau ? TRAP_NAMEN[trappen[niveau - 1].trap] : '';
   if (!volgende) { kastBalk(kop, card, metaal + '!'); return; }
   const pr = volgende.progress(p), rem = Math.max(0, pr.target - pr.now);
+  // achter de horizon geen "nog 5 werelden": dat verklapt het totaal (zie tapTrophy)
+  if (volgende.telWerelden && meerWereldenVooruit(p)) {
+    kastBalk(kop, card, `${metaal} · ${pr.now} ${pr.label}`, pr.now); return;
+  }
   const nog = rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!';
   kastBalk(kop, card, metaal ? `${metaal} · ${nog}` : nog, rem > 0 ? rem : null);
 }
@@ -9334,15 +9414,26 @@ function kastBalk(t, card, tekst, getal) {
   if (teveel > 0 && kast.scrollBy) kast.scrollBy({ top: teveel, behavior: motionOff() ? 'auto' : 'smooth' });
 }
 // Het claim-moment: van 'klaar' naar 'behaald', met een kort, vrolijk feestje.
+/* Een trofee openen geeft TROFEE_DIAMANTEN 💎 (oktober 2026, Max). Eerst gaf hij
+   niets dan het moment, terwijl de kop van de kast wel het saldo toont. Klein met
+   opzet: met alle trappen samen is het een paar honderd over het hele spel, een
+   handvol spulletjes. Alleen hier, waar een kind zelf een cadeautje opent; een
+   trofee die elders vanzelf in de kast komt (zie awardTrophy) geeft niets. */
+const TROFEE_DIAMANTEN = 5;
 function openTrophy(id) {
   const p = P();
   const t = TROPHIES.find(x => x.id === id);
   if (!t || p.trophies.includes(id) || !(p.readyTrophies || []).includes(id)) return;
   awardTrophy(p, id);   // uit de klaarlijst, in de kast -- dezelfde regel als overal
+  p.diamonds += TROFEE_DIAMANTEN;
   save();
+  const saldo = $('trophy-diamonds'), was = saldo ? saldo.textContent : null;
   celebrateTrophy(t);
   justClaimed = id;   // net-behaalde kaart krijgt eenmalig een gouden shimmer
   renderShelves();    // kaart wordt 'Behaald!', scrollpositie blijft
+  /* Het saldo blijft staan tot het feestje dichtgaat: dan vliegen de diamanten
+     van de geopende medaille naar de pil, en telt hij op (zie celebrateTrophy). */
+  if (saldo && was != null) saldo.textContent = was;
 }
 // Klein beloningsmoment: pop-up + confetti, blijft in beeld tot er ergens
 // op het scherm getikt wordt (geen auto-sluit-timer meer) -- de overlay
@@ -9361,7 +9452,11 @@ function celebrateTrophy(t) {
     +   `<div class="tp-emoji"${t.trap != null ? ` style="--tp-vlak:var(--m-vlak-${t.trap});--tp-rand:var(--m-rand-${t.trap})"` : ''}>${t.emoji}</div>`
     + '</div>'
     + `<div class="tp-name">${t.name}</div>`
-    + '<div class="tp-joepie">Joepie!</div></div>',
+    /* Waarvoor: "6 werelden uitgespeeld". Er stond alleen de naam, en een kind
+       wist bij het openen niet wát ze gedaan had. Bij een trap zegt het metaal
+       van de grote medaille hierboven welke trap het is. */
+    + `<div class="tp-waarom">${esc(t.desc)}</div>`
+    + `<div class="tp-joepie">Joepie! <span class="tp-dia">+${TROFEE_DIAMANTEN} 💎</span></div></div>`,
     // het sprankelen loopt door zolang de trofee open staat -- stoppen bij het sluiten.
     // De gouden shimmer over de net behaalde kaart (.just-claimed) liep af onder
     // dit feestje, waar niemand hem zag. Hij begint daarom opnieuw zodra het
@@ -9370,6 +9465,12 @@ function celebrateTrophy(t) {
       if (o._spark) clearInterval(o._spark);
       const kaart = document.querySelector('.trophy-card.just-claimed');
       if (kaart) { kaart.classList.remove('just-claimed'); void kaart.offsetWidth; kaart.classList.add('just-claimed'); }
+      // de diamanten van deze trofee: van de medaille naar het saldo, dan telt hij op
+      const saldo = $('trophy-diamonds');
+      if (saldo && cur) {
+        flyDiamonds((kaart && kaart.querySelector('.temoji, .pw-medal')) || kaart, saldo, 3);
+        telStraks(saldo, P().diamonds);
+      }
     } });
   const pop = ov.querySelector('.trophy-pop');
   // De uitbarsting: kist knalt open, emoji slaat in, confetti-kanon + feestgeluid.
