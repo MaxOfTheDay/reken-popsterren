@@ -739,6 +739,33 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     'een optioneel stuk gaat met een tik uit (tag: gouden ✓ -> zacht ✓) en weer aan', JSON.stringify(r));
   check(r.jurkNa === r.jurk, 'een jurk gaat bij nog eens tikken niet uit', JSON.stringify(r));
 
+  /* ---- 7b3 · Stoppen met passen ----
+     Past ze iets dat niet van haar is, dan brengt een tik op wat ze écht
+     aanheeft, of nog eens op het blauwe kaartje, haar terug in haar eigen
+     spullen: de lade gaat dicht en wat ze draagt verandert niet. Bij een micro
+     trok die tik haar eigen micro vroeger uit. */
+  r = await page.evaluate(async () => {
+    const wacht = () => new Promise(res => setTimeout(res, 150));
+    const p = P();
+    p.equipped.mic = 'mic_zilver';
+    const nu = () => ({ sel: shopSelectedId, mic: P().equipped.mic, lade: $('dress-bar').style.display });
+    shopCat = 'mic'; shopSelectedId = null; renderShop();
+    const vreemd = [...document.querySelectorAll('.item-card')].find(k => !bezit(P(), item(k.dataset.item))).dataset.item;
+    const kaart = id => document.querySelector(`.item-card[data-item="${id}"]`);
+    kaart(vreemd).click(); await wacht();
+    const past = nu();
+    kaart('mic_zilver').click(); await wacht();
+    const eigen = nu();
+    kaart(vreemd).click(); await wacht();
+    kaart(vreemd).click(); await wacht();
+    const nogEens = nu();
+    return { vreemd, past, eigen, nogEens };
+  });
+  check(r.past.sel === r.vreemd && r.eigen.sel === null && r.eigen.mic === 'mic_zilver' && r.eigen.lade === 'none',
+    'een tik op wat ze aanheeft stopt het passen, en trekt het niet uit', JSON.stringify(r));
+  check(r.nogEens.sel === null && r.nogEens.mic === 'mic_zilver' && r.nogEens.lade === 'none',
+    'nog eens op het blauwe kaartje tikken stopt het passen ook', JSON.stringify(r));
+
   /* ---- 7c · Heen en weer tussen de tabbladen ----
      SNEL HEEN EN WEER. schermWeg, schermKomtOp en kaartKomtOp stoppen bij een
      tik alleen de animaties die ze zelf op een scherm zetten (zie schermAnims)
