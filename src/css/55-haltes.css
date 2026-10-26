@@ -470,6 +470,16 @@
   .tour-stop.done.perfect .dot {
     background: linear-gradient(180deg, var(--halte-vulling-top), var(--halte-vulling));
     box-shadow: 0 0.9cqw 0 var(--halte-lip), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
+  /* Drie sterren = áf, en dat zegt nu ook het cijfer: goud, met hetzelfde
+     donkere lipje. In een afgemaakte wereld stonden er anders acht dezelfde
+     paarse knoppen en moest je 24 sterretjes aflezen om te zien waar er nog één
+     te halen valt. Nu: wit cijfer = hier ligt nog een ster, goud = klaar, en een
+     perfecte wereld is 1 tot en met 8 in goud.
+     Het is het goud van de verdiende ster, níét dat van "hier speel je": dat is
+     een gouden VULLING met haar erop, dit een cijfer op een paarse knop. Geen
+     gouden rand (die maakte er het drukste plekje van de kaart van, zie
+     hierboven), geen vulling, geen beweging. */
+  .tour-stop.done.perfect .dot { color: var(--gold-accent); text-shadow: 0 0.3cqw 0 var(--halte-lip); }
   .tour-stop.next .dot { text-shadow: none;
     box-shadow: 0 0.9cqw 0 var(--gold-cta-shadow), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
   .tour-stop.locked .dot {
@@ -641,9 +651,15 @@
   }
   .tour-stop .cstars svg { flex: none; width: 4.4cqw; height: 4.4cqw; display: block;
     overflow: visible; stroke-linejoin: round; }
-  .tour-stop .cstars svg:nth-child(1) { transform: translateY(-0.7cqw) rotate(-16deg); }
-  .tour-stop .cstars svg:nth-child(2) { transform: scale(1.1); }
-  .tour-stop .cstars svg:nth-child(3) { transform: translateY(-0.7cqw) rotate(16deg); }
+  /* Dicht op elkaar, als één insigne onder het rondje: de buitenste twee schuiven
+     1,1cqw naar binnen en leunen tegen de middelste, die er een fractie overheen
+     ligt. Eerst stonden ze los naast elkaar in een brede glimlach, en die stak aan
+     beide kanten buiten de halte uit -- op een kleine telefoon las dat als drie
+     losse dingen in plaats van één score. De maat blijft: kleiner lijkt minder
+     waard (zie hierboven). */
+  .tour-stop .cstars svg:nth-child(1) { transform: translate(1.1cqw, -0.5cqw) rotate(-14deg); }
+  .tour-stop .cstars svg:nth-child(2) { transform: scale(1.12); position: relative; z-index: 1; }
+  .tour-stop .cstars svg:nth-child(3) { transform: translate(-1.1cqw, -0.5cqw) rotate(14deg); }
   .tour-stop .cstars .cs-lip { fill: var(--ster-lip); stroke: var(--ster-lip); stroke-width: 3.4; }
   .tour-stop .cstars .cs-rand { fill: none; stroke: var(--ster-zoom); stroke-width: 3.4; }
   .tour-stop .cstars .cs-vol { fill: url(#sterVerloop); stroke: #f08c00; stroke-width: 1; }
