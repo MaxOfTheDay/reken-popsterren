@@ -487,6 +487,10 @@ function check(ok, label, detail) {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
     await cacheFonts(ctx);
     const page = await ctx.newPage();
+    // één ster in de opslag, zodat er verderop een tegel is om op te tikken
+    await page.goto(APP_URL);
+    await page.evaluate(() => localStorage.setItem('rekenPopsterren_v1',
+      JSON.stringify({ sound: false, haptics: false, schemaV: 3, profiles: { p1: defaultProfile('Terug', 'dress_roze') } })));
     page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
     await page.goto(APP_URL);
     await page.waitForTimeout(400);
@@ -506,6 +510,24 @@ function check(ok, label, detail) {
     k = await page.evaluate(() => ({ kaart: document.getElementById('confirm-modal').classList.contains('open'),
       wacht: !!(history.state && history.state.rpGuard) }));
     check(!k.kaart && k.wacht, 'na Blijven spelen neemt de gewone wachtpost het over', JSON.stringify(k));
+    /* Op een aanraakscherm vangt de terugwachter élke terug, niet alleen de
+       eerste: dan beweegt de history niet, en speelt Chrome geen veeg-animatie
+       met een oude schermafdruk (het flitsen na een paar keer terug). Escape is
+       hier weer de terugknop. Pas het stopkaartje laat de history terugstappen. */
+    await page.evaluate(() => { window.__pops = 0; addEventListener('popstate', () => window.__pops++); });
+    await page.tap('.ster-tegel'); await page.waitForTimeout(600);
+    await page.tap('#nav-tro'); await page.waitForTimeout(600);
+    const stappen = [];
+    for (let i = 0; i < 2; i++) {
+      await page.keyboard.press('Escape'); await page.waitForTimeout(600);
+      stappen.push(await page.evaluate(() => document.querySelector('.screen.active').id + '/' + window.__pops));
+    }
+    check(stappen.join() === 'screen-map/0,screen-profile/0',
+      'terug op een aanraakscherm: kast, kaart, sterrenkeuze -- zonder één history-stap', stappen.join());
+    await page.keyboard.press('Escape'); await page.waitForTimeout(500);
+    k = await page.evaluate(() => ({ kaart: !!document.getElementById('stop-blijf') && document.getElementById('confirm-modal').classList.contains('open'),
+      wacht: !!(history.state && history.state.rpGuard) }));
+    check(k.kaart && !k.wacht, 'daarna het stopkaartje, en de wachtpost gaat eraf zodat de volgende terug de app sluit', JSON.stringify(k));
     await ctx.close();
   }
 
