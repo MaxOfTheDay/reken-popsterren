@@ -79,7 +79,7 @@
      Kleedkamer ......... winkel, passen, aankleden. Staat ook de 💎-tellers in
                           (zetTeller/telNu/telNaar/telStraks, gedeeld)
      Nieuwe ster ........ het maakformulier
-     Instellingen ....... ouderscherm: voortgang + oefening + beheer
+     Instellingen ....... ouderscherm: overzicht, en per ster voortgang + oefening + haar blad
      Op het beginscherm   de uitlegkaart in Beheer: hoe het spel als app op
                           dit toestel komt. Laat het installeren aan de browser
      Terug-navigatie .... Android back / browser back
@@ -13712,7 +13712,7 @@ function createStar() {
    plek afzet is erger dan geen. */
 // null = het overzicht; anders de sleutel van de ster waar je naar kijkt.
 let setKey = null;
-// 'voortgang' (lezen) | 'oefenen' (hoe dit kind oefent) | 'beheer' (✏️: wie ze is, wissen).
+// 'voortgang' (lezen) | 'oefenen' (hoe dit kind oefent). Wie ze is: zie openWieBlad.
 let setTab = 'voortgang';
 function openSettings() {
   // Altijd het overzicht: daar staat elk kind met hoe het gaat, dus wie even wil
@@ -14299,7 +14299,7 @@ function oefenenPanelHtml(p, s) {
 /* ---- Beheer: alles wat géén oefeninstelling is ----
    Twee soorten dingen, en het verschil moet te zien zijn:
      - kindgebonden : naam, meisje of jongen, opnieuw beginnen, verwijderen.
-                      Die staan onder ✏️ op de pagina van die ster (beheerPanelHtml).
+                      Die staan in haar blad, onder haar naam in de kop (wieBladHtml).
      - app-breed    : geluid, als app, back-up (exportData schrijft de héle db weg
                       -- alle sterren plus geluid -- en importData vervángt die
                       helemaal). Die staan op het overzicht, onder "Voor alle
@@ -14489,26 +14489,30 @@ function beheerEmptyHtml() {
        hoort bij het rode vlak, en dáár staat hij nog; de dichte kaart krijgt een
        gewoon tegeltje. En de tweede openklapper noemt de ster bij naam, net als
        het rode vlak erachter ("Lotte verwijderen"). */
-function beheerPanelHtml(p) {
-  return `<div class="settings-panel">
-    <div class="set-card">
-      <div class="set-card-head"><div class="ico">👤</div><div><h2><label for="set-name">Wie</label></h2></div></div>
-      <div class="set-field">
-        <div class="chip-row mode-row" id="set-base" role="group" aria-label="Meisje of jongen">${BASE_CHOICES.map(b =>
-          `<button class="chip gestapeld${baseOf(p) === b.id ? ' on' : ''}" data-v="${b.id}">`
-          + `<span class="mc-ico" aria-hidden="true">${b.emoji}</span><span class="mc-label">${b.name}</span></button>`).join('')}</div>
-        <div class="name-edit-wrap"><input type="text" id="set-name" value="${esc(p.name)}" maxlength="12" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
-    </div>
-    <div class="set-card secundair">
-      <div class="set-card-head"><div class="ico">🔄</div><div><h2>Opnieuw beginnen of verwijderen</h2><div class="sub">Alleen voor <span class="set-naam">${esc(p.name)}</span> — en niet terug te draaien</div></div></div>
+/* HET BLAD VAN ÉÉN STER -- een tik op haar naam in de kop (zie renderWie).
+   Wie ze is (meisje of jongen, de naam) en, onder een lijn, de twee onomkeerbare
+   dingen. Hier stond eerst een derde tabblad "✏️" naast Voortgang en Oefeningen;
+   maar die twee zeggen hoe het gaat en wat ze oefent, en dit doe je zelden. Haar
+   naam aantikken om hem te veranderen is een gebaar dat een ouder al kent.
+   Het blad staat in het gewone bevestigingsvenster, net als het blad "als app".
+   Een tik op Wissen of Verwijderen vervangt het door de vraag "Weet je het
+   zeker?"; "Nee, terug" brengt je terug in haar blad. */
+function wieBladHtml(p) {
+  return `<div class="settings-sheet wie-blad">
+    <div class="wb-pop" aria-hidden="true">${avatarSVG(p, 64)}</div>
+    <div class="chip-row mode-row" id="set-base" role="group" aria-label="Meisje of jongen">${BASE_CHOICES.map(b =>
+      `<button class="chip gestapeld${baseOf(p) === b.id ? ' on' : ''}" data-v="${b.id}">`
+      + `<span class="mc-ico" aria-hidden="true">${b.emoji}</span><span class="mc-label">${b.name}</span></button>`).join('')}</div>
+    <div class="name-edit-wrap"><input type="text" id="set-name" aria-label="Naam" value="${esc(p.name)}" maxlength="12" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div>
+    <div class="wb-gevaar">
       <!-- rode vlak bestaat pas als een ouder er zelf om vraagt; een permanent
            zichtbare wisknop hoort niet tussen gewone instellingen te staan -->
       <details class="danger-reveal" id="set-danger">
         <summary>Voortgang wissen…</summary>
         <div class="danger-zone">
-          <div><div class="t">⚠️ Voortgang van ${esc(p.name)} wissen</div>
+          <div><div class="t">⚠️ Voortgang van <span class="set-naam">${esc(p.name)}</span> wissen</div>
             <div class="d"><b>Weg:</b> alle diamanten, sterren, trofeeën en gekochte spulletjes.<br>
-              <b>Blijft:</b> ${esc(p.name)} zelf, de naam, de startoutfit en alle oefeninstellingen.</div></div>
+              <b>Blijft:</b> de naam, de startoutfit en alle oefeninstellingen.</div></div>
           <button class="danger-btn" id="set-reset">Wissen</button>
         </div>
       </details>
@@ -14519,13 +14523,24 @@ function beheerPanelHtml(p) {
              tussen de naam en "verwijderen" -->
         <summary><span><span class="set-naam">${esc(p.name)}</span> verwijderen…</span></summary>
         <div class="danger-zone">
-          <div><div class="t">⚠️ ${esc(p.name)} verwijderen</div>
-            <div class="d">Haalt ${esc(p.name)} helemaal weg van dit toestel, met alle diamanten, sterren en spulletjes. De andere sterren blijven. Kan niet ongedaan gemaakt worden.</div></div>
+          <div><div class="t">⚠️ <span class="set-naam">${esc(p.name)}</span> verwijderen</div>
+            <div class="d">Helemaal weg van dit toestel, met alle diamanten, sterren en spulletjes. De andere sterren blijven. Kan niet ongedaan gemaakt worden.</div></div>
           <button class="danger-btn" id="set-delete">Verwijderen</button>
         </div>
       </details>
     </div>
   </div>`;
+}
+function openWieBlad() {
+  const p = setKey && db.profiles[setKey];
+  if (!p) return;
+  $('confirm-title').textContent = '';
+  $('confirm-body').innerHTML = wieBladHtml(p);
+  $('confirm-actions').innerHTML = '<button class="btn small purple" id="wie-klaar">Klaar</button>';
+  $('wie-klaar').onclick = closeConfirmModal;
+  bindWie(p);
+  $('confirm-modal').classList.add('open');
+  syncBackGuard();
 }
 /* Het overzicht: waar ⚙️ opent. Bovenaan elke ster als één rij, met hoe het
    gaat in dezelfde woorden als de statuskaart van Voortgang (STAND_TEKST) -- wie
@@ -14604,43 +14619,37 @@ function speelAlsKnop(p) {
   b.setAttribute('aria-label', 'Speel als ' + p.name);
   b.title = 'Speel als ' + p.name;
 }
-// De drie onderdelen van één ster. Waarde = staat, label = wat er staat.
-// Beheer staat er als "✏️": zie renderSectionTabs.
-const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefeningen'], ['beheer', 'Aanpassen']];
+// De twee onderdelen van één ster. Waarde = staat, label = wat er staat.
+const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefeningen']];
 
 /* De kop van één ster: haar portret en haar naam, tussen ← en ▶ in. Hier stond
    eerst een scrollende rij met álle sterren plus een "+", om van kind te
    wisselen zonder terug te gaan. Dat wisselen doet nu het overzicht, één ← terug,
    en de kop zegt nog maar één ding: over wie dit gaat.
+   Portret, naam en ✏️ zijn samen één knop (#settings-wie, een pil): een tik
+   opent haar blad (openWieBlad). Groot genoeg om te raken, en "tik op de naam om
+   hem te veranderen" hoeft niemand uitgelegd te worden.
    renderSettings loopt bij élke tik op een schakelaar of chip; de pop wordt
    alleen opnieuw getekend als er iets aan veranderde (zelfde reden als vroeger
    bij de rij: op een trage tablet was dat het dure deel). */
 let lastWieHtml = null;
 function renderWie(p) {
   const html = `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 65)}</span>`
-    + `<span class="wie-naam">${esc(p.name)}</span>`;
+    + `<span class="wie-naam">${esc(p.name)}</span><span class="wie-pen" aria-hidden="true">✏️</span>`;
   if (html === lastWieHtml && $('settings-wie').childElementCount) return;
   lastWieHtml = html;
   $('settings-wie').innerHTML = html;
+  $('settings-wie').setAttribute('aria-label', p.name + ' aanpassen');
 }
 
-/* Niveau 2 -- wát: Voortgang | Oefeningen | ✏️. Bewust zonder emoji: drie
-   labels mét icoon passen niet in het 460px-spoor op een 320px-telefoon (~333px
-   nodig, 288px beschikbaar), en zonder is het bovendien rustiger. De iconen
-   blijven wél op de kaartkoppen staan, waar ze iets betekenen.
-
-   ✏️ IS EEN UITZONDERING, GEEN DERDE HOOFDZAAK. Naam, meisje of jongen, wissen,
-   verwijderen: dingen die een ouder zelden doet, terwijl een tabblad even breed
-   als Voortgang en Oefenen evenveel aandacht vroeg. Dus een smal vakje
-   achteraan; een schermlezer hoort "Aanpassen". Hier stond eerst "⋯", met de
-   back-up eronder en een amber stipje als die te oud was -- de back-up staat nu
-   op het overzicht, en het stipje is daar de amber regel in de kaart zelf. */
+/* Niveau 2 -- wát: Voortgang | Oefeningen, twee even brede helften. Bewust
+   zonder emoji: rustiger, en de iconen staan al op de kaartkoppen, waar ze iets
+   betekenen. Hier stond eerst nog een smal derde vakje (eerst "⋯" met de back-up
+   eronder, daarna "✏️"); wie ze is staat nu achter haar naam in de kop. */
 function renderSectionTabs() {
   const t = $('settings-subtabs');
-  t.innerHTML = SET_TABS.map(([v, label]) => v === 'beheer'
-    ? `<button class="st-meer${setTab === v ? ' on' : ''}" role="tab" aria-selected="${setTab === v}" data-t="${v}" aria-label="${label}" title="${label}">`
-      + `<span aria-hidden="true">✏️</span></button>`
-    : `<button class="${setTab === v ? 'on' : ''}" role="tab" aria-selected="${setTab === v}" data-t="${v}">${label}</button>`).join('');
+  t.innerHTML = SET_TABS.map(([v, label]) =>
+    `<button class="${setTab === v ? 'on' : ''}" role="tab" aria-selected="${setTab === v}" data-t="${v}">${label}</button>`).join('');
   t.querySelectorAll('button').forEach(b => b.onclick = () => {
     if (b.dataset.t === setTab) return;
     sndClick(); setTab = b.dataset.t; renderSettings(); settingsToTop();
@@ -14669,10 +14678,7 @@ function renderSettings() {
   renderWie(p);
   renderSectionTabs();
   const s = p.settings;
-  $('settings-body').innerHTML =
-      setTab === 'oefenen' ? oefenenPanelHtml(p, s)
-    : setTab === 'beheer'  ? beheerPanelHtml(p)
-    :                        statsPanelHtml(p);
+  $('settings-body').innerHTML = setTab === 'oefenen' ? oefenenPanelHtml(p, s) : statsPanelHtml(p);
   bindSettings(p, s);
 }
 
@@ -14791,8 +14797,9 @@ function bindOefenChips(s, p, pfx, done) {
   bind('set-voorlezen', c => { s.voorlezen = (c.dataset.v === 'on'); });
   bind('set-repr', c => { s.repr = c.dataset.v; });
 }
-function bindSettings(p, s) {
-  const bind = (id, fn) => { const el = $(id); if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => fn(c)); };
+/* De bediening van haar blad (openWieBlad). Alleen gebonden als het blad open
+   gaat, en opnieuw na elke hertekening ervan. */
+function bindWie(p) {
   const on = (id, ev, fn) => { const el = $(id); if (el) el[ev] = fn; };
   on('set-name', 'oninput', e => {
     p.name = e.target.value.trim() || p.name;
@@ -14802,8 +14809,8 @@ function bindSettings(p, s) {
     const lbl = $('settings-wie').querySelector('.wie-naam');
     if (lbl) lbl.textContent = p.name;
     lastWieHtml = null;
-    // en in de wiskaart eronder, die haar ook bij naam noemt (.set-naam)
-    document.querySelectorAll('#settings-body .set-naam').forEach(n => { n.textContent = p.name; });
+    // en in het blad zelf, dat haar ook bij naam noemt (.set-naam)
+    document.querySelectorAll('#confirm-body .set-naam').forEach(n => { n.textContent = p.name; });
     // en in wat ▶ rechtsboven voorleest
     speelAlsKnop(p);
   });
@@ -14812,6 +14819,79 @@ function bindSettings(p, s) {
      niets verzonden -- de naam is al opgeslagen bij elke aanslag -- dus dit is
      alleen de uitgang die een telefoontoetsenbord zelf aanbiedt en die hier
      eerder in het niets viel. */
+  on('set-name', 'onkeydown', e => {
+    if (e.key !== 'Enter' || e.isComposing) return;
+    e.preventDefault();
+    e.target.blur();
+  });
+  // het rode vlak openklappen mag ook hoorbaar zijn, net als elke andere tik
+  // (er zijn er twee: voortgang wissen en de ster verwijderen)
+  document.querySelectorAll('#confirm-body .danger-reveal').forEach(dg => {
+    dg.ontoggle = () => { if (dg.open) sndClick(); };
+  });
+  on('set-reset', 'onclick', () => {
+    showConfirm(
+      '⚠️ Weet je het zeker?',
+      `Alle voortgang, diamanten, sterren en spulletjes van ${p.name} wissen?`
+      + ` De naam, de startoutfit en alle oefeninstellingen blijven staan.`
+      + ` Dit kan niet ongedaan gemaakt worden.`,
+      'Ja, wissen',
+      () => {
+        // Wissen raakt de voortgang, niet wie ze is en niet hoe ze oefent: haar
+        // startoutfit, plek in de rij én álle instellingen gaan mee. Dat gold
+        // eerder alleen voor de telmodus -- in de rekenmodus vielen bewerkingen,
+        // bereik, tafels, antwoordmethode en de extra uitdagingen stilletjes terug
+        // op de standaardwaarden, terwijl de waarschuwing dat niet zei.
+        const dress = p.startDress || p.equipped.dress || 'dress_roze';
+        // settings kent geen haar en geen basisfiguur, dus zonder dit werd een
+        // bruinharige ster blond en een jongen een meisje
+        const opts = { ...p.settings, hair: p.startHair || 'hair_blond', base: p.base };
+        const order = p.order;
+        db.profiles[setKey] = defaultProfile(p.name, dress, opts);
+        db.profiles[setKey].order = order;   // plek in de rij behouden na een reset
+        save(); renderSettings();
+        showToast('✓ Voortgang gewist');
+        toastWeg(1800);
+      }
+    );
+    $('confirm-no').onclick = openWieBlad;   // nee: terug in haar blad, niet ernaast
+  });
+  /* Meisje of jongen, ook na het maken. Op het maakformulier is dat de enige vraag
+     zonder voorkeuze, en een verkeerde tik was daarna nergens meer recht te zetten
+     dan door de ster te verwijderen -- met al haar voortgang. Haar en kleren gaan
+     mee naar de andere figuur, net als in het voorbeeld van het formulier. */
+  const basis = $('set-base');
+  if (basis) basis.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    if (p.base === c.dataset.v) return;
+    sndClick();
+    p.base = c.dataset.v;
+    save();
+    renderSettings();      // haar portret in de kop
+    openWieBlad();         // en het blad zelf, met de nieuwe figuur en keuze
+  });
+  on('set-delete', 'onclick', () => {
+    showConfirm(
+      '⚠️ Ster verwijderen?',
+      `${p.name} helemaal verwijderen, met alle voortgang, diamanten en spulletjes? Dit kan niet ongedaan gemaakt worden.`,
+      'Ja, verwijderen',
+      () => {
+        const naam = p.name;
+        delete db.profiles[setKey];
+        if (cur === setKey) cur = null;      // niet met een verdwenen ster verder spelen
+        setKey = null;                       // terug naar het overzicht, waar de anderen staan
+        save();
+        if (profileKeys().length) { renderSettings(); settingsToTop(); }
+        else closeSettings();                // laatste ster weg -> terug naar het welkomscherm
+        showToast(`✓ ${esc(naam)} is verwijderd`);
+        toastWeg(1800);
+      }
+    );
+    $('confirm-no').onclick = openWieBlad;
+  });
+}
+function bindSettings(p, s) {
+  const bind = (id, fn) => { const el = $(id); if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => fn(c)); };
+  const on = (id, ev, fn) => { const el = $(id); if (el) el[ev] = fn; };
   // de tip in Voortgang (zie grensTip): dezelfde instelling als op Oefeningen, met één tik
   on('grens-tip-ja', 'onclick', e => {
     sndClick();
@@ -14840,16 +14920,6 @@ function bindSettings(p, s) {
     const lad = $('set-startstap') || $('set-fase');
     if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
   });
-  on('set-name', 'onkeydown', e => {
-    if (e.key !== 'Enter' || e.isComposing) return;
-    e.preventDefault();
-    e.target.blur();
-  });
-  // het rode vlak openklappen mag ook hoorbaar zijn, net als elke andere tik
-  // (er zijn er twee: voortgang wissen en de ster verwijderen)
-  document.querySelectorAll('#settings-body .danger-reveal').forEach(dg => {
-    dg.ontoggle = () => { if (dg.open) sndClick(); };
-  });
   // modus: wisselen tussen de rekenshow en de lees-vrije telmodus. Blijft hier:
   // de moduskaart hoort bij het ouderdeel (het maakformulier heeft zijn eigen
   // #newstar-track vlak boven de openklapper).
@@ -14858,65 +14928,9 @@ function bindSettings(p, s) {
   // Het maakformulier heeft niets op te slaan, dus wat er ná een wijziging
   // gebeurt komt van de aanroeper (hier: opslaan + hertekenen).
   bindOefenChips(s, p, '', () => { save(); renderSettings(); });
-  on('set-reset', 'onclick', () => {
-    showConfirm(
-      '⚠️ Weet je het zeker?',
-      `Alle voortgang, diamanten, sterren en spulletjes van ${p.name} wissen?`
-      + ` De naam, de startoutfit en alle oefeninstellingen blijven staan.`
-      + ` Dit kan niet ongedaan gemaakt worden.`,
-      'Ja, wissen',
-      () => {
-        // Wissen raakt de voortgang, niet wie ze is en niet hoe ze oefent: haar
-        // startoutfit, plek in de rij én álle instellingen gaan mee. Dat gold
-        // eerder alleen voor de telmodus -- in de rekenmodus vielen bewerkingen,
-        // bereik, tafels, antwoordmethode en de extra uitdagingen stilletjes terug
-        // op de standaardwaarden, terwijl de waarschuwing dat niet zei.
-        const dress = p.startDress || p.equipped.dress || 'dress_roze';
-        // settings kent geen haar en geen basisfiguur, dus zonder dit werd een
-        // bruinharige ster blond en een jongen een meisje
-        const opts = { ...p.settings, hair: p.startHair || 'hair_blond', base: p.base };
-        const order = p.order;
-        db.profiles[setKey] = defaultProfile(p.name, dress, opts);
-        db.profiles[setKey].order = order;   // plek in de rij behouden na een reset
-        save(); renderSettings();
-        showToast('✓ Voortgang gewist');
-        toastWeg(1800);
-      }
-    );
-  });
   on('set-newstar', 'onclick', () => openNewStar('settings'));
-  /* Meisje of jongen, ook na het maken. Op het maakformulier is dat de enige vraag
-     zonder voorkeuze, en een verkeerde tik was daarna nergens meer recht te zetten
-     dan door de ster te verwijderen -- met al haar voortgang. Haar en kleren gaan
-     mee naar de andere figuur, net als in het voorbeeld van het formulier. */
-  const basis = $('set-base');
-  if (basis) basis.querySelectorAll('.chip').forEach(c => c.onclick = () => {
-    if (p.base === c.dataset.v) return;
-    sndClick();
-    p.base = c.dataset.v;
-    save();
-    renderSettings();
-  });
-  on('set-delete', 'onclick', () => {
-    showConfirm(
-      '⚠️ Ster verwijderen?',
-      `${p.name} helemaal verwijderen, met alle voortgang, diamanten en spulletjes? Dit kan niet ongedaan gemaakt worden.`,
-      'Ja, verwijderen',
-      () => {
-        const naam = p.name;
-        delete db.profiles[setKey];
-        if (cur === setKey) cur = null;      // niet met een verdwenen ster verder spelen
-        setKey = null;                       // terug naar het overzicht, waar de anderen staan
-        save();
-        if (profileKeys().length) { renderSettings(); settingsToTop(); }
-        else closeSettings();                // laatste ster weg -> terug naar het welkomscherm
-        showToast(`✓ ${esc(naam)} is verwijderd`);
-        toastWeg(1800);
-      }
-    );
-  });
   // het geluid aan, vanaf de notitie in Voortgang (zie stemNotitie): dezelfde
-  // schakelaar als onder ⋯, en dan staat de notitie er niet meer
+  // schakelaar als op het overzicht, en dan staat de notitie er niet meer
   on('stem-aan', 'onclick', () => { if (!db.sound) toggleSound(); renderSettings(); });
   on('set-sound', 'onclick', toggleSound);
   on('set-alsapp', 'onclick', () => openAppBlad(false));

@@ -8727,10 +8727,19 @@
 
   #screen-settings.met-ster .screen-header { display: flex; gap: 8px; }
   #screen-settings.met-ster .header-title { display: none; }
+
+
+
   .ouder-wie {
-    flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px;
-    font-size: var(--tx-sub); font-weight: 700; color: var(--c-white);
+    flex: 0 1 auto; min-width: 0; margin-right: auto; display: flex; align-items: center; gap: 10px;
+    font-family: inherit; font-size: var(--tx-sub); font-weight: 700; color: var(--c-white);
+    border: none; cursor: pointer; padding: 4px 14px 4px 4px; border-radius: var(--r-pill);
+    background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.28);
+    transition: background var(--t-tik) ease;
   }
+  .ouder-wie:hover { background: rgba(255,255,255,.18); }
+  .ouder-wie:active { background: rgba(255,255,255,.24); }
+  .ouder-wie .wie-pen { font-size: 15px; opacity: .9; flex: none; }
   .ouder-wie .who-portrait { width: 40px; height: 40px; flex: none; }
   .ouder-wie .who-portrait svg { top: -5px; width: 68px; }
   .ouder-wie .wie-naam { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -8813,8 +8822,6 @@
 
 
 
-
-  .segmented button.st-meer { flex: 0 0 58px; position: relative; padding: 0; font-size: 20px; }
   .segmented button.on { background: var(--nav-sel); color: var(--c-white); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); text-shadow: var(--nav-ink); }
 
 
@@ -9539,6 +9546,16 @@
   }
   .modal h3 { color: var(--purple-deep); margin-bottom: 10px; }
 
+  .modal h3:empty { display: none; }
+
+
+  .wie-blad { gap: 12px; }
+  .wie-blad .wb-pop { display: flex; justify-content: center; margin-top: -4px; }
+  .wie-blad .name-edit-wrap { max-width: none; }
+  .wb-gevaar { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding-top: 12px; border-top: 1px solid var(--paper-border); }
+  .wb-gevaar .danger-reveal { width: 100%; margin: 0; }
+  .wie-blad #set-base { margin-bottom: 0; }
+
 
   .modal-body { font-size: var(--tx-label); color: var(--paper-ink-muted); margin-bottom: 14px; }
   .modal-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
@@ -10134,7 +10151,8 @@
              van één ster (.met-ster, zie renderSettings) staat op zijn plek haar
              portret en naam, en zeggen de tabbladen eronder al waar je bent. -->
         <div class="header-title">Voor ouders</div>
-        <div class="ouder-wie" id="settings-wie"></div>
+        <!-- portret · naam · ✏️ als één knop: haar blad (openWieBlad) -->
+        <button class="ouder-wie" id="settings-wie" type="button" onclick="sndClick(); naTik(openWieBlad)"></button>
         <!-- ▶ = meteen spelen als de ster die links gekozen is (speelAlsGekozen):
              het spiegelbeeld van ←. Zonder naam erin, die staat er pal naast al. -->
         <div class="header-right"><button class="btn small speel-als" id="speel-als" onclick="naTik(speelAlsGekozen)" hidden><svg class="ico" aria-hidden="true"><use href="#ico-speel"/></svg></button></div>
@@ -25706,26 +25724,30 @@ function beheerEmptyHtml() {
 
 
 
-function beheerPanelHtml(p) {
-  return `<div class="settings-panel">
-    <div class="set-card">
-      <div class="set-card-head"><div class="ico">👤</div><div><h2><label for="set-name">Wie</label></h2></div></div>
-      <div class="set-field">
-        <div class="chip-row mode-row" id="set-base" role="group" aria-label="Meisje of jongen">${BASE_CHOICES.map(b =>
-          `<button class="chip gestapeld${baseOf(p) === b.id ? ' on' : ''}" data-v="${b.id}">`
-          + `<span class="mc-ico" aria-hidden="true">${b.emoji}</span><span class="mc-label">${b.name}</span></button>`).join('')}</div>
-        <div class="name-edit-wrap"><input type="text" id="set-name" value="${esc(p.name)}" maxlength="12" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
-    </div>
-    <div class="set-card secundair">
-      <div class="set-card-head"><div class="ico">🔄</div><div><h2>Opnieuw beginnen of verwijderen</h2><div class="sub">Alleen voor <span class="set-naam">${esc(p.name)}</span> — en niet terug te draaien</div></div></div>
+
+
+
+
+
+
+
+
+function wieBladHtml(p) {
+  return `<div class="settings-sheet wie-blad">
+    <div class="wb-pop" aria-hidden="true">${avatarSVG(p, 64)}</div>
+    <div class="chip-row mode-row" id="set-base" role="group" aria-label="Meisje of jongen">${BASE_CHOICES.map(b =>
+      `<button class="chip gestapeld${baseOf(p) === b.id ? ' on' : ''}" data-v="${b.id}">`
+      + `<span class="mc-ico" aria-hidden="true">${b.emoji}</span><span class="mc-label">${b.name}</span></button>`).join('')}</div>
+    <div class="name-edit-wrap"><input type="text" id="set-name" aria-label="Naam" value="${esc(p.name)}" maxlength="12" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div>
+    <div class="wb-gevaar">
       <!-- rode vlak bestaat pas als een ouder er zelf om vraagt; een permanent
            zichtbare wisknop hoort niet tussen gewone instellingen te staan -->
       <details class="danger-reveal" id="set-danger">
         <summary>Voortgang wissen…</summary>
         <div class="danger-zone">
-          <div><div class="t">⚠️ Voortgang van ${esc(p.name)} wissen</div>
+          <div><div class="t">⚠️ Voortgang van <span class="set-naam">${esc(p.name)}</span> wissen</div>
             <div class="d"><b>Weg:</b> alle diamanten, sterren, trofeeën en gekochte spulletjes.<br>
-              <b>Blijft:</b> ${esc(p.name)} zelf, de naam, de startoutfit en alle oefeninstellingen.</div></div>
+              <b>Blijft:</b> de naam, de startoutfit en alle oefeninstellingen.</div></div>
           <button class="danger-btn" id="set-reset">Wissen</button>
         </div>
       </details>
@@ -25736,13 +25758,24 @@ function beheerPanelHtml(p) {
              tussen de naam en "verwijderen" -->
         <summary><span><span class="set-naam">${esc(p.name)}</span> verwijderen…</span></summary>
         <div class="danger-zone">
-          <div><div class="t">⚠️ ${esc(p.name)} verwijderen</div>
-            <div class="d">Haalt ${esc(p.name)} helemaal weg van dit toestel, met alle diamanten, sterren en spulletjes. De andere sterren blijven. Kan niet ongedaan gemaakt worden.</div></div>
+          <div><div class="t">⚠️ <span class="set-naam">${esc(p.name)}</span> verwijderen</div>
+            <div class="d">Helemaal weg van dit toestel, met alle diamanten, sterren en spulletjes. De andere sterren blijven. Kan niet ongedaan gemaakt worden.</div></div>
           <button class="danger-btn" id="set-delete">Verwijderen</button>
         </div>
       </details>
     </div>
   </div>`;
+}
+function openWieBlad() {
+  const p = setKey && db.profiles[setKey];
+  if (!p) return;
+  $('confirm-title').textContent = '';
+  $('confirm-body').innerHTML = wieBladHtml(p);
+  $('confirm-actions').innerHTML = '<button class="btn small purple" id="wie-klaar">Klaar</button>';
+  $('wie-klaar').onclick = closeConfirmModal;
+  bindWie(p);
+  $('confirm-modal').classList.add('open');
+  syncBackGuard();
 }
 
 
@@ -25822,8 +25855,10 @@ function speelAlsKnop(p) {
   b.title = 'Speel als ' + p.name;
 }
 
+const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefeningen']];
 
-const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefeningen'], ['beheer', 'Aanpassen']];
+
+
 
 
 
@@ -25835,18 +25870,12 @@ const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefeningen'], ['behee
 let lastWieHtml = null;
 function renderWie(p) {
   const html = `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 65)}</span>`
-    + `<span class="wie-naam">${esc(p.name)}</span>`;
+    + `<span class="wie-naam">${esc(p.name)}</span><span class="wie-pen" aria-hidden="true">✏️</span>`;
   if (html === lastWieHtml && $('settings-wie').childElementCount) return;
   lastWieHtml = html;
   $('settings-wie').innerHTML = html;
+  $('settings-wie').setAttribute('aria-label', p.name + ' aanpassen');
 }
-
-
-
-
-
-
-
 
 
 
@@ -25854,10 +25883,8 @@ function renderWie(p) {
 
 function renderSectionTabs() {
   const t = $('settings-subtabs');
-  t.innerHTML = SET_TABS.map(([v, label]) => v === 'beheer'
-    ? `<button class="st-meer${setTab === v ? ' on' : ''}" role="tab" aria-selected="${setTab === v}" data-t="${v}" aria-label="${label}" title="${label}">`
-      + `<span aria-hidden="true">✏️</span></button>`
-    : `<button class="${setTab === v ? 'on' : ''}" role="tab" aria-selected="${setTab === v}" data-t="${v}">${label}</button>`).join('');
+  t.innerHTML = SET_TABS.map(([v, label]) =>
+    `<button class="${setTab === v ? 'on' : ''}" role="tab" aria-selected="${setTab === v}" data-t="${v}">${label}</button>`).join('');
   t.querySelectorAll('button').forEach(b => b.onclick = () => {
     if (b.dataset.t === setTab) return;
     sndClick(); setTab = b.dataset.t; renderSettings(); settingsToTop();
@@ -25886,10 +25913,7 @@ function renderSettings() {
   renderWie(p);
   renderSectionTabs();
   const s = p.settings;
-  $('settings-body').innerHTML =
-      setTab === 'oefenen' ? oefenenPanelHtml(p, s)
-    : setTab === 'beheer'  ? beheerPanelHtml(p)
-    :                        statsPanelHtml(p);
+  $('settings-body').innerHTML = setTab === 'oefenen' ? oefenenPanelHtml(p, s) : statsPanelHtml(p);
   bindSettings(p, s);
 }
 
@@ -26008,8 +26032,9 @@ function bindOefenChips(s, p, pfx, done) {
   bind('set-voorlezen', c => { s.voorlezen = (c.dataset.v === 'on'); });
   bind('set-repr', c => { s.repr = c.dataset.v; });
 }
-function bindSettings(p, s) {
-  const bind = (id, fn) => { const el = $(id); if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => fn(c)); };
+
+
+function bindWie(p) {
   const on = (id, ev, fn) => { const el = $(id); if (el) el[ev] = fn; };
   on('set-name', 'oninput', e => {
     p.name = e.target.value.trim() || p.name;
@@ -26020,7 +26045,7 @@ function bindSettings(p, s) {
     if (lbl) lbl.textContent = p.name;
     lastWieHtml = null;
 
-    document.querySelectorAll('#settings-body .set-naam').forEach(n => { n.textContent = p.name; });
+    document.querySelectorAll('#confirm-body .set-naam').forEach(n => { n.textContent = p.name; });
 
     speelAlsKnop(p);
   });
@@ -26029,6 +26054,79 @@ function bindSettings(p, s) {
 
 
 
+  on('set-name', 'onkeydown', e => {
+    if (e.key !== 'Enter' || e.isComposing) return;
+    e.preventDefault();
+    e.target.blur();
+  });
+
+
+  document.querySelectorAll('#confirm-body .danger-reveal').forEach(dg => {
+    dg.ontoggle = () => { if (dg.open) sndClick(); };
+  });
+  on('set-reset', 'onclick', () => {
+    showConfirm(
+      '⚠️ Weet je het zeker?',
+      `Alle voortgang, diamanten, sterren en spulletjes van ${p.name} wissen?`
+      + ` De naam, de startoutfit en alle oefeninstellingen blijven staan.`
+      + ` Dit kan niet ongedaan gemaakt worden.`,
+      'Ja, wissen',
+      () => {
+
+
+
+
+
+        const dress = p.startDress || p.equipped.dress || 'dress_roze';
+
+
+        const opts = { ...p.settings, hair: p.startHair || 'hair_blond', base: p.base };
+        const order = p.order;
+        db.profiles[setKey] = defaultProfile(p.name, dress, opts);
+        db.profiles[setKey].order = order;
+        save(); renderSettings();
+        showToast('✓ Voortgang gewist');
+        toastWeg(1800);
+      }
+    );
+    $('confirm-no').onclick = openWieBlad;
+  });
+
+
+
+
+  const basis = $('set-base');
+  if (basis) basis.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    if (p.base === c.dataset.v) return;
+    sndClick();
+    p.base = c.dataset.v;
+    save();
+    renderSettings();
+    openWieBlad();
+  });
+  on('set-delete', 'onclick', () => {
+    showConfirm(
+      '⚠️ Ster verwijderen?',
+      `${p.name} helemaal verwijderen, met alle voortgang, diamanten en spulletjes? Dit kan niet ongedaan gemaakt worden.`,
+      'Ja, verwijderen',
+      () => {
+        const naam = p.name;
+        delete db.profiles[setKey];
+        if (cur === setKey) cur = null;
+        setKey = null;
+        save();
+        if (profileKeys().length) { renderSettings(); settingsToTop(); }
+        else closeSettings();
+        showToast(`✓ ${esc(naam)} is verwijderd`);
+        toastWeg(1800);
+      }
+    );
+    $('confirm-no').onclick = openWieBlad;
+  });
+}
+function bindSettings(p, s) {
+  const bind = (id, fn) => { const el = $(id); if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => fn(c)); };
+  const on = (id, ev, fn) => { const el = $(id); if (el) el[ev] = fn; };
 
   on('grens-tip-ja', 'onclick', e => {
     sndClick();
@@ -26057,16 +26155,6 @@ function bindSettings(p, s) {
     const lad = $('set-startstap') || $('set-fase');
     if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
   });
-  on('set-name', 'onkeydown', e => {
-    if (e.key !== 'Enter' || e.isComposing) return;
-    e.preventDefault();
-    e.target.blur();
-  });
-
-
-  document.querySelectorAll('#settings-body .danger-reveal').forEach(dg => {
-    dg.ontoggle = () => { if (dg.open) sndClick(); };
-  });
 
 
 
@@ -26075,63 +26163,7 @@ function bindSettings(p, s) {
 
 
   bindOefenChips(s, p, '', () => { save(); renderSettings(); });
-  on('set-reset', 'onclick', () => {
-    showConfirm(
-      '⚠️ Weet je het zeker?',
-      `Alle voortgang, diamanten, sterren en spulletjes van ${p.name} wissen?`
-      + ` De naam, de startoutfit en alle oefeninstellingen blijven staan.`
-      + ` Dit kan niet ongedaan gemaakt worden.`,
-      'Ja, wissen',
-      () => {
-
-
-
-
-
-        const dress = p.startDress || p.equipped.dress || 'dress_roze';
-
-
-        const opts = { ...p.settings, hair: p.startHair || 'hair_blond', base: p.base };
-        const order = p.order;
-        db.profiles[setKey] = defaultProfile(p.name, dress, opts);
-        db.profiles[setKey].order = order;
-        save(); renderSettings();
-        showToast('✓ Voortgang gewist');
-        toastWeg(1800);
-      }
-    );
-  });
   on('set-newstar', 'onclick', () => openNewStar('settings'));
-
-
-
-
-  const basis = $('set-base');
-  if (basis) basis.querySelectorAll('.chip').forEach(c => c.onclick = () => {
-    if (p.base === c.dataset.v) return;
-    sndClick();
-    p.base = c.dataset.v;
-    save();
-    renderSettings();
-  });
-  on('set-delete', 'onclick', () => {
-    showConfirm(
-      '⚠️ Ster verwijderen?',
-      `${p.name} helemaal verwijderen, met alle voortgang, diamanten en spulletjes? Dit kan niet ongedaan gemaakt worden.`,
-      'Ja, verwijderen',
-      () => {
-        const naam = p.name;
-        delete db.profiles[setKey];
-        if (cur === setKey) cur = null;
-        setKey = null;
-        save();
-        if (profileKeys().length) { renderSettings(); settingsToTop(); }
-        else closeSettings();
-        showToast(`✓ ${esc(naam)} is verwijderd`);
-        toastWeg(1800);
-      }
-    );
-  });
 
 
   on('stem-aan', 'onclick', () => { if (!db.sound) toggleSound(); renderSettings(); });
