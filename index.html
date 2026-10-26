@@ -3640,13 +3640,17 @@
 
 
 
+
+
+
+
   .venue-aan .venue-bundel {
-    left: 50%; bottom: 8%; width: 210%; height: 520%; transform: translateX(-50%);
+    left: 50%; bottom: 10%; width: 118%; height: 330%; transform: translateX(-50%);
     transform-origin: 50% 0;
-    background: linear-gradient(180deg, rgba(var(--goud-glans-rgb),.42) 0%, rgba(var(--goud-glans-rgb),.36) 40%,
-                                rgba(var(--warm-licht-rgb),.15) 74%, rgba(var(--warm-licht-rgb),0) 93%);
-    -webkit-clip-path: polygon(46.5% 0, 53.5% 0, 100% 100%, 0 100%);
-    clip-path: polygon(46.5% 0, 53.5% 0, 100% 100%, 0 100%);
+    background: linear-gradient(180deg, rgba(var(--goud-glans-rgb),.5) 0%, rgba(var(--goud-glans-rgb),.46) 45%,
+                                rgba(var(--warm-licht-rgb),.24) 78%, rgba(var(--warm-licht-rgb),0) 96%);
+    -webkit-clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
+    clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
     -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 22%);
     mask-image: linear-gradient(180deg, transparent 0%, #000 22%);
   }
@@ -4238,12 +4242,6 @@
     #screen-game.met-cijfers .show-stage {
       --stage-h: min(clamp(180px, calc(100svh - 700px), 300px), calc((100vw - 40px) / 1.19));
     }
-
-
-
-
-
-    .venue-aan .venue-bundel { width: min(210%, 480px); }
   }
   @media (min-width: 900px) and (min-height: 760px) {
     .show-stage { width: 240px; height: 202px; }
@@ -5072,6 +5070,9 @@
   .venue-aan #show-stage { margin-bottom: 6px; }
   .venue-aan #end-stage .stage-podium { width: 139%; bottom: .3%; }
   .venue-aan #end-stage .stage-podium .podium { --pod-dik: 8px; }
+
+
+  .venue-aan .end-panel > .venue-bundel { width: 165%; }
 
 
 
