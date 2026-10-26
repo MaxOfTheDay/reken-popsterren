@@ -76,15 +76,16 @@ function check(ok, label, detail) {
     const r = await page.evaluate(() => ({
       n: Object.keys(db.profiles).length,
       cards: document.querySelectorAll('.ster-tegel').length,
-      sub: document.getElementById('profile-subtitle').textContent,
-      addLabel: document.getElementById('btn-newstar').textContent,
+      leeg: document.getElementById('btn-newstar').classList.contains('leeg-tegel'),
+      vraag: !!document.querySelector('#btn-newstar .ns-vraag'),
+      addLabel: document.getElementById('btn-newstar').getAttribute('aria-label'),
       hintShown: getComputedStyle(document.getElementById('over-hint')).display !== 'none',
       hintHref: document.getElementById('over-hint').getAttribute('href'),
       stored: localStorage.getItem('rekenPopsterren_v1'),
     }));
     check(r.n === 0, 'verse installatie heeft nul sterren', `n=${r.n}`);
     check(r.cards === 0, 'verse installatie toont geen kaarten', `cards=${r.cards}`);
-    check(/Welkom/.test(r.sub), 'verse installatie verwelkomt', r.sub);
+    check(r.leeg && r.vraag, 'verse installatie toont één lege tegel met het vraagteken', JSON.stringify(r));
     check(/eerste ster/.test(r.addLabel), 'de knop noemt de eerste ster', r.addLabel);
     check(r.hintShown && r.hintHref === 'over/index.html', 'bij nul sterren zegt één stille regel wat het spel is', JSON.stringify(r));
     // terugzetten zit achter het tandwiel: zonder sterren opent Voor ouders meteen daar
@@ -128,7 +129,7 @@ function check(ok, label, detail) {
         cardText: document.querySelector('.st-naam') ? document.querySelector('.st-naam').textContent : null,
         boldInCard: !!document.querySelector('.st-naam b'),
         fieldValue: document.getElementById('set-name').value,
-        sub: document.getElementById('profile-subtitle').textContent,
+        plus: document.getElementById('btn-newstar').className,
       };
     });
     check(r.n === 1 && r.key === 'p1', 'eerste ster krijgt sleutel p1', `${r.key} n=${r.n}`);
@@ -144,7 +145,7 @@ function check(ok, label, detail) {
     check(r.bought === 0, 'gratis startspullen tellen niet als gekocht', `bought=${r.bought}`);
     // Zodra er een ster staat spreekt het scherm voor zich en verdwijnt de
     // ondertitel; het welkom hoort alleen bij een leeg scherm.
-    check(r.sub === '', 'met een ster erbij verdwijnt de ondertitel', JSON.stringify(r.sub));
+    check(r.plus === 'add-tegel', 'met een ster erbij is de "+" weer een gewone knop', r.plus);
     await ctx.close();
   }
 
@@ -396,11 +397,11 @@ function check(ok, label, detail) {
     r = await page.evaluate(() => ({
       n: Object.keys(db.profiles).length,
       screen: document.querySelector('.screen.active').id,
-      sub: document.getElementById('profile-subtitle').textContent,
+      leeg: document.getElementById('btn-newstar').classList.contains('leeg-tegel'),
     }));
     check(r.n === 0, 'de laatste ster mag ook weg', `n=${r.n}`);
     check(r.screen === 'screen-profile', 'na de laatste ster sta je op het welkomscherm', r.screen);
-    check(/Welkom/.test(r.sub), 'het welkom komt terug', r.sub);
+    check(r.leeg, 'de lege tegel komt terug', JSON.stringify(r));
     // en het ouderdeel doet het daarna nog steeds
     r = await page.evaluate(() => { openSettings(); return !!document.getElementById('set-import'); });
     check(r, 'het ouderdeel werkt nog na het verwijderen van alles', 'geen back-up-knop');
