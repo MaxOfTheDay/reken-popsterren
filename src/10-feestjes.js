@@ -290,8 +290,15 @@ function dockPlek(el) {
   el.style.left = Math.max(8, mid - half) + 'px';
   el.style.right = Math.max(8, innerWidth - mid - half) + 'px';
 }
-function showPraise(txt, reward, blauw) {
+/* LOF_DUUR is hoe lang de lof gewoonlijk staat; de CSS leest hem als --t-lof.
+   duur (optioneel, ms): korter dan dat. De show geeft die mee, zodat
+   de lof weg is op het moment dat de volgende som er staat (zie antwoordGoed);
+   zonder duur geldt weer gewoon LOF_DUUR. */
+const LOF_DUUR = 900;
+document.documentElement.style.setProperty('--t-lof', LOF_DUUR + 'ms');
+function showPraise(txt, reward, blauw, duur) {
   const el = $('praise');
+  el.style.animationDuration = duur ? duur + 'ms' : '';
   el.classList.toggle('docked', $('screen-game').classList.contains('active'));
   dockPlek(el);
   el.classList.toggle('blauw', !!blauw);
