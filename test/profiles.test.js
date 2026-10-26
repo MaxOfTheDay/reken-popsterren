@@ -117,7 +117,7 @@ function check(ok, label, detail) {
       const k = Object.keys(db.profiles)[0];
       const p = db.profiles[k];
       goProfiles();   // terug naar de keuze: daar staat de tegel die we hieronder nakijken
-      openSettings(); setKey = k; setTab = 'beheer'; renderSettings();
+      openSettings(); setKey = k; renderSettings(); openWieBlad();
       return {
         key: k, n: Object.keys(db.profiles).length,
         name: p.name, base: p.base, hair: p.equipped.hair, dress: p.equipped.dress,
@@ -361,7 +361,7 @@ function check(ok, label, detail) {
     const { ctx, page } = await fresh();
     for (const n of ['Een', 'Twee', 'Drie']) await makeStar(page, { name: n });
     // de middelste weg
-    await page.evaluate(() => { openSettings(); setKey = 'p2'; setTab = 'beheer'; renderSettings(); });
+    await page.evaluate(() => { openSettings(); setKey = 'p2'; renderSettings(); openWieBlad(); });
     await page.waitForTimeout(150);
     await page.click('#set-danger-del summary');   // net als een ouder: eerst openklappen
     await page.waitForTimeout(150);
@@ -384,7 +384,7 @@ function check(ok, label, detail) {
     check(r.nextKey === 'p2', 'het gat in de sleutels wordt hergebruikt', r.nextKey);
     // en nu alles weg
     for (const k of ['p1', 'p3']) {
-      await page.evaluate(key => { openSettings(); setKey = key; setTab = 'beheer'; renderSettings(); }, k);
+      await page.evaluate(key => { openSettings(); setKey = key; renderSettings(); openWieBlad(); }, k);
       await page.waitForTimeout(120);
       await page.click('#set-danger-del summary');
       await page.waitForTimeout(120);
@@ -2321,7 +2321,7 @@ function check(ok, label, detail) {
       const k = profileKeys()[0];
       db.profiles[k].diamonds = 999;
       db.profiles[k].equipped.hair = 'hair_regenboog';   // iets anders aangetrokken
-      openSettings(); setKey = k; setTab = 'beheer'; renderSettings();
+      openSettings(); setKey = k; renderSettings(); openWieBlad();
       document.getElementById('set-reset').click();
       await new Promise(r => setTimeout(r, 200));
       document.getElementById('confirm-yes').click();

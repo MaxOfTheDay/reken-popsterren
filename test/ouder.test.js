@@ -21,7 +21,7 @@
  *   H  een kapotte back-up verandert niets
  *   I  de plakkende kop krimpt bij scrollen, maar wie en wat blijven in beeld --
  *      en de inhoud eronder schuift niet mee
- *   J  vanuit Beheer een ster maken komt terug in Beheer, bij de nieuwe ster
+ *   J  vanuit het overzicht een ster maken komt terug in het ouderdeel, bij de nieuwe ster
  *   K  enkelvoud/meervoud: "1 show", "2 shows", "0 shows"
  *   L  de trofeeteller heeft één bron, en de kast noemt hetzelfde getal
  *   M  de inschatting toont geen percentage, en p.perf draait er ongewijzigd door
@@ -80,12 +80,14 @@ function check(ok, label, detail) {
     return { ctx, page };
   }
 
-  // Het ouderdeel openen op een bepaald kind en onderdeel.
+  // Het ouderdeel openen op een bepaald kind en onderdeel. 'beheer' is geen
+  // tabblad meer maar haar blad, achter haar naam in de kop (openWieBlad).
   const open = (page, key, tab) => page.evaluate(([k, t]) => {
     openSettings();
     if (k) setKey = k;
-    if (t) setTab = t;
+    if (t && t !== 'beheer') setTab = t;
     renderSettings();
+    if (t === 'beheer') openWieBlad();
   }, [key, tab]);
 
   /* ================= A · Het tandwiel en het geluid ================= */
@@ -247,17 +249,25 @@ function check(ok, label, detail) {
       'een tik op een rij opent dat kind, op Voortgang', JSON.stringify(r));
     check(r.speel === 'Speel als Cato' && !r.alle, 'met ▶ voor haar, en zonder de app-brede kaarten', JSON.stringify(r));
     // van onderdeel wisselen houdt het kind vast
-    await page.click('#settings-subtabs button[data-t="beheer"]');
+    await page.click('#settings-wie');
     await page.waitForTimeout(200);
     r = await page.evaluate(() => ({
       setKey: setKey, tab: setTab,
       naam: document.getElementById('set-name').value,
-      knop: document.querySelector('#settings-subtabs .st-meer').textContent.trim(),
-      label: document.querySelector('#settings-subtabs .st-meer').getAttribute('aria-label'),
+      blad: document.getElementById('confirm-modal').classList.contains('open'),
+      tabs: [...document.querySelectorAll('#settings-subtabs button')].map(b => b.dataset.t).join(','),
+      label: document.getElementById('settings-wie').getAttribute('aria-label'),
+      pen: document.querySelector('#settings-wie .wie-pen').textContent,
     }));
-    check(r.setKey === 'p3' && r.tab === 'beheer' && r.naam === 'Cato',
-      'van onderdeel wisselen houdt hetzelfde kind vast', JSON.stringify(r));
-    check(r.knop === '✏️' && r.label === 'Aanpassen', 'het derde vakje is ✏️, en heet voor een schermlezer Aanpassen', JSON.stringify(r));
+    check(r.setKey === 'p3' && r.blad && r.naam === 'Cato',
+      'een tik op haar naam in de kop opent haar blad, bij hetzelfde kind', JSON.stringify(r));
+    check(r.tabs === 'voortgang,oefenen' && r.pen === '✏️' && r.label === 'Cato aanpassen',
+      'er zijn twee tabbladen, en de naam zegt met ✏️ dat je hem kunt aanpassen', JSON.stringify(r));
+    // terug sluit eerst het blad, en dan pas naar het overzicht
+    r = await page.evaluate(() => backTarget() === closeConfirmModal);
+    check(r, 'de terugknop van Android sluit eerst het blad', String(r));
+    await page.click('#wie-klaar');
+    await page.waitForTimeout(200);
     // ← terug: eerst naar het overzicht, dan het ouderdeel uit
     await page.click('#screen-settings .header-left');
     await page.waitForTimeout(250);
@@ -431,7 +441,11 @@ function check(ok, label, detail) {
     await page.waitForTimeout(150);
     r = await page.evaluate(() => ({ sterren: Object.keys(db.profiles.p1.stars).length, dia: db.profiles.p1.diamonds }));
     check(r.sterren === 2 && r.dia === 99, '"nee, terug" laat alles staan', JSON.stringify(r));
+    r = await page.evaluate(() => !!document.querySelector('#confirm-body .wie-blad'));
+    check(r, 'en brengt je terug in haar blad', String(r));
     // en nu ja
+    await page.click('#set-danger summary');
+    await page.waitForTimeout(150);
     await page.click('#set-reset');
     await page.waitForTimeout(120);
     await page.click('#confirm-yes');
@@ -1051,7 +1065,7 @@ function check(ok, label, detail) {
        - Voor ouders opent op het overzicht (sinds de ronde "overzicht eerst"; eerder
          op de ster die net speelde)
        - "het geluid staat uit" in Voortgang heeft zelf de knop om het aan te zetten
-       - meisje of jongen is in Beheer nog te veranderen (de voortgang blijft)
+       - meisje of jongen is in haar blad nog te veranderen (de voortgang blijft)
        - gekozen = paarse vulling, zonder vinkje erachter
        - het maakformulier: een vraagteken tot "wie ben je?" beantwoord is,
          kleuren als bolletjes, en een lijntje waar het ouderdeel begint */
@@ -1085,14 +1099,14 @@ function check(ok, label, detail) {
     r = await page.evaluate(() => ({ g: db.sound, knop: !!document.getElementById('stem-aan') }));
     check(r.g === true && !r.knop, 'Q · één tik en het geluid staat aan', JSON.stringify(r));
 
-    // Beheer: meisje -> jongen, de voortgang blijft
+    // haar blad: meisje -> jongen, de voortgang blijft
     await page.evaluate(() => { db.profiles.p2.stars = { 1: 3 }; db.profiles.p2.diamonds = 12; save(); });
-    await page.click('#settings-subtabs button[data-t="beheer"]');
+    await page.click('#settings-wie');
     await page.waitForTimeout(200);
     r = await page.evaluate(() => ({
       chips: [...document.querySelectorAll('#set-base .chip')].map(c => c.dataset.v + (c.classList.contains('on') ? '*' : '')),
     }));
-    check(JSON.stringify(r.chips) === '["meisje*","jongen"]', 'Q · Beheer toont meisje of jongen, met de huidige gekozen', JSON.stringify(r));
+    check(JSON.stringify(r.chips) === '["meisje*","jongen"]', 'Q · haar blad toont meisje of jongen, met de huidige gekozen', JSON.stringify(r));
     await page.click('#set-base .chip[data-v="jongen"]');
     await page.waitForTimeout(200);
     r = await page.evaluate(() => {
@@ -1105,6 +1119,8 @@ function check(ok, label, detail) {
       'Q · omzetten bewaart, voor dit kind alleen, en de voortgang blijft', JSON.stringify(r));
     check(r.vink === 'none' || r.vink === 'normal' || r.vink === '""', 'Q · gekozen is paars, zonder vinkje', r.vink);
 
+    await page.click('#wie-klaar');
+    await page.waitForTimeout(200);
     // De onderdelen spreken de taal van de tabbalk: doorschijnend, niet dekkend cyaan
     r = await page.evaluate(() => {
       const cs = getComputedStyle(document.querySelector('#settings-subtabs button.on'));
@@ -1160,8 +1176,10 @@ function check(ok, label, detail) {
     check(r.zicht && r.label === 'Speel als Bas', 'R · ▶ zegt wie er gekozen is', JSON.stringify(r));
     check(r.eenRegel && r.titel === 'none' && r.naam === 'Bas', 'R · ← · zij · ▶ op één regel, zonder titel', JSON.stringify(r));
     check(!r.oud, 'R · het opslagpilletje is weg', JSON.stringify(r));
-    await page.click('#settings-subtabs button[data-t="beheer"]');
+    await page.click('#settings-wie');
     await page.fill('#set-name', 'Basje');
+    await page.click('#wie-klaar');
+    await page.waitForTimeout(200);
     r = await page.evaluate(() => [document.getElementById('speel-als').getAttribute('aria-label'),
       document.querySelector('#settings-wie .wie-naam').textContent]);
     check(r[0] === 'Speel als Basje' && r[1] === 'Basje', 'R · een nieuwe naam staat meteen in ▶ en in de kop', JSON.stringify(r));
@@ -1183,11 +1201,11 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
-  /* ================= S · Eén leerpad, en Beheer als "✏️" ================= */
+  /* ================= S · Eén leerpad, en twee tabbladen ================= */
   /* Voortgang en Oefeningen tekenen het leerpad met dezelfde rijen, en zeggen
      hetzelfde over waar het kind staat -- ook voorbij de laatste stap, waar
-     Oefenen eerst haar pop op "Drie getallen" zette. Beheer is een smal "✏️";
-     of de back-up te oud is, zegt de amber regel op het overzicht. */
+     Oefenen eerst haar pop op "Drie getallen" zette. Wie ze is staat achter haar
+     naam in de kop; of de back-up te oud is, zegt de amber regel op het overzicht. */
   {
     const { ctx, page } = await fresh();
     await page.evaluate(() => {
@@ -1206,14 +1224,11 @@ function check(ok, label, detail) {
     let r = await page.evaluate(() => ({
       oudPad: document.querySelectorAll('.vg-pad').length,
       ladder: !!document.querySelector('.niveau-blok .fase-ladder'),
-      meer: document.querySelector('#settings-subtabs .st-meer').textContent.trim(),
-      label: document.querySelector('#settings-subtabs .st-meer').getAttribute('aria-label'),
-      breed: document.querySelector('#settings-subtabs [data-t="oefenen"]').offsetWidth,
-      smal: document.querySelector('#settings-subtabs .st-meer').offsetWidth,
+      tabs: [...document.querySelectorAll('#settings-subtabs button')].map(b => b.offsetWidth),
     }));
     check(r.oudPad === 0 && r.ladder, 'S · Voortgang tekent het leerpad als de ladder', JSON.stringify(r));
     check(vg === 'Alles door elkaar', 'S · voorbij de laatste stap staat ze op "Alles door elkaar"', vg);
-    check(r.meer === '✏️' && r.label === 'Aanpassen' && r.smal < r.breed / 2, 'S · Beheer is een smal "✏️"', JSON.stringify(r));
+    check(r.tabs.length === 2 && r.tabs[0] === r.tabs[1], 'S · twee even brede tabbladen', JSON.stringify(r));
     // Aanpassen › brengt je naar Oefenen, en daar staat ze op dezelfde stap
     await page.click('#leerpad-aanpas');
     await page.waitForTimeout(300);

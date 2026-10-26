@@ -235,9 +235,10 @@ vastloopt.
   byte staan, het paneel toont bij een wissel de waarden van het gekozen kind, van
   modus wisselen schakelt alleen dát kind om, en na heropenen klopt het nog;
 - **het overzicht en één ster** — ⚙️ opent het overzicht (elk kind een rij, dan
-  wat voor alle sterren geldt); een rij opent dat kind op Voortgang, van onderdeel
-  wisselen houdt het kind vast, en ← (of Android-terug) gaat eerst naar het
-  overzicht en pas dan het ouderdeel uit;
+  wat voor alle sterren geldt); een rij opent dat kind op Voortgang, met twee
+  tabbladen; een tik op haar naam in de kop opent haar blad (naam, meisje of
+  jongen, wissen, verwijderen), en ← (of Android-terug) sluit eerst dat blad,
+  gaat dan naar het overzicht en pas dan het ouderdeel uit;
 - **startfase en hoogste fase** — een start boven het plafond duwt het plafond mee
   omhoog, een plafond onder de start trekt de start mee omlaag, de zichtbare band
   (`.chip.bereik`) loopt in béide rijen precies van start tot plafond, en cijfers
