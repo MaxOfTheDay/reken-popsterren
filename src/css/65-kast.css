@@ -465,6 +465,38 @@
   .pw-card.fresh .pw-ico { opacity: .85; }
   .pw-card.busy .pw-medal { opacity: .84; }
   .pw-card.busy .pw-ico { opacity: .94; }
+  /* Onderweg naar perfect: een witte rand om het podium die vol loopt (--p, zie
+     perfectCardHTML), van links over de achterkant. Hij staat los van het podium
+     zelf (dat is bleek gefilterd zolang hij niet af is) en achter de schat. Wit en
+     niet goud: goud is gewonnen. Het masker laat alleen de rand staan. */
+  .pw-card.busy .wereldprijs::after {
+    content: ''; position: absolute; left: 4%; right: 4%; bottom: 8%; height: 34%; border-radius: 50%;
+    border: 3px solid transparent;
+    background: conic-gradient(from 270deg, rgba(255,255,255,.9) calc(var(--p, 0) * 1%), rgba(255,255,255,.16) 0) border-box;
+    -webkit-mask: linear-gradient(#000 0 0) border-box, linear-gradient(#000 0 0) padding-box;
+    -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  .pw-card.busy .wereldprijs .wp-schat { z-index: 1; }
+  .pw-card.busy .wereldprijs, .pw-card.fresh .wereldprijs { opacity: .8; }
+  /* Gewonnen: het verschil met onderweg moet je van een afstand zien. Een dikkere
+     gouden rand met een volle gloed, een warme gloed erachter, twee vonkjes (de
+     opmaak van de diamanten medaille, zie DIAMANT_VONKJES) en de naam in goud. */
+  .pw-card.done .wereldprijs.goud .podium {
+    border-width: 3px;
+    box-shadow: 0 var(--pod-dik) 0 var(--ps), 0 var(--pod-dik) 0 4px var(--gold-accent), 0 0 26px rgba(var(--goud-gloed-rgb), .95);
+  }
+  .pw-card.done .wereldprijs::before {
+    content: ''; position: absolute; left: 50%; bottom: 22%; width: 120%; height: 90%; z-index: -1;
+    transform: translateX(-50%); border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(var(--goud-gloed-rgb), .45), transparent);
+  }
+  .pw-card.done .tname { color: var(--gold-light); }
+  /* Eigen stapel, anders valt de gloed (z-index -1) achter het vlak van de groep. */
+  .pw-card .pw-prijs { isolation: isolate; }
+  .pw-card .vonkje { position: absolute; z-index: 2; width: 9px; height: 9px; pointer-events: none; }
+  .pw-card .vonkje svg { display: block; width: 100%; height: 100%; fill: #fff; }
+  .pw-card .vonkje:nth-of-type(1) { right: 2px; top: 6px; }
+  .pw-card .vonkje:nth-of-type(2) { left: 4px; top: 26px; width: 6px; height: 6px; }
   /* Behaald (alleen nog het medaillon zonder podium): gouden ring en gouden gloed. */
   .trophy-card.done .pw-medal {
     border-color: var(--gold-accent);
