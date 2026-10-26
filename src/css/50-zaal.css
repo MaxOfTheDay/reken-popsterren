@@ -791,6 +791,12 @@
     #screen-game.met-cijfers .show-stage {
       --stage-h: min(clamp(180px, calc(100svh - 700px), 300px), calc((100vw - 40px) / 1.19));
     }
+    /* De bundel rekent in procenten van dit paneel, dus groeide hij mee: op 412
+       breed werd hij 750px, breder dan het scherm. Beide randen vielen er dan
+       buiten en er bleef alleen een vlakke gloed over -- "het licht is weg",
+       zei Max. Daarom een plafond: iets breder dan op het vaste paneel (449px),
+       omdat zij groter is, maar altijd met twee schuine randen in beeld. */
+    .venue-aan .venue-bundel { width: min(210%, 480px); }
   }
   @media (min-width: 900px) and (min-height: 760px) {
     .show-stage { width: 240px; height: 202px; }
