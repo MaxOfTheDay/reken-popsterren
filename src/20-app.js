@@ -3528,8 +3528,14 @@ function avatarSVG(p, width, propMaat) {
     <stop offset="0" stop-color="#ff5f6d"/><stop offset="0.25" stop-color="#ffc371"/>
     <stop offset="0.5" stop-color="#8bd450"/><stop offset="0.75" stop-color="#47c9ff"/>
     <stop offset="1" stop-color="#b06ab3"/></linearGradient>${lichtDefs(uid)}</defs>`;
-  if (pet) s += `<text x="${pm.pet[0]}" y="${pm.pet[1]}" font-size="${pm.pet[2]}">${pet.emoji}</text>`;
-  if (instr) s += `<text x="${pm.instr[0]}" y="${pm.instr[1]}" font-size="${pm.instr[2]}">${instr.emoji}</text>`;
+  /* Huisdier en instrument staan óp het podium, niet aan haar vast: in een
+     eigen groep, zodat pasLaag ze uit de dansende tekening kan tillen (zie daar). */
+  if (pet || instr) {
+    s += '<g class="av-props">';
+    if (pet) s += `<text class="av-dier" x="${pm.pet[0]}" y="${pm.pet[1]}" font-size="${pm.pet[2]}">${pet.emoji}</text>`;
+    if (instr) s += `<text class="av-instr" x="${pm.instr[0]}" y="${pm.instr[1]}" font-size="${pm.instr[2]}">${instr.emoji}</text>`;
+    s += '</g>';
+  }
   /* nek: een bruggetje tussen kin en kraag, áchter het hoofd. Zo valt de kin er
      vanzelf overheen en werpt hij een sikkeltje schaduw op de hals (dezelfde
      cirkel als het hoofd, een tikje lager, binnen de hals gehouden). Hier lag de
