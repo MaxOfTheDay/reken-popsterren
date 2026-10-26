@@ -687,10 +687,16 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     const bundel = await p2.evaluate(() => {
       startLevel(P().level);
       const b = document.querySelector('#screen-game .venue-bundel');
-      return { filter: getComputedStyle(b).filter, aan: b.getAnimations().length };
+      const pod = document.querySelector('#show-stage .stage-podium');
+      return { filter: getComputedStyle(b).filter, aan: b.getAnimations().length, breed: Math.round(b.getBoundingClientRect().width),
+               podium: pod ? Math.round(pod.getBoundingClientRect().width) : 0, scherm: innerWidth };
     });
     check(bundel.filter === 'none' && bundel.aan === 1,
       'de lichtbundel tekent zonder filter en gaat aan bij het begin van een show', JSON.stringify(bundel));
+    // de bundel valt op haar podium: onderaan iets breder dan de schijf, en
+    // smaller dan het scherm (anders vallen beide randen weg en is het licht "weg")
+    check(bundel.podium > 0 && bundel.breed >= bundel.podium && bundel.breed <= bundel.podium * 1.4 && bundel.breed < bundel.scherm,
+      'de lichtbundel valt op haar podium, met beide randen in beeld', JSON.stringify(bundel));
     // het Stoppen?-venster: de klok staat stil zolang het openstaat
     const pauze = await p2.evaluate(async () => {
       startLevel(P().level);

@@ -185,21 +185,25 @@
      er ineens vol in -- "hij begint uit het niets", zei Max. Een tel op een
      snelle telefoon, langer op een trage. Nu tekent hij in het eerste beeldje
      mee, en gaat hij aan op het moment dat wij kiezen (bundelAan). */
-  /* TOT BOVENAAN. De bundel rekent in procenten van haar paneel, niet van het
-     scherm. Op een lang scherm staat zij lager, en een bundel van 260% hield
-     dan halverwege de zaal op met een platte bovenrand in de lucht (de blur
-     maakte die rand vroeger een beetje zacht). Nu is hij twee keer zo lang en
-     iets smaller, zodat hij op elk scherm achter de kop door naar boven loopt --
-     een lamp hoog in de stelling -- en het masker laat de bovenste 22% wegvloeien:
-     ook op een scherm dat nog langer is, staat er nooit een rand. Het verloop is
-     mee opgerekt, dus vanaf haar hoofd naar beneden is het licht wat het was. */
+  /* OP HAAR PODIUM. De bundel valt precies op haar schijf: smal bij de lamp,
+     onderaan zo breed als het podium (118% van het paneel; de schijf is 99%),
+     en eindigend op de schijf (bottom 10%). Eerder was hij 210% breed en
+     520% hoog -- een brede, vlakke gloed over bijna het hele scherm, die in een
+     donkere wereld nauwelijks te zien was en nergens op viel. En toen haar
+     paneel op een lange telefoon meegroeide, werd hij breder dan het scherm en
+     was het licht "weg". Doordat hij nu op haar podium mikt in plaats van op
+     de breedte van het scherm, klopt hij op elke maat vanzelf.
+     TOT BOVENAAN: 330% van het paneel haalt op elk scherm de bovenrand (achter
+     de kop door, een lamp hoog in de stelling), en het masker laat de bovenste
+     22% wegvloeien, zodat er nooit een platte rand in de lucht staat. Hij is
+     iets voller dan de brede was, want hij bedekt nog maar een strook. */
   .venue-aan .venue-bundel {
-    left: 50%; bottom: 8%; width: 210%; height: 520%; transform: translateX(-50%);
+    left: 50%; bottom: 10%; width: 118%; height: 330%; transform: translateX(-50%);
     transform-origin: 50% 0;   /* bundelAan rekt hem vanaf de lamp */
-    background: linear-gradient(180deg, rgba(var(--goud-glans-rgb),.42) 0%, rgba(var(--goud-glans-rgb),.36) 40%,
-                                rgba(var(--warm-licht-rgb),.15) 74%, rgba(var(--warm-licht-rgb),0) 93%);
-    -webkit-clip-path: polygon(46.5% 0, 53.5% 0, 100% 100%, 0 100%);
-    clip-path: polygon(46.5% 0, 53.5% 0, 100% 100%, 0 100%);
+    background: linear-gradient(180deg, rgba(var(--goud-glans-rgb),.5) 0%, rgba(var(--goud-glans-rgb),.46) 45%,
+                                rgba(var(--warm-licht-rgb),.24) 78%, rgba(var(--warm-licht-rgb),0) 96%);
+    -webkit-clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
+    clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
     -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 22%);
     mask-image: linear-gradient(180deg, transparent 0%, #000 22%);
   }
@@ -1619,3 +1623,6 @@
   .venue-aan #show-stage { margin-bottom: 6px; }
   .venue-aan #end-stage .stage-podium { width: 139%; bottom: .3%; }
   .venue-aan #end-stage .stage-podium .podium { --pod-dik: 8px; }
+  /* de bundel valt op haar podium (zie OP HAAR PODIUM): dat is hier 139% van
+     het vlak in plaats van 99%, dus de bundel in dezelfde verhouding mee */
+  .venue-aan .end-panel > .venue-bundel { width: 165%; }
