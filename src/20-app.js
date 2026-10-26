@@ -4578,25 +4578,18 @@ function renderProfiles() {
      beneden -- het scherm scrolt dan, in plaats van dat de tegels blijven krimpen
      tot een kind ze niet meer raakt. */
   const n = keys.length;
-  const kol = !n ? 0 : n <= 1 ? 1 : n <= 2 ? 2 : n === 4 ? 2 : 3;
+  /* Vier is 2+2 maar met een eigen, kleinere maat (kol-4): op de maat van twee
+     werd het blok hoger dan met zes sterren -- zie .star-grid.kol-4. */
+  const kol = !n ? 0 : n <= 1 ? 1 : n <= 2 ? 2 : n === 4 ? 4 : 3;
   row.classList.toggle('kol-0', kol === 0);
   row.classList.toggle('kol-1', kol === 1);
   row.classList.toggle('kol-2', kol === 2);
+  row.classList.toggle('kol-4', kol === 4);
   // Verse installatie: het keuzescherm ís het welkom. Geen apart onthaalscherm --
-  // dezelfde knop en hetzelfde formulier als later, alleen luider gezegd.
-  /* Met sterren op het scherm spreekt het voor zich: de tegels zijn de vraag.
-     Zonder sterren is deze regel het hele welkom -- dan moet hij er wél staan,
-     anders opent een verse installatie op een titel en een knop en verder niets. */
-  const sub = $('profile-subtitle');
-  if (sub) {
-    sub.textContent = n ? '' : 'Welkom! Maak je eerste ster.';
-    sub.style.display = n ? 'none' : '';
-  }
+  // dezelfde knop en hetzelfde formulier als later.
   if (add) {
     add.style.display = n >= MAX_PROFILES ? 'none' : '';
-    add.classList.toggle('leeg', !n);
-    add.querySelector('.at-tekst').textContent = n ? 'Nieuwe ster' : 'Maak je eerste ster';
-    add.setAttribute('aria-label', n ? 'Nieuwe ster maken' : 'Maak je eerste ster');
+    if (n) plusKnop(add); else leegTegel(add);
   }
   // alleen op het lege scherm: wat is dit spel (zie de opmaak van #over-hint)
   const hint = $('over-hint');
@@ -4615,6 +4608,34 @@ function renderProfiles() {
      tegels staan daarom stil -- ook geen .idle, dat stond er al niet op. */
 }
 function selectProfile(key) { cur = key; goMap(); }
+/* De "+" heeft twee gedaanten, en het is steeds dezelfde knop (#btn-newstar):
+   met sterren een lage gestippelde knop onder de tegels, zonder sterren een lege
+   sterrentegel. Die lege tegel was eerst een welkomstzin boven een knop die
+   hetzelfde zei ("Welkom! Maak je eerste ster." / "Maak je eerste ster"); nu
+   staat er wat je gaat maken -- de gedimde schim met het vraagteken uit het
+   maakformulier (zie renderNewStar), op een podium in de eerste wereld, want daar
+   begint ze. Een tik opent precies diezelfde schim. */
+function leegTegel(add) {
+  if (add.classList.contains('leeg-tegel')) return;
+  const schim = defaultProfile('', 'dress_roze', { base: 'jongen' });
+  add.className = 'leeg-tegel';
+  add.innerHTML =
+    `<div class="stage st-podium"><div class="avatar-holder">${pasLaag(avatarSVG(schim, 132, 'klein'))}</div>`
+    + `<span class="ns-vraag" aria-hidden="true">?</span></div>
+     <div class="st-voet"><div class="st-rij">
+       <span class="st-ico" aria-hidden="true">＋</span>
+       <span class="st-naam">Maak je ster</span>
+     </div></div>`;
+  applyWorldTheme(add, WORLDS[0]);
+  applyStage(add.querySelector('.st-podium'), schim);
+  add.setAttribute('aria-label', 'Maak je eerste ster');
+}
+function plusKnop(add) {
+  if (add.classList.contains('add-tegel')) return;
+  add.className = 'add-tegel';
+  add.innerHTML = '<span class="at-plus" aria-hidden="true">＋</span><span class="at-tekst">Nieuwe ster</span>';
+  add.setAttribute('aria-label', 'Nieuwe ster maken');
+}
 
 /* ================= Wat er geladen wordt, en wanneer =========================
    Drie soorten spullen, en ze horen op drie verschillende momenten binnen te
