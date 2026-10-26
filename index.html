@@ -23881,6 +23881,15 @@ function renderShop() {
     card.onclick = () => {
       if (it.id === 'mic_pintje') bumpPintjeTaps(card);
       const p2 = P();
+
+
+
+
+
+
+      if (shopSelectedId && (shopSelectedId === it.id || (bezit(p2, it) && p2.equipped[it.cat] === it.id))) {
+        return stopPassen();
+      }
       if (bezit(p2, it)) {
         if (p2.equipped[it.cat] === it.id) {
           if (OPTIONELE_SPULLEN.includes(it.cat) || it.cat === PODIA_CAT) return unequipShopItem(it.cat);
@@ -24370,6 +24379,15 @@ function zichtbaarBovenBalk(id) {
   let houder = kaart.parentElement;
   while (houder && !(houder.scrollHeight > houder.clientHeight && /auto|scroll/.test(getComputedStyle(houder).overflowY))) houder = houder.parentElement;
   if (houder && houder.scrollBy) houder.scrollBy({ top: teveel, behavior: motionOff() ? 'auto' : 'smooth' });
+}
+
+
+
+function stopPassen() {
+  shopSelectedId = null; podiumStuk = null;
+  sndClick();
+  paintShop();
+  tapDance('shop-avatar');
 }
 
 function openPodia(ev) {

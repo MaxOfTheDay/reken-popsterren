@@ -12594,6 +12594,15 @@ function renderShop() {
     card.onclick = () => {
       if (it.id === 'mic_pintje') bumpPintjeTaps(card);   // easter egg telt hier mee, ook los aangetikt
       const p2 = P();
+      /* Past ze iets dat niet van haar is, dan is een tik op wat ze écht aanheeft
+         (het gouden ✓) of nog eens op het blauwe kaartje: "laat maar, terug naar
+         mij". Eerst deed de eerste niets (de pop bleef in het paskleed staan, de
+         lade bleef "Koop" zeggen) en trok hij bij een micro je eígen micro uit --
+         precies het omgekeerde van wat het kind vroeg. Pas ná deze tik, als er
+         niets meer gepast wordt, gelden de drie gevallen hieronder weer. */
+      if (shopSelectedId && (shopSelectedId === it.id || (bezit(p2, it) && p2.equipped[it.cat] === it.id))) {
+        return stopPassen();
+      }
       if (bezit(p2, it)) {
         if (p2.equipped[it.cat] === it.id) {
           if (OPTIONELE_SPULLEN.includes(it.cat) || it.cat === PODIA_CAT) return unequipShopItem(it.cat);
@@ -13083,6 +13092,15 @@ function zichtbaarBovenBalk(id) {
   let houder = kaart.parentElement;
   while (houder && !(houder.scrollHeight > houder.clientHeight && /auto|scroll/.test(getComputedStyle(houder).overflowY))) houder = houder.parentElement;
   if (houder && houder.scrollBy) houder.scrollBy({ top: teveel, behavior: motionOff() ? 'auto' : 'smooth' });
+}
+/* Niets meer passen: de pop staat weer in wat van haar is, en de lade onderaan
+   gaat dicht. Er verandert niets aan wat ze bezit of draagt, dus het rek blijft
+   staan (paintShop) -- hetzelfde als een tweede tik op een stuk in de podiumbalk. */
+function stopPassen() {
+  shopSelectedId = null; podiumStuk = null;
+  sndClick();
+  paintShop();
+  tapDance('shop-avatar');
 }
 // De schijf in de spiegel is een snelkoppeling naar Podia.
 function openPodia(ev) {
