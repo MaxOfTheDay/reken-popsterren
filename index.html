@@ -4331,7 +4331,7 @@
     text-shadow: var(--goud-ink);
     text-align: center; text-wrap: balance; line-height: 1.15;
   }
-  .praise.pop { animation: praisePop .9s cubic-bezier(.22,1.1,.4,1) forwards; }
+  .praise.pop { animation: praisePop var(--t-lof, .9s) cubic-bezier(.22,1.1,.4,1) forwards; }
   .praise.docked.pop { animation-name: praisePopDocked; }
   @keyframes praisePop {
     0% { opacity: 0; transform: translateY(-50%) scale(.7); }
@@ -10526,8 +10526,15 @@ function dockPlek(el) {
   el.style.left = Math.max(8, mid - half) + 'px';
   el.style.right = Math.max(8, innerWidth - mid - half) + 'px';
 }
-function showPraise(txt, reward, blauw) {
+
+
+
+
+const LOF_DUUR = 900;
+document.documentElement.style.setProperty('--t-lof', LOF_DUUR + 'ms');
+function showPraise(txt, reward, blauw, duur) {
   const el = $('praise');
+  el.style.animationDuration = duur ? duur + 'ms' : '';
   el.classList.toggle('docked', $('screen-game').classList.contains('active'));
   dockPlek(el);
   el.classList.toggle('blauw', !!blauw);
@@ -22749,17 +22756,30 @@ function antwoordGoed(q, p, btnEl) {
 
 
 
-  const lof = 'Ja, ' + numWord(q.ans) + '! ' + pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Goed!', 'Wauw!']);
+
+
+
+
+
+
+  const lof = 'Ja, ' + numWord(q.ans) + '!'
+    + (encore || q.gold || streakBonus ? ' ' + pick(['Super!', 'Knap gedaan!', 'Wauw!']) : '');
   const trofees = checkTrophies(p);
   if (trofees.length) { save(); updateTroDot(); }
   const g = G;
+
+
+
+
+  const rust = encore || q.gold ? 1400 : 950;
+  const lofDuur = Math.min(LOF_DUUR, rust - vlucht);
   const feest = () => {
     if (G !== g) return;
-    if (encore) { confetti(24); showPraise('👏 Applaus!', '💎 +5'); }
-    else if (q.gold) { confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
-    else if (streakBonus) showPraise('🔥 3 op een rij!', '💎 +' + gain);
-    else if (!firstTry) showPraise('Goed zo!', '💎 +' + gain);
-    else showPraise(pick(PRAISE), '💎 +' + gain);
+    if (encore) { confetti(24); showPraise('👏 Applaus!', '💎 +5', false, lofDuur); }
+    else if (q.gold) { confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain, false, lofDuur); }
+    else if (streakBonus) showPraise('🔥 3 op een rij!', '💎 +' + gain, false, lofDuur);
+    else if (!firstTry) showPraise('Goed zo!', '💎 +' + gain, false, lofDuur);
+    else showPraise(pick(PRAISE), '💎 +' + gain, false, lofDuur);
     if (encore) buiging('game-avatar-inner');
     else dance('game-avatar-inner');
     zaalJuicht();
@@ -22773,7 +22793,7 @@ function antwoordGoed(q, p, btnEl) {
 
 
 
-  zegEnDan(lof, null, encore || q.gold ? 1400 : 950, () => { if (G === g) nextStep(); });
+  zegEnDan(lof, null, rust, () => { if (G === g) nextStep(); });
 }
 
 

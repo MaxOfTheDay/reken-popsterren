@@ -856,7 +856,7 @@
     text-shadow: var(--goud-ink);
     text-align: center; text-wrap: balance; line-height: 1.15;
   }
-  .praise.pop { animation: praisePop .9s cubic-bezier(.22,1.1,.4,1) forwards; }
+  .praise.pop { animation: praisePop var(--t-lof, .9s) cubic-bezier(.22,1.1,.4,1) forwards; }
   .praise.docked.pop { animation-name: praisePopDocked; }
   @keyframes praisePop {
     0% { opacity: 0; transform: translateY(-50%) scale(.7); }
