@@ -1335,6 +1335,9 @@ zaak('ZA', () => {
     const doelen = tr.map(x => x.progress(p).target);
     check(doelen.every((d, i) => !i || d >= doelen[i - 1]), `ZA · ${l.name}: elke trap vraagt minstens zoveel als de vorige`, JSON.stringify(doelen));
   });
+  // een wereldnaam breekt vóór "wereld", niet midden in het woord (zie pwNaam)
+  check(app.pwNaam('Onderwaterwereld') === 'Onderwater&shy;wereld' && app.pwNaam('Wereld') === 'Wereld',
+    'ZA · perfecte wereld: zacht afbreekstreepje vóór "wereld"', app.pwNaam('Onderwaterwereld'));
   // Wereldtournee: behalve een lege boog achter de mist
   const wt = t('worldtour');
   const w = verseSter(), q = w.p;

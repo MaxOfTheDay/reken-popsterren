@@ -9280,14 +9280,33 @@ function perfectCardHTML(t, p, status) {
      wereld zonder podium houdt het medaillon. */
   const i = typeof t.index === 'number' ? t.index : -1;
   const st = i >= 0 ? wereldPrijsStand(p, i) : null;
-  if (st) st.goud = status === 'done';
+  /* Gewonnen is in de kast altijd het volle podium in goud, ook als de twee
+     stukken nog niet gekocht zijn: deze trofee gaat over hoe je speelde, niet
+     over wat je kocht. Elders (Podia, de kaart) blijft kleur "gekocht"
+     betekenen -- zie "= De prijs van een wereld". */
+  if (st) { st.goud = status === 'done'; if (st.goud) st.af = true; }
   const prijs = st ? wereldPrijsHTML(p, i, 72, st) : '';
-  if (prijs) return `<div class="pw-medal pw-prijs">${prijs}</div>`
-    + `<div class="tname">${t.name}</div>` + cardVoet(stand);
+  /* Onderweg: geen balkje meer maar een witte rand om het podium die vol loopt
+     (--p, zie .pw-card.busy in de kast) -- dezelfde taal als de boog om een
+     medaille. Wit en niet goud: goud betekent hier "gewonnen", en een gouden rand
+     die halfvol stond las al als bijna-van-mij (Max, oktober 2026). Gewonnen
+     krijgt de gloed en twee vonkjes. */
+  const naam = pwNaam(t.name);
+  if (prijs) {
+    const pr = status === 'busy' ? t.progress(p) : null;
+    const stijl = pr ? ` style="--p:${Math.round(100 * pr.now / pr.target)}"` : '';
+    return `<div class="pw-medal pw-prijs"${stijl}>${prijs}${status === 'done' ? DIAMANT_VONKJES : ''}</div>`
+      + `<div class="tname">${naam}</div>`;
+  }
   return `<div class="pw-medal" style="${kleur}"><span class="pw-ico">${t.emoji}</span></div>`
-    + `<div class="tname">${t.name}</div>`
+    + `<div class="tname">${naam}</div>`
     + cardVoet(stand);
 }
+/* Een wereldnaam breekt vóór "wereld" en niet midden in het woord: op een derde
+   van een telefoon past "Onderwaterwereld" niet op één regel, en dan brak hij als
+   "Onderwaterwerel / d". Met een zacht afbreekstreepje wordt het
+   "Onderwater- / wereld", en past hij wel, dan zie je niets. */
+function pwNaam(naam) { return esc(naam).replace(/(.)wereld$/, '$1&shy;wereld'); }
 /* Tikken mag, en elke tik speelt: klaar opent de trofee; anders klinkt hij (of
    zegt hij "tok") en zegt de balk onderin wat hij is of wat er nog moet gebeuren.
    Nog eens op dezelfde speelt nog eens -- de balk blijft dan gewoon staan. Hier
@@ -9313,6 +9332,16 @@ function tapTrophy(t, card) {
   if (st === 'locked') { kastBalk(t, card, '🔒 Nog niet'); return; }
   if (!t.progress) { kastBalk(t, card, t.desc); return; }
   const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
+  /* Een perfecte wereld: wat er nog moet, en een knop naar die wereld op de
+     kaart -- daar staat op elke halte met drie sterren een gouden cijfer, dus zie
+     je welke shows het nog zijn. Alleen als ze er al heen kan (anders zou de
+     knop haar naar een wereld sturen die nog dicht is). */
+  if (t.perfect) {
+    const kop = { emoji: '', name: t.name, perfect: true,
+      naar: wereldTeBezoeken(p, t.index) ? 'kaart' : null, wereldIdx: t.index };
+    kastBalk(kop, card, `nog ${rem} ${rem === 1 ? 'show' : 'shows'} met ⭐⭐⭐`, rem);
+    return;
+  }
   // achter de horizon geen "nog 9 werelden": dat is hetzelfde totaal, anders gezegd
   if (t.telWerelden && meerWereldenVooruit(p)) { kastBalk(t, card, `${pr.now} ${pr.label}`, pr.now); return; }
   kastBalk(t, card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!', rem > 0 ? rem : null);
@@ -9371,7 +9400,7 @@ function kastDof(card) {
   /* de boog opnieuw laten vollopen: --p van 0 naar wat er stond, met een uitloop.
      Wat er stond onthoudt hij (dataset.p): wie tikt terwijl hij nog loopt, leest
      anders een halve boog als het doel. */
-  const m = card.querySelector('.temoji');
+  const m = card.querySelector('.temoji, .pw-prijs');
   if (!m) return;
   const doel = parseFloat(m.dataset.p || m.style.getPropertyValue('--p')) || 0;
   if (!doel) return;
@@ -9413,10 +9442,14 @@ function kastBalk(t, card, tekst, getal) {
   /* t.naar: deze trofee verdien je in de kleedkamer, dus staat er rechts één
      knop die die lade opent -- dezelfde kleine knop als Speel in de balk van de
      kleedkamer. Alleen het icoon van waar je heen gaat, geen woord. */
-  const knop = t.naar ? `<button class="btn small" id="kast-naar" type="button" aria-label="Naar de kleedkamer">${t.naar === 'stage' ? '🎪' : '👕'}</button>` : '';
+  const naarKaart = t.naar === 'kaart';
+  const knop = t.naar ? `<button class="btn small" id="kast-naar" type="button" aria-label="${naarKaart ? 'Naar de wereld' : 'Naar de kleedkamer'}">${naarKaart ? '🗺️' : t.naar === 'stage' ? '🎪' : '👕'}</button>` : '';
   bar.innerHTML = `<div class="db-info"><span class="db-name">${t.perfect ? '' : t.emoji + ' '}${esc(t.name)}</span>`
     + `<span class="db-sub">· ${sub}</span></div>` + knop;
-  if (knop) $('kast-naar').onclick = () => { sndClick(); kastBalk(null); openKleedkamerCat(t.naar); };
+  if (knop) $('kast-naar').onclick = () => {
+    sndClick(); kastBalk(null);
+    if (naarKaart) naarWereldKaart(t.wereldIdx); else openKleedkamerCat(t.naar);
+  };
   bar.style.display = 'flex';
   speak(tekst);
   /* Viel de getikte trofee achter de balk (een tik vlak boven de navigatie), dan

@@ -7275,6 +7275,38 @@
   .pw-card.busy .pw-medal { opacity: .84; }
   .pw-card.busy .pw-ico { opacity: .94; }
 
+
+
+
+  .pw-card.busy .wereldprijs::after {
+    content: ''; position: absolute; left: 4%; right: 4%; bottom: 8%; height: 34%; border-radius: 50%;
+    border: 3px solid transparent;
+    background: conic-gradient(from 270deg, rgba(255,255,255,.9) calc(var(--p, 0) * 1%), rgba(255,255,255,.16) 0) border-box;
+    -webkit-mask: linear-gradient(#000 0 0) border-box, linear-gradient(#000 0 0) padding-box;
+    -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  .pw-card.busy .wereldprijs .wp-schat { z-index: 1; }
+  .pw-card.busy .wereldprijs, .pw-card.fresh .wereldprijs { opacity: .8; }
+
+
+
+  .pw-card.done .wereldprijs.goud .podium {
+    border-width: 3px;
+    box-shadow: 0 var(--pod-dik) 0 var(--ps), 0 var(--pod-dik) 0 4px var(--gold-accent), 0 0 26px rgba(var(--goud-gloed-rgb), .95);
+  }
+  .pw-card.done .wereldprijs::before {
+    content: ''; position: absolute; left: 50%; bottom: 22%; width: 120%; height: 90%; z-index: -1;
+    transform: translateX(-50%); border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(var(--goud-gloed-rgb), .45), transparent);
+  }
+  .pw-card.done .tname { color: var(--gold-light); }
+
+  .pw-card .pw-prijs { isolation: isolate; }
+  .pw-card .vonkje { position: absolute; z-index: 2; width: 9px; height: 9px; pointer-events: none; }
+  .pw-card .vonkje svg { display: block; width: 100%; height: 100%; fill: #fff; }
+  .pw-card .vonkje:nth-of-type(1) { right: 2px; top: 6px; }
+  .pw-card .vonkje:nth-of-type(2) { left: 4px; top: 26px; width: 6px; height: 6px; }
+
   .trophy-card.done .pw-medal {
     border-color: var(--gold-accent);
     box-shadow: inset 0 2px 0 rgba(var(--goud-glans-rgb),.3), 0 0 16px rgba(var(--goud-rgb),.5);
@@ -20621,14 +20653,33 @@ function perfectCardHTML(t, p, status) {
 
   const i = typeof t.index === 'number' ? t.index : -1;
   const st = i >= 0 ? wereldPrijsStand(p, i) : null;
-  if (st) st.goud = status === 'done';
+
+
+
+
+  if (st) { st.goud = status === 'done'; if (st.goud) st.af = true; }
   const prijs = st ? wereldPrijsHTML(p, i, 72, st) : '';
-  if (prijs) return `<div class="pw-medal pw-prijs">${prijs}</div>`
-    + `<div class="tname">${t.name}</div>` + cardVoet(stand);
+
+
+
+
+
+  const naam = pwNaam(t.name);
+  if (prijs) {
+    const pr = status === 'busy' ? t.progress(p) : null;
+    const stijl = pr ? ` style="--p:${Math.round(100 * pr.now / pr.target)}"` : '';
+    return `<div class="pw-medal pw-prijs"${stijl}>${prijs}${status === 'done' ? DIAMANT_VONKJES : ''}</div>`
+      + `<div class="tname">${naam}</div>`;
+  }
   return `<div class="pw-medal" style="${kleur}"><span class="pw-ico">${t.emoji}</span></div>`
-    + `<div class="tname">${t.name}</div>`
+    + `<div class="tname">${naam}</div>`
     + cardVoet(stand);
 }
+
+
+
+
+function pwNaam(naam) { return esc(naam).replace(/(.)wereld$/, '$1&shy;wereld'); }
 
 
 
@@ -20654,6 +20705,16 @@ function tapTrophy(t, card) {
   if (st === 'locked') { kastBalk(t, card, '🔒 Nog niet'); return; }
   if (!t.progress) { kastBalk(t, card, t.desc); return; }
   const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
+
+
+
+
+  if (t.perfect) {
+    const kop = { emoji: '', name: t.name, perfect: true,
+      naar: wereldTeBezoeken(p, t.index) ? 'kaart' : null, wereldIdx: t.index };
+    kastBalk(kop, card, `nog ${rem} ${rem === 1 ? 'show' : 'shows'} met ⭐⭐⭐`, rem);
+    return;
+  }
 
   if (t.telWerelden && meerWereldenVooruit(p)) { kastBalk(t, card, `${pr.now} ${pr.label}`, pr.now); return; }
   kastBalk(t, card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!', rem > 0 ? rem : null);
@@ -20712,7 +20773,7 @@ function kastDof(card) {
 
 
 
-  const m = card.querySelector('.temoji');
+  const m = card.querySelector('.temoji, .pw-prijs');
   if (!m) return;
   const doel = parseFloat(m.dataset.p || m.style.getPropertyValue('--p')) || 0;
   if (!doel) return;
@@ -20754,10 +20815,14 @@ function kastBalk(t, card, tekst, getal) {
 
 
 
-  const knop = t.naar ? `<button class="btn small" id="kast-naar" type="button" aria-label="Naar de kleedkamer">${t.naar === 'stage' ? '🎪' : '👕'}</button>` : '';
+  const naarKaart = t.naar === 'kaart';
+  const knop = t.naar ? `<button class="btn small" id="kast-naar" type="button" aria-label="${naarKaart ? 'Naar de wereld' : 'Naar de kleedkamer'}">${naarKaart ? '🗺️' : t.naar === 'stage' ? '🎪' : '👕'}</button>` : '';
   bar.innerHTML = `<div class="db-info"><span class="db-name">${t.perfect ? '' : t.emoji + ' '}${esc(t.name)}</span>`
     + `<span class="db-sub">· ${sub}</span></div>` + knop;
-  if (knop) $('kast-naar').onclick = () => { sndClick(); kastBalk(null); openKleedkamerCat(t.naar); };
+  if (knop) $('kast-naar').onclick = () => {
+    sndClick(); kastBalk(null);
+    if (naarKaart) naarWereldKaart(t.wereldIdx); else openKleedkamerCat(t.naar);
+  };
   bar.style.display = 'flex';
   speak(tekst);
 
