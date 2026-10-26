@@ -630,6 +630,34 @@ const TELEFOON = { width: 390, height: 844 };
     await ctx.close();
   }
 
+  /* ---- M · Een uitstapje opent waar je komt verbeteren, en zij past liggend ----
+     Op een schuivende kaart (liggend, een staande tablet) kwam een eerdere wereld
+     bovenaan uit: halte 8 in beeld, halte 1 en 2 eronder. Nu staat de eerste
+     halte zonder drie sterren in beeld. En liggend is zij klein genoeg om onder
+     de wereldpil te blijven. */
+  for (const maat of [{ width: 844, height: 390 }, { width: 768, height: 1024 }]) {
+    const { ctx, page } = await fresh(maat);
+    await page.evaluate(() => { __speel(3); const q = db.profiles.p1; q.stars[WORLD_START[1]] = 3; save(); selectProfile('p1'); });
+    await page.waitForTimeout(900);
+    if (maat.height < 500) {
+      const kop = await page.evaluate(() => {
+        const zij = document.querySelector('#tour-map .tour-hero svg').getBoundingClientRect();
+        return { zij: Math.round(zij.height), hoog: innerHeight };
+      });
+      check(kop.zij < kop.hoog * .45, 'M · liggend is zij minder dan de halve schermhoogte', JSON.stringify(kop));
+    }
+    await page.evaluate(() => { navigeerNaarWereld(1); });
+    await page.waitForTimeout(900);
+    const st = await page.evaluate(() => {
+      const map = $('tour-map'), nav = $('main-nav').getBoundingClientRect();
+      const b = map.querySelectorAll('.tour-stop')[1].getBoundingClientRect();   // halte 1 is perfect, halte 2 niet
+      return { boven: Math.round(b.top), onder: Math.round(b.bottom), nav: Math.round(nav.top), uit: map.dataset.uitstap };
+    });
+    check(st.uit === '1' && st.boven >= 0 && st.onder <= st.nav,
+      `M · ${maat.width}x${maat.height}: een eerdere wereld opent op de eerste halte zonder drie sterren`, JSON.stringify(st));
+    await ctx.close();
+  }
+
   check(pageErrors.length === 0, 'Z · geen fouten in de pagina', pageErrors.join(' | '));
   await browser.close();
   klaar();
