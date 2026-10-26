@@ -5645,6 +5645,16 @@
   .tour-stop.done.perfect .dot {
     background: linear-gradient(180deg, var(--halte-vulling-top), var(--halte-vulling));
     box-shadow: 0 0.9cqw 0 var(--halte-lip), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
+
+
+
+
+
+
+
+
+
+  .tour-stop.done.perfect .dot { color: var(--gold-accent); text-shadow: 0 0.3cqw 0 var(--halte-lip); }
   .tour-stop.next .dot { text-shadow: none;
     box-shadow: 0 0.9cqw 0 var(--gold-cta-shadow), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
   .tour-stop.locked .dot {
@@ -5816,9 +5826,15 @@
   }
   .tour-stop .cstars svg { flex: none; width: 4.4cqw; height: 4.4cqw; display: block;
     overflow: visible; stroke-linejoin: round; }
-  .tour-stop .cstars svg:nth-child(1) { transform: translateY(-0.7cqw) rotate(-16deg); }
-  .tour-stop .cstars svg:nth-child(2) { transform: scale(1.1); }
-  .tour-stop .cstars svg:nth-child(3) { transform: translateY(-0.7cqw) rotate(16deg); }
+
+
+
+
+
+
+  .tour-stop .cstars svg:nth-child(1) { transform: translate(1.1cqw, -0.5cqw) rotate(-14deg); }
+  .tour-stop .cstars svg:nth-child(2) { transform: scale(1.12); position: relative; z-index: 1; }
+  .tour-stop .cstars svg:nth-child(3) { transform: translate(-1.1cqw, -0.5cqw) rotate(14deg); }
   .tour-stop .cstars .cs-lip { fill: var(--ster-lip); stroke: var(--ster-lip); stroke-width: 3.4; }
   .tour-stop .cstars .cs-rand { fill: none; stroke: var(--ster-zoom); stroke-width: 3.4; }
   .tour-stop .cstars .cs-vol { fill: url(#sterVerloop); stroke: #f08c00; stroke-width: 1; }
