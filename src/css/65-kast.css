@@ -212,7 +212,9 @@
     display: flex; flex-direction: column; align-items: center;
     transition: transform var(--t-tik);
   }
-  .trophy-card:active { transform: scale(.96); }
+  /* Geen indrukken van het hele kaartje (:active scale): de medaille wordt bij
+     een tik zelf ingedrukt (kastKlop hieronder), en twee keer indrukken -- het
+     kaartje met naam en al, en de medaille erin -- zag er wiebelig uit. */
   /* De medaille. Elk icoon staat in een rond medaillon -- de vorm die de perfecte
      plank al had (.pw-medal) -- en de rand zegt de stand:
        behaald / klaar   een gouden rand met een zachte gloed
@@ -347,6 +349,26 @@
   .trophy-card.ladder.nu-1 { --ring: var(--m-1); }
   .trophy-card.ladder.nu-2 { --ring: var(--m-2); }
   .trophy-card.ladder.nu-3 { --ring: var(--m-3); }
+  /* Het muzieknootje van een tik (zie kastNoot): rechtsboven van de medaille
+     omhoog en weg, in goud of in het metaal van een medaille die meegroeit. Het
+     zegt zonder woorden wat de tik deed: die trofee speelde een noot. */
+  .kast-noot {
+    position: absolute; z-index: 3; line-height: 0; pointer-events: none;
+    fill: var(--noot, var(--gold-accent)); filter: drop-shadow(0 0 6px var(--noot, var(--gold-accent)));
+    animation: kastNoot .8s ease-out forwards;
+  }
+  @keyframes kastNoot {
+    0% { opacity: 0; transform: translate(0, 6px) scale(.6) rotate(-10deg); }
+    20% { opacity: 1; transform: translate(4px, -6px) scale(1.1) rotate(4deg); }
+    100% { opacity: 0; transform: translate(14px, -38px) scale(.9) rotate(12deg); }
+  }
+  /* Behaald glanst: een zachte lichtvlek linksboven, alsof het vlak gepoetst is.
+     Nog niet blijft mat. Zo zie je ook zonder te tikken welke medailles van jou
+     zijn -- en dus welke er zingen. */
+  .trophy-card.done:not(.ready) .temoji::before {
+    content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(60% 45% at 35% 22%, rgba(255,255,255,.28), transparent 70%);
+  }
   @keyframes kastRing { from { opacity: .85; transform: scale(.9); } to { opacity: 0; transform: scale(1.45); } }
   @media (prefers-reduced-motion: reduce) {
     .trophy-card.ladder.top .temoji::after { animation: none; display: none; }

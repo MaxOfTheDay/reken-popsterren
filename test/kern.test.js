@@ -713,6 +713,24 @@ zaak('O', () => {
     check(!losseNul, `O · ${naam} laat geen noot zonder toon staan`, JSON.stringify(def.noten));
   }
 
+  /* De kast: één klokje in vier metalen, en een tok voor wat nog moet komen. Dat
+     ze verschillend klinken is hier het onderwerp -- een medaille die meegroeit
+     hoort je te vertellen in welk metaal hij nu is. De boventonen (boven) liggen
+     altijd op of boven de grondtoon, zodat de ondergrens hieronder ook voor hen
+     geldt. */
+  const kastKlanken = ['kast.brons', 'kast.klink', 'kast.goud', 'kast.diamant'];
+  for (const naam of kastKlanken.concat('kast.tok'))
+    check(!!sfx[naam], `O · ${naam} staat in de tabel`, '');
+  const kastVorm = naam => JSON.stringify([sfx[naam].noten, sfx[naam].boven]);
+  check(new Set(kastKlanken.map(kastVorm)).size === kastKlanken.length,
+    'O · elk metaal in de kast klinkt anders', '');
+  for (const naam of namen) {
+    const boven = sfx[naam].boven;
+    if (!boven) continue;
+    const ok = sfx[naam].ladder && boven.every(b => Array.isArray(b) && b.length === 5 && b[0] >= 1 && b[1] > 0 && b[2] >= 0 && b[4] > 0);
+    check(ok, `O · ${naam}: de boventonen liggen boven een toon uit de ladder`, JSON.stringify(boven));
+  }
+
   /* De laagste toon in de hele app. Een tabletluidspreker begint ruim boven de
      311 Hz die hier ooit stond, dus daar bleef van de zachtste helft van
      'answer.retry' niets over. Dit is de grens die dat tegenhoudt. */

@@ -6844,7 +6844,9 @@
     display: flex; flex-direction: column; align-items: center;
     transition: transform var(--t-tik);
   }
-  .trophy-card:active { transform: scale(.96); }
+
+
+
 
 
 
@@ -6979,6 +6981,26 @@
   .trophy-card.ladder.nu-1 { --ring: var(--m-1); }
   .trophy-card.ladder.nu-2 { --ring: var(--m-2); }
   .trophy-card.ladder.nu-3 { --ring: var(--m-3); }
+
+
+
+  .kast-noot {
+    position: absolute; z-index: 3; line-height: 0; pointer-events: none;
+    fill: var(--noot, var(--gold-accent)); filter: drop-shadow(0 0 6px var(--noot, var(--gold-accent)));
+    animation: kastNoot .8s ease-out forwards;
+  }
+  @keyframes kastNoot {
+    0% { opacity: 0; transform: translate(0, 6px) scale(.6) rotate(-10deg); }
+    20% { opacity: 1; transform: translate(4px, -6px) scale(1.1) rotate(4deg); }
+    100% { opacity: 0; transform: translate(14px, -38px) scale(.9) rotate(12deg); }
+  }
+
+
+
+  .trophy-card.done:not(.ready) .temoji::before {
+    content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(60% 45% at 35% 22%, rgba(255,255,255,.28), transparent 70%);
+  }
   @keyframes kastRing { from { opacity: .85; transform: scale(.9); } to { opacity: 0; transform: scale(1.45); } }
   @media (prefers-reduced-motion: reduce) {
     .trophy-card.ladder.top .temoji::after { animation: none; display: none; }
@@ -13997,7 +14019,10 @@ function noot(freq, dur, delay, type, vol) {
 
 
 
+
 const HERHAALREM = 60;
+
+const KAST_LADDER = [523, 587, 659, 784, 880, 1047, 1175, 1319, 1568, 1760, 2093];
 const klankTijd = {};
 const SFX = {
 
@@ -14010,8 +14035,37 @@ const SFX = {
 
 
 
-  'kast.klink':     { noten: [[0, 0.34, 0, 'triangle', 0.13], [0, 0.22, 0.02, 'sine', 0.04]],
-                      ladder: [523, 587, 659, 784, 880, 1047, 1175, 1319, 1568], tril: 12 },
+
+
+
+
+
+
+
+
+
+
+
+
+
+  'kast.klink':     { noten: [[0, 0.55, 0, 'sine', 0.17]],
+                      boven: [[2.76, 0.14, 0, 'sine', 0.045], [4, 0.035, 0, 'triangle', 0.03]],
+                      ladder: KAST_LADDER, tril: 12 },
+  'kast.brons':     { noten: [[0, 0.3, 0, 'sine', 0.2]],
+                      boven: [[2, 0.12, 0, 'sine', 0.04], [4, 0.05, 0, 'triangle', 0.05]],
+                      ladder: KAST_LADDER, tril: 12 },
+  'kast.goud':      { noten: [[0, 0.55, 0, 'sine', 0.16]],
+                      boven: [[2.76, 0.14, 0, 'sine', 0.04], [4, 0.035, 0, 'triangle', 0.03],
+                              [1.5, 0.55, 0.07, 'sine', 0.14], [4.14, 0.12, 0.07, 'sine', 0.035]],
+                      ladder: KAST_LADDER, tril: 12 },
+  'kast.diamant':   { noten: [[0, 0.5, 0, 'sine', 0.15]],
+                      boven: [[2.76, 0.12, 0, 'sine', 0.04], [1.25, 0.5, 0.06, 'sine', 0.14],
+                              [1.5, 0.55, 0.12, 'sine', 0.14], [4, 0.3, 0.18, 'sine', 0.03]],
+                      ladder: KAST_LADDER, tril: 12 },
+
+
+
+  'kast.tok':       { noten: [[440, 0.12, 0, 'sine', 0.16], [880, 0.03, 0, 'triangle', 0.035]], tril: 8 },
 
 
 
@@ -14144,6 +14198,7 @@ function playSfx(naam, opts) {
     const toon = def.ladder ? def.ladder[Math.min(opts.i | 0, def.ladder.length - 1)]
       : def.keuze ? pick(def.keuze) : 0;
     def.noten.forEach(n => noot(n[0] || toon, n[1], n[2], n[3], n[4]));
+    if (def.boven) def.boven.forEach(b => noot(toon * b[0], b[1], b[2], b[3], b[4]));
   } catch (e) { }
 }
 
@@ -19931,6 +19986,7 @@ let justClaimed = null;
 function renderShelves() {
   const p = P();
   $('screen-trophies').onscroll = kastSchuift;
+  $('trophy-shelves').onclick = kastErnaast;
   checkTrophies(p);
 
   const earned = earnedActiveCount(p);
@@ -20078,7 +20134,7 @@ function trophyCard(t, p) {
 
 
   card.setAttribute('aria-label', status === 'ready' ? `Open ${t.name}` : `${t.name}: ${t.desc}`);
-  card.onclick = (e) => tapTrophy(t, card, e);
+  card.onclick = () => tapTrophy(t, card);
   return card;
 }
 
@@ -20122,17 +20178,16 @@ function ladderCard(ladder, p) {
       + `<div class="tname">${ladder.name}</div>` + stippen;
     card.setAttribute('aria-label', niveau ? `${trappen[niveau - 1].name}` : `${ladder.name}: ${trappen[0].desc}`);
   }
-  card.onclick = (e) => tapLadder(ladder, card, e);
+  card.onclick = () => tapLadder(ladder, card);
   return card;
 }
-function tapLadder(ladder, card, e) {
-  if (e) tapRipple(e.clientX, e.clientY);
+function tapLadder(ladder, card) {
   const p = P();
   const { trappen, klaar, niveau, volgende } = ladderStand(ladder, p);
   if (klaar) { openTrophy(klaar.id); return; }
 
-  if (niveau) kastKlink(card); else kastDof(card);
-  if (card.classList.contains('kies')) { kastBalk(null); return; }
+  if (niveau) kastKlink(card, trappen[niveau - 1].trap); else kastDof(card);
+  if (card.classList.contains('kies')) return;
   const kop = { emoji: ladder.emoji, name: ladder.name };
   const metaal = niveau ? TRAP_NAMEN[trappen[niveau - 1].trap] : '';
   if (!volgende) { kastBalk(kop, card, metaal + '!'); return; }
@@ -20215,8 +20270,14 @@ function perfectCardHTML(t, p, status) {
 }
 
 
-function tapTrophy(t, card, e) {
-  if (e) tapRipple(e.clientX, e.clientY);
+
+
+
+
+
+
+
+function tapTrophy(t, card) {
   const p = P();
   const st = trophyStatus(p, t);
   if (st === 'ready') { openTrophy(t.id); return; }
@@ -20224,9 +20285,10 @@ function tapTrophy(t, card, e) {
   if (st === 'done') kastKlink(card); else kastDof(card);
 
 
+  if (card.classList.contains('kies')) return;
 
 
-  if (card.classList.contains('kies')) { kastBalk(null); return; }
+
   if (st === 'done') { kastBalk(t, card, t.desc); return; }
   if (st === 'locked') { kastBalk(t, card, '🔒 Nog niet'); return; }
   if (!t.progress) { kastBalk(t, card, t.desc); return; }
@@ -20249,22 +20311,51 @@ function tapTrophy(t, card, e) {
 
 
 
+const KAST_KLANK = ['kast.brons', 'kast.klink', 'kast.goud', 'kast.diamant'];
+const KAST_NOOT_KLEUR = ['var(--m-0)', 'var(--m-1)', 'var(--m-2)', 'var(--m-3)'];
 
 
-function kastKlink(card) {
-  playSfx('kast.klink', { i: [...card.parentElement.children].indexOf(card) % 9 });
-  if (motionOff() || card.classList.contains('kies')) return;
+const KAST_NOOT = [
+  '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 3v11.3A3.5 3.5 0 1 0 11 17.5V8h6V3z"/></svg>',
+  '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M8 4v10.3A3.2 3.2 0 1 0 10 17.3V9l9-2v5.3A3.2 3.2 0 1 0 21 15.3V2z"/></svg>'];
+function kastKlink(card, trap) {
+  const plek = [...card.parentElement.children].indexOf(card);
+
+  const keer = card._keer || 0;
+  card._keer = keer + 1;
+  clearTimeout(card._keerWeg);
+  card._keerWeg = setTimeout(() => { card._keer = 0; }, 900);
+  playSfx(KAST_KLANK[trap == null ? 1 : trap], { i: (plek + keer) % KAST_LADDER.length });
+  if (motionOff()) return;
   opnieuw(card, 'klink');
-  sparkle(card, ['✨']);
+  kastNoot(card, trap);
+}
+
+function kastNoot(card, trap) {
+  const m = card.querySelector('.temoji, .pw-medal');
+  if (!m) return;
+  const r = m.getBoundingClientRect(), c = card.getBoundingClientRect();
+  const n = document.createElement('span');
+  n.className = 'kast-noot';
+  n.innerHTML = KAST_NOOT[(card._keer || 0) % 2];
+  n.style.left = (r.right - c.left - 16) + 'px';
+  n.style.top = (r.top - c.top - 10) + 'px';
+  if (trap != null) n.style.setProperty('--noot', KAST_NOOT_KLEUR[trap]);
+  card.appendChild(n);
+  setTimeout(() => n.remove(), 850);
 }
 function kastDof(card) {
-  sndClick();
-  if (motionOff() || card.classList.contains('kies')) return;
+  playSfx('kast.tok');
+  if (motionOff()) return;
   opnieuw(card, 'dof');
 
+
+
   const m = card.querySelector('.temoji');
-  const doel = m ? parseFloat(m.style.getPropertyValue('--p')) || 0 : 0;
+  if (!m) return;
+  const doel = parseFloat(m.dataset.p || m.style.getPropertyValue('--p')) || 0;
   if (!doel) return;
+  m.dataset.p = doel;
   const t0 = performance.now();
   const stap = t => {
     const k = Math.min(1, (t - t0) / 520);
@@ -20274,6 +20365,8 @@ function kastDof(card) {
   m.style.setProperty('--p', 0);
   requestAnimationFrame(stap);
 }
+
+function kastErnaast(e) { if (!e.target.closest('.trophy-card')) kastBalk(null); }
 
 function opnieuw(el, klasse) {
   el.classList.remove(klasse); void el.offsetWidth; el.classList.add(klasse);
