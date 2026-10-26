@@ -15216,7 +15216,7 @@ function syncBackGuard() {
       // als overslaanbaar markeren, en de eerste terug sloeg de app over zonder
       // stopkaartje. Dus wachten op de eerste tik -- de klik-luisteraar hieronder.
       const ua = navigator.userActivation;
-      if (!guardVooruit && ua && !ua.hasBeenActive) return;
+      if (!guardVooruit && ua && !ua.hasBeenActive) { zetStopWachter(); return; }
       if (guardVooruit) history.forward();                    // de oude wachtpost, zie hierboven
       else history.pushState({ rpGuard: 1 }, '');
       backGuardArmed = true;
@@ -15237,9 +15237,34 @@ window.addEventListener('popstate', () => {
 // Na terugkeer uit de bfcache (bv. via Recents) kan de wachtpost-entry intussen
 // alweer weg zijn -- lees de status dan opnieuw af i.p.v. hem zomaar aan te nemen.
 window.addEventListener('pageshow', () => { backGuardArmed = !!(history.state && history.state.rpGuard); syncBackGuard(); });
+/* Vóór de eerste tik: een CloseWatcher in plaats van de wachtpost. Dat is de
+   API die Android-terug eerst vraagt, vóór de history, en een pagina mag er
+   precies één zetten zonder dat er getikt is -- dus bij een vers geopende app
+   geeft de eerste terug tóch het stopkaartje. Hij gaat na één keer op (en zet
+   zichzelf niet opnieuw), zodat de tweede terug de app verlaat zoals bij de
+   wachtpost. Eerst getikt? Dan ruimt de klik hieronder hem op en neemt de
+   gewone wachtpost het over; bleef hij staan, dan ving hij de eerstvolgende
+   terug weg vóór de history. Alleen op een aanraakscherm: met een toetsenbord is
+   Escape het sluitverzoek, en daar hoort geen kaartje over de terugknop bij.
+   Oudere browsers zonder CloseWatcher houden het gedrag van vroeger: zonder tik
+   sluit de eerste terug de app. */
+let stopWachter = null;
+function zetStopWachter() {
+  if (stopWachter || typeof CloseWatcher !== 'function') return;
+  if (!matchMedia('(pointer: coarse)').matches) return;
+  try { stopWachter = new CloseWatcher(); } catch (e) { return; }
+  stopWachter.onclose = () => {
+    stopWachter = null;
+    const act = backTarget();
+    if (act) act();
+  };
+}
 // De wachtpost die bij het opstarten nog niet mocht (zie syncBackGuard): bij elke
 // tik opnieuw kijken. Kost niets als hij er al staat of niet hoeft.
-document.addEventListener('click', syncBackGuard, true);
+document.addEventListener('click', () => {
+  if (stopWachter) { stopWachter.destroy(); stopWachter = null; }
+  syncBackGuard();
+}, true);
 // Escape is dezelfde intentie als terug, ook zonder touchscherm. Behalve het
 // stopkaartje: "druk nog eens op terug" zegt een toetsenbord niets.
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { const act = backTarget(); if (act && act !== toonStopKaart) act(); } });

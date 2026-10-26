@@ -477,6 +477,38 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ---- 7a2 · Het stopkaartje bij een vers geopende app ----
+     Vóór de eerste tik mag er geen wachtpost (Chrome zou hem overslaan), dus
+     vangt een CloseWatcher die eerste terug op. Een sluitverzoek zonder
+     terugknop is in een test de Escape-toets; de eigen Escape-luisteraar van de
+     app opent het kaartje níét, dus als het hier opengaat, deed de watcher het.
+     Op een aanraakscherm (hasTouch), want alleen daar wordt hij gezet. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await page.goto(APP_URL);
+    await page.waitForTimeout(400);
+    // (navigator.userActivation zelf aflezen kan hier niet: page.evaluate telt
+    // voor Chrome als een gebaar en zet hem zo zelf op true.)
+    let k = await page.evaluate(() => ({ cw: typeof CloseWatcher === 'function',
+      wacht: !!(history.state && history.state.rpGuard) }));
+    check(k.cw && !k.wacht, 'vers geopend: nog geen tik en dus nog geen wachtpost', JSON.stringify(k));
+    await page.keyboard.press('Escape'); await page.waitForTimeout(400);
+    k = await page.evaluate(() => ({ kaart: document.getElementById('confirm-modal').classList.contains('open') && !!document.getElementById('stop-blijf'),
+      wacht: !!(history.state && history.state.rpGuard) }));
+    check(k.kaart && !k.wacht, 'de eerste terug na het openen toont tóch het stopkaartje (CloseWatcher)', JSON.stringify(k));
+    await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+    check(await page.evaluate(() => document.getElementById('confirm-modal').classList.contains('open')),
+      'de watcher gaat na één keer op: de tweede druk opent niets nieuws (terug verlaat dan de app)', '');
+    await page.tap('#stop-blijf'); await page.waitForTimeout(400);
+    k = await page.evaluate(() => ({ kaart: document.getElementById('confirm-modal').classList.contains('open'),
+      wacht: !!(history.state && history.state.rpGuard) }));
+    check(!k.kaart && k.wacht, 'na Blijven spelen neemt de gewone wachtpost het over', JSON.stringify(k));
+    await ctx.close();
+  }
+
   /* ================= 7b · Werelden: indeling, staart en de leerstap =================
    * Een wereld is een hergroepering van p.level, en sinds de review van september
    * 2026 ook een stap in het rekenen (zie "De leerstap" in de app). Twee dingen
