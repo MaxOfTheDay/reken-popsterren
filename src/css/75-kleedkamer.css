@@ -453,7 +453,8 @@
   /* ---- De spot ------------------------------------------------------------
      Eén bundel van boven op haar, en dat is precies de bundel uit de show
      (.venue-bundel in 50-zaal): goud bovenin, uitgedoofd vóór haar voeten, met
-     dezelfde zachte rand. Geen eigen lichtje, zodat ze in de kleedkamer op
+     dezelfde rand -- en net als daar zonder filter (zie "GEEN FILTER" bij
+     .venue-bundel). Geen eigen lichtje, zodat ze in de kleedkamer op
      hetzelfde podium staat als straks in de show. De kamer eromheen is gedempt
      (zie "De kamer, gedempt"), dus zij is het lichtste ding in beeld en de lade
      het tweede.
@@ -466,7 +467,6 @@
     background: linear-gradient(180deg, rgba(var(--goud-glans-rgb),.36) 0%, rgba(var(--warm-licht-rgb),.15) 54%, rgba(var(--warm-licht-rgb),0) 86%);
     -webkit-clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
     clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
-    filter: blur(13px);
   }
   @media (min-width: 1000px) and (orientation: landscape) and (min-height: 501px) {
     #screen-dress .stage-wrap::before { top: -110px; }
