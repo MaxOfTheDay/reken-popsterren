@@ -272,7 +272,8 @@ zaak('F', () => {
   check(perfect.every(t => t.id.indexOf(app.PERFECT_BADGE) === 0),
     'F · en een perfecte wereld is te herkennen aan zijn id',
     JSON.stringify(perfect.filter(t => t.id.indexOf(app.PERFECT_BADGE) !== 0).map(t => t.id)));
-  check(TROPHY_SHELVES.length === 5, 'F · en er zijn vijf planken', TROPHY_SHELVES.length);
+  // vijf -> vier (oktober 2026): alle medailles die meegroeien samen, zie TROPHY_SHELVES
+  check(TROPHY_SHELVES.length === 4, 'F · en er zijn vier planken', TROPHY_SHELVES.length);
   /* De medailles die meegroeien (TROPHY_LADDERS): elke trap is een echte trofee,
      alle trappen van een ladder hangen op dezelfde plank, en ze lopen op van
      brons naar boven -- trap 0, 1, 2 ... in de volgorde van de ladder, met een

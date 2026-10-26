@@ -2142,7 +2142,7 @@ function rebuildWorldBadges() {
    perfecte show) hebben er geen -- "0 / 1" is geen voortgang,
    dat is alleen de mededeling dat het nog niet gebeurd is. */
 const TROPHIES = [
-  // 🎤 Avontuur — de momenten die je je herinnert
+  // 🎤 Wat je meemaakt. In de kast staan ze in twee groepen, Eerste keer en Medailles (zie TROPHY_SHELVES)
   { id: 'first',      emoji: '🎫', name: 'Eerste optreden', desc: 'Je allereerste show',   has: p => playedCount(p) >= 1 },
   /* (Hier stond 'toegift', "Applaus!": de publieksmeter één keer vol. Met pensioen
      sinds oktober 2026 -- die meter loopt in bijna elke show vol, dus lag hij
@@ -2260,23 +2260,30 @@ const TROPHY_LADDERS = [
   { key: 'goud',  emoji: '🌟', name: 'Goudzoeker',     ids: ['gold5', 'gold20', 'gold50', 'gold100'] },
   { key: 'kast',  emoji: '🛍️', name: 'Verzamelaar',    ids: ['shopper', 'shop25', 'shop50', 'shop100'], naar: 'dress' },
 ];
-/* De kast heeft vijf planken, en niet meer. Elke plank is één soort prestatie, zodat
-   een kind aan de kop al ziet waar ze naar kijkt -- en zodat er geen plank is die
+/* De kast heeft vier groepen, en niet meer. Elke groep is één soort prestatie, zodat
+   een kind aan de kop al ziet waar ze naar kijkt -- en zodat er geen groep is die
    bestaat omdat er nog trofeeën over waren.
 
-   De volgorde is de volgorde waarin je ze tegenkomt: eerst wat je meemaakt, dan de
-   lange rekenweg en wat je leert, dan de grote prijzen, en helemaal onderaan de
-   kleedkamer. */
+   Oktober 2026: van vijf naar vier. Sinds Sterrenhit, Wereldreiziger en
+   Verzamelaar meegroeien stonden er medailles die meegroeien op drie planken, en
+   Rekenkracht en Kleedkamer hielden er elk twee over: halflege groepen. Nu staan
+   alle vijf medailles samen (één rij metaal, één manier van lezen), en de twee
+   eerste keren -- je eerste show, je eerste eigen podium -- samen eronder.
+
+   De volgorde: eerst wat je verzamelt en meemaakt, dan wat je leert, en
+   onderaan de grote prijzen. */
 /* `ico` staat los van `name` sinds de kopregel van een groep uit drie cellen
    bestaat (icoon | naam + regeltje | stand). Stond het emoji nog vóór de naam in
    dezelfde string, dan zou het meeschuiven met de tekst en niet op één lijn staan
    met de iconen van de andere groepen -- en dat is nu juist wat de kolom rustig
    maakt. Een groep erbij heeft dus één veld meer, en verder niets. */
 const TROPHY_SHELVES = [
-  { key: 'avontuur', ico: '🎤', name: 'Avontuur',          note: 'De momenten die je je blijft herinneren',
-    ids: ['first', 'perfect1', 'perfect10', 'perfect25', 'perfect50', 'worlds3', 'worlds6', 'worlds9', 'worldtour'] },
-  { key: 'rekenen',  ico: '🧮', name: 'Rekenkracht',       note: 'Elke goede som telt mee, je hele leven lang',
-    ids: ['sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20', 'gold50', 'gold100'] },
+  { key: 'medailles', ico: '🎖️', name: 'Medailles',      note: 'Medailles die meegroeien: brons, zilver, goud, diamant',
+    ids: ['perfect1', 'perfect10', 'perfect25', 'perfect50', 'worlds3', 'worlds6', 'worlds9', 'worldtour',
+          'sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20', 'gold50', 'gold100',
+          'shopper', 'shop25', 'shop50', 'shop100'] },
+  { key: 'eerst',    ico: '🎤', name: 'Eerste keer',       note: 'De momenten die je je blijft herinneren',
+    ids: ['first', 'eigenpodium'] },
   { key: 'leren',    ico: '💡', name: 'Nieuwe sommen',     note: 'Wat je nieuw geleerd hebt',
     ids: ['leer-brug', 'leer-zoek', 'leer-drie', 'leer-cijfers', 'leer-telsom'] },
   /* De grote prijzen. De lijst wordt gevuld door rebuildWorldBadges() -- de werelden
@@ -2284,9 +2291,6 @@ const TROPHY_SHELVES = [
      meteen uit de pas lopen. De `key` is waar die functie deze plank aan herkent. */
   { key: 'perfect',  ico: '🥇', name: 'Perfecte werelden', note: 'Overal drie sterren: de grootste prijs van het spel',
     ids: [] },
-  // key 'sterren' van toen het nog Sterrenleven heette; de key is alleen een naam in de code
-  { key: 'sterren',  ico: '👕', name: 'Kleedkamer',        note: 'Je eigen stijl in de kleedkamer',
-    ids: ['shopper', 'shop25', 'shop50', 'shop100', 'eigenpodium'] },
 ];
 /* Trofeeën met pensioen.
    Een kind dat zo'n trofee ooit behaald heeft, heeft die id nog in p.trophies

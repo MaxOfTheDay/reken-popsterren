@@ -338,8 +338,8 @@ Moet het toch:
    `progress: p => trophyProgress(nu, doel, 'label')` als het getal zélf iets
    zegt ("82 / 100 sommen"). Voor iets wat één keer gebeurt géén `progress` —
    "0 / 1" is geen voortgang.
-2. Het id bij een plank in `TROPHY_SHELVES`. Er zijn er vijf (Avontuur,
-   Rekenkracht, Nieuwe sommen, Perfecte werelden, Kleedkamer); een plank met
+2. Het id bij een plank in `TROPHY_SHELVES`. Er zijn er vier (Medailles,
+   Eerste keer, Nieuwe sommen, Perfecte werelden); een plank met
    één kaartje is geen plank. Is de trofee niet voor elk kind te halen (hangt
    hij af van wat de ouder instelde), geef hem dan `voor: p => …`: dan staat hij
    er alleen bij wie hem kán halen.
