@@ -3406,7 +3406,8 @@
 
 
 
-  .spotlight-bar { height: 100%; width: 100%; border-radius: var(--r-pill); background: var(--gold-light); transition: transform .1s linear, width .1s linear; }
+
+  .spotlight-bar { height: 100%; width: 100%; border-radius: var(--r-pill); background: var(--gold-light); }
   .question-card.zonder-tijd .spot-rail { display: none; }
 
   .question-card.golden .spot-rail { background: rgba(74, 20, 140, .28); }
@@ -21934,10 +21935,21 @@ function askQuit() {
   sndClick();
   if (G && G.idx === 0 && G.errors === 0 && G.misses === 0) { quitGame(); return; }
   renderGeluid();
+
+
+  if (G && G.timer) { stopSpot(); G.spotPauze = true; }
   $('quit-modal').classList.add('open');
   syncBackGuard();
 }
-function closeQuitModal() { sndClick(); $('quit-modal').classList.remove('open'); syncBackGuard(); }
+function closeQuitModal() {
+  sndClick();
+  $('quit-modal').classList.remove('open');
+  syncBackGuard();
+  if (G && G.spotPauze) {
+    G.spotPauze = false;
+    if (!G.lock && G.spot > 0) spotLoopt();
+  }
+}
 function quitGame() {
   $('quit-modal').classList.remove('open');
   stopSpot();
@@ -22185,41 +22197,87 @@ document.addEventListener('keydown', e => {
 
 
 
-function zetSpot(pct) {
-  const balk = $('spotlight-bar');
 
-  const zicht = Math.min(100, pct * SPOT_DUUR / (SPOT_DUUR - SPOT_RUST));
-  if ($('question-card').classList.contains('golden')) {
-    balk.style.transform = '';
-    balk.style.width = zicht + '%';
-  } else {
-    balk.style.width = '';
-    balk.style.transform = `translateX(${zicht - 100}%)`;
-  }
-}
+
+
+
+
+
+
+
+
+
+
+
 const SPOT_DUUR = 12000;
 const SPOT_RUST = 4000;
+const SPOT_VUL = 450;
 let spotAnim = null;
+
+function spotZicht(t) {
+  if (t <= SPOT_RUST) return 1;
+  if (t >= SPOT_DUUR) return 0;
+  const u = (t - SPOT_RUST) / (SPOT_DUUR - SPOT_RUST);
+  return 1 - (2 * u * u - u * u * u);
+}
+function spotGouden() { return $('question-card').classList.contains('golden'); }
+
+function spotStand(v) {
+  return spotGouden() ? { width: (v * 100) + '%' } : { transform: `translateX(${v * 100 - 100}%)` };
+}
+
+
+
+
+function zetSpot(pct, zacht) {
+  const balk = $('spotlight-bar');
+  const van = zacht && balk.animate && !motionOff() ? getComputedStyle(balk) : null;
+  const vorig = van && { transform: van.transform, width: van.width };
+  const v = spotZicht((1 - pct / 100) * SPOT_DUUR);
+  if (spotGouden()) {
+    balk.style.transform = '';
+    balk.style.width = (v * 100) + '%';
+  } else {
+    balk.style.width = '';
+    balk.style.transform = `translateX(${v * 100 - 100}%)`;
+  }
+  if (vorig) {
+    const naar = spotStand(v);
+    const begin = spotGouden() ? { width: vorig.width } : { transform: vorig.transform };
+    balk.animate([begin, naar], { duration: 220, easing: MOTION.uit });
+  }
+}
 function startSpot() {
   stopSpot();
   if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
   G.spot = 100;
   zetSpot(100);
-  spotLoopt();
+  spotLoopt(!motionOff());
 }
 
 
 
-function spotLoopt() {
+
+function spotLoopt(vullen) {
   const al = (1 - G.spot / 100) * SPOT_DUUR;
   G.spotStart = performance.now() - al;
   const balk = $('spotlight-bar');
   if (balk && balk.animate) {
+    const kf = [];
+    if (vullen) {
 
-    const rust = SPOT_RUST / SPOT_DUUR;
-    const kf = $('question-card').classList.contains('golden')
-      ? [{ width: '100%' }, { width: '100%', offset: rust }, { width: '0%' }]
-      : [{ transform: 'translateX(0%)' }, { transform: 'translateX(0%)', offset: rust }, { transform: 'translateX(-100%)' }];
+      for (let i = 0; i <= 6; i++) {
+        const u = i / 6;
+        kf.push({ ...spotStand(1 - Math.pow(1 - u, 3)), offset: u * SPOT_VUL / SPOT_DUUR });
+      }
+    } else kf.push({ ...spotStand(1), offset: 0 });
+    kf.push({ ...spotStand(1), offset: SPOT_RUST / SPOT_DUUR });
+
+
+    for (let i = 1; i <= 24; i++) {
+      const t = SPOT_RUST + (SPOT_DUUR - SPOT_RUST) * i / 24;
+      kf.push({ ...spotStand(spotZicht(t)), offset: t / SPOT_DUUR });
+    }
     spotAnim = balk.animate(kf, { duration: SPOT_DUUR, easing: 'linear', fill: 'forwards' });
     if (al) spotAnim.currentTime = al;
   }
@@ -22507,7 +22565,7 @@ function antwoordFout(q, p, val, btnEl) {
 function eersteMisser(q, val, btnEl) {
   G.retried = true;
   G.misses++;
-  stopSpot(); G.spot = 0; zetSpot(0);
+  stopSpot(); G.spot = 0; zetSpot(0, true);
   save();
   if (btnEl) { btnEl.classList.add('bad'); btnEl.disabled = true; }
   if (G.mode === 'typ') { G.input = ''; drawQuestion(); }

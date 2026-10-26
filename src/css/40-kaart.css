@@ -611,9 +611,10 @@
   /* Altijd de volle breedte van de rail; wat er verstreken is schuift er links
      uit (zie zetSpot). Een verschuiving en geen breedte, want een breedte die
      verandert moet elk beeldje opnieuw opgemeten en getekend worden. Alleen de
-     gouden vraag krimpt nog in de breedte -- zie zetSpot waarom -- vandaar dat
-     de overgang voor allebei geldt. */
-  .spotlight-bar { height: 100%; width: 100%; border-radius: var(--r-pill); background: var(--gold-light); transition: transform .1s linear, width .1s linear; }
+     gouden vraag krimpt nog in de breedte -- zie zetSpot waarom. Geen CSS-
+     overgang: alles wat hij doet is een animatie uit het script (zie "ZACHT
+     VERTREKKEN"), en een overgang zou daar in de cascade vóór gaan. */
+  .spotlight-bar { height: 100%; width: 100%; border-radius: var(--r-pill); background: var(--gold-light); }
   .question-card.zonder-tijd .spot-rail { display: none; }
   /* gouden vraag: gele balk op gele kaart is onzichtbaar → donkere baan + paarse balk */
   .question-card.golden .spot-rail { background: rgba(74, 20, 140, .28); }

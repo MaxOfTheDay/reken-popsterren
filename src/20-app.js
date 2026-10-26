@@ -10884,10 +10884,21 @@ function askQuit() {
   sndClick();
   if (G && G.idx === 0 && G.errors === 0 && G.misses === 0) { quitGame(); return; }
   renderGeluid();   // de geluidsrij in dit venster toont de stand van nu
+  // het spotlicht wacht zolang de vraag achter dit venster staat, net als
+  // wanneer de app wegvalt -- anders is hij leeg of verder als je terugkomt
+  if (G && G.timer) { stopSpot(); G.spotPauze = true; }
   $('quit-modal').classList.add('open');
   syncBackGuard();
 }
-function closeQuitModal() { sndClick(); $('quit-modal').classList.remove('open'); syncBackGuard(); }
+function closeQuitModal() {
+  sndClick();
+  $('quit-modal').classList.remove('open');
+  syncBackGuard();
+  if (G && G.spotPauze) {
+    G.spotPauze = false;
+    if (!G.lock && G.spot > 0) spotLoopt();
+  }
+}
 function quitGame() {
   $('quit-modal').classList.remove('open');
   stopSpot();
@@ -11135,41 +11146,87 @@ document.addEventListener('keydown', e => {
    één vraag per show, en die kaart moet elk beeldje toch al opnieuw getekend
    worden voor zijn eigen gloed (goldGlow). drawQuestion zet .golden vóór
    startSpot, dus hier staat al vast welke van de twee het is. */
-function zetSpot(pct) {
-  const balk = $('spotlight-bar');
-  // wat de balk laat zien: vol tijdens SPOT_RUST, daarna naar nul (zie boven)
-  const zicht = Math.min(100, pct * SPOT_DUUR / (SPOT_DUUR - SPOT_RUST));
-  if ($('question-card').classList.contains('golden')) {
-    balk.style.transform = '';
-    balk.style.width = zicht + '%';
-  } else {
-    balk.style.width = '';
-    balk.style.transform = `translateX(${zicht - 100}%)`;
-  }
-}
+/* ZACHT VERTREKKEN. De balk stond SPOT_RUST lang vol en doodstil, en schoot
+   dan in één beeldje op volle snelheid weg -- "hij begint uit het niets", zei
+   Max. Twee dingen nu, en allebei alleen in het beeld (G.spot loopt rechtlijnig
+   als altijd, dus de bonus en "vlot" zijn niet veranderd):
+   - bij elke nieuwe som vult de balk zich eerst van links naar rechts
+     (SPOT_VUL): dát is het moment waarop de klok begint, en je ziet het;
+   - na de rust zet hij zachtjes aan in plaats van te springen (spotZicht: begint
+     op snelheid nul, eindigt op de gewone) en is hij leeg op precies SPOT_DUUR,
+     het moment waarop de +1 💎 vervalt.
+   De animatie en zetSpot rekenen allebei met spotZicht, zodat de balk bij een
+   antwoord blijft staan waar hij was. De curve gaat als een rij keyframes mee en
+   niet als CSS linear(): die kent een oude tablet niet. */
 const SPOT_DUUR = 12000;   // ms: zo lang loopt de spotlight-bonus
 const SPOT_RUST = 4000;    // ms: zo lang staat de balk eerst vol en stil
+const SPOT_VUL = 450;      // ms: zo lang vult de balk zich bij een nieuwe som
 let spotAnim = null;       // de lopende balk-animatie; er is maar één balk
+// hoeveel van de balk er te zien is (1..0) na t ms klok -- zonder het vullen
+function spotZicht(t) {
+  if (t <= SPOT_RUST) return 1;
+  if (t >= SPOT_DUUR) return 0;
+  const u = (t - SPOT_RUST) / (SPOT_DUUR - SPOT_RUST);
+  return 1 - (2 * u * u - u * u * u);
+}
+function spotGouden() { return $('question-card').classList.contains('golden'); }
+// één stand van de balk als stijl: v = 1 vol, 0 leeg
+function spotStand(v) {
+  return spotGouden() ? { width: (v * 100) + '%' } : { transform: `translateX(${v * 100 - 100}%)` };
+}
+/* zacht = er schuift iets zichtbaars (de misser: de balk zakt weg). De balk
+   heeft geen CSS-overgang meer: een overgang gaat in de cascade vóór een
+   animatie uit het script, en liet de balk bij een nieuwe som eerst 100ms
+   van leeg naar vol flitsen voordat het vullen kon beginnen. */
+function zetSpot(pct, zacht) {
+  const balk = $('spotlight-bar');
+  const van = zacht && balk.animate && !motionOff() ? getComputedStyle(balk) : null;
+  const vorig = van && { transform: van.transform, width: van.width };
+  const v = spotZicht((1 - pct / 100) * SPOT_DUUR);
+  if (spotGouden()) {
+    balk.style.transform = '';
+    balk.style.width = (v * 100) + '%';
+  } else {
+    balk.style.width = '';
+    balk.style.transform = `translateX(${v * 100 - 100}%)`;
+  }
+  if (vorig) {
+    const naar = spotStand(v);
+    const begin = spotGouden() ? { width: vorig.width } : { transform: vorig.transform };
+    balk.animate([begin, naar], { duration: 220, easing: MOTION.uit });
+  }
+}
 function startSpot() {
   stopSpot();
   if (spotAnim) { spotAnim.cancel(); spotAnim = null; }   // van een show die niet gestopt werd
   G.spot = 100;
   zetSpot(100);
-  spotLoopt();
+  spotLoopt(!motionOff());
 }
 /* Laat de klok lopen vanaf G.spot: bij startSpot is dat 100, na een pauze (de
-   app was weg, zie hieronder) de stand waar hij stilstond. De animatie springt
-   dan naar hetzelfde punt op haar lijn, dus de balk loopt verder waar hij was. */
-function spotLoopt() {
+   app was weg, of het Stoppen?-venster stond open, zie hieronder) de stand waar
+   hij stilstond. De animatie springt dan naar hetzelfde punt op haar lijn, dus
+   de balk loopt verder waar hij was. vullen = een nieuwe som: eerst vol lopen. */
+function spotLoopt(vullen) {
   const al = (1 - G.spot / 100) * SPOT_DUUR;   // ms die er al af zijn
   G.spotStart = performance.now() - al;
   const balk = $('spotlight-bar');
   if (balk && balk.animate) {
-    // dezelfde lijn als zetSpot: SPOT_RUST vol en stil, daarna rechtlijnig naar nul
-    const rust = SPOT_RUST / SPOT_DUUR;
-    const kf = $('question-card').classList.contains('golden')
-      ? [{ width: '100%' }, { width: '100%', offset: rust }, { width: '0%' }]
-      : [{ transform: 'translateX(0%)' }, { transform: 'translateX(0%)', offset: rust }, { transform: 'translateX(-100%)' }];
+    const kf = [];
+    if (vullen) {
+      // van leeg naar vol, uitlopend (dezelfde 1-(1-u)^3 als MOTION.uit ongeveer)
+      for (let i = 0; i <= 6; i++) {
+        const u = i / 6;
+        kf.push({ ...spotStand(1 - Math.pow(1 - u, 3)), offset: u * SPOT_VUL / SPOT_DUUR });
+      }
+    } else kf.push({ ...spotStand(1), offset: 0 });
+    kf.push({ ...spotStand(1), offset: SPOT_RUST / SPOT_DUUR });
+    // de zachte aanzet als een rij rechte stukjes: 24 is op een telefoon niet
+    // van een echte curve te onderscheiden
+    for (let i = 1; i <= 24; i++) {
+      const t = SPOT_RUST + (SPOT_DUUR - SPOT_RUST) * i / 24;
+      kf.push({ ...spotStand(spotZicht(t)), offset: t / SPOT_DUUR });
+    }
     spotAnim = balk.animate(kf, { duration: SPOT_DUUR, easing: 'linear', fill: 'forwards' });
     if (al) spotAnim.currentTime = al;
   }
@@ -11457,7 +11514,7 @@ function antwoordFout(q, p, val, btnEl) {
 function eersteMisser(q, val, btnEl) {
   G.retried = true;
   G.misses++;
-  stopSpot(); G.spot = 0; zetSpot(0);
+  stopSpot(); G.spot = 0; zetSpot(0, true);   // de balk zakt zichtbaar weg
   save();
   if (btnEl) { btnEl.classList.add('bad'); btnEl.disabled = true; }  // deze keuze uitschakelen
   if (G.mode === 'typ') { G.input = ''; drawQuestion(); }
