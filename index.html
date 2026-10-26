@@ -26260,13 +26260,14 @@ function syncBackGuard() {
   queueMicrotask(() => {
     backSyncQueued = false;
     const want = !!backTarget();
+    syncTerugWachter(want);
     if (want === backGuardArmed) return;
     if (want) {
 
 
 
       const ua = navigator.userActivation;
-      if (!guardVooruit && ua && !ua.hasBeenActive) { zetStopWachter(); return; }
+      if (!guardVooruit && ua && !ua.hasBeenActive) return;
       if (guardVooruit) history.forward();
       else history.pushState({ rpGuard: 1 }, '');
       backGuardArmed = true;
@@ -26298,26 +26299,35 @@ window.addEventListener('pageshow', () => { backGuardArmed = !!(history.state &&
 
 
 
-let stopWachter = null;
-function zetStopWachter() {
-  if (stopWachter || typeof CloseWatcher !== 'function') return;
-  if (!matchMedia('(pointer: coarse)').matches) return;
-  try { stopWachter = new CloseWatcher(); } catch (e) { return; }
-  stopWachter.onclose = () => {
-    stopWachter = null;
+
+
+
+
+
+
+
+
+let terugWachter = null;
+const kanTerugWachter = typeof CloseWatcher === 'function' && matchMedia('(pointer: coarse)').matches;
+function syncTerugWachter(want) {
+  if (!kanTerugWachter) return;
+  if (!want) { if (terugWachter) { terugWachter.destroy(); terugWachter = null; } return; }
+  if (terugWachter) return;
+  try { terugWachter = new CloseWatcher(); } catch (e) { terugWachter = null; return; }
+  terugWachter.onclose = () => {
+    terugWachter = null;
     const act = backTarget();
     if (act) act();
+    syncBackGuard();
   };
 }
 
 
-document.addEventListener('click', () => {
-  if (stopWachter) { stopWachter.destroy(); stopWachter = null; }
-  syncBackGuard();
-}, true);
+document.addEventListener('click', syncBackGuard, true);
 
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { const act = backTarget(); if (act && act !== toonStopKaart) act(); } });
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !terugWachter) { const act = backTarget(); if (act && act !== toonStopKaart) act(); } });
 
 
 
