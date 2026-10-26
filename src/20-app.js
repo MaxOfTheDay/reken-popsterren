@@ -2919,13 +2919,16 @@ function noot(freq, dur, delay, type, vol) {
 
    Veertien regels en dertien gebeurtenissen -- 'tap' en 'tap.blij' zijn twee
    kleuren van één tik en geen twee dingen. Daarmee is de woordenschat vol.
-   (Eén erbij in oktober 2026: 'kast.klink', omdat Max de kast speelser wilde --
-   een behaalde trofee hoort anders te klinken dan een knop.) Dit is een spel voor
+   (Erbij in oktober 2026: de kast, omdat Max hem speelser wilde -- een behaalde
+   trofee hoort anders te klinken dan een knop. Dat is één gebeurtenis in vier
+   metalen, plus het "tok" van een trofee die nog moet komen.) Dit is een spel voor
    vijfjarigen op één tablet in een woonkamer, geen instrument: wat er nog stil is
    -- een schermwissel, een vraag die verschijnt, elk deeltjesfeestje, de
    zaalgloed bij een goed antwoord -- is stil gehouden en niet vergeten. Zie
    docs/AUDIO-REVIEW.md §4.8 voor de plekken waar een klankje láwaai zou zijn. */
 const HERHAALREM = 60;   // ms: zo lang herhaalt hetzelfde klankje zichzelf niet
+// De toonladder van de kast: C-pentatonisch, ruim twee octaven (zie 'kast.klink').
+const KAST_LADDER = [523, 587, 659, 784, 880, 1047, 1175, 1319, 1568, 1760, 2093];
 const klankTijd = {};
 const SFX = {
   // ---- tikken ----
@@ -2933,13 +2936,42 @@ const SFX = {
   /* Dezelfde tik, maar speels: de pop aantikken geeft elke keer een andere noot.
      Eén gebeurtenis met twee kleuren, en met opzet geen tweede gebeurtenis. */
   'tap.blij':       { noten: [[0, 0.12, 0, 'triangle', 0.12]], keuze: [784, 880, 988, 1047, 1175], tril: 12 },
-  /* Een behaalde trofee aantikken: een noot op zijn plek op de plank. Van links
+  /* Een behaalde trofee aantikken: een klokje op zijn plek op de plank. Van links
      naar rechts loopt hij een pentatonische toonladder op, dus wie langs een rij
-     tikt speelt een wijsje -- de kast als xylofoon. Pentatonisch omdat elke
-     volgorde dan mooi klinkt, ook kriskras. Langer en ronder dan tap.blij: dit
-     is een ding van jou dat klinkt, geen tik. (oktober 2026, zie kastKlink) */
-  'kast.klink':     { noten: [[0, 0.34, 0, 'triangle', 0.13], [0, 0.22, 0.02, 'sine', 0.04]],
-                      ladder: [523, 587, 659, 784, 880, 1047, 1175, 1319, 1568], tril: 12 },
+     tikt speelt een wijsje -- de kast als xylofoon -- en wie op één trofee blijft
+     tikken, loopt de ladder op (zie kastKlink). Pentatonisch omdat elke volgorde
+     dan mooi klinkt, ook kriskras.
+     Een klokje en geen pieptoon: de grondtoon, een hoge boventoon die snel
+     wegsterft (2,76 keer, die van een metalen staafje) en een tikje van het
+     hamertje. Hier stond eerst één driehoekstoon, en die klonk als een knop van
+     een app in plaats van als speelgoed (Max, oktober 2026).
+     Een medaille die meegroeit klinkt in zijn eigen metaal -- vier kleuren van
+     één tik, zoals tap en tap.blij er twee zijn:
+       brons     houtig en warm, een marimba
+       zilver    hetzelfde klokje als hierboven ('kast.klink')
+       goud      twee klokjes, een kwint uit elkaar
+       diamant   een loopje van drie, met een glinster erachteraan
+     De boventonen staan in `boven`: [veelvoud van de toon, duur, uitstel,
+     golfvorm, versterking]. Zo liggen ze altijd boven de grondtoon, en dus
+     boven de ondergrens van een tabletluidspreker. */
+  'kast.klink':     { noten: [[0, 0.55, 0, 'sine', 0.17]],
+                      boven: [[2.76, 0.14, 0, 'sine', 0.045], [4, 0.035, 0, 'triangle', 0.03]],
+                      ladder: KAST_LADDER, tril: 12 },
+  'kast.brons':     { noten: [[0, 0.3, 0, 'sine', 0.2]],
+                      boven: [[2, 0.12, 0, 'sine', 0.04], [4, 0.05, 0, 'triangle', 0.05]],
+                      ladder: KAST_LADDER, tril: 12 },
+  'kast.goud':      { noten: [[0, 0.55, 0, 'sine', 0.16]],
+                      boven: [[2.76, 0.14, 0, 'sine', 0.04], [4, 0.035, 0, 'triangle', 0.03],
+                              [1.5, 0.55, 0.07, 'sine', 0.14], [4.14, 0.12, 0.07, 'sine', 0.035]],
+                      ladder: KAST_LADDER, tril: 12 },
+  'kast.diamant':   { noten: [[0, 0.5, 0, 'sine', 0.15]],
+                      boven: [[2.76, 0.12, 0, 'sine', 0.04], [1.25, 0.5, 0.06, 'sine', 0.14],
+                              [1.5, 0.55, 0.12, 'sine', 0.14], [4, 0.3, 0.18, 'sine', 0.03]],
+                      ladder: KAST_LADDER, tril: 12 },
+  /* En een die je nog niet hebt: een zacht houten "tok" in plaats van de gewone
+     tik. Nog steeds leuk om op te tikken, maar hij zingt niet -- dat doet hij
+     pas als hij van jou is. */
+  'kast.tok':       { noten: [[440, 0.12, 0, 'sine', 0.16], [880, 0.03, 0, 'triangle', 0.035]], tril: 8 },
   /* Iets aandoen. Dit stond hier als 'reward.claim' op de lijst, maar de drie
      plekken die overbleven doen alle drie hetzelfde en het is geen beloning: je
      zet iets op. Het cadeau-moment zelf -- een trofee die openknalt -- heeft zijn
@@ -3072,6 +3104,7 @@ function playSfx(naam, opts) {
     const toon = def.ladder ? def.ladder[Math.min(opts.i | 0, def.ladder.length - 1)]
       : def.keuze ? pick(def.keuze) : 0;
     def.noten.forEach(n => noot(n[0] || toon, n[1], n[2], n[3], n[4]));
+    if (def.boven) def.boven.forEach(b => noot(toon * b[0], b[1], b[2], b[3], b[4]));
   } catch (e) { /* geen audio */ }
 }
 
@@ -8859,6 +8892,7 @@ let justClaimed = null;   // id van de zojuist geopende trofee (voor de shimmer,
 function renderShelves() {
   const p = P();
   $('screen-trophies').onscroll = kastSchuift;
+  $('trophy-shelves').onclick = kastErnaast;
   checkTrophies(p);   // net gehaalde trofeeën komen 'klaar' te liggen
   // alleen wat er ook echt in de kast staat telt mee (zie RETIRED_TROPHIES)
   const earned = earnedActiveCount(p);
@@ -9006,7 +9040,7 @@ function trophyCard(t, p) {
   // De beschrijving staat niet meer op het kaartje (zie normalCardHTML), wel hier.
   // Klaar: het 🎁 vervangt het icoon, dus zegt het label wat een tik doet.
   card.setAttribute('aria-label', status === 'ready' ? `Open ${t.name}` : `${t.name}: ${t.desc}`);
-  card.onclick = (e) => tapTrophy(t, card, e);
+  card.onclick = () => tapTrophy(t, card);
   return card;
 }
 /* Een medaille die meegroeit (zie TROPHY_LADDERS): één kaartje voor alle trappen.
@@ -9050,17 +9084,16 @@ function ladderCard(ladder, p) {
       + `<div class="tname">${ladder.name}</div>` + stippen;
     card.setAttribute('aria-label', niveau ? `${trappen[niveau - 1].name}` : `${ladder.name}: ${trappen[0].desc}`);
   }
-  card.onclick = (e) => tapLadder(ladder, card, e);
+  card.onclick = () => tapLadder(ladder, card);
   return card;
 }
-function tapLadder(ladder, card, e) {
-  if (e) tapRipple(e.clientX, e.clientY);
+function tapLadder(ladder, card) {
   const p = P();
   const { trappen, klaar, niveau, volgende } = ladderStand(ladder, p);
   if (klaar) { openTrophy(klaar.id); return; }
-  // een medaille met al een metaal klinkt; nog geen enkel metaal blijft gedempt
-  if (niveau) kastKlink(card); else kastDof(card);
-  if (card.classList.contains('kies')) { kastBalk(null); return; }
+  // een medaille met al een metaal klinkt in dat metaal; nog geen metaal zegt "tok"
+  if (niveau) kastKlink(card, trappen[niveau - 1].trap); else kastDof(card);
+  if (card.classList.contains('kies')) return;   // nog eens: alleen spelen, de balk staat er al
   const kop = { emoji: ladder.emoji, name: ladder.name };
   const metaal = niveau ? TRAP_NAMEN[trappen[niveau - 1].trap] : '';
   if (!volgende) { kastBalk(kop, card, metaal + '!'); return; }
@@ -9141,20 +9174,27 @@ function perfectCardHTML(t, p, status) {
     + `<div class="tname">${t.name}</div>`
     + cardVoet(stand);
 }
-// tikken mag: klaar opent de trofee; anders zegt de balk onderin wat hij is
-// of wat er nog moet gebeuren, en een behaalde glinstert er nog bij.
-function tapTrophy(t, card, e) {
-  if (e) tapRipple(e.clientX, e.clientY);   // tactiel: kringetje vanaf de vinger
+/* Tikken mag, en elke tik speelt: klaar opent de trofee; anders klinkt hij (of
+   zegt hij "tok") en zegt de balk onderin wat hij is of wat er nog moet gebeuren.
+   Nog eens op dezelfde speelt nog eens -- de balk blijft dan gewoon staan. Hier
+   ging de balk bij de tweede tik weer weg, zoals in de kleedkamer, maar dan was
+   om de andere tik op een trofee geen spelen maar wegzetten: wie op één medaille
+   trommelde, zag hem op en neer gaan (Max, oktober 2026). De balk gaat nu weg als
+   je ernaast tikt (zie kastErnaast), iets anders tikt of weggaat.
+   Geen kringetje vanaf de vinger (tapRipple) en geen indrukken van het kaartje:
+   de medaille reageert zelf, en drie dingen tegelijk was er twee te veel. */
+function tapTrophy(t, card) {
   const p = P();
   const st = trophyStatus(p, t);
   if (st === 'ready') { openTrophy(t.id); return; }
-  // eerst het klankje en het bewegen: behaald klinkt, de rest blijft gedempt (zie kastKlink)
+  // eerst het klankje en het bewegen: behaald klinkt, de rest zegt "tok" (zie kastKlink)
   if (st === 'done') kastKlink(card); else kastDof(card);
+  // nog eens op dezelfde: alleen spelen -- de balk staat er al, en de stem hoeft
+  // hem niet bij elke tik opnieuw voor te lezen
+  if (card.classList.contains('kies')) return;
   /* Een trofee die ergens anders verdiend wordt (t.naar) ging hier eerst meteen
      naar de kleedkamer -- en dus zag je bij Verzamelaar nooit hoe ver je was. Nu
      doet hij wat elke trofee doet, en staat de weg erheen als knop in de balk. */
-  // nog een keer op dezelfde: de balk gaat weer weg, zoals in de kleedkamer
-  if (card.classList.contains('kies')) { kastBalk(null); return; }
   if (st === 'done') { kastBalk(t, card, t.desc); return; }
   if (st === 'locked') { kastBalk(t, card, '🔒 Nog niet'); return; }
   if (!t.progress) { kastBalk(t, card, t.desc); return; }
@@ -9164,35 +9204,64 @@ function tapTrophy(t, card, e) {
   kastBalk(t, card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!', rem > 0 ? rem : null);
 }
 /* De tikken in de kast (oktober 2026). Max miste hoe speels het aantikken eerst
-   was: behaald klonk en deed iets, nog niet was stiller. Dat is er weer, en de
-   balk onderin blijft wat hij is.
+   was: behaald klonk en deed iets, nog niet was stiller. De kast is daarom een
+   beetje speelgoed: elke tik speelt, en de balk onderin blijft wat hij is.
      behaald   kastKlink: de medaille wordt kort ingedrukt en wipt dan omhoog de
                getikte stand in, er gaat een glans over en een ring licht van af,
-               en hij speelt een noot op zijn plek op de plank (zie 'kast.klink':
-               langs een rij tikken is een wijsje). Een medaille die meegroeit
-               geeft een ring in zijn eigen metaal (zie --ring in de kast).
-     nog niet  kastDof: de gewone tik, omhoog en daar "nog niet" schudden, en de
-               boog in de rand loopt opnieuw vol van leeg tot waar je bent -- zo
-               zie je bij elke tik hoe ver je al bent.
-   Een tweede tik op dezelfde (de balk gaat weer weg) is alleen het klankje: de
-   medaille zakt dan gewoon terug. Hier draaide eerst de medaille om als een munt,
-   met drie vonkjes erbij, ook bij die tweede tik; dat waren te veel bewegingen na
-   elkaar (Max, oktober 2026, zie kastKlop in de kast).
+               en er zweeft een muzieknootje op. Hij speelt een klokje op zijn
+               plek op de plank ('kast.klink': langs een rij tikken is een
+               wijsje); blijf je op dezelfde tikken, dan gaat elke tik een toon
+               hoger, tot je even stopt. Een medaille die meegroeit klinkt, ringt
+               en noot in zijn eigen metaal.
+     nog niet  kastDof: een houten "tok", omhoog en daar "nog niet" schudden, en
+               de boog in de rand loopt opnieuw vol van leeg tot waar je bent --
+               zo zie je bij elke tik hoe ver je al bent.
    Zonder beweging (motionOff) blijft alleen het klankje over. */
-function kastKlink(card) {
-  playSfx('kast.klink', { i: [...card.parentElement.children].indexOf(card) % 9 });
-  if (motionOff() || card.classList.contains('kies')) return;
+const KAST_KLANK = ['kast.brons', 'kast.klink', 'kast.goud', 'kast.diamant'];
+const KAST_NOOT_KLEUR = ['var(--m-0)', 'var(--m-1)', 'var(--m-2)', 'var(--m-3)'];
+// Een achtste en twee gebalkte: hetzelfde nootje als een tekening en niet als
+// letter, want ♪ staat niet in de letter van het spel en een 🎵-emoji is grijs.
+const KAST_NOOT = [
+  '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 3v11.3A3.5 3.5 0 1 0 11 17.5V8h6V3z"/></svg>',
+  '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M8 4v10.3A3.2 3.2 0 1 0 10 17.3V9l9-2v5.3A3.2 3.2 0 1 0 21 15.3V2z"/></svg>'];
+function kastKlink(card, trap) {
+  const plek = [...card.parentElement.children].indexOf(card);
+  // trommelen: elke volgende tik op dezelfde een toon hoger, na een pauze weer van onder
+  const keer = card._keer || 0;
+  card._keer = keer + 1;
+  clearTimeout(card._keerWeg);
+  card._keerWeg = setTimeout(() => { card._keer = 0; }, 900);
+  playSfx(KAST_KLANK[trap == null ? 1 : trap], { i: (plek + keer) % KAST_LADDER.length });
+  if (motionOff()) return;
   opnieuw(card, 'klink');
-  sparkle(card, ['✨']);
+  kastNoot(card, trap);
+}
+// Het nootje: rechtsboven van de medaille omhoog, en weg.
+function kastNoot(card, trap) {
+  const m = card.querySelector('.temoji, .pw-medal');
+  if (!m) return;
+  const r = m.getBoundingClientRect(), c = card.getBoundingClientRect();
+  const n = document.createElement('span');
+  n.className = 'kast-noot';
+  n.innerHTML = KAST_NOOT[(card._keer || 0) % 2];
+  n.style.left = (r.right - c.left - 16) + 'px';
+  n.style.top = (r.top - c.top - 10) + 'px';
+  if (trap != null) n.style.setProperty('--noot', KAST_NOOT_KLEUR[trap]);
+  card.appendChild(n);
+  setTimeout(() => n.remove(), 850);
 }
 function kastDof(card) {
-  sndClick();
-  if (motionOff() || card.classList.contains('kies')) return;
+  playSfx('kast.tok');
+  if (motionOff()) return;
   opnieuw(card, 'dof');
-  // de boog opnieuw laten vollopen: --p van 0 naar wat er stond, met een uitloop
+  /* de boog opnieuw laten vollopen: --p van 0 naar wat er stond, met een uitloop.
+     Wat er stond onthoudt hij (dataset.p): wie tikt terwijl hij nog loopt, leest
+     anders een halve boog als het doel. */
   const m = card.querySelector('.temoji');
-  const doel = m ? parseFloat(m.style.getPropertyValue('--p')) || 0 : 0;
+  if (!m) return;
+  const doel = parseFloat(m.dataset.p || m.style.getPropertyValue('--p')) || 0;
   if (!doel) return;
+  m.dataset.p = doel;
   const t0 = performance.now();
   const stap = t => {
     const k = Math.min(1, (t - t0) / 520);
@@ -9202,6 +9271,8 @@ function kastDof(card) {
   m.style.setProperty('--p', 0);
   requestAnimationFrame(stap);
 }
+// Naast de trofeeën tikken zet de balk uit (zie tapTrophy).
+function kastErnaast(e) { if (!e.target.closest('.trophy-card')) kastBalk(null); }
 // Een klasse opnieuw laten afspelen, ook als hij er nog op stond (tweede tik).
 function opnieuw(el, klasse) {
   el.classList.remove(klasse); void el.offsetWidth; el.classList.add(klasse);
