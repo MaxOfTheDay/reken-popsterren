@@ -29,6 +29,12 @@
      Het getal is goud: dát is wat een kind komt bekijken. */
   .kast-chip { vertical-align: middle; }
   .kast-chip b { color: var(--gold-accent); font-weight: 700; }
+  /* De 🎁-pil naast de stand: de gouden pil van "🎁 Nieuwe trofee" op het
+     eindscherm, een maat kleiner zodat hij in de kop past. Er alleen zolang er
+     iets klaarligt (hidden, zie renderShelves). */
+  .kast-cadeau { margin-left: 6px; vertical-align: middle; padding: 5px 12px; min-height: 32px; font-size: var(--tx-body); gap: 5px; }
+  .kast-cadeau b { font-weight: 700; }
+  .kast-cadeau[hidden] { display: none; }
   /* ---- De plakkende kop, twee standen ----
      Bovenaan staat de kop in de kamer, zonder plaat -- net als in de kleedkamer:
      de twee pillen op de kamer, en eronder begint de kast (de lade, zie
@@ -207,6 +213,18 @@
   }
   @media (min-width: 560px) { .trophy-grid { grid-template-columns: repeat(4, 1fr); } }
   @media (min-width: 900px) { .trophy-grid { grid-template-columns: repeat(6, 1fr); } }
+  /* Breed (een tablet, een telefoon dwars): de groepen in twee kolommen, drie
+     medailles per rij. Eén kolom van vier of zes medailles vulde op een tablet
+     alleen de linkerhelft (drie of vier medailles in zes vakken), en de kast was
+     er nog steeds twee schermen lang. Nu past hij in ongeveer één.
+     CSS-kolommen en geen raster: de groepen zijn verschillend hoog, en kolommen
+     stapelen ze zonder gaten. Bovenaan geen marge: in een kolom valt die marge
+     bij de overgang weg of niet, en dan staan de twee kolommen ongelijk. */
+  @media (min-width: 700px) {
+    #trophy-shelves { columns: 2; column-gap: 12px; }
+    #trophy-shelves .kast-groep { break-inside: avoid; margin: 0 0 12px; }
+    #trophy-shelves .trophy-grid { grid-template-columns: repeat(3, 1fr); }
+  }
   .trophy-card {
     position: relative; min-width: 0; padding: 8px 2px 2px; text-align: center; cursor: pointer;
     display: flex; flex-direction: column; align-items: center;
@@ -263,10 +281,25 @@
       var(--medaille-vul) padding-box,
       conic-gradient(var(--straks, transparent) calc(var(--p, 0) * 1%), rgba(255,255,255,.13) 0) border-box;
   }
-  .trophy-card.ladder.nu-0:not(.ready) .temoji { --vlak: var(--m-vlak-0); --rand: var(--m-rand-0); box-shadow: 0 0 14px rgba(217,143,85,.4), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.25); }
-  .trophy-card.ladder.nu-1:not(.ready) .temoji { --vlak: var(--m-vlak-1); --rand: var(--m-rand-1); box-shadow: 0 0 14px rgba(219,228,238,.35), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.4); }
-  .trophy-card.ladder.nu-2:not(.ready) .temoji { --vlak: var(--m-vlak-2); --rand: var(--m-rand-2); box-shadow: 0 0 16px rgba(var(--goud-rgb),.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.3); }
-  .trophy-card.ladder.nu-3:not(.ready) .temoji { --vlak: var(--m-vlak-3); --rand: var(--m-rand-3); box-shadow: 0 0 20px rgba(159,232,255,.55), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.4); }
+  /* De gloed loopt mee op: brons heeft er geen (mat), zilver een witte, goud een
+     warme, diamant de felste en blauw. */
+  .trophy-card.ladder.nu-0:not(.ready) .temoji { --vlak: var(--m-vlak-0); --rand: var(--m-rand-0); box-shadow: 0 3px 10px rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.15); }
+  .trophy-card.ladder.nu-1:not(.ready) .temoji { --vlak: var(--m-vlak-1); --rand: var(--m-rand-1); box-shadow: 0 0 14px rgba(230,240,255,.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.6); }
+  .trophy-card.ladder.nu-2:not(.ready) .temoji { --vlak: var(--m-vlak-2); --rand: var(--m-rand-2); box-shadow: 0 0 22px rgba(255,190,60,.7), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.45); }
+  /* Diamant: over het ijsblauw een kring facetten (een conic-gradient van witte
+     en lege taartpunten), zodat hij als geslepen steen leest en niet als nog een
+     metaal. Plus twee vonkjes (zie DIAMANT_VONKJES in ladderCard). De facetten
+     dragen hun eigen padding-box: --vlak wordt gebruikt als "var(--vlak)
+     padding-box", en dat geldt dan alleen voor de laatste laag. */
+  .trophy-card.ladder.nu-3:not(.ready) .temoji {
+    --vlak: conic-gradient(from 20deg, rgba(255,255,255,.35) 0 30deg, transparent 30deg 60deg, rgba(255,255,255,.22) 60deg 95deg, transparent 95deg 130deg, rgba(255,255,255,.3) 130deg 165deg, transparent 165deg 205deg, rgba(255,255,255,.2) 205deg 240deg, transparent 240deg 280deg, rgba(255,255,255,.3) 280deg 315deg, transparent 315deg) padding-box, var(--m-vlak-3);
+    --rand: var(--m-rand-3);
+    box-shadow: 0 0 24px rgba(80,210,255,.75), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.7);
+  }
+  .trophy-card.ladder .vonkje { position: absolute; z-index: 1; width: 10px; height: 10px; pointer-events: none; }
+  .trophy-card.ladder .vonkje svg { display: block; width: 100%; height: 100%; fill: #fff; }
+  .trophy-card.ladder .vonkje:nth-of-type(1) { top: 7px; right: 9px; }
+  .trophy-card.ladder .vonkje:nth-of-type(2) { bottom: 12px; left: 8px; width: 7px; height: 7px; }
   .trophy-card.ladder.done:not(.ready) .temoji {
     background:
       var(--vlak) padding-box,
@@ -281,14 +314,8 @@
   .trophy-card.ladder .tico { filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
   /* Ligt er een trap klaar, dan is het gewoon het cadeautje (zie giftMedaille):
      daarom staat er overal :not(.ready), anders won dit van de gouden rand. */
-  /* Een stipje per trap onder de naam, gekleurd voor wat je al hebt: zo zie je
-     zonder woorden dat er meer metalen zijn, en hoeveel. */
-  .trap-stippen { display: flex; gap: 6px; margin-top: 6px; }
-  .trap-stippen i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.16); }
-  .trap-stippen i.m-0 { background: var(--m-0); }
-  .trap-stippen i.m-1 { background: var(--m-1); }
-  .trap-stippen i.m-2 { background: var(--m-2); }
-  .trap-stippen i.m-3 { background: var(--m-3); }
+  /* (Hier stonden de stipjes onder de naam, één per trap. Weg: het metaal zegt
+     het al, zie ladderCard.) */
   /* Getikt: de medaille komt een stukje naar voren, zolang de balk onderin over
      hem gaat. Hier stond eerst een blauwe ring om de medaille (zoals een getikt
      kaartje in de kleedkamer), maar op een wand van ronde medailles met gouden

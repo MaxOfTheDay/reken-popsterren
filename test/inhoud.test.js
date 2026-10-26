@@ -253,8 +253,12 @@ zaak('F', () => {
      zijn. */
   /* 12 -> 18 (oktober 2026): Applaus! met pensioen, Goudzoeker kreeg een gouden
      trap (gold50), en er kwamen de plank Nieuwe sommen (vijf, waarvan een kind er
-     hoogstens drie ziet: zie t.voor) en Eigen podium bij. */
-  const VASTE_KAST = 18;
+     hoogstens drie ziet: zie t.voor) en Eigen podium bij.
+     18 -> 27 (oktober 2026): Sterrenhit, Wereldreiziger en Verzamelaar werden
+     medailles die meegroeien, en elke ladder kreeg vier trappen. In de kast zijn
+     dat vijf kaartjes in plaats van negentien: het aantal trappen groeide, het
+     aantal dingen om naar te kijken niet. */
+  const VASTE_KAST = 27;
   const actief = app.activeTrophies();
   const vast = actief.filter(t => !t.perfect);
   const perfect = actief.filter(t => t.perfect);

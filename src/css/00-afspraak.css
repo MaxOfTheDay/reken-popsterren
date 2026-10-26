@@ -582,20 +582,24 @@
     --m-0: #d98f55;
     --m-1: #dbe4ee;
     --m-2: var(--gold-accent);
-    --m-3: #9fe8ff;
+    --m-3: #6fdcff;
     /* En de medaille zelf in dat metaal: het vlak van een medaille die meegroeit
        (.trophy-card.ladder) en zijn rand als hij af is, en de grote medaille als
        een trap opengaat (.tp-emoji). Het licht bovenin, net als --medaille-vul.
        Het goud is in het midden een slag donkerder dan je zou denken: anders
-       verdwijnt een gele ster erop. */
-    --m-vlak-0: radial-gradient(80% 80% at 50% 25%, #d9a06e, #7a3f1c 78%);
-    --m-vlak-1: radial-gradient(80% 80% at 50% 25%, #f4f7fb, #8794a5 78%);
-    --m-vlak-2: radial-gradient(80% 80% at 50% 25%, #eec35a, #8a5c08 78%);
-    --m-vlak-3: radial-gradient(80% 80% at 50% 25%, #effcff, #58b9db 78%);
+       verdwijnt een gele ster erop.
+       Sinds de stipjes weg zijn zegt alleen het metaal hoe ver je bent, dus loopt
+       het op van mat naar rijk: brons mat en warm, zilver helder, goud warm, en
+       diamant ijsblauw -- eerst leek diamant op een telefoon op zilver. Bij
+       diamant komen er in de kast nog facetten en vonkjes bij (zie .nu-3). */
+    --m-vlak-0: radial-gradient(80% 80% at 50% 25%, #d39368, #6e3818 80%);
+    --m-vlak-1: radial-gradient(80% 80% at 50% 25%, #ffffff, #9aa6b6 80%);
+    --m-vlak-2: radial-gradient(80% 80% at 50% 25%, #ffe08a, #b7790a 80%);
+    --m-vlak-3: radial-gradient(80% 80% at 50% 25%, #c9f6ff, #1ea7e0 80%);
     --m-rand-0: linear-gradient(160deg, #f3c08f, var(--m-0) 45%, #6e3412);
     --m-rand-1: linear-gradient(160deg, #ffffff, var(--m-1) 45%, #75808f);
     --m-rand-2: var(--medaille-goud);
-    --m-rand-3: linear-gradient(160deg, #ffffff, var(--m-3) 45%, #3e9fc4);
+    --m-rand-3: linear-gradient(160deg, #ffffff, #5fd6ff 45%, #1479b0);
 
     /* ---- Emoji staan ergens op ---------------------------------------------
        FASE 5E. De app tekent met emoji, en die komen plat en zonder eigen licht
