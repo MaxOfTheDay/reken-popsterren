@@ -26266,7 +26266,7 @@ function syncBackGuard() {
 
 
       const ua = navigator.userActivation;
-      if (!guardVooruit && ua && !ua.hasBeenActive) return;
+      if (!guardVooruit && ua && !ua.hasBeenActive) { zetStopWachter(); return; }
       if (guardVooruit) history.forward();
       else history.pushState({ rpGuard: 1 }, '');
       backGuardArmed = true;
@@ -26289,7 +26289,32 @@ window.addEventListener('popstate', () => {
 window.addEventListener('pageshow', () => { backGuardArmed = !!(history.state && history.state.rpGuard); syncBackGuard(); });
 
 
-document.addEventListener('click', syncBackGuard, true);
+
+
+
+
+
+
+
+
+
+let stopWachter = null;
+function zetStopWachter() {
+  if (stopWachter || typeof CloseWatcher !== 'function') return;
+  if (!matchMedia('(pointer: coarse)').matches) return;
+  try { stopWachter = new CloseWatcher(); } catch (e) { return; }
+  stopWachter.onclose = () => {
+    stopWachter = null;
+    const act = backTarget();
+    if (act) act();
+  };
+}
+
+
+document.addEventListener('click', () => {
+  if (stopWachter) { stopWachter.destroy(); stopWachter = null; }
+  syncBackGuard();
+}, true);
 
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { const act = backTarget(); if (act && act !== toonStopKaart) act(); } });
