@@ -774,6 +774,23 @@
   @media (orientation: portrait) and (max-width: 599px) and (min-height: 760px) {
     .game-arena { align-content: flex-end; row-gap: 14px; padding-bottom: 22px; }
     .show-stage { width: 214px; height: 180px; }
+    /* ZIJ GROEIT MEE. Op een telefoon van 844 hoog bleef er boven haar ~200px
+       lege zaal over, op een van 1000 hoog ~350px: de ster van de show werd
+       klein en ver weg. Nu krijgt zij wat er boven de som en de antwoorden
+       overblijft: hoogte = schermhoogte min 600 (wat kop, som, antwoorden en
+       lucht samen nodig hebben), tussen 180 en 300, en nooit breder dan het
+       scherm. De som en de antwoorden blijven waar ze stonden, onderaan bij de
+       duim. Zonder svh (oudere browsers) valt dit weg en geldt de regel erboven. */
+    .show-stage {
+      --stage-h: min(clamp(180px, calc(100svh - 600px), 300px), calc((100vw - 40px) / 1.19));
+      height: var(--stage-h); width: calc(var(--stage-h) * 1.19);
+    }
+    /* het cijferblok (typmodus) is ~100px hoger dan vier antwoordknoppen. Op de
+       instelling en niet op het blok zelf: in de mix-modus wisselt dat per vraag,
+       en dan zou zij tussen twee sommen van maat verspringen (startLevel) */
+    #screen-game.met-cijfers .show-stage {
+      --stage-h: min(clamp(180px, calc(100svh - 700px), 300px), calc((100vw - 40px) / 1.19));
+    }
   }
   @media (min-width: 900px) and (min-height: 760px) {
     .show-stage { width: 240px; height: 202px; }

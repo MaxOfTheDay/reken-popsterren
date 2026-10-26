@@ -10944,6 +10944,9 @@ function startLevel(lvl, eigenOvergang) {
   applyStage($('show-stage'), p);
   applyVenue($('screen-game'), wl.world, lvl);
   bundelAan();
+  // kan er een cijferblok komen? dan houdt zij er vanaf de eerste vraag ruimte
+  // voor (zie "ZIJ GROEIT MEE" in 50-zaal)
+  $('screen-game').classList.toggle('met-cijfers', !count && s.mode !== 'kies');
   if (eigenOvergang) show('screen-game');
   else toonHub('screen-game');
   renderQuestion();

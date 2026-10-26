@@ -4221,6 +4221,23 @@
   @media (orientation: portrait) and (max-width: 599px) and (min-height: 760px) {
     .game-arena { align-content: flex-end; row-gap: 14px; padding-bottom: 22px; }
     .show-stage { width: 214px; height: 180px; }
+
+
+
+
+
+
+
+    .show-stage {
+      --stage-h: min(clamp(180px, calc(100svh - 600px), 300px), calc((100vw - 40px) / 1.19));
+      height: var(--stage-h); width: calc(var(--stage-h) * 1.19);
+    }
+
+
+
+    #screen-game.met-cijfers .show-stage {
+      --stage-h: min(clamp(180px, calc(100svh - 700px), 300px), calc((100vw - 40px) / 1.19));
+    }
   }
   @media (min-width: 900px) and (min-height: 760px) {
     .show-stage { width: 240px; height: 202px; }
@@ -22067,6 +22084,9 @@ function startLevel(lvl, eigenOvergang) {
   applyStage($('show-stage'), p);
   applyVenue($('screen-game'), wl.world, lvl);
   bundelAan();
+
+
+  $('screen-game').classList.toggle('met-cijfers', !count && s.mode !== 'kies');
   if (eigenOvergang) show('screen-game');
   else toonHub('screen-game');
   renderQuestion();
