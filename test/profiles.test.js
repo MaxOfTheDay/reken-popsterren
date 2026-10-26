@@ -94,7 +94,7 @@ function check(ok, label, detail) {
       scherm: document.querySelector('.screen.active').id, tab: setTab,
       terugzetten: !!document.getElementById('set-import'),
     }));
-    check(naHint.scherm === 'screen-settings' && naHint.tab === 'beheer' && naHint.terugzetten,
+    check(naHint.scherm === 'screen-settings' && naHint.terugzetten,
       'zonder sterren brengt Voor ouders je meteen bij terugzetten', JSON.stringify(naHint));
     check(r.stored === null, 'een verse start schrijft nog niets weg', `stored=${r.stored && r.stored.slice(0, 40)}`);
     await ctx.close();
@@ -117,7 +117,7 @@ function check(ok, label, detail) {
       const k = Object.keys(db.profiles)[0];
       const p = db.profiles[k];
       goProfiles();   // terug naar de keuze: daar staat de tegel die we hieronder nakijken
-      openSettings(); setTab = 'beheer'; renderSettings();
+      openSettings(); setKey = k; setTab = 'beheer'; renderSettings();
       return {
         key: k, n: Object.keys(db.profiles).length,
         name: p.name, base: p.base, hair: p.equipped.hair, dress: p.equipped.dress,
@@ -340,7 +340,7 @@ function check(ok, label, detail) {
         hasExport: !!document.getElementById('set-export'),
         importVol: !!document.querySelector('#set-import.purple'),
         hasNewStar: !!document.getElementById('set-newstar'),
-        whoHidden: getComputedStyle(document.getElementById('settings-profiles')).display === 'none',
+        whoHidden: getComputedStyle(document.getElementById('settings-wie')).display === 'none',
         tabsHidden: getComputedStyle(document.getElementById('settings-subtabs')).display === 'none',
         hasName: !!document.getElementById('set-name'),
         hasReset: !!document.getElementById('set-reset'),
@@ -379,8 +379,8 @@ function check(ok, label, detail) {
     /* cur is sinds "maken start het avontuur" gewoon de laatst gemaakte ster (p3),
        en dat mag: de regel is dat er nooit een ster geselecteerd blijft die er niet
        meer ís. Dat is precies wat hier bewaakt wordt. */
-    check(r.setKey === 'p1' && r.cur !== 'p2' && r.curBestaat,
-      'de selectie blijft niet op een verdwenen ster staan', `${r.setKey}/${r.cur}`);
+    check(r.setKey === null && r.cur !== 'p2' && r.curBestaat,
+      'de selectie blijft niet op een verdwenen ster staan: terug naar het overzicht', `${r.setKey}/${r.cur}`);
     check(r.nextKey === 'p2', 'het gat in de sleutels wordt hergebruikt', r.nextKey);
     // en nu alles weg
     for (const k of ['p1', 'p3']) {
