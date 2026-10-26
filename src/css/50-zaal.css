@@ -288,6 +288,34 @@
   .venue-aan .notes-left { font-size: var(--tx-label); opacity: .92; }
   .venue-aan .segbar > span { height: 8px; }
 
+  /* ---- Eén rij ----
+     De kop van een show is één rij: ✕ | hartjes + voortgang | 💎. Hier stond
+     in het midden de wereld met "Show 7 / 8" eronder, en daaronder nog een rij
+     voor het pilletje -- drie regels voor een kind dat niet leest tijdens het
+     rekenen. Welke wereld zegt de zaal zelf al (de tekening erachter is die van
+     de kaart), en welke show zei de kaart een tel geleden; het eindscherm zegt
+     het nog eens ("Show 7 was geweldig!"). Het pilletje vult nu de ruimte
+     tussen ✕ en 💎, even hoog als die twee, en de voortgang krijgt wat er
+     overblijft: grotere stukjes dan in de oude rij. Wint een regel hoogte voor
+     haar en de som, en dat telt het meest op een klein scherm.
+     De titel blijft in de opmaak staan, alleen voor de voorlezer; het
+     eindscherm doet hetzelfde, zodat ✕ en ← en 💎 op dezelfde plek blijven. */
+  #screen-game .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
+  #screen-game .screen-header .header-title,
+  #screen-end .screen-header .header-title {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
+  }
+  #screen-game .screen-header .game-progress-row {
+    justify-self: center; width: 100%; max-width: 380px; min-width: 0;
+    height: 44px; box-sizing: border-box; padding: 0 16px; gap: 10px;
+  }
+  #screen-game .screen-header .segbar { flex: 1; width: auto; max-width: 260px; }
+  #screen-game .screen-header .segbar > span { height: 9px; }
+  /* een verborgen titel neemt geen vak meer in: zet de rest zelf op zijn plek */
+  #screen-game .screen-header .game-progress-row { grid-column: 2; }
+  #screen-game .screen-header .header-right, #screen-end .screen-header .header-right { grid-column: 3; }
+
   /* De somkaart draagt in een zaal zijn eigen licht: een zachte gloed eromheen,
      zodat hij op de vloer staat en er niet op geplakt is. */
   .venue-aan .question-card { box-shadow: var(--e-2), 0 0 34px rgba(var(--warm-licht-rgb),.18); }

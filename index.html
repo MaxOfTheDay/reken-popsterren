@@ -3737,6 +3737,34 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+  #screen-game .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
+  #screen-game .screen-header .header-title,
+  #screen-end .screen-header .header-title {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
+  }
+  #screen-game .screen-header .game-progress-row {
+    justify-self: center; width: 100%; max-width: 380px; min-width: 0;
+    height: 44px; box-sizing: border-box; padding: 0 16px; gap: 10px;
+  }
+  #screen-game .screen-header .segbar { flex: 1; width: auto; max-width: 260px; }
+  #screen-game .screen-header .segbar > span { height: 9px; }
+
+  #screen-game .screen-header .game-progress-row { grid-column: 2; }
+  #screen-game .screen-header .header-right, #screen-end .screen-header .header-right { grid-column: 3; }
+
+
+
   .venue-aan .question-card { box-shadow: var(--e-2), 0 0 34px rgba(var(--warm-licht-rgb),.18); }
 
 
@@ -9848,12 +9876,13 @@
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="askQuit()" aria-label="Show stoppen" title="Show stoppen"><svg class="ico" aria-hidden="true"><use href="#ico-kruis"/></svg></button>
+        <!-- wereld + show: alleen nog voor de voorlezer (zie "Eén rij" in 50-zaal) -->
         <div class="header-title" id="game-lvl-label"></div>
+        <div class="game-progress-row">
+          <span class="notes-left" id="notes-left"></span>
+          <div class="segbar" id="qprogress" role="progressbar" aria-label="Voortgang in de show"></div>
+        </div>
         <div class="diamond-badge header-right">💎 <span id="game-diamonds">0</span></div>
-      </div>
-      <div class="game-progress-row">
-        <span class="notes-left" id="notes-left"></span>
-        <div class="segbar" id="qprogress" role="progressbar" aria-label="Voortgang in de show"></div>
       </div>
     </div>
     <div class="game-arena">
