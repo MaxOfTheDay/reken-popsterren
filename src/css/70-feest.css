@@ -318,6 +318,8 @@
   }
   @media (max-height: 740px) { .groei-pil { padding: 6px 13px; min-height: 30px; } }
   .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+  /* tot ze opkomen tellen tikken niet mee (zie eindWacht) */
+  .end-actions.wacht { pointer-events: none; }
   .end-actions .btn { width: 100%; max-width: 320px; }
   .end-actions .btn.big { font-size: var(--tx-kop); padding: 15px 20px; }
   /* Een telefoon op zijn kant: twee kolommen. Hierboven staat dat dit scherm

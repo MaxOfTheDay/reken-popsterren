@@ -7555,6 +7555,8 @@
   }
   @media (max-height: 740px) { .groei-pil { padding: 6px 13px; min-height: 30px; } }
   .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+
+  .end-actions.wacht { pointer-events: none; }
   .end-actions .btn { width: 100%; max-width: 320px; }
   .end-actions .btn.big { font-size: var(--tx-kop); padding: 15px 20px; }
 
@@ -23143,12 +23145,10 @@ function endLevel(success) {
 
 
 
-    const juich = beter
-      ? (stars === 3 ? 'Nog beter — nu alle drie de sterren!' : 'Beter dan de vorige keer!')
-      : stars === 3 ? 'Foutloos — het publiek gaat uit zijn dak!'
-      : stars === 2 ? 'Het publiek juicht en danst mee!'
-      : 'Het publiek klapt hard voor je!';
-    $('end-text').textContent = juich;
+
+
+    $('end-text').textContent = !beter ? ''
+      : stars === 3 ? 'Nog beter — nu alle drie de sterren!' : 'Beter dan de vorige keer!';
 
 
 
@@ -23210,7 +23210,10 @@ function endLevel(success) {
     $('end-title').textContent = '🎭 Bijna!';
     zin = 'Bijna! Probeer het nog eens.';
     $('end-stars').textContent = '💪';
-    $('end-text').textContent = 'Oefening baart kunst — probeer het nog eens!';
+
+
+
+    $('end-text').textContent = '';
     $('end-milestone').innerHTML = '';
 
 
@@ -23228,8 +23231,7 @@ function endLevel(success) {
 
 
   telNu($('end-diamonds'), p.diamonds - opbrengst);
-  eindKomtOp(success);
-  telStraks($('end-diamonds'), p.diamonds, motionOff() ? 0 : EINDE.beloning);
+  telStraks($('end-diamonds'), p.diamonds, eindKomtOp(success));
   G = null;
 
 
@@ -23325,16 +23327,36 @@ function naSterren() { return motionOff() ? STERCEREMONIE.stil : STERCEREMONIE.t
 
 
 
+
+
+
+
 const EINDE = {
   beloning: STERCEREMONIE.eerste + 2 * STERCEREMONIE.tussen + 200,
   pil: STERCEREMONIE.eerste + 2 * STERCEREMONIE.tussen + 450,
   knoppen: STERCEREMONIE.eerste + 2 * STERCEREMONIE.tussen + 650,
   mislukt: 360,
   op: 260,
+  vlucht: 160,
 };
+
+
+
+
+
+
+
+
+let eindWacht = 0;
+
 function eindKomtOp(success) {
-  if (motionOff()) return;
+  const acties = document.querySelector('#screen-end .end-actions');
+  clearTimeout(eindWacht);
+  acties.classList.remove('wacht');
+  if (motionOff()) return 0;
   const t = success ? EINDE : { beloning: EINDE.mislukt, pil: EINDE.mislukt, knoppen: EINDE.mislukt + 150 };
+  acties.classList.add('wacht');
+  eindWacht = setTimeout(() => acties.classList.remove('wacht'), t.knoppen);
   const op = (el, delay, pop) => {
     if (!el || !el.animate || !el.firstChild) return;
     el.animate(pop
@@ -23344,7 +23366,14 @@ function eindKomtOp(success) {
   };
   op($('end-earn'), t.beloning, true);
   op($('end-milestone'), t.pil);
-  op(document.querySelector('#screen-end .end-actions'), t.knoppen);
+  op(acties, t.knoppen);
+  const vakje = $('end-earn').querySelector('.earn-chip');
+  if (!vakje) return t.beloning;
+  const weg = t.beloning + EINDE.vlucht;
+  setTimeout(() => {
+    if ($('screen-end').classList.contains('active')) flyDiamonds(vakje, $('end-diamonds'), 3);
+  }, weg);
+  return weg + DIA_AANKOMST;
 }
 
 

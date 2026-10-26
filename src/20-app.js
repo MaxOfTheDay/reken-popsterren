@@ -11954,17 +11954,15 @@ function endLevel(success) {
       : stars === 2 ? 'Twee sterren! Goed zo!'
       : 'Eén ster! Je hebt de show gehaald!';
     renderEndStars(stars);
-    // de juichtekst groeit mee met de prestatie
-    // Een verbeterde herkansing krijgt zijn eigen regel: dát is het moment waar
-    // de gouden haltes op de kaart (.tour-stop.perfect) naartoe lokken.
-    // Zonder emoji aan het eind (de regel voor meldingen sinds de pil): die viel op
-    // een telefoon alleen op een eigen regel. De kop heeft er al een vooraan.
-    const juich = beter
-      ? (stars === 3 ? 'Nog beter — nu alle drie de sterren!' : 'Beter dan de vorige keer!')
-      : stars === 3 ? 'Foutloos — het publiek gaat uit zijn dak!'
-      : stars === 2 ? 'Het publiek juicht en danst mee!'
-      : 'Het publiek klapt hard voor je!';
-    $('end-text').textContent = juich;
+    /* Alleen een verbeterde herkansing krijgt een regel: dát is nieuws dat de
+       sterren niet laten zien, en het moment waar de gouden haltes op de kaart
+       (.tour-stop.perfect) naartoe lokken. Hier stond altijd een juichzin
+       ("Het publiek juicht en danst mee!"), maar de kop en de sterren zeiden
+       dat al, en het was het enige stuk van de kaart dat een kind van vijf niet
+       kan lezen. Zonder de zin schuift de hoofdknop een regel op.
+       Zonder emoji aan het eind (de regel voor meldingen sinds de pil). */
+    $('end-text').textContent = !beter ? ''
+      : stars === 3 ? 'Nog beter — nu alle drie de sterren!' : 'Beter dan de vorige keer!';
     /* Eén vakje: alle 💎 van deze show, de sterrenbonus erbij. Hier stonden er
        twee, en het tweede was "⭐ +15" -- maar die 15 waren diamanten (5 per ster,
        zie applyShowResult), met een ster ervoor. Een kind las vijftien sterren,
@@ -12026,7 +12024,10 @@ function endLevel(success) {
     $('end-title').textContent = '🎭 Bijna!';
     zin = 'Bijna! Probeer het nog eens.';
     $('end-stars').textContent = '💪';
-    $('end-text').textContent = 'Oefening baart kunst — probeer het nog eens!';
+    // Geen regel eronder: hier stond "Oefening baart kunst — probeer het nog
+    // eens!", een spreekwoord voor grote mensen over twee regels, vlak boven
+    // een knop die al "Opnieuw proberen" zegt. 💪 en Bijna! zijn genoeg.
+    $('end-text').textContent = '';
     $('end-milestone').innerHTML = '';
     // hetzelfde 💎-vakje als bij een geslaagde show: wat je verdiend hebt, blijft
     // van jou. Maar alléén als er iets in zit. Een "💎 +0" vlak onder "Bijna!" was
@@ -12044,8 +12045,7 @@ function endLevel(success) {
      -- en pas daarna landden de sterren die dat allemaal verdiend hadden. Nu
      telt de teller op vanaf wat er vóór de show stond. */
   telNu($('end-diamonds'), p.diamonds - opbrengst);
-  eindKomtOp(success);
-  telStraks($('end-diamonds'), p.diamonds, motionOff() ? 0 : EINDE.beloning);
+  telStraks($('end-diamonds'), p.diamonds, eindKomtOp(success));
   G = null;
   /* De stille wissel van toonHub, en geen kale show(). Die liet het eindscherm
      met screenIn uit het niets opkomen terwijl de zaal op het eerste beeldje al
@@ -12134,6 +12134,10 @@ function naSterren() { return motionOff() ? STERCEREMONIE.stil : STERCEREMONIE.t
    beloning  de "💎 +.." en de teller die optelt: wat de sterren opleverden. Op
              het moment dat de derde plek gevuld is (geland of dof), niet pas
              na het kanon van foutloos -- dat mag eroverheen.
+   vlucht    hoe ver in zijn plop het vakje is als er drie 💎 uit vertrekken naar
+             de teller bovenaan -- zoals overal waar je diamanten krijgt (de
+             show, Memory). Het vakje stond op en de teller telde, maar niets
+             zei dat het ene in het andere ging. De teller telt nu bij aankomst.
    pil       de gouden trofeepil, een tel later
    knoppen   de weg verder, als laatste
 
@@ -12147,10 +12151,26 @@ const EINDE = {
   knoppen: STERCEREMONIE.eerste + 2 * STERCEREMONIE.tussen + 650,
   mislukt: 360,
   op: 260,
+  vlucht: 160,
 };
+/* De knoppen staan tot hun tel onzichtbaar, maar ze luisterden al vanaf het
+   eerste beeldje. En "Kleedkamer" staat precies waar tijdens de show de
+   bovenste rij antwoorden stond: een kind dat het laatste antwoord twee keer
+   tikte, of gewoon doortikte, stond in de kleedkamer zonder haar sterren gezien
+   te hebben (en zonder het wereldfeest). Nagemeten: een tik 150, 400 en 800ms
+   na de show opende alle drie de keren de kleedkamer. Nu tellen tikken pas mee
+   zodra de knoppen opkomen (.end-actions.wacht, pointer-events). Een
+   programmatische click() gaat daar gewoon langs; dat is een test, geen vinger. */
+let eindWacht = 0;
+/* Geeft terug wanneer de 💎 bij de teller aankomen: dan telt die op. */
 function eindKomtOp(success) {
-  if (motionOff()) return;
+  const acties = document.querySelector('#screen-end .end-actions');
+  clearTimeout(eindWacht);
+  acties.classList.remove('wacht');
+  if (motionOff()) return 0;
   const t = success ? EINDE : { beloning: EINDE.mislukt, pil: EINDE.mislukt, knoppen: EINDE.mislukt + 150 };
+  acties.classList.add('wacht');
+  eindWacht = setTimeout(() => acties.classList.remove('wacht'), t.knoppen);
   const op = (el, delay, pop) => {
     if (!el || !el.animate || !el.firstChild) return;
     el.animate(pop
@@ -12160,7 +12180,14 @@ function eindKomtOp(success) {
   };
   op($('end-earn'), t.beloning, true);
   op($('end-milestone'), t.pil);
-  op(document.querySelector('#screen-end .end-actions'), t.knoppen);
+  op(acties, t.knoppen);
+  const vakje = $('end-earn').querySelector('.earn-chip');
+  if (!vakje) return t.beloning;
+  const weg = t.beloning + EINDE.vlucht;
+  setTimeout(() => {
+    if ($('screen-end').classList.contains('active')) flyDiamonds(vakje, $('end-diamonds'), 3);
+  }, weg);
+  return weg + DIA_AANKOMST;
 }
 
 // Het sterrenmoment: de verdiende sterren ploppen één voor één op, elk met een
