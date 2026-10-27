@@ -2354,7 +2354,9 @@ function tourStarValues(p) { return Object.values(p.tourStars || {}); }
 function allStarValues(p) { return Object.values(p.stars).concat(tourStarValues(p)); }
 function playedCount(p) { return Object.keys(p.stars).length + tourStarValues(p).length; }
 function perfectCount(p) { return allStarValues(p).filter(s => s === 3).length; }
-function totalStarCount(p) { return allStarValues(p).reduce((a, b) => a + b, 0); }
+// Number(): een save van een ander toestel (Overzetten) is alleen op zijn vorm
+// gekeurd, niet op elke waarde -- een ster als tekst telt mee, maar plakt niet.
+function totalStarCount(p) { return allStarValues(p).reduce((a, b) => a + (Number(b) || 0), 0); }
 // Hoeveel beschikbare werelden dit kind echt uitgespeeld heeft (voor de teller op
 // de Wereldtournee-trofee, en straks voor de wereldladder).
 function doneWorldCount(p) { let n = 0; for (let i = 0; i < WORLD_AVAIL; i++) if (worldDone(p, i)) n++; return n; }
@@ -2594,8 +2596,11 @@ function migrate(p) {
   // bestaande spelers beginnen met een lege onderhoudslijst; die vult zich vanzelf
   // zodra ze weer sommen goed maken (geen terugwerkende kracht)
   if (!p.learned) p.learned = {};
-  // oude zwakke-sleutels ("3 + 4") naar het nieuwe sjabloonformaat ("3 + 4 = @")
-  else {
+  /* oude zwakke-sleutels ("3 + 4") naar het nieuwe sjabloonformaat ("3 + 4 = @").
+     Dit hing aan een else achter p.learned, en dan kreeg een heel oude save de
+     omzetting pas bij de tweede keer laden. Elke keer mag: wat al een @ heeft,
+     blijft zoals het is. */
+  {
     const nw = {};
     for (const [k, e] of Object.entries(p.weak)) nw[k.includes('@') ? k : `${k} = @`] = e;
     p.weak = nw;
@@ -2684,11 +2689,25 @@ function migrate(p) {
     return !(t && t.telWerelden) || t.has(p);
   });
 }
-// Werkt de vaardigheidsinschatting bij na elk antwoord (exponentieel voortschrijdend gemiddelde).
+/* ---- Lopende inschattingen ----------------------------------------------
+   Vier tellers volgen hoe het gaat (p.perf, de nauwkeurigheid per bewerking, van
+   de drie getallen en van de telmodus), en ze rekenen allemaal op dezelfde
+   manier: een exponentieel voortschrijdend gemiddelde, waarin het nieuwste
+   antwoord een vijfde weegt. Een goed antwoord is 1, goed bij de tweede poging
+   (of niet snel) 0.85, fout 0. Op één plek, zodat bijstellen op één plek kan. */
+function lopend(oud, doel) { return oud * 0.8 + doel * 0.2; }
+function antwoordWaarde(correct, volledig) { return correct ? (volledig ? 1 : 0.85) : 0; }
+/* De pauze van een vraagsoort, met hysterese: onder 0.70 gaat hij op pauze en
+   pas vanaf 0.85 weer aan, zodat hij niet bij elk antwoord aan en uit springt. */
+const PAUZE_ONDER = 0.70, PAUZE_UIT = 0.85;
+function pauzeBij(t) {
+  if (t.acc < PAUZE_ONDER) t.paused = true;
+  else if (t.acc >= PAUZE_UIT) t.paused = false;
+}
+// Werkt de vaardigheidsinschatting bij na elk antwoord.
 // Goed = omhoog (extra beloond bij snel binnen de spotlight), fout = omlaag.
 function updatePerf(p, correct, fast) {
-  const target = correct ? (fast ? 1 : 0.85) : 0;
-  p.perf = Math.max(0, Math.min(1, p.perf * 0.8 + target * 0.2));
+  p.perf = Math.max(0, Math.min(1, lopend(p.perf, antwoordWaarde(correct, fast))));
 }
 let db;
 // LEGACY. Vaste weergavevolgorde voor saves van vóór het bewaarde order-veld:
@@ -2708,15 +2727,16 @@ function assignProfileOrder() {
 function nextProfileKey() { for (let i = 1; ; i++) if (!db.profiles['p' + i]) return 'p' + i; }
 // Nieuwe sterren sluiten achteraan aan. Math.max(-1) geeft -1 bij nul sterren, dus
 // de eerste krijgt order 0; legacy-profielen in de 90-bak blijven ervóór staan.
+// Een ster zonder plek (een save van vóór de volgorde) hoort in de 90-bak.
+function plekVan(p) { return p.order == null ? 90 : p.order; }
 function nextOrder() {
-  return 1 + Math.max(-1, ...Object.values(db.profiles).map(p => p.order == null ? 90 : p.order));
+  return 1 + Math.max(-1, ...Object.values(db.profiles).map(plekVan));
 }
-// Sleutels in weergavevolgorde (order oplopend; gelijkspel op sleutel).
-function profileKeys() {
-  return Object.keys(db.profiles).sort((a, b) => {
-    const d = (db.profiles[a].order == null ? 90 : db.profiles[a].order) - (db.profiles[b].order == null ? 90 : db.profiles[b].order);
-    return d !== 0 ? d : (a < b ? -1 : 1);
-  });
+// Sleutels in weergavevolgorde (order oplopend; gelijkspel op sleutel). Van deze
+// db, of van een andere save (Overzetten toont die vóór hij erin staat).
+function profileKeys(profielen) {
+  const ps = profielen || db.profiles;
+  return Object.keys(ps).sort((a, b) => plekVan(ps[a]) - plekVan(ps[b]) || (a < b ? -1 : 1));
 }
 // Eenmalige ophaalslag voor saves van vóór "maak je eigen ster": die konden Clara
 // missen (ze kwam er later bij). Dat mag maar één keer gebeuren -- anders komt een
@@ -10720,8 +10740,7 @@ document.addEventListener('visibilitychange', () => {
 function updateCountAcc(p, correct, firstTry) {
   const ct = p.countTrack;
   ct.seen = (ct.seen || 0) + 1;
-  const target = correct ? (firstTry ? 1 : 0.85) : 0;
-  ct.acc = (ct.acc == null ? 0.5 : ct.acc) * 0.8 + target * 0.2;
+  ct.acc = lopend(ct.acc == null ? 0.5 : ct.acc, antwoordWaarde(correct, firstTry));
   const top = countTopRung(countLiveStage(p));
   if (correct && firstTry) {
     ct.streak = (ct.streak || 0) + 1;
@@ -11272,29 +11291,23 @@ function refreshReadiness(p, stap) {
   });
 }
 // Werkt de per-bewerking-nauwkeurigheid bij ná de definitieve afronding van een
-// klassieke som (niet bij een tussentijdse herkansing). Pauze met hysterese:
-// onder 0.70 pauzeren, pas boven 0.85 weer vrijgeven.
+// klassieke som (niet bij een tussentijdse herkansing). Pauze met hysterese,
+// zie pauzeBij.
 function updateOpAcc(p, op, correct, firstTry, fast) {
   const t = ot(p, op);
   t.n++;
-  const target = correct ? (firstTry ? 1 : 0.85) : 0;
-  t.acc = t.acc * 0.8 + target * 0.2;
+  t.acc = lopend(t.acc, antwoordWaarde(correct, firstTry));
   // vlotheid alleen meten bij een directe treffer, en rustiger middelen dan de
   // accuratesse: even opkijken of napraten mag geen vlotheidsdip veroorzaken
   if (correct && firstTry) t.fast = t.fast * 0.85 + (fast ? 1 : 0) * 0.15;
-  if (t.acc < 0.70) t.paused = true;
-  else if (t.acc >= 0.85) t.paused = false;
+  pauzeBij(t);
 }
 // Nauwkeurigheid van de drie-getallen-vragen zelf (voor hun eigen pauze).
 function updateChainAcc(p, correct, firstTry) {
   const ct = p.chainTrack;
   ct.seen = (ct.seen || 0) + 1;
-  const target = correct ? (firstTry ? 1 : 0.85) : 0;
-  ct.acc = ct.acc * 0.8 + target * 0.2;
-  if (ct.seen >= 5) {
-    if (ct.acc < 0.70) ct.paused = true;
-    else if (ct.acc >= 0.85) ct.paused = false;
-  }
+  ct.acc = lopend(ct.acc, antwoordWaarde(correct, firstTry));
+  if (ct.seen >= 5) pauzeBij(ct);
 }
 // Na een optreden: frequentie-trap bijstellen. Schone ronde (geen misser op de
 // speciale vragen) → teller op; na 3 schone rondes trap 2. Een misser → terug
@@ -15851,22 +15864,13 @@ function ozFoutTekst(status) {
   if (status === 413) return 'Te veel om over te zetten. Maak een back-upbestand.';
   return 'Dat lukte niet. Probeer het nog eens.';
 }
-function ozSterren(p) {
-  return Object.values(p.stars || {}).reduce((a, b) => a + (Number(b) || 0), 0);
-}
 function ozKaart(p, soort) {
-  const sterren = soort === 'ok' ? '' : `<small><span aria-hidden="true">⭐</span> ${ozSterren(p)}</small>`;
+  const sterren = soort === 'ok' ? '' : `<small><span aria-hidden="true">⭐</span> ${totalStarCount(p)}</small>`;
   return `<div class="oz-ster${soort ? ' ' + soort : ''}"><span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
     + `<b>${esc(p.name)}</b>${sterren}${soort === 'ok' ? '<span class="oz-vink" aria-hidden="true">✓</span>' : ''}</div>`;
 }
-// De profielen van een save, in hun eigen volgorde (zoals profileKeys dat doet).
-function ozProfielen(data) {
-  return Object.keys(data.profiles).sort((a, b) => {
-    const pa = data.profiles[a], pb = data.profiles[b];
-    const d = (pa.order == null ? 90 : pa.order) - (pb.order == null ? 90 : pb.order);
-    return d !== 0 ? d : (a < b ? -1 : 1);
-  }).map(k => data.profiles[k]);
-}
+// De profielen van een save, in hun eigen volgorde.
+function ozProfielen(data) { return profileKeys(data.profiles).map(k => data.profiles[k]); }
 function ozCodeHtml(code, soort, nu) {
   let h = `<div class="oz-code${soort ? ' ' + soort : ''}" aria-hidden="true">`;
   for (let i = 0; i < 6; i++) {
