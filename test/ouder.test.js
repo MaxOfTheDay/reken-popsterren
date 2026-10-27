@@ -1049,7 +1049,7 @@ function check(ok, label, detail) {
   {
     const { ctx, page } = await fresh();
     const lees = async () => page.evaluate(() => ({
-      kaarten: [...document.querySelectorAll('#settings-body .vg-kop')].map(e => e.textContent.trim()),
+      kaarten: [...document.querySelectorAll('#settings-body .vg-kaart:not(.vg-meer) > .kaart-kop h2')].map(e => e.textContent.trim()),
       labels: [...document.querySelectorAll('#settings-body .vg-tag')].map(e => e.dataset.stand),
       onder: (document.querySelector('.vg-onder') || {}).textContent || '',
       meerOpen: document.querySelector('.vg-meer').open,
@@ -1288,6 +1288,64 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+
+  /* ================= U · Eén kaartkop, en het pad ================= */
+  /* Elke kaart op Voortgang en Oefeningen begint met dezelfde kop (kaartKop):
+     zelfde grootte, zelfde kleur, op allebei de tabbladen en in beide modi.
+     Hier stonden drie soorten kop naast elkaar; wie een kaart bijzet zonder
+     kaartKop, of een eigen kopstijl meegeeft, valt hier om. Alleen de notitie
+     over de stem heeft geen kop -- dat is een melding, geen onderwerp.
+     Daarnaast: het leerpad op Voortgang is een weg (vol tot haar, gestippeld
+     erna), en die op Oefeningen niet. */
+  {
+    const { ctx, page } = await fresh();
+    await page.evaluate(() => { db.profiles.p1.weak = { '8 + @ = 13': { w: 3, ans: 5 } };
+      db.profiles.p1.pad = { klaar: ['tot10'], rij: 'tot20', shows: 1, goed: 0 }; save(); });
+    const koppen = () => page.evaluate(() => {
+      const kaarten = [...document.querySelectorAll('#settings-body .settings-panel > .set-card')];
+      const zonder = kaarten.filter(k => {
+        if (k.querySelector('.stem-notitie')) return false;
+        const eerste = k.tagName === 'DETAILS' ? k.querySelector('summary').firstElementChild : k.firstElementChild;
+        return !(eerste && eerste.classList.contains('kaart-kop'));
+      }).map(k => k.className);
+      const stijl = [...document.querySelectorAll('#settings-body .kaart-kop h2')].map(h => {
+        const c = getComputedStyle(h); return c.fontSize + ' ' + c.fontWeight + ' ' + c.color;
+      });
+      return { n: kaarten.length, zonder, stijl, oud: document.querySelectorAll('#settings-body .vg-kop, #settings-body .vg-kop-rij').length };
+    });
+    const stijlen = new Set();
+    for (const [track, tab] of [['math', 'voortgang'], ['math', 'oefenen'], ['count', 'voortgang'], ['count', 'oefenen']]) {
+      await page.evaluate(t => { db.profiles.p1.settings.track = t; save(); }, track);
+      await open(page, 'p1', tab);
+      await page.waitForTimeout(150);
+      const r = await koppen();
+      check(r.n >= 2 && !r.zonder.length && !r.oud, `U · ${track} · ${tab}: elke kaart begint met de kaartkop`, JSON.stringify(r));
+      r.stijl.forEach(x => stijlen.add(x));
+    }
+    check(stijlen.size === 1, 'U · en die kop ziet er overal hetzelfde uit', JSON.stringify([...stijlen]));
+    // het pad: op Voortgang wel, op Oefeningen niet
+    await page.evaluate(() => { db.profiles.p1.settings.track = 'math'; save(); });
+    await open(page, 'p1', 'voortgang');
+    await page.waitForTimeout(150);
+    let r = await page.evaluate(() => {
+      const ps = (sel, pseudo) => { const e = document.querySelector('#settings-body ' + sel); return e && getComputedStyle(e, pseudo); };
+      return {
+        klaarOnder: ps('.vg-ladder .fl-rij.klaar', '::after').backgroundColor,
+        hierBoven: ps('.vg-ladder .fl-rij.hier', '::before').backgroundColor,
+        laterOnder: ps('.vg-ladder .fl-rij.later', '::after').backgroundImage,
+        eersteBoven: ps('.vg-ladder > .fl-rij:first-child', '::before').display,
+        paars: getComputedStyle(document.documentElement).getPropertyValue('--purple-mid').trim(),
+      };
+    });
+    check(r.klaarOnder === r.hierBoven && r.klaarOnder !== 'rgba(0, 0, 0, 0)' && /radial-gradient/.test(r.laterOnder) && r.eersteBoven === 'none',
+      'U · Voortgang: de weg is vol tot haar en gestippeld erna, en begint bij het eerste bolletje', JSON.stringify(r));
+    await open(page, 'p1', 'oefenen');
+    await page.waitForTimeout(150);
+    r = await page.evaluate(() => [...document.querySelectorAll('#set-startstap .fl-rij')]
+      .filter(e => getComputedStyle(e, '::before').content !== 'none').length);
+    check(r === 0, 'U · Oefeningen: geen weg door de ladder (daar lopen vanaf en tot al)', String(r));
+    await ctx.close();
+  }
 
   /* ================= T · Het back-upblad en overzetten ================= */
   /* De ontvanger (worker/overzetten.js) wordt hier nagebootst met page.route --
