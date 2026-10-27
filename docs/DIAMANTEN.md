@@ -30,7 +30,7 @@ shows, geen herkansingen, geen moeilijkheid, geen trofeeën en geen wereldbeloni
 | applaus (publieksmeter vol) | +5 💎 | 1–2 per show | idem |
 | rest van de publieksmeter | +1 💎 per volle 25% | 1× per show | `endLevel` |
 | sterren van de show | ⭐ × 5 💎 (5 / 10 / 15) | ja, ook bij overdoen | `endLevel` |
-| memory (telmodus) | 2 💎 per paar + 3 💎 | ja | `onMemMatch` |
+| memory (tellen én rekenen, 4–6 paren) | 2 💎 per paar + 3 💎 | ja | `onMemMatch` |
 | verse ster | 30 💎 | eenmalig | `defaultProfile` |
 
 De ster-status (rang omhoog: 10 tot 60 💎, samen 225) stond hier ook; die is in
