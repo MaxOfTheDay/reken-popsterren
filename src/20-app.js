@@ -11019,6 +11019,10 @@ function finishMemory(m) {
   // De bonus is verdiend, ook als het kind al weg is; alleen het feestje niet meer.
   p.diamonds += bonus; m.earned += bonus;
   save();
+  // het feestje wacht tot het kind weer kijkt (zie alsZichtbaar); de bonus niet
+  alsZichtbaar(() => memoryFeest(m, p));
+}
+function memoryFeest(m, p) {
   if (M !== m) return;
   telStraks($('mem-diamonds'), p.diamonds);
   sndGroot();
@@ -12229,9 +12233,31 @@ function livesText() {
   const left = Math.max(0, 3 - G.errors);
   return '❤️'.repeat(left) + '🤍'.repeat(3 - left);
 }
+/* De show wacht op je. Een telefoon die op slot gaat of een kind dat even naar
+   een andere app gaat, laat de show op Android en op een tablet nog een tijd
+   doorlopen: de volgende som kwam dan zonder kijker, zijn spotlicht liep leeg
+   (weg +1 💎), de telmodus las hem voor aan een vergrendeld scherm, en na de
+   laatste som speelde het hele eindfeest voor niemand. Een iPhone legt de pagina
+   stil en had dit niet. Nu wacht elke stap die vanzelf komt tot de app weer in
+   beeld is, en gaat dan gewoon verder.
+   Eén wachter tegelijk: wie twee keer vraagt, krijgt alleen de laatste. */
+let zichtbaarWacht = null;
+function alsZichtbaar(fn) {
+  if (zichtbaarWacht) document.removeEventListener('visibilitychange', zichtbaarWacht);
+  zichtbaarWacht = null;
+  if (!document.hidden) { fn(); return; }
+  zichtbaarWacht = () => {
+    if (document.hidden) return;
+    document.removeEventListener('visibilitychange', zichtbaarWacht);
+    zichtbaarWacht = null;
+    fn();
+  };
+  document.addEventListener('visibilitychange', zichtbaarWacht);
+}
 function nextStep() {
   hideToast();
   if (!G) return;
+  if (document.hidden) { const g = G; alsZichtbaar(() => { if (G === g) nextStep(); }); return; }
   if (G.errors >= 3) { endLevel(false); return; }
   G.idx++;
   if (G.idx >= G.total) endLevel(true);

@@ -658,6 +658,32 @@ const TELEFOON = { width: 390, height: 844 };
     await ctx.close();
   }
 
+  /* N · De show wacht op je. Antwoord en meteen weg (scherm op slot, andere app):
+     op Android loopt de pagina nog door, en dan kwam de volgende som zonder kijker
+     en liep zijn spotlicht leeg. Nu blijft de show staan tot de app weer in beeld
+     is. "Weg" wordt hier nagebootst: document.hidden en een visibilitychange. */
+  {
+    const { page, ctx } = await fresh();
+    await page.evaluate(() => {
+      window.__zicht = 'visible';
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => window.__zicht });
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => window.__zicht === 'hidden' });
+      window.__weg = w => { window.__zicht = w ? 'hidden' : 'visible'; document.dispatchEvent(new Event('visibilitychange')); };
+      selectProfile('p1'); startLevel(P().level);
+    });
+    await page.waitForTimeout(1200);
+    const stand = () => page.evaluate(() => ({ idx: G.idx, spot: Math.round(spotNu()), loopt: !!G.timer }));
+    await page.evaluate(() => { submitAnswer(G.qs[G.idx].ans); __weg(true); });
+    await page.waitForTimeout(3000);
+    const weg = await stand();
+    check(weg.idx === 0 && !weg.loopt, 'N · antwoord en weg: de volgende som wacht', JSON.stringify(weg));
+    await page.evaluate(() => __weg(false));
+    await page.waitForTimeout(600);
+    const terug = await stand();
+    check(terug.idx === 1 && terug.loopt && terug.spot > 90, 'N · terug: de volgende som komt, met een vol spotlicht', JSON.stringify(terug));
+    await ctx.close();
+  }
+
   check(pageErrors.length === 0, 'Z · geen fouten in de pagina', pageErrors.join(' | '));
   await browser.close();
   klaar();
