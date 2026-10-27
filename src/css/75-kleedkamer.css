@@ -537,7 +537,6 @@
     min-height: 44px; min-width: 46px; flex: none;
   }
   .tab-btn .tab-ico { font-size: 21px; line-height: 1; filter: var(--emoji-schaduw); }
-  .tab-label { white-space: nowrap; }
   .tab-btn:active { transform: scale(.95); }
   /* Wat niet gekozen is staat iets stiller (zoals .nav-item); het vlak eronder
      is het licht (zie .shop-tabs .tab-btn verderop, na .tab-btn.active). */

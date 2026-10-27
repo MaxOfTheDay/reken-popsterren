@@ -1375,22 +1375,6 @@
                    100cqw);
       border-radius: var(--r-md); box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 20px 70px rgba(0,0,0,.6); }
   }
-  /* zachte fade-randen op horizontale scrollers (tabbladen, kindkiezer):
-     verschijnen alleen aan de kant waar nog meer te scrollen valt.
-
-     --fade is hoe breed die overgang is, en dat is met opzet een knop en geen
-     vast getal: de fade hoort smaller te zijn dan het stukje knop dat er aan die
-     kant nog uitsteekt. Is hij breder, dan wist hij precies datgene uit wat hij
-     moest aankondigen -- dan ziet een rij die dóórloopt eruit als een rij die
-     ophoudt. Een rij met smalle knopjes zet hem daarom zelf smaller (zie
-     .shop-tabs). */
-  .hscroll-fade { --fade: 34px; }
-  .hscroll-fade.can-right { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - var(--fade)), transparent 100%);
-    mask-image: linear-gradient(90deg, #000 calc(100% - var(--fade)), transparent 100%); }
-  .hscroll-fade.can-left { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade));
-    mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade)); }
-  .hscroll-fade.can-left.can-right { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade), #000 calc(100% - var(--fade)), transparent 100%);
-    mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade), #000 calc(100% - var(--fade)), transparent 100%); }
   /* De weg: twee lagen over de volle tekening. Het hele pad dof ("nog te
      ontdekken"), het afgelegde stuk daar bovenop vol goud ("al gehaald") --
      dezelfde taal als de haltes zelf. Gestippeld, zodat het als een route leest
@@ -1477,10 +1461,10 @@
      tikken van de laatste naar de eerste, en ze lagen bovendien over de tekening.
      De naam is toch al de plek waar je kijkt om te weten wáár je bent.
 
-     PS-11 -- de pil is twee zones in één knop: .wp-here (waar je bent) en
+     PS-11 -- de pil was twee zones in één knop: de wereldnaam (waar je bent) en
      .wp-cta (waar de tik heen gaat). Eén <button>, dus altijd precies één
-     raakvlak; de twee zones zijn opmaak, geen aparte knoppen. Op de kaart staat
-     sinds oktober 2026 alleen .wp-cta er nog in (zie renderMapTitle).
+     raakvlak; de zones zijn opmaak, geen aparte knoppen. Sinds oktober 2026
+     staat alleen .wp-cta er nog in (zie renderMapTitle).
 
      Refine -- .wp-cta droeg eerst nog een woord ("Werelden"). Dat maakte de pil
      twee regels hoog op een telefoon, en een label náást een pictogram dat het
@@ -1498,16 +1482,8 @@
   /* .bezig: ingedrukt blijven tot de vlucht hem meeneemt -- zie pilTik */
   .world-pick:active, .world-pick.bezig { transform: scale(.96); filter: brightness(1.15); }
   @media (prefers-reduced-motion: reduce) { .world-pick:active, .world-pick.bezig { transform: none; } }
-  .wp-here, .wp-cta { display: flex; align-items: center; justify-content: center; white-space: nowrap; }
-  /* .wp-here mag krimpen, .wp-cta nooit: het icoon + de chevron zijn wat deze
-     pil als knop leest, dus die blijven altijd voluit staan. Wijkt er iets, dan
-     is dat de wereldnaam zelf (.wp-here-naam neemt de ellips), niet het icoon
-     ernaast en niet de cta-zone. min-width:0 zet flexbox's eigen bodem (nooit
-     kleiner dan de inhoud) opzij -- zonder dat blijft .wp-here altijd zijn volle
-     tekstbreedte opeisen, ook als de kolom (zie #screen-map hieronder) minder
-     overheeft. */
-  .wp-here { flex: 1 1 auto; min-width: 0; gap: 6px; padding: 0 8px 0 14px; }
-  .wp-here-naam { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .wp-cta { display: flex; align-items: center; justify-content: center; white-space: nowrap; }
+  /* .wp-cta krimpt nooit: het icoon is wat deze pil als knop leest. */
   .wp-cta { flex: none; }
   /* De rechterzone krijgt een lichte cyaan waas -- dezelfde familie als
      --cyaan-tint/--cyaan-rand, de kleur die elders al "hier kijk je" zegt (een

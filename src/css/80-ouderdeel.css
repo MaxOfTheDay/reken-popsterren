@@ -72,7 +72,7 @@
     #screen-settings .segmented button { padding: 7px 8px; min-height: 36px; font-size: var(--tx-label); }
   }
 
-  /* zelfde donkerpaarse .hub-sticky-kop als de rest van de app: ← · zij · ▶
+  /* zelfde donkerpaarse .hub-sticky als de rest van de app: ← · zij · ▶
      (op het overzicht: ← · Voor ouders), met Voortgang | Oefeningen | ✏️ er
      direct onder, ook altijd in beeld. Alles in dit scherm leest dezelfde
      --kolom, dus er is maar één linkerkant. */
@@ -265,17 +265,6 @@
   .set-field + .set-field { margin-top: 15px; }
   .set-field .lbl { font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink); }
   .set-card .note, .set-field .note { font-size: var(--tx-klein); color: var(--paper-ink-muted); font-weight: 500; }
-  /* FASE 5D.1 -- de uitleg bij een instelling stond als "(zo werkt dit)" ín het
-     label, op dezelfde regel. Op een telefoon werd dat één doorlopende dichte
-     regel van vet plus haakjes die over twee of drie regels afbrak, en dan is het
-     label zelf niet meer te vinden. Nu: het label op zijn eigen regel, de uitleg
-     eronder in één kleinere, gedempte zin.
-     De negatieve marge is de tegenhanger van de 7px gap van .set-field: label en
-     uitleg horen bij elkaar (3px), de chips eronder zijn iets anders (7px). */
-  .set-field .hulp {
-    font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted);
-    line-height: 1.3; margin-top: -4px;
-  }
   .chip-row { display: flex; flex-wrap: wrap; gap: 7px; }
   /* FASE 5D.1 -- drie keuzes die samen één vraag beantwoorden ("hoe tonen we de
      antwoorden?") horen op één regel te staan. Met de natuurlijke breedte viel
