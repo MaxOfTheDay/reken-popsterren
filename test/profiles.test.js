@@ -1444,6 +1444,10 @@ function check(ok, label, detail) {
           renderMapTitle(p);
           renderTourMap(0);
           const naamW = worldForIndex(idx).world.id + (slinger ? ' (slinger)' : '');
+          /* De maat alleen voor de open haltes: over een halte op slot kan zij
+             staan (haar halte ligt erboven), en dan meet je haar. Dat de haltes op
+             slot -- die sinds de nee-wiebel ook een raakvlak hebben -- niemand
+             overlappen, zegt de overlapmeting hieronder: die neemt álle haltes. */
           const stops = [...document.querySelectorAll('.tour-stop:not(.locked)')];
           const vakken = [];
           stops.forEach(s => {
@@ -1797,6 +1801,103 @@ function check(ok, label, detail) {
     });
     check(Math.max(...spreid) <= 12, 'een halte op slot heeft in élke wereld dezelfde kleur',
       'spreiding per kanaal ' + JSON.stringify(spreid) + ' — ' + JSON.stringify(gemeten));
+    await c.close();
+  }
+
+  /* ========== 7e-quinquies · Op slot antwoordt, memory vraagt, 💎 is overal de knop ==========
+   * Drie kleine dingen uit de navigatierondgang van oktober 2026:
+   *   - een tik op een halte op slot deed niets (geen raakvlak). Nu wiebelt hij
+   *     nee, ringt haar eigen halte en huppelt zij -- en er begint geen show
+   *   - memory ging met een ← meteen weg, midden in een potje. Nu een ✕ met
+   *     hetzelfde venster als de show, en pas als er een kaartje om is
+   *   - de 💎-pil was alleen op de kaart een knop; op Werelden en in de kast
+   *     zag hij er hetzelfde uit en deed hij niets
+   * Met aanraking, op een gewone telefoon. */
+  {
+    const c = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    await cacheFonts(c);
+    const page = await c.newPage();
+    page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await page.goto(APP_URL + '&demo&star=p1&screen=map');
+    await page.waitForTimeout(2600);   // opkomst en groet voorbij
+    const plek = await page.evaluate(() => {
+      const d = document.querySelector('.tour-stop.locked .dot').getBoundingClientRect();
+      return { x: d.left + d.width / 2, y: d.top + d.height / 2 };
+    });
+    await page.touchscreen.tap(plek.x, plek.y);
+    await page.waitForTimeout(80);
+    const slot = await page.evaluate(() => ({
+      scherm: document.querySelector('.screen.active').id,
+      nee: !!document.querySelector('.tour-stop.locked .dot.nee'),
+      ring: !!document.querySelector('.tour-stop.next.aangekomen'),
+      huppel: !!document.querySelector('.tour-hero .avatar-holder.move-huppel'),
+    }));
+    check(slot.scherm === 'screen-map', 'een halte op slot start geen show', slot.scherm);
+    check(slot.nee, 'een tik op een halte op slot laat hem nee wiebelen', JSON.stringify(slot));
+    check(slot.ring && slot.huppel, 'en haar eigen halte antwoordt: ring en huppel', JSON.stringify(slot));
+
+    // de 💎-pil op Werelden en in de kast: dezelfde knop, met de wens erbij
+    for (const [naam, open, sel] of [
+      ['Werelden', () => openReis(), '#screen-journey .diamond-badge'],
+      ['de kast', () => openTrophies(), '#screen-trophies .diamond-badge.header-right']]) {
+      await page.evaluate(() => goMap());
+      await page.waitForTimeout(500);
+      await page.evaluate(open);
+      await page.waitForTimeout(1600);
+      const pil = await page.evaluate((sel) => {
+        const p = P();
+        p.wens = ITEMS.filter(i => typeof i.price === 'number' && !p.owned.includes(i.id) && i.price > p.diamonds)[0].id;
+        zetWensPil(p);
+        const b = document.querySelector(sel);
+        return { knop: b.tagName, wens: b.classList.contains('met-wens') && !!b.querySelector('.wens-mini').textContent };
+      }, sel);
+      check(pil.knop === 'BUTTON' && pil.wens, 'de 💎-pil is een knop met de wens — ' + naam, JSON.stringify(pil));
+      await page.tap(sel);
+      await page.waitForTimeout(900);
+      const nu = await page.evaluate(() => document.querySelector('.screen.active').id);
+      check(nu === 'screen-dress', 'een tik op de 💎-pil gaat naar de kleedkamer — ' + naam, nu);
+      await page.evaluate(() => { delete P().wens; });
+    }
+
+    // memory: ✕, en het venster pas als er een kaartje om is
+    await page.goto(APP_URL + '&demo&star=p2&screen=map');
+    await page.waitForTimeout(1500);
+    await page.evaluate(() => startMemory());
+    await page.waitForTimeout(600);
+    await page.tap('#screen-memory .header-left');
+    await page.waitForTimeout(500);
+    const meteen = await page.evaluate(() => ({
+      scherm: document.querySelector('.screen.active').id, venster: !!document.querySelector('#quit-modal.open') }));
+    check(meteen.scherm === 'screen-map' && !meteen.venster,
+      'memory zonder omgedraaid kaartje: de ✕ gaat meteen naar de kaart', JSON.stringify(meteen));
+    await page.evaluate(() => startMemory());
+    await page.waitForTimeout(600);
+    await page.tap('.mem-card >> nth=0');
+    await page.waitForTimeout(200);
+    await page.tap('#screen-memory .header-left');
+    await page.waitForTimeout(300);
+    const vraag = await page.evaluate(() => ({
+      scherm: document.querySelector('.screen.active').id,
+      titel: (document.querySelector('#quit-modal.open h3') || {}).textContent }));
+    check(vraag.scherm === 'screen-memory' && /Memory stoppen/.test(vraag.titel || ''),
+      'memory met een kaartje om: de ✕ vraagt eerst', JSON.stringify(vraag));
+    await page.keyboard.press('Escape');   // terug = Doorspelen
+    await page.waitForTimeout(300);
+    check(await page.evaluate(() => !document.querySelector('#quit-modal.open')
+      && document.getElementById('screen-memory').classList.contains('active')),
+      'terug in het venster speelt memory door', 'venster nog open of memory weg');
+    await page.keyboard.press('Escape');   // terug in memory = dezelfde vraag als de ✕
+    await page.waitForTimeout(300);
+    await page.tap('#quit-modal .btn.paper');
+    await page.waitForTimeout(700);
+    check(await page.evaluate(() => document.querySelector('.screen.active').id) === 'screen-map',
+      'Stoppen in het venster brengt memory naar de kaart', 'niet op de kaart');
+    // en de show houdt zijn eigen zinnen
+    await page.evaluate(() => { startLevel(P().level); });
+    await page.waitForTimeout(1500);
+    const show = await page.evaluate(() => { G.idx = 1; askQuit();
+      return document.querySelector('#quit-modal.open h3').textContent; });
+    check(/Show stoppen/.test(show), 'na memory vraagt de show nog steeds "Show stoppen?"', show);
     await c.close();
   }
 

@@ -90,9 +90,13 @@
   .tour-stop::before { content: ''; position: absolute; left: 50%; top: 5.95cqw;
     width: 14.4cqw; height: 13.3cqw; margin: -6.65cqw 0 0 -7.2cqw; border-radius: 30%;
     pointer-events: auto; }
-  /* Een halte op slot is geen knop en hoort ook geen tikken van de buren af te
-     pakken: geen raakvlak, dus de halte ernaast krijgt ze. */
-  .tour-stop.locked::before { display: none; }
+  /* Een halte op slot heeft hetzelfde raakvlak als de rest. Hier stond eerst
+     géén raakvlak, en dan deed een tik op show 7 helemaal niets -- terwijl de
+     kaart juist de plek is waar een kind vooruit tikt, en Werelden op een wereld
+     op slot wél antwoordt. Nu wiebelt hij "nee" en antwoordt haar eigen halte
+     (zie slotHalte). Van de buren pakt hij niets af: de maat hierboven is zo
+     gekozen dat geen twee raakvlakken overlappen, op slot of niet (test 7e meet
+     het voor alle haltes), en haar halte ligt er met z-index 3 sowieso boven. */
   .tour-stop {
     position: absolute; transform: translate(-50%, -5.15cqw);
     width: 26cqw; border: none; cursor: pointer; font-family: inherit; color: var(--c-white);
@@ -227,6 +231,11 @@
      Wat NIET terugkomt: een ander teken op diezelfde plek. Dan is er niets
      opgelost en staat er alleen iets anders in de weg. */
   .tour-stop.locked { cursor: default; }
+  /* Op slot drukt niet in: indrukken zegt "ja, deze show". Hij wiebelt nee, met
+     dezelfde beweging als het slotje van een wereld op slot in Werelden. */
+  .tour-stop.locked:active .stop-body { transform: scale(var(--stop-schaal)); }
+  .tour-stop.locked .dot.nee { animation: slot-nee .5s ease; }
+  @media (prefers-reduced-motion: reduce) { .tour-stop.locked .dot.nee { animation: none; } }
   /* Op slot = nog niet aan de beurt, en dus rustiger: een stillere kleur en een
      zachtere schaduw. Niet grijzer of vager -- het moet een halte blijven die je
      herkent, alleen niet een die om aandacht vraagt. */

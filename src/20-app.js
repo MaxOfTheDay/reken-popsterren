@@ -7226,6 +7226,7 @@ function renderReis() {
   track.style.setProperty('--reis-n', hoogte.toFixed(3));
   $('screen-journey').onscroll = reisScroll;
   telNu($('reis-diamonds'), p.diamonds);
+  zetWensPil(p);   // dezelfde pil als op de kaart, met de wens erbij
   reisTerugVullen(WORLDS[doel]);
 
   /* De route. Tussen elke twee bestemmingen ligt een extra stuurpunt, om en om naar
@@ -8172,7 +8173,31 @@ function haltKnop(shown, nodes, i, stand) {
       if (nu && !nu.classList.contains('locked') && $('screen-map').classList.contains('active')) enterLevel(lvl, nu);
     });
   };
+  else b.onclick = () => slotHalte(b);
   return b;
+}
+/* Een tik op een halte op slot. Hier deed die tik niets: hij had geen raakvlak,
+   dus viel hij door naar de tekening. Werelden antwoordt op een wereld op slot
+   met een wiebel en een zin; de kaart doet het zonder woorden. De halte wiebelt
+   "nee" (de beweging van het slotje in Werelden), en haar eigen halte zegt waar
+   het wél is: de aankomstring, en zij huppelt (zie haltePuls en kaartTik -- dat
+   laatste geeft ook het klankje). Staat zij niet op deze kaart (een uitstapje),
+   dan is er alleen de wiebel en het tikje. Niet tijdens een overgang of vlucht:
+   dan beweegt de kaart al. */
+function slotHalte(b) {
+  if (overgangBezig || vluchtOp || wereldReisOp) return;
+  const dot = b.querySelector('.dot');
+  if (dot) {
+    dot.classList.remove('nee');
+    void dot.offsetWidth;
+    dot.classList.add('nee');
+    setTimeout(() => dot.classList.remove('nee'), 600);
+  }
+  const map = $('tour-map');
+  const ster = map && map.querySelector('.tour-stop.next .tour-hero');
+  if (!ster) { sndTap(); return; }
+  haltePuls();
+  kaartTik(ster, ster.closest('.tour-stop'));
 }
 /* Hoe hoog de kop en de navigatiebalk werkelijk zijn. De wereldknoppen gaan daar
    tussenin staan, en die maten hangen af van het lettertype, de veilige zones van
@@ -8982,6 +9007,7 @@ function renderShelves() {
   // alleen wat er ook echt in de kast staat telt mee (zie RETIRED_TROPHIES)
   const earned = earnedActiveCount(p);
   telNu($('trophy-diamonds'), p.diamonds);
+  zetWensPil(p);   // dezelfde pil als op de kaart, met de wens erbij
   /* De stand als pil in de kop: 🏆 en het getal, in dezelfde pil als het saldo
      ernaast (zie .kast-chip). Zonder totaal -- dat groeide met elke wereld die
      erbij kwam, en dan loopt een volle kast leeg zonder dat een kind iets kwijt
@@ -10641,12 +10667,33 @@ function memFitCols(grid, n) {
   grid.style.width = Math.floor(best.cols * best.size + gap * (best.cols - 1)) + 'px';
 }
 function exitMemory() { sndClick(); hideToast(); M = null; goMap(); }
+/* De ✕ van memory, en de terugknop daar. Memory had een ←, en die ging meteen
+   weg, midden in een potje -- vanuit dezelfde hoek waar de show een ✕ heeft die
+   eerst vraagt. Nu is het dezelfde ✕ en hetzelfde venster, met dezelfde regel:
+   nog niets gedaan (geen kaartje omgedraaid) of al klaar, dan vraagt hij niets.
+   De 💎 van de gevonden paren zijn al bewaard (onMemMatch), dus het venster
+   belooft alleen wat waar is. */
+function vraagMemoryStop() {
+  if (!M || !M.gedraaid || $('mem-done').style.display === 'flex') { exitMemory(); return; }
+  sndClick();
+  renderGeluid();
+  $('quit-titel').textContent = '🎤 Memory stoppen?';
+  $('quit-zin').textContent = 'Je 💎 houd je.';
+  $('quit-modal').classList.add('open');
+  syncBackGuard();
+}
+// "Stoppen" in dat venster: memory uit, of de show uit.
+function stopNu() {
+  if ($('screen-memory').classList.contains('active')) { $('quit-modal').classList.remove('open'); exitMemory(); }
+  else quitGame();
+}
 // MEM_DRAAI is de draai van een kaart (.mem-inner in 50-zaal: transition .35s).
 const MEM_DRAAI = 350, MEM_KIJK = 850;
 function flipCard(i, btn) {
   if (!M || M.lock) return;
   if (btn.classList.contains('open') || btn.classList.contains('done')) return;
   const c = M.cards[i];
+  M.gedraaid = true;   // vanaf nu vraagt de ✕ eerst (zie vraagMemoryStop)
   btn.classList.add('open');
   sndClick();
   speak(numWord(c.v));
@@ -11126,6 +11173,9 @@ function startLevel(lvl, eigenOvergang) {
 function askQuit() {
   sndClick();
   if (G && G.idx === 0 && G.errors === 0 && G.misses === 0) { quitGame(); return; }
+  // hetzelfde venster vraagt het ook voor memory (zie vraagMemoryStop)
+  $('quit-titel').textContent = '🎭 Show stoppen?';
+  $('quit-zin').textContent = 'Dan stopt dit optreden en ga je terug naar de kaart.';
   renderGeluid();   // de geluidsrij in dit venster toont de stand van nu
   // het spotlicht wacht zolang de vraag achter dit venster staat, net als
   // wanneer de app wegvalt -- anders is hij leeg of verder als je terugkomt
@@ -13055,28 +13105,36 @@ function wensTeken(it) {
   const c = CATS.find(c2 => c2.id === it.cat);
   return c ? c.ico : '💖';
 }
-// De 💎-pil op de kaart bijwerken: met wens, of gewoon zoals hij altijd was.
+/* De 💎-pil bijwerken: met wens, of gewoon zoals hij altijd was. Dezelfde pil
+   staat op de drie schermen met de tabbladbalk -- de kaart, Werelden en de kast
+   -- en is daar alle drie dezelfde knop. Hij was alleen op de kaart een knop: op
+   Werelden en in de kast zag hij er precies zo uit, maar deed een tik niets, en
+   stond de wens er niet bij. In de show, op het eindscherm en in memory blijft
+   hij een gewone teller: daar is ze aan het spelen. */
+const WENS_PILLEN = ['map-diamonds', 'reis-diamonds', 'trophy-diamonds'];
 function zetWensPil(p) {
-  const pil = $('map-diamonds') && $('map-diamonds').closest('.diamond-badge');
-  const plek = $('map-wens');
-  if (!pil || !plek) return;
   const it = wensItem(p);
-  if (!it) {
-    plek.textContent = '';
-    pil.classList.remove('met-wens', 'wens-klaar');
-    pil.style.removeProperty('--wens');
-    pil.onclick = () => navTik('dress');
-    pil.setAttribute('aria-label', 'Naar de kleedkamer');
-    return;
-  }
-  const klaar = p.diamonds >= it.price;
-  plek.textContent = wensTeken(it);
-  pil.classList.add('met-wens');
-  pil.classList.toggle('wens-klaar', klaar);
-  pil.style.setProperty('--wens', Math.min(100, Math.round(100 * p.diamonds / it.price)) + '%');
-  pil.onclick = () => { sndClick(); openKleedkamerItem(it.id); };
-  pil.setAttribute('aria-label', klaar ? `Je wens: ${it.full || it.name} -- je kunt hem kopen!`
-    : `Je wens: ${it.full || it.name}, nog ${it.price - p.diamonds} diamanten`);
+  WENS_PILLEN.forEach(id => {
+    const pil = $(id) && $(id).closest('.diamond-badge');
+    const plek = pil && pil.querySelector('.wens-mini');
+    if (!plek) return;
+    if (!it) {
+      plek.textContent = '';
+      pil.classList.remove('met-wens', 'wens-klaar');
+      pil.style.removeProperty('--wens');
+      pil.onclick = () => navTik('dress');
+      pil.setAttribute('aria-label', 'Naar de kleedkamer');
+      return;
+    }
+    const klaar = p.diamonds >= it.price;
+    plek.textContent = wensTeken(it);
+    pil.classList.add('met-wens');
+    pil.classList.toggle('wens-klaar', klaar);
+    pil.style.setProperty('--wens', Math.min(100, Math.round(100 * p.diamonds / it.price)) + '%');
+    pil.onclick = () => { sndClick(); openKleedkamerItem(it.id); };
+    pil.setAttribute('aria-label', klaar ? `Je wens: ${it.full || it.name} -- je kunt hem kopen!`
+      : `Je wens: ${it.full || it.name}, nog ${it.price - p.diamonds} diamanten`);
+  });
 }
 
 /* De lade onderaan: naam links, dé knop rechts. Bij te weinig diamanten geen dood
@@ -15528,7 +15586,7 @@ function backTarget() {
   //    als de zichtbare ✕/←/tab-knop op dat scherm (nooit twee betekenissen van "terug").
   if ($('screen-game').classList.contains('active')) return askQuit;
   if ($('screen-end').classList.contains('active')) return goMapNaShow;
-  if ($('screen-memory').classList.contains('active')) return exitMemory;
+  if ($('screen-memory').classList.contains('active')) return vraagMemoryStop;
   if ($('screen-settings').classList.contains('active')) return ouderTerug;
   if ($('screen-newstar').classList.contains('active')) return closeNewStar;
   if ($('screen-dress').classList.contains('active')) return dressBack;

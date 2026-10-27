@@ -5267,7 +5267,11 @@
     pointer-events: auto; }
 
 
-  .tour-stop.locked::before { display: none; }
+
+
+
+
+
   .tour-stop {
     position: absolute; transform: translate(-50%, -5.15cqw);
     width: 26cqw; border: none; cursor: pointer; font-family: inherit; color: var(--c-white);
@@ -5402,6 +5406,11 @@
 
 
   .tour-stop.locked { cursor: default; }
+
+
+  .tour-stop.locked:active .stop-body { transform: scale(var(--stop-schaal)); }
+  .tour-stop.locked .dot.nee { animation: slot-nee .5s ease; }
+  @media (prefers-reduced-motion: reduce) { .tour-stop.locked .dot.nee { animation: none; } }
 
 
 
@@ -6850,6 +6859,13 @@
 
 
   .gold-pill.kast-cadeau::after { left: 0; right: 0; }
+
+
+
+  @media (max-width: 389px) {
+    #screen-trophies .diamond-badge.met-wens { font-size: var(--tx-body); gap: 4px; padding-inline: 10px; }
+    #screen-trophies .wens-mini { font-size: .85em; margin-left: 0; }
+  }
 
 
 
@@ -10039,7 +10055,7 @@
           <button class="reis-titel" type="button" onclick="reisGlobeTik()"
             aria-label="Terug naar de kaart" title="Terug naar de kaart"><span class="rt-ico" aria-hidden="true">🌍</span></button>
         </div>
-        <div class="diamond-badge header-right">💎 <span id="reis-diamonds">0</span></div>
+        <button class="diamond-badge header-right" onclick="navTik('dress')" aria-label="Naar de kleedkamer" title="Naar de kleedkamer">💎 <span id="reis-diamonds">0</span><span id="reis-wens" class="wens-mini"></span></button>
       </div>
     </div>
     <div class="reis-track" id="reis-track"></div>
@@ -10057,7 +10073,7 @@
   <div class="screen app-sfeer" id="screen-memory">
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="naTik(exitMemory)" aria-label="Terug naar de kaart" title="Terug naar de kaart"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
+        <button class="btn icon-btn header-left" onclick="vraagMemoryStop()" aria-label="Memory stoppen" title="Memory stoppen"><svg class="ico" aria-hidden="true"><use href="#ico-kruis"/></svg></button>
         <div class="header-title">🎤 Memory</div>
         <div class="diamond-badge header-right">💎 <span id="mem-diamonds">0</span></div>
       </div>
@@ -10130,11 +10146,13 @@
   <!-- bevestiging vóór het verlaten van een show (voorkomt per-ongeluk-tikken) -->
   <div class="modal-bg" id="quit-modal" onclick="if(event.target===this)closeQuitModal()">
     <div class="modal">
-      <h3>🎭 Show stoppen?</h3>
-      <div class="modal-body">Dan stopt dit optreden en ga je terug naar de kaart.</div>
+      <!-- Ook het memory-spel vraagt het hier; vraagMemoryStop zet de twee zinnen om,
+           askQuit zet ze terug, en stopNu kiest wat Stoppen verlaat. -->
+      <h3 id="quit-titel">🎭 Show stoppen?</h3>
+      <div class="modal-body" id="quit-zin">Dan stopt dit optreden en ga je terug naar de kaart.</div>
       <div class="modal-actions">
         <button class="btn" onclick="closeQuitModal()">🎤 Doorspelen</button>
-        <button class="btn paper" onclick="quitGame()">Stoppen</button>
+        <button class="btn paper" onclick="stopNu()">Stoppen</button>
       </div>
       <!-- Het geluid, hier ook. Het tandwiel staat alleen op de sterrenkeuze, dus
            wie midden in een show stilte wilde, moest de show uit. Dit venster is
@@ -10177,7 +10195,7 @@
         <!-- De 🎁-pil staat er alleen als er een cadeautje klaarligt, en brengt je
              erheen (zie naarCadeau). -->
         <div class="header-title"><span class="diamond-badge kast-chip" id="trophy-count"></span><button class="gold-pill kast-cadeau" id="kast-cadeau" type="button" hidden></button></div>
-        <div class="diamond-badge header-right">💎 <span id="trophy-diamonds">0</span></div>
+        <button class="diamond-badge header-right" onclick="navTik('dress')" aria-label="Naar de kleedkamer" title="Naar de kleedkamer">💎 <span id="trophy-diamonds">0</span><span id="trophy-wens" class="wens-mini"></span></button>
       </div>
     </div>
     <!-- En hier houdt het op. Er stond een strookje ster-status onder de planken
@@ -18599,6 +18617,7 @@ function renderReis() {
   track.style.setProperty('--reis-n', hoogte.toFixed(3));
   $('screen-journey').onscroll = reisScroll;
   telNu($('reis-diamonds'), p.diamonds);
+  zetWensPil(p);
   reisTerugVullen(WORLDS[doel]);
 
 
@@ -19545,7 +19564,31 @@ function haltKnop(shown, nodes, i, stand) {
       if (nu && !nu.classList.contains('locked') && $('screen-map').classList.contains('active')) enterLevel(lvl, nu);
     });
   };
+  else b.onclick = () => slotHalte(b);
   return b;
+}
+
+
+
+
+
+
+
+
+function slotHalte(b) {
+  if (overgangBezig || vluchtOp || wereldReisOp) return;
+  const dot = b.querySelector('.dot');
+  if (dot) {
+    dot.classList.remove('nee');
+    void dot.offsetWidth;
+    dot.classList.add('nee');
+    setTimeout(() => dot.classList.remove('nee'), 600);
+  }
+  const map = $('tour-map');
+  const ster = map && map.querySelector('.tour-stop.next .tour-hero');
+  if (!ster) { sndTap(); return; }
+  haltePuls();
+  kaartTik(ster, ster.closest('.tour-stop'));
 }
 
 
@@ -20355,6 +20398,7 @@ function renderShelves() {
 
   const earned = earnedActiveCount(p);
   telNu($('trophy-diamonds'), p.diamonds);
+  zetWensPil(p);
 
 
 
@@ -22015,11 +22059,32 @@ function memFitCols(grid, n) {
 }
 function exitMemory() { sndClick(); hideToast(); M = null; goMap(); }
 
+
+
+
+
+
+function vraagMemoryStop() {
+  if (!M || !M.gedraaid || $('mem-done').style.display === 'flex') { exitMemory(); return; }
+  sndClick();
+  renderGeluid();
+  $('quit-titel').textContent = '🎤 Memory stoppen?';
+  $('quit-zin').textContent = 'Je 💎 houd je.';
+  $('quit-modal').classList.add('open');
+  syncBackGuard();
+}
+
+function stopNu() {
+  if ($('screen-memory').classList.contains('active')) { $('quit-modal').classList.remove('open'); exitMemory(); }
+  else quitGame();
+}
+
 const MEM_DRAAI = 350, MEM_KIJK = 850;
 function flipCard(i, btn) {
   if (!M || M.lock) return;
   if (btn.classList.contains('open') || btn.classList.contains('done')) return;
   const c = M.cards[i];
+  M.gedraaid = true;
   btn.classList.add('open');
   sndClick();
   speak(numWord(c.v));
@@ -22499,6 +22564,9 @@ function startLevel(lvl, eigenOvergang) {
 function askQuit() {
   sndClick();
   if (G && G.idx === 0 && G.errors === 0 && G.misses === 0) { quitGame(); return; }
+
+  $('quit-titel').textContent = '🎭 Show stoppen?';
+  $('quit-zin').textContent = 'Dan stopt dit optreden en ga je terug naar de kaart.';
   renderGeluid();
 
 
@@ -24429,27 +24497,35 @@ function wensTeken(it) {
   return c ? c.ico : '💖';
 }
 
+
+
+
+
+
+const WENS_PILLEN = ['map-diamonds', 'reis-diamonds', 'trophy-diamonds'];
 function zetWensPil(p) {
-  const pil = $('map-diamonds') && $('map-diamonds').closest('.diamond-badge');
-  const plek = $('map-wens');
-  if (!pil || !plek) return;
   const it = wensItem(p);
-  if (!it) {
-    plek.textContent = '';
-    pil.classList.remove('met-wens', 'wens-klaar');
-    pil.style.removeProperty('--wens');
-    pil.onclick = () => navTik('dress');
-    pil.setAttribute('aria-label', 'Naar de kleedkamer');
-    return;
-  }
-  const klaar = p.diamonds >= it.price;
-  plek.textContent = wensTeken(it);
-  pil.classList.add('met-wens');
-  pil.classList.toggle('wens-klaar', klaar);
-  pil.style.setProperty('--wens', Math.min(100, Math.round(100 * p.diamonds / it.price)) + '%');
-  pil.onclick = () => { sndClick(); openKleedkamerItem(it.id); };
-  pil.setAttribute('aria-label', klaar ? `Je wens: ${it.full || it.name} -- je kunt hem kopen!`
-    : `Je wens: ${it.full || it.name}, nog ${it.price - p.diamonds} diamanten`);
+  WENS_PILLEN.forEach(id => {
+    const pil = $(id) && $(id).closest('.diamond-badge');
+    const plek = pil && pil.querySelector('.wens-mini');
+    if (!plek) return;
+    if (!it) {
+      plek.textContent = '';
+      pil.classList.remove('met-wens', 'wens-klaar');
+      pil.style.removeProperty('--wens');
+      pil.onclick = () => navTik('dress');
+      pil.setAttribute('aria-label', 'Naar de kleedkamer');
+      return;
+    }
+    const klaar = p.diamonds >= it.price;
+    plek.textContent = wensTeken(it);
+    pil.classList.add('met-wens');
+    pil.classList.toggle('wens-klaar', klaar);
+    pil.style.setProperty('--wens', Math.min(100, Math.round(100 * p.diamonds / it.price)) + '%');
+    pil.onclick = () => { sndClick(); openKleedkamerItem(it.id); };
+    pil.setAttribute('aria-label', klaar ? `Je wens: ${it.full || it.name} -- je kunt hem kopen!`
+      : `Je wens: ${it.full || it.name}, nog ${it.price - p.diamonds} diamanten`);
+  });
 }
 
 
@@ -26901,7 +26977,7 @@ function backTarget() {
 
   if ($('screen-game').classList.contains('active')) return askQuit;
   if ($('screen-end').classList.contains('active')) return goMapNaShow;
-  if ($('screen-memory').classList.contains('active')) return exitMemory;
+  if ($('screen-memory').classList.contains('active')) return vraagMemoryStop;
   if ($('screen-settings').classList.contains('active')) return ouderTerug;
   if ($('screen-newstar').classList.contains('active')) return closeNewStar;
   if ($('screen-dress').classList.contains('active')) return dressBack;
