@@ -153,8 +153,12 @@ self.addEventListener('fetch', e => {
     Promise.race([
       fetch(req).then(resp => resp.ok ? bewaar(CACHE, url, resp)
         : uitVoorraad(CACHE, url).then(hit => hit || resp)),
-      new Promise((ja, nee) => setTimeout(
-        () => uitVoorraad(CACHE, url).then(hit => hit ? ja(hit) : nee(0)), WACHT))
+      /* Ligt er niets in de voorraad, dan blijft het wachten op het net: hier
+         stond een afwijzing, en dan kreeg een bestand dat nog nergens bewaard
+         was (een nieuw bestand na een uitgave, studio.js) op een trage lijn na
+         vier tellen een fout terwijl het antwoord op weg was. */
+      new Promise(ja => setTimeout(
+        () => uitVoorraad(CACHE, url).then(hit => { if (hit) ja(hit); }), WACHT))
     ]).catch(() => uitVoorraad(CACHE, url).then(hit => hit
       // Alleen een schermwissel valt terug op het spel zelf. Zonder die voorwaarde
       // kreeg een mislukte aanvraag naar wat dan ook een pagina met HTML terug, en
