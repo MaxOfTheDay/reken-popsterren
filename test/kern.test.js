@@ -41,6 +41,7 @@
  *   Z  de antwoordknoppen               -> binnen de grens, één echte fout, en het middelste kiezen loont niet
  *   ZB de foutmelder                    -> een kort briefje zonder iets persoonlijks, en stil vanaf file://
  *   ZC de stem                          -> zegt woorden, geen emoji of tekens
+ *   ZE oefenen                          -> elke instelling één bediening, in de kaart waar hij hoort
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -1099,12 +1100,15 @@ zaak('S', () => {
   // niet op de hoogste fase: telt niet
   for (let i = 0; i < n; i++) show(3, 3);
   check(tip() === null, 'S · onder het plafond spelen telt niet', String(tip()));
-  // cijfers uit: na fase 5 is de volgende stap de cijfers
-  p.settings.numerals = false; p.settings.stageMax = MAX;
+  // een oude save met "cijfers uit": die schakelaar is weg, "tot" staat nu op fase 5
+  p.settings.numerals = false; p.settings.stageMax = MAX; app.migrate(p);
+  check(p.settings.numerals === true && p.settings.stageMax === 5 && app.countMaxStage(p.settings) === 5,
+    'S · cijfers uit wordt "tot" fase 5: ze speelt precies hetzelfde', JSON.stringify(p.settings));
   for (let i = 0; i < n; i++) show(5, 3);
-  check(tip() === 'cijfers', 'S · cijfers uit en vast op fase 5: de tip zet de cijfers aan', String(tip()));
+  check(tip() === 'fase', 'S · en vast op fase 5 is de volgende stap gewoon de volgende fase', String(tip()));
   app.run('telTip(P())').doe(p); app.telPlafondOpnieuw(p);
-  check(p.settings.numerals === true && app.countMaxStage(p.settings) === MAX, 'S · cijfers aan, het bereik is weer heel', app.countMaxStage(p.settings));
+  check(p.settings.stageMax === 6, 'S · de knop zet "tot" op de cijfers', p.settings.stageMax);
+  p.settings.stageMax = MAX; app.telPlafondOpnieuw(p);
   // de laatste fase met kleine hoeveelheden: eerst de hoeveelheden
   p.settings.qmax = 8;
   for (let i = 0; i < n; i++) show(MAX, 3);
@@ -1434,6 +1438,40 @@ zaak('ZD', () => {
   const pm = new Set();
   for (let i = 0; i < 200; i++) { const q = app.pickWeak(p, p.settings); if (q) pm.add(q.tmpl); }
   check(pm.size === 1 && pm.has('6 + 3 = @'), 'ZD · min: 15 − 8 valt buiten "tot 10", ook al is het antwoord 7', JSON.stringify([...pm]));
+});
+
+/* ================= ZE · Oefenen: één bediening per instelling =================
+   Oefenen is drie kaarten (wat · pad · show), en OEFEN_INSTELLINGEN zegt welke
+   instelling in welke kaart staat. Hier stond eerst een kaart waar alles in
+   belandde wat nergens anders paste, en dan kreeg een instelling er stilletjes
+   een tweede bediening bij (de extra's als schakelaar én als leerpadstap,
+   "Cijfers" naast de lijn "tot"). Dit valt om zodra dat weer gebeurt. */
+zaak('ZE', () => {
+  const app = laadApp();
+  const kaarten = app.run('OEFEN_INSTELLINGEN');
+  const gevallen = [
+    ['math', { ops: ['+', '-', 'x', ':'], max: 20 }],          // alles wat kan staat er
+    ['math', { ops: ['+', '-'], max: 10, missNum: false }],    // en met minder
+    ['math', { ops: [':'] }],
+    ['count', { track: 'count' }],
+  ];
+  for (const [track, opts] of gevallen) {
+    const s = app.defaultProfile('Roos', 'dress_roze', opts).settings;
+    const groepen = app.run('oefenGroups')(s, '', null);
+    check(JSON.stringify(groepen.map(g => g.kaart)) === '["wat","pad","show"]',
+      `ZE · ${track} ${JSON.stringify(opts)}: drie kaarten, altijd in dezelfde volgorde`, JSON.stringify(groepen.map(g => g.kaart)));
+    const gezien = {};
+    for (const g of groepen) for (const [, k] of g.html.matchAll(/data-instelling="(\w+)"/g)) (gezien[k] = gezien[k] || []).push(g.kaart);
+    const dubbel = Object.entries(gezien).filter(([, ks]) => ks.length > 1);
+    check(!dubbel.length, `ZE · ${track}: geen instelling met twee bedieningen`, JSON.stringify(dubbel));
+    const fout = Object.entries(gezien).filter(([k, ks]) => !(kaarten[track][ks[0]] || []).includes(k));
+    check(!fout.length, `ZE · ${track}: elke bediening staat in de kaart die OEFEN_INSTELLINGEN zegt`, JSON.stringify(fout));
+    if (opts.ops && opts.ops.length === 4 || track === 'count') {
+      const alle = Object.values(kaarten[track]).flat();
+      const mist = alle.filter(k => !gezien[k]);
+      check(!mist.length, `ZE · ${track}: met alles aan heeft elke instelling een bediening`, JSON.stringify(mist));
+    }
+  }
 });
 
 klaar();

@@ -929,6 +929,15 @@ function migrate(p) {
   }
   if (p.settings.repr == null) p.settings.repr = 'objects';
   if (p.settings.numerals == null) p.settings.numerals = true;
+  /* "Cijfers uit" was een eigen schakelaar, en deed wat de lijn "tot" op de
+     faseladder ook doet: niet voorbij fase 5. Die schakelaar is weg; wie hem uit
+     had krijgt "tot" op fase 5 (of lager, als die al lager stond) en speelt
+     precies hetzelfde. Daarna staan de cijfers aan, en zegt alleen "tot" het. */
+  if (p.settings.numerals === false) {
+    p.settings.stageMax = Math.min(p.settings.stageMax || COUNT_STAGE_MAX, 5);
+    p.settings.stage = Math.min(p.settings.stage || 1, p.settings.stageMax);
+    p.settings.numerals = true;
+  }
   if (p.settings.qmax == null) p.settings.qmax = 10;
   if (p.settings.memory == null) p.settings.memory = true;
   if (!p.countTrack) p.countTrack = { stage: p.settings.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 };

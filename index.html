@@ -9262,15 +9262,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
   .fase-ladder { display: flex; flex-direction: column; gap: 2px; }
   .fase-ladder .fl-rij {
     display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 5px 8px;
@@ -9289,6 +9280,11 @@
   .fl-rij.voor .fl-n, .fl-rij.uit .fl-n { background: var(--lavender-wash-3); color: var(--purple-mid); }
   .fl-rij.voor, .fl-rij.uit { opacity: .5; }
   .fl-naam { flex: 1; min-width: 0; }
+
+
+
+  .fl-rij.overgeslagen .fl-n, .fl-rij.overgeslagen .fl-naam, .fl-rij.overgeslagen .fl-vb { opacity: .4; }
+  .fl-rij.overgeslagen .fl-naam { text-decoration: line-through; text-decoration-thickness: 2px; }
   .fl-vb { flex: none; min-width: 92px; text-align: right; font-weight: 700; letter-spacing: .3px; white-space: nowrap; }
   .fl-vak {
     display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 4px; opacity: .55;
@@ -9309,6 +9305,39 @@
   .fl-rij .fl-lijn.boven { top: -10px; }
   .fl-rij .fl-lijn.onder { bottom: -10px; }
   .fl-rij .fl-lijn::before { flex: 0 0 18px; }
+
+
+
+
+
+
+
+  .fl-plek { display: flex; align-items: center; }
+  .fl-plek > .fl-rij { flex: 1; min-width: 0; }
+  .fl-vink {
+    flex: none; display: grid; place-items: center; width: 40px; align-self: stretch; padding: 0;
+    border: none; background: none; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .fl-vink::before {
+    content: ""; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; box-sizing: border-box;
+    border: 2.5px solid var(--purple-light); color: var(--c-white); font-size: 14px; font-weight: 900; line-height: 1;
+    transition: background var(--t-tik) ease, border-color var(--t-tik) ease, transform var(--t-tik) ease;
+  }
+  .fl-vink.aan::before { content: "✓"; background: var(--purple-mid); border-color: transparent; }
+  .fl-vink:active::before { transform: scale(.88); }
+  .fl-vink.vast { cursor: default; }
+  .fl-vink.vast::before { content: "✓"; border-color: transparent; color: var(--purple-light); opacity: .55; }
+
+
+  .fl-vb:empty { min-width: 0; }
+
+
+
+  @media (max-width: 360px) {
+    .fase-ladder.met-vinkjes .fl-rij { gap: 8px; padding-left: 6px; padding-right: 4px; }
+    .fase-ladder.met-vinkjes .fl-vb { min-width: 0; }
+    .fl-vink { width: 34px; }
+  }
 
 
 
@@ -9346,10 +9375,6 @@
   .mode-row .chip.gestapeld .mc-ico { font-size: 21px; }
 
   #set-base { margin-bottom: 10px; }
-
-
-  .drie-op-een-rij .chip.gestapeld { gap: 1px; padding: 6px 5px 7px; font-size: var(--tx-klein); min-width: 78px; }
-  .drie-op-een-rij .chip.gestapeld .mc-ico { font-size: 17px; }
   .chip {
     font-family: inherit; font-size: var(--tx-label); font-weight: 600; cursor: pointer; text-align: center; min-width: 44px;
     border: 2px solid var(--paper-border); background: var(--c-white); color: var(--purple-mid); border-radius: var(--r-pill); padding: 7px 15px;
@@ -9377,8 +9402,8 @@
 
 
 
+
   .oefen-kaart.primary { padding: 16px 16px 14px; }
-  .oefen-kaart.secundair { padding: 6px 14px; background: var(--paper-tint); }
   .oe-lbl { display: flex; align-items: center; gap: 6px; margin: 14px 2px 7px; font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
   .oe-lbl:first-child { margin-top: 0; }
   .oe-teken { padding: 1px 8px; border-radius: var(--r-sm); background: var(--lavender-wash); color: var(--purple-mid); font-size: var(--tx-label); letter-spacing: .5px; }
@@ -9399,6 +9424,9 @@
     color: var(--purple-mid); font-size: var(--tx-label); font-weight: 700; line-height: 1;
   }
   .oe-seg .chip.on { background: var(--purple-mid); color: var(--c-white); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
+
+
+  @media (max-width: 360px) { .oe-seg .chip { font-size: var(--tx-klein); } }
   .oe-tafels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
   .oe-tafels .chip { min-width: 0; height: 42px; padding: 0; border-radius: var(--r-sm); font-size: var(--tx-body); font-weight: 700; }
 
@@ -9413,19 +9441,19 @@
   .oefen-kaart > .oe-rij:first-child, .oefen-kaart > div:first-child > .oe-rij.chip { border-top: none; }
   .oe-i { width: 28px; flex: none; text-align: center; font-size: 20px; }
   .oe-w { flex: 1; min-width: 0; }
-  .oe-som { font-weight: 700; letter-spacing: .5px; }
-  .oe-som i { display: inline-block; width: 20px; height: 20px; vertical-align: -4px; border: 2px dashed var(--purple-light); border-radius: 6px; }
-  .oe-stand { min-width: 46px; padding: 5px 10px; border-radius: var(--r-pill); text-align: center; font-size: var(--tx-klein); font-weight: 700; background: var(--lavender-wash-3); color: var(--paper-ink-muted); }
-  .oe-rij.on .oe-stand { background: var(--purple-mid); color: var(--c-white); }
 
-  .oe-mini { display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: var(--lavender-wash); }
-  .oe-mini .chip, .oe-mini .chip:hover {
-    display: flex; align-items: center; justify-content: center; min-width: 36px; height: 30px; padding: 0 6px;
-    border: none; border-radius: 7px; background: none; box-shadow: none; font-size: var(--tx-klein); font-weight: 700; line-height: 1;
+
+
+  .oe-stand {
+    flex: none; position: relative; width: 40px; height: 24px; border-radius: 12px;
+    background: var(--lavender-wash-3); transition: background var(--t-tik) ease;
   }
-  .oe-mini .chip.on { background: var(--purple-mid); color: var(--c-white); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
-  .oe-rij-blok { flex-wrap: wrap; }
-  .oe-rij-blok .chip-row { flex-basis: 100%; }
+  .oe-stand::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--c-white); box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform var(--t-tik) ease;
+  }
+  .oe-rij.on .oe-stand { background: var(--purple-mid); }
+  .oe-rij.on .oe-stand::after { transform: translateX(16px); }
 
 
 
@@ -9603,10 +9631,9 @@
 
   #screen-newstar .oe-seg .chip, #screen-newstar .oe-seg .chip:hover,
   #screen-newstar .oe-rij.chip, #screen-newstar .oe-rij.chip:hover, #screen-newstar .oe-rij.chip.on,
-  #screen-newstar .oe-mini .chip, #screen-newstar .oe-mini .chip:hover,
   #screen-newstar .fase-ladder .chip.fl-rij { background: none; border: none; }
   #screen-newstar .fase-ladder .chip.fl-rij:hover { background: var(--lavender-wash-2); }
-  #screen-newstar .oe-mini .chip.on, #screen-newstar .oe-seg .chip.on,
+  #screen-newstar .oe-seg .chip.on,
   #screen-newstar .oe-ops .chip.on, #screen-newstar .oe-tafels .chip.on { background: var(--purple-mid); }
 
 
@@ -14405,6 +14432,15 @@ function migrate(p) {
   }
   if (p.settings.repr == null) p.settings.repr = 'objects';
   if (p.settings.numerals == null) p.settings.numerals = true;
+
+
+
+
+  if (p.settings.numerals === false) {
+    p.settings.stageMax = Math.min(p.settings.stageMax || COUNT_STAGE_MAX, 5);
+    p.settings.stage = Math.min(p.settings.stage || 1, p.settings.stageMax);
+    p.settings.numerals = true;
+  }
   if (p.settings.qmax == null) p.settings.qmax = 10;
   if (p.settings.memory == null) p.settings.memory = true;
   if (!p.countTrack) p.countTrack = { stage: p.settings.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 };
@@ -22006,6 +22042,7 @@ function countStageTypes(stage) {
 }
 
 
+
 function countMaxStage(s) {
   const top = (s.qmax || 10) < 10 ? 11 : COUNT_STAGE_MAX;
   return s.numerals ? Math.min(top, s.stageMax || COUNT_STAGE_MAX) : Math.min(5, s.stageMax || COUNT_STAGE_MAX);
@@ -22342,7 +22379,8 @@ function tapHTML(card) {
 
 function bindTap(card, q, drawId) {
   let geteld = 0;
-  const cijfers = P().settings.numerals !== false;
+
+  const cijfers = countMaxStage(P().settings) >= 6;
   card.querySelectorAll('.tap-obj').forEach(b => {
     b.onclick = () => {
       if (!G || !G.count || drawId !== countDrawId || b.classList.contains('geteld')) return;
@@ -26313,17 +26351,21 @@ function statusKaartHtml(p) {
 
 
 
+
+
+
+
 function leerpadStappen(s) {
   const plusMin = s.ops.includes('+') || s.ops.includes('-');
   const klein = !plusMin ? '2 × 3' : s.ops.includes('+') ? '3 + 4' : '7 − 3';
   const tot = { 10: '6 + 3', 20: '12 + 5', 50: '34 + 12', 100: '56 + 27' }[s.max] || '12 + 5';
-  const stap = (naam, vb) => ({ naam, vb });
+  const stap = (naam, vb, keuze) => ({ naam, vb, keuze, uit: !!keuze && s[keuze] === false });
   return [
     stap('Kleine sommen', klein),
     plusMin ? stap(`Tot ${s.max}`, tot) : stap('Hele tafels', '7 × 8'),
     plusMin && s.max > 10 && stap('Over het tiental', '8 + 5'),
-    s.missNum !== false && stap('Zoek het getal', '7 + ▢ = 12'),
-    s.chain3 !== false && s.ops.includes('+') && stap('Drie getallen', '3 + 4 + 2'),
+    s.ops.some(o => o !== ':') && stap('Zoek het getal', '7 + ▢ = 12', 'missNum'),
+    s.ops.includes('+') && stap('Drie getallen', '3 + 4 + 2', 'chain3'),
     stap('Alles door elkaar', ''),
   ].map((st, i) => st && { ...st, wereld: i + 1 }).filter(Boolean);
 }
@@ -26401,13 +26443,14 @@ function leerpadHtml(p) {
     const stappen = leerpadStappen(s);
     const w = continueWorld(p) + 1;
     const laatste = LEERSTAPPEN.length;
-    const nu = stappen.filter(st => st.wereld <= Math.min(Math.max(w, s.startStap || 1), laatste)).pop();
+
+    const nu = stappen.filter(st => !st.uit && st.wereld <= Math.min(Math.max(w, s.startStap || 1), laatste)).pop();
     const nr = stappen.indexOf(nu);
 
     if (nr) rijen.push(flRij(' klaar', '✓', `Stap ${nr > 1 ? '1–' + nr : 1}`));
     const grens = grensTip(p);
     rijen.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}<small>Wereld ${w}${accentTekst(s, w)}</small>`, flVb(nu.vb)));
-    stappen.slice(nr + 1).forEach((st, i) => rijen.push(flRij(' later', nr + 2 + i, st.naam, flVb(st.vb))));
+    stappen.slice(nr + 1).forEach((st, i) => rijen.push(flRij(` later${st.uit ? ' overgeslagen' : ''}`, nr + 2 + i, st.naam, flVb(st.vb))));
     const [tekst, knop] = !grens ? [] : grens.soort === 'grens'
       ? [`Bijna altijd ⭐⭐⭐ tot ${s.max}. Grotere getallen?`, `Tot ${grens.naar}`]
       : grens.naar === 'mix'
@@ -26588,8 +26631,6 @@ function telTip(p) {
 
   if (qnaar && hi === COUNT_STAGE_MAX - 1 && (s.stageMax || COUNT_STAGE_MAX) >= COUNT_STAGE_MAX) return qtip();
   if (hi < COUNT_STAGE_MAX) {
-    if (s.numerals === false && hi === 5) return { soort: 'cijfers',
-      tekst: 'Fase 5 gaat foutloos. Cijfers erbij?', knop: 'Cijfers aan', doe: p => { p.settings.numerals = true; p.settings.stageMax = Math.max(p.settings.stageMax || 0, 6); } };
     return { soort: 'fase',
       tekst: `Fase ${hi} gaat foutloos. Verder groeien?`, knop: `Tot fase ${hi + 1}`, doe: p => { p.settings.stageMax = hi + 1; } };
   }
@@ -26631,6 +26672,22 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+const OEFEN_INSTELLINGEN = {
+  math:  { wat: ['ops', 'max', 'tables'], pad: ['startStap', 'missNum', 'chain3'], show: ['mode', 'perLevel', 'voorlezen', 'memory'] },
+  count: { wat: ['qmax'], pad: ['stage'], show: ['repr', 'perLevel', 'memory'] },
+};
 function oefenGroups(s, pfx, p) {
   pfx = pfx || '';
 
@@ -26638,26 +26695,9 @@ function oefenGroups(s, pfx, p) {
   const opDefs = [['+', '+', 'Plus'], ['-', '−', 'Min'], ['x', '×', 'Maal'], [':', '÷', 'Delen']];
   const plusMin = s.ops.includes('+') || s.ops.includes('-');
   const tablesRelevant = s.ops.includes('x') || s.ops.includes(':');
-
-
-
-  const availMax = s.numerals ? COUNT_STAGE_MAX : 5;
+  const availMax = COUNT_STAGE_MAX;
   const stageNums = [];
   for (let v = 1; v <= availMax; v++) stageNums.push(v);
-
-
-
-
-
-
-
-
-
-
-
-  const reprChip = (v, ico, label, on) => chip(v,
-    `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${label}</span>`,
-    on, 'gestapeld');
   const lo = Math.min(Math.max(1, s.stage || 1), availMax);
   const hi = Math.min(Math.max(lo, s.stageMax || availMax), availMax);
 
@@ -26684,14 +26724,25 @@ function oefenGroups(s, pfx, p) {
 
 
 
+
+
+
+
+
+
+
+
   const ava = p ? flAva(p) : '';
   const lijn = (woord, kant) => `<span class="fl-lijn ${kant}" aria-hidden="true">${woord}</span>`;
-  const ladder = (id, rijen, lo, hi, hier, staart) => `<div class="fase-ladder naad" id="${pfx}${id}">${rijen.map((r, i) =>
-    flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}`, r.v === hier && ava ? ava : i + 1, r.naam, r.vb, r.v,
-      (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn('tot', 'onder') : ''))).join('')}${staart || ''}</div>`;
-
-
-
+  const vink = r => !r.keuze ? '<span class="fl-vink vast" aria-hidden="true"></span>'
+    : `<button class="fl-vink${r.uit ? '' : ' aan'}" type="button" data-instelling="${r.keuze}" role="checkbox"`
+      + ` aria-checked="${!r.uit}" aria-label="${r.naam}"></button>`;
+  const ladder = (id, instelling, rijen, lo, hi, hier, staart, vinkjes) => `<div class="fase-ladder naad${vinkjes ? ' met-vinkjes' : ''}" id="${pfx}${id}" data-instelling="${instelling}">${rijen.map((r, i) => {
+    const rij = flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}${r.uit ? ' overgeslagen' : ''}`,
+      r.v === hier && ava ? ava : i + 1, r.naam, r.vb, r.v,
+      (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn('tot', 'onder') : ''));
+    return vinkjes ? `<div class="fl-plek">${rij}${vink(r)}</div>` : rij;
+  }).join('')}${staart || ''}</div>`;
 
 
 
@@ -26706,30 +26757,23 @@ function oefenGroups(s, pfx, p) {
 
 
 
-  const balk = (id, items, sel) => `<div class="oe-seg" id="${pfx}${id}">${items.map(([v, t]) => chip(v, t, v === sel)).join('')}</div>`;
+  const balk = (id, instelling, items, sel) => `<div class="oe-seg" id="${pfx}${id}" data-instelling="${instelling}">${items.map(([v, t]) => chip(v, t, v === sel)).join('')}</div>`;
 
 
-  const schakel = (v, ico, woord, aan, naam) => `<button class="chip oe-rij${aan ? ' on' : ''}" data-v="${v}" role="switch" aria-checked="${aan}"${naam ? ` aria-label="${naam}"` : ''}>`
-    + `<span class="oe-i" aria-hidden="true">${ico}</span><span class="oe-w">${woord}</span><span class="oe-stand">${aan ? 'Aan' : 'Uit'}</span></button>`;
-  const aanUit = (id, ico, woord, aan) => `<div id="${pfx}${id}">${schakel(aan ? 'off' : 'on', ico, woord, aan)}</div>`;
-
-  const klein = (id, ico, woord, waarden, sel) => `<div class="oe-rij vast"><span class="oe-i" aria-hidden="true">${ico}</span>`
-    + `<span class="oe-w">${woord}</span><span class="oe-mini" id="${pfx}${id}">${waarden.map(v => chip(v, v, sel === v)).join('')}</span></div>`;
-  const perShow = klein('set-perlevel', '🎤', 'Vragen per show', [5, 8, 10], s.perLevel);
+  const aanUit = (id, instelling, ico, woord, aan) => `<div id="${pfx}${id}"><button class="chip oe-rij${aan ? ' on' : ''}" data-v="${aan ? 'off' : 'on'}" data-instelling="${instelling}" role="switch" aria-checked="${aan}">`
+    + `<span class="oe-i" aria-hidden="true">${ico}</span><span class="oe-w">${woord}</span><span class="oe-stand" aria-hidden="true"></span></button></div>`;
+  const perShow = `${lbl('Vragen per show')}${balk('set-perlevel', 'perLevel', [[5, '5'], [8, '8'], [10, '10']], s.perLevel)}`;
+  const memory = aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false);
   if (s.track === 'count') return [{
-    html: `${lbl('Fases')}${ladder('set-fase',
+    kaart: 'wat', html: `${lbl('Hoeveelheden tot')}${balk('set-qmax', 'qmax', [[6, '6'], [8, '8'], [10, '10']], s.qmax || 10)}`
+  }, {
+    kaart: 'pad', html: `${lbl('Leerpad')}${ladder('set-fase', 'stage',
       stageNums.map(v => ({ v, naam: COUNT_STAGE_LABELS[v], vb: COUNT_STAGE_VB[v] })), lo, hi, p && countLiveStage(p))}`
   }, {
-    secundair: true, html: `
-      ${aanUit('set-numerals', '🔢', 'Cijfers', s.numerals !== false)}
-      ${aanUit('set-memory', '🃏', 'Memory', s.memory !== false)}
-      ${klein('set-qmax', '🍎', 'Hoeveelheden tot', [6, 8, 10], s.qmax || 10)}
+    kaart: 'show', html: `${lbl('Tonen als')}${balk('set-repr', 'repr',
+      [['objects', 'Voorwerpen'], ['dots', 'Stippen'], ['mix', 'Mix']], s.repr || 'objects')}
       ${perShow}
-      <div class="oe-rij vast oe-rij-blok"><span class="oe-w">Tonen als</span>
-        <div class="chip-row drie-op-een-rij" id="${pfx}set-repr">${
-          reprChip('objects', '🧸', 'Voorwerpen', (s.repr || 'objects') === 'objects')}${
-          reprChip('dots', '⚫', 'Stippen', s.repr === 'dots')}${
-          reprChip('mix', '🎲', 'Mix', s.repr === 'mix')}</div></div>`
+      ${memory}`
   }];
 
 
@@ -26746,30 +26790,30 @@ function oefenGroups(s, pfx, p) {
 
 
   const voorbij = !!p && wNu >= LEERSTAPPEN.length;
-  const eind = flRij(` eind${voorbij ? ' hier' : ''}`, voorbij ? ava : stappen.length + 1, 'Alles door elkaar');
+  const eind = `<div class="fl-plek">${flRij(` eind${voorbij ? ' hier' : ''}`, voorbij ? ava : stappen.length + 1, 'Alles door elkaar')}`
+    + '<span class="fl-vink vast" aria-hidden="true"></span></div>';
+
+  const hier = p && !voorbij && stappen.filter(st => st.wereld <= nuStap && !st.uit).pop();
 
 
 
 
   return [{
-    html: `${lbl('Sommen')}
-      <div class="oe-ops" id="${pfx}set-ops">${opDefs.map(([v, teken, woord]) =>
+    kaart: 'wat', html: `${lbl('Sommen')}
+      <div class="oe-ops" id="${pfx}set-ops" data-instelling="ops">${opDefs.map(([v, teken, woord]) =>
         `<button class="chip${s.ops.includes(v) ? ' on' : ''}" data-v="${v}" aria-label="${woord}" aria-pressed="${s.ops.includes(v)}">${teken}</button>`).join('')}</div>
-      ${plusMin ? `${lbl('tot', '+ −')}${balk('set-max', [[10, '10'], [20, '20'], [50, '50'], [100, '100']], s.max)}` : ''}
-      ${tablesRelevant ? `${lbl('tafels van', '× ÷')}
-      <div class="oe-tafels" id="${pfx}set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>` : ''}
-      ${lbl('Antwoord')}${balk('set-mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
-      ${lbl('Leerpad')}${ladder('set-startstap', stappen.map(st => ({ v: st.wereld, naam: st.naam, vb: flVb(st.vb) })),
-        startRij, Infinity, p && !voorbij && stappen.filter(st => st.wereld <= nuStap).pop().wereld, eind)}`
+      ${plusMin ? `${lbl('Getallen tot', '+ −')}${balk('set-max', 'max', [[10, '10'], [20, '20'], [50, '50'], [100, '100']], s.max)}` : ''}
+      ${tablesRelevant ? `${lbl('Tafels van', '× ÷')}
+      <div class="oe-tafels" id="${pfx}set-tables" data-instelling="tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>` : ''}`
   }, {
-    secundair: true, html: `
-      ${aanUit('set-voorlezen', '🔊', 'Voorlezen', s.voorlezen === true)}
-      ${aanUit('set-memory', '🃏', 'Memory', s.memory !== false)}
-      <div id="${pfx}set-extra">
-        ${schakel('missNum', '🔍', '<span class="oe-som">4 + <i></i> = 9</span>', s.missNum !== false, 'Zoek het getal')}
-        ${schakel('chain3', '➕', '<span class="oe-som">2 + 3 + 4</span>', s.chain3 !== false, 'Drie getallen')}
-      </div>
-      ${perShow}`
+    kaart: 'pad', html: `${lbl('Leerpad')}${ladder('set-startstap', 'startStap',
+      stappen.map(st => ({ v: st.wereld, naam: st.naam, vb: flVb(st.vb), keuze: st.keuze, uit: st.uit })),
+      startRij, Infinity, hier && hier.wereld, eind, true)}`
+  }, {
+    kaart: 'show', html: `${lbl('Antwoord')}${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
+      ${perShow}
+      ${aanUit('set-voorlezen', 'voorlezen', '🔊', 'Voorlezen', s.voorlezen === true)}
+      ${memory}`
   }];
 }
 
@@ -26803,10 +26847,11 @@ function oefenSamenvatting(s) {
 
 
 
+
 function oefenenPanelHtml(p, s) {
   const isCount = s.track === 'count';
   const cards = oefenGroups(s, '', p).map(g => `
-    <div class="set-card oefen-kaart${g.secundair ? ' secundair' : ' primary'}">${g.html}</div>`).join('');
+    <div class="set-card oefen-kaart primary" data-kaart="${g.kaart}">${g.html}</div>`).join('');
   const half = (v, ico, woord) => `<button class="chip${(v === 'count') === isCount ? ' on' : ''}" data-v="${v}">`
     + `<span aria-hidden="true">${ico}</span> ${woord}</button>`;
   return `<div class="settings-panel">${cards}
@@ -27286,9 +27331,13 @@ function bindOefenChips(s, p, pfx, done) {
   });
   bind('set-perlevel', c => { s.perLevel = parseInt(c.dataset.v, 10); });
 
-  bind('set-extra', c => {
-    const k = c.dataset.v;
+
+
+  const pad = $((pfx || '') + 'set-startstap');
+  if (pad) pad.querySelectorAll('.fl-vink[data-instelling]').forEach(b => b.onclick = () => {
+    const k = b.dataset.instelling;
     s[k] = (s[k] === false);
+    done('set-startstap');
   });
 
 
@@ -27298,7 +27347,7 @@ function bindOefenChips(s, p, pfx, done) {
 
   bind('set-fase', c => {
     const v = parseInt(c.dataset.v, 10);
-    const top = s.numerals ? COUNT_STAGE_MAX : 5;
+    const top = COUNT_STAGE_MAX;
     const lo = Math.min(Math.max(1, s.stage || 1), top);
     const hi = Math.min(Math.max(lo, s.stageMax || top), top);
     const vanaf = v < lo || (v <= hi && v - lo < hi - v);
@@ -27318,13 +27367,6 @@ function bindOefenChips(s, p, pfx, done) {
   });
 
   bind('set-startstap', c => { s.startStap = parseInt(c.dataset.v, 10); });
-  bind('set-numerals', c => {
-
-
-
-    s.numerals = (c.dataset.v === 'on');
-    telPlafondOpnieuw(p);
-  });
   bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); telPlafondOpnieuw(p); });
   bind('set-memory', c => { s.memory = (c.dataset.v === 'on'); });
   bind('set-voorlezen', c => { s.voorlezen = (c.dataset.v === 'on'); });
