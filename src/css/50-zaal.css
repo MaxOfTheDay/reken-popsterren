@@ -742,9 +742,9 @@
   .mem-done-title { font-size: 54px; line-height: 1; }
   .mem-done-earn { margin: 12px auto 4px; }
   /* Het vakje van .earn-chip.dia is gemaakt voor een donker vlak (witte letter op
-     een blauwe waas); op dit witte kaartje werd dat wit op lichtblauw, en las je
-     "+9" nauwelijks. Hier dus een donkerblauwe letter op dezelfde waas. */
-  .mem-done-card .earn-chip.dia { color: #0b4f7a; background: rgba(41,182,246,.2); }
+     een donkere pil); op dit witte kaartje zou dat een grijze vlek worden. Hier
+     dus dezelfde neutrale pil in papier: donkere letter, lichtgrijs vlak. */
+  .mem-done-card .earn-chip.dia { color: var(--paper-ink); background: var(--paper-muted-bg); }
   .mem-done-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
 
   /* op smalle schermen: show compacter zodat het rekenen prominent blijft */

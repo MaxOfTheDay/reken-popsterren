@@ -9705,8 +9705,11 @@ function wereldFeest(f) {
     + `<div class="wf-kop">${kop}</div>`
     + `<div class="wf-wereld">${w.icon || '🌍'} ${esc(w.name)}</div>`
     + `<div class="wf-rijen wf-een">${rijen}</div>`
-    + aanKnop
-    + `<div class="wf-verder">Tik om verder te gaan</div></div>`, { fade: 300 });
+    + aanKnop + `</div>`,
+    /* Geen "Tik om verder te gaan" meer: hij sluit zichzelf, elke tik sluit hem,
+       en een kind van vijf leest die regel toch niet. */
+    { fade: 300, onClose: () => $('screen-end').classList.remove('feest-open') });
+  $('screen-end').classList.add('feest-open');
   let af = false;
   const dicht = () => { if (af) return; af = true; ov._close(); };
   ov.onclick = dicht;
@@ -14264,7 +14267,7 @@ function oefentExtraHtml(p) {
     <h2 class="vg-kop">Oefent extra op</h2>
     ${weak.length
       ? `<div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>`
-      : `<div class="stats-empty">Geen lastige sommen op dit moment. 🎉</div>`}
+      : `<div class="stats-empty">Geen lastige sommen op dit moment.</div>`}
     ${nLearned ? `<div class="note vg-noot">🧠 ${nLearned} geleerde ${mv(nLearned, 'som komt', 'sommen komen')} later terug.</div>` : ''}
   </div>`;
 }

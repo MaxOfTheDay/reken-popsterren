@@ -4263,7 +4263,7 @@
 
 
 
-  .mem-done-card .earn-chip.dia { color: #0b4f7a; background: rgba(41,182,246,.2); }
+  .mem-done-card .earn-chip.dia { color: var(--paper-ink); background: var(--paper-muted-bg); }
   .mem-done-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
 
 
@@ -7258,6 +7258,10 @@
     font-size: var(--tx-klein); font-weight: 700; margin-top: 9px; line-height: 1.2;
     overflow-wrap: break-word; max-width: 100%;
   }
+
+
+
+  @media (max-width: 340px) { .trophy-card .tname { font-size: var(--tx-mini); } }
   .trophy-card.ready .tname { color: var(--gold-light); }
   .trophy-card.fresh .tname, .trophy-card.busy .tname { color: rgba(255,255,255,.72); }
   .trophy-card.locked .tname { color: rgba(255,255,255,.56); }
@@ -7484,6 +7488,13 @@
 
 
   .wereld-feest-overlay.closing { animation: popFade .3s ease reverse forwards; pointer-events: none; }
+
+
+
+
+
+  #screen-end .result-card { transition: opacity .3s ease; }
+  #screen-end.feest-open .result-card { opacity: 0; }
   .wereld-feest { width: min(92vw, 360px); padding: 18px 18px 14px; }
   .wf-kop { font-size: var(--tx-feest); font-weight: 700; color: var(--c-white); line-height: 1.1;
     text-shadow: var(--goud-ink); }
@@ -7493,7 +7504,6 @@
   .wf-tekst b { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); }
   .wf-tekst span { font-size: var(--tx-label); font-weight: 700; color: var(--c-white); opacity: .92;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .wf-verder { font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); opacity: .6; margin-top: 8px; }
 
 
 
@@ -7744,7 +7754,12 @@
     background: rgba(0,0,0,.3); border-radius: var(--r-pill); padding: 9px 6px; }
   .earn-line .earn-chip { min-height: 34px; box-sizing: border-box; padding: 7px 16px; }
 
-  .earn-chip.dia { background: rgba(41,182,246,.32); }
+
+
+
+
+
+  .earn-chip.dia { background: rgba(0,0,0,.32); color: var(--c-white); }
 
 
 
@@ -8737,7 +8752,6 @@
 
 
   .wereld-feest .wf-aan { margin-top: 12px; padding: 9px 22px; }
-  .wereld-feest .wf-aan + .wf-verder { margin-top: 7px; }
 
 
 
@@ -21121,8 +21135,11 @@ function wereldFeest(f) {
     + `<div class="wf-kop">${kop}</div>`
     + `<div class="wf-wereld">${w.icon || '🌍'} ${esc(w.name)}</div>`
     + `<div class="wf-rijen wf-een">${rijen}</div>`
-    + aanKnop
-    + `<div class="wf-verder">Tik om verder te gaan</div></div>`, { fade: 300 });
+    + aanKnop + `</div>`,
+
+
+    { fade: 300, onClose: () => $('screen-end').classList.remove('feest-open') });
+  $('screen-end').classList.add('feest-open');
   let af = false;
   const dicht = () => { if (af) return; af = true; ov._close(); };
   ov.onclick = dicht;
@@ -25680,7 +25697,7 @@ function oefentExtraHtml(p) {
     <h2 class="vg-kop">Oefent extra op</h2>
     ${weak.length
       ? `<div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>`
-      : `<div class="stats-empty">Geen lastige sommen op dit moment. 🎉</div>`}
+      : `<div class="stats-empty">Geen lastige sommen op dit moment.</div>`}
     ${nLearned ? `<div class="note vg-noot">🧠 ${nLearned} geleerde ${mv(nLearned, 'som komt', 'sommen komen')} later terug.</div>` : ''}
   </div>`;
 }
