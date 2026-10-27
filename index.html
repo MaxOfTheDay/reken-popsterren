@@ -10628,6 +10628,12 @@
 
 
 
+
+
+
+
+
+
 const STATUSBALK = 80;
 let vhSlot = innerHeight, vhBreedte = innerWidth;
 function venstermaat() { return vhBreedte + 'x' + vhSlot; }
@@ -10658,7 +10664,7 @@ vhZet();
 addEventListener('resize', () => {
   if (innerWidth !== vhBreedte) { vhBreedte = innerWidth; vhZet(); return; }
   const verschil = innerHeight - vhSlot;
-  if (verschil === 0 || vhTyptIemand() || (verschil > 0 && verschil <= STATUSBALK)) vhDrift();
+  if (verschil === 0 || vhTyptIemand() || Math.abs(verschil) <= STATUSBALK) vhDrift();
   else vhZet();
 });
 

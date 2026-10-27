@@ -44,6 +44,12 @@
        het oude scherm is dan al weg en het nieuwe nog niet getekend, dus er is
        niets dat zichtbaar verspringt. Tot dan vult --vh-drift het gat, zoals
        hierboven. Zo houdt de app niet de hele sessie een balk tekort.
+     - het venster kromp een klein stukje (tot STATUSBALK): dat zijn de balken van
+       het systeem die even terugkomen, bijvoorbeeld na een druk op terug. Die gaan
+       na een paar tellen vanzelf weer weg. Legde je de hoogte hier opnieuw vast,
+       dan bleef er na het wegvagen een strook onder de app over -- dat was na
+       te zien op een telefoon, nadat de vorige versie dit wél deed. Dus niets
+       doen: het venster komt vanzelf op het slot terug.
    Al het andere legt de hoogte meteen opnieuw vast, net als draaien.
 
    venstermaat() is de maat waar de opmaak écht op staat: de breedte en het slot,
@@ -80,6 +86,6 @@ vhZet();
 addEventListener('resize', () => {
   if (innerWidth !== vhBreedte) { vhBreedte = innerWidth; vhZet(); return; }
   const verschil = innerHeight - vhSlot;
-  if (verschil === 0 || vhTyptIemand() || (verschil > 0 && verschil <= STATUSBALK)) vhDrift();
+  if (verschil === 0 || vhTyptIemand() || Math.abs(verschil) <= STATUSBALK) vhDrift();
   else vhZet();
 });

@@ -235,6 +235,18 @@ async function zetOnderrandAan(page) {
     check(s.slot === HOOG + 'px' && s.drift === '0px',
       'H · en als het toetsenbord dichtgaat staat alles weer zoals het was', JSON.stringify(s));
 
+    /* Na een druk op terug komen de systeembalken in een fullscreen-app even terug
+       (het venster krimpt een stukje) en vagen ze na een paar tellen weer weg. Het
+       slot hoort daar niet op te reageren, anders blijft er na het wegvagen een
+       strook onder de app over. */
+    s = await maat(HOOG - 72);
+    check(s.slot === HOOG + 'px' && s.drift === '0px',
+      'H · systeembalken die even terugkomen (klein stukje lager) laten het slot staan', JSON.stringify(s));
+    await page.evaluate(() => show('screen-dress'));
+    s = await maat(HOOG);
+    check(s.slot === HOOG + 'px' && s.drift === '0px',
+      'H · en als ze weer wegvagen blijft er geen strook onder de app, ook niet na een schermwissel', JSON.stringify(s));
+
     s = await maat(HOOG + STATUSBALK);
     check(s.slot === HOOG + 'px' && s.drift === STATUSBALK + 'px',
       'H · de statusbalk die vervaagt verandert het slot niet meteen', JSON.stringify(s));
