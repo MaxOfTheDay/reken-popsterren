@@ -52,6 +52,13 @@
   /* pointer-events uit zodra hij wegfadet: die 300 ms zijn anders een laag glas
      over de knop waar het kind net naartoe wilde */
   .wereld-feest-overlay.closing { animation: popFade .3s ease reverse forwards; pointer-events: none; }
+  /* Eén kaart, niet twee. De laag is half doorzichtig (de zaal moet erdoor te
+     zien blijven), en dan stond de eindkaart er omheen te kijken: zijn randen
+     boven en onder, en een spookversie van "Naar je podium" eronder. Zolang het
+     feest openstaat stapt de eindkaart opzij; bij het sluiten komt hij terug
+     (zie wereldFeest). */
+  #screen-end .result-card { transition: opacity .3s ease; }
+  #screen-end.feest-open .result-card { opacity: 0; }
   .wereld-feest { width: min(92vw, 360px); padding: 18px 18px 14px; }
   .wf-kop { font-size: var(--tx-feest); font-weight: 700; color: var(--c-white); line-height: 1.1;
     text-shadow: var(--goud-ink); }
@@ -61,7 +68,6 @@
   .wf-tekst b { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); }
   .wf-tekst span { font-size: var(--tx-label); font-weight: 700; color: var(--c-white); opacity: .92;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .wf-verder { font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); opacity: .6; margin-top: 8px; }
   /* Eén prijs in plaats van drie rijen (zie wereldFeest): de prijs groot, zijn
      naam, de som van het podium, en de gouden regel voor perfect. Alles in het
      midden en onder elkaar. (Hier stonden de rijen: plaatje links, tekst rechts,
@@ -311,8 +317,13 @@
     font-size: var(--tx-body); font-weight: 700; line-height: 1;
     background: rgba(0,0,0,.3); border-radius: var(--r-pill); padding: 9px 6px; }
   .earn-line .earn-chip { min-height: 34px; box-sizing: border-box; padding: 7px 16px; }
-  /* Het vakje draagt het blauw van de diamant: de munt. */
-  .earn-chip.dia { background: rgba(41,182,246,.32); }
+  /* Het vakje is de pil van het saldo in de kop (.diamond-badge): donker en
+     neutraal. Het was lichtblauw, "het blauw van de diamant" -- maar ijsblauw zegt
+     in deze app "hier ben je" (zie §2 van de afspraak: 💎 heeft met opzet géén
+     eigen kleur). En zo landt de 💎 die van dit vakje naar de kop vliegt op
+     hetzelfde ding als waar hij vandaan kwam. Ook de lof in de show gebruikt dit
+     vakje (zie showPraise). */
+  .earn-chip.dia { background: rgba(0,0,0,.32); color: var(--c-white); }
   /* Mijlpaal: precies één regel, en alleen als er iets gehaald is -- een trofee
      die klaarligt, in de gouden pil (de ster-status is met pensioen). De derde stand
      ("nog 13 ⭐ tot ...", gestippeld en stil) is weg; zie endLevel. Is er niets te
