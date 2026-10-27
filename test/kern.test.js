@@ -42,6 +42,7 @@
  *   ZB de foutmelder                    -> een kort briefje zonder iets persoonlijks, en stil vanaf file://
  *   ZC de stem                          -> zegt woorden, geen emoji of tekens
  *   ZE oefenen                          -> elke instelling één bediening, in de kaart waar hij hoort
+ *   ZF leerpad                          -> naam en voorbeeld van elke stap kloppen met de gekozen sommen
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -1119,8 +1120,8 @@ zaak('S', () => {
   const sterrenVoor = JSON.stringify(p.stars);
   app.run('telTip(P())').doe(p);
   const s = p.settings;
-  check(s.track === 'math' && s.max === 10 && s.ops.join() === '+,-' && s.mode === 'kies' && s.voorlezen === true,
-    'S · naar rekenen: plus en min tot 10, kiezen, en de stem leest mee', JSON.stringify(s));
+  check(s.track === 'math' && s.max === 10 && s.ops.join() === '+,-' && s.mode === 'kies' && !('voorlezen' in s),
+    'S · naar rekenen: plus en min tot 10, kiezen, zonder stem', JSON.stringify(s));
   check(JSON.stringify(p.stars) === sterrenVoor, 'S · de sterren blijven staan', JSON.stringify(p.stars));
   check(app.run('grensTip(P())') === null, 'S · en de grenstip begint daar opnieuw te tellen', JSON.stringify(app.run('grensTip(P())')));
   check(tip() === null, 'S · in de rekenmodus geen telmodus-tip', String(tip()));
@@ -1134,9 +1135,17 @@ zaak('S', () => {
   check(stem(['nl_BE', 'nl-NL']) === 'nl_BE', 'S · ook als het toestel nl_BE schrijft', stem(['nl_BE', 'nl-NL']));
   check(stem(['en-US', 'nl-NL']) === 'nl-NL', 'S · zonder Vlaamse stem wordt het Nederlands', stem(['en-US', 'nl-NL']));
   check(stem(['en-US']) === null, 'S · en zonder Nederlandstalige stem geen stem', String(stem(['en-US'])));
-  check(app.stemAan(p) === true, 'S · met Voorlezen aan mag de stem in de rekenmodus', '');
-  s.voorlezen = false;
-  check(app.stemAan(p) === false, 'S · zonder Voorlezen zwijgt de rekenmodus zoals altijd', '');
+  check(app.stemAan(p) === false, 'S · de rekenmodus zwijgt, ook net na de overstap', '');
+  // de oude schakelaar Voorlezen verdwijnt bij het laden
+  s.voorlezen = true; app.migrate(p);
+  check(!('voorlezen' in s) && app.stemAan(p) === false, 'S · een oude Voorlezen aan geeft geen stem meer', JSON.stringify(s));
+  // memory is er alleen voor een telkind (zie memoryAan)
+  check(app.run('memoryAan')(p) === false, 'S · een rekenkind krijgt geen memory-knop', '');
+  s.track = 'count';
+  check(app.run('memoryAan')(p) === true, 'S · een telkind wel', '');
+  s.memory = false;
+  check(app.run('memoryAan')(p) === false, 'S · tenzij de ouder hem uitzette', '');
+  s.track = 'math'; s.memory = true;
 });
 
 zaak('T', () => {
@@ -1472,6 +1481,77 @@ zaak('ZE', () => {
       check(!mist.length, `ZE · ${track}: met alles aan heeft elke instelling een bediening`, JSON.stringify(mist));
     }
   }
+});
+
+/* ================= ZF · Het leerpad zegt wat het speelt =================
+   Elke stap noemt zijn echte bereik en toont een voorbeeld uit wat de ouder
+   koos (zie leerpadStappen). Over alle combinaties van bewerkingen, grenzen en
+   een paar tafelsets:
+     * in een voorbeeld staat geen teken dat niet gekozen is;
+     * geen getal boven het bereik van de stap ("Tot 25": niets boven 25; de
+       andere stappen: niets boven de grens);
+     * een × of ÷ gebruikt een tafel die aan staat;
+     * twee stappen na elkaar heten nooit hetzelfde, en "Tot N" klopt met wat
+       genTriple in die wereld echt maakt;
+     * de tafels zijn altijd heel, ook in wereld 1. */
+zaak('ZF', () => {
+  const { app } = verseSter('Pad');
+  const teken = { '+': '+', '−': '-', '×': 'x', ':': ':' };
+  const opsSets = [];
+  for (let m = 1; m < 16; m++) opsSets.push(['+', '-', 'x', ':'].filter((_, i) => m & (1 << i)));
+  let n = 0;
+  const fouten = [];
+  for (const ops of opsSets) for (const max of [10, 20, 50, 100]) for (const tables of [[2, 5, 10], [7], [3, 8]]) {
+    const s = { ...app.defaultProfile('Pad', 'dress_roze', {}).settings, ops, max, tables };
+    const stappen = app.run('leerpadStappen')(s);
+    stappen.forEach((st, i) => {
+      n++;
+      const waar = `${ops.join('')} tot ${max} tafels ${tables} · ${st.naam} "${st.vb}"`;
+      if (i && stappen[i - 1].naam === st.naam) fouten.push('dubbele naam: ' + waar);
+      if (!st.vb) return;
+      const tekens = (st.vb.match(/[+−×:]/g) || []).map(t => teken[t]);
+      if (tekens.some(t => !ops.includes(t))) fouten.push('teken niet gekozen: ' + waar);
+      const getallen = (st.vb.match(/\d+/g) || []).map(Number);
+      const tot = /^Tot (\d+)$/.exec(st.naam);
+      const grens = tot ? +tot[1] : max;
+      if (/[+−]/.test(st.vb)) {
+        // de uitkomst telt ook: 3 + 4 is 7, 12 + 5 is 17
+        const [a, op, b] = st.vb.replace(/ = \d+$/, '').split(' ');
+        const uit = st.vb.includes('▢') ? Math.max(...getallen) : op === '+' ? +a + +b : +a - +b;
+        if (Math.max(...getallen, uit) > grens) fouten.push('boven het bereik: ' + waar);
+      }
+      if (/[×:]/.test(st.vb)) {
+        // zoals genTriple ze maakt: a × tafel, en bij zoek het getal is de tafel wat er ontbreekt
+        const tafel = st.vb.includes('▢') ? getallen[1] / getallen[0] : getallen[1];
+        if (!tables.includes(tafel)) fouten.push('tafel staat uit: ' + waar);
+      }
+    });
+    // "Tot N" is wat de eerste wereld echt speelt (een gemiddeld kind, perf 0.5)
+    const eerste = stappen[0];
+    const totN = /^Tot (\d+)$/.exec(eerste.naam);
+    if (totN && (ops.includes('+') || ops.includes('-'))) {
+      const op = ops.includes('+') ? '+' : '-';
+      let hoogste = 0;
+      for (let k = 0; k < 200; k++) { const t = app.run('genTriple')(s, 1, 0.5, op); hoogste = Math.max(hoogste, t.a, t.b, t.c); }
+      if (hoogste > +totN[1]) fouten.push(`wereld 1 speelt tot ${hoogste}, het pad zegt ${eerste.naam}: ${ops.join('')} tot ${max}`);
+    }
+  }
+  check(!fouten.length, `ZF · ${n} stappen: naam en voorbeeld kloppen met de gekozen sommen`, fouten.slice(0, 6).join(' | '));
+  // tot 10: stap 1 en 2 zijn dezelfde sommen, dus één stap
+  const tien = app.run('leerpadStappen')({ ...app.defaultProfile('Pad', 'dress_roze', {}).settings, ops: ['+', '-'], max: 10 });
+  check(tien.map(st => st.naam).join() === 'Tot 10,Zoek het getal,Drie getallen,Alles door elkaar',
+    'ZF · tot 10: één stap "Tot 10", geen tweede met dezelfde sommen', tien.map(st => st.naam).join());
+  const maal = app.run('leerpadStappen')({ ...app.defaultProfile('Pad', 'dress_roze', {}).settings, ops: ['x'], tables: [8] });
+  check(maal.map(st => `${st.naam}=${st.vb}`).join() === 'Hele tafels=7 × 8,Zoek het getal=3 × ▢ = 24,Alles door elkaar=',
+    'ZF · alleen ×: hele tafels, en zoek het getal met een tafel die aan staat', maal.map(st => `${st.naam}=${st.vb}`).join());
+  // de tafels zijn heel vanaf wereld 1, ook voor een kind dat worstelt
+  const s = { ...app.defaultProfile('Pad', 'dress_roze', {}).settings, ops: ['x', ':'], tables: [7] };
+  const factoren = new Set();
+  for (let k = 0; k < 400; k++) {
+    const t = app.run('genTriple')(s, 1, 0, k % 2 ? 'x' : ':');
+    factoren.add(t.op === 'x' ? t.a : t.c);
+  }
+  check(factoren.size === 10 && Math.max(...factoren) === 10, 'ZF · wereld 1, zwak kind: de tafel loopt van × 1 tot × 10', [...factoren].sort((a, b) => a - b).join());
 });
 
 klaar();

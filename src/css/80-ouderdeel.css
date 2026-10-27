@@ -467,16 +467,6 @@
   }
   .oe-rij.on .oe-stand { background: var(--purple-mid); }
   .oe-rij.on .oe-stand::after { transform: translateX(16px); }
-  /* De modus: twee gelijke helften onderaan, op de donkere achtergrond. Dezelfde
-     vorm als de tabbalk bovenaan (.segmented), maar stiller: geen blauw, alleen
-     een lichter vlak voor wat aanstaat. Geen pijl -- tellen en rekenen zijn twee
-     manieren van spelen, geen stap na elkaar (zie oefenenPanelHtml). */
-  .oe-modus { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-md); background: rgba(0,0,0,.26); }
-  .oe-modus .chip, .oe-modus .chip:hover {
-    flex: 1 1 0; min-height: 44px; padding: 8px 6px; border: none; border-radius: var(--r-sm);
-    background: none; box-shadow: none; color: rgba(255,255,255,.7); font-size: var(--tx-label);
-  }
-  .oe-modus .chip.on { background: rgba(255,255,255,.16); color: var(--c-white); box-shadow: none; }
   /* ---- Het voorbeeld is een kind, geen app-icoon -------------------------
      Het voorbeeld staat vóór de keuzes -- je maakt iemand, je vult geen formulier
      in -- maar het is niet het onderwerp. Op 148px vulde het een derde van de
@@ -869,13 +859,19 @@
   /* het blad van één ster heeft geen titel: haar pop staat er bovenaan */
   .modal h3:empty { display: none; }
   /* Het blad van één ster (wieBladHtml): haar pop, meisje of jongen, de naam,
-     en onder een lijn de twee openklappers die iets onomkeerbaars doen. */
+     hoe ze speelt, en onder een lijn de twee openklappers die iets onomkeerbaars
+     doen. */
   .wie-blad { gap: 12px; }
   .wie-blad .wb-pop { display: flex; justify-content: center; margin-top: -4px; }
   .wie-blad .name-edit-wrap { max-width: none; }
   .wb-gevaar { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding-top: 12px; border-top: 1px solid var(--paper-border); }
   .wb-gevaar .danger-reveal { width: 100%; margin: 0; }
   .wie-blad #set-base { margin-bottom: 0; }
+  /* "Hoe speelt ze?": dezelfde twee helften als meisje of jongen erboven, met
+     een klein label, want hier staat het niet vanzelf (zie wieBladHtml) */
+  .wie-blad .wb-modus { padding-top: 4px; }
+  .wie-blad .wb-modus .lbl { text-align: center; }
+  .wie-blad #set-track { margin-bottom: 0; }
   /* zelfde twee blokjes stonden tweemaal identiek als losse inline style op
      de bevestigingsmodals (stoppen / algemene bevestiging) -- nu één plek */
   .modal-body { font-size: var(--tx-label); color: var(--paper-ink-muted); margin-bottom: 14px; }

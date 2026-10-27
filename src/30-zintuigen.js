@@ -374,11 +374,12 @@ function nlVoice() {
   return null;
 }
 function hasSpeech() { return 'speechSynthesis' in window; }
-/* Mag deze ster een stem horen? In de telmodus altijd. In de rekenmodus alleen
-   met Voorlezen aan: zo verliest een kind dat net van tellen naar rekenen ging
-   niet in één klap de stem die alles voorlas (de telmodus-tip zet hem aan, zie
-   naarRekenen). De ouder zet hem uit op Oefeningen. */
-function stemAan(p) { return p.settings.track === 'count' || p.settings.voorlezen === true; }
+/* Mag deze ster een stem horen? Alleen in de telmodus: die is lees-vrij en
+   leunt op de stem. Een rekenkind leest de som zelf, ook net na de overstap
+   van tellen. Er stond een schakelaar Voorlezen op Oefeningen, en daarna een
+   wereld voorlezen na de overstap; allebei zijn bewust weggehaald -- zet de
+   stem niet terug in de rekenmodus zonder dat te vragen. */
+function stemAan(p) { return p.settings.track === 'count'; }
 /* Een rekensom als zin: "7 + 3 = @" -> "zeven plus drie is hoeveel?". Het
    sjabloon is dezelfde bron als wat er in beeld staat, dus ze kunnen niet
    uit elkaar lopen. Boven de tien leest de stem gewoon het cijfer voor.
@@ -409,7 +410,6 @@ function speak(text, opts) {
   opts = opts || {};
   // Voice hoort bij de lees-vrije telmodus; in de rekenmodus geen enkele gesproken
   // uitvoer (ook niet op gedeelde plekken als het trofee-feestje of de ster-status)
-  // -- behalve als de ouder Voorlezen aanzette, zie stemAan.
   const cp = cur ? P() : null;
   if (cp && cp.settings && !stemAan(cp)) { if (opts.onEnd) opts.onEnd(); return; }
   if (!db.sound || !hasSpeech() || !text) { if (opts.onEnd) opts.onEnd(); return; }

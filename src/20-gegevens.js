@@ -42,7 +42,7 @@
      Trilfeedback ....... haptics
      Geluid ............. de SFX-tabel: klankjes op naam van de gebeurtenis,
                           live gemaakt met oscillatoren. Geen bestanden
-     Gesproken opdrachten  nl-BE stem — telmodus, en rekenen met Voorlezen aan (zie stemAan)
+     Gesproken opdrachten  nl-BE stem — alleen de telmodus (zie stemAan)
      Avatar (SVG) ....... de pop tekenen (BASES: meisje of jongen)
 
    ---- 35-schermen.js: welk scherm staat aan -------------------------------

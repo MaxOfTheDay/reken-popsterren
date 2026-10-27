@@ -388,6 +388,7 @@ async function zetOnderrandAan(page) {
     const r = await page.evaluate(async () => {
       const wacht = ms => new Promise(res => setTimeout(res, ms));
       $('mem-fab').style.display = 'flex';
+      P().settings.track = 'count';   // de memory-knop is er alleen voor een telkind (zie memoryAan)
       window.vhVolg = () => false;
       navTik('dress'); await wacht(900);
       const beelden = [];

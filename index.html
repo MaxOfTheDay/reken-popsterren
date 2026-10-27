@@ -9458,16 +9458,6 @@
 
 
 
-  .oe-modus { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-md); background: rgba(0,0,0,.26); }
-  .oe-modus .chip, .oe-modus .chip:hover {
-    flex: 1 1 0; min-height: 44px; padding: 8px 6px; border: none; border-radius: var(--r-sm);
-    background: none; box-shadow: none; color: rgba(255,255,255,.7); font-size: var(--tx-label);
-  }
-  .oe-modus .chip.on { background: rgba(255,255,255,.16); color: var(--c-white); box-shadow: none; }
-
-
-
-
 
 
 
@@ -9857,12 +9847,18 @@
   .modal h3:empty { display: none; }
 
 
+
   .wie-blad { gap: 12px; }
   .wie-blad .wb-pop { display: flex; justify-content: center; margin-top: -4px; }
   .wie-blad .name-edit-wrap { max-width: none; }
   .wb-gevaar { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding-top: 12px; border-top: 1px solid var(--paper-border); }
   .wb-gevaar .danger-reveal { width: 100%; margin: 0; }
   .wie-blad #set-base { margin-bottom: 0; }
+
+
+  .wie-blad .wb-modus { padding-top: 4px; }
+  .wie-blad .wb-modus .lbl { text-align: center; }
+  .wie-blad #set-track { margin-bottom: 0; }
 
 
   .modal-body { font-size: var(--tx-label); color: var(--paper-ink-muted); margin-bottom: 14px; }
@@ -14276,7 +14272,6 @@ function defaultProfile(name, dress, opts) {
       numerals: opts.numerals !== false,
       qmax: opts.qmax || 10,
       memory: opts.memory !== false,
-      voorlezen: opts.voorlezen === true,
       startStap: opts.startStap || 1
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
@@ -14443,6 +14438,7 @@ function migrate(p) {
   }
   if (p.settings.qmax == null) p.settings.qmax = 10;
   if (p.settings.memory == null) p.settings.memory = true;
+  delete p.settings.voorlezen;
   if (!p.countTrack) p.countTrack = { stage: p.settings.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 };
   if (p.countTrack.rung == null) p.countTrack.rung = 0;
   if (p.countTrack.streak == null) p.countTrack.streak = 0;
@@ -15093,7 +15089,8 @@ function hasSpeech() { return 'speechSynthesis' in window; }
 
 
 
-function stemAan(p) { return p.settings.track === 'count' || p.settings.voorlezen === true; }
+
+function stemAan(p) { return p.settings.track === 'count'; }
 
 
 
@@ -15122,7 +15119,6 @@ function cancelSpeech() { try { if (window.speechSynthesis) speechSynthesis.canc
 
 function speak(text, opts) {
   opts = opts || {};
-
 
 
   const cp = cur ? P() : null;
@@ -18648,8 +18644,7 @@ function goMap(vanLvl) {
   $('map-tournee-label').classList.remove('bezig');
   $('map-portrait').innerHTML = avatarSVG(p, 80);
 
-
-  const memOn = p.settings.memory !== false;
+  const memOn = memoryAan(p);
   $('mem-fab').style.display = memOn ? 'flex' : 'none';
   if (memOn) $('mem-fab-pay').textContent = memPayout(p);
   const o = kaartOpdracht(p, vanLvl, uitShow);
@@ -21868,12 +21863,14 @@ function genTriple(s, lvl, perf, op) {
 
 
 
+
+
     b = pick(tables);
-    a = rnd(1, Math.max(1, Math.round(10 * t)));
+    a = rnd(1, 10);
     c = a * b; sym = '×';
   } else {
     b = pick(tables);
-    const q = rnd(1, Math.max(1, Math.round(10 * t)));
+    const q = rnd(1, 10);
     a = q * b; c = q; sym = ':';
   }
   return { a, b, c, sym, op, t, effMax };
@@ -22671,6 +22668,13 @@ let M = null;
 
 
 const MEM_PAIR_GAIN = 2, MEM_DONE_BONUS = 3, MEM_MIN_PAREN = 4;
+
+
+
+
+
+
+function memoryAan(p) { return p.settings.track === 'count' && p.settings.memory !== false; }
 function memFaceHTML(c) {
 
 
@@ -23540,9 +23544,7 @@ function drawQuestion() {
   $('gold-banner').textContent = q.gold ? '🌟 3× 💎 🌟' : '';
 
 
-
-  const lezen = !G.count && stemAan(P());
-  $('btn-replay').style.display = G.count || lezen ? 'flex' : 'none';
+  $('btn-replay').style.display = G.count ? 'flex' : 'none';
   somVluchtWeg();
   if (G.count) { drawCountQuestion(q); return; }
 
@@ -23555,9 +23557,6 @@ function drawQuestion() {
 
   const pad = document.querySelector('#answer-area .numpad');
   if (pad) pad.classList.toggle('heeft', G.mode === 'typ' && G.input !== '');
-
-
-  if (lezen && !q.voorgelezen) { q.voorgelezen = true; speak(somZin(q)); }
 }
 function numpadPress(n) {
   if (!G || G.lock) return;
@@ -26355,16 +26354,38 @@ function statusKaartHtml(p) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+const PAD_VB = {
+  '+': { 10: '3 + 4', 20: '12 + 5', 25: '15 + 4', 50: '34 + 12', 100: '56 + 23' },
+  '-': { 10: '7 − 3', 20: '17 − 5', 25: '24 − 3', 50: '47 − 12', 100: '86 − 34' },
+};
 function leerpadStappen(s) {
   const plusMin = s.ops.includes('+') || s.ops.includes('-');
-  const klein = !plusMin ? '2 × 3' : s.ops.includes('+') ? '3 + 4' : '7 − 3';
-  const tot = { 10: '6 + 3', 20: '12 + 5', 50: '34 + 12', 100: '56 + 27' }[s.max] || '12 + 5';
+  const pm = s.ops.includes('+') ? '+' : '-';
+  const tafel = Math.max(...(s.tables.length ? s.tables : [2, 5, 10]));
+  const klein = Math.max(10, Math.round(s.max * LEERSTAPPEN[0].t));
+  const som = n => PAD_VB[pm][n] || PAD_VB[pm][10];
+  const zoek = s.ops.includes('+') ? (s.max > 10 ? '7 + ▢ = 12' : '3 + ▢ = 7')
+    : s.ops.includes('-') ? '9 − ▢ = 4' : `3 × ▢ = ${3 * tafel}`;
+  const keer = tafel === 7 ? 8 : 7;
+  const tafelVb = s.ops.includes('x') ? `${keer} × ${tafel}` : `${keer * tafel} : ${tafel}`;
   const stap = (naam, vb, keuze) => ({ naam, vb, keuze, uit: !!keuze && s[keuze] === false });
   return [
-    stap('Kleine sommen', klein),
-    plusMin ? stap(`Tot ${s.max}`, tot) : stap('Hele tafels', '7 × 8'),
-    plusMin && s.max > 10 && stap('Over het tiental', '8 + 5'),
-    s.ops.some(o => o !== ':') && stap('Zoek het getal', '7 + ▢ = 12', 'missNum'),
+    plusMin ? stap(`Tot ${klein}`, som(klein)) : stap('Hele tafels', tafelVb),
+    plusMin && s.max > klein && stap(`Tot ${s.max}`, som(s.max)),
+    plusMin && s.max > 10 && stap('Over het tiental', pm === '+' ? '8 + 5' : '13 − 6'),
+    s.ops.some(o => o !== ':') && stap('Zoek het getal', zoek, 'missNum'),
     s.ops.includes('+') && stap('Drie getallen', '3 + 4 + 2', 'chain3'),
     stap('Alles door elkaar', ''),
   ].map((st, i) => st && { ...st, wereld: i + 1 }).filter(Boolean);
@@ -26372,7 +26393,10 @@ function leerpadStappen(s) {
 
 function accentTekst(s, w) {
   const a = wereldAccent(w);
-  if (a === 'miss' && s.missNum !== false) return ' · extra 7 + ▢ = 12';
+  if (a === 'miss' && s.missNum !== false) {
+    const zoek = leerpadStappen(s).find(st => st.keuze === 'missNum');
+    if (zoek) return ' · extra ' + zoek.vb;
+  }
   if (a === 'chain' && s.chain3 !== false && s.ops.includes('+')) return ' · extra 3 + 4 + 2';
   return '';
 }
@@ -26636,7 +26660,7 @@ function telTip(p) {
   }
   if (qnaar) return qtip();
   return { soort: 'rekenen',
-    tekst: 'De laatste fase gaat foutloos. Klaar om te rekenen? <span class="tip-klein">Plus en min tot 10, de stem leest mee.</span>', knop: 'Naar rekenen', doe: naarRekenen };
+    tekst: 'De laatste fase gaat foutloos. Klaar om te rekenen? <span class="tip-klein">Plus en min tot 10, ze leest de sommen zelf.</span>', knop: 'Naar rekenen', doe: naarRekenen };
 }
 
 
@@ -26648,7 +26672,6 @@ function naarRekenen(p) {
   s.ops = ['+', '-'];
   s.max = 10;
   s.mode = 'kies';
-  s.voorlezen = true;
   s.grensTipBasis = grensDrieSterren(p);
 }
 
@@ -26684,8 +26707,9 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
 
 
 
+
 const OEFEN_INSTELLINGEN = {
-  math:  { wat: ['ops', 'max', 'tables'], pad: ['startStap', 'missNum', 'chain3'], show: ['mode', 'perLevel', 'voorlezen', 'memory'] },
+  math:  { wat: ['ops', 'max', 'tables'], pad: ['startStap', 'missNum', 'chain3'], show: ['mode', 'perLevel'] },
   count: { wat: ['qmax'], pad: ['stage'], show: ['repr', 'perLevel', 'memory'] },
 };
 function oefenGroups(s, pfx, p) {
@@ -26763,7 +26787,6 @@ function oefenGroups(s, pfx, p) {
   const aanUit = (id, instelling, ico, woord, aan) => `<div id="${pfx}${id}"><button class="chip oe-rij${aan ? ' on' : ''}" data-v="${aan ? 'off' : 'on'}" data-instelling="${instelling}" role="switch" aria-checked="${aan}">`
     + `<span class="oe-i" aria-hidden="true">${ico}</span><span class="oe-w">${woord}</span><span class="oe-stand" aria-hidden="true"></span></button></div>`;
   const perShow = `${lbl('Vragen per show')}${balk('set-perlevel', 'perLevel', [[5, '5'], [8, '8'], [10, '10']], s.perLevel)}`;
-  const memory = aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false);
   if (s.track === 'count') return [{
     kaart: 'wat', html: `${lbl('Hoeveelheden tot')}${balk('set-qmax', 'qmax', [[6, '6'], [8, '8'], [10, '10']], s.qmax || 10)}`
   }, {
@@ -26773,7 +26796,7 @@ function oefenGroups(s, pfx, p) {
     kaart: 'show', html: `${lbl('Tonen als')}${balk('set-repr', 'repr',
       [['objects', 'Voorwerpen'], ['dots', 'Stippen'], ['mix', 'Mix']], s.repr || 'objects')}
       ${perShow}
-      ${memory}`
+      ${aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false)}`
   }];
 
 
@@ -26782,7 +26805,7 @@ function oefenGroups(s, pfx, p) {
 
   const stappen = leerpadStappen(s).filter(st => st.wereld < LEERSTAPPEN.length);
   const start = Math.min(s.startStap || 1, stappen[stappen.length - 1].wereld);
-  const startRij = stappen.find(st => st.wereld >= start).wereld;
+  const startRij = stappen.filter(st => st.wereld <= start).pop().wereld;
   const wNu = p ? Math.max(continueWorld(p) + 1, start) : 0;
   const nuStap = Math.min(wNu, stappen[stappen.length - 1].wereld);
 
@@ -26794,6 +26817,8 @@ function oefenGroups(s, pfx, p) {
     + '<span class="fl-vink vast" aria-hidden="true"></span></div>';
 
   const hier = p && !voorbij && stappen.filter(st => st.wereld <= nuStap && !st.uit).pop();
+
+
 
 
 
@@ -26811,9 +26836,7 @@ function oefenGroups(s, pfx, p) {
       startRij, Infinity, hier && hier.wereld, eind, true)}`
   }, {
     kaart: 'show', html: `${lbl('Antwoord')}${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
-      ${perShow}
-      ${aanUit('set-voorlezen', 'voorlezen', '🔊', 'Voorlezen', s.voorlezen === true)}
-      ${memory}`
+      ${perShow}`
   }];
 }
 
@@ -26830,7 +26853,7 @@ function oefenSamenvatting(s) {
   const tot = (s.ops.includes('+') || s.ops.includes('-')) ? ` · tot ${s.max}` : '';
   const tafels = (s.ops.includes('x') || s.ops.includes(':'))
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
-  const start = (s.startStap || 1) > 1 && leerpadStappen(s).find(st => st.wereld >= s.startStap);
+  const start = (s.startStap || 1) > 1 && leerpadStappen(s).filter(st => st.wereld > 1 && st.wereld <= s.startStap).pop();
   return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}`
        + ` · ${modes[s.mode] || s.mode}${start ? ` · vanaf ${start.naam.toLowerCase()}` : ''}`
        + ` · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
@@ -26842,20 +26865,10 @@ function oefenSamenvatting(s) {
 
 
 
-
-
-
-
-
-
 function oefenenPanelHtml(p, s) {
-  const isCount = s.track === 'count';
   const cards = oefenGroups(s, '', p).map(g => `
     <div class="set-card oefen-kaart primary" data-kaart="${g.kaart}">${g.html}</div>`).join('');
-  const half = (v, ico, woord) => `<button class="chip${(v === 'count') === isCount ? ' on' : ''}" data-v="${v}">`
-    + `<span aria-hidden="true">${ico}</span> ${woord}</button>`;
   return `<div class="settings-panel">${cards}
-    <div class="oe-modus" id="set-track" role="group" aria-label="Modus">${half('count', '🧸', 'Tellen')}${half('math', '🧮', 'Rekenen')}</div>
   </div>`;
 }
 
@@ -27075,6 +27088,10 @@ function beheerEmptyHtml() {
 
 
 
+
+
+
+
 function wieBladHtml(p) {
   return `<div class="settings-sheet wie-blad">
     <div class="wb-pop" aria-hidden="true">${avatarSVG(p, 64)}</div>
@@ -27082,6 +27099,10 @@ function wieBladHtml(p) {
       `<button class="chip gestapeld${baseOf(p) === b.id ? ' on' : ''}" data-v="${b.id}">`
       + `<span class="mc-ico" aria-hidden="true">${b.emoji}</span><span class="mc-label">${b.name}</span></button>`).join('')}</div>
     <div class="name-edit-wrap"><input type="text" id="set-name" aria-label="Naam" value="${esc(p.name)}" maxlength="12" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div>
+    <div class="set-field wb-modus"><div class="lbl">Hoe speelt <span class="set-naam">${esc(p.name)}</span>?</div>
+      <div class="chip-row mode-row" id="set-track" role="group" aria-label="Tellen of rekenen">${[['count', '🧸', 'Leren tellen'], ['math', '🧮', 'Rekenen']].map(([v, ico, woord]) =>
+        `<button class="chip gestapeld${(p.settings.track === 'count') === (v === 'count') ? ' on' : ''}" data-v="${v}">`
+        + `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${woord}</span></button>`).join('')}</div></div>
     <div class="wb-gevaar">
       <!-- rode vlak bestaat pas als een ouder er zelf om vraagt; een permanent
            zichtbare wisknop hoort niet tussen gewone instellingen te staan -->
@@ -27369,7 +27390,6 @@ function bindOefenChips(s, p, pfx, done) {
   bind('set-startstap', c => { s.startStap = parseInt(c.dataset.v, 10); });
   bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); telPlafondOpnieuw(p); });
   bind('set-memory', c => { s.memory = (c.dataset.v === 'on'); });
-  bind('set-voorlezen', c => { s.voorlezen = (c.dataset.v === 'on'); });
   bind('set-repr', c => { s.repr = c.dataset.v; });
 }
 
@@ -27435,6 +27455,21 @@ function bindWie(p) {
 
 
 
+
+
+
+  const modus = $('set-track');
+  if (modus) modus.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    const s = p.settings;
+    if (s.track === c.dataset.v) return;
+    sndClick();
+    s.track = c.dataset.v;
+    telPlafondOpnieuw(p);
+    if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 };
+    save();
+    renderSettings();
+    openWieBlad();
+  });
   const basis = $('set-base');
   if (basis) basis.querySelectorAll('.chip').forEach(c => c.onclick = () => {
     if (p.base === c.dataset.v) return;
@@ -27495,10 +27530,6 @@ function bindSettings(p, s) {
     const lad = $('set-startstap') || $('set-fase');
     if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
   });
-
-
-
-  bind('set-track', c => { s.track = c.dataset.v; telPlafondOpnieuw(p); if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 }; save(); renderSettings(); });
 
 
 

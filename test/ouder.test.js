@@ -193,9 +193,17 @@ function check(ok, label, detail) {
     check(r.gekozenMax === '20' && r.gekozenMode === 'kies',
       'de velden tonen de waarden van het gekozen kind', JSON.stringify(r));
     check(/Bas/.test(r.kop), 'en de kop zegt over wie het gaat', r.kop);
-    // Bas naar de telmodus: dat mag Anna niet raken
-    await page.click('#set-track .chip[data-v="count"]');
+    // Bas naar de telmodus: dat mag Anna niet raken. De modus staat niet op
+    // Oefeningen maar in zijn blad (een tik op zijn naam, zie wieBladHtml)
+    check(await page.evaluate(() => !document.querySelector('#settings-body #set-track, .settings-panel #set-track')),
+      'tellen of rekenen staat niet meer op Oefeningen', 'er staat nog een modusknop');
+    await page.evaluate(() => openWieBlad());
+    await page.click('#confirm-body #set-track .chip[data-v="count"]');
     await page.waitForTimeout(150);
+    check(await page.evaluate(() => $('confirm-modal').classList.contains('open')
+      && document.querySelector('#confirm-body #set-track .chip.on').dataset.v === 'count'),
+      'het blad blijft open en toont de nieuwe modus', 'blad dicht of oude modus');
+    await page.evaluate(() => closeConfirmModal());
     r = await page.evaluate(() => ({
       anna: db.profiles.p1.settings.track, bas: db.profiles.p2.settings.track,
       basFase: !!document.getElementById('set-fase'),
@@ -377,12 +385,13 @@ function check(ok, label, detail) {
       'een tik zet "vanaf" op die stap en dempt wat ervoor ligt', JSON.stringify(r));
     check(r.plek === plek, 'en de stappen blijven staan waar ze stonden', `${plek} -> ${r.plek}`);
     check(r.hier === 3 && r.stap === 3, 'en in wereld 1 speelt ze nu stap 3', JSON.stringify(r));
-    // tot 10: over het tiental valt weg, "vanaf" schuift naar de volgende stap
+    // tot 10: tot 20 en over het tiental vallen weg (wereld 1 tot 3 spelen dan
+    // dezelfde sommen), dus "vanaf" staat bij de stap die die werelden speelt
     await page.click('#set-max .chip[data-v="10"]');
     await page.waitForTimeout(200);
     r = await pad();
-    check(r.rijen.join(',') === '1,2,4,5' && r.vanaf === 4 && r.start === 3,
-      'valt de gekozen stap weg, dan staat "vanaf" bij de volgende', JSON.stringify(r));
+    check(r.rijen.join(',') === '1,4,5' && r.vanaf === 1 && r.start === 3,
+      'valt de gekozen stap weg, dan staat "vanaf" bij de stap die hij speelt', JSON.stringify(r));
     await page.click('#set-startstap .chip[data-v="1"]');
     await page.waitForTimeout(200);
     r = await pad();
@@ -829,7 +838,7 @@ function check(ok, label, detail) {
     check(!/%/.test(r.tekst), 'het niveau-blok noemt geen percentage', r.tekst.slice(0, 80));
     check(r.balken === 0, 'en heeft geen voortgangsbalk', 'balken=' + r.balken);
     check(r.tekst.split(/\s+/).filter(Boolean).length < 40, 'en het leerpad blijft kort (geen vaste voetnoot)', r.tekst.slice(0, 120));
-    check(/Leerpad/.test(r.tekst) && /tot 20/.test(r.tekst) && /Kleine sommen/.test(r.bezig) && r.stap === 'step' && r.pop,
+    check(/Leerpad/.test(r.tekst) && /tot 20/.test(r.tekst) && /Tot 10/.test(r.bezig) && r.stap === 'step' && r.pop,
       'en zet op het leerpad waar het kind nu aan werkt, met haar pop', JSON.stringify(r));
     check(r.perf === 0.5, 'p.perf staat nog gewoon in de opslag', String(r.perf));
     // telmodus: dan is de fase de bezig-regel

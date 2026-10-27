@@ -104,16 +104,18 @@ function genTriple(s, lvl, perf, op) {
     } while (++poging < 40);
     sym = op === '+' ? '+' : '−';
   } else if (op === 'x') {
-    /* Een tafel loopt altijd van × 1 tot × 10; t laat hem nog steeds rustig
-       beginnen. Vroeger knipte "Getallen tot" hem ongezegd af (tot 20 en de
-       tafel van 7 gaf nooit meer dan 7 × 2) -- die grens is nu alleen van plus
-       en min (zie oefenGroups). */
+    /* Een tafel is altijd de hele tafel, van × 1 tot × 10, vanaf de eerste
+       show: zo leert een kind ze op school, en de ouder kiest wélke tafels, niet
+       hoe ver. t speelt hier niet mee. Met t begon wereld 1 op × 1 tot × 5, en
+       dan stond er op het leerpad een stap "tot × 5" die geen ouder zo bedoelde.
+       Vroeger knipte "Getallen tot" hem ook nog ongezegd af (tot 20 en de tafel
+       van 7 gaf nooit meer dan 7 × 2) -- die grens is alleen van plus en min. */
     b = pick(tables);
-    a = rnd(1, Math.max(1, Math.round(10 * t)));
+    a = rnd(1, 10);
     c = a * b; sym = '×';
   } else { // ':'
     b = pick(tables);
-    const q = rnd(1, Math.max(1, Math.round(10 * t)));
+    const q = rnd(1, 10);
     a = q * b; c = q; sym = ':';
   }
   return { a, b, c, sym, op, t, effMax };
@@ -911,6 +913,13 @@ let M = null;
 // wat een memory-potje oplevert -- gedeeld door het spel zelf en door de belofte
 // op de knop op de kaart (zie memPayout)
 const MEM_PAIR_GAIN = 2, MEM_DONE_BONUS = 3, MEM_MIN_PAREN = 4;
+/* Wie krijgt de memory-knop op de kaart? Alleen een telkind, en dan alleen als
+   de ouder hem niet uitzette (Oefeningen, de kaart "show"). Een rekenkind
+   speelt voorlopig geen memory: bij rekenen is de show het oefenen, en een
+   schakelaar minder op Oefeningen. De sommenvariant (memSomDeck)
+   blijft staan; terugbrengen is deze ene regel en de schakelaar in
+   OEFEN_INSTELLINGEN.math. */
+function memoryAan(p) { return p.settings.track === 'count' && p.settings.memory !== false; }
 function memFaceHTML(c) {
   /* een som past op een kaart als de letter met de lengte meekrimpt ("3 + 4"
      tegen "48 + 37"); in cqw, dus ook mee met de kaart zelf */

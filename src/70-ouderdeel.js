@@ -394,16 +394,38 @@ function statusKaartHtml(p) {
    doorgestreept (uit: true), en houdt zijn nummer. Eerst viel hij weg, en dan
    schoof alles erachter een nummer op -- en stond dezelfde keuze nog een keer
    als losse schakelaar in een andere kaart. */
+/* DE STAP ZEGT WAT HIJ SPEELT. Een naam is het echte bereik ("Tot 10", "Tot 20"),
+   uitgerekend zoals genTriple het doet (LEERSTAPPEN[0].t), en het voorbeeld is
+   gemaakt met wat de ouder koos: alleen min geeft min-voorbeelden, alleen maal
+   maal-voorbeelden met een tafel die aan staat. Eerst stond er "Kleine sommen
+   3 + 4" (wat bij tot 100 sommen tot vijftig waren), en "7 + ▢ = 12" bij
+   alleen maal.
+   Een stap die niets bijbrengt valt weg, en de wereld die hij had speelt dan
+   de stap ervoor: bij tot 10 zijn stap 1 en 2 dezelfde sommen, en een tafel is
+   altijd heel (zie genTriple), dus bij alleen × en ÷ zijn de eerste drie
+   werelden één stap "Hele tafels".
+   test/kern.test.js zaak ZF houdt het vast: geen teken dat niet gekozen is,
+   geen getal boven het bereik van de stap, geen tafel die uit staat. */
+const PAD_VB = {
+  '+': { 10: '3 + 4', 20: '12 + 5', 25: '15 + 4', 50: '34 + 12', 100: '56 + 23' },
+  '-': { 10: '7 − 3', 20: '17 − 5', 25: '24 − 3', 50: '47 − 12', 100: '86 − 34' },
+};
 function leerpadStappen(s) {
   const plusMin = s.ops.includes('+') || s.ops.includes('-');
-  const klein = !plusMin ? '2 × 3' : s.ops.includes('+') ? '3 + 4' : '7 − 3';
-  const tot = { 10: '6 + 3', 20: '12 + 5', 50: '34 + 12', 100: '56 + 27' }[s.max] || '12 + 5';
+  const pm = s.ops.includes('+') ? '+' : '-';          // het voorbeeld van plus en min: plus als dat er is
+  const tafel = Math.max(...(s.tables.length ? s.tables : [2, 5, 10]));
+  const klein = Math.max(10, Math.round(s.max * LEERSTAPPEN[0].t));
+  const som = n => PAD_VB[pm][n] || PAD_VB[pm][10];
+  const zoek = s.ops.includes('+') ? (s.max > 10 ? '7 + ▢ = 12' : '3 + ▢ = 7')
+    : s.ops.includes('-') ? '9 − ▢ = 4' : `3 × ▢ = ${3 * tafel}`;
+  const keer = tafel === 7 ? 8 : 7;                     // 7 × 7 leest als een vergissing
+  const tafelVb = s.ops.includes('x') ? `${keer} × ${tafel}` : `${keer * tafel} : ${tafel}`;
   const stap = (naam, vb, keuze) => ({ naam, vb, keuze, uit: !!keuze && s[keuze] === false });
   return [
-    stap('Kleine sommen', klein),
-    plusMin ? stap(`Tot ${s.max}`, tot) : stap('Hele tafels', '7 × 8'),
-    plusMin && s.max > 10 && stap('Over het tiental', '8 + 5'),
-    s.ops.some(o => o !== ':') && stap('Zoek het getal', '7 + ▢ = 12', 'missNum'),
+    plusMin ? stap(`Tot ${klein}`, som(klein)) : stap('Hele tafels', tafelVb),
+    plusMin && s.max > klein && stap(`Tot ${s.max}`, som(s.max)),
+    plusMin && s.max > 10 && stap('Over het tiental', pm === '+' ? '8 + 5' : '13 − 6'),
+    s.ops.some(o => o !== ':') && stap('Zoek het getal', zoek, 'missNum'),
     s.ops.includes('+') && stap('Drie getallen', '3 + 4 + 2', 'chain3'),
     stap('Alles door elkaar', ''),
   ].map((st, i) => st && { ...st, wereld: i + 1 }).filter(Boolean);
@@ -411,7 +433,10 @@ function leerpadStappen(s) {
 // Het accent van een wereld na de laatste leerstap (zie wereldAccent), als het er is.
 function accentTekst(s, w) {
   const a = wereldAccent(w);
-  if (a === 'miss' && s.missNum !== false) return ' · extra 7 + ▢ = 12';
+  if (a === 'miss' && s.missNum !== false) {
+    const zoek = leerpadStappen(s).find(st => st.keuze === 'missNum');
+    if (zoek) return ' · extra ' + zoek.vb;
+  }
   if (a === 'chain' && s.chain3 !== false && s.ops.includes('+')) return ' · extra 3 + 4 + 2';
   return '';
 }
@@ -675,7 +700,7 @@ function telTip(p) {
   }
   if (qnaar) return qtip();
   return { soort: 'rekenen',
-    tekst: 'De laatste fase gaat foutloos. Klaar om te rekenen? <span class="tip-klein">Plus en min tot 10, de stem leest mee.</span>', knop: 'Naar rekenen', doe: naarRekenen };
+    tekst: 'De laatste fase gaat foutloos. Klaar om te rekenen? <span class="tip-klein">Plus en min tot 10, ze leest de sommen zelf.</span>', knop: 'Naar rekenen', doe: naarRekenen };
 }
 /* Van tellen naar rekenen, zoals de tip het doet. Sterren, kaart en kleren
    hangen niet aan de modus, dus die blijven gewoon staan. Tot 10 en geen 20:
@@ -687,7 +712,6 @@ function naarRekenen(p) {
   s.ops = ['+', '-'];
   s.max = 10;
   s.mode = 'kies';
-  s.voorlezen = true;
   s.grensTipBasis = grensDrieSterren(p);
 }
 
@@ -715,7 +739,8 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
    dezelfde volgorde:
      wat    wat het kind oefent en hoe groot (bewerkingen, getallen, tafels)
      pad    het leerpad: wat er na elkaar komt, en wat ze overslaat
-     show   hoe een show speelt (antwoorden, hoeveel vragen, stem, memory)
+     show   hoe een show speelt (antwoorden of hoe het getoond wordt, hoeveel
+            vragen, en bij tellen het memory-spel)
    Elke instelling staat hier één keer, met zijn kaart, en heeft op het scherm
    precies één bediening (data-instelling). Hiervoor groeide er een tweede kaart
    waar alles in belandde wat nergens anders paste: de extra's stonden daar als
@@ -724,7 +749,7 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
    instelling met twee bedieningen, of een bediening in de verkeerde kaart, valt
    daar om. Komt er een instelling bij, dan kiest hij hier eerst zijn kaart. */
 const OEFEN_INSTELLINGEN = {
-  math:  { wat: ['ops', 'max', 'tables'], pad: ['startStap', 'missNum', 'chain3'], show: ['mode', 'perLevel', 'voorlezen', 'memory'] },
+  math:  { wat: ['ops', 'max', 'tables'], pad: ['startStap', 'missNum', 'chain3'], show: ['mode', 'perLevel'] },
   count: { wat: ['qmax'], pad: ['stage'], show: ['repr', 'perLevel', 'memory'] },
 };
 function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde wat · pad · show
@@ -786,7 +811,7 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde 
      de bediening zeggen wat een tik doet. Drie vormen, elk voor één soort keuze:
        tegels       meer tegelijk mag (+ − × ÷, de tafels)
        balk         één uit een rij (getallen tot, antwoord, vragen per show)
-       schakelaar   aan of uit (voorlezen, memory)
+       schakelaar   aan of uit (memory, alleen bij tellen)
      en op het leerpad de vinkjes hierboven. Alles blijft .chip met een data-v
      in een houder met het oude id -- daar hangt bindOefenChips aan, en de tests
      ook. */
@@ -802,7 +827,6 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde 
   const aanUit = (id, instelling, ico, woord, aan) => `<div id="${pfx}${id}"><button class="chip oe-rij${aan ? ' on' : ''}" data-v="${aan ? 'off' : 'on'}" data-instelling="${instelling}" role="switch" aria-checked="${aan}">`
     + `<span class="oe-i" aria-hidden="true">${ico}</span><span class="oe-w">${woord}</span><span class="oe-stand" aria-hidden="true"></span></button></div>`;
   const perShow = `${lbl('Vragen per show')}${balk('set-perlevel', 'perLevel', [[5, '5'], [8, '8'], [10, '10']], s.perLevel)}`;
-  const memory = aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false);
   if (s.track === 'count') return [{
     kaart: 'wat', html: `${lbl('Hoeveelheden tot')}${balk('set-qmax', 'qmax', [[6, '6'], [8, '8'], [10, '10']], s.qmax || 10)}`
   }, {
@@ -812,16 +836,16 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde 
     kaart: 'show', html: `${lbl('Tonen als')}${balk('set-repr', 'repr',
       [['objects', 'Voorwerpen'], ['dots', 'Stippen'], ['mix', 'Mix']], s.repr || 'objects')}
       ${perShow}
-      ${memory}`
+      ${aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false)}`
   }];
   /* Het leerpad van rekenen: de stappen van de werelden (zie leerpadStappen),
      zonder "alles door elkaar" -- daar begin je niet. "vanaf" staat boven de
      eerste stap die het spel nog speelt; is de gekozen stap met deze
-     instellingen weggevallen (over het tiental bij tot 10), dan is dat de
-     volgende. Het kind staat op max(wereld, start), net als in leerStap. */
+     instellingen weggevallen (tot 20 of over het tiental bij tot 10), dan is
+     dat de stap ervoor: die speelt in zijn wereld dezelfde sommen. Het kind staat op max(wereld, start), net als in leerStap. */
   const stappen = leerpadStappen(s).filter(st => st.wereld < LEERSTAPPEN.length);
   const start = Math.min(s.startStap || 1, stappen[stappen.length - 1].wereld);
-  const startRij = stappen.find(st => st.wereld >= start).wereld;
+  const startRij = stappen.filter(st => st.wereld <= start).pop().wereld;
   const wNu = p ? Math.max(continueWorld(p) + 1, start) : 0;
   const nuStap = Math.min(wNu, stappen[stappen.length - 1].wereld);
   /* "Alles door elkaar" staat er wél, als laatste rij om te lezen: daar begin je
@@ -836,7 +860,9 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde 
   /* + − en × ÷ hebben elk hun eigen maat, en die staat er alleen als ze geldt.
      "Getallen tot" gold vroeger ongezegd ook voor de tafels: met tot 20 en de
      tafel van 7 kwam er nooit meer dan 7 × 2. Nu is "tot" alleen van plus en
-     min, en loopt een tafel altijd van × 1 tot × 10 (zie genTriple). */
+     min, en is een tafel altijd heel: × 1 tot × 10 (zie genTriple).
+     Er is geen stem-schakelaar (rekenen is zonder stem, zie stemAan) en bij
+     rekenen geen memory (zie memoryAan). */
   return [{
     kaart: 'wat', html: `${lbl('Sommen')}
       <div class="oe-ops" id="${pfx}set-ops" data-instelling="ops">${opDefs.map(([v, teken, woord]) =>
@@ -850,9 +876,7 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde 
       startRij, Infinity, hier && hier.wereld, eind, true)}`
   }, {
     kaart: 'show', html: `${lbl('Antwoord')}${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
-      ${perShow}
-      ${aanUit('set-voorlezen', 'voorlezen', '🔊', 'Voorlezen', s.voorlezen === true)}
-      ${memory}`
+      ${perShow}`
   }];
 }
 /* Wat er in de dichte openklapper te lezen staat: een ouder die hem nooit opent
@@ -869,32 +893,22 @@ function oefenSamenvatting(s) {
   const tot = (s.ops.includes('+') || s.ops.includes('-')) ? ` · tot ${s.max}` : '';
   const tafels = (s.ops.includes('x') || s.ops.includes(':'))
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
-  const start = (s.startStap || 1) > 1 && leerpadStappen(s).find(st => st.wereld >= s.startStap);
+  const start = (s.startStap || 1) > 1 && leerpadStappen(s).filter(st => st.wereld > 1 && st.wereld <= s.startStap).pop();
   return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}`
        + ` · ${modes[s.mode] || s.mode}${start ? ` · vanaf ${start.naam.toLowerCase()}` : ''}`
        + ` · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
 }
 /* DE VOLGORDE VAN OEFENEN. Eerst wat het kind oefent, dan het leerpad, dan hoe
-   een show speelt (de drie kaarten van oefenGroups), en helemaal onderaan de
-   modus.
-   Hiervoor stond de modus bovenaan in de grootste kaart van het scherm, met
-   een uitleg erbij, terwijl hij één keer gekozen wordt -- meestal al bij het
-   maken van de ster, en daarna nog één keer als de tip in Voortgang zegt dat
-   het tijd is om te rekenen.
-   Onderaan is hij een schakelaar met twee gelijke helften (.oe-modus), in de
-   vorm van de tabbalk erboven maar stiller, op de donkere achtergrond. Bewust
-   géén "Naar tellen ›": een pijl leest als een volgende stap, en tellen is
-   geen stap na rekenen maar een andere manier van spelen. Wisselen kost niets
-   -- elke modus houdt zijn eigen instellingen -- dus er komt geen vraag
-   "weet je het zeker" tussen. */
+   een show speelt: de drie kaarten van oefenGroups, en verder niets.
+   De modus (tellen of rekenen) staat hier niet: die wordt één keer gekozen,
+   bij het maken van de ster, en daarna nog één keer als de tip in Voortgang
+   zegt dat het tijd is om te rekenen. Hij staat in haar blad, bij wie ze is
+   (zie wieBladHtml). Onderaan Oefeningen was hij nog steeds het eerste waar
+   een duim op viel na het scrollen. */
 function oefenenPanelHtml(p, s) {
-  const isCount = s.track === 'count';
   const cards = oefenGroups(s, '', p).map(g => `
     <div class="set-card oefen-kaart primary" data-kaart="${g.kaart}">${g.html}</div>`).join('');
-  const half = (v, ico, woord) => `<button class="chip${(v === 'count') === isCount ? ' on' : ''}" data-v="${v}">`
-    + `<span aria-hidden="true">${ico}</span> ${woord}</button>`;
   return `<div class="settings-panel">${cards}
-    <div class="oe-modus" id="set-track" role="group" aria-label="Modus">${half('count', '🧸', 'Tellen')}${half('math', '🧮', 'Rekenen')}</div>
   </div>`;
 }
 
@@ -1111,6 +1125,10 @@ function beheerEmptyHtml() {
    dingen. Hier stond eerst een derde tabblad "✏️" naast Voortgang en Oefeningen;
    maar die twee zeggen hoe het gaat en wat ze oefent, en dit doe je zelden. Haar
    naam aantikken om hem te veranderen is een gebaar dat een ouder al kent.
+   "Hoe speelt ze?" (tellen of rekenen) staat hier ook, met dezelfde twee
+   helften als op het maakformulier: net als meisje of jongen kies je het één
+   keer en verander je het zelden. Wisselen kost niets -- elke modus houdt zijn
+   eigen instellingen -- dus er komt geen "weet je het zeker" tussen.
    Het blad staat in het gewone bevestigingsvenster, net als het blad "als app".
    Een tik op Wissen of Verwijderen vervangt het door de vraag "Weet je het
    zeker?"; "Nee, terug" brengt je terug in haar blad. */
@@ -1121,6 +1139,10 @@ function wieBladHtml(p) {
       `<button class="chip gestapeld${baseOf(p) === b.id ? ' on' : ''}" data-v="${b.id}">`
       + `<span class="mc-ico" aria-hidden="true">${b.emoji}</span><span class="mc-label">${b.name}</span></button>`).join('')}</div>
     <div class="name-edit-wrap"><input type="text" id="set-name" aria-label="Naam" value="${esc(p.name)}" maxlength="12" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div>
+    <div class="set-field wb-modus"><div class="lbl">Hoe speelt <span class="set-naam">${esc(p.name)}</span>?</div>
+      <div class="chip-row mode-row" id="set-track" role="group" aria-label="Tellen of rekenen">${[['count', '🧸', 'Leren tellen'], ['math', '🧮', 'Rekenen']].map(([v, ico, woord]) =>
+        `<button class="chip gestapeld${(p.settings.track === 'count') === (v === 'count') ? ' on' : ''}" data-v="${v}">`
+        + `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${woord}</span></button>`).join('')}</div></div>
     <div class="wb-gevaar">
       <!-- rode vlak bestaat pas als een ouder er zelf om vraagt; een permanent
            zichtbare wisknop hoort niet tussen gewone instellingen te staan -->
@@ -1408,7 +1430,6 @@ function bindOefenChips(s, p, pfx, done) {
   bind('set-startstap', c => { s.startStap = parseInt(c.dataset.v, 10); });
   bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); telPlafondOpnieuw(p); });
   bind('set-memory', c => { s.memory = (c.dataset.v === 'on'); });
-  bind('set-voorlezen', c => { s.voorlezen = (c.dataset.v === 'on'); });
   bind('set-repr', c => { s.repr = c.dataset.v; });
 }
 /* De bediening van haar blad (openWieBlad). Alleen gebonden als het blad open
@@ -1474,6 +1495,21 @@ function bindWie(p) {
      zonder voorkeuze, en een verkeerde tik was daarna nergens meer recht te zetten
      dan door de ster te verwijderen -- met al haar voortgang. Haar en kleren gaan
      mee naar de andere figuur, net als in het voorbeeld van het formulier. */
+  /* Tellen of rekenen: wisselen tussen de rekenshow en de lees-vrije telmodus
+     (het maakformulier heeft zijn eigen #newstar-track). Oefeningen eronder
+     schakelt mee om, en het blad blijft open. */
+  const modus = $('set-track');
+  if (modus) modus.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    const s = p.settings;
+    if (s.track === c.dataset.v) return;
+    sndClick();
+    s.track = c.dataset.v;
+    telPlafondOpnieuw(p);
+    if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 };
+    save();
+    renderSettings();
+    openWieBlad();
+  });
   const basis = $('set-base');
   if (basis) basis.querySelectorAll('.chip').forEach(c => c.onclick = () => {
     if (p.base === c.dataset.v) return;
@@ -1534,10 +1570,6 @@ function bindSettings(p, s) {
     const lad = $('set-startstap') || $('set-fase');
     if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
   });
-  // modus: wisselen tussen de rekenshow en de lees-vrije telmodus. Blijft hier:
-  // de moduskaart hoort bij het ouderdeel (het maakformulier heeft zijn eigen
-  // #newstar-track vlak boven de openklapper).
-  bind('set-track', c => { s.track = c.dataset.v; telPlafondOpnieuw(p); if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 }; save(); renderSettings(); });
   // De velden zelf staan óók op het maakformulier; de bediening is gedeeld.
   // Het maakformulier heeft niets op te slaan, dus wat er ná een wijziging
   // gebeurt komt van de aanroeper (hier: opslaan + hertekenen).
