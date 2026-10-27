@@ -1097,29 +1097,65 @@ function beheerEmptyHtml() {
     </div>${beginschermKaartHtml(false)}${ouderVoetHtml()}
   </div>`;
 }
-/* FASE 5D -- de twee onomkeerbare dingen staan onderaan, en ze zeggen ook wat
-   er blíjft.
-   De opbouw is dezelfde als hiervoor (naam bovenaan, opnieuw beginnen eronder,
-   verwijderen achter een openklapper) -- wat eraan veranderd is:
-     * "Opnieuw beginnen" en "Verwijderen" staan nu samen in één stille kaart
-       onder een eigen kopje, in plaats van dat verwijderen in de naamkaart zat.
-       Een ouder die haar dochters naam wil verbeteren hoort niet in dezelfde
-       kaart een wisknop tegen te komen.
-     * Beide openklappers zeggen expliciet wat er BLIJFT, niet alleen wat er
-       weggaat -- dat is bij "opnieuw beginnen" precies het verschil met
-       verwijderen, en dat verschil stond alleen in een losse notitie.
-   De bevestigingsvensters erachter zijn ongewijzigd (drie tikken: openklappen,
-   knop, ja).
-
-   En twee dingen die er minder staan:
-     * De naamkaart noemde zichzelf drie keer ("Profiel", "De naam van deze
-       ster", en dan het label "Naam") voor één invulveld. De kop ís nu het
-       label -- een <label> in de <h2> -- dus een schermlezer hoort nog steeds
-       "Naam" bij het veld, zonder een verstopt tweede label.
-     * De stille kaart droeg een ⚠️ terwijl er nog niets open was. De waarschuwing
-       hoort bij het rode vlak, en dáár staat hij nog; de dichte kaart krijgt een
-       gewoon tegeltje. En de tweede openklapper noemt de ster bij naam, net als
-       het rode vlak erachter ("Lotte verwijderen"). */
+/* = Onomkeerbaar: één vraag, één vorm =========================================
+   Alles wat sterren weggooit (voortgang wissen, een ster verwijderen, een
+   back-up terugzetten over wat er staat) vraagt het hier, en nergens anders.
+   Ze schreven hun venster eerst elk met de hand, en liepen daardoor uiteen: een
+   andere titel, Weg/Blijft in het ene en een lap tekst in het andere, trofeeën
+   die in de ene lijst wel en in de andere niet stonden, en geen woord over de
+   back-up. De keuring houdt het zo (kern zaak ZG): showConfirm wordt alleen
+   hiervandaan aangeroepen.
+     titel   wat er gebeurt, als vraag ("Lotte verwijderen?") -- tekst, geen html
+     weg     wat er verdwijnt (html: namen dus door esc)
+     blijft  wat er blijft; leeg laat de regel weg
+     ja      het woord op de rode knop
+     nee     optioneel: waar "Nee, terug" heen gaat (anders: venster dicht)
+     doe     doet het, en geeft { melding, terug } terug: de melding onderaan en
+             hoe het teruggedraaid wordt (zie meldMetTerug)
+   Staat er geen recente back-up (backupOud), dan staat er een amberen regel
+   onder, met "Eerst maken": dat maakt hem meteen, zonder de vraag te verlaten. */
+function gevaarVraag({ titel, weg, blijft, ja, nee, doe }) {
+  showConfirm(titel, '', ja, () => {
+    const { melding, terug } = doe();
+    if (melding) meldMetTerug(melding, terug);   // geen melding: het ging niet door
+  });
+  $('confirm-body').innerHTML = `<div class="gv-lijst"><div><b>Weg:</b> ${weg}</div>`
+    + (blijft ? `<div><b>Blijft:</b> ${blijft}</div>` : '') + '</div>'
+    + (profileKeys().length && backupOud() ? `<button class="gv-backup" id="gv-backup" type="button">`
+      + `<span aria-hidden="true">🗄️</span><span class="gv-wanneer">${backupDagen() === null ? 'Geen back-up' : `Back-up ${backupWanneer().replace(' geleden', '')} oud`}</span>`
+      + '<b>Eerst maken ›</b></button>' : '');
+  const bk = $('gv-backup');
+  if (bk) bk.onclick = () => {
+    sndClick();
+    exportData();
+    bk.outerHTML = '<div class="gv-backup klaar"><span aria-hidden="true">✓</span><span class="gv-wanneer">Back-up gemaakt</span></div>';
+  };
+  if (nee) $('confirm-no').onclick = nee;
+}
+/* De melding na iets onomkeerbaars, met "↶ Terug" erin. Onderaan, en niet op
+   de gewone plek bovenin: daar viel hij over de tabs of over de rij van de ster
+   die er nog staat. TERUG_DUUR lang; daarna is het echt weg. terug() zet alleen
+   de gegevens terug -- opslaan en opnieuw tekenen gebeurt hier, voor elk scherm
+   waar je dan toevallig staat. */
+const TERUG_DUUR = 6000;
+function meldMetTerug(melding, terug) {
+  showToast(`${melding}<button class="toast-terug" type="button">↶ Terug</button>`);
+  const t = $('toast');
+  t.classList.add('onder', 'met-knop');
+  t.querySelector('.toast-terug').onclick = () => {
+    sndClick();
+    hideToast();
+    terug();
+    save();
+    if ($('screen-settings').classList.contains('active')) { renderSettings(); settingsToTop(); }
+    renderProfiles();
+  };
+  toastWeg(TERUG_DUUR);
+}
+// "Sem", "Sem en Noor", "Sem, Noor en Lina"
+function opsomming(woorden) {
+  return woorden.length < 2 ? woorden.join('') : woorden.slice(0, -1).join(', ') + ' en ' + woorden[woorden.length - 1];
+}
 /* HET BLAD VAN ÉÉN STER -- een tik op haar naam in de kop (zie renderWie).
    Wie ze is (meisje of jongen, de naam) en, onder een lijn, de twee onomkeerbare
    dingen. Hier stond eerst een derde tabblad "✏️" naast Voortgang en Oefeningen;
@@ -1130,8 +1166,10 @@ function beheerEmptyHtml() {
    keer en verander je het zelden. Wisselen kost niets -- elke modus houdt zijn
    eigen instellingen -- dus er komt geen "weet je het zeker" tussen.
    Het blad staat in het gewone bevestigingsvenster, net als het blad "als app".
-   Een tik op Wissen of Verwijderen vervangt het door de vraag "Weet je het
-   zeker?"; "Nee, terug" brengt je terug in haar blad. */
+   Onderaan, onder een lijn, de twee onomkeerbare dingen als rijen. Ze zeggen
+   allebei wat er blíjft ("Alles op nul, Lotte blijft" tegen "Weg van dit
+   toestel"): dat is precies het verschil tussen de twee. Een tik vervangt het
+   blad door één vraag (gevaarVraag); "Nee, terug" brengt je terug in haar blad. */
 function wieBladHtml(p) {
   return `<div class="settings-sheet wie-blad">
     <div class="wb-pop" aria-hidden="true">${avatarSVG(p, 64)}</div>
@@ -1143,30 +1181,17 @@ function wieBladHtml(p) {
       <div class="chip-row mode-row" id="set-track" role="group" aria-label="Tellen of rekenen">${[['count', '🧸', 'Leren tellen'], ['math', '🧮', 'Rekenen']].map(([v, ico, woord]) =>
         `<button class="chip gestapeld${(p.settings.track === 'count') === (v === 'count') ? ' on' : ''}" data-v="${v}">`
         + `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${woord}</span></button>`).join('')}</div></div>
+    <!-- twee rijen in rode letters: ze zeggen wat er gebeurt en openen elk één
+         vraag (gevaarVraag). Geen openklapper meer ervoor -- die herhaalde
+         dezelfde uitleg als de vraag erachter, en klapte het blad open tot de knop
+         op een smalle telefoon onder de rand viel. -->
     <div class="wb-gevaar">
-      <!-- rode vlak bestaat pas als een ouder er zelf om vraagt; een permanent
-           zichtbare wisknop hoort niet tussen gewone instellingen te staan -->
-      <details class="danger-reveal" id="set-danger">
-        <summary>Voortgang wissen…</summary>
-        <div class="danger-zone">
-          <div><div class="t">⚠️ Voortgang van <span class="set-naam">${esc(p.name)}</span> wissen</div>
-            <div class="d"><b>Weg:</b> alle diamanten, sterren, trofeeën en gekochte spulletjes.<br>
-              <b>Blijft:</b> de naam, de startoutfit en alle oefeninstellingen.</div></div>
-          <button class="danger-btn" id="set-reset">Wissen</button>
-        </div>
-      </details>
-      <!-- verwijderen hoort bij "wie deze ster is", niet bij "opnieuw beginnen":
-           het ene haalt haar wég, het andere laat haar juist blijven -->
-      <details class="danger-reveal" id="set-danger-del">
-        <!-- één tekstvak: de summary is flex met een gat, en anders valt dat gat
-             tussen de naam en "verwijderen" -->
-        <summary><span><span class="set-naam">${esc(p.name)}</span> verwijderen…</span></summary>
-        <div class="danger-zone">
-          <div><div class="t">⚠️ <span class="set-naam">${esc(p.name)}</span> verwijderen</div>
-            <div class="d">Helemaal weg van dit toestel, met alle diamanten, sterren en spulletjes. De andere sterren blijven. Kan niet ongedaan gemaakt worden.</div></div>
-          <button class="danger-btn" id="set-delete">Verwijderen</button>
-        </div>
-      </details>
+      <button class="gear-item" id="set-reset" type="button"><span class="gi-ico" aria-hidden="true">🔄</span>`
+        + `<span class="gi-label">Voortgang wissen<span class="gi-sub">Alles op nul, <span class="set-naam">${esc(p.name)}</span> blijft</span></span>`
+        + `<span class="gi-pijl" aria-hidden="true">›</span></button>
+      <button class="gear-item" id="set-delete" type="button"><span class="gi-ico" aria-hidden="true">🗑️</span>`
+        + `<span class="gi-label"><span class="set-naam">${esc(p.name)}</span> verwijderen<span class="gi-sub">Weg van dit toestel</span></span>`
+        + `<span class="gi-pijl" aria-hidden="true">›</span></button>
     </div>
   </div>`;
 }
@@ -1459,19 +1484,15 @@ function bindWie(p) {
     e.preventDefault();
     e.target.blur();
   });
-  // het rode vlak openklappen mag ook hoorbaar zijn, net als elke andere tik
-  // (er zijn er twee: voortgang wissen en de ster verwijderen)
-  document.querySelectorAll('#confirm-body .danger-reveal').forEach(dg => {
-    dg.ontoggle = () => { if (dg.open) sndClick(); };
-  });
   on('set-reset', 'onclick', () => {
-    showConfirm(
-      '⚠️ Weet je het zeker?',
-      `Alle voortgang, diamanten, sterren en spulletjes van ${p.name} wissen?`
-      + ` De naam, de startoutfit en alle oefeninstellingen blijven staan.`
-      + ` Dit kan niet ongedaan gemaakt worden.`,
-      'Ja, wissen',
-      () => {
+    sndClick();
+    gevaarVraag({
+      titel: `Voortgang van ${p.name} wissen?`,
+      weg: 'alle diamanten, sterren, trofeeën en spulletjes.',
+      blijft: `${esc(p.name)} zelf: naam, figuur, startoutfit en oefeninstellingen.`,
+      ja: 'Ja, wissen',
+      nee: openWieBlad,                       // nee: terug in haar blad, niet ernaast
+      doe: () => {
         // Wissen raakt de voortgang, niet wie ze is en niet hoe ze oefent: haar
         // startoutfit, plek in de rij én álle instellingen gaan mee. Dat gold
         // eerder alleen voor de telmodus -- in de rekenmodus vielen bewerkingen,
@@ -1481,15 +1502,14 @@ function bindWie(p) {
         // settings kent geen haar en geen basisfiguur, dus zonder dit werd een
         // bruinharige ster blond en een jongen een meisje
         const opts = { ...p.settings, hair: p.startHair || 'hair_blond', base: p.base };
-        const order = p.order;
-        db.profiles[setKey] = defaultProfile(p.name, dress, opts);
-        db.profiles[setKey].order = order;   // plek in de rij behouden na een reset
+        const key = setKey;
+        db.profiles[key] = defaultProfile(p.name, dress, opts);
+        db.profiles[key].order = p.order;   // plek in de rij behouden na een reset
         save(); renderSettings();
-        showToast('✓ Voortgang gewist');
-        toastWeg(1800);
-      }
-    );
-    $('confirm-no').onclick = openWieBlad;   // nee: terug in haar blad, niet ernaast
+        // p zelf is niet aangeraakt: er staat een nieuw profiel op haar plek
+        return { melding: '✓ Voortgang gewist', terug: () => { db.profiles[key] = p; } };
+      },
+    });
   });
   /* Meisje of jongen, ook na het maken. Op het maakformulier is dat de enige vraag
      zonder voorkeuze, en een verkeerde tik was daarna nergens meer recht te zetten
@@ -1520,23 +1540,35 @@ function bindWie(p) {
     openWieBlad();         // en het blad zelf, met de nieuwe figuur en keuze
   });
   on('set-delete', 'onclick', () => {
-    showConfirm(
-      '⚠️ Ster verwijderen?',
-      `${p.name} helemaal verwijderen, met alle voortgang, diamanten en spulletjes? Dit kan niet ongedaan gemaakt worden.`,
-      'Ja, verwijderen',
-      () => {
-        const naam = p.name;
-        delete db.profiles[setKey];
-        if (cur === setKey) cur = null;      // niet met een verdwenen ster verder spelen
+    sndClick();
+    const andere = profileKeys().filter(k => k !== setKey).map(k => esc(db.profiles[k].name));
+    gevaarVraag({
+      titel: `${p.name} verwijderen?`,
+      weg: `${esc(p.name)}, met alle diamanten, sterren, trofeeën en spulletjes.`,
+      // de laatste ster: dan blijft er niets, en dat hoeft geen regel te krijgen
+      blijft: andere.length ? opsomming(andere) + '.' : '',
+      ja: 'Ja, verwijderen',
+      nee: openWieBlad,
+      doe: () => {
+        const key = setKey;
+        delete db.profiles[key];
+        if (cur === key) cur = null;         // niet met een verdwenen ster verder spelen
         setKey = null;                       // terug naar het overzicht, waar de anderen staan
         save();
         if (profileKeys().length) { renderSettings(); settingsToTop(); }
         else closeSettings();                // laatste ster weg -> terug naar het welkomscherm
-        showToast(`✓ ${esc(naam)} is verwijderd`);
-        toastWeg(1800);
-      }
-    );
-    $('confirm-no').onclick = openWieBlad;
+        return {
+          melding: `✓ ${esc(p.name)} is verwijderd`,
+          terug: () => {
+            // in die paar tellen kan er een nieuwe ster op haar sleutel gekomen zijn
+            const k = db.profiles[key] ? nextProfileKey() : key;
+            db.profiles[k] = p;
+            // stond Voor ouders nog open, dan weer op haar pagina, waar het begon
+            if ($('screen-settings').classList.contains('active')) setKey = k;
+          },
+        };
+      },
+    });
   });
 }
 function bindSettings(p, s) {
@@ -1673,18 +1705,21 @@ function importData(file) {
       showNotice('Oeps!', 'Kon dit bestand niet lezen. Kies een geldig back-upbestand.');
       return;
     }
-    showConfirm(
-      '📂 Back-up terugzetten?',
-      'Dit vervangt de huidige diamanten, sterren en spulletjes van alle profielen door de inhoud van dit back-upbestand. Dit kan niet ongedaan gemaakt worden.',
-      'Ja, terugzetten',
-      () => {
-        if (!backupToepassen(data)) { showNotice('Oeps!', 'Dit back-upbestand is beschadigd; er is niets veranderd.'); return; }
+    const hier = profileKeys().map(k => esc(db.profiles[k].name));
+    gevaarVraag({
+      titel: 'Back-up terugzetten?',
+      weg: hier.length ? `wat er nu op dit toestel staat: ${opsomming(hier)}.` : 'niets, er staan hier nog geen sterren.',
+      ja: 'Ja, terugzetten',
+      doe: () => {
+        const oud = db;          // backupToepassen zet een nieuwe db neer; deze blijft heel
+        if (!backupToepassen(data)) {
+          showNotice('Oeps!', 'Dit back-upbestand is beschadigd; er is niets veranderd.');
+          return { melding: '', terug: null };
+        }
         renderSettings();
-        // gelukt is geen vraag: een melding, geen venster om weg te tikken
-        showToast('✓ Back-up geladen');
-        toastWeg(2200);
-      }
-    );
+        return { melding: '✓ Back-up geladen', terug: () => { db = oud; cur = null; setKey = null; } };
+      },
+    });
   };
   reader.onerror = () => showNotice('Oeps!', 'Kon dit bestand niet lezen.');
   reader.readAsText(file);
@@ -1955,11 +1990,15 @@ function ozGevonden(data, vanStart) {
   $('oz-dicht').onclick = closeConfirmModal;
   $('oz-ja').onclick = () => {
     closeConfirmModal();
+    const oud = db;            // backupToepassen zet een nieuwe db neer; deze blijft heel
     if (!backupToepassen(data)) { showNotice('Oeps!', 'Deze sterren zijn beschadigd; er is niets veranderd.'); return; }
     if ($('screen-settings').classList.contains('active')) renderSettings();
     renderProfiles();
-    showToast('✓ Sterren overgezet');
-    toastWeg(2400);
+    // Vervangen gooit weg wat er stond, dus net als bij elke ander verlies een
+    // melding met Terug (zie meldMetTerug). Het blad zelf blijft zijn eigen vorm:
+    // het is geen vraag maar een voorbeeld van wat er komt.
+    if (hier.length) meldMetTerug('✓ Sterren overgezet', () => { db = oud; cur = null; setKey = null; });
+    else { showToast('✓ Sterren overgezet'); toastWeg(2400); }
     if (vanStart) confetti(50);
   };
 }

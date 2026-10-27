@@ -369,8 +369,6 @@ function check(ok, label, detail) {
     // de middelste weg
     await page.evaluate(() => { openSettings(); setKey = 'p2'; renderSettings(); openWieBlad(); });
     await page.waitForTimeout(150);
-    await page.click('#set-danger-del summary');   // net als een ouder: eerst openklappen
-    await page.waitForTimeout(150);
     await page.click('#set-delete');
     await page.waitForTimeout(150);
     const asked = await page.isVisible('#confirm-modal');
@@ -391,8 +389,6 @@ function check(ok, label, detail) {
     // en nu alles weg
     for (const k of ['p1', 'p3']) {
       await page.evaluate(key => { openSettings(); setKey = key; renderSettings(); openWieBlad(); }, k);
-      await page.waitForTimeout(120);
-      await page.click('#set-danger-del summary');
       await page.waitForTimeout(120);
       await page.click('#set-delete');
       await page.waitForTimeout(120);
