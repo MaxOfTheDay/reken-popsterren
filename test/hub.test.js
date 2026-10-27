@@ -497,7 +497,7 @@ zaak('K · het concept', () => {
      brengt de eerste keer opslaan een diff mee in werelden waar niemand aan zat
      (".56" dat "0.56" werd), of verdwijnt er stil een uitleg die iemand tussen de
      markeringen schreef -- zet die erboven. */
-  const bronTekst = fs.readFileSync(path.resolve(__dirname, '..', 'src', '20-app.js'), 'utf8');
+  const bronTekst = fs.readFileSync(require('./bouw.js').bronMetMarkering('/* WERELDEN-BEGIN'), 'utf8');
   const blokNu = bronTekst.slice(bronTekst.indexOf('const WORLDS = ['), bronTekst.indexOf('/* WERELDEN-EINDE */')).trim();
   // Wijkt het af, noem dan de eerste regel die anders is en hoe je het rechtzet:
   // een wereld die met de hand is bijgezet staat vaak alleen in een andere volgorde.

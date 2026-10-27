@@ -11,7 +11,7 @@ poster -- staand op een smal scherm, liggend op een breed.
 | `rekensterren-promo-staand.mp4` | hetzelfde filmpje staand, 720×1280, ± 3,6 MB: wat de over-pagina op een telefoon toont |
 | `*-hoog.mp4` | de scherpe versies op volle maat (1920×1080 en 1080×1920), om op sociale media te posten. **Niet in git** -- `render.js` maakt ze, bewaar ze zelf |
 | `rekensterren-logo.mp4` | alleen het logo: het merkteken dat het spelogo wordt (de eerste 2,2 s) |
-| `in-app-intro.mp4` | opname van de korte logo-intro zoals hij ín het spel speelt (zie "= Het spelogo komt binnen" in `src/20-app.js`); de intro zelf staat in de app, niet hier |
+| `in-app-intro.mp4` | opname van de korte logo-intro zoals hij ín het spel speelt (zie "= Het spelogo komt binnen" in `src/35-schermen.js`); de intro zelf staat in de app, niet hier |
 | `poster.jpg`, `poster-staand.jpg` | de eindkaart als stilstaand beeld, liggend en staand |
 | `promo.html` | de bron. Open hem in een browser en hij speelt in een lus |
 | `render.js` | maakt er beeld voor beeld een mp4 van |

@@ -103,14 +103,14 @@ npm run studio      -> Werelden -> + Nieuwe wereld
    niet uitgebracht is mag wel mee naar main (met de losse stappen): hij
    reserveert zijn levelnummers en blijft voor kinderen dicht.
 
-Wat de studio nakijkt staat op één plek: `wereldControle` in `src/20-app.js`. De
+Wat de studio nakijkt staat op één plek: `wereldControle` in `src/20-gegevens.js`. De
 studio toont het, *Opslaan* weigert erop, en `npm run check` (zaak K in
 `test/inhoud.test.js`) valt erop om — alle drie dezelfde regels.
 
 ### Met de hand (als het zonder studio moet)
 
 Zet de wereld in `WORLDS`, achteraan, tussen de markeringen `WERELDEN-BEGIN` en
-`WERELDEN-EINDE` in `src/20-app.js`, en draai `npm run bouw`:
+`WERELDEN-EINDE` in `src/20-gegevens.js`, en draai `npm run bouw`:
 
 ```js
 {
@@ -304,7 +304,7 @@ In de editor, stap *3 Schat*:
 5. Naam en emoji, dan **✓ Maak dit de schat**. *✕ schat weg* (twee keer
    tikken) zet de wereld weer zonder schat.
 
-Wat een getekende schat moet (`schatFouten` in `src/20-app.js`; de keuring
+Wat een getekende schat moet (`schatFouten` in `src/20-gegevens.js`; de keuring
 blokkeert erop via `wereldControle`, zaak L in `test/inhoud.test.js`): een naam,
 een emoji, een `view` van vier getallen, hoogstens 12.000 tekens, en alleen de
 vormen uit `SCHAT_ELEMENTEN`, beginnend met een uit `SCHAT_VORMEN`. Geen

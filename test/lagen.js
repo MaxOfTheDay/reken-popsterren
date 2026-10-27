@@ -4,7 +4,7 @@
  *   npm run lagen      -> assets/branding/source/lagen/*.png   (de meesters, 2000x667)
  *                         assets/branding/logo-lagen.webp       (wat de app laadt)
  *
- * De logo-intro (zie "= Het spelogo komt binnen" in src/20-app.js) en het
+ * De logo-intro (zie "= Het spelogo komt binnen" in src/35-schermen.js) en het
  * promofilmpje bouwen het logo op uit zijn delen: de R blijft staan, de ster
  * springt naar zijn plek, de letters en de zwaai komen erbij. Daarvoor moeten die
  * delen los bestaan -- en ze moeten precies op het origineel passen, anders
@@ -26,7 +26,7 @@
  * laadt is geen stapel van veertien volle lagen maar een compact blad met alleen
  * de rechthoek om elk deel. Waar elk stuk staat -- in het logo en in het blad --
  * zet dit script in een tabel (LOGO_DELEN) die de app en het filmpje gebruiken. Die tabel staat met de
- * hand in src/20-app.js en promo/promo.html; dit script kijkt of hij daar nog
+ * hand in src/35-schermen.js en promo/promo.html; dit script kijkt of hij daar nog
  * klopt en zegt anders welke regel er moet staan.
  *
  * HOE ER GEKNIPT WORDT. Elke letter heeft een vulling (geel of wit) met een
@@ -269,7 +269,7 @@ function naarBestand(dataUrl, pad) {
   // de tabel die de app en het filmpje gebruiken: de maat van het blad, en per laag
   // [naam, x0, y0, x1, y1, bx, by] -- waar hij in het logo staat, en waar in het blad
   const regel = 'const LOGO_DELEN = ' + JSON.stringify({ blad: uit.bladMaat, delen: uit.delen }) + ';';
-  for (const bestand of ['src/20-app.js', 'promo/promo.html']) {
+  for (const bestand of ['src/35-schermen.js', 'promo/promo.html']) {
     const tekst = fs.readFileSync(path.join(WORTEL, bestand), 'utf8');
     if (tekst.includes(regel)) console.log(`${bestand}: LOGO_DELEN klopt`);
     else { console.log(`FOUT: ${bestand} heeft niet de LOGO_DELEN van dit blad. Zet deze regel erin:\n${regel}`); process.exitCode = 1; }

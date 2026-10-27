@@ -85,7 +85,7 @@ koop — alleen te verdienen door de wereld uit te spelen.
 
 **Podia** koop je niet los. Elk wereldpodium is van jou zodra je zijn drie stukken
 hebt: de wereldschat (alleen te verdienen) plus twee gewone winkelstukken (samen
-± 145 tot 325 💎). Dat is afgeleid uit `p.owned`; zie "= Podia" in `src/20-app.js`.
+± 145 tot 325 💎). Dat is afgeleid uit `p.owned`; zie "= Podia" in `src/25-kern.js`.
 De `price` op een podiumregel in `ITEMS` is een overblijfsel uit de oude winkel en
 wordt nergens gebruikt. Het podium mét zijn schat is meteen de **prijs van de
 wereld** die het spel overal tekent (kaart, reis, Podia): schat → podium → goud

@@ -120,7 +120,7 @@ function url(params, basis) {
   // de wereldstudio meteen op een stap openen (1 kaart … 4 publiceren)
   if (p.stap) d.push('stap=' + p.stap);
   if (p.nieuw) d.push(p.nieuw === 1 || p.nieuw === true ? 'nieuw' : 'nieuw=' + encodeURIComponent(p.nieuw));
-  // ook wat nog niet uitgebracht is (zie PROEF_ONUITGEBRACHT in src/20-app.js)
+  // ook wat nog niet uitgebracht is (zie PROEF_ONUITGEBRACHT in src/20-gegevens.js)
   if (p.onuitgebracht) d.push('onuitgebracht');
   if (p.fit) d.push('fit=' + p.fit);
   return (basis || '/') + '?' + d.join('&');
