@@ -25,6 +25,9 @@
  *   L  alles uit, en een wereld erbij -> de Wereldtournee die nog dicht lag, ligt
  *                                        niet langer klaar; een geopende blijft
  *   M  de datum van de laatste back-up -> reist mee, en de regel in de kaart klopt
+ *   N  twee keer open op één toestel  -> het oude exemplaar schrijft niet over het
+ *                                        nieuwere heen, maar laadt opnieuw
+ *   O  één kapotte ster               -> alleen die gaat opzij, de rest speelt door
  *
  * Draaien:
  *   npm run test:saves      (of: npm test voor alle suites)
@@ -440,6 +443,76 @@ zaak('M', () => {
   check(na.db.backupAt === app.db.backupAt, 'M · de datum blijft staan na heropenen', na.db.backupAt);
   check((() => { try { na.opslagVasthouden(false); return true; } catch (e) { return false; } })(),
     'M · de opslag vragen vast te houden gooit nooit, ook zonder navigator.storage', '');
+});
+
+/* ================= N · Twee keer open =================
+   Op Android delen de app en een Chrome-tabblad dezelfde opslag; een iPad haalt
+   een tabblad van vorige week terug. Het exemplaar dat het oudst gelezen heeft
+   mag dan nooit zijn stand over de nieuwere heen schrijven. */
+zaak('N', () => {
+  const A = laadApp({ opslag: F.tweeSterren() });
+  const B = laadApp({ opslag: A.opslagZelf });
+  const key = Object.keys(B.db.profiles)[0];
+  const voor = Object.keys(A.db.profiles[key].stars).length;
+  // B speelt een wereld uit
+  B.db.profiles[key].stars = kopie(B.db.profiles[key].stars);
+  for (let l = 1; l <= 12; l++) B.db.profiles[key].stars[l] = 3;
+  B.save();
+  const nieuw = JSON.stringify(B.bestand().profiles[key].stars);
+  check(B.herladen() === 0, 'N · wie zelf het laatst schreef, schrijft gewoon door', B.herladen());
+  // A heeft nog de oude stand en geeft een antwoord
+  A.db.profiles[key].diamonds += 1;
+  A.save();
+  check(JSON.stringify(A.bestand().profiles[key].stars) === nieuw,
+    'N · het oude exemplaar schrijft niet over de nieuwere sterren heen',
+    voor + ' -> ' + JSON.stringify(A.bestand().profiles[key].stars));
+  check(A.herladen() === 1, 'N · maar laadt opnieuw, met de nieuwere stand', A.herladen());
+  A.save();
+  check(A.herladen() === 1, 'N · en vraagt dat maar één keer', A.herladen());
+
+  // Bij terugkomen kijkt het al vóór er getikt wordt
+  const C = laadApp({ opslag: F.tweeSterren() });
+  const D = laadApp({ opslag: C.opslagZelf });
+  D.db.sound = !D.db.sound; D.save();
+  C.run('opslagNagaan()');
+  check(C.herladen() === 1, 'N · terug in beeld: het oude exemplaar laadt meteen opnieuw', C.herladen());
+  D.run('opslagNagaan()');
+  check(D.herladen() === 0, 'N · het exemplaar dat zelf schreef niet', D.herladen());
+
+  // Een gewiste opslag is geen ander exemplaar: wat in het geheugen staat is
+  // dan de enige kopie, en die gaat terug.
+  const E = laadApp({ opslag: F.tweeSterren() });
+  E.opslagZelf.clear();
+  E.save();
+  check(E.herladen() === 0 && E.bestand() && Object.keys(E.bestand().profiles).length === 2,
+    'N · gewiste opslag: de stand uit het geheugen wordt teruggezet', JSON.stringify(E.opslag()));
+
+  // Twee verse exemplaren: het tweede mag de eerste ster niet wegvegen
+  const G1 = laadApp({ opslag: F.geenSave() });
+  const G2 = laadApp({ opslag: G1.opslagZelf });
+  G1.db.profiles.p1 = G1.defaultProfile('Mila', 'dress_roze'); G1.save();
+  G2.db.sound = false; G2.save();
+  check(G2.herladen() === 1 && G2.bestand().profiles.p1 && G2.bestand().profiles.p1.name === 'Mila',
+    'N · ook twee verse exemplaren: de eerste ster blijft staan', JSON.stringify(G2.bestand()));
+});
+
+/* ================= O · Eén kapotte ster =================
+   Vroeger gooide één ster waar migrate op stukliep de hele db weg: een leeg
+   beginscherm. Nu gaat alleen die ster opzij. */
+zaak('O', () => {
+  const app = laadApp({ opslag: F.eenKapotteSter() });
+  const namen = Object.values(app.db.profiles).map(p => p.name);
+  check(namen.join() === 'Lina', 'O · de gezonde ster blijft staan', namen.join());
+  check(Object.keys(app.db.profiles.p1.stars).length === 8, 'O · met al haar sterren',
+    JSON.stringify(app.db.profiles.p1.stars));
+  check(app.opslag()[F.LS_KEY + '.broken'] === F.eenKapotteSter()[F.LS_KEY],
+    'O · het hele bestand gaat ongeschonden naar .broken', JSON.stringify(app.opslag()));
+  check(app.opslag()[F.LS_KEY] === F.eenKapotteSter()[F.LS_KEY],
+    'O · en onder de gewone sleutel wordt er bij het openen niets overschreven', app.opslag()[F.LS_KEY]);
+  app.save();
+  const na = heropen(app);
+  check(Object.values(na.db.profiles).map(p => p.name).join() === 'Lina' && na.herladen() === 0,
+    'O · na het eerste bewaren speelt Lina gewoon door', JSON.stringify(Object.keys(na.db.profiles)));
 });
 
 klaar();
