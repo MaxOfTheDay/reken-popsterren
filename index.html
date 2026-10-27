@@ -3425,10 +3425,7 @@
   #screen-game { padding: 8px; justify-content: flex-start; }
 
 
-
-
   .game-progress-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
-  .notes-left { font-size: var(--tx-sub); letter-spacing: 1px; white-space: nowrap; }
   .segbar { display: flex; gap: 3px; width: min(48vw, 190px); }
   .segbar > span {
     flex: 1; height: 9px; border-radius: var(--r-pill);
@@ -3443,7 +3440,6 @@
   .segbar > span.done.mis { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.5); }
   .segbar > span.goudvraag { box-shadow: 0 0 0 1.5px var(--gold-accent), 0 0 7px rgba(var(--goud-gloed-rgb),.7); }
   @media (max-width: 430px) {
-    .notes-left { font-size: var(--tx-body); letter-spacing: 0; }
     .segbar { width: min(44vw, 150px); }
   }
 
@@ -3487,6 +3483,9 @@
 
 
   .q-blank.done.klikt { animation: somKlikt 300ms ease-out; }
+
+  .q-blank.tikt { animation: somTikt 180ms ease-out; }
+  @keyframes somTikt { 0% { transform: none; } 40% { transform: scale(1.08); } 100% { transform: none; } }
   @keyframes somKlikt { 0% { transform: none; } 35% { transform: scale(1.14); } 100% { transform: none; } }
   .q-blank.done.rustig {
     border-color: rgba(126,87,194,.55); background: rgba(126,87,194,.08); color: var(--purple-shadow);
@@ -3497,7 +3496,7 @@
     position: fixed; z-index: 55; margin: 0; pointer-events: none; box-sizing: border-box;
     display: flex; align-items: center; justify-content: center; will-change: transform;
   }
-  @media (prefers-reduced-motion: reduce) { .q-blank.done.klikt, .q-blank.done.rustig { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .q-blank.done.klikt, .q-blank.done.rustig, .q-blank.tikt { animation: none; } }
 
 
 
@@ -3550,6 +3549,11 @@
   .num-btn.ok { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
 
   .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); font-size: 22px; }
+
+
+
+  .num-btn { transition: opacity var(--t-tik) ease, filter var(--t-tik) ease; }
+  .numpad:not(.heeft) .num-btn:is(.ok, .del) { opacity: .38; filter: saturate(.4); box-shadow: none; transform: translateY(3px); cursor: default; }
 
 
 
@@ -3852,14 +3856,11 @@
 
   .venue-aan .screen-header .diamond-badge { font-size: var(--tx-body); padding: 6px 13px; }
 
-
   .venue-aan .game-progress-row {
     padding: 5px 14px 6px; border-radius: var(--r-pill);
     background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
   }
-
-  .venue-aan .notes-left { font-size: var(--tx-label); opacity: .92; }
   .venue-aan .segbar > span { height: 8px; }
 
 
@@ -3884,8 +3885,15 @@
     justify-self: center; width: 100%; max-width: 380px; min-width: 0;
     height: 44px; box-sizing: border-box; padding: 0 16px; gap: 10px;
   }
-  #screen-game .screen-header .segbar { flex: 1; width: auto; max-width: 260px; }
-  #screen-game .screen-header .segbar > span { height: 9px; }
+  #screen-game .screen-header .game-progress-row { padding: 0 18px; }
+  #screen-game .screen-header .segbar { flex: 1; width: auto; max-width: 320px; gap: 5px; }
+  #screen-game .screen-header .segbar > span { height: 11px; }
+
+
+  @media (max-width: 359px) {
+    #screen-game .screen-header .segbar { gap: 4px; }
+    #screen-game .screen-header .segbar > span { height: 8px; }
+  }
 
   #screen-game .screen-header .game-progress-row { grid-column: 2; }
   #screen-game .screen-header .header-right, #screen-end .screen-header .header-right { grid-column: 3; }
@@ -4357,6 +4365,15 @@
 
 
 
+
+  @media (orientation: landscape) and (max-height: 500px) {
+    .numpad { grid-template-columns: repeat(6, 1fr); width: min(56vw, 470px); gap: 8px; }
+    .num-btn { padding: 10px 0; font-size: 24px; }
+    .num-btn:is([data-n="6"], [data-n="7"], [data-n="8"], [data-n="9"], [data-n="0"], .ok) { order: 1; }
+  }
+
+
+
   @media (min-height: 780px) {
     .question-card { font-size: clamp(46px, 13vw, 62px); padding: 22px 30px 30px; }
   }
@@ -4391,6 +4408,12 @@
   @media (min-width: 900px) and (min-height: 760px) {
     .show-stage { width: 240px; height: 202px; }
     .question-card { font-size: clamp(50px, 6vw, 68px); }
+  }
+
+
+  @media (min-aspect-ratio: 1/1) and (min-width: 900px) and (min-height: 700px) {
+    .numpad { width: min(40vw, 390px); gap: 12px; }
+    .num-btn { font-size: 32px; padding: 15px 0; }
   }
 
 
@@ -10332,7 +10355,6 @@
         <!-- wereld + show: alleen nog voor de voorlezer (zie "Eén rij" in 50-zaal) -->
         <div class="header-title" id="game-lvl-label"></div>
         <div class="game-progress-row">
-          <span class="notes-left" id="notes-left"></span>
           <div class="segbar" id="qprogress" role="progressbar" aria-label="Voortgang in de show"></div>
         </div>
         <div class="diamond-badge header-right">💎 <span id="game-diamonds">0</span></div>
@@ -15167,6 +15189,11 @@ async function keepAwake() {
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
 document.addEventListener('pointerdown', keepAwake, { passive: true });
+
+
+
+
+document.addEventListener('touchstart', () => {}, { passive: true });
 keepAwake();
 
 
@@ -23345,7 +23372,6 @@ function renderQuestion() {
   G.retried = false;
 
   showBalk(G.idx);
-  $('notes-left').textContent = livesText();
   drawQuestion();
   vraagKomtIn($('question-card'), G.idx === 0);
 
@@ -23365,9 +23391,9 @@ function renderQuestion() {
   } else {
     area.innerHTML = `<div class="numpad">
       ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="num-btn" data-n="${n}">${n}</button>`).join('')}
-      <button class="num-btn del" data-n="del">⌫</button>
+      <button class="num-btn del" data-n="del" aria-label="Wissen">⌫</button>
       <button class="num-btn" data-n="0">0</button>
-      <button class="num-btn ok" data-n="ok">✔</button>
+      <button class="num-btn ok" data-n="ok" aria-label="Klaar">✔</button>
     </div>`;
     area.querySelectorAll('.num-btn').forEach(b => {
       b.onclick = () => numpadPress(b.dataset.n);
@@ -23442,6 +23468,7 @@ function kaartWiebelt(kaart) {
 
 
 
+
 function showBalk(done, hasNow) {
   const el = $('qprogress');
   renderSegBar(el, G.total, done, hasNow);
@@ -23480,18 +23507,30 @@ function drawQuestion() {
   $('btn-replay').style.display = G.count || lezen ? 'flex' : 'none';
   somVluchtWeg();
   if (G.count) { drawCountQuestion(q); return; }
-  const shown = G.mode === 'typ' ? G.input : '?';
+
+
+
+
+  const shown = G.mode === 'typ' ? (G.input || '?') : '?';
   $('question-text').innerHTML = q.tmpl.replace('@', `<span class="q-blank">${shown}</span>`);
+
+
+  const pad = document.querySelector('#answer-area .numpad');
+  if (pad) pad.classList.toggle('heeft', G.mode === 'typ' && G.input !== '');
 
 
   if (lezen && !q.voorgelezen) { q.voorgelezen = true; speak(somZin(q)); }
 }
 function numpadPress(n) {
   if (!G || G.lock) return;
-  if (n === 'del') { G.input = G.input.slice(0, -1); }
+  if (n === 'del') { if (G.input === '') return; G.input = G.input.slice(0, -1); sndClick(); }
   else if (n === 'ok') { if (G.input !== '') submitAnswer(parseInt(G.input, 10), null); return; }
   else if (G.input.length < 3) { G.input += n; sndClick(); }
+  else return;
   drawQuestion();
+
+
+  if (n !== 'del') { const vak = document.querySelector('#question-text .q-blank'); if (vak) vak.classList.add('tikt'); }
 }
 document.addEventListener('keydown', e => {
   if (!G || G.lock) return;
@@ -23916,7 +23955,6 @@ function antwoordFout(q, p, val, btnEl) {
 
 
 
-
   if (G.retried) sndMis(); else sndWrong();
   oepsGezicht();
 
@@ -23953,8 +23991,12 @@ function tweedeMisser(q, p, btnEl) {
   save();
   if (btnEl) btnEl.classList.add('bad');
 
+
+
+
+  showBalk(G.idx + 1, false);
+
   if (G.count) {
-    loseHeart();
 
 
     const show = G;
@@ -23969,7 +24011,6 @@ function tweedeMisser(q, p, btnEl) {
 
 
 
-  loseHeart();
   hideToast();
   const g = G;
   setTimeout(() => {
@@ -23977,6 +24018,9 @@ function tweedeMisser(q, p, btnEl) {
     if (G.mode === 'kies') {
       const cb = [...document.querySelectorAll('.choice-btn')].find(b => parseInt(b.dataset.v, 10) === q.ans);
       if (cb) cb.classList.add('good', 'rustig');
+
+
+      document.querySelectorAll('#answer-area .tegel-pijl').forEach(el => el.remove());
     }
 
 
@@ -24022,7 +24066,6 @@ function oepsGezicht() {
 
 
 
-
 let zaalTimer = null;
 function zaalJuicht() {
   const z = $('game-venue');
@@ -24030,20 +24073,6 @@ function zaalJuicht() {
   z.classList.add('juist');
   clearTimeout(zaalTimer);
   zaalTimer = setTimeout(() => z.classList.remove('juist'), 380);
-}
-function loseHeart() {
-  const el = $('notes-left');
-  const left = Math.max(0, 3 - G.errors);
-  el.textContent = '❤️'.repeat(left) + '💔' + '🤍'.repeat(Math.max(0, 2 - left));
-  el.classList.remove('shake');
-  void el.offsetWidth;
-  el.classList.add('shake');
-  setTimeout(() => { el.classList.remove('shake'); if (G) el.textContent = livesText(); }, 900);
-}
-
-function livesText() {
-  const left = Math.max(0, 3 - G.errors);
-  return '❤️'.repeat(left) + '🤍'.repeat(3 - left);
 }
 
 
@@ -24054,6 +24083,12 @@ function livesText() {
 
 
 let zichtbaarWacht = null;
+
+
+
+
+
+const MIS_GRENS = 3;
 function alsZichtbaar(fn) {
   if (zichtbaarWacht) document.removeEventListener('visibilitychange', zichtbaarWacht);
   zichtbaarWacht = null;
@@ -24070,9 +24105,8 @@ function nextStep() {
   hideToast();
   if (!G) return;
   if (document.hidden) { const g = G; alsZichtbaar(() => { if (G === g) nextStep(); }); return; }
-  if (G.errors >= 3) { endLevel(false); return; }
   G.idx++;
-  if (G.idx >= G.total) endLevel(true);
+  if (G.idx >= G.total) endLevel(G.errors < MIS_GRENS);
   else renderQuestion();
 }
 

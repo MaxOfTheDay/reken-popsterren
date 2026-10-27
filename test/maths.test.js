@@ -325,14 +325,22 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     out.tileMarkedGood = good.classList.contains('good');
     out.diamondsUp = P().diamonds > before;
     await new Promise(r => setTimeout(r, 1200));
-    // fout antwoord kost een hartje
+    // een eerste fout antwoord maakt de vraag nog niet gemist
     q = G.qs[G.idx];
-    const livesBefore = 3 - G.errors;
+    const missedBefore = G.errors;
     const bad = [...document.querySelectorAll('.choice-btn')].find(b => Number(b.dataset.v) !== q.ans);
     bad.click();
     await new Promise(r => setTimeout(r, 250));
     out.retryOffered = G.retried === true;              // eerste misser = nog eens proberen
-    out.livesKeptOnFirstMiss = (3 - G.errors) === livesBefore;
+    out.notMissedOnFirstMiss = G.errors === missedBefore && G.uitslag[G.idx] === undefined;
+    // de tweede wél: en dan is zijn vakje meteen een lege ring, niet pas bij de volgende vraag
+    const idxMis = G.idx;
+    const bad2 = [...document.querySelectorAll('.choice-btn:not(:disabled)')].find(b => Number(b.dataset.v) !== q.ans);
+    bad2.click();
+    await new Promise(r => setTimeout(r, 100));
+    out.segMisNow = document.querySelectorAll('#qprogress > span')[idxMis].classList.contains('mis');
+    out.geenHartjes = !document.getElementById('notes-left');
+    hideToast();
     // gouden vraag telt drievoudig
     const p2 = P();
     const dia = p2.diamonds;
@@ -347,9 +355,79 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
   check(flow.tileMarkedGood === true, 'juiste antwoordknop wordt groen', String(flow.tileMarkedGood));
   check(flow.diamondsUp === true, 'een goed antwoord levert diamanten op', String(flow.diamondsUp));
   check(flow.retryOffered === true, 'eerste misser geeft een herkansing', String(flow.retryOffered));
-  check(flow.livesKeptOnFirstMiss === true, 'eerste misser kost nog geen hartje', String(flow.livesKeptOnFirstMiss));
+  check(flow.notMissedOnFirstMiss === true, 'eerste misser maakt de vraag nog niet gemist', String(flow.notMissedOnFirstMiss));
+  check(flow.segMisNow === true, 'tweede misser: het vakje wordt meteen een lege ring', String(flow.segMisNow));
+  check(flow.geenHartjes === true, 'de show heeft geen hartjes meer: de balk is de enige meter', String(flow.geenHartjes));
   check(flow.goldBanner === '🌟 3× 💎 🌟', 'gouden vraag toont het lees-vrije signaal', flow.goldBanner);
   check(flow.goldGain >= 6, 'gouden vraag levert drie keer zoveel op', String(flow.goldGain));
+
+  /* ========== 4a · Geen hartjes: de show speelt uit, het eind telt ==========
+     In een eigen venster: een show uitspelen schrijft sterren weg, en de rest
+     van deze suite rekent op het profiel zoals het was. Liggend op telefoonmaat,
+     voor het cijferblok hieronder. */
+  const los = await browser.newContext({ viewport: { width: 844, height: 390 } });
+  await cacheFonts(los);
+  const p4 = await los.newPage();
+  p4.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+  await p4.goto(APP_URL + '&demo&star=p1');
+  await p4.waitForFunction(() => typeof startLevel === 'function');
+  const uitspelen = await p4.evaluate(async () => {
+    const out = {};
+    const p = P();
+    p.settings.ops = ['+']; p.settings.max = 20; p.settings.mode = 'kies';
+    startLevel(1);
+    await new Promise(r => setTimeout(r, 250));
+    // drie gemiste vragen: vroeger stopte de show hier
+    G.errors = MIS_GRENS; G.idx = 2;
+    nextStep();
+    out.speeltDoor = !!G && G.idx === 3 && document.getElementById('screen-game').classList.contains('active');
+    // en aan het eind: Bijna!
+    G.idx = G.total - 1;
+    nextStep();
+    await new Promise(r => setTimeout(r, 50));
+    out.bijna = document.getElementById('end-title').textContent;
+    // twee gemist is nog gewoon gehaald
+    startLevel(1);
+    await new Promise(r => setTimeout(r, 250));
+    G.errors = MIS_GRENS - 1; G.misses = MIS_GRENS - 1; G.idx = G.total - 1;
+    nextStep();
+    await new Promise(r => setTimeout(r, 50));
+    out.gehaald = document.getElementById('end-title').textContent;
+    return out;
+  });
+  check(uitspelen.speeltDoor === true, 'drie gemiste vragen: de show speelt gewoon door', String(uitspelen.speeltDoor));
+  check(/Bijna/.test(uitspelen.bijna), 'drie of meer gemist: aan het eind "Bijna!"', uitspelen.bijna);
+  check(!/Bijna/.test(uitspelen.gehaald), 'twee gemist: de show is gehaald', uitspelen.gehaald);
+
+  /* ========== 4a' · Het cijferblok ========== */
+  const blok = await p4.evaluate(async () => {
+    const out = {};
+    const p = P();
+    p.settings.ops = ['+']; p.settings.max = 20; p.settings.mode = 'typ';
+    startLevel(1);
+    await new Promise(r => setTimeout(r, 250));
+    const vak = () => document.querySelector('#question-text .q-blank').textContent;
+    const pad = document.querySelector('.numpad');
+    out.leegVraagteken = vak() === '?';
+    out.slaaptLeeg = !pad.classList.contains('heeft');
+    numpadPress('ok');                              // leeg: ✔ doet niets
+    out.okLeegNiets = !G.lock && G.input === '';
+    numpadPress('1');
+    out.eenCijfer = vak() === '1' && pad.classList.contains('heeft');
+    numpadPress('del');
+    out.terugLeeg = vak() === '?' && !pad.classList.contains('heeft');
+    // liggend: ⌫ 0 ✔ vielen hier onder het scherm
+    const ok = document.querySelector('.num-btn.ok').getBoundingClientRect();
+    out.okInBeeld = ok.bottom <= innerHeight;
+    return out;
+  });
+  await los.close();
+  check(blok.leegVraagteken === true, 'typmodus begint met hetzelfde ?-vakje als kiezen', String(blok.leegVraagteken));
+  check(blok.slaaptLeeg === true, '⌫ en ✔ slapen zolang er niets getypt is', String(blok.slaaptLeeg));
+  check(blok.okLeegNiets === true, '✔ zonder cijfer doet niets', String(blok.okLeegNiets));
+  check(blok.eenCijfer === true, 'een getikt cijfer staat in het vakje en maakt ⌫ en ✔ wakker', String(blok.eenCijfer));
+  check(blok.terugLeeg === true, 'alles gewist: weer het ?-vakje', String(blok.terugLeeg));
+  check(blok.okInBeeld === true, 'telefoon liggend: het hele cijferblok staat in beeld', String(blok.okInBeeld));
 
   /* ========== 4b · Vlotheid: accuraat is niet genoeg voor moeilijkere stof ========== */
   const fluency = await page.evaluate(() => {

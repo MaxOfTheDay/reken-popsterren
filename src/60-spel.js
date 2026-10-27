@@ -156,7 +156,6 @@ function renderQuestion() {
   G.retried = false;
   // voortgang
   showBalk(G.idx);
-  $('notes-left').textContent = livesText();
   drawQuestion();
   vraagKomtIn($('question-card'), G.idx === 0);
   // antwoorden
@@ -176,9 +175,9 @@ function renderQuestion() {
   } else {
     area.innerHTML = `<div class="numpad">
       ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="num-btn" data-n="${n}">${n}</button>`).join('')}
-      <button class="num-btn del" data-n="del">⌫</button>
+      <button class="num-btn del" data-n="del" aria-label="Wissen">⌫</button>
       <button class="num-btn" data-n="0">0</button>
-      <button class="num-btn ok" data-n="ok">✔</button>
+      <button class="num-btn ok" data-n="ok" aria-label="Klaar">✔</button>
     </div>`;
     area.querySelectorAll('.num-btn').forEach(b => {
       b.onclick = () => numpadPress(b.dataset.n);
@@ -242,17 +241,18 @@ function kaartWiebelt(kaart) {
 }
 /* De balk van de show zegt ook HOE een vraag ging, want dat is waar de sterren
    op staan: drie sterren is geen enkele misser, ook geen eerste die je daarna
-   goed maakte. Hier werd elk beantwoord vakje gewoon goud, ook na een hint of
-   een gemiste vraag -- en dan eindigde een kind met drie volle hartjes op twee
-   sterren zonder te zien waarom (de hartjes tellen alleen de tweede misser).
-   Nu, met dezelfde vakjes:
+   goed maakte. Elk vakje zegt dus hoe die vraag ging:
      goud           in één keer goed
      half goud      goed na een hint
      leeg (rand)    gemist
    Een rijtje helemaal goud is meteen ook "3 op een rij", zonder meter erbij.
    En de gouden vraag heeft van bij de start een gouden rand om zijn vakje,
    zodat er iets is om naar uit te kijken; zodra hij aan de beurt is, is de
-   kaart zelf goud en gaat de rand eraf. */
+   kaart zelf goud en gaat de rand eraf.
+   Dit is de enige meter van de show. Er stonden drie hartjes naast, maar die
+   telden alleen de lege vakjes nog eens -- en spraken de balk tegen: drie
+   volle hartjes en toch twee sterren, omdat een hint wél een ster kost en geen
+   hartje. Een hart betekent elders in het spel ook iets anders (je wens). */
 function showBalk(done, hasNow) {
   const el = $('qprogress');
   renderSegBar(el, G.total, done, hasNow);
@@ -291,18 +291,30 @@ function drawQuestion() {
   $('btn-replay').style.display = G.count || lezen ? 'flex' : 'none';
   somVluchtWeg();   // een getal dat nog naar de vorige som vloog, hoort daar niet meer bij
   if (G.count) { drawCountQuestion(q); return; }
-  const shown = G.mode === 'typ' ? G.input : '?';
+  /* Typen begint met hetzelfde ?-vakje als kiezen, en de cijfers komen erin.
+     Leeg was het hier een dun streepje (een leeg vakje klapt dicht), en dan zag
+     de som er in de typmodus anders uit dan in de kiesmodus -- terwijl het
+     dezelfde vraag is. */
+  const shown = G.mode === 'typ' ? (G.input || '?') : '?';
   $('question-text').innerHTML = q.tmpl.replace('@', `<span class="q-blank">${shown}</span>`);
+  // ⌫ en ✔ slapen tot er iets getypt is: een ✔ die er klaar uitziet maar niets
+  // doet, is een knop die liegt (zie .numpad.heeft in het stijlblad)
+  const pad = document.querySelector('#answer-area .numpad');
+  if (pad) pad.classList.toggle('heeft', G.mode === 'typ' && G.input !== '');
   // drawQuestion tekent opnieuw bij elke cijfertik (typmodus): alleen de eerste
   // keer per som voorlezen, anders begint de stem bij elk cijfer opnieuw
   if (lezen && !q.voorgelezen) { q.voorgelezen = true; speak(somZin(q)); }
 }
 function numpadPress(n) {
   if (!G || G.lock) return;
-  if (n === 'del') { G.input = G.input.slice(0, -1); }
+  if (n === 'del') { if (G.input === '') return; G.input = G.input.slice(0, -1); sndClick(); }
   else if (n === 'ok') { if (G.input !== '') submitAnswer(parseInt(G.input, 10), null); return; }
   else if (G.input.length < 3) { G.input += n; sndClick(); }
+  else return;
   drawQuestion();
+  // het getikte cijfer landt in het vakje: een kleine plop, zodat de tik
+  // ergens aankomt en niet alleen een getal verandert
+  if (n !== 'del') { const vak = document.querySelector('#question-text .q-blank'); if (vak) vak.classList.add('tikt'); }
 }
 document.addEventListener('keydown', e => {
   if (!G || G.lock) return;
@@ -715,16 +727,15 @@ function antwoordGoed(q, p, btnEl) {
 }
 /* Een fout antwoord (zachte, vriendelijke animatie). Wat élke misser doet staat
    hier; daarna splitst het in de eerste (een hint, nog een kans) en de tweede
-   (het hartje, en het antwoord). */
+   (de vraag is gemist, en het antwoord komt). */
 function antwoordFout(q, p, val, btnEl) {
   updatePerf(p, false, false);
   p.stats.wrong++;
   incWeak(p, q);                                  // deze som vaker laten terugkomen
   demoteLearned(p, q);                            // stond hij in onderhoud? dan is hij weer zwak
   G.streak = 0;
-  /* Twee missers, twee klankjes. De eerste kost nog geen hartje en levert een
-     hint op: dat is "niet die, probeer nog eens". De tweede kost het hartje en
-     onthult het antwoord. Tot nu toe klonken ze precies hetzelfde, en daarmee had
+  /* Twee missers, twee klankjes. De eerste levert een hint op: dat is "niet die,
+     probeer nog eens". De tweede maakt de vraag gemist en onthult het antwoord. Tot nu toe klonken ze precies hetzelfde, en daarmee had
      het enige echte gevolg in het spel geen gewicht.
      G.retried staat hier nog op de stand van vóór deze beurt -- hij gaat pas om in
      de eerste-misser-tak hieronder, dus dit leest de vorige poging en niet deze. */
@@ -740,7 +751,7 @@ function antwoordFout(q, p, val, btnEl) {
   if (!G.retried) eersteMisser(q, val, btnEl);   // G.lock blijft false → kind mag opnieuw antwoorden
   else tweedeMisser(q, p, btnEl);
 }
-// eerste misser: nog géén hartje kwijt, wél een tweede kans met een hint
+// eerste misser: nog niet gemist, wél een tweede kans met een hint
 function eersteMisser(q, val, btnEl) {
   G.retried = true;
   G.misses++;
@@ -751,7 +762,7 @@ function eersteMisser(q, val, btnEl) {
   if (G.count) { countMissSpeak(q, val); showToast('🤔', null, null, 'teken'); }   // lees-vrij: gesproken hint, geen tekst
   else toonHint(q, val, btnEl);
 }
-// tweede misser: hartje kwijt, antwoord tonen en door
+// tweede misser: de vraag is gemist, antwoord tonen en door
 function tweedeMisser(q, p, btnEl) {
   G.lock = true;
   stopSpot();
@@ -763,9 +774,13 @@ function tweedeMisser(q, p, btnEl) {
   else if (q.count) updateCountAcc(p, false, false);
   save();
   if (btnEl) btnEl.classList.add('bad');
+  /* Het vakje van deze vraag wordt nú een lege ring, en niet pas als de volgende
+     vraag komt. Hier brak vroeger een hartje; zonder hartjes is de balk de enige
+     plek die zegt dat deze vraag gemist is, dus hoort hij het op hetzelfde
+     moment te zeggen als de rode knop en het klankje. */
+  showBalk(G.idx + 1, false);
   // laat het juiste antwoord oplichten zodat het kind ziet wat het moest zijn
   if (G.count) {
-    loseHeart();
     // juiste hoeveelheid hardop meetellen, geen tekst -- en het 👉 pas als de stem
     // klaar is: een snelle tik brak het tellen anders halverwege af
     const show = G;
@@ -773,14 +788,13 @@ function tweedeMisser(q, p, btnEl) {
     return;
   }
   /* DE VOLGORDE na een tweede misser: eerst wat er fout ging (de rode knop, het
-     hartje, het klankje -- meteen), dan pas wat het had moeten zijn (ONTHUL), en
+     lege vakje, het klankje -- meteen), dan pas wat het had moeten zijn (ONTHUL), en
      pas daarna mag een tik verder (VERDER_NA). Dat stond allemaal op 0: zes
      dingen tegelijk, en een snelle tweede tik sloeg het antwoord over voordat
      het er stond.
 
      De goede knop wordt groen zonder te veren (.rustig): de veerpop en de ring
      zijn van een gewonnen antwoord, en een misser mag er niet uitzien als winst. */
-  loseHeart();
   hideToast();   // de hint van de eerste misser is nu niet meer waar; het 👉 komt straks
   const g = G;
   setTimeout(() => {
@@ -788,6 +802,9 @@ function tweedeMisser(q, p, btnEl) {
     if (G.mode === 'kies') {
       const cb = [...document.querySelectorAll('.choice-btn')].find(b => parseInt(b.dataset.v, 10) === q.ans);
       if (cb) cb.classList.add('good', 'rustig');
+      // de pijl van de eerste poging gold voor toen; nu staat het antwoord er
+      // zelf, en dan is rood (wat je koos) en groen (wat het was) genoeg
+      document.querySelectorAll('#answer-area .tegel-pijl').forEach(el => el.remove());
     }
     // Ook nu gaat de som dicht, maar rustig: geen vlucht, geen groen, geen feest.
     // Juist hier moet de goede som te zien zijn -- in de som zelf, en niet in een
@@ -824,7 +841,6 @@ function oepsGezicht() {
     oepsTimer = setTimeout(() => pop.classList.remove('oeps'), OEPS_DUUR);
   });
 }
-// het verloren hartje breekt even zichtbaar (💔 + schudden) voor het wit wordt
 /* De zaal reageert op een goed antwoord: het voetlicht trekt aan en de wereld
    erachter wordt een tel helderder. Eén klasse, twee opacity-overgangen in de CSS
    -- geen tweede confetti, geen extra geluid, niets dat over de antwoordknop en de
@@ -842,20 +858,6 @@ function zaalJuicht() {
   clearTimeout(zaalTimer);                        // snel achter elkaar goed: één gloed, geen stapel
   zaalTimer = setTimeout(() => z.classList.remove('juist'), 380);
 }
-function loseHeart() {
-  const el = $('notes-left');
-  const left = Math.max(0, 3 - G.errors);
-  el.textContent = '❤️'.repeat(left) + '💔' + '🤍'.repeat(Math.max(0, 2 - left));
-  el.classList.remove('shake');
-  void el.offsetWidth;
-  el.classList.add('shake');
-  setTimeout(() => { el.classList.remove('shake'); if (G) el.textContent = livesText(); }, 900);
-}
-// levens: 3 hartjes, verloren kansen worden een gebroken hartje
-function livesText() {
-  const left = Math.max(0, 3 - G.errors);
-  return '❤️'.repeat(left) + '🤍'.repeat(3 - left);
-}
 /* De show wacht op je. Een telefoon die op slot gaat of een kind dat even naar
    een andere app gaat, laat de show op Android en op een tablet nog een tijd
    doorlopen: de volgende som kwam dan zonder kijker, zijn spotlicht liep leeg
@@ -865,6 +867,12 @@ function livesText() {
    beeld is, en gaat dan gewoon verder.
    Eén wachter tegelijk: wie twee keer vraagt, krijgt alleen de laatste. */
 let zichtbaarWacht = null;
+/* Hoeveel gemiste vragen (twee keer fout) een show mag hebben. De show speelt
+   altijd uit, en pas aan het eind telt dit: MIS_GRENS of meer is "Bijna!", geen
+   ster. Hij stopte vroeger midden in de show bij de derde, met de hartjes als
+   aftelling; zonder die aftelling zou de show uit het niets ophouden, en een
+   kind dat het lastig heeft, ziet zo toch elk antwoord nog eens. */
+const MIS_GRENS = 3;
 function alsZichtbaar(fn) {
   if (zichtbaarWacht) document.removeEventListener('visibilitychange', zichtbaarWacht);
   zichtbaarWacht = null;
@@ -881,9 +889,8 @@ function nextStep() {
   hideToast();
   if (!G) return;
   if (document.hidden) { const g = G; alsZichtbaar(() => { if (G === g) nextStep(); }); return; }
-  if (G.errors >= 3) { endLevel(false); return; }
   G.idx++;
-  if (G.idx >= G.total) endLevel(true);
+  if (G.idx >= G.total) endLevel(G.errors < MIS_GRENS);
   else renderQuestion();
 }
 
