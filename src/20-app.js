@@ -4147,7 +4147,7 @@ function vonkje(bijLogo) {
   el.style.left = Math.round(plek.x) + 'px';
   el.style.top = Math.round(plek.y) + 'px';
   el.style.fontSize = Math.round(bijLogo ? vonkTussen(15, 19) : vonkTussen(8, 13)) + 'px';
-  el.style.opacity = (bijLogo ? .95 : vonkTussen(.55, .8)).toFixed(2);
+  el.style.setProperty('--piek', (bijLogo ? .95 : vonkTussen(.55, .8)).toFixed(2));   // niet style.opacity: zie .vonk-laag
   el.style.animationDuration = Math.round(vonkTussen(VONKJES.duurMin, VONKJES.duurMax)) + 'ms';
   el.classList.add('aan');
   // Geen timer voor het uitzetten: de animatie meldt zelf wanneer ze klaar is.
