@@ -32,8 +32,12 @@
    buiten (het meetscriptje, een browserextensie) komen als "Script error." zonder
    bestand binnen; die tellen niet mee, ze zijn niet van ons.
 
-   FOUT_ADRES leeg = de melder staat uit. */
-const FOUT_ADRES = '';
+   FOUT_ADRES leeg = de melder staat uit.
+
+   ?foutproef gooit bij het opstarten één opzettelijke fout ("proef: ..."), zodat
+   je op een echt toestel kunt nakijken of de hele weg werkt. De rapportage telt
+   briefjes met "proef:" erin niet mee. */
+const FOUT_ADRES = 'https://rekensterren-fouten.maxheyrman.workers.dev/';
 const FOUT_MAX = 3;
 const foutGezien = [];
 
@@ -114,3 +118,7 @@ addEventListener('unhandledrejection', e => {
   const m = plek.match(/^(.*):(\d+):(\d+)$/);
   meldFout('belofte: ' + bericht, m ? m[1] : '', m ? m[2] : 0, m ? m[3] : 0);
 });
+
+if ((location.search || '').indexOf('foutproef') !== -1) {
+  setTimeout(() => { throw new Error('proef: de foutmelder werkt'); }, 0);
+}
