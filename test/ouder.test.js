@@ -350,14 +350,17 @@ function check(ok, label, detail) {
       'een fase boven "vanaf" zet "vanaf" daar, en het kind zakt niet mee', JSON.stringify(r));
     check(r.plek === plek, 'na vijf tikken staat elke fase nog precies waar hij stond', `${plek} -> ${r.plek}`);
     check(!(await page.$('#set-numerals')), 'er is geen losse schakelaar "Cijfers" meer: "tot" doet het', '');
+    r = await tik(1);
+    check(r.stage === 1 && r.max === 1 && r.vanaf === 1 && r.tot === 1,
+      'een tik op de fase van "vanaf" haalt "tot" erheen: één fase (zoals op het leerpad van rekenen)', JSON.stringify(r));
     await ctx.close();
   }
 
   /* ================= D2 · Het leerpad van rekenen ================= */
-  /* Eén ladder met twee lijnen, zoals bij tellen: "vanaf" en "tot". "tot" is de
-     grens van plus en min, en staat aan het eind van een blok; daaronder staat
-     grijs het volgende blok. Een tik verhuist de dichtste lijn (zie
-     bindOefenChips). */
+  /* Eén ladder met twee lijnen, zoals bij tellen: "vanaf" en "tot". Allebei
+     staan ze bij een rij; "tot" is ook de grens van plus en min (het blok van
+     zijn rij). Daaronder staat grijs wat erbij komt als hij zakt. Een tik
+     verhuist de dichtste lijn (zie bindOefenChips). */
   {
     const { ctx, page } = await fresh();
     await open(page, 'p1', 'oefenen');
@@ -367,7 +370,7 @@ function check(ok, label, detail) {
       const hier = document.querySelector('#set-startstap .chip.hier');
       const s = db.profiles.p1.settings;
       return {
-        vanafId: s.padVanaf, max: s.max,
+        vanafId: s.padVanaf, totId: s.padTot, max: s.max,
         rijen: [...document.querySelectorAll('#set-startstap .chip')].map(c => +c.dataset.v),
         namen: [...document.querySelectorAll('#set-startstap .chip .fl-naam')].map(n => n.textContent).join(','),
         voor: [...document.querySelectorAll('#set-startstap .chip.voor')].map(c => +c.dataset.v),
@@ -384,26 +387,37 @@ function check(ok, label, detail) {
       && r.vanaf === 1 && r.tot === 5 && r.grijs.join() === '6,7,8,9' && r.hier === 1 && r.pop && !r.balk,
       'tot 20: vijf rijen tussen "vanaf" en "tot", het blok tot 100 grijs eronder, haar pop op de eerste, geen balk "Getallen tot"', JSON.stringify(r));
     const plek = r.plek;
-    await page.click('#set-startstap .chip[data-v="3"]');
+    await page.click('#set-startstap .chip[data-v="2"]');
     await page.waitForTimeout(200);
     r = await pad();
-    check(r.vanafId === 'brug20' && r.vanaf === 3 && r.voor.join() === '1,2' && r.tot === 5,
+    check(r.vanafId === 'tot20' && r.vanaf === 2 && r.voor.join() === '1' && r.tot === 5,
       'een tik dicht bij "vanaf" zet "vanaf" daar en dempt wat ervoor ligt', JSON.stringify(r));
-    check(r.plek === plek && r.hier === 3 && r.nu === 'brug20', 'de rijen blijven staan, en ze speelt nu vanaf daar', JSON.stringify(r));
+    check(r.plek === plek && r.hier === 2 && r.nu === 'tot20', 'de rijen blijven staan, en ze speelt nu vanaf daar', JSON.stringify(r));
     await page.click('#set-startstap .chip[data-v="7"]');
     await page.waitForTimeout(200);
     r = await pad();
-    check(r.max === 100 && r.tot === 9 && !r.grijs.length && r.plek === plek,
-      'een tik op een grijze rij laat "tot" zakken tot onder zijn blok: tot 100', JSON.stringify(r));
+    check(r.max === 100 && r.tot === 7 && r.totId === 'tientallen' && r.grijs.join() === '8,9' && r.plek === plek,
+      'een tik op een grijze rij laat "tot" precies daar zakken: tot Tientallen, en dus tot 100', JSON.stringify(r));
     check(await page.evaluate(() => db.profiles.p1.settings.wennen > 0), 'en ze went aan de grotere getallen (wennen)', '');
     await page.click('#set-startstap .chip[data-v="1"]');
     await page.waitForTimeout(200);
     r = await pad();
     check(r.vanafId === null && r.vanaf === 1 && r.nu === 'tot10', 'terug naar de eerste rij zet "vanaf" weer bovenaan', JSON.stringify(r));
+    await page.click('#set-startstap .chip[data-v="1"]');
+    await page.waitForTimeout(200);
+    r = await pad();
+    check(r.max === 10 && r.vanaf === 1 && r.tot === 1 && r.grijs.join() === '2,3,4,5',
+      'een tik op de rij van "vanaf" haalt "tot" erheen: terug naar tot 10 kan', JSON.stringify(r));
+    await page.click('#set-startstap .chip[data-v="3"]');
+    await page.waitForTimeout(200);
+    r = await pad();
+    check(r.max === 10 && r.tot === 3 && r.totId === null && r.namen.startsWith('Tot 10,Zoek het getal,Drie getallen,Tot 20'),
+      'tot 10 staan zoek en drie getallen vlak onder Tot 10', JSON.stringify(r));
     await page.click('#set-startstap .chip[data-v="5"]');
     await page.waitForTimeout(200);
     r = await pad();
-    check(r.max === 20 && r.tot === 5 && r.vanafId === null, 'een tik dicht bij "tot" zet hem terug aan het eind van dat blok', JSON.stringify(r));
+    check(r.max === 20 && r.tot === 5 && r.totId === null && r.grijs.join() === '6,7,8,9',
+      'zakt hij weer tot 20, dan is het hele blok terug, met zoek en drie getallen', JSON.stringify(r));
     /* De vinkjes: overslaan haalt de rij niet weg. Hij blijft staan,
        doorgestreept, met zijn nummer, en niets schuift op. */
     const vinkjes = () => page.evaluate(() => ({

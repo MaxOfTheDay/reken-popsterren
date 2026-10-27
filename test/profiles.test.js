@@ -2539,7 +2539,7 @@ function check(ok, label, detail) {
     });
     const mathWant = { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8,
       missNum: true, chain3: true, track: 'math', stage: 1, stageMax: 12, fasesBekend: 12, repr: 'objects',
-      numerals: true, qmax: 10, memory: true, padVanaf: null };
+      numerals: true, qmax: 10, memory: true, padVanaf: null, padTot: null };
     const countWant = { ...mathWant, track: 'count', perLevel: 5 };
     check(JSON.stringify(r.math) === JSON.stringify(mathWant),
       'zonder de openklapper aan te raken blijft de rekenster ongewijzigd', JSON.stringify(r.math));
@@ -2574,7 +2574,7 @@ function check(ok, label, detail) {
       val: document.querySelector('#newstar-oefen .sr-val').textContent,
     }));
     check(r.open === true, 'de openklapper blijft open na een tik erin', `open=${r.open}`);
-    check(/tot 100/.test(r.val), 'de samenvatting loopt mee met de keuze', r.val);
+    check(/tot getallen bouwen/.test(r.val), 'de samenvatting loopt mee met de keuze: "tot" staat nu op die rij, en zo heet hij', r.val);
     await ctx.close();
   }
 

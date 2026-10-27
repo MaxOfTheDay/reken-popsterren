@@ -95,18 +95,47 @@ function padPast(r, s) {
   if (r.id === 'drie') return s.ops.includes('+');
   return true;
 }
-/* Het pad van dit kind: { rijen, later }. rijen = wat ze speelt (tot de grens),
-   later = het volgende blok erachter, grijs op de ladder: dat komt er als de
-   lijn "tot" zakt. Elke rij: { id, naam, vb, keuze, uit, ... } -- uit = de ouder
-   vinkte hem weg; hij blijft staan, doorgestreept, en ze slaat hem over. */
+/* Het pad van dit kind: { rijen, later }. rijen = wat ze speelt: vanaf het
+   begin tot en met de lijn "tot". later = wat eronder grijs op de ladder staat:
+   de rest van haar blok als de lijn erin staat, en het volgende blok -- dat
+   komt er als de lijn zakt. Elke rij: { id, naam, vb, keuze, uit, ... } -- uit =
+   de ouder vinkte hem weg; hij blijft staan, doorgestreept, en ze slaat hem over.
+   "tot" is een rij, net als "vanaf" (s.padTot, null = het eind van het blok),
+   en de grens van de getallen (s.max) is het blok waar die rij in staat (zie
+   padBlok). Zo kan de lijn ook midden in een blok staan: tot Tientallen speelt
+   wel tot honderd, maar nog niet Tot 100 en Over het tiental. */
 function padRijen(s) {
   const plusMin = s.ops.includes('+') || s.ops.includes('-');
   const rij = r => ({ ...r, vb: padVoorbeeld(r, s), uit: !!r.keuze && s[r.keuze] === false });
-  const rijen = LEERPAD.filter(r => padPast(r, s) && (r.soort !== 'bereik' || r.bereik <= s.max)).map(rij);
+  const blok = LEERPAD.filter(r => padPast(r, s) && (r.soort !== 'bereik' || r.bereik <= s.max)).map(rij);
+  const tot = blok.findIndex(r => r.id === s.padTot);
+  const rijen = tot < 0 ? blok : blok.slice(0, tot + 1);
   const volgende = plusMin && LEERPAD.filter(r => r.soort === 'bereik' && r.bereik > s.max)
     .reduce((m, r) => Math.min(m, r.bereik), Infinity);
-  const later = plusMin ? LEERPAD.filter(r => r.soort === 'bereik' && r.bereik === volgende && padPast(r, s)).map(rij) : [];
+  const later = blok.slice(rijen.length).concat(plusMin
+    ? LEERPAD.filter(r => r.soort === 'bereik' && r.bereik === volgende && padPast(r, s)).map(rij) : []);
   return { rijen, later };
+}
+/* In welk blok staat deze rij -- welke grens hoort erbij als "tot" er komt?
+   Een bereik-rij zegt het zelf. De vormen (tafels, zoek het getal, ...) staan
+   in het blok tot 20, of tot 10 zolang de grens nog daar staat. */
+function padBlok(r, s) { return r.soort === 'bereik' ? r.bereik : Math.min(s.max, 20); }
+/* Zet de lijn "tot" op deze rij: de grens wordt zijn blok (grensOmhoog, met
+   wennen als het omhoog gaat), en staat hij op de laatste rij van dat blok,
+   dan is het gewoon "het eind van het blok" (null) -- zo blijft een kind dat
+   nooit een lijn verzette precies waar het stond.
+   Zakt de lijn, dan valt er niets af dat ze al speelde. Dat kan anders: tot 10
+   staan de vormen vlak onder Tot 10, tot 20 pas na Over het tiental. Een tik op
+   het grijze Tot 20 zou Zoek het getal en Drie getallen dan onder de lijn
+   schuiven; de lijn zakt daarom tot onder de laatste rij die ze al had. */
+function padTotOp(s, r) {
+  const had = padRijen(s).rijen.map(x => x.id);
+  const zakt = !had.includes(r.id);
+  grensOmhoog(s, padBlok(r, s));
+  const blok = padRijen({ ...s, padTot: null }).rijen;
+  const plek = id => blok.findIndex(x => x.id === id);
+  const i = Math.max(plek(r.id), ...(zakt ? had.map(plek) : []));
+  s.padTot = i < 0 || i === blok.length - 1 ? null : blok[i].id;
 }
 /* Waar staat ze? p.pad = { rij, shows, goed, klaar }: klaar zijn de rijen die
    ze gehaald heeft (zie padNa), rij de rij waar shows en goed over tellen. Ze
@@ -163,6 +192,8 @@ function padUitOudeStap(s, stap) {
               zonder over het tiental, op "over het tiental" vaak); daarna vrij,
               als "over het tiental" er al was
      bouwen   'vaak' op Getallen bouwen zelf, daarna 'soms' (zie buildQuestion)
+   Tientallen en Getallen bouwen tellen op 'alles' als "de rij zelf" als de
+   lijn "tot" eronder staat (zie eigen).
      ops      + − vanaf de eerste bereik-rij, × vanaf Tafels, : vanaf Delen
      missNum, chain3   zoek het getal en drie getallen, vanaf hun rij en als ze
               aangevinkt zijn
@@ -176,6 +207,10 @@ function padStand(s, nuId, klaar) {
   const i = nuId === 'alles' ? rijen.length - 1 : rijen.findIndex(r => r.id === nuId);
   const tot = rijen.slice(0, Math.max(0, i) + 1);
   const nu = nuId === 'alles' ? null : tot[tot.length - 1];
+  /* De rij die zijn eigen sommen meebrengt (tientallen, getallen bouwen): haar
+     rij, of op 'alles' de laatste -- staat "tot" op Tientallen, dan blijven de
+     hele tientallen ook door elkaar het hoofdgerecht, niet 56 + 23. */
+  const eigen = nu || (nuId === 'alles' ? tot[tot.length - 1] : null);
   const bereik = tot.filter(r => r.soort === 'bereik' && !r.bouwen);
   const gehaald = new Set(klaar || []);
   const heeft = id => rijen.some((r, j) => r.id === id && !r.uit && (j <= i || gehaald.has(id)));
@@ -186,8 +221,8 @@ function padStand(s, nuId, klaar) {
     ops: ops.length ? ops : s.ops.slice(0, 1),
     missNum: heeft('zoek'),
     chain3: heeft('drie'),
-    tientallen: !!(nu && nu.tientallen),
-    bouwen: nu && nu.bouwen ? 'vaak' : heeft('bouwen100') ? 'soms' : null,
+    tientallen: !!(eigen && eigen.tientallen),
+    bouwen: eigen && eigen.bouwen ? 'vaak' : heeft('bouwen100') ? 'soms' : null,
   };
 }
 // De instellingen voor de vraagmaker: die van de ouder, met haar rij erover.
@@ -232,10 +267,16 @@ function wenPlafond(s) {
   const n = (s && s.wennen) || 0;
   return n > 0 ? WEN_VAN + (1 - WEN_VAN) * (1 - n / WEN_SHOWS) : 1;
 }
+/* De grens naar een ander blok. De lijn "tot" gaat mee naar het eind ervan
+   (padTot null): wie de grens met de tip verzet, krijgt het hele blok. Op
+   Oefeningen zet padTotOp hem daarna op de rij waar getikt werd. Dezelfde grens
+   doet niets -- ook het wennen loopt dan gewoon door. */
 function grensOmhoog(s, naar) {
+  if (naar === s.max) return;
   if (naar > s.max) s.wennen = WEN_SHOWS;
   else s.wennen = 0;
   s.max = naar;
+  s.padTot = null;
 }
 /* Gaat deze som over een tiental heen? Voor plus: tellen de eenheden samen tot
    boven de tien (8 + 5 wel, 7 + 3 en 15 + 5 niet -- die landen óp een tiental).
