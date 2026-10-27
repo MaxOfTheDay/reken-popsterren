@@ -1155,7 +1155,17 @@
 
 
 
-  .screen { display: none; flex: 1; flex-direction: column; align-items: center; padding: 12px; overflow-y: auto; overflow-x: hidden;
+
+
+
+
+
+
+
+
+
+
+  .screen { display: none; flex: 1; flex-direction: column; align-items: center; padding: 12px; overflow: hidden;
 
 
 
@@ -1271,6 +1281,7 @@
 
 
 
+  .screen.lijst { overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; }
   .screen.active { display: flex; animation: screenIn .18s ease both; }
   @keyframes screenIn { from { opacity: 0; } to { opacity: 1; } }
 
@@ -3419,7 +3430,8 @@
 
 
 
-  .screen.hub { padding-bottom: calc(var(--balk-ruimte) + 14px); }
+
+  .screen.hub { padding-bottom: var(--onder-vrij, calc(var(--balk-ruimte) + 14px)); }
 
 
 
@@ -4892,13 +4904,6 @@
 
 
 
-    #screen-map { overflow: hidden; }
-
-
-
-
-
-
 
 
 
@@ -4916,7 +4921,11 @@
       background-image: var(--art, none), linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 100%);
       background-size: cover; background-position: 50% 50%;
       filter: blur(4.5px) brightness(.46) saturate(.8); }
-    #screen-map::after { z-index: -2; }
+
+
+
+
+    #screen-map::after { z-index: -2; position: fixed; }
 
 
 
@@ -7067,7 +7076,7 @@
 
 
   #screen-trophies:not(.kunst).app-sfeer::before { filter: brightness(.6) saturate(.85); }
-  #screen-trophies { --lade: rgb(40,12,68); --lade-onder: calc(var(--balk-ruimte) + 14px); }
+  #screen-trophies { --lade: rgb(40,12,68); --lade-onder: var(--onder-vrij, calc(var(--balk-ruimte) + 14px)); }
   #trophy-shelves {
     width: min(100% + var(--rand, 12px) * 2, var(--kolom) + 24px); max-width: none; flex-shrink: 0;
     contain: layout style;
@@ -7120,7 +7129,6 @@
 
 
 
-  #screen-trophies.balk-aan #trophy-shelves { padding-bottom: calc(var(--lade-onder) + 16px + 62px); }
 
 
 
@@ -7940,18 +7948,6 @@
 
 
 
-  #screen-dress { padding-bottom: calc(var(--balk-ruimte) + 14px); }
-  #screen-dress.met-lade { padding-bottom: calc(var(--balk-ruimte) + 80px); }
-
-
-
-  #screen-dress.met-podiumbalk { padding-bottom: calc(var(--balk-ruimte) + 190px); }
-
-
-
-
-
-
 
 
 
@@ -8551,9 +8547,7 @@
 
 
 
-  #screen-dress { --lade: rgb(40,12,68); --lade-onder: calc(var(--balk-ruimte) + 14px); }
-  #screen-dress.met-lade { --lade-onder: calc(var(--balk-ruimte) + 80px); }
-  #screen-dress.met-podiumbalk { --lade-onder: calc(var(--balk-ruimte) + 190px); }
+  #screen-dress { --lade: rgb(40,12,68); --lade-onder: var(--onder-vrij, calc(var(--balk-ruimte) + 14px)); }
   #screen-dress .shop-tabs-wrap {
     width: min(100% + 24px, var(--kolom) + 24px); max-width: none; margin-top: 6px;
     padding: 12px 12px 6px;
@@ -10190,7 +10184,7 @@
 <div id="app">
 
   <!-- ===== Profielkeuze ===== -->
-  <div class="screen active app-sfeer" id="screen-profile">
+  <div class="screen lijst active app-sfeer" id="screen-profile">
     <div class="map-sky" aria-hidden="true">
       <div class="map-sky-inner">
         <span style="top:14%;font-size:28px;animation-duration:85s;animation-delay:-20s;opacity:.24">☁️</span>
@@ -10345,7 +10339,7 @@
        zelf wordt door renderReis() opgebouwd uit WORLDS en de voortgang van fase
        4A -- er staat hier met opzet geen enkele wereld met naam, zodat een wereld
        erbij niets aan dit blokje verandert. -->
-  <div class="screen hub" id="screen-journey">
+  <div class="screen lijst hub" id="screen-journey">
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="naTik(reisSluit)" aria-label="Terug naar de kaart" title="Terug naar de kaart"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
@@ -10494,7 +10488,7 @@
        schermen die niet op elkaar leken. .kast is de variant erop: hetzelfde licht
        van boven als de kaptafel in de kleedkamer, maar koeler en smaller, zoals een
        vitrine wordt uitgelicht. Zie .app-sfeer.kast in het stijlblad. -->
-  <div class="screen hub gebruik app-sfeer kast" id="screen-trophies">
+  <div class="screen lijst hub gebruik app-sfeer kast" id="screen-trophies">
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="naTik(goMap)" aria-label="Terug naar de kaart" title="Terug naar de kaart"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
@@ -10564,7 +10558,7 @@
        plaatje, geen nieuwe laag: precies dezelfde regel als daar.
        .kleedkamer is de variant erop: dezelfde schil, met het licht van een
        kaptafel erbij. Zie .app-sfeer.kleedkamer in het stijlblad. -->
-  <div class="screen hub gebruik app-sfeer kleedkamer" id="screen-dress">
+  <div class="screen lijst hub gebruik app-sfeer kleedkamer" id="screen-dress">
     <div class="hub-sticky">
       <!-- de kamer achter de kop, zodat het rek er niet doorheen schemert (zie .kop-kamer) -->
       <div class="kop-kamer" aria-hidden="true"></div>
@@ -10602,7 +10596,7 @@
   </div>
 
   <!-- ===== Instellingen (ouders) ===== -->
-  <div class="screen gebruik app-sfeer" id="screen-settings">
+  <div class="screen lijst gebruik app-sfeer" id="screen-settings">
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="naTik(ouderTerug)" aria-label="Terug" title="Terug"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
@@ -10635,7 +10629,7 @@
        quit-modal is naar closeConfirmModal, dus als modal zou Android-terug dit
        formulier nooit sluiten. Bovendien vecht een invoerveld in een vast
        gecentreerde overlay met het toetsenbord; een scherm scrolt gewoon mee. -->
-  <div class="screen gebruik app-sfeer" id="screen-newstar">
+  <div class="screen lijst gebruik app-sfeer" id="screen-newstar">
     <div class="hub-sticky sub">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="closeNewStar()" aria-label="Terug" title="Terug"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
@@ -15847,6 +15841,94 @@ function show(id) {
   if (navId) updateTroDot();
   knipperWek();
   syncBackGuard();
+  onderVrijOpnieuw();
+  schuifWacht();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const ONDER_BALKEN = ['main-nav', 'dress-bar', 'kast-bar'];
+const ONDER_LUCHT = 14;
+let onderVrijScherm = null, onderVrijNu = 0;
+function onderVrijMeet() {
+  const scherm = document.querySelector('.screen.active');
+  if (!scherm || !scherm.classList.contains('lijst')) return;
+  let onder = scherm.offsetHeight;
+  for (let e = scherm; e; e = e.offsetParent) onder += e.offsetTop;
+  let top = onder;
+  for (const id of ONDER_BALKEN) {
+    const balk = $(id);
+    if (!balk || !balk.offsetHeight || getComputedStyle(balk).display === 'none') continue;
+    top = Math.min(top, balk.offsetTop);
+  }
+  const vrij = Math.max(0, Math.ceil(onder - top)) + ONDER_LUCHT;
+  if (scherm === onderVrijScherm && vrij <= onderVrijNu) return;
+  onderVrijScherm = scherm; onderVrijNu = vrij;
+  scherm.style.setProperty('--onder-vrij', vrij + 'px');
+}
+
+
+
+
+
+function onderVrijOpnieuw() {
+  onderVrijScherm = null;
+  queueMicrotask(onderVrijMeet);
+}
+
+
+
+
+function onderVrijWaarnemen() {
+  const kijk = typeof MutationObserver === 'function'
+    ? new MutationObserver(onderVrijMeet) : null;
+  const maat = typeof ResizeObserver === 'function'
+    ? new ResizeObserver(onderVrijMeet) : null;
+  for (const id of ONDER_BALKEN) {
+    const balk = $(id);
+    if (!balk) continue;
+    if (kijk) kijk.observe(balk, { attributes: true, attributeFilter: ['style', 'class'], childList: true, subtree: true });
+    if (maat) maat.observe(balk);
+  }
+  window.addEventListener('resize', onderVrijOpnieuw);
+}
+
+
+
+
+
+let schuifWachtAan = false;
+function schuifWacht() {
+  if (!schuifWachtAan) return;
+  clearTimeout(schuifWacht.t);
+
+  schuifWacht.t = setTimeout(() => {
+    const scherm = document.querySelector('.screen.active');
+    if (!scherm || scherm.classList.contains('lijst')) return;
+    const weg = scherm.scrollHeight - scherm.clientHeight;
+    if (weg > 1) console.warn(`[schuiven] #${scherm.id} past niet op ${innerWidth}x${innerHeight}: `
+      + `${weg}px valt onderaan weg. Laat het passen, of maak er een lijst van (.lijst).`);
+  }, 900);
 }
 
 
@@ -21583,9 +21665,8 @@ function kastBalk(t, card, tekst, getal) {
   const bar = $('kast-bar');
   document.querySelectorAll('#trophy-shelves .trophy-card.kies').forEach(k => k.classList.remove('kies'));
   const kast = $('screen-trophies');
-  if (!t) { bar.innerHTML = ''; bar.style.display = 'none'; kast.classList.remove('balk-aan'); return; }
+  if (!t) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
   card.classList.add('kies');
-  kast.classList.add('balk-aan');
   const sub = getal != null ? esc(tekst).replace(String(getal), `<span class="db-highlight">${getal}</span>`) : esc(tekst);
 
 
@@ -21599,6 +21680,7 @@ function kastBalk(t, card, tekst, getal) {
     if (naarKaart) naarWereldKaart(t.wereldIdx); else openKleedkamerCat(t.naar);
   };
   bar.style.display = 'flex';
+  onderVrijMeet();
   speak(tekst);
 
 
@@ -25130,7 +25212,7 @@ let dressReturnTo = null;
 function openKleedkamer() {
   shopCat = 'dress'; shopSelectedId = null; dressReturnTo = null;
   toonHub('screen-dress');
-  ladeRuimteOpnieuw();
+  onderVrijOpnieuw();
   renderShop();
   $('screen-dress').scrollTop = 0;
 }
@@ -25151,7 +25233,7 @@ function resumeKleedkamer() {
 function openKleedkamerCat(cat) {
   shopCat = cat; shopSelectedId = null; dressReturnTo = 'trophies';
   toonHub('screen-dress');
-  ladeRuimteOpnieuw();
+  onderVrijOpnieuw();
   renderShop();
   $('screen-dress').scrollTop = 0;
 }
@@ -25174,7 +25256,7 @@ function openKleedkamerItem(id) {
   const podium = (isBeloning(it.id) && !p.owned.includes(it.id)) ? podiumVan(it.id) : null;
   shopCat = podium ? PODIA_CAT : it.cat; shopSelectedId = null; podiumStuk = null; dressReturnTo = null;
   toonHub('screen-dress');
-  ladeRuimteOpnieuw();
+  onderVrijOpnieuw();
   renderShop();
   if (podium) id = podium.id;
 
@@ -25275,7 +25357,7 @@ function renderShop() {
       sndClick();
       if (aan) return;
       shopCat = c.id; shopSelectedId = null; podiumStuk = null;
-      ladeRuimteOpnieuw(); renderShop();
+      onderVrijOpnieuw(); renderShop();
       $('screen-dress').scrollTop = 0;
     };
     tabs.appendChild(b);
@@ -25560,26 +25642,11 @@ function paintShop() {
   }
   popKleren($('shop-avatar'), avatarSVG(preview, 165, true));
   renderDressBar(selected, p);
-  ladeRuimte();
+  onderVrijMeet();
   $('item-grid').querySelectorAll('.item-card').forEach(card => {
     const it = item(card.dataset.item);
     if (it) dressCardState(card, it, p);
   });
-}
-
-
-
-
-
-
-function ladeRuimte() {
-  const scherm = $('screen-dress'), lade = $('dress-bar');
-  if (lade.style.display === 'none') return;
-  scherm.classList.add('met-lade');
-  if (lade.classList.contains('podium-bar')) scherm.classList.add('met-podiumbalk');
-}
-function ladeRuimteOpnieuw() {
-  $('screen-dress').classList.remove('met-lade', 'met-podiumbalk');
 }
 function previewProfile(p, it) {
   const preview = { ...p, equipped: { ...p.equipped } };
@@ -25926,7 +25993,7 @@ function openPodia(ev) {
   if (ev) ev.stopPropagation();
   sndClick();
   shopCat = PODIA_CAT; shopSelectedId = null; podiumStuk = null;
-  ladeRuimteOpnieuw(); renderShop();
+  onderVrijOpnieuw(); renderShop();
   $('screen-dress').scrollTop = 0;
 }
 
@@ -28792,6 +28859,9 @@ landingLeeft();
 logoIntro();
 syncBackGuard();
 
+onderVrijWaarnemen();
+onderVrijOpnieuw();
+
 
 
 
@@ -28843,6 +28913,9 @@ if (location.search.indexOf('debug') !== -1) {
   }
   if (loadWorldDraft()) console.log('wereldconcept uit localStorage geladen (' + WORLDS.length + ' werelden)');
   window.__game = () => G;
+
+  schuifWachtAan = true;
+  addEventListener('resize', schuifWacht);
   window.__db = () => db;
   if (dbg.has('demo')) {
 

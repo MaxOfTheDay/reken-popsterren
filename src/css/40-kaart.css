@@ -510,11 +510,12 @@
   }
   @media (prefers-reduced-motion: reduce) { .nav-sel { transition: none; } }
   /* Schermen met de vaste navigatie eronder krijgen ruimte zodat niets erachter
-     verdwijnt: de balk zelf (--balk-ruimte, veilige zone incl.) plus 14px lucht,
-     zodat het laatste element er écht onderuit te scrollen is en niet net
-     tegen de balk aan blijft plakken. Was 100px plat -- hetzelfde getal op een
-     toestel zonder streepje, maar nu klopt het ook mét. */
-  .screen.hub { padding-bottom: calc(var(--balk-ruimte) + 14px); }
+     verdwijnt, en niet meer: --onder-vrij is gemeten tot de hoogste balk die er
+     nú staat, plus 14 lucht (zie "= De ruimte onder de balken" in
+     35-schermen.js). Zo'n maat niet per scherm met de hand bijtellen -- een
+     balk erbij hoort in ONDER_BALKEN. De terugvaller is de navigatie alleen
+     (--balk-ruimte, veilige zone incl.), voor de eerste verf. */
+  .screen.hub { padding-bottom: var(--onder-vrij, calc(var(--balk-ruimte) + 14px)); }
 
   /* ---- Spel ----
      Zelfde donkerpaarse .hub-sticky als Kaart/Kleedkamer/Trofeeënkast: ✕ stoppen ·

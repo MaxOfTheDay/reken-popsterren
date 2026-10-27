@@ -20,9 +20,12 @@
  *   B  het rek van de kleedkamer en de kast zijn tot onderaan te schuiven
  *      (vóór oktober 2026: liggend breed bleef de onderste rij van het rek
  *      onder de navigatie, het raster werd op schermhoogte afgekapt)
- *   C  de kleedkamer maakt ruimte voor de lade zodra die opengaat, en geeft die
- *      pas terug bij een andere lade -- niet bij het dichtgaan, want dan sprong
- *      het rek wie onderaan stond een stuk omlaag
+ *   C  de ruimte onder de balken (--onder-vrij, zie 35-schermen.js) groeit
+ *      zodra een balk opengaat, en krimpt pas bij een andere lade of een ander
+ *      scherm -- niet bij het dichtgaan, want dan sprong het rek wie onderaan
+ *      stond een stuk omlaag. Ook voor de balk van de kast.
+ *   D  een scherm dat geen lijst is (.lijst, zie .screen in 10-basis) past op
+ *      elke maat: zo'n scherm schuift niet, dus wat niet past valt weg
  *
  * Draaien:  npm run test:schuiven
  */
@@ -34,7 +37,7 @@ const { check, klaar } = require('./meld')('schuiven');
    van een paneel (de kast houdt er zo'n 36), krap genoeg voor een vergeten balk. */
 const SPELING = 44;
 
-const MATEN = [[390, 844], [412, 915], [640, 360], [1024, 768], [1180, 820]];
+const MATEN = [[320, 568], [390, 844], [412, 915], [640, 360], [844, 390], [1024, 768], [1180, 820]];
 const KIJK = '&demo&star=p1&wereld=4&diamanten=60&stand=halverwege';
 const SCHERMEN = [
   ['beginscherm', '&demo&screen=profile'],
@@ -45,6 +48,12 @@ const SCHERMEN = [
   ['kast', KIJK + '&screen=tro'],
   ['ouderdeel', KIJK + '&screen=ouder'],
   ['kleedkamer', KIJK + '&screen=dress'],
+  ['reis', KIJK + '&screen=reis'],
+  ['tellen', '&demo&star=p2&screen=map'],
+  ['telshow', '&demo&star=p2&screen=game'],
+  ['niet gelukt', KIJK + '&screen=game', 'G.stars = 0; endLevel(false)'],
+  ['memory', '&demo&star=p2&screen=map', 'startMemory()'],
+  ['nieuwe ster', KIJK + '&screen=map', 'openNewStar()'],
 ];
 
 /* Elk scrollvak dat schuift, met wat het schuift en wat het moet. */
@@ -68,7 +77,12 @@ const meet = page => page.evaluate(() => {
     const schuift = el.scrollHeight - el.clientHeight;
     if (schuift <= 0) continue;
     const vak = el.getBoundingClientRect();
-    const onder = el === actief ? Math.min(vak.bottom, balk) : vak.bottom;
+    let onder = el === actief ? Math.min(vak.bottom, balk) : vak.bottom;
+    // een voet die onderaan plakt (Klaar! op het maakformulier) is ook een balk
+    for (const c of el.querySelectorAll('*')) {
+      const ccs = getComputedStyle(c);
+      if (ccs.position === 'sticky' && ccs.bottom !== 'auto' && zicht(c)) onder = Math.min(onder, c.getBoundingClientRect().top);
+    }
     let laagst = -1e9;
     for (const c of el.querySelectorAll('*')) {
       const blad = !c.childElementCount || /^(svg|img|button)$/i.test(c.tagName) || c.matches('.item-card,.trophy-card');
@@ -92,12 +106,21 @@ const tabs = page => page.locator('#screen-dress .tab-btn');
   for (const [w, h] of MATEN) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true });
     await cacheFonts(ctx);
-    for (const [naam, param] of SCHERMEN) {
+    for (const [naam, param, js] of SCHERMEN) {
       const page = await ctx.newPage();
       const fouten = [];
       page.on('pageerror', e => fouten.push(e.message));
       await page.goto(APP_URL + param);
-      await page.waitForTimeout(naam === 'eindscherm' ? 2500 : 1200);
+      await page.waitForTimeout(1200);
+      if (js) { await page.evaluate(js); await page.waitForTimeout(1200); }
+      if (naam === 'eindscherm') await page.waitForTimeout(1300);
+      // ---- D · wat geen lijst is, past ----
+      const past = await page.evaluate(() => {
+        const s = document.querySelector('.screen.active');
+        return { id: s.id, lijst: s.classList.contains('lijst'), weg: s.scrollHeight - s.clientHeight };
+      });
+      if (!past.lijst) check(past.weg <= 1, 'D · een beeldscherm past',
+        `${naam} op ${w}x${h}: #${past.id} is ${past.weg}px te hoog en wordt afgeknipt`);
       // de kleedkamer per lade: elke categorie is een ander rek
       const laden = naam === 'kleedkamer' ? await tabs(page).count() : 1;
       for (let i = 0; i < laden; i++) {
@@ -117,43 +140,57 @@ const tabs = page => page.locator('#screen-dress .tab-btn');
     await ctx.close();
   }
 
-  // ---- C · de lade krijgt ruimte, en die blijft tot een andere lade ----
+  // ---- C · de ruimte onder de balken groeit meteen en krimpt pas later ----
   {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
     await cacheFonts(ctx);
     const page = await ctx.newPage();
     await page.goto(APP_URL + KIJK + '&screen=dress');
     await page.waitForTimeout(1200);
-    const stand = () => page.evaluate(() => {
-      const s = document.getElementById('screen-dress');
-      return { lade: s.classList.contains('met-lade'), hoog: s.scrollHeight, top: s.scrollTop,
-               balk: document.getElementById('dress-bar').style.display };
-    });
-    const dicht = await stand();
-    check(!dicht.lade, 'C · ruimte voor de lade', 'met de lade dicht staat er al ruimte voor: ' + JSON.stringify(dicht));
+    const stand = id => page.evaluate(id => {
+      const s = document.getElementById(id);
+      return { vrij: parseFloat(s.style.getPropertyValue('--onder-vrij')) || 0,
+               hoog: s.scrollHeight, top: s.scrollTop };
+    }, id);
+    const dicht = await stand('screen-dress');
+    check(dicht.vrij > 0 && dicht.vrij < 120, 'C · de ruimte onder de balken',
+      'met de lade dicht hoort er alleen de navigatie onder: ' + JSON.stringify(dicht));
     // een spulletje dat nog niet van haar is: de lade gaat open
     await page.evaluate(() => {
-      const k = [...document.querySelectorAll('#item-grid .item-card')]
-        .find(c => c.dataset.item && !P().owned.includes(c.dataset.item));
-      k.click();
+      [...document.querySelectorAll('#item-grid .item-card')]
+        .find(c => c.dataset.item && !P().owned.includes(c.dataset.item)).click();
     });
     await page.waitForTimeout(300);
-    const open = await stand();
-    check(open.lade && open.balk !== 'none' && open.hoog > dicht.hoog, 'C · ruimte voor de lade',
-      'lade open maar het rek kreeg er geen ruimte bij: ' + JSON.stringify(open));
+    const open = await stand('screen-dress');
+    check(open.vrij > dicht.vrij + 40 && open.hoog > dicht.hoog, 'C · de ruimte onder de balken',
+      'lade open maar het rek kreeg er geen ruimte bij: ' + JSON.stringify({ dicht, open }));
     // helemaal onderaan, en dan de lade dicht (niets meer passen)
     await page.evaluate(() => { document.getElementById('screen-dress').scrollTop = 1e5; });
     await page.waitForTimeout(150);
-    const onder = await stand();
+    const onder = await stand('screen-dress');
     await page.evaluate(() => stopPassen());
     await page.waitForTimeout(300);
-    const terug = await stand();
-    check(terug.balk === 'none' && terug.top === onder.top, 'C · ruimte voor de lade',
+    const terug = await stand('screen-dress');
+    check(terug.top === onder.top, 'C · de ruimte onder de balken',
       `de lade ging dicht en het rek sprong: ${onder.top} -> ${terug.top}`);
     await tabs(page).nth(0).click();
     await page.waitForTimeout(300);
-    const ander = await stand();
-    check(!ander.lade, 'C · ruimte voor de lade', 'een andere lade houdt de ruimte voor de dichte lade vast');
+    const ander = await stand('screen-dress');
+    check(ander.vrij === dicht.vrij, 'C · de ruimte onder de balken',
+      `een andere lade houdt de ruimte voor de dichte lade vast: ${ander.vrij} tegen ${dicht.vrij}`);
+    // de kast: een getikte trofee opent zijn balk, en die krijgt ook ruimte
+    await page.goto(APP_URL + KIJK + '&screen=tro');
+    await page.waitForTimeout(1200);
+    const kastDicht = await stand('screen-trophies');
+    await page.evaluate(() => {
+      const k = [...document.querySelectorAll('#trophy-shelves .trophy-card')].pop();
+      k.click();
+    });
+    await page.waitForTimeout(400);
+    const kastOpen = await page.evaluate(() => document.getElementById('kast-bar').style.display);
+    const kastNa = await stand('screen-trophies');
+    check(kastOpen === 'none' || kastNa.vrij > kastDicht.vrij + 30, 'C · de ruimte onder de balken',
+      'de balk van de kast ging open zonder ruimte eronder: ' + JSON.stringify({ kastDicht, kastNa }));
     await ctx.close();
   }
 

@@ -2,21 +2,9 @@
      Opbouw: vaste kop (titel + 💎 + paspop + tabbladen) blijft plakken bovenaan,
      het rek met spulletjes scrollt eronder door, en de actiebalk (passen/kopen)
      zit vast boven de navigatie. Zo is elke tik meteen zichtbaar op de paspop. */
-  /* Ruimte onder het rek voor wat er onderaan zweeft, plus de veilige zone van
-     het toestel. Zonder lade is dat alleen de navigatiebalk (--balk-ruimte,
-     veilige zone incl.) en 14 lucht -- dezelfde maat als elk ander scherm met de
-     balk (.screen.hub). Hier stond altijd ook de ruimte voor de lade, ook als die
-     dicht was: dan schoof elke categorie zo'n 80px te ver, en kon een lade waar
-     alles in paste (Podia, Schoenen) toch de lege ruimte in geduwd worden.
-     Staat de lade open (.met-lade, zie ladeRuimte), dan komt die erbij: 14 lucht
-     + 53 hoog (zie .dress-bar) en daarboven nog lucht, zodat het laatste kaartje
-     er echt onderuit te scrollen is en niet net eronder blijft plakken. */
-  #screen-dress { padding-bottom: calc(var(--balk-ruimte) + 14px); }
-  #screen-dress.met-lade { padding-bottom: calc(var(--balk-ruimte) + 80px); }
-  /* De podiumbalk (drie stukjes plus een knop, zie .podium-bar) is ruim honderd
-     pixels hoger, en het podium dat je aantikte moet er nog boven te krijgen zijn
-     (zie zichtbaarBovenBalk). */
-  #screen-dress.met-podiumbalk { padding-bottom: calc(var(--balk-ruimte) + 190px); }
+  /* De ruimte onder het rek is die van elk scherm met de navigatie (.screen.hub,
+     --onder-vrij): gemeten tot de lade als die open is, of de podiumbalk, en
+     anders tot de navigatie. Geen eigen getal hier. */
   /* FASE 5B -- de kleedkamer op een breed scherm: de kop krimpt daar mee met de
      kolom. FASE 5D heeft daar één gedeelde regel van gemaakt voor álle
      gebruiksschermen (.screen.gebruik, zie het skelet bovenaan); hier stond hij
@@ -622,9 +610,7 @@
      want die zou een korte lade scrollbaar maken.
      Liggend en breed staat de balk niet in de kop maar bovenop het rek, in de
      rechterkolom (ladenPlaatsen); daar is de lade één paneel naast haar. */
-  #screen-dress { --lade: rgb(40,12,68); --lade-onder: calc(var(--balk-ruimte) + 14px); }
-  #screen-dress.met-lade { --lade-onder: calc(var(--balk-ruimte) + 80px); }
-  #screen-dress.met-podiumbalk { --lade-onder: calc(var(--balk-ruimte) + 190px); }
+  #screen-dress { --lade: rgb(40,12,68); --lade-onder: var(--onder-vrij, calc(var(--balk-ruimte) + 14px)); }
   #screen-dress .shop-tabs-wrap {
     width: min(100% + 24px, var(--kolom) + 24px); max-width: none; margin-top: 6px;
     padding: 12px 12px 6px;
