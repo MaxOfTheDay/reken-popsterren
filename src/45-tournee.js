@@ -1127,24 +1127,28 @@ function haltKnop(shown, nodes, i, stand) {
   if (lvl === netAfLvl && sterrenRij) b.classList.add('net-af');
   /* Het schatteken bij de laatste halte (fase 6E). Alleen daar, alleen zolang
      de schat van deze wereld nog niet van haar is, en bewust niets meer dan een
-     teken: wát er ligt hoort ze op het feestje te horen en niet hier van de
-     kaart af te lezen. Eén teken op de hele kaart, bij de plek waar de route heen
+     teken. Eén teken op de hele kaart, bij de plek waar de route heen
      loopt -- dat is de bedoeling ("daar ligt iets") en niet een tweede
      statussysteem over de haltes heen. Het verdwijnt zodra ze hem heeft.
-     Het teken is de prijs van de wereld als silhouet (zie "= De prijs van een
-     wereld"): hetzelfde ding dat ze op de reis, in Podia en op het feestje ziet.
-     Hier stond een 🎁, maar dat teken zegt elders "er ligt een trofee klaar om te
-     openen" -- en dit is juist iets wat je nog moet winnen. Een wereld zonder
-     podium houdt het cadeautje.
+     Het teken is een kaartje met de schat erop, in kleur: dezelfde witte tegel
+     als in de kleedkamer, met een lipje naar de halte. Eerst was het hier een 🎁
+     (dat zegt elders "er ligt een trofee klaar"), daarna de prijs van de wereld
+     als silhouet: een bleek podium met een zwarte vorm. Op deze maat las dat
+     podium als een vuil schoteltje, en van een getekende schat bleef zwart soms
+     alleen een vlek over (de kroon van Onderwater). Dus geen podium en geen
+     geheim meer op de kaart: ze ziet wát ze bij de laatste show wint, en dat is
+     het lokkertje. Het feestje onthult daarna het podium eronder.
      EN ALLEEN VLAK VOOR HET EIND: zolang de volgende show die van de laatste
      halte is (lvl === playable). Bij haltes 1 tot 7 is de kaart rustig -- een
      prijs die er de hele wereld lang stond was nog een ding op een scherm dat al
-     beweegt. Bij de laatste show komt hij één keer op: deze wint hem. */
+     beweegt. Bij de laatste show komt hij één keer op: deze wint hem.
+     Staat de halte in het rechterdeel van de tekening, dan hangt het kaartje
+     links van haar: rechts viel het anders over de schermrand (Onderwater). */
   const laatste = i === nodes.length - 1 && lvl === playable;
   const schat = laatste ? beloningItem(shown.world) : null;
-  const prijs = (schat && !p.owned.includes(schat.id)) ? wereldPrijsHTML(p, shown.index, '11cqw') : '';
   const schatTeken = (schat && !p.owned.includes(schat.id))
-    ? `<span class="stop-schat${prijs ? ' met-prijs' : ''}" aria-hidden="true">${prijs || '🎁'}</span>` : '';
+    ? `<span class="stop-schat${n.x > 70 ? ' links' : ''}" aria-hidden="true">`
+      + (schat.thumb ? schat.thumb(curBase()) : `<span class="thumb-emo">${schat.emoji || '🎁'}</span>`) + '</span>' : '';
   b.innerHTML = `${hero}<div class="stop-body"><div class="dot">${i + 1}</div>`
     + `${schatTeken}${sterrenRij}</div>`;
   /* Het slotje is weg; de voorleesnaam zegt het nog wél. Wie de kaart met een
