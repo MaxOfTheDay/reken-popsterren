@@ -22392,6 +22392,10 @@ function finishMemory(m) {
 
   p.diamonds += bonus; m.earned += bonus;
   save();
+
+  alsZichtbaar(() => memoryFeest(m, p));
+}
+function memoryFeest(m, p) {
   if (M !== m) return;
   telStraks($('mem-diamonds'), p.diamonds);
   sndGroot();
@@ -23602,9 +23606,31 @@ function livesText() {
   const left = Math.max(0, 3 - G.errors);
   return '❤️'.repeat(left) + '🤍'.repeat(3 - left);
 }
+
+
+
+
+
+
+
+
+let zichtbaarWacht = null;
+function alsZichtbaar(fn) {
+  if (zichtbaarWacht) document.removeEventListener('visibilitychange', zichtbaarWacht);
+  zichtbaarWacht = null;
+  if (!document.hidden) { fn(); return; }
+  zichtbaarWacht = () => {
+    if (document.hidden) return;
+    document.removeEventListener('visibilitychange', zichtbaarWacht);
+    zichtbaarWacht = null;
+    fn();
+  };
+  document.addEventListener('visibilitychange', zichtbaarWacht);
+}
 function nextStep() {
   hideToast();
   if (!G) return;
+  if (document.hidden) { const g = G; alsZichtbaar(() => { if (G === g) nextStep(); }); return; }
   if (G.errors >= 3) { endLevel(false); return; }
   G.idx++;
   if (G.idx >= G.total) endLevel(true);
