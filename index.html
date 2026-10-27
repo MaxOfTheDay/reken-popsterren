@@ -27940,7 +27940,7 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
     const meenemen = hasStars && overzetMag();
     if (hasStars) html += meenemen
       ? '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Neem je sterren mee met een code.</div>'
-      : '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ Voor ouders, en zet hem daar in de app terug.</div>';
+      : '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ › Back-up, en zet hem in de app terug.</div>';
     return { html, installeer: false, meenemen };
   }
   if (soort === 'android' && kanInstalleren) {

@@ -987,7 +987,7 @@ function check(ok, label, detail) {
       await page.waitForTimeout(200);
       const tekst = await page.evaluate(() => document.getElementById('app-blad').textContent.replace(/\s+/g, ' '));
       check(/Zet op beginscherm/.test(tekst), `O · ${naam}: Deel → Zet op beginscherm`, tekst);
-      check(/Al gespeeld in Safari\? .*back-up via ⚙️ Voor ouders/.test(tekst), `O · ${naam}: met de back-upwaarschuwing`, tekst);
+      check(/Al gespeeld in Safari\? .*back-up via ⚙️ › Back-up/.test(tekst), `O · ${naam}: met de back-upwaarschuwing`, tekst);
       await ctx.close();
     }
 
@@ -1413,6 +1413,12 @@ function check(ok, label, detail) {
     await d.page.waitForTimeout(300);
     r = await d.page.evaluate(() => ({ fout: (document.querySelector('#oz-blad .oz-fout') || {}).textContent, weer: !!document.getElementById('oz-weer') }));
     check(!!r.fout && r.weer, 'T · zonder ontvanger: een zin en "Opnieuw"', JSON.stringify(r));
+    // het blad "als app" op een iPhone met sterren: meenemen met een code
+    r = await d.page.evaluate(() => {
+      const m = appBladInhoud('ios', false, true, false, true), z = appBladInhoud('ios', false, false, false, true);
+      return { mee: m.meenemen, noot: /met een code/.test(m.html), leeg: z.meenemen };
+    });
+    check(r.mee && r.noot && !r.leeg, 'T · iPhone met sterren: "Sterren meenemen" in het blad "als app"', JSON.stringify(r));
     for (const x of [a, b, c2, d]) await x.ctx.close();
     // Een verkeerde code is een 404 en "geen net" een afgebroken aanvraag: de
     // browser zet die zelf in de console, en dat hoort zo. Alleen díe twee gaan eruit.
