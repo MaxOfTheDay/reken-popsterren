@@ -22651,7 +22651,8 @@ function memSomDeck(p) {
     if (gekozen.length >= pairs || antwoorden.has(ans) || !/ = @$/.test(tmpl)) return;
     antwoorden.add(ans); gekozen.push({ som: tmpl.replace(/ = @$/, ''), v: ans });
   };
-  Object.entries(p.weak || {}).sort((a, b) => b[1].w - a[1].w).slice(0, 2)
+  Object.entries(p.weak || {}).filter(([tmpl, e]) => pastNog(tmpl, e, p.settings))
+    .sort((a, b) => b[1].w - a[1].w).slice(0, 2)
     .forEach(([tmpl, e]) => neem(tmpl, e.ans));
   const lvl = WORLD_START[continueWorld(p)] || 1;
   for (let poging = 0; gekozen.length < pairs && poging < 60; poging++) {
@@ -22900,16 +22901,31 @@ function demoteLearned(p, q) { if (p.learned) delete p.learned[q.tmpl]; }
 
 
 
+
+
+
+
+
+
+
+function pastNog(tmpl, e, s) {
+  const ops = s.ops.length ? s.ops : ['+'];
+  if (!ops.includes(e.op)) return false;
+  const getallen = (tmpl.match(/\d+/g) || []).map(Number);
+  if (e.op === '+' || e.op === '-') return Math.max(e.ans, ...getallen) <= s.max;
+  const tables = s.tables.length ? s.tables : [2, 5, 10];
+  return tables.includes(getallen[1]);
+}
+
+
+
 function pickRefresh(p, s, mag) {
   if (!p.learned) return null;
-  const ops = s.ops.length ? s.ops : ['+'];
   const now = qClock(p);
   let best = null, bestOver = -1;
   for (const k of Object.keys(p.learned)) {
     const e = p.learned[k];
-
-    const teGroot = (e.op === '+' || e.op === '-') && e.ans > s.max;
-    if (!ops.includes(e.op) || teGroot || (mag && !mag(k))) continue;
+    if (!pastNog(k, e, s) || (mag && !mag(k))) continue;
     const over = now - e.due;
     if (over >= 0 && over > bestOver) { best = k; bestOver = over; }
   }
@@ -22920,8 +22936,7 @@ function pickRefresh(p, s, mag) {
 
 
 function pickWeak(p, s, mag) {
-  const ops = s.ops.length ? s.ops : ['+'];
-  const keys = Object.keys(p.weak).filter(k => ops.includes(p.weak[k].op) && (!mag || mag(k)));
+  const keys = Object.keys(p.weak).filter(k => pastNog(k, p.weak[k], s) && (!mag || mag(k)));
   if (!keys.length) return null;
   const pool = [];
   keys.forEach(k => { for (let i = 0; i < p.weak[k].w; i++) pool.push(k); });
