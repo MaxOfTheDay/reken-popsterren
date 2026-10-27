@@ -10566,6 +10566,122 @@ addEventListener('resize', () => {
 
 
 
+const FOUT_ADRES = '';
+const FOUT_MAX = 3;
+const foutGezien = [];
+
+function foutMeldenMag() {
+  return !!FOUT_ADRES && location.protocol === 'https:'
+    && !/^(localhost|127\.|\[::1\])/.test(location.hostname || '')
+    && (location.search || '').indexOf('debug') === -1;
+}
+
+
+
+function foutPlekUitStack(stack) {
+  const regels = String(stack || '').split('\n');
+  for (const r of regels) {
+    const m = r.match(/([^\/\s(@]*):(\d+):(\d+)\)?\s*$/);
+    if (m && r.indexOf(location.host || '\u0000') !== -1) return (m[1] || 'index.html').replace(/\?.*$/, '') + ':' + m[2] + ':' + m[3];
+  }
+  return '';
+}
+
+
+
+function foutBriefje(bericht, bestand, regel, kolom) {
+  const wat = String(bericht == null ? '' : bericht).split('\n')[0].trim().replace(/^Uncaught /, '').slice(0, 120);
+  const naam = String(bestand || '').replace(/[?#].*$/, '').split('/').pop() || 'index.html';
+  const waar = regel ? naam + ':' + regel + ':' + (kolom || 0) : '';
+  let scherm = '';
+  try {
+    const act = document.querySelector('.screen.active');
+    scherm = act && act.id ? act.id.replace(/^screen-/, '') : '';
+  } catch (e) { }
+  let toestel = '';
+  try { toestel = Math.min(screen.width, screen.height) < 600 ? 'telefoon' : 'tablet'; } catch (e) { }
+  return { wat: wat, waar: waar, versie: foutVersie(), scherm: scherm, toestel: toestel };
+}
+
+
+
+
+let foutAfdruk = null;
+function foutVersie() {
+  if (foutAfdruk == null) {
+    try {
+      const st = document.querySelector('style');
+      const sc = document.querySelector('script:not([src]):not([type])');
+      foutAfdruk = versieVan((st ? st.textContent : '') + (sc ? sc.textContent : ''));
+    } catch (e) { foutAfdruk = ''; }
+  }
+  return foutAfdruk;
+}
+
+function meldFout(bericht, bestand, regel, kolom) {
+  try {
+    if (!foutMeldenMag() || foutGezien.length >= FOUT_MAX) return;
+    const b = foutBriefje(bericht, bestand, regel, kolom);
+    if (!b.wat) return;
+    const sleutel = b.wat + '|' + b.waar;
+    if (foutGezien.indexOf(sleutel) !== -1) return;
+    foutGezien.push(sleutel);
+
+
+    const tekst = JSON.stringify(b);
+    if (navigator.sendBeacon) navigator.sendBeacon(FOUT_ADRES, tekst);
+    else fetch(FOUT_ADRES, { method: 'POST', body: tekst, mode: 'no-cors', keepalive: true }).catch(() => {});
+  } catch (e) { }
+}
+
+addEventListener('error', e => {
+
+
+  if (!e || !e.filename || e.filename.indexOf(location.origin) !== 0) return;
+  meldFout(e.message || (e.error && e.error.message), e.filename, e.lineno, e.colno);
+});
+addEventListener('unhandledrejection', e => {
+  const r = e && e.reason;
+  const bericht = r && r.message ? (r.name && r.message.indexOf(r.name) !== 0 ? r.name + ': ' : '') + r.message : r;
+  const plek = r && r.stack ? foutPlekUitStack(r.stack) : '';
+  const m = plek.match(/^(.*):(\d+):(\d+)$/);
+  meldFout('belofte: ' + bericht, m ? m[1] : '', m ? m[2] : 0, m ? m[3] : 0);
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
