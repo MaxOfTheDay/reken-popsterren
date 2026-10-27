@@ -370,8 +370,10 @@
     /* ---- "Paper" theme: parent-facing screens (settings / modal) ---- */
     --paper-ink: #3a0f56; --paper-ink-muted: #6b5b7a; --paper-border: #ecdcf6; --paper-tint: #faf6ff;
     --paper-muted-bg: #eceaef; --paper-muted-text: #9a90a6;
-    /* De fijne ring die om een papieren vel hoort. */
-    --paper-ring: rgba(142,36,170,.14);
+    /* Het vel zelf, zwevend boven de schil: bijna wit, maar met een zweem van de
+       paarse achtergrond erdoorheen, plus de fijne ring die er altijd omheen
+       hoort. */
+    --paper-surface: rgba(255,255,255,.96); --paper-ring: rgba(142,36,170,.14);
     /* Hetzelfde papier, maar dan mét de warme kant van de app erin. Voor het ene
        vel dat NIET in het ouderdeel staat: het maakformulier, dat een kind ziet
        en dat op de sterrenpoort ligt. Vol wit (#fff) is daar een gat in de
@@ -392,9 +394,10 @@
     /* Voortgang-tab: twee betekenissen, twee kleuren. Er stonden zes tegels in
        zes kleuren zonder dat de kleur iets zei -- decoratie op juist het scherm
        dat verder het strakst is. Nu: paars = hoeveel er gedaan is, groen = hoe
-       goed het ging. --stat-green-* is de enige die overblijft naast --purple-*:
-       als vlak voor een goede status (.vg-status.goed) en voor de regel "laatste
-       back-up" in de back-upkaart (zie .backup-stand). */
+       goed het ging. --stat-green is de enige die overblijft naast --purple-*. */
+    --stat-green: #2e9e4f;
+    /* en als vlak: voor een goede status (.vg-status.goed) en de regel "laatste
+       back-up" in de back-upkaart (zie .backup-stand) */
     --stat-green-bg: #eaf7ee; --stat-green-rand: #b9e2c6; --stat-green-tekst: #22663a;
 
     /* (Hier stond de --glass-*-familie: eenentwintig tokens van de vorm

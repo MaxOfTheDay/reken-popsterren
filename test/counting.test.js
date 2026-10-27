@@ -421,7 +421,7 @@ function check(ok, label, detail) {
     let q = null;
     for (let i = 0; i < 80 && !q; i++) { const c = genCount(p); if (c.along) q = c; }
     if (!q) return { skipped: true };
-    q.prompt = 'Gouden vraag! Deze telt drie keer. ' + q.prompt;
+    q.prompt = 'Gouden vraag! Die geeft drie keer zoveel diamanten. ' + q.prompt;
     const log = __stem(1500);
     G.qs[G.idx] = q; G.mode = 'count';
     drawCountQuestion(q);

@@ -4,7 +4,7 @@
   "private": true,
   "description": "Rekensterren — rekenspel voor kinderen (single-file PWA). De JavaScript wordt uit src/ samengesteld met `npm run bouw`; het spel zelf draait op index.html alleen, zonder bouwstap en zonder node_modules.",
   "scripts": {
-    "test": "npm run check && node test/counting.test.js && node test/maths.test.js && node test/profiles.test.js && node test/ouder.test.js && node test/rondgang.test.js && node test/voortgang.test.js && node test/reis.test.js && node test/vlucht.test.js && node test/beloning.test.js && node test/hub.test.js && node test/onderrand.test.js && node test/kop.test.js && node test/studio.test.js",
+    "test": "npm run check && node test/counting.test.js && node test/maths.test.js && node test/profiles.test.js && node test/ouder.test.js && node test/rondgang.test.js && node test/voortgang.test.js && node test/reis.test.js && node test/vlucht.test.js && node test/beloning.test.js && node test/hub.test.js && node test/overzetten.test.js && node test/onderrand.test.js && node test/kop.test.js && node test/studio.test.js",
     "check": "node test/inhoud.test.js && node test/kern.test.js && node test/saves.test.js && node test/kleedkamer.test.js",
     "bouw": "node test/bouw.js",
     "test:inhoud": "node test/inhoud.test.js",
@@ -31,6 +31,7 @@
     "preview": "node test/preview.js",
     "werelden:netjes": "node test/werelden.js --netjes",
     "test:hub": "node test/hub.test.js",
+    "test:overzetten": "node test/overzetten.test.js",
     "test:tekeningen": "node test/tekeningen.js",
     "test:onderrand": "node test/onderrand.test.js",
     "test:kop": "node test/kop.test.js",
