@@ -125,6 +125,9 @@ self.addEventListener('fetch', e => {
   // lettertype en het logo die over/ uit assets/ leent, zijn van het spel zelf en
   // gaan dus wél via isArt() -- dat zijn dezelfde bestanden.)
   if (/\/(over|promo)\//.test(url.pathname)) return;
+  // versie.txt is de vraag "is er een nieuwere?" (zie 99-servicewerker.js). Een
+  // bewaard antwoord daarop is per definitie oud, dus die gaat altijd naar het net.
+  if (/\/versie\.txt$/.test(url.pathname)) return;
 
   /* Tekeningen: eerst de voorraad. Ze veranderen alleen als ART_CACHE omhoog gaat,
      en het zijn de grootste bestanden van de app -- netwerk-eerst zou ze bij elk
@@ -139,10 +142,17 @@ self.addEventListener('fetch', e => {
 
   /* De schil: het net eerst, maar niet eindeloos. Wint de klok, dan staat het spel
      er meteen uit de voorraad; komt het net daarna alsnog binnen, dan is dat voor
-     de vólgende start. */
+     de vólgende start.
+
+     Een antwoord is niet altijd het spel. Midden in een uitrol, of als GitHub even
+     hapert, komt er een 404 of een 500 terug -- en die ging hier rechtstreeks naar
+     het kind, een foutpagina in plaats van het spel dat gewoon op het toestel
+     stond. Een foutantwoord telt dus als géén antwoord: dan de voorraad, en pas
+     als daar niets staat het foutantwoord zelf. */
   e.respondWith(
     Promise.race([
-      fetch(req).then(resp => bewaar(CACHE, url, resp)),
+      fetch(req).then(resp => resp.ok ? bewaar(CACHE, url, resp)
+        : uitVoorraad(CACHE, url).then(hit => hit || resp)),
       new Promise((ja, nee) => setTimeout(
         () => uitVoorraad(CACHE, url).then(hit => hit ? ja(hit) : nee(0)), WACHT))
     ]).catch(() => uitVoorraad(CACHE, url).then(hit => hit

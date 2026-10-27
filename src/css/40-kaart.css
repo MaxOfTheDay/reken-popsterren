@@ -451,7 +451,7 @@
 
      Dit zijn de drie die aan de onderrand hángen: de navigatie, de actiebalk van
      de kleedkamer erboven, en het terug-knopje van de reis. .mem-fab hoort er
-     bewust niet bij: die zet zichzelf af tegen --nav-h, en dat getal meet
+     bewust niet bij: die zet zichzelf af tegen --fab-onder, en dat getal meet
      meetChroom() aan de balk zelf op -- hij schuift dus vanzelf mee zodra de balk
      hier verzet is, en de drift er nóg eens bij zou hem dubbel optillen. */
   .main-nav, .dress-bar, .reis-terug { margin-bottom: var(--vh-drift, 0px); }
