@@ -3265,6 +3265,14 @@ if (typeof window !== 'undefined' && window.speechSynthesis) {
   speechSynthesis.onvoiceschanged = refreshVoices;
 }
 
+/* ---- Niet inzoomen ----
+   De viewport zegt user-scalable=no, en Android houdt zich daaraan. Safari op iPhone
+   en iPad niet (al sinds iOS 10, om toegankelijkheidsredenen): knijpen met twee
+   vingers zoomt daar het hele spel in, en een kind vindt de weg terug niet. Dit
+   houdt het knijpgebaar tegen; het dubbeltikken doet touch-action in het stijlblad
+   (zie de reset in 00-afspraak.css). */
+document.addEventListener('gesturestart', e => e.preventDefault());
+
 /* ---- Scherm wakker houden zolang de app open is (Wake Lock API) ----
    Kinderen denken soms lang na zonder het scherm aan te raken; dan mag het
    niet dimmen of vergrendelen. De lock wordt automatisch vrijgegeven als het
@@ -3808,6 +3816,10 @@ function show(id) {
   if (id !== 'screen-map' && id !== 'screen-journey') vluchtKlaar();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'komt-op'));
   $(id).classList.add('active');
+  /* Een statusbalk die na het opstarten wegvaagde, maakte het venster hoger dan de
+     vastgelegde hoogte. Die ruimte nemen we hier pas: het oude scherm is net weg en
+     het nieuwe nog niet getekend -- zie vhVolg in 00-vh-lock.js. */
+  vhVolg();
   const onProfile = (id === 'screen-profile');
   $('corner-btns').style.display = onProfile ? 'flex' : 'none';
   appKnopZet();   // het knopje linksboven hoort ook alleen bij de sterrenkeuze
@@ -6383,7 +6395,7 @@ function toonHub(id) {
 function kopKrimpMeten(scherm, stand) {
   const kop = scherm && scherm.querySelector('.hub-sticky');
   if (!kop) return;
-  const sleutel = stand == null ? null : `${innerWidth}x${innerHeight}|${stand}`;
+  const sleutel = stand == null ? null : `${venstermaat()}|${stand}`;
   if (sleutel && scherm.dataset.krimpBij === sleutel) return;
   if (!kop.offsetHeight) return;
   const hoogte = () => parseFloat(getComputedStyle(kop).height);
@@ -12986,7 +12998,7 @@ const KAART_GAT = 10;
 let rekBreedteBij = '';
 function rekBreedte() {
   const rek = $('item-grid');
-  if (!rek || rekBreedteBij === `${innerWidth}x${innerHeight}`) return;
+  if (!rek || rekBreedteBij === venstermaat()) return;
   if (!rek.clientWidth || typeof getComputedStyle !== 'function') return;
   const min = parseFloat(getComputedStyle(rek).getPropertyValue('--kaart-min')) || 104;
   /* clientWidth rondt áf naar het dichtstbijzijnde hele getal, dus een rek van
@@ -12999,7 +13011,7 @@ function rekBreedte() {
   const b = Math.min((w - (n - 1) * KAART_GAT) / n, min * 1.7);
   rek.style.setProperty('--kaart-b', Math.floor(b) + 'px');
   rek.style.setProperty('--kaart-groei', '0');
-  rekBreedteBij = `${innerWidth}x${innerHeight}`;
+  rekBreedteBij = venstermaat();
 }
 addEventListener('resize', () => rafKlem(rekBreedte));
 /* Waar de balk met de laden staat. Op een telefoon in de kop: die plakt, dus de

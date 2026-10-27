@@ -1006,6 +1006,10 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  /* Snel twee keer tikken naast een knop zoomde Safari in (die negeert user-scalable=no
+     in de viewport). manipulation laat schuiven gewoon toe en neemt alleen dat
+     dubbeltikken weg; het knijpen houdt gesturestart in 20-app.js tegen. */
+  html { touch-action: manipulation; }
   /* De browser verbergt [hidden] met display:none uit zijn eigen stijlblad, en dat
      is de zwakste regel die er is: élke eigen regel met een display wint ervan. Dat
      ging hier ook mis -- .world-back stond op display:flex, kreeg netjes hidden
