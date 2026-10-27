@@ -137,6 +137,11 @@
   #trophy-shelves.schuift .trophy-card.ready .temoji::after,
   #trophy-shelves.schuift .trophy-card.ready .temoji,
   #trophy-shelves.schuift .trophy-card.ready .pw-medal { animation-play-state: paused; }
+  /* En ook zolang een kaart buiten beeld staat (.buiten, zie kastZichtVolg). De
+     glans van een hoogste trap (65-kast.css) hoort daar ook bij. */
+  #trophy-shelves .trophy-card.buiten .temoji::after,
+  #trophy-shelves .trophy-card.buiten .temoji,
+  #trophy-shelves .trophy-card.buiten .pw-medal { animation-play-state: paused; }
   @keyframes giftWiggle {
     0%, 58%, 100% { transform: rotate(0) translateY(0); }
     66% { transform: rotate(-9deg); } 74% { transform: rotate(8deg); }
