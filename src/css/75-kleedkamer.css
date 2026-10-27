@@ -316,16 +316,6 @@
     #screen-dress { --lade-kop: 66px; }
     #screen-dress.active { grid-template-rows: var(--lade-kop) auto; }
     #screen-dress > .item-grid { grid-column: 2; grid-row: 2; max-width: none; }
-    /* de kop staat hier naast het rek: niets schuift eronder, en de kamer achter
-       hem is die van het scherm zelf (zie "De kamer, gedempt") */
-    #screen-dress:not(.kunst) .hub-sticky {
-      background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
-    }
-    #screen-dress:not(.kunst) .hub-sticky::before,
-    #screen-dress:not(.kunst) .kop-kamer { display: none; }
-    /* de koprij in een kolom van ~300: dezelfde verdeling als op een smalle
-       telefoon (zie max-width 380 hierboven), anders stak het saldo het rek in */
-    #screen-dress .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
   }
   /* ---- Breed: de spiegel groot links, het rek rechts ----------------------
      Op een bureaublad (en een tablet op zijn kant) stond de kleedkamer als een
@@ -369,7 +359,15 @@
     #screen-dress > .item-grid {
       grid-column: 2; grid-row: 2; max-width: none; --kaart-min: 130px;
     }
-    /* net als liggend: de kop heeft zijn eigen kolom, op de kamer van het scherm */
+  }
+  /* Liggend én breed (dezelfde twee als LADE_NAAST in het spel): de kop staat
+     naast het rek. Niets schuift eronder, en de kamer achter hem is die van het
+     scherm zelf (zie "De kamer, gedempt"). De koprij staat in een smalle kolom,
+     dus met dezelfde verdeling als op een smalle telefoon (zie max-width 380
+     hierboven), anders stak het saldo het rek in. Stond hierboven twee keer,
+     in elk van beide blokken; de twee sluiten elkaar uit (max- en min-height
+     500/501), dus hier erachter verandert er niets aan de voorrang. */
+  @media (orientation: landscape) and (max-height: 500px), (min-width: 1000px) and (orientation: landscape) and (min-height: 501px) {
     #screen-dress:not(.kunst) .hub-sticky {
       background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
     }

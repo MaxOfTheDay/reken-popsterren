@@ -8184,16 +8184,6 @@
     #screen-dress { --lade-kop: 66px; }
     #screen-dress.active { grid-template-rows: var(--lade-kop) auto; }
     #screen-dress > .item-grid { grid-column: 2; grid-row: 2; max-width: none; }
-
-
-    #screen-dress:not(.kunst) .hub-sticky {
-      background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
-    }
-    #screen-dress:not(.kunst) .hub-sticky::before,
-    #screen-dress:not(.kunst) .kop-kamer { display: none; }
-
-
-    #screen-dress .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
   }
 
 
@@ -8237,7 +8227,15 @@
     #screen-dress > .item-grid {
       grid-column: 2; grid-row: 2; max-width: none; --kaart-min: 130px;
     }
+  }
 
+
+
+
+
+
+
+  @media (orientation: landscape) and (max-height: 500px), (min-width: 1000px) and (orientation: landscape) and (min-height: 501px) {
     #screen-dress:not(.kunst) .hub-sticky {
       background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
     }
@@ -14064,7 +14062,9 @@ function tourStarValues(p) { return Object.values(p.tourStars || {}); }
 function allStarValues(p) { return Object.values(p.stars).concat(tourStarValues(p)); }
 function playedCount(p) { return Object.keys(p.stars).length + tourStarValues(p).length; }
 function perfectCount(p) { return allStarValues(p).filter(s => s === 3).length; }
-function totalStarCount(p) { return allStarValues(p).reduce((a, b) => a + b, 0); }
+
+
+function totalStarCount(p) { return allStarValues(p).reduce((a, b) => a + (Number(b) || 0), 0); }
 
 
 function doneWorldCount(p) { let n = 0; for (let i = 0; i < WORLD_AVAIL; i++) if (worldDone(p, i)) n++; return n; }
@@ -14305,7 +14305,10 @@ function migrate(p) {
 
   if (!p.learned) p.learned = {};
 
-  else {
+
+
+
+  {
     const nw = {};
     for (const [k, e] of Object.entries(p.weak)) nw[k.includes('@') ? k : `${k} = @`] = e;
     p.weak = nw;
@@ -14396,9 +14399,23 @@ function migrate(p) {
 }
 
 
+
+
+
+
+function lopend(oud, doel) { return oud * 0.8 + doel * 0.2; }
+function antwoordWaarde(correct, volledig) { return correct ? (volledig ? 1 : 0.85) : 0; }
+
+
+const PAUZE_ONDER = 0.70, PAUZE_UIT = 0.85;
+function pauzeBij(t) {
+  if (t.acc < PAUZE_ONDER) t.paused = true;
+  else if (t.acc >= PAUZE_UIT) t.paused = false;
+}
+
+
 function updatePerf(p, correct, fast) {
-  const target = correct ? (fast ? 1 : 0.85) : 0;
-  p.perf = Math.max(0, Math.min(1, p.perf * 0.8 + target * 0.2));
+  p.perf = Math.max(0, Math.min(1, lopend(p.perf, antwoordWaarde(correct, fast))));
 }
 let db;
 
@@ -14418,15 +14435,16 @@ function assignProfileOrder() {
 function nextProfileKey() { for (let i = 1; ; i++) if (!db.profiles['p' + i]) return 'p' + i; }
 
 
+
+function plekVan(p) { return p.order == null ? 90 : p.order; }
 function nextOrder() {
-  return 1 + Math.max(-1, ...Object.values(db.profiles).map(p => p.order == null ? 90 : p.order));
+  return 1 + Math.max(-1, ...Object.values(db.profiles).map(plekVan));
 }
 
-function profileKeys() {
-  return Object.keys(db.profiles).sort((a, b) => {
-    const d = (db.profiles[a].order == null ? 90 : db.profiles[a].order) - (db.profiles[b].order == null ? 90 : db.profiles[b].order);
-    return d !== 0 ? d : (a < b ? -1 : 1);
-  });
+
+function profileKeys(profielen) {
+  const ps = profielen || db.profiles;
+  return Object.keys(ps).sort((a, b) => plekVan(ps[a]) - plekVan(ps[b]) || (a < b ? -1 : 1));
 }
 
 
@@ -22430,8 +22448,7 @@ document.addEventListener('visibilitychange', () => {
 function updateCountAcc(p, correct, firstTry) {
   const ct = p.countTrack;
   ct.seen = (ct.seen || 0) + 1;
-  const target = correct ? (firstTry ? 1 : 0.85) : 0;
-  ct.acc = (ct.acc == null ? 0.5 : ct.acc) * 0.8 + target * 0.2;
+  ct.acc = lopend(ct.acc == null ? 0.5 : ct.acc, antwoordWaarde(correct, firstTry));
   const top = countTopRung(countLiveStage(p));
   if (correct && firstTry) {
     ct.streak = (ct.streak || 0) + 1;
@@ -22987,24 +23004,18 @@ function refreshReadiness(p, stap) {
 function updateOpAcc(p, op, correct, firstTry, fast) {
   const t = ot(p, op);
   t.n++;
-  const target = correct ? (firstTry ? 1 : 0.85) : 0;
-  t.acc = t.acc * 0.8 + target * 0.2;
+  t.acc = lopend(t.acc, antwoordWaarde(correct, firstTry));
 
 
   if (correct && firstTry) t.fast = t.fast * 0.85 + (fast ? 1 : 0) * 0.15;
-  if (t.acc < 0.70) t.paused = true;
-  else if (t.acc >= 0.85) t.paused = false;
+  pauzeBij(t);
 }
 
 function updateChainAcc(p, correct, firstTry) {
   const ct = p.chainTrack;
   ct.seen = (ct.seen || 0) + 1;
-  const target = correct ? (firstTry ? 1 : 0.85) : 0;
-  ct.acc = ct.acc * 0.8 + target * 0.2;
-  if (ct.seen >= 5) {
-    if (ct.acc < 0.70) ct.paused = true;
-    else if (ct.acc >= 0.85) ct.paused = false;
-  }
+  ct.acc = lopend(ct.acc, antwoordWaarde(correct, firstTry));
+  if (ct.seen >= 5) pauzeBij(ct);
 }
 
 
@@ -27561,22 +27572,13 @@ function ozFoutTekst(status) {
   if (status === 413) return 'Te veel om over te zetten. Maak een back-upbestand.';
   return 'Dat lukte niet. Probeer het nog eens.';
 }
-function ozSterren(p) {
-  return Object.values(p.stars || {}).reduce((a, b) => a + (Number(b) || 0), 0);
-}
 function ozKaart(p, soort) {
-  const sterren = soort === 'ok' ? '' : `<small><span aria-hidden="true">⭐</span> ${ozSterren(p)}</small>`;
+  const sterren = soort === 'ok' ? '' : `<small><span aria-hidden="true">⭐</span> ${totalStarCount(p)}</small>`;
   return `<div class="oz-ster${soort ? ' ' + soort : ''}"><span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
     + `<b>${esc(p.name)}</b>${sterren}${soort === 'ok' ? '<span class="oz-vink" aria-hidden="true">✓</span>' : ''}</div>`;
 }
 
-function ozProfielen(data) {
-  return Object.keys(data.profiles).sort((a, b) => {
-    const pa = data.profiles[a], pb = data.profiles[b];
-    const d = (pa.order == null ? 90 : pa.order) - (pb.order == null ? 90 : pb.order);
-    return d !== 0 ? d : (a < b ? -1 : 1);
-  }).map(k => data.profiles[k]);
-}
+function ozProfielen(data) { return profileKeys(data.profiles).map(k => data.profiles[k]); }
 function ozCodeHtml(code, soort, nu) {
   let h = `<div class="oz-code${soort ? ' ' + soort : ''}" aria-hidden="true">`;
   for (let i = 0; i < 6; i++) {

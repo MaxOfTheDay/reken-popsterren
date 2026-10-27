@@ -1,0 +1,9 @@
+# versie.txt is de afdruk van de laatste bouw, en elke tak die iets aan src/
+# verandert schrijft er een andere in. Bij het samenvoegen botst hij dus altijd,
+# terwijl het juiste antwoord geen van beide kanten is maar de volgende
+# `npm run bouw`. De regel "versie" houdt gewoon de eigen kant; de bouw die na
+# elke merge toch al volgt zet het goede getal neer, en zaak H in
+# test/inhoud.test.js valt om als iemand die bouw vergeet.
+# Wat "versie" doet staat niet in git maar in de instellingen van de kloon; zie
+# test/samenvoegen.js (npm run bouw en de studio zetten het vanzelf).
+versie.txt merge=versie
