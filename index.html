@@ -4171,8 +4171,18 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
   .mem-fab {
-    position: fixed; right: 14px; bottom: calc(var(--nav-h, 94px) - 12px); z-index: 30;
+    position: absolute; right: 14px; bottom: var(--fab-onder, calc(var(--nav-h, 94px) - 12px)); z-index: 30;
     display: flex; flex-direction: column; align-items: center; gap: 0;
     font-family: inherit; font-size: 21px; font-weight: 700; color: var(--c-white);
     cursor: pointer; padding: 8px 11px 7px; border-radius: var(--r-md);
@@ -9901,6 +9911,7 @@
       width: var(--podium-w); margin-left: calc(var(--podium-w) / -2);
       border-bottom-left-radius: var(--r-md); border-bottom-right-radius: var(--r-md);
     }
+
 
 
 
@@ -19728,8 +19739,20 @@ function meetChroom() {
   const kop = scherm.querySelector('.hub-sticky');
   const nav = $('main-nav');
   if (kop && kop.offsetHeight) stijlVar(scherm, '--kop-h', (kop.offsetHeight + 12) + 'px');
-  if (nav && nav.offsetHeight) stijlVar(scherm, '--nav-h',
-    (nav.offsetHeight + (innerHeight - nav.getBoundingClientRect().bottom) + 12) + 'px');
+  if (nav && nav.offsetHeight) {
+    const n = nav.getBoundingClientRect();
+
+
+
+
+
+
+
+    const ouder = scherm.offsetParent;
+    const bodem = (ouder ? ouder.getBoundingClientRect().top : 0) + scherm.offsetTop + scherm.offsetHeight;
+    stijlVar(scherm, '--nav-h', (nav.offsetHeight + (innerHeight - n.bottom) + 12) + 'px');
+    stijlVar(scherm, '--fab-onder', Math.round(bodem - n.top) + 'px');
+  }
   terugUitlijnen();
 }
 

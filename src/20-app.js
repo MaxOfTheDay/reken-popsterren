@@ -8286,8 +8286,20 @@ function meetChroom() {
   const kop = scherm.querySelector('.hub-sticky');
   const nav = $('main-nav');
   if (kop && kop.offsetHeight) stijlVar(scherm, '--kop-h', (kop.offsetHeight + 12) + 'px');
-  if (nav && nav.offsetHeight) stijlVar(scherm, '--nav-h',
-    (nav.offsetHeight + (innerHeight - nav.getBoundingClientRect().bottom) + 12) + 'px');
+  if (nav && nav.offsetHeight) {
+    const n = nav.getBoundingClientRect();
+    /* Dezelfde plek, maar gemeten vanaf de onderrand van het scherm zelf in plaats
+       van die van het venster: daar hangt .mem-fab aan (zie daar). Die twee randen
+       vallen samen, behalve als het venster na het opstarten van hoogte veranderd
+       is (--vh-lock, de adresbalk) -- en precies dan sprong het knopje na elke
+       aankomst op de kaart. Layoutmaten voor het scherm, geen omtrek: dit kan
+       draaien terwijl het nog inzoomt, en die schaal hoort er niet in. Eerst alles
+       meten en dan pas schrijven (zie stijlVar). */
+    const ouder = scherm.offsetParent;
+    const bodem = (ouder ? ouder.getBoundingClientRect().top : 0) + scherm.offsetTop + scherm.offsetHeight;
+    stijlVar(scherm, '--nav-h', (nav.offsetHeight + (innerHeight - n.bottom) + 12) + 'px');
+    stijlVar(scherm, '--fab-onder', Math.round(bodem - n.top) + 'px');
+  }
   terugUitlijnen();
 }
 /* Een maat alleen opschrijven als hij verandert. Bij elke aankomst op de kaart

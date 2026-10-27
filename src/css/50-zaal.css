@@ -651,9 +651,19 @@
      smaller dan welk bruikbaar knopje ook. Wat wél te garanderen is, is dat hij
      geen enkele échte halte afdekt -- test 7f meet dat na op alle werelden, zodat
      een nieuwe wereld die daar wél een halte neerzet opvalt vóór een kind erop
-     tikt in plaats van erna. */
+     tikt in plaats van erna.
+
+     Absolute en niet fixed. Hij stond fixed, maar #screen-map zoomt bij elke
+     aankomst in (kaartKomtOp) en bij elk vertrek uit, en een transform op een
+     voorouder maakt van fixed stilletjes 'tegen dat scherm': zolang de zoom liep
+     hing hij aan de onderrand van het scherm, daarna weer aan die van het venster.
+     Zijn die twee niet even hoog -- een Android-statusbalk die na het opstarten
+     wegvaagt (--vh-lock), een adresbalk -- dan sprong hij na elke terugkeer naar
+     de kaart een stuk omlaag (60px gemeten). Nu hangt hij altijd aan het scherm,
+     en --fab-onder (meetChroom) is de afstand van díe rand tot de bovenkant van de
+     navigatiebalk. De terugval is de oude som, voor de allereerste opbouw. */
   .mem-fab {
-    position: fixed; right: 14px; bottom: calc(var(--nav-h, 94px) - 12px); z-index: 30;
+    position: absolute; right: 14px; bottom: var(--fab-onder, calc(var(--nav-h, 94px) - 12px)); z-index: 30;
     display: flex; flex-direction: column; align-items: center; gap: 0;
     font-family: inherit; font-size: 21px; font-weight: 700; color: var(--c-white);
     cursor: pointer; padding: 8px 11px 7px; border-radius: var(--r-md);
