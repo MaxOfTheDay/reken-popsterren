@@ -164,7 +164,8 @@ nodig en er gaat geen voortgang verloren: de opslag van een speler staat in
   over een fullscreen-PWA heen ligt.
   Alleen de hoogte kan ook écht veranderen (de deler van split-screen, een
   pc-venster): dan legt het slot zich ook opnieuw vast. Uitzonderingen zijn een
-  open tekstveld (het toetsenbord) en een kleine groei tot 80 px (de
+  open tekstveld (het toetsenbord), een kleine krimp tot 80 px (de systeembalken
+  die na een druk op terug even terugkomen) en een kleine groei tot 80 px (de
   statusbalk); die laatste wordt bij de volgende `show()` alsnog overgenomen
   (`vhVolg`), dus de drift is na de eerste schermwissel weer nul. Wie een meting
   per venstermaat onthoudt, sleutelt op `venstermaat()` en niet op `innerHeight`.
