@@ -45,6 +45,7 @@ npm run test:studio      # de wereldstudio (?debug&mapedit)
 npm run test:onderrand   # de zwevende bediening onderaan blijft staan
 npm run test:kop         # de kop van de kaart: niets overlapt, op geen enkele maat
 npm run test:hub         # de Dev Studio (npm run studio) — kaal Node
+npm run test:tekeningen  # een vervangen tekening liet ART_CACHE omhoog gaan — kaal Node, tegen origin/main
 ```
 
 `npm run check` heeft geen `node_modules` nodig: het draait op kaal Node. Wie
@@ -409,6 +410,11 @@ is. De beloftes, op de kaart, in de kleedkamer, in de kast en op de reis:
   open is een kleiner venster het toetsenbord en blijft het slot staan; en de
   groei van de statusbalk wordt bij de volgende `show()` alsnog overgenomen,
   zodat er geen strook onder de app blijft.
+- **de memory-knop springt niet na een terugkeer naar de kaart** (zaak I) — de
+  kaart zoomt bij aankomst in, en een transform maakt van `position: fixed`
+  stilletjes "tegen het scherm". Per beeldje gemeten (ná de verf) moet de knop op
+  zijn rustplek staan, meegeschaald met het scherm, en daarna met zijn onderrand
+  op de navigatiebalk landen — ook als het venster en het slot niet even hoog zijn.
 
 Zie `docs/LADEN.md`, "Venster, veilige zone en toetsenbord", voor de maten zelf.
 

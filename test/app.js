@@ -188,6 +188,8 @@ const BRUG = `globalThis.__api = {
   get cur() { return cur; },
   // werelden en voortgang
   item, itemOr, worldReleased, rebuildWorldStarts, rebuildWorldBadges,
+  // de versie-afdruk (zie "Een nieuwe versie" in 99-servicewerker.js)
+  versieVan,
   // de studio: id/pad uit een naam, en de controle die zegt wat er mis is.
   // Staan hier omdat het uitspraken over een wereld zijn en geen paneelwerk --
   // test/werelden.js kijkt er de werelden mee na zonder een browser te openen.

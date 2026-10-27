@@ -31,6 +31,7 @@
     "preview": "node test/preview.js",
     "werelden:netjes": "node test/werelden.js --netjes",
     "test:hub": "node test/hub.test.js",
+    "test:tekeningen": "node test/tekeningen.js",
     "test:onderrand": "node test/onderrand.test.js",
     "test:kop": "node test/kop.test.js",
     "test:snel": "node test/alles.js"
