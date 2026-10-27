@@ -14317,7 +14317,8 @@ function defaultProfile(name, dress, opts) {
       numerals: opts.numerals !== false,
       qmax: opts.qmax || 10,
       memory: opts.memory !== false,
-      padVanaf: opts.padVanaf || null
+      padVanaf: opts.padVanaf || null,
+      padTot: null,
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
 
@@ -14514,6 +14515,8 @@ function migrate(p) {
     s.padVanaf = vanaf === 'alles' ? (padRijen(s).rijen.slice(-1)[0] || {}).id || null : vanaf;
   }
   if (p.settings.padVanaf === undefined) p.settings.padVanaf = null;
+
+  if (!(p.settings.padTot in PAD_IDX)) p.settings.padTot = null;
   delete p.settings.startStap;
   if (!p.countTrack) p.countTrack = { stage: p.settings.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 };
   if (p.countTrack.rung == null) p.countTrack.rung = 0;
@@ -21934,14 +21937,43 @@ function padPast(r, s) {
 
 
 
+
+
+
+
+
 function padRijen(s) {
   const plusMin = s.ops.includes('+') || s.ops.includes('-');
   const rij = r => ({ ...r, vb: padVoorbeeld(r, s), uit: !!r.keuze && s[r.keuze] === false });
-  const rijen = LEERPAD.filter(r => padPast(r, s) && (r.soort !== 'bereik' || r.bereik <= s.max)).map(rij);
+  const blok = LEERPAD.filter(r => padPast(r, s) && (r.soort !== 'bereik' || r.bereik <= s.max)).map(rij);
+  const tot = blok.findIndex(r => r.id === s.padTot);
+  const rijen = tot < 0 ? blok : blok.slice(0, tot + 1);
   const volgende = plusMin && LEERPAD.filter(r => r.soort === 'bereik' && r.bereik > s.max)
     .reduce((m, r) => Math.min(m, r.bereik), Infinity);
-  const later = plusMin ? LEERPAD.filter(r => r.soort === 'bereik' && r.bereik === volgende && padPast(r, s)).map(rij) : [];
+  const later = blok.slice(rijen.length).concat(plusMin
+    ? LEERPAD.filter(r => r.soort === 'bereik' && r.bereik === volgende && padPast(r, s)).map(rij) : []);
   return { rijen, later };
+}
+
+
+
+function padBlok(r, s) { return r.soort === 'bereik' ? r.bereik : Math.min(s.max, 20); }
+
+
+
+
+
+
+
+
+function padTotOp(s, r) {
+  const had = padRijen(s).rijen.map(x => x.id);
+  const zakt = !had.includes(r.id);
+  grensOmhoog(s, padBlok(r, s));
+  const blok = padRijen({ ...s, padTot: null }).rijen;
+  const plek = id => blok.findIndex(x => x.id === id);
+  const i = Math.max(plek(r.id), ...(zakt ? had.map(plek) : []));
+  s.padTot = i < 0 || i === blok.length - 1 ? null : blok[i].id;
 }
 
 
@@ -22006,11 +22038,17 @@ function padUitOudeStap(s, stap) {
 
 
 
+
+
 function padStand(s, nuId, klaar) {
   const rijen = padRijen(s).rijen;
   const i = nuId === 'alles' ? rijen.length - 1 : rijen.findIndex(r => r.id === nuId);
   const tot = rijen.slice(0, Math.max(0, i) + 1);
   const nu = nuId === 'alles' ? null : tot[tot.length - 1];
+
+
+
+  const eigen = nu || (nuId === 'alles' ? tot[tot.length - 1] : null);
   const bereik = tot.filter(r => r.soort === 'bereik' && !r.bouwen);
   const gehaald = new Set(klaar || []);
   const heeft = id => rijen.some((r, j) => r.id === id && !r.uit && (j <= i || gehaald.has(id)));
@@ -22021,8 +22059,8 @@ function padStand(s, nuId, klaar) {
     ops: ops.length ? ops : s.ops.slice(0, 1),
     missNum: heeft('zoek'),
     chain3: heeft('drie'),
-    tientallen: !!(nu && nu.tientallen),
-    bouwen: nu && nu.bouwen ? 'vaak' : heeft('bouwen100') ? 'soms' : null,
+    tientallen: !!(eigen && eigen.tientallen),
+    bouwen: eigen && eigen.bouwen ? 'vaak' : heeft('bouwen100') ? 'soms' : null,
   };
 }
 
@@ -22067,10 +22105,16 @@ function wenPlafond(s) {
   const n = (s && s.wennen) || 0;
   return n > 0 ? WEN_VAN + (1 - WEN_VAN) * (1 - n / WEN_SHOWS) : 1;
 }
+
+
+
+
 function grensOmhoog(s, naar) {
+  if (naar === s.max) return;
   if (naar > s.max) s.wennen = WEN_SHOWS;
   else s.wennen = 0;
   s.max = naar;
+  s.padTot = null;
 }
 
 
@@ -26983,6 +27027,7 @@ function naarRekenen(p) {
   s.mode = 'kies';
   s.grensTipBasis = grensDrieSterren(p);
   s.padVanaf = null;
+  s.padTot = null;
   p.pad = null;
 }
 
@@ -27107,7 +27152,7 @@ function oefenGroups(s, pfx, p) {
       stageNums.map(v => ({ v, naam: COUNT_STAGE_LABELS[v], vb: COUNT_STAGE_VB[v] })), lo, hi, p && countLiveStage(p))}`
   }, {
     kaart: 'show', html: `${lbl('Tonen als')}${balk('set-repr', 'repr',
-      [['objects', 'Voorwerpen'], ['dots', 'Stippen'], ['mix', 'Mix']], s.repr || 'objects')}
+      [['objects', 'Voorwerpen'], ['mix', 'Mix'], ['dots', 'Stippen']], s.repr || 'objects')}
       ${perShow}
       ${aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false)}`
   }];
@@ -27167,7 +27212,8 @@ function oefenSamenvatting(s) {
 
   const glyph = { '+': '+', '-': '−', 'x': '×', ':': '÷' };
   const modes = { kies: 'kiezen', typ: 'typen', mix: 'mix' };
-  const tot = (s.ops.includes('+') || s.ops.includes('-')) ? ` · tot ${s.max}` : '';
+  const totRij = s.padTot && padRijen(s).rijen.slice(-1)[0];
+  const tot = (s.ops.includes('+') || s.ops.includes('-')) ? ` · tot ${totRij ? totRij.naam.toLowerCase() : s.max}` : '';
   const tafels = (s.ops.includes('x') || s.ops.includes(':'))
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
   const rijen = padRijen(s).rijen.filter(r => !r.uit);
@@ -27647,6 +27693,14 @@ function lijnPlekken(ladder) {
   ladder.querySelectorAll('.fl-lijn').forEach(l => { plek[l.textContent] = l.getBoundingClientRect().top - top; });
   return plek;
 }
+
+
+
+
+
+function dichtsteLijn(v, lo, hi) {
+  return v < lo || (v > lo && v <= hi && v - lo < hi - v) ? 'vanaf' : 'tot';
+}
 function bindOefenChips(s, p, pfx, done) {
   const bind = (id, fn) => {
     const el = $((pfx || '') + id);
@@ -27703,13 +27757,12 @@ function bindOefenChips(s, p, pfx, done) {
 
 
 
-
   bind('set-fase', c => {
     const v = parseInt(c.dataset.v, 10);
     const top = COUNT_STAGE_MAX;
     const lo = Math.min(Math.max(1, s.stage || 1), top);
     const hi = Math.min(Math.max(lo, s.stageMax || top), top);
-    const vanaf = v < lo || (v <= hi && v - lo < hi - v);
+    const vanaf = dichtsteLijn(v, lo, hi) === 'vanaf';
     if (vanaf) {
       s.stage = v;
       if (s.stageMax < v) s.stageMax = v;
@@ -27730,23 +27783,20 @@ function bindOefenChips(s, p, pfx, done) {
 
 
 
-
-
-
-
-
   bind('set-startstap', c => {
     const v = parseInt(c.dataset.v, 10);
     const { rijen, later } = padRijen(s);
     const r = rijen.concat(later)[v - 1];
     if (!r) return false;
-    const grens = naar => { grensOmhoog(s, naar); if (p) s.grensTipBasis = grensDrieSterren(p); };
-    if (v > rijen.length) return grens(r.bereik);
     const speel = rijen.filter(x => !x.uit);
     const lo = speel.length ? rijen.indexOf(padVanafRij(s, speel)) + 1 : 1, hi = rijen.length;
-    const blok = r.soort === 'bereik' ? r.bereik : 20;
     const plusMin = s.ops.includes('+') || s.ops.includes('-');
-    if (plusMin && !(v < lo || v - lo < hi - v) && blok < s.max) return grens(blok);
+    if (plusMin && dichtsteLijn(v, lo, hi) === 'tot') {
+      const max = s.max;
+      padTotOp(s, r);
+      if (p && s.max !== max) s.grensTipBasis = grensDrieSterren(p);
+      return;
+    }
     s.padVanaf = v === 1 ? null : r.id;
   });
   bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); telPlafondOpnieuw(p); });

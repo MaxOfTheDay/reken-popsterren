@@ -1165,6 +1165,40 @@ zaak('Q3', () => {
     'Q3 · ze begint het blok tot honderd met Getallen bouwen', JSON.stringify(q.pad));
 });
 
+/* ================= Q4 · De lijn "tot" is een rij =================
+   Net als op de faseladder van tellen: "tot" staat onder een rij, ook midden
+   in een blok, en de grens van de getallen is het blok van die rij. Eerst was
+   "tot" alleen een getal (10, 20, 100): dan kon de lijn niet op Tientallen
+   staan, en kwam je van 20 nooit meer terug op 10. */
+zaak('Q4', () => {
+  const { app, p } = verseSter('Lijn');
+  const s = p.settings;
+  const namen = () => app.padRijen(s).rijen.map(r => r.id).join();
+  const rij = id => app.LEERPAD.find(r => r.id === id);
+  s.max = 100;
+  app.padTotOp(s, rij('tientallen'));
+  check(s.max === 100 && s.padTot === 'tientallen' && namen().endsWith('bouwen100,tientallen')
+    && app.padRijen(s).later.map(r => r.id).join() === 'tot100,brug100',
+    'Q4 · "tot" op Tientallen: tot honderd, maar Tot 100 en Over het tiental staan nog grijs', namen());
+  const alles = app.padStand(s, 'alles');
+  check(alles.max === 100 && alles.tientallen, 'Q4 · en door elkaar blijven het hele tientallen', JSON.stringify(alles));
+  app.padTotOp(s, rij('tot10'));
+  check(s.max === 10 && s.padTot === 'tot10' && namen() === 'tot10', 'Q4 · terug naar tot 10 kan', namen());
+  app.padTotOp(s, rij('drie'));
+  check(s.max === 10 && s.padTot === null && namen() === 'tot10,zoek,drie', 'Q4 · tot 10 staan de vormen vlak onder Tot 10', namen());
+  app.padTotOp(s, rij('tot20'));
+  check(s.max === 20 && s.padTot === null && namen() === 'tot10,tot20,brug20,zoek,drie' && s.wennen > 0,
+    'Q4 · zakt de lijn, dan valt er niets af wat ze al had: tot 10 speelde ze zoek en drie getallen al', namen());
+  app.padTotOp(s, rij('drie'));
+  check(s.max === 20 && s.padTot === null && s.wennen > 0, 'Q4 · op het eind van het blok is het gewoon het blok, en het wennen loopt door', JSON.stringify(s));
+  app.grensOmhoog(s, 100);
+  check(s.padTot === null && s.max === 100, 'Q4 · de tip (grensOmhoog) geeft het hele volgende blok', JSON.stringify(s));
+  s.padTot = 'tot50';
+  app.save();
+  const na = heropen(app).db.profiles.p1;
+  check(na.settings.padTot === null, 'Q4 · een "tot" op een rij die er niet meer is, wordt het eind van het blok', JSON.stringify(na.settings));
+});
+
 /* ================= R · De tip om de getallengrens hoger te zetten =================
    Na de laatste leerstap worden de sommen niet vanzelf moeilijker. Het spel zet de
    grens niet zelf hoger (dat is van de ouder), maar zegt in Voortgang wanneer het

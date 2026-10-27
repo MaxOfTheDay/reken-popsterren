@@ -692,6 +692,7 @@ function naarRekenen(p) {
   s.mode = 'kies';
   s.grensTipBasis = grensDrieSterren(p);
   s.padVanaf = null;
+  s.padTot = null;
   p.pad = null;                 // het leerpad begint vooraan (zie padNu)
 }
 
@@ -816,19 +817,19 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde 
       stageNums.map(v => ({ v, naam: COUNT_STAGE_LABELS[v], vb: COUNT_STAGE_VB[v] })), lo, hi, p && countLiveStage(p))}`
   }, {
     kaart: 'show', html: `${lbl('Tonen als')}${balk('set-repr', 'repr',
-      [['objects', 'Voorwerpen'], ['dots', 'Stippen'], ['mix', 'Mix']], s.repr || 'objects')}
+      [['objects', 'Voorwerpen'], ['mix', 'Mix'], ['dots', 'Stippen']], s.repr || 'objects')}
       ${perShow}
       ${aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false)}`
   }];
   /* Het leerpad van rekenen: de rijen van LEERPAD die op háár pad staan (zie
      padRijen), genummerd op plaats. Twee lijnen, net als bij tellen:
        vanaf  boven de rij waar het spel minstens begint (s.padVanaf)
-       tot    onder de laatste rij binnen de grens (s.max). Dit ís de grens: de
-              balk "Getallen tot" is weg, want die zei met een getal wat de
-              lijn hier met de rijen zelf zegt.
-     Onder "tot" staat grijs het blok dat komt als de lijn zakt (Getallen
-     bouwen, Tientallen, Tot 100 en Over het tiental) -- niet alles tot het
-     eind, alleen de volgende stap. "Alles door elkaar" staat helemaal onderaan om te lezen:
+       tot    onder de laatste rij die ze speelt (s.padTot, of het eind van
+              het blok). Dit ís ook de grens: de balk "Getallen tot" is weg,
+              want die zei met een getal wat de lijn hier met de rijen zegt.
+     Onder "tot" staat grijs wat komt als de lijn zakt: de rest van het blok,
+     en het volgende blok (Getallen bouwen, Tientallen, Tot 100 en Over het
+     tiental) -- niet alles tot het eind, alleen de volgende stap. "Alles door elkaar" staat helemaal onderaan om te lezen:
      daar begin je niet, maar een kind voorbij de laatste rij staat daar. */
   const { rijen: padR, later: padL } = padRijen(s);
   const padAlle = padR.concat(padL);
@@ -876,7 +877,8 @@ function oefenSamenvatting(s) {
   // dezelfde volgorde en dezelfde tekens als de velden (zie oefenGroups)
   const glyph = { '+': '+', '-': '−', 'x': '×', ':': '÷' };
   const modes = { kies: 'kiezen', typ: 'typen', mix: 'mix' };
-  const tot = (s.ops.includes('+') || s.ops.includes('-')) ? ` · tot ${s.max}` : '';
+  const totRij = s.padTot && padRijen(s).rijen.slice(-1)[0];   // de lijn midden in een blok: zeg de rij
+  const tot = (s.ops.includes('+') || s.ops.includes('-')) ? ` · tot ${totRij ? totRij.naam.toLowerCase() : s.max}` : '';
   const tafels = (s.ops.includes('x') || s.ops.includes(':'))
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
   const rijen = padRijen(s).rijen.filter(r => !r.uit);
@@ -1356,6 +1358,14 @@ function lijnPlekken(ladder) {
   ladder.querySelectorAll('.fl-lijn').forEach(l => { plek[l.textContent] = l.getBoundingClientRect().top - top; });
   return plek;
 }
+/* Welke lijn verhuist een tik op rij v, met "vanaf" op lo en "tot" op hi?
+   Eén regel voor beide ladders (tellen en rekenen), zodat ze hetzelfde doen:
+   boven de band "vanaf", eronder "tot", erbinnen de dichtste (even ver: "tot"),
+   en op de rij van "vanaf" zelf "tot" -- dan wordt de band die ene rij, waar
+   die tik anders niets deed. Geeft 'vanaf' of 'tot'. */
+function dichtsteLijn(v, lo, hi) {
+  return v < lo || (v > lo && v <= hi && v - lo < hi - v) ? 'vanaf' : 'tot';
+}
 function bindOefenChips(s, p, pfx, done) {
   const bind = (id, fn) => {
     const el = $((pfx || '') + id);
@@ -1409,16 +1419,15 @@ function bindOefenChips(s, p, pfx, done) {
   });
   // telmodus-instellingen
   /* De faseladder: een tik verhuist de dichtstbijzijnde lijn naar die fase.
-     Boven de band trekt "vanaf" omhoog, eronder zakt "tot" mee, en binnen de
-     band komt de lijn die het dichtst bij is (even ver: "tot"). Daarna doet
-     het wat de twee losse kiezers hiervoor deden: de start tilt het kind mee
-     omhoog, de grens houdt het tegen. */
+     Welke lijn dat is zegt dichtsteLijn. Daarna doet het wat de twee losse
+     kiezers hiervoor deden: de start tilt het kind mee omhoog, de grens houdt
+     het tegen. */
   bind('set-fase', c => {
     const v = parseInt(c.dataset.v, 10);
     const top = COUNT_STAGE_MAX;                       // dezelfde klem als de ladder
     const lo = Math.min(Math.max(1, s.stage || 1), top);
     const hi = Math.min(Math.max(lo, s.stageMax || top), top);
-    const vanaf = v < lo || (v <= hi && v - lo < hi - v);
+    const vanaf = dichtsteLijn(v, lo, hi) === 'vanaf';
     if (vanaf) {
       s.stage = v;
       if (s.stageMax < v) s.stageMax = v;               // plafond mag niet onder de start
@@ -1433,29 +1442,26 @@ function bindOefenChips(s, p, pfx, done) {
       p.countTrack.stage = Math.min(st, countMaxStage(s)); // live-stand binnen bereik
     }
   });
-  /* Het leerpad van rekenen (zie oefenGroups): een tik verhuist de dichtstbij-
-     zijnde lijn, zoals op de faseladder (even ver: "tot"). Maar "tot" is de
-     grens van de getallen, en die staat altijd aan het eind van een blok (tot
-     10, 20, 100). Dus:
-       een grijze rij onder "tot"   de lijn zakt tot onder zijn blok: de grens
-                                    omhoog (grensOmhoog, met wennen)
-       een rij dicht bij "tot"      de lijn komt aan het eind van het blok van
-                                    die rij -- de vormen horen bij het blok tot
-                                    20. Is dat al het laatste blok, dan is er
-                                    niets af te snijden en verhuist "vanaf".
+  /* Het leerpad van rekenen (zie oefenGroups): precies zoals de faseladder
+     hierboven -- een tik verhuist de lijn die dichtsteLijn zegt naar die rij,
+     en een grijze rij eronder haalt "tot" erheen. "tot" is ook de grens van de getallen: padTotOp zet die op het blok
+     van de rij (tot 10, 20, 100), met wennen als hij omhoog gaat. Zonder plus en
+     min is er geen "tot" en verhuist alleen "vanaf".
      Haar plek op het pad blijft (padNu): "vanaf" tilt haar hoogstens mee omhoog. */
   bind('set-startstap', c => {
     const v = parseInt(c.dataset.v, 10);
     const { rijen, later } = padRijen(s);
     const r = rijen.concat(later)[v - 1];
     if (!r) return false;
-    const grens = naar => { grensOmhoog(s, naar); if (p) s.grensTipBasis = grensDrieSterren(p); };   // de tip telt opnieuw (zie grensTip)
-    if (v > rijen.length) return grens(r.bereik);
     const speel = rijen.filter(x => !x.uit);
     const lo = speel.length ? rijen.indexOf(padVanafRij(s, speel)) + 1 : 1, hi = rijen.length;
-    const blok = r.soort === 'bereik' ? r.bereik : 20;
-    const plusMin = s.ops.includes('+') || s.ops.includes('-');   // zonder plus en min is er geen "tot"
-    if (plusMin && !(v < lo || v - lo < hi - v) && blok < s.max) return grens(blok);
+    const plusMin = s.ops.includes('+') || s.ops.includes('-');
+    if (plusMin && dichtsteLijn(v, lo, hi) === 'tot') {
+      const max = s.max;
+      padTotOp(s, r);
+      if (p && s.max !== max) s.grensTipBasis = grensDrieSterren(p);   // de tip telt opnieuw (zie grensTip)
+      return;
+    }
     s.padVanaf = v === 1 ? null : r.id;
   });
   bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); telPlafondOpnieuw(p); });

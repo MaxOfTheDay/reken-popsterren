@@ -773,7 +773,8 @@ function defaultProfile(name, dress, opts) {
       numerals: opts.numerals !== false,            // fase 6 (cijfers) toestaan
       qmax: opts.qmax || 10,                         // hoogste hoeveelheid waar het spel naartoe mag groeien (6/8/10)
       memory: opts.memory !== false,                // memory-spelletje op de kaart (standaard aan)
-      padVanaf: opts.padVanaf || null               // rekenmodus: de rij van het leerpad waar het spel minstens begint (zie padNu)
+      padVanaf: opts.padVanaf || null,              // rekenmodus: de rij van het leerpad waar het spel minstens begint (zie padNu)
+      padTot: null,                                 // en de rij waar de lijn "tot" onder staat; null = het eind van het blok (zie padRijen)
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
     // FASE 4A. tourStars blijft bij een verse ster voorgoed leeg -- het is de
@@ -970,6 +971,8 @@ function migrate(p) {
     s.padVanaf = vanaf === 'alles' ? (padRijen(s).rijen.slice(-1)[0] || {}).id || null : vanaf;
   }
   if (p.settings.padVanaf === undefined) p.settings.padVanaf = null;
+  // "tot" als rij kwam later: zonder staat de lijn waar hij altijd stond, aan het eind van het blok
+  if (!(p.settings.padTot in PAD_IDX)) p.settings.padTot = null;
   delete p.settings.startStap;
   if (!p.countTrack) p.countTrack = { stage: p.settings.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 };
   if (p.countTrack.rung == null) p.countTrack.rung = 0;
