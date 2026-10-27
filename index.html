@@ -18354,7 +18354,6 @@ function kaartGroet(mag) {
 
 
 
-  pulsTimer = setTimeout(() => { pulsTimer = null; haltePuls(); }, MOTION.totaal + GROET.landt);
   groetTimer = setTimeout(() => {
     groetTimer = null;
     const map = $('tour-map');
@@ -18365,8 +18364,23 @@ function kaartGroet(mag) {
 
 
     if (!el || !el.isConnected || !$('screen-map').classList.contains('active')) return;
-    if (zetPas(el, GROET.pas)) pasUit(el);
+    hierBenIk(el);
   }, MOTION.totaal);
+}
+
+
+
+
+
+
+
+
+function hierBenIk(el) {
+  if (!zetPas(el, GROET.pas)) return false;
+  pasUit(el);
+  clearTimeout(pulsTimer);
+  pulsTimer = setTimeout(() => { pulsTimer = null; haltePuls(); }, GROET.landt);
+  return true;
 }
 
 
@@ -18454,7 +18468,7 @@ function kaartThuis() {
     groetTimer = null;
     const el = map.querySelector('.tour-hero .avatar-holder');
     if (!el || !el.isConnected || el.classList.contains('dancing')) return;
-    if (zetPas(el, HUPPEL)) pasUit(el);
+    hierBenIk(el);
   };
 
   const hier = kaartHierDoel(map);
@@ -20061,11 +20075,13 @@ function slotHalte(b) {
     dot.classList.add('nee');
     setTimeout(() => dot.classList.remove('nee'), 600);
   }
+  sndTap();
   const map = $('tour-map');
-  const ster = map && map.querySelector('.tour-stop.next .tour-hero');
-  if (!ster) { sndTap(); return; }
-  haltePuls();
-  kaartTik(ster, ster.closest('.tour-stop'));
+  const el = map && map.querySelector('.tour-stop.next .tour-hero .avatar-holder');
+  if (!el || el.classList.contains('dancing')) return;
+  clearTimeout(groetTimer);
+  groetTimer = null;
+  hierBenIk(el);
 }
 
 
