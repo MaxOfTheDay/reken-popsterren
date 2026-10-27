@@ -1430,10 +1430,16 @@
   }
 
 
+
+
+
+
+
+
   .vonk-laag .vonk.aan { animation: vonkje 800ms ease-in-out; }
   @keyframes vonkje {
     0%   { opacity: 0; transform: scale(.3) rotate(-20deg); }
-    40%  { opacity: 1; transform: scale(1) rotate(0deg); }
+    40%  { opacity: var(--piek, 1); transform: scale(1) rotate(0deg); }
     100% { opacity: 0; transform: scale(.55) rotate(16deg); }
   }
 
@@ -15752,7 +15758,7 @@ function vonkje(bijLogo) {
   el.style.left = Math.round(plek.x) + 'px';
   el.style.top = Math.round(plek.y) + 'px';
   el.style.fontSize = Math.round(bijLogo ? vonkTussen(15, 19) : vonkTussen(8, 13)) + 'px';
-  el.style.opacity = (bijLogo ? .95 : vonkTussen(.55, .8)).toFixed(2);
+  el.style.setProperty('--piek', (bijLogo ? .95 : vonkTussen(.55, .8)).toFixed(2));
   el.style.animationDuration = Math.round(vonkTussen(VONKJES.duurMin, VONKJES.duurMax)) + 'ms';
   el.classList.add('aan');
 
