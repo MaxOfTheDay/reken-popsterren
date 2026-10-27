@@ -59,6 +59,94 @@ function show(id) {
   if (navId) updateTroDot();
   knipperWek();   // het knipperklokje kijkt naar de poppen van het nieuwe scherm
   syncBackGuard();   // elk schermwissel loopt door hier heen -- zie "Terug-navigatie" onderaan
+  onderVrijOpnieuw();   // de ruimte onder de balken hoort bij dít scherm -- zie hieronder
+  schuifWacht();
+}
+
+/* = De ruimte onder de balken ------------------------------------------------
+   Op een lijst (.lijst, zie .screen in 10-basis) zweeft er onderaan van alles
+   over de inhoud: de navigatie, de lade van de kleedkamer, de balk van de kast.
+   Het laatste kaartje hoort daar net boven te kunnen komen, en niet verder.
+
+   Dat is één maat voor de hele app, en hij wordt gemeten in plaats van
+   uitgerekend: van de onderrand van het scherm tot de bovenkant van de hoogste
+   balk die er nú staat, plus ONDER_LUCHT. Hij staat als --onder-vrij op het
+   scherm zelf, en het stijlblad gebruikt hem als padding onderaan (en de lade
+   van de kleedkamer en de kast voor hun doorlopende achtergrond). Zo kan een
+   scherm geen ruimte meer houden voor een balk die dicht is, en hoeft een nieuwe
+   balk alleen in ONDER_BALKEN te staan.
+
+   Groeien gaat meteen: een balk die opengaat moet het kaartje eronder meteen
+   kunnen vrijgeven (zichtbaarBovenBalk scrollt in dezelfde tik). Krimpen pas na
+   onderVrijOpnieuw -- een ander scherm (show) of een andere lade: wie onderaan
+   stond als de balk dichtging, zag het rek anders een stuk omlaag springen,
+   omdat de browser de schuifstand terugtrekt.
+
+   Gemeten met offsetTop en niet met getBoundingClientRect: de navigatie schuift
+   met een transform in en uit, en een scherm zoomt bij aankomst -- de maat hoort
+   bij waar ze straks stilstaan, niet bij het beeldje waarop er gemeten wordt. */
+const ONDER_BALKEN = ['main-nav', 'dress-bar', 'kast-bar'];
+const ONDER_LUCHT = 14;
+let onderVrijScherm = null, onderVrijNu = 0;
+function onderVrijMeet() {
+  const scherm = document.querySelector('.screen.active');
+  if (!scherm || !scherm.classList.contains('lijst')) return;
+  let onder = scherm.offsetHeight;
+  for (let e = scherm; e; e = e.offsetParent) onder += e.offsetTop;
+  let top = onder;
+  for (const id of ONDER_BALKEN) {
+    const balk = $(id);
+    if (!balk || !balk.offsetHeight || getComputedStyle(balk).display === 'none') continue;
+    top = Math.min(top, balk.offsetTop);
+  }
+  const vrij = Math.max(0, Math.ceil(onder - top)) + ONDER_LUCHT;
+  if (scherm === onderVrijScherm && vrij <= onderVrijNu) return;
+  onderVrijScherm = scherm; onderVrijNu = vrij;
+  scherm.style.setProperty('--onder-vrij', vrij + 'px');
+}
+/* Opnieuw beginnen meet niet meteen: wie dit aanroept (show, een andere lade)
+   zet daarna in dezelfde tik pas neer wat er komt -- show() zet de lade van de
+   kleedkamer eerst open, en renderShop doet hem pas daarna dicht als er niets
+   gekozen is. Wie in die tik meet, krijgt de nieuwe stand; anders meet de
+   microtaak hieronder, nog vóór de eerste verf. */
+function onderVrijOpnieuw() {
+  onderVrijScherm = null;
+  queueMicrotask(onderVrijMeet);
+}
+/* Wie een balk opent of dichtdoet roept onderVrijMeet zelf aan, in dezelfde tik
+   (de kleedkamer en de kast doen dat). Dit is het vangnet voor wie dat vergeet:
+   elke balk die verschijnt, verdwijnt of van hoogte verandert, en elk venster
+   dat draait of van maat verandert, meet opnieuw. */
+function onderVrijWaarnemen() {
+  const kijk = typeof MutationObserver === 'function'
+    ? new MutationObserver(onderVrijMeet) : null;
+  const maat = typeof ResizeObserver === 'function'
+    ? new ResizeObserver(onderVrijMeet) : null;
+  for (const id of ONDER_BALKEN) {
+    const balk = $(id);
+    if (!balk) continue;
+    if (kijk) kijk.observe(balk, { attributes: true, attributeFilter: ['style', 'class'], childList: true, subtree: true });
+    if (maat) maat.observe(balk);
+  }
+  window.addEventListener('resize', onderVrijOpnieuw);
+}
+/* De keerzijde van "schuiven is een keuze" (zie .screen in 10-basis): een scherm
+   dat geen lijst is en toch niet past, wordt afgeknipt -- stil, er breekt niets.
+   Met ?debug zegt de console het, bij elke schermwissel en elke nieuwe maat, met
+   hoeveel er wegvalt. Zo zie je het in de studio al terwijl je eraan werkt, en
+   niet pas in test/schuiven.test.js (zaak D). */
+let schuifWachtAan = false;
+function schuifWacht() {
+  if (!schuifWachtAan) return;
+  clearTimeout(schuifWacht.t);
+  // na de aankomst: een scherm dat nog inzoomt of een kaart die nog opbouwt telt niet
+  schuifWacht.t = setTimeout(() => {
+    const scherm = document.querySelector('.screen.active');
+    if (!scherm || scherm.classList.contains('lijst')) return;
+    const weg = scherm.scrollHeight - scherm.clientHeight;
+    if (weg > 1) console.warn(`[schuiven] #${scherm.id} past niet op ${innerWidth}x${innerHeight}: `
+      + `${weg}px valt onderaan weg. Laat het passen, of maak er een lijst van (.lijst).`);
+  }, 900);
 }
 // Kaart is altijd "thuis" (goMap() start zelf al altijd bij de huidige wereld,
 // nooit een onthouden positie). Kleedkamer/Trofeeën onthouden juist wél waar

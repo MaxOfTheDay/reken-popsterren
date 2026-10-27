@@ -75,9 +75,19 @@
     outline: 3px solid var(--gold-accent); outline-offset: 2px;
   }
 
-  /* schermen scrollen nooit zijwaarts: horizontaal scrollen gebeurt alleen
-     ín de reisroute en de tabbladen zelf */
-  .screen { display: none; flex: 1; flex-direction: column; align-items: center; padding: 12px; overflow-y: auto; overflow-x: hidden;
+  /* SCHUIVEN IS EEN KEUZE, GEEN STANDAARD. Een scherm schuift niet, tenzij het
+     een lijst is (.lijst): de kleedkamer, de kast, de reis, het ouderdeel, het
+     maakformulier en de sterrenkeuze. Daar is meer dan er past, en schuiven is
+     de manier om het te zien. De kaart, de show, het eindscherm en memory zijn
+     één beeld: die horen te passen, en ze bewegen niet onder je vinger.
+     Een scrollvak schuift al bij één pixel te veel (een onscherpe rand die groter
+     is dan het scherm, een padding voor een balk die dicht is), en dat voelt los.
+     De keerzijde: wat op een beeldscherm níét past wordt afgeknipt in plaats van
+     te schuiven. test/schuiven.test.js zaak D kijkt daarom op elke maat na dat
+     zo'n scherm echt past. Wordt een scherm een lijst, zet dan .lijst erbij.
+     Zijwaarts schuift geen enkel scherm: dat gebeurt alleen ín de reisroute en
+     de tabbladen zelf. */
+  .screen { display: none; flex: 1; flex-direction: column; align-items: center; padding: 12px; overflow: hidden;
     /* --rand moet gelijk zijn aan de padding hierboven: de plakkende kop bloedt
        er met een negatieve marge precies overheen, zodat hij tot de schermrand
        doorloopt terwijl de inhoud eronder netjes binnen de rand blijft. Stond
@@ -193,6 +203,7 @@
      transition op. Opnieuw hetzelfde scherm tonen herstart hem niet -- show()
      haalt .active weg en zet hem in dezelfde taak terug -- dus nogmaals op
      hetzelfde tabblad tikken geeft geen flits. */
+  .screen.lijst { overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; }
   .screen.active { display: flex; animation: screenIn .18s ease both; }
   @keyframes screenIn { from { opacity: 0; } to { opacity: 1; } }
   /* Wie geen beweging wil krijgt geen harde knip maar een kortere fade: een
