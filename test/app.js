@@ -225,6 +225,8 @@ const BRUG = `globalThis.__api = {
   wereldAccent, planSpecials,
   // de antwoordknoppen
   genQuestion, keuzeGrens, makeChoices,
+  // herhalen wat bewaard staat: alleen wat nog bij de instellingen past
+  pastNog, pickWeak, pickRefresh, buildQuestion, memSomDeck,
 };`;
 
 function laadApp(opties) {

@@ -1402,4 +1402,38 @@ zaak('ZC', () => {
   check(z('🗺️ ❤️‍🔥') === '', 'ZC · alleen emoji is niets om te zeggen', JSON.stringify(z('🗺️ ❤️‍🔥')));
 });
 
+zaak('ZD', () => {
+  // Een ouder zet alleen de tafels van 3, 6 en 9 aan, terwijl er van vroeger nog
+  // een gemiste 8 × 2 bewaard staat. Die mag niet meer terugkomen: niet als
+  // herhaling, niet als onderhoud en niet in memory.
+  const { app } = verseSter('Tafels');
+  const p = app.db.profiles.p1 = app.defaultProfile('Tafels', 'dress_roze', {});
+  app.normalizeProfiles();
+  p.settings.ops = ['x']; p.settings.tables = [3, 6, 9];
+  p.weak = {
+    '8 × 2 = @': { ans: 16, op: 'x', w: 6 },
+    '4 × 6 = @': { ans: 24, op: 'x', w: 2 },
+    '3 + 4 = @': { ans: 7, op: '+', w: 6 },
+  };
+  p.learned = { '7 × 5 = @': { ans: 35, op: 'x', iv: 18, due: 0 } };
+  p.stats.correct = 999;
+  const gezien = new Set();
+  for (let i = 0; i < 200; i++) { const q = app.pickWeak(p, p.settings); if (q) gezien.add(q.tmpl); }
+  check(gezien.size === 1 && gezien.has('4 × 6 = @'), 'ZD · herhaling: alleen tafels die aanstaan', JSON.stringify([...gezien]));
+  check(app.pickRefresh(p, p.settings) === null, 'ZD · onderhoud: een tafel die uitstaat komt niet langs', '');
+  const mem = app.memSomDeck(p).cards.filter(c => c.som).map(c => c.som);
+  check(!mem.includes('8 × 2') && !mem.includes('3 + 4'), 'ZD · memory: geen zwakke som die niet meer past', JSON.stringify(mem));
+  const vragen = [];
+  for (let i = 0; i < 300; i++) vragen.push(app.buildQuestion(p, app.WORLD_START[5]).tmpl);
+  // de tafel is het tweede getal, ook bij zoek-het-getal ("4 × @ = 12" is er geen)
+  const vreemd = vragen.filter(t => / × \d+ = @$/.test(t) && ![3, 6, 9].includes(Number(t.match(/\d+/g)[1])));
+  check(vreemd.length === 0, 'ZD · in een show: geen enkele tafel buiten 3, 6 en 9', JSON.stringify(vreemd.slice(0, 5)));
+  // plus en min: een verlaagde grens geldt ook voor wat al bewaard stond
+  p.settings.ops = ['+', '-']; p.settings.max = 10;
+  p.weak = { '15 − 8 = @': { ans: 7, op: '-', w: 6 }, '6 + 3 = @': { ans: 9, op: '+', w: 2 } };
+  const pm = new Set();
+  for (let i = 0; i < 200; i++) { const q = app.pickWeak(p, p.settings); if (q) pm.add(q.tmpl); }
+  check(pm.size === 1 && pm.has('6 + 3 = @'), 'ZD · min: 15 − 8 valt buiten "tot 10", ook al is het antwoord 7', JSON.stringify([...pm]));
+});
+
 klaar();

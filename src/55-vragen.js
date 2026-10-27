@@ -945,7 +945,7 @@ function buildMemoryDeck(p) {
 }
 /* De rekenvariant: een som en zijn antwoord vormen een paar. Elk antwoord komt
    maar één keer voor, anders passen er twee sommen bij hetzelfde getal. Eerst de
-   sommen die ze lastig vindt (zwaarste eerst), de rest uit dezelfde maker als de
+   sommen die ze lastig vindt en die nog passen (zwaarste eerst), de rest uit dezelfde maker als de
    show, op de stap van de wereld waar ze nu is. */
 function memSomDeck(p) {
   const pairs = MEM_MIN_PAREN;
@@ -954,7 +954,8 @@ function memSomDeck(p) {
     if (gekozen.length >= pairs || antwoorden.has(ans) || !/ = @$/.test(tmpl)) return;
     antwoorden.add(ans); gekozen.push({ som: tmpl.replace(/ = @$/, ''), v: ans });
   };
-  Object.entries(p.weak || {}).sort((a, b) => b[1].w - a[1].w).slice(0, 2)
+  Object.entries(p.weak || {}).filter(([tmpl, e]) => pastNog(tmpl, e, p.settings))
+    .sort((a, b) => b[1].w - a[1].w).slice(0, 2)
     .forEach(([tmpl, e]) => neem(tmpl, e.ans));
   const lvl = WORLD_START[continueWorld(p)] || 1;
   for (let poging = 0; gekozen.length < pairs && poging < 60; poging++) {
@@ -1200,19 +1201,34 @@ function bumpLearned(p, q) {
 }
 // Toch weer misgegaan: uit onderhoud, terug naar de zwakke sommen (incWeak doet dat).
 function demoteLearned(p, q) { if (p.learned) delete p.learned[q.tmpl]; }
-// Een som die aan onderhoud toe is: het langst over tijd gaat voor. Alleen
-// bewerkingen die nu aanstaan, en niets boven de ingestelde bovengrens.
+/* Mag een bewaarde som (uit p.weak of p.learned) nog terugkomen met wat er nú
+   is ingesteld? Een ouder zet op elk moment een bewerking uit, verlaagt de
+   grens of haalt tafels weg, en wat ze daarvóór miste of leerde blijft gewoon
+   bewaard. Zonder deze toets op álle drie kwam 8 × 2 terug als zwakke som
+   terwijl alleen de tafels van 3, 6 en 9 aanstonden.
+     plus en min  geen getal in de som boven de grens (bij min is dat het
+                  eerste, niet het antwoord)
+     × en :       de tafel staat nog aan. De tafel is het tweede getal: zo
+                  bouwt genTriple ze (b = pick(tables)), en alleen klassieke
+                  sommen komen in de poel (zie incWeak). */
+function pastNog(tmpl, e, s) {
+  const ops = s.ops.length ? s.ops : ['+'];
+  if (!ops.includes(e.op)) return false;
+  const getallen = (tmpl.match(/\d+/g) || []).map(Number);
+  if (e.op === '+' || e.op === '-') return Math.max(e.ans, ...getallen) <= s.max;
+  const tables = s.tables.length ? s.tables : [2, 5, 10];
+  return tables.includes(getallen[1]);
+}
+// Een som die aan onderhoud toe is: het langst over tijd gaat voor. Alleen wat
+// met de instellingen van nu nog kan (pastNog).
 // mag (optioneel): zegt per sjabloon of hij nu terug mag komen (zie buildQuestion).
 function pickRefresh(p, s, mag) {
   if (!p.learned) return null;
-  const ops = s.ops.length ? s.ops : ['+'];
   const now = qClock(p);
   let best = null, bestOver = -1;
   for (const k of Object.keys(p.learned)) {
     const e = p.learned[k];
-    // de grens geldt alleen voor plus en min; een tafel loopt altijd tot × 10
-    const teGroot = (e.op === '+' || e.op === '-') && e.ans > s.max;
-    if (!ops.includes(e.op) || teGroot || (mag && !mag(k))) continue;
+    if (!pastNog(k, e, s) || (mag && !mag(k))) continue;
     const over = now - e.due;
     if (over >= 0 && over > bestOver) { best = k; bestOver = over; }
   }
@@ -1220,11 +1236,10 @@ function pickRefresh(p, s, mag) {
   const e = p.learned[best];
   return { tmpl: best, ans: e.ans, op: e.op, kind: 'classic', refresh: true };
 }
-// Kies een zwakke som om te herhalen (alleen als de bewerking nog aanstaat); zwaardere vaker.
+// Kies een zwakke som om te herhalen (alleen als hij nog past, zie pastNog); zwaardere vaker.
 // mag (optioneel): zegt per sjabloon of hij nu terug mag komen (zie buildQuestion).
 function pickWeak(p, s, mag) {
-  const ops = s.ops.length ? s.ops : ['+'];
-  const keys = Object.keys(p.weak).filter(k => ops.includes(p.weak[k].op) && (!mag || mag(k)));
+  const keys = Object.keys(p.weak).filter(k => pastNog(k, p.weak[k], s) && (!mag || mag(k)));
   if (!keys.length) return null;
   const pool = [];
   keys.forEach(k => { for (let i = 0; i < p.weak[k].w; i++) pool.push(k); });
