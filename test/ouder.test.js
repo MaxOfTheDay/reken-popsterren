@@ -29,6 +29,8 @@
  *   O  op het beginscherm: de uitlegkaart na de back-up, per browser, en weg in de app
  *   P  Voortgang: status uit de laatste shows, één stap "nu", de oogst dicht
  *   Q  opstarten en instellingen: wie net speelde, geluid aan, meisje/jongen, het maakformulier
+ *   T  de back-up is één rij met een blad erachter; overzetten met een code, langs
+ *      een nagebootste ontvanger: neerleggen, ophalen, één keer, vervangen, annuleren
  *
  * Draaien:
  *   npm run test:ouder          (of: npm test voor alle suites)
@@ -228,7 +230,7 @@ function check(ok, label, detail) {
       titel: getComputedStyle(document.querySelector('#screen-settings .header-title')).display !== 'none',
       tabs: getComputedStyle(document.getElementById('settings-subtabs')).display === 'none',
       speel: document.getElementById('speel-als').hidden,
-      alle: !!document.getElementById('set-sound') && !!document.getElementById('set-export'),
+      alle: !!document.getElementById('set-sound') && !!document.getElementById('set-backup'),
       naam: !!document.getElementById('set-name'),
     }));
     check(r.setKey === null && r.rijen.join(',') === 'Anna,Bas,Cato', 'het tandwiel opent het overzicht, met elk kind als rij', JSON.stringify(r));
@@ -243,7 +245,7 @@ function check(ok, label, detail) {
       kop: document.querySelector('#settings-wie .wie-naam').textContent,
       tabAan: document.querySelector('#settings-subtabs button.on').dataset.t,
       speel: document.getElementById('speel-als').getAttribute('aria-label'),
-      alle: !!document.getElementById('set-export'),
+      alle: !!document.getElementById('set-backup'),
     }));
     check(r.setKey === 'p3' && r.tab === 'voortgang' && r.tabAan === 'voortgang' && r.kop === 'Cato',
       'een tik op een rij opent dat kind, op Voortgang', JSON.stringify(r));
@@ -930,8 +932,9 @@ function check(ok, label, detail) {
     });
     const rij = page => page.evaluate(() => {
       const r = document.getElementById('set-alsapp');
-      return { er: !!r, naGeluid: !!r && r.previousElementSibling === document.getElementById('set-sound'),
-        backup: !!document.getElementById('set-export') };
+      // Geluid, Back-up, en "Als app" als laatste (zie appWideCardsHtml)
+      return { er: !!r, naGeluid: !!r && r.previousElementSibling === document.getElementById('set-backup'),
+        backup: !!document.getElementById('set-backup') };
     });
     const leeg = page => page.evaluate(() => { db.profiles = {}; save(); openSettings(); });
 
@@ -941,7 +944,7 @@ function check(ok, label, detail) {
       await open(page, null, null);
       await page.waitForTimeout(200);
       let r = await rij(page);
-      check(r.er && r.naGeluid, 'O · op het overzicht staat "Als app" direct onder Geluid', JSON.stringify(r));
+      check(r.er && r.naGeluid, 'O · op het overzicht staat "Als app" als laatste, onder de back-up', JSON.stringify(r));
       check(!(await kaart(page)).er, 'O · en geen uitlegkaart meer -- die staat in het blad', '');
       await page.click('#set-alsapp');
       await page.waitForTimeout(200);
@@ -984,7 +987,7 @@ function check(ok, label, detail) {
       await page.waitForTimeout(200);
       const tekst = await page.evaluate(() => document.getElementById('app-blad').textContent.replace(/\s+/g, ' '));
       check(/Zet op beginscherm/.test(tekst), `O · ${naam}: Deel → Zet op beginscherm`, tekst);
-      check(/Al gespeeld in Safari\? .*back-up via ⚙️ Voor ouders/.test(tekst), `O · ${naam}: met de back-upwaarschuwing`, tekst);
+      check(/Al gespeeld in Safari\? .*back-up via ⚙️ › Back-up/.test(tekst), `O · ${naam}: met de back-upwaarschuwing`, tekst);
       await ctx.close();
     }
 
@@ -1249,6 +1252,179 @@ function check(ok, label, detail) {
     r = await page.evaluate(() => document.getElementById('set-backup-stand').classList.contains('oud'));
     check(!r, 'S · met een verse back-up niet meer', String(r));
     await ctx.close();
+  }
+
+
+  /* ================= T · Het back-upblad en overzetten ================= */
+  /* De ontvanger (worker/overzetten.js) wordt hier nagebootst met page.route --
+     zijn eigen logica heeft een eigen suite (test/overzetten.test.js). Hier gaat
+     het om de app: wat er weggaat, dat er niets verandert tot "Zet op dit
+     toestel", en dat een code maar één keer werkt. ?debug&overzet zet overzetten
+     aan vanaf file://. */
+  {
+    const ADRES = 'https://rekensterren-overzetten.maxheyrman.workers.dev/';
+    const foutenVoor = pageErrors.length;
+    const codes = new Map();
+    let neergelegd = null, nr = 100000;
+    const ontvanger = async route => {
+      const req = route.request();
+      const pad = new URL(req.url()).pathname;
+      const body = req.postData() || '';
+      const stuur = (status, data) => route.fulfill({ status, contentType: 'application/json',
+        headers: { 'Access-Control-Allow-Origin': '*' }, body: data == null ? '' : JSON.stringify(data) });
+      if (pad === '/zet') {
+        neergelegd = body;
+        const code = String(++nr);
+        codes.set(code, { save: body, opgehaald: false });
+        return stuur(201, { code, tot: Date.now() + 15 * 60000, sleutel: 'k' + code });
+      }
+      const v = JSON.parse(body);
+      const c = codes.get(v.code);
+      if (pad === '/haal') {
+        if (!c || c.opgehaald) return stuur(404, { fout: 'onbekend' });
+        c.opgehaald = true;
+        return route.fulfill({ status: 200, contentType: 'application/json',
+          headers: { 'Access-Control-Allow-Origin': '*' }, body: '{"save":' + c.save + '}' });
+      }
+      if (pad === '/stand') return stuur(200, { opgehaald: !!(c && c.opgehaald), verlopen: !c });
+      return stuur(404);
+    };
+    const metOverzet = async (page, ctx) => {
+      await ctx.route(ADRES + '**', ontvanger);
+      await page.goto(APP_URL + '&overzet');
+      await page.waitForTimeout(250);
+    };
+    const tik = async (page, sel) => { await page.click(sel); await page.waitForTimeout(200); };
+
+    // A: de afzender, met Anna en Bas
+    const a = await fresh();
+    // zonder ?overzet (zoals vanaf file://): alleen het bestand
+    await open(a.page, null, null);
+    await tik(a.page, '#set-backup');
+    let r = await a.page.evaluate(() => ['bb-maak', 'bb-terug', 'bb-zet', 'bb-code'].filter(id => document.getElementById(id)));
+    check(r.join() === 'bb-maak,bb-terug', 'T · zonder overzetten: alleen Maken en Terugzetten', r.join());
+    await metOverzet(a.page, a.ctx);
+    await a.page.evaluate(() => { db.profiles.p1.stars = { 1: 3, 2: 2 }; db.profiles.p2.stars = { 1: 1 }; save(); });
+    await open(a.page, null, null);
+    r = await a.page.evaluate(() => {
+      const kaart = document.querySelector('.geluid-kaart');
+      return { rijen: [...kaart.querySelectorAll('.gear-item')].map(b => b.id), knoppen: !!document.getElementById('set-export') };
+    });
+    check(r.rijen[0] === 'set-sound' && r.rijen[1] === 'set-backup' && !r.knoppen,
+      'T · de back-up is één rij onder Geluid, zonder knoppen op het overzicht', JSON.stringify(r));
+    await tik(a.page, '#set-backup');
+    r = await a.page.evaluate(() => ['bb-maak', 'bb-terug', 'bb-zet', 'bb-code'].filter(id => document.getElementById(id)));
+    check(r.length === 4, 'T · het blad heeft vier tegels', r.join());
+    await tik(a.page, '#bb-zet');
+    await a.page.waitForTimeout(300);
+    r = await a.page.evaluate(() => ({
+      code: [...document.querySelectorAll('#oz-blad .oz-c')].map(c => c.textContent).join(''),
+      gezichten: document.querySelectorAll('#oz-blad .oz-mini').length,
+      db: JSON.stringify(db),
+    }));
+    const code = r.code;
+    check(/^\d{6}$/.test(code), 'T · Overzetten toont een code van zes cijfers', code);
+    check(r.gezichten === 2, 'T · met de gezichten van wie er meegaat', String(r.gezichten));
+    check(neergelegd === r.db, 'T · wat weggaat is precies de save', (neergelegd || '').slice(0, 60));
+
+    // B: een leeg toestel, vanaf het beginscherm
+    const b = await fresh([]);
+    await metOverzet(b.page, b.ctx);
+    await b.page.evaluate(() => { db.profiles = {}; save(); goProfiles(); });
+    await b.page.waitForTimeout(200);
+    r = await b.page.evaluate(() => getComputedStyle(document.getElementById('code-hint')).display);
+    check(r === 'flex', 'T · het lege beginscherm heeft "Code invullen"', r);
+    await tik(b.page, '#code-hint');
+    await b.page.keyboard.type('999999');
+    await b.page.waitForTimeout(400);
+    r = await b.page.evaluate(() => ({
+      fout: !!document.querySelector('#oz-blad .oz-code.fout'),
+      tekst: (document.querySelector('#oz-blad .oz-fout') || {}).textContent,
+      n: Object.keys(db.profiles).length,
+    }));
+    check(r.fout && /Klopt niet/.test(r.tekst) && r.n === 0, 'T · een verkeerde code: rood, en er verandert niets', JSON.stringify(r));
+    await b.page.keyboard.type(code);
+    await b.page.waitForTimeout(400);
+    r = await b.page.evaluate(() => ({
+      titel: document.getElementById('confirm-title').textContent,
+      namen: [...document.querySelectorAll('#oz-blad .oz-ster b')].map(x => x.textContent),
+      sterren: [...document.querySelectorAll('#oz-blad .oz-ster small')].map(x => x.textContent.trim()),
+      knop: document.getElementById('oz-ja').textContent,
+      vervang: !!document.querySelector('.oz-vervang'),
+      n: Object.keys(db.profiles).length,
+    }));
+    check(/Sterren gevonden/.test(r.titel) && r.namen.join() === 'Anna,Bas', 'T · "Sterren gevonden" noemt wie erin zit', JSON.stringify(r));
+    check(r.sterren.join('|') === '⭐ 5|⭐ 1', 'T · met hun sterren', r.sterren.join('|'));
+    check(r.knop === 'Zet op dit toestel' && !r.vervang, 'T · op een leeg toestel: "Zet op dit toestel"', JSON.stringify(r));
+    check(r.n === 0, 'T · en nog niets veranderd vóór de knop', 'n=' + r.n);
+    await tik(b.page, '#oz-ja');
+    r = await b.page.evaluate(() => ({
+      namen: profileKeys().map(k => db.profiles[k].name),
+      opgeslagen: Object.keys(JSON.parse(localStorage.getItem(LS_KEY)).profiles).length,
+      tegels: document.querySelectorAll('#star-grid .ster-tegel, .star-grid .ster-tegel').length,
+      hint: getComputedStyle(document.getElementById('code-hint')).display,
+    }));
+    check(r.namen.join() === 'Anna,Bas' && r.opgeslagen === 2, 'T · daarna staan Anna en Bas op dit toestel, opgeslagen', JSON.stringify(r));
+    check(r.hint === 'none', 'T · en is "Code invullen" weg van het beginscherm', r.hint);
+
+    // A hoort het: de stand komt binnen drie tellen
+    await a.page.waitForTimeout(3600);
+    r = await a.page.evaluate(() => ({
+      titel: document.getElementById('confirm-title').textContent,
+      vinkjes: document.querySelectorAll('#oz-blad .oz-vink').length,
+    }));
+    check(/Overgezet/.test(r.titel) && r.vinkjes === 2, 'T · het toestel met de code zegt "Overgezet"', JSON.stringify(r));
+
+    // dezelfde code nog eens: werkt niet meer
+    const c2 = await fresh(['Cato']);
+    await metOverzet(c2.page, c2.ctx);
+    await open(c2.page, null, null);
+    await tik(c2.page, '#set-backup');
+    await tik(c2.page, '#bb-code');
+    await c2.page.keyboard.type(code);
+    await c2.page.waitForTimeout(400);
+    r = await c2.page.evaluate(() => !!document.querySelector('#oz-blad .oz-code.fout'));
+    check(r, 'T · een code werkt maar één keer', String(r));
+    // een nieuwe code van A, op een toestel mét een ster: vervangen, of annuleren
+    await a.page.evaluate(() => closeConfirmModal());
+    await tik(a.page, '#set-backup');
+    await tik(a.page, '#bb-zet');
+    await a.page.waitForTimeout(300);
+    const code2 = await a.page.evaluate(() => [...document.querySelectorAll('#oz-blad .oz-c')].map(c => c.textContent).join(''));
+    await c2.page.keyboard.type(code2);
+    await c2.page.waitForTimeout(400);
+    r = await c2.page.evaluate(() => ({
+      knop: document.getElementById('oz-ja').textContent,
+      weg: [...document.querySelectorAll('.oz-vervang .oz-ster b')].map(x => x.textContent),
+    }));
+    check(r.knop === 'Vervangen' && r.weg.join() === 'Cato', 'T · met sterren op dit toestel: wie verdwijnt, en "Vervangen"', JSON.stringify(r));
+    await tik(c2.page, '#oz-dicht');
+    r = await c2.page.evaluate(() => profileKeys().map(k => db.profiles[k].name).join());
+    check(r === 'Cato', 'T · Annuleer laat alles staan', r);
+
+    // geen net: een zin, en niets kapot
+    const d = await fresh();
+    await d.ctx.route(ADRES + '**', route => route.abort());
+    await d.page.goto(APP_URL + '&overzet');
+    await d.page.waitForTimeout(250);
+    await open(d.page, null, null);
+    await tik(d.page, '#set-backup');
+    await tik(d.page, '#bb-zet');
+    await d.page.waitForTimeout(300);
+    r = await d.page.evaluate(() => ({ fout: (document.querySelector('#oz-blad .oz-fout') || {}).textContent, weer: !!document.getElementById('oz-weer') }));
+    check(!!r.fout && r.weer, 'T · zonder ontvanger: een zin en "Opnieuw"', JSON.stringify(r));
+    // het blad "als app" op een iPhone met sterren: meenemen met een code
+    r = await d.page.evaluate(() => {
+      const m = appBladInhoud('ios', false, true, false, true), z = appBladInhoud('ios', false, false, false, true);
+      return { mee: m.meenemen, noot: /met een code/.test(m.html), leeg: z.meenemen };
+    });
+    check(r.mee && r.noot && !r.leeg, 'T · iPhone met sterren: "Sterren meenemen" in het blad "als app"', JSON.stringify(r));
+    for (const x of [a, b, c2, d]) await x.ctx.close();
+    // Een verkeerde code is een 404 en "geen net" een afgebroken aanvraag: de
+    // browser zet die zelf in de console, en dat hoort zo. Alleen díe twee gaan eruit.
+    const verwacht = /Failed to load resource: (the server responded with a status of 404|net::ERR_FAILED)/;
+    const eigen = pageErrors.splice(foutenVoor).filter(e => !verwacht.test(e));
+    pageErrors.push(...eigen);
   }
 
   await browser.close();

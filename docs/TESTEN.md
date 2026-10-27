@@ -45,6 +45,7 @@ npm run test:studio      # de wereldstudio (?debug&mapedit)
 npm run test:onderrand   # de zwevende bediening onderaan blijft staan
 npm run test:kop         # de kop van de kaart: niets overlapt, op geen enkele maat
 npm run test:hub         # de Dev Studio (npm run studio) — kaal Node
+npm run test:overzetten  # de ontvanger van Overzetten (worker/overzetten.js) — kaal Node
 npm run test:tekeningen  # een vervangen tekening liet ART_CACHE omhoog gaan — kaal Node, tegen origin/main
 ```
 
@@ -383,6 +384,17 @@ Een Node-suite (geen browser) over het gereedschap achter `npm run studio`; zie
   voorraad-eerst en negeert de query, dus blijft hij staan, dan is een vervangen
   tekening onzichtbaar — ook na herladen, en ook in het voorbeeldje op een
   kaartje, want zijn bereik is `/` en hij bedient dus ook de studiopagina.
+
+### `test/overzetten.test.js` — de ontvanger van Overzetten
+
+De Worker in `worker/overzetten.js` draait bij Cloudflare, waar geen test bij
+kan. Hij is gewone JavaScript met `fetch`, `Request` en `Response`, en zijn twee
+Durable Objects worden hier nagebootst (een opslag in het geheugen, een wekker
+die de test zelf laat aflopen). Zo gaan herkomst, neerleggen, één keer ophalen,
+verlopen, de stand voor de eigenaar, het remmen per adres en botsende codes er
+allemaal door, op kaal Node. De app-kant (de bladen, dat er niets verandert vóór
+"Zet op dit toestel") staat in `test/ouder.test.js` zaak T, met een nagebootste
+ontvanger via `page.route` en `?debug&overzet`.
 
 ### `test/onderrand.test.js` — de zwevende bediening onderaan
 

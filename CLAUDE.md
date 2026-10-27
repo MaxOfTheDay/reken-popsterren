@@ -121,7 +121,10 @@ app moet het doen op een oude tablet in een woonkamer, zonder net. Alles wat het
 spel nodig heeft ligt naast `index.html` (ook het lettertype staat in
 `assets/font/`); houd dat zo. Er gaat bij een gewone start nog precies één
 verzoek naar buiten en dat is het meetscriptje uit regel 2 — niets van het spel
-wacht erop, dus zonder net mist er niets dan een telling.
+wacht erop, dus zonder net mist er niets dan een telling. **Overzetten** (de
+sterren met een code naar een ander toestel, `= Overzetten` in `src/20-app.js`)
+praat alleen met zijn Worker als een ouder daar zelf op tikt; zie
+`docs/OVERZETTEN.md`.
 
 ## Waar de dingen staan
 
