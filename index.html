@@ -23926,6 +23926,7 @@ function endLevel(success) {
   }
   onthoudUitkomst(p, success ? showStars(G) : 0);
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;
+  if (!G.count && success) telGrensDrie(p, lvl, showStars(G));
 
 
 
@@ -26076,12 +26077,32 @@ function stemNotitie(naam) {
 
 const GRENS_LADDER = [10, 20, 50, 100];
 const GRENS_TIP_SHOWS = 6;
-function grensDrieSterren(p) {
+
+
+
+
+
+
+
+
+
+
+
+
+function grensDrieHaltes(p) {
   const vanaf = LEERSTAPPEN.length - 1;
   if (vanaf >= WORLD_AVAIL) return 0;
   let drie = 0;
   for (let l = WORLD_START[vanaf]; l <= WORLD_LAST; l++) if ((p.stars || {})[l] >= 3) drie++;
   return drie;
+}
+function grensDrieSterren(p) {
+  return typeof p.grensDrie === 'number' ? p.grensDrie : grensDrieHaltes(p);
+}
+
+function telGrensDrie(p, lvl, sterren) {
+  if (sterren < 3 || worldFor(lvl).index < LEERSTAPPEN.length - 1) return;
+  p.grensDrie = grensDrieSterren(p) + 1;
 }
 const MODE_LADDER = { kies: 'mix', mix: 'typ' };
 function grensTip(p) {
