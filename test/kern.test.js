@@ -44,6 +44,7 @@
  *   ZE oefenen                          -> elke instelling één bediening, in de kaart waar hij hoort
  *   ZF leerpad                          -> naam en voorbeeld van elke stap kloppen met de gekozen sommen
  *   ZG onomkeerbaar                     -> elke rode ja-knop gaat door gevaarVraag, met Weg en Terug
+ *   ZH past het niveau                  -> alleen de shows op de stap van nu, en de namen van het pad
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -1718,6 +1719,50 @@ zaak('ZG', () => {
   const run = app.run;
   check(run('opsomming')(['Sem']) === 'Sem' && run('opsomming')(['Sem', 'Noor']) === 'Sem en Noor'
     && run('opsomming')(['Sem', 'Noor', 'Lina']) === 'Sem, Noor en Lina', 'ZG · opsomming: "Sem, Noor en Lina"', '');
+});
+
+/* ================= ZH · Past het niveau? =================
+   Het label op het leerpad (vgStand) zegt hoe de stap van NU past. Twee
+   valkuilen houdt deze zaak dicht:
+     - de shows van de vorige stap tellen niet mee. Het pad schuift door zodra
+       ze een rij kan, en dan waren de laatste tien bijna allemaal makkelijker:
+       "gaat vlot" boven de stap die ze net lastig vindt.
+     - de tellers sinds het begin (p.stats, p.stars) veranderen het label niet;
+       die staan in Meer cijfers.
+   En de rij met wat al kan noemt de stappen zoals de ladder op Oefeningen
+   (padRijen, COUNT_STAGE_LABELS), niet "Stap 1–3" of "Fase 1–2". */
+zaak('ZH', () => {
+  const { app, p } = verseSter('Niveau');
+  const stand = () => app.run('vgStand(db.profiles.p1)');
+  const show = (sterren, n) => { for (let i = 0; i < (n || 1); i++) app.onthoudUitkomst(p, sterren, app.run('stapSleutel(db.profiles.p1)')); };
+  check(stand() === 'nieuw', 'ZH · zonder shows: net begonnen', stand());
+  show(3);
+  check(stand() === 'stap', 'ZH · één show op deze stap is nog te weinig: nieuwe stap', stand());
+  show(3, 4);
+  check(stand() === 'vlot', 'ZH · alles drie sterren op deze stap: gaat vlot', stand());
+  // ze schuift door naar de volgende rij: de oude shows tellen niet meer
+  p.pad = { klaar: ['tot10'], rij: 'tot20', shows: 0, goed: 0 };
+  check(app.run('padNu(db.profiles.p1)') === 'tot20', 'ZH · (opzet) ze staat op Tot 20', app.run('padNu(db.profiles.p1)'));
+  check(stand() === 'stap', 'ZH · na een stap verder: geen "gaat vlot" uit de vorige stap', stand());
+  show(0, 2);
+  check(stand() === 'pittig', 'ZH · twee mislukte op de nieuwe stap: even pittig, ook na vijf keer drie sterren', stand());
+  // tellers sinds het begin veranderen het label niet
+  const voor = stand();
+  p.stats = { correct: 999, wrong: 0 }; p.stars = { 1: 3, 2: 3, 3: 3 };
+  check(stand() === voor, 'ZH · p.stats en p.stars veranderen het label niet', stand());
+  // de rij met wat al kan: de namen van de ladder
+  p.pad = { klaar: ['tot10', 'tot20', 'brug20'], rij: 'zoek', shows: 0, goed: 0 };
+  p.settings.max = 20;
+  const html = app.run('leerpadHtml(db.profiles.p1)');
+  const namen = app.run('padRijen(db.profiles.p1.settings).rijen.slice(0, 3).map(r => r.naam)');
+  check(html.includes(`${namen[0]} … ${namen[2]}`) && !/Stap 1/.test(html),
+    'ZH · wat al kan heet zoals op de ladder ("Tot 10 … Over het tiental")', namen.join(', '));
+  check((html.match(/vg-tag/g) || []).length === 1, 'ZH · precies één label op het leerpad', '');
+  p.settings.track = 'count';
+  p.countTrack = { stage: 4, rung: 0, streak: 0, seen: 0, acc: 0.5 };
+  const tel = app.run('leerpadHtml(db.profiles.p1)');
+  check(tel.includes('Tellen 1–3 … Meer / minder') && !/Fase 1/.test(tel),
+    'ZH · ook bij tellen: de namen van de fases', (tel.match(/fl-rij klaar[\s\S]*?<\/div>/) || [''])[0].replace(/<[^>]+>/g, ' '));
 });
 
 klaar();

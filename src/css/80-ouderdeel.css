@@ -736,50 +736,76 @@
   .danger-btn { background: linear-gradient(180deg, var(--red-danger-500), var(--red-danger-shadow)); color: var(--c-white); border: none; border-radius: var(--r-sm); padding: 10px 16px; font-family: inherit; font-weight: 700; font-size: var(--tx-label); cursor: pointer; box-shadow: 0 var(--btn-lip-sm) 0 var(--red-danger-shadow); white-space: nowrap; }
   .danger-btn:active { transform: translateY(3px); box-shadow: none; }
 
-  /* ---- Voortgang: drie kaarten met elk één vraag (zie statsPanelHtml) ----
+  /* ---- Voortgang: het leerpad met het label, extra oefenen, meer cijfers (zie statsPanelHtml) ----
      Geen kaartkop met een icoontegel zoals op Oefenen: daar is de kop een
-     onderwerp ("Modus"), hier is hij de vraag zelf, en een tegel ervoor maakt
-     hem alleen breder. */
+     onderwerp ("Modus"), hier gaat het om wat eronder staat. */
   .vg-kop { font-size: var(--tx-body); font-weight: 700; color: var(--purple-mid); margin: 0 2px 10px; }
   .vg-kop span { color: var(--paper-ink-muted); font-weight: 600; }
-  /* De stand: één vlakje met een gekleurde stip. De kleur zit in de stip én
-     in de vulling, zodat hij ook zonder kleurenzicht uit het woord blijkt. */
-  .vg-status {
-    display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r-md);
-    background: var(--lavender-wash);
+  /* Het label (zie vgLabel): één woord met een teken ervoor. De kleur zegt wie
+     er aan zet is, het teken en het woord zeggen het ook zonder kleurenzicht.
+     Ook op het overzicht, in de rij van elke ster. */
+  .vg-tag {
+    display: inline-flex; align-items: center; gap: 5px; flex: none; white-space: nowrap; vertical-align: middle;
+    padding: 4px 10px 4px 5px; border-radius: var(--r-pill);
+    font-size: var(--tx-klein); font-weight: 700; line-height: 1.1;
+    background: var(--lavender-wash); color: var(--paper-ink-muted);
   }
-  .vg-status.goed { background: var(--stat-green-bg); }
-  .vg-status.vlot { background: var(--goud-tint); }
-  .vg-status.pittig { background: var(--practice-bg); }
-  .vg-dot { font-size: 28px; line-height: 1; flex: none; }
-  .vg-status b { display: block; font-size: var(--tx-body); font-weight: 700; color: var(--paper-ink); }
-  .vg-status span { display: block; font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted); margin-top: 2px; }
-  /* de kale tellers: klein, op één regel, en op een smal scherm netjes eronder */
-  .vg-getallen {
-    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin: 10px 4px 0;
-    font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted);
+  .vg-tag b, .sr-tekst .vg-tag b {
+    display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%;
+    font-size: 11px; font-weight: 800; line-height: 1; color: var(--c-white); background: var(--paper-ink-muted);
   }
-  .vg-status span.vg-reeks { display: flex; gap: 4px; margin-top: 5px; }
-  .vg-reeks i { display: block; flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--gold-accent); }
-  .vg-reeks i.r2, .vg-reeks i.r1 { background: var(--gold-light); }
-  .vg-reeks i.r0 { background: none; border: 2px solid var(--practice-text); box-sizing: border-box; }
-  .vg-getal b { font-size: var(--tx-body); font-weight: 700; color: var(--paper-ink); }
+  .vg-tag.goed { background: var(--stat-green-bg); color: var(--stat-green-tekst); }
+  .vg-tag.goed b { background: var(--stat-green-tekst); }
+  .vg-tag.vlot, .vg-tag.meer { background: var(--goud-tint); color: var(--ink-on-gold-card); }
+  .vg-tag.vlot b, .vg-tag.meer b { background: var(--ink-on-gold-card); }
+  .vg-tag.pittig { background: var(--practice-bg); color: var(--practice-text); }
+  .vg-tag.pittig b { background: var(--practice-text); }
+  /* past het label er niet naast (320 breed, een lange kop), dan zakt het eronder */
+  .vg-kop-rij { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; margin: 0 2px 10px; }
+  .vg-kop-rij .vg-kop { margin: 0; white-space: nowrap; }
+  /* hoe ver op haar stap: bolletjes (rekenen) of streepjes (tellen), en een paar woorden */
+  .vg-ladder .fl-naam small.vg-hoever { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+  .vg-bol { display: inline-flex; gap: 3px; }
+  .vg-bol i { width: 8px; height: 8px; border-radius: 50%; background: var(--lavender-wash-3); box-shadow: inset 0 0 0 1.5px var(--purple-light); }
+  .vg-bol i.aan { background: var(--purple-mid); box-shadow: none; }
+  /* de regel onder haar stap: hetzelfde vlak als de rij, zodat hij er zichtbaar bij hoort */
+  .vg-ladder .fl-rij.met-onder { border-radius: var(--r-sm) var(--r-sm) 0 0; }
+  .vg-onder {
+    display: flex; align-items: center; gap: 10px; margin: 0 0 4px; padding: 2px 10px 10px 48px;
+    background: var(--lavender-wash); border-radius: 0 0 var(--r-sm) var(--r-sm);
+    font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted);
+  }
+  .vg-onder span { flex: 1; min-width: 0; }
+  .vg-onder .btn { flex: none; }
+  /* Op een smal scherm is haar rij te vol voor naam, "hoe ver" én voorbeeld:
+     dan valt het voorbeeld weg. Het staat ook op Oefeningen, en de andere rijen
+     houden het wel. */
+  @media (max-width: 360px) {
+    .vg-ladder .fl-rij.hier .fl-vb { display: none; }
+  }
+  .vg-gat .fl-n { background: none !important; color: var(--paper-ink-muted); }
+  .vg-gat .fl-naam { font-size: var(--tx-klein); }
+  .vg-voet { display: flex; justify-content: flex-end; margin-top: 4px; }
+  .vg-vlot { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+  .vg-vlot span {
+    padding: 3px 10px; border-radius: var(--r-pill); border: 1.5px solid var(--paper-border); background: var(--paper-tint);
+    font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted);
+  }
+  .vg-vlot b { color: var(--paper-ink); margin-right: 2px; }
   /* Het leerpad heeft de rijen van de ladder op Oefenen (zie de ladder hierboven
-     en .vg-ladder daar). De kop heeft rechts "Aanpassen ›", stil, als link. */
-  .vg-kop-link { display: flex; align-items: baseline; gap: 6px; }
+     en .vg-ladder daar). Onderaan "Aanpassen ›", stil, als link. */
   .vg-aanpas {
-    margin-left: auto; padding: 4px 2px; border: none; background: none; cursor: pointer; white-space: nowrap;
+    padding: 4px 2px; border: none; background: none; cursor: pointer; white-space: nowrap;
     font: inherit; font-size: var(--tx-klein); font-weight: 700; color: var(--purple-mid);
   }
   /* de stapjes binnen een fase: hoe dicht de volgende fase is */
-  .vg-rungs { display: inline-flex; gap: 3px; margin-left: 8px; vertical-align: 1px; }
+  .vg-rungs { display: inline-flex; gap: 3px; }
   .vg-rungs i { width: 14px; height: 6px; border-radius: 3px; background: var(--lavender-wash-3); }
   .vg-rungs i.aan { background: var(--purple-mid); }
   .vg-kaart > .note { margin-top: 8px; }
   .vg-noot { margin-top: 10px; }
   .practice-chips { display: flex; flex-wrap: wrap; gap: 7px; }
   .practice-chip { background: var(--practice-bg); border: 1px solid var(--gold-light); color: var(--practice-text); border-radius: var(--r-pill); padding: 6px 13px; font-weight: 700; font-size: var(--tx-label); }
-  .stats-empty { font-size: var(--tx-klein); color: var(--green-deep); font-weight: 600; }
   /* "Meer cijfers": een kaart die dicht begint. Zelfde pijltje als .set-reveal. */
   .vg-meer { padding-top: 12px; padding-bottom: 12px; }
   .vg-meer > summary {
@@ -789,26 +815,18 @@
   .vg-meer > summary::-webkit-details-marker { display: none; }
   .vg-meer > summary::after { content: '▾'; margin-left: auto; opacity: .7; }
   .vg-meer[open] > summary::after { content: '▴'; }
-  /* De oogst: sterren, perfecte shows en trofeeën. Bewust géén tegels -- ze zijn
-     van het kind en staan groot in de kast en op de kaart; hier hoeven ze alleen
-     te bestaan. Eén rustige regel die op een smal scherm netjes afbreekt. */
-  .oogst-rij {
-    display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 8px 2px 0;
+  /* Meer cijfers: de tellers en de oogst, drie op een rij. Bewust géén tegels --
+     sterren en trofeeën zijn van het kind en staan groot in de kast en op de
+     kaart; hier hoeven ze alleen te bestaan. */
+  .vg-cijfers {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 8px; margin: 8px 2px 2px;
     font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted);
   }
-  .oogst-item b { font-weight: 700; color: var(--paper-ink); }
-  /* De tip om verder te groeien (zie grensTip en telTip). Op het leerpad, onder
-     de stappen: eerst wat er is, dan wat er zou kunnen. */
-  .grens-tip {
-    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px;
-    padding: 10px 13px; border-radius: var(--r-sm); border: 1px dashed var(--purple-mid);
-    font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink);
-  }
-  .grens-tip > div { flex: 1 1 150px; }
-  /* de uitleg bij een tip: wat de knop precies verandert, een tikje stiller */
-  .grens-tip .tip-klein { color: var(--paper-ink-muted); }
+  .vg-cijfers b { display: block; font-size: var(--tx-body); }
+  .vg-getal b, .oogst-item b { font-weight: 700; color: var(--paper-ink); }
   /* geen stem op dit toestel (zie stemNotitie): een gewone notitie, met wat lucht erboven */
   .stem-notitie { margin-top: 10px; }
+  .vg-kaart > .stem-notitie:first-child { margin-top: 0; }
   /* de knop eronder, op een eigen regel: één tik en de notitie is weg */
   .stem-notitie .stem-aan { display: flex; margin-top: 8px; }
   /* "Hoe?" bij de stem: de uitleg klapt pas open als een ouder erom vraagt */
