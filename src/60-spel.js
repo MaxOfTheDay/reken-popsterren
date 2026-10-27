@@ -34,13 +34,16 @@ function startLevel(lvl, eigenOvergang) {
   // Extra-uitdaging-vragen (zoek-het-getal / drie getallen) vooraf inroosteren op
   // vaste plekken; de gewone vragen worden per stuk gebouwd (incl. zwakke herhaling).
   // In de telmodus komen die niet voor -- daar bouwt genCount elke vraag.
-  const plan = count ? [] : planSpecials(p, s, s.perLevel, leerStap(lvl, s), goldIdx);
+  /* inst: de instellingen voor de vraagmaker, met haar rij op het leerpad erover
+     (zie vraagInst). Eén keer per show: de rij verandert pas in endLevel. */
+  const inst = count ? null : vraagInst(p);
+  const plan = count ? [] : planSpecials(p, inst, s.perLevel, wereldAccent(lvl, padNu(p)), goldIdx);
   // FASE 1: de publieksmeter is uit het spel gehaald. De teller zelf loopt stil door
   // (zie submitAnswer/endLevel): hij bepaalt nog altijd het applaus en de restbonus,
   // maar er staat geen balk meer op het scherm. G.fan/G.fanStep zijn daarmee interne
   // staat geworden -- bewust blijven staan i.p.v. de beloningen eruit te slopen.
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
-  G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
+  G = { lvl, inst, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
         klaarBijStart: (p.readyTrophies || []).slice(),
         missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0,
         uitslag: [] };   // per vraag: 'goed' | 'hint' | 'mis' -- zie showBalk
@@ -139,8 +142,8 @@ function renderQuestion() {
     if (G.count) { built = genCount(p); }             // telmodus: elke vraag lees-vrij
     else {
       const plan = G.plan[G.idx];
-      if (plan && plan.type === 'miss') { built = genMissing(s, G.lvl, p.perf, plan.op); G.missShown++; }
-      else if (plan && plan.type === 'chain') { built = genChain(s, G.lvl, p.perf); G.chainShown++; }
+      if (plan && plan.type === 'miss') { built = genMissing(G.inst, G.lvl, p.perf, plan.op); G.missShown++; }
+      else if (plan && plan.type === 'chain') { built = genChain(G.inst, G.lvl, p.perf); G.chainShown++; }
       else built = buildQuestion(p, G.lvl, G);
     }
     if (G.idx === G.goldIdx) built.gold = true;
@@ -166,7 +169,7 @@ function renderQuestion() {
     return;
   }
   if (G.mode === 'kies') {
-    const choices = makeChoices(q, keuzeGrens(q, s, G.lvl));
+    const choices = makeChoices(q, keuzeGrens(q, G.inst, G.lvl));
     area.innerHTML = '<div class="choices">' +
       choices.map(c => `<button class="choice-btn" data-v="${c}">${c}</button>`).join('') + '</div>';
     area.querySelectorAll('.choice-btn').forEach(b => {
@@ -1053,7 +1056,8 @@ function endLevel(success) {
   }
   onthoudUitkomst(p, success ? showStars(G) : 0);   // voor de stand in Voortgang (beide takken hieronder bewaren)
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;   // een show verder gewend aan de grens
-  if (!G.count && success) telGrensDrie(p, lvl, showStars(G));   // voor de grenstip (zie grensDrieSterren)
+  if (!G.count && success) telGrensDrie(p, showStars(G));   // voor de grenstip (zie grensDrieSterren)
+  if (!G.count) padNa(p, success ? showStars(G) : 0);   // een show verder op haar rij van het leerpad
   /* Wat er pas ná het eindscherm gevierd wordt (zie de staart van deze
      functie): een wereld die net uit of perfect werd. Bij een mislukte show
      blijft het leeg. */

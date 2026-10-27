@@ -773,7 +773,7 @@ function defaultProfile(name, dress, opts) {
       numerals: opts.numerals !== false,            // fase 6 (cijfers) toestaan
       qmax: opts.qmax || 10,                         // hoogste hoeveelheid waar het spel naartoe mag groeien (6/8/10)
       memory: opts.memory !== false,                // memory-spelletje op de kaart (standaard aan)
-      startStap: opts.startStap || 1                // rekenmodus: de leerstap waar het spel minstens begint (zie leerStap)
+      padVanaf: opts.padVanaf || null               // rekenmodus: de rij van het leerpad waar het spel minstens begint (zie padNu)
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
     // FASE 4A. tourStars blijft bij een verse ster voorgoed leeg -- het is de
@@ -795,6 +795,7 @@ function defaultProfile(name, dress, opts) {
     stats: { correct: 0, wrong: 0 },  // voor het ouder-overzicht
     leer: { brug: 0, zoek: 0, drie: 0 },  // nieuwe soorten sommen goed, voor de kast (zie telLeer)
     recent: [],                       // de laatste shows: sterren, of 0 als hij mislukte (zie onthoudUitkomst)
+    pad: null,                        // rekenmodus: waar ze op het leerpad staat (zie padNu, padNa)
     gezien: {}                        // welke groei het kind al gevierd heeft (zie groeiMoment)
   };
 }
@@ -940,6 +941,28 @@ function migrate(p) {
   if (p.settings.qmax == null) p.settings.qmax = 10;
   if (p.settings.memory == null) p.settings.memory = true;
   delete p.settings.voorlezen;   // de schakelaar Voorlezen bestaat niet meer (zie stemAan)
+  /* ---- Het leerpad: van leerstap naar rij ----------------------------------
+     Tot hier was een stap een wereld: de hoogste van haar wereld en "vanaf"
+     (s.startStap, 1 tot 5), en voorbij stap 5 was het alles door elkaar. Nu
+     staat ze op een rij van LEERPAD (p.pad). padUitOudeStap zoekt de rij die
+     minstens speelt wat haar stap speelde: nooit makkelijker dan ze gewend
+     was. Wat ervoor ligt telt als gehaald. "vanaf" gaat op dezelfde manier
+     mee. Eén keer: daarna staat p.pad er (ook als null). Een telster heeft nog
+     geen pad; dat begint als ze gaat rekenen (zie naarRekenen). */
+  if (!('pad' in p)) {
+    const s = p.settings;
+    p.pad = null;
+    if (s.track !== 'count') {
+      const stap = Math.min(6, Math.max(continueWorld(p) + 1, s.startStap || 1));
+      const rij = stap > 1 ? padUitOudeStap(s, stap) : null;
+      if (rij) p.pad = { rij, shows: 0, goed: 0, klaar: padRijen(s).rijen
+        .filter(r => rij === 'alles' || PAD_IDX[r.id] < PAD_IDX[rij]).map(r => r.id) };
+    }
+    const vanaf = (s.startStap || 1) > 1 ? padUitOudeStap(s, s.startStap) : null;
+    s.padVanaf = vanaf === 'alles' ? (padRijen(s).rijen.slice(-1)[0] || {}).id || null : vanaf;
+  }
+  if (p.settings.padVanaf === undefined) p.settings.padVanaf = null;
+  delete p.settings.startStap;
   if (!p.countTrack) p.countTrack = { stage: p.settings.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 };
   if (p.countTrack.rung == null) p.countTrack.rung = 0;
   if (p.countTrack.streak == null) p.countTrack.streak = 0;

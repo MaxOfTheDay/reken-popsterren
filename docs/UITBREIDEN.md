@@ -155,7 +155,7 @@ Wat **vanzelf** meekomt, zonder dat je er iets voor doet:
 | de zaal | `venue`, of anders `VENUE_TERUGVAL` (de kaart zelf) |
 | de perfecte-wereldtrofee | `rebuildWorldBadges()` maakt `perfect-<id>` aan en hangt hem op de plank — zodra hij uitgebracht is, niet eerder |
 | de Wereldtournee | wie hem nog niet geopend had, ziet hem terug naar "bezig" gaan tot ook deze wereld uit is; een geopende blijft van haar (zie het einde van `migrate()`) |
-| de leerstap | een wereld voorbij `LEERSTAPPEN` speelt de laatste stap, alles door elkaar (`stapVan`) |
+| het rekenen | niets: wat een kind leert staat op het leerpad (`LEERPAD`), los van de werelden — een wereld erbij is alleen een langere reis |
 | de tests | elke zaak die over werelden gaat telt uit `WORLDS` en `WORLD_AVAIL`, niet uit een getal — met een wereld erbij, uitgebracht of nog dicht, blijft alles groen |
 | het laden | de tekening komt binnen als die wereld in beeld komt of bijna in beeld is — het opstarten wordt er geen byte zwaarder van |
 | de cache | de service worker kent geen werelden; de nieuwe tekening komt erin bij het eerste bezoek en er hoeft geen versienummer omhoog |
@@ -363,6 +363,30 @@ krijgt er nog geen: anders stond hij met naam en icoon in de kast van elk kind. 
 `RETIRED_TROPHIES` te zetten. Kinderen die hem behaald hebben houden hem dan in
 hun opslag staan; hij telt alleen niet meer mee en is niet meer te zien. Zie
 `isRetiredTrophy()`.
+
+---
+
+## Een rekenonderwerp erbij
+
+Het leerpad van rekenen is één tabel, `LEERPAD` in `src/55-vragen.js`, in de
+volgorde waarin school het brengt. Een nieuw onderwerp (getallen bouwen, geld,
+tot 1000) is één rij daarin — geen nieuw scherm en geen nieuwe instelling:
+
+1. **Zijn plek.** Zet hem waar school hem brengt. Een rij die de getallen laat
+   groeien is `soort: 'bereik'` (met `bereik`), een andere soort vraag met
+   dezelfde getallen is `soort: 'vorm'`. Een vorm hoort vóór alles boven
+   twintig te staan, anders snijdt de lijn "tot" hem af.
+2. **Wanneer hij op het pad staat** — `padPast` (welke bewerkingen hij nodig
+   heeft), en eventueel een vinkje om over te slaan (`keuze`: de naam van de
+   vlag in `settings`).
+3. **Zijn voorbeeld** — `padVoorbeeld`, gemaakt met wat de ouder koos.
+4. **Wat hij aan de vragen verandert** — `padStand`, en de vraagmaker die het
+   leest (`genTriple` en zijn buren).
+
+Oefeningen en Voortgang tekenen hem dan vanzelf, met naam, voorbeeld en vinkje;
+ze gaat verder als ze hem kan (`padNa`). `npm run test:kern` zaak ZF meet bij
+elke rij na of het voorbeeld en de vragen kloppen met wat de rij belooft, en
+zaak Q2 of een oude save nergens makkelijker wordt.
 
 ---
 

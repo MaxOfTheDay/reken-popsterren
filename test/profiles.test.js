@@ -40,7 +40,9 @@ function check(ok, label, detail) {
   }
 
   // Het formulier invullen en verzenden. `settings` is optioneel: een kaartje
-  // {'set-max': '100'} klapt de oefening-openklapper open en tikt die chips aan.
+  // {'set-ops': 'x'} klapt de oefening-openklapper open en tikt die chips aan.
+  // Een lijst tikt er meer na elkaar; 'grijs' is de eerste grijze rij onder
+  // "tot" op het leerpad (de grens omhoog, zie bindOefenChips).
   async function makeStar(page, { name, base, hair, dress, track, settings } = {}) {
     // Een ster maken start meteen háár avontuur (zie createStar), dus voor de
     // volgende ster moet er eerst teruggekeerd worden naar de sterrenkeuze --
@@ -62,8 +64,8 @@ function check(ok, label, detail) {
     if (settings) {
       await page.click('#newstar-oefen summary');
       await page.waitForTimeout(120);
-      for (const [id, v] of Object.entries(settings)) {
-        await page.click(`#ns-${id} .chip[data-v="${v}"]`);
+      for (const [id, vs] of Object.entries(settings)) for (const v of [].concat(vs)) {
+        await page.click(v === 'grijs' ? `#ns-${id} .chip.uit` : `#ns-${id} .chip[data-v="${v}"]`);
         await page.waitForTimeout(120);
       }
     }
@@ -580,8 +582,6 @@ function check(ok, label, detail) {
         // voor een kind nog niet, en de toegift speelt dus in de wereld ervóór
         staartVerwacht: (() => { const w = WORLDS[WORLD_AVAIL - 1]; return w.name + ' ' + w.levels + '/' + w.levels; })(),
         altijdIets: [0, -5, null, undefined, NaN].every(l => { const w = worldFor(l); return w && w.world && w.nr >= 1; }),
-        stappen: [1, 8, 9, 24, 25, 32, 33].map(leerStap),
-        zoekVanaf: (() => { let l = 1; while (l <= WORLD_LAST && leerStap(l) < STAP_ZOEK) l++; return l; })(),
         eersteLevels: WORLDS.map((w, i) => WORLD_START[i]),
         // de regel zelf, voor élke geschreven wereld (ook een dichte: die houdt
         // zijn levelnummers al vast, zie rebuildWorldStarts)
@@ -595,10 +595,6 @@ function check(ok, label, detail) {
       'voorbij de laatste wereld verzint de app geen wereld meer',
       r.staart.join(' | ') + '  !=  ' + r.staartVerwacht);
     check(r.altijdIets, 'een raar level geeft nooit undefined terug', JSON.stringify(r.staart));
-    check(r.stappen.join(',') === '1,1,2,3,4,4,5',
-      'de leerstap loopt per wereld', r.stappen.join(','));
-    check(r.zoekVanaf === 25, 'zoek-het-getal komt niet vroeger dan show 25, net als met de oude klok',
-      String(r.zoekVanaf));
     check(r.aansluitend, 'elke wereld begint waar de vorige ophoudt', r.eersteLevels.join(','));
     // De zes van toen liggen vast: daar staan de sterren van elk kind op (zie
     // LEGACY_TOUR_END). Een wereld erbij komt erachter en schuift hier niets op.
@@ -2547,7 +2543,7 @@ function check(ok, label, detail) {
     });
     const mathWant = { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8,
       missNum: true, chain3: true, track: 'math', stage: 1, stageMax: 12, fasesBekend: 12, repr: 'objects',
-      numerals: true, qmax: 10, memory: true, startStap: 1 };
+      numerals: true, qmax: 10, memory: true, padVanaf: null };
     const countWant = { ...mathWant, track: 'count', perLevel: 5 };
     check(JSON.stringify(r.math) === JSON.stringify(mathWant),
       'zonder de openklapper aan te raken blijft de rekenster ongewijzigd', JSON.stringify(r.math));
@@ -2559,7 +2555,7 @@ function check(ok, label, detail) {
   // 10c · wat een ouder vooraf instelt, komt ook echt in het profiel
   {
     const { ctx, page } = await fresh();
-    await makeStar(page, { name: 'Maal', settings: { 'set-ops': 'x', 'set-max': '100' } });
+    await makeStar(page, { name: 'Maal', settings: { 'set-ops': 'x', 'set-startstap': ['grijs', 'grijs'] } });
     const s = await page.evaluate(() => Object.values(db.profiles)[0].settings);
     check(s.ops.includes('x'), 'een vooraf gekozen bewerking landt in het profiel', JSON.stringify(s.ops));
     check(s.max === 100, 'een vooraf gekozen bereik landt in het profiel', `max=${s.max}`);
@@ -2575,14 +2571,14 @@ function check(ok, label, detail) {
     await page.waitForTimeout(150);
     await page.click('#newstar-oefen summary');
     await page.waitForTimeout(120);
-    await page.click('#ns-set-max .chip[data-v="100"]');
+    await page.click('#ns-set-startstap .chip.uit');
     await page.waitForTimeout(150);
     const r = await page.evaluate(() => ({
       open: document.getElementById('newstar-oefen').hasAttribute('open'),
       val: document.querySelector('#newstar-oefen .sr-val').textContent,
     }));
     check(r.open === true, 'de openklapper blijft open na een tik erin', `open=${r.open}`);
-    check(/tot 100/.test(r.val), 'de samenvatting loopt mee met de keuze', r.val);
+    check(/tot 50/.test(r.val), 'de samenvatting loopt mee met de keuze', r.val);
     await ctx.close();
   }
 
@@ -2631,12 +2627,12 @@ function check(ok, label, detail) {
       await new Promise(r => setTimeout(r, 150));
       document.querySelector('#newstar-oefen summary').click();
       await new Promise(r => setTimeout(r, 150));
-      document.querySelector('#ns-set-max .chip[data-v="100"]').click();
+      document.querySelector('#ns-set-startstap .chip.uit').click();
       await new Promise(r => setTimeout(r, 150));
       return { zus: db.profiles[k].settings.max, concept: newStar.settings.max };
     });
     check(r.zus === 20, 'een tik op het maakformulier laat de bestaande ster met rust', `max=${r.zus}`);
-    check(r.concept === 100, 'diezelfde tik komt wél in het concept terecht', `max=${r.concept}`);
+    check(r.concept === 50, 'diezelfde tik komt wél in het concept terecht', `max=${r.concept}`);
     await ctx.close();
   }
 
