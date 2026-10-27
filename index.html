@@ -1430,10 +1430,16 @@
   }
 
 
+
+
+
+
+
+
   .vonk-laag .vonk.aan { animation: vonkje 800ms ease-in-out; }
   @keyframes vonkje {
     0%   { opacity: 0; transform: scale(.3) rotate(-20deg); }
-    40%  { opacity: 1; transform: scale(1) rotate(0deg); }
+    40%  { opacity: var(--piek, 1); transform: scale(1) rotate(0deg); }
     100% { opacity: 0; transform: scale(.55) rotate(16deg); }
   }
 
@@ -14167,8 +14173,13 @@ function defaultProfile(name, dress, opts) {
 
 
 
+
+
+
+
+
   const hair = opts.hair || 'hair_blond';
-  const owned = ['hair_blond', 'dress_roze', 'dress_paars', 'shoes_roze', 'stage_disco'];
+  const owned = START_HAIR.concat(START_DRESS, ['shoes_roze', 'stage_disco']);
   if (dress && !owned.includes(dress)) owned.push(dress);
   if (hair && !owned.includes(hair)) owned.push(hair);
   return {
@@ -15882,7 +15893,7 @@ function vonkje(bijLogo) {
   el.style.left = Math.round(plek.x) + 'px';
   el.style.top = Math.round(plek.y) + 'px';
   el.style.fontSize = Math.round(bijLogo ? vonkTussen(15, 19) : vonkTussen(8, 13)) + 'px';
-  el.style.opacity = (bijLogo ? .95 : vonkTussen(.55, .8)).toFixed(2);
+  el.style.setProperty('--piek', (bijLogo ? .95 : vonkTussen(.55, .8)).toFixed(2));
   el.style.animationDuration = Math.round(vonkTussen(VONKJES.duurMin, VONKJES.duurMax)) + 'ms';
   el.classList.add('aan');
 
@@ -25756,7 +25767,12 @@ function openNewStar(from) {
 
 
     name: '', base: null, hair: 'hair_blond', dress: 'dress_roze',
-    settings: defaultProfile('', 'dress_roze').settings,
+
+
+
+
+
+    settings: Object.assign(defaultProfile('', 'dress_roze').settings, { track: null }),
     open: false
   };
   renderNewStar();
@@ -25793,7 +25809,7 @@ function renderNewStar() {
 
   const wacht = !n.base;
   const preview = defaultProfile(n.name || '…', n.dress, { hair: n.hair, base: n.base || 'jongen' });
-  const ok = !!n.name.trim() && !!n.base;
+  const ok = nieuweSterKlaar();
 
 
 
@@ -25834,10 +25850,11 @@ function renderNewStar() {
             ${halfChip('count', '🧸', 'Leren tellen', s.track === 'count')}
             ${halfChip('math', '🧮', 'Rekenen', s.track === 'math')}
           </div>
-          <div class="note">${s.track === 'count'
+          ${s.track ? `<div class="note">${s.track === 'count'
             ? 'Nog niet lezen: tellen met plaatjes.'
-            : 'Met cijfers en sommen.'}</div></div>
-        <details class="set-reveal" id="newstar-oefen"${n.open ? ' open' : ''}>
+            : 'Met cijfers en sommen.'}</div>` : ''}</div>
+        <!-- De oefening hangt van de modus af, dus pas zichtbaar als die gekozen is. -->
+        ${s.track ? `<details class="set-reveal" id="newstar-oefen"${n.open ? ' open' : ''}>
           <summary>
             <span class="sr-ico" aria-hidden="true">⚙️</span>
             <span class="sr-text"><span class="sr-title">Oefening</span>
@@ -25847,7 +25864,7 @@ function renderNewStar() {
             ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${g.html}</div>`).join('')}
             <div class="note" style="margin-top:14px">Later te wijzigen bij 👨‍👩‍👧 Voor ouders.</div>
           </div>
-        </details>
+        </details>` : ''}
       </div>
       <div class="newstar-voet">
         <button class="btn newstar-go" id="newstar-go" aria-disabled="${ok ? 'false' : 'true'}">🌟 Klaar!</button>
@@ -25908,7 +25925,7 @@ function renderNewStar() {
 }
 
 
-function nieuweSterKlaar() { return !!(newStar && newStar.name.trim() && newStar.base); }
+function nieuweSterKlaar() { return !!(newStar && newStar.name.trim() && newStar.base && newStar.settings.track); }
 function merkKlaarKnop() {
   const go = $('newstar-go');
   if (go) go.setAttribute('aria-disabled', nieuweSterKlaar() ? 'false' : 'true');
@@ -25928,10 +25945,11 @@ function merkKlaarKnop() {
 
 function wijsOntbrekende() {
   if (!newStar) return;
-  const basisMist = !newStar.base;
-  const doelen = basisMist
-    ? [...($('newstar-base') || { querySelectorAll: () => [] }).querySelectorAll('.chip')]
-    : [$('newstar-name')].filter(Boolean);
+
+  const chips = id => [...($(id) || { querySelectorAll: () => [] }).querySelectorAll('.chip')];
+  const doelen = !newStar.base ? chips('newstar-base')
+    : !newStar.name.trim() ? [$('newstar-name')].filter(Boolean)
+    : chips('newstar-track');
   if (!doelen.length) return;
   sndClick();
   const anker = doelen[0];
@@ -25955,7 +25973,7 @@ function createStar() {
 
 
   const name = newStar.name.trim().replace(/\s+/g, ' ').slice(0, 12);
-  if (!name || !newStar.base) return wijsOntbrekende();
+  if (!name || !newStar.base || !newStar.settings.track) return wijsOntbrekende();
   const taken = Object.values(db.profiles).some(p => p.name.toLowerCase() === name.toLowerCase());
   if (taken) {
     showToast('⚠️ Die naam bestaat al');
@@ -27818,6 +27836,10 @@ addEventListener('appinstalled', () => {
 
 
 
+
+
+
+
 const APPKNOP_KEY = 'rekenPopsterren_appknop';
 const APPKNOP = { vanafBezoek: 2, rustDagen: 14, maxNee: 3 };
 let installVoorstel = null;
@@ -27845,7 +27867,8 @@ function appKnopTonen(nu) {
   const zoek = location.search || '';
   if (zoek.indexOf('debug') !== -1 && zoek.indexOf('appknop') === -1) return false;
   const s = appKnopLees();
-  if ((s.bezoek | 0) < APPKNOP.vanafBezoek) return false;
+  const iosLeeg = /^ios/.test(beginschermSoort()) && profileKeys().length === 0;
+  if ((s.bezoek | 0) < APPKNOP.vanafBezoek && !iosLeeg) return false;
   if ((s.nee | 0) >= APPKNOP.maxNee) return false;
   return !(s.rustTot > (nu || Date.now()));
 }
