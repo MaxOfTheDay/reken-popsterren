@@ -9738,47 +9738,73 @@
 
 
 
-
   .vg-kop { font-size: var(--tx-body); font-weight: 700; color: var(--purple-mid); margin: 0 2px 10px; }
   .vg-kop span { color: var(--paper-ink-muted); font-weight: 600; }
 
 
-  .vg-status {
-    display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r-md);
-    background: var(--lavender-wash);
+
+  .vg-tag {
+    display: inline-flex; align-items: center; gap: 5px; flex: none; white-space: nowrap; vertical-align: middle;
+    padding: 4px 10px 4px 5px; border-radius: var(--r-pill);
+    font-size: var(--tx-klein); font-weight: 700; line-height: 1.1;
+    background: var(--lavender-wash); color: var(--paper-ink-muted);
   }
-  .vg-status.goed { background: var(--stat-green-bg); }
-  .vg-status.vlot { background: var(--goud-tint); }
-  .vg-status.pittig { background: var(--practice-bg); }
-  .vg-dot { font-size: 28px; line-height: 1; flex: none; }
-  .vg-status b { display: block; font-size: var(--tx-body); font-weight: 700; color: var(--paper-ink); }
-  .vg-status span { display: block; font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted); margin-top: 2px; }
-
-  .vg-getallen {
-    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin: 10px 4px 0;
-    font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted);
+  .vg-tag b, .sr-tekst .vg-tag b {
+    display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%;
+    font-size: 11px; font-weight: 800; line-height: 1; color: var(--c-white); background: var(--paper-ink-muted);
   }
-  .vg-status span.vg-reeks { display: flex; gap: 4px; margin-top: 5px; }
-  .vg-reeks i { display: block; flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--gold-accent); }
-  .vg-reeks i.r2, .vg-reeks i.r1 { background: var(--gold-light); }
-  .vg-reeks i.r0 { background: none; border: 2px solid var(--practice-text); box-sizing: border-box; }
-  .vg-getal b { font-size: var(--tx-body); font-weight: 700; color: var(--paper-ink); }
+  .vg-tag.goed { background: var(--stat-green-bg); color: var(--stat-green-tekst); }
+  .vg-tag.goed b { background: var(--stat-green-tekst); }
+  .vg-tag.vlot, .vg-tag.meer { background: var(--goud-tint); color: var(--ink-on-gold-card); }
+  .vg-tag.vlot b, .vg-tag.meer b { background: var(--ink-on-gold-card); }
+  .vg-tag.pittig { background: var(--practice-bg); color: var(--practice-text); }
+  .vg-tag.pittig b { background: var(--practice-text); }
+
+  .vg-kop-rij { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; margin: 0 2px 10px; }
+  .vg-kop-rij .vg-kop { margin: 0; white-space: nowrap; }
+
+  .vg-ladder .fl-naam small.vg-hoever { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+  .vg-bol { display: inline-flex; gap: 3px; }
+  .vg-bol i { width: 8px; height: 8px; border-radius: 50%; background: var(--lavender-wash-3); box-shadow: inset 0 0 0 1.5px var(--purple-light); }
+  .vg-bol i.aan { background: var(--purple-mid); box-shadow: none; }
+
+  .vg-ladder .fl-rij.met-onder { border-radius: var(--r-sm) var(--r-sm) 0 0; }
+  .vg-onder {
+    display: flex; align-items: center; gap: 10px; margin: 0 0 4px; padding: 2px 10px 10px 48px;
+    background: var(--lavender-wash); border-radius: 0 0 var(--r-sm) var(--r-sm);
+    font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted);
+  }
+  .vg-onder span { flex: 1; min-width: 0; }
+  .vg-onder .btn { flex: none; }
 
 
-  .vg-kop-link { display: flex; align-items: baseline; gap: 6px; }
+
+  @media (max-width: 360px) {
+    .vg-ladder .fl-rij.hier .fl-vb { display: none; }
+  }
+  .vg-gat .fl-n { background: none !important; color: var(--paper-ink-muted); }
+  .vg-gat .fl-naam { font-size: var(--tx-klein); }
+  .vg-voet { display: flex; justify-content: flex-end; margin-top: 4px; }
+  .vg-vlot { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+  .vg-vlot span {
+    padding: 3px 10px; border-radius: var(--r-pill); border: 1.5px solid var(--paper-border); background: var(--paper-tint);
+    font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted);
+  }
+  .vg-vlot b { color: var(--paper-ink); margin-right: 2px; }
+
+
   .vg-aanpas {
-    margin-left: auto; padding: 4px 2px; border: none; background: none; cursor: pointer; white-space: nowrap;
+    padding: 4px 2px; border: none; background: none; cursor: pointer; white-space: nowrap;
     font: inherit; font-size: var(--tx-klein); font-weight: 700; color: var(--purple-mid);
   }
 
-  .vg-rungs { display: inline-flex; gap: 3px; margin-left: 8px; vertical-align: 1px; }
+  .vg-rungs { display: inline-flex; gap: 3px; }
   .vg-rungs i { width: 14px; height: 6px; border-radius: 3px; background: var(--lavender-wash-3); }
   .vg-rungs i.aan { background: var(--purple-mid); }
   .vg-kaart > .note { margin-top: 8px; }
   .vg-noot { margin-top: 10px; }
   .practice-chips { display: flex; flex-wrap: wrap; gap: 7px; }
   .practice-chip { background: var(--practice-bg); border: 1px solid var(--gold-light); color: var(--practice-text); border-radius: var(--r-pill); padding: 6px 13px; font-weight: 700; font-size: var(--tx-label); }
-  .stats-empty { font-size: var(--tx-klein); color: var(--green-deep); font-weight: 600; }
 
   .vg-meer { padding-top: 12px; padding-bottom: 12px; }
   .vg-meer > summary {
@@ -9791,23 +9817,15 @@
 
 
 
-  .oogst-rij {
-    display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 8px 2px 0;
+  .vg-cijfers {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 8px; margin: 8px 2px 2px;
     font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted);
   }
-  .oogst-item b { font-weight: 700; color: var(--paper-ink); }
-
-
-  .grens-tip {
-    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px;
-    padding: 10px 13px; border-radius: var(--r-sm); border: 1px dashed var(--purple-mid);
-    font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink);
-  }
-  .grens-tip > div { flex: 1 1 150px; }
-
-  .grens-tip .tip-klein { color: var(--paper-ink-muted); }
+  .vg-cijfers b { display: block; font-size: var(--tx-body); }
+  .vg-getal b, .oogst-item b { font-weight: 700; color: var(--paper-ink); }
 
   .stem-notitie { margin-top: 10px; }
+  .vg-kaart > .stem-notitie:first-child { margin-top: 0; }
 
   .stem-notitie .stem-aan { display: flex; margin-top: 8px; }
 
@@ -24418,19 +24436,50 @@ function groeiMoment(p, g, voor) {
   else if (max > z.max) { z.max = max; nieuw = { pil: `⬆️ Nieuw: getallen tot ${max}!` }; }
   return nieuw;
 }
-function onthoudUitkomst(p, sterren) { p.recent = (p.recent || []).concat(sterren).slice(-RECENT_N); }
+
+
+
+function stapSleutel(p) {
+  return p.settings.track === 'count' ? 'fase' + countLiveStage(p) : 'pad:' + padNu(p);
+}
+
+
+
+function onthoudUitkomst(p, sterren, stap) {
+  p.recent = (p.recent || []).concat(sterren).slice(-RECENT_N);
+  if (stap == null) return;
+  if (!p.stap || p.stap.id !== stap) p.stap = { id: stap, n: 0 };
+  p.stap.n++;
+}
 
 
 
 
 
 
+
+
+
+
+
+
+
+
+const STAND_MIN = 2;
 function uitdagingStand(p) {
   const r = p.recent || [];
-  if (r.length < 4) return null;
-  const drie = r.filter(v => v >= 3).length, mis = r.filter(v => v === 0).length;
-  const stand = mis >= 3 ? 'pittig' : (drie / r.length >= 0.8 ? 'vlot' : 'goed');
-  return { stand, n: r.length, drie, mis };
+  let w;
+  if (!p.stap) {
+    if (r.length < 4) return null;
+    w = r;
+  } else {
+    const n = p.stap.id === stapSleutel(p) ? Math.min(p.stap.n, r.length) : 0;
+    if (n < STAND_MIN) return null;
+    w = r.slice(-n);
+  }
+  const drie = w.filter(v => v >= 3).length, mis = w.filter(v => v === 0).length;
+  const stand = mis >= Math.max(2, Math.ceil(w.length * 0.3)) ? 'pittig' : (drie / w.length >= 0.8 ? 'vlot' : 'goed');
+  return { stand, n: w.length, drie, mis };
 }
 function showStars(g) {
   if (g.misses === 0) return 3;
@@ -24503,11 +24552,12 @@ function endLevel(success) {
   const lvl = G.lvl;
   applyRampUpdates(p, G);
   const faseVoor = G.count ? countLiveStage(p) : 0;
+  const stapVoor = stapSleutel(p);
   if (G.count) {
     advanceCountStage(p, success, success && showStars(G) === 3);
     telPlafondTel(p, success ? showStars(G) : 0);
   }
-  onthoudUitkomst(p, success ? showStars(G) : 0);
+  onthoudUitkomst(p, success ? showStars(G) : 0, stapVoor);
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;
   if (!G.count && success) telGrensDrie(p, showStars(G));
   if (!G.count) padNa(p, success ? showStars(G) : 0);
@@ -26496,63 +26546,47 @@ function openSter(key) {
 
 
 
+
+
+
+
+
+
+
+
 const STAND_TEKST = {
-  goed:   { ico: '🟢', kop: 'Zit goed' },
-  vlot:   { ico: '🟡', kop: 'Gaat vlot' },
-  pittig: { ico: '🟠', kop: 'Even pittig' },
+  goed:   { ico: '✓', kop: 'Past goed' },
+  vlot:   { ico: '↑', kop: 'Gaat vlot' },
+  pittig: { ico: '↓', kop: 'Even pittig' },
+  meer:   { ico: '★', kop: 'Klaar voor meer' },
+  stap:   { ico: '•', kop: 'Nieuwe stap' },
+  nieuw:  { ico: '•', kop: 'Net begonnen' },
 };
 
 
 
 
-
-
-
-
-
-
-function statusKaartHtml(p) {
-  const s = p.settings;
-  const isCount = s.track === 'count';
+function vgStand(p) {
+  if (p.settings.track === 'count' ? telTip(p) : grensTip(p)) return 'meer';
   const u = uitdagingStand(p);
-  let ico = '🌱', kop = 'Net begonnen', zin = 'Na een paar shows zie je hier hoe het gaat.', klas = 'nieuw';
-  if (u) {
-    ({ ico, kop } = STAND_TEKST[u.stand]);
-    klas = u.stand;
-    zin = `<span class="vg-reeks">${(p.recent || []).map(v => `<i class="r${v}"></i>`).join('')}</span>`
-      + (u.stand === 'pittig' ? ' Het spel maakt het nu wat makkelijker.' : '');
-  }
-  const shows = playedCount(p);
-  const answered = p.stats.correct + p.stats.wrong;
-  const getallen = [
-    [shows, mv(shows, 'show', 'shows')],
-    [answered, isCount ? mv(answered, 'vraag', 'vragen') : mv(answered, 'som', 'sommen')],
-  ];
-  if (answered) getallen.push([Math.round(100 * p.stats.correct / answered) + '%', 'goed']);
+  if (u) return u.stand;
+  return p.stap ? 'stap' : 'nieuw';
+}
+function vgLabel(stand) {
+  const t = STAND_TEKST[stand];
+  return `<span class="vg-tag ${stand}" data-stand="${stand}"><b aria-hidden="true">${t.ico}</b>${t.kop}</span>`;
+}
 
+function stemKaartHtml(p) {
   const stem = stemAan(p) ? stemNotitie(p.name) : '';
-  return `<div class="set-card vg-kaart">
-    <h2 class="vg-kop">Hoe gaat het met ${esc(p.name)}?</h2>
-    <div class="vg-status ${klas}"><span class="vg-dot" aria-hidden="true">${ico}</span>
-      <div><b>${kop}</b><span>${zin}</span></div></div>
-    <div class="vg-getallen">${getallen.map(([n, w]) => `<span class="vg-getal"><b>${n}</b> ${w}</span>`).join('')}</div>
-    ${stem ? `<div class="note stem-notitie">${stem}${!db.sound
-      ? '<button class="btn small purple stem-aan" id="stem-aan" type="button">🔊 Zet aan</button>' : ''}</div>` : ''}
-  </div>`;
+  return stem ? `<div class="set-card vg-kaart"><div class="note stem-notitie">${stem}${!db.sound
+    ? '<button class="btn small purple stem-aan" id="stem-aan" type="button">🔊 Zet aan</button>' : ''}</div></div>` : '';
 }
 
 
 
 
 
-
-function accentTekst(s, w, nuId) {
-  const a = wereldAccent(WORLD_START[w - 1] || 1, nuId);
-  const zoek = padRijen(s).rijen.find(r => r.id === 'zoek' && !r.uit);
-  if (a === 'miss' && zoek) return ' · extra ' + zoek.vb;
-  if (a === 'chain' && s.chain3 !== false && s.ops.includes('+')) return ' · extra 3 + 4 + 2';
-  return '';
-}
 
 
 
@@ -26591,27 +26625,34 @@ const flVb = vb => (vb || '').replace('▢', '<i class="fl-vak"></i>');
 
 
 
+
+
+const klaarNamen = namen => namen.length > 2 ? `${namen[0]} … ${namen[namen.length - 1]}` : namen.join(', ');
 function leerpadHtml(p) {
   const s = p.settings;
+  const stand = vgStand(p);
   const rijen = [];
-  let kop, tip = '';
+  let kop, onder = '', verder;
   if (s.track === 'count') {
     const st = countLiveStage(p), hi = countMaxStage(s);
     kop = 'tellen';
-    if (st > 1) rijen.push(flRij(' klaar', '✓', `Fase ${st > 2 ? '1–' + (st - 1) : 1}`));
+    verder = st < hi;
+    if (st > 1) rijen.push(flRij(' klaar', '✓', klaarNamen(COUNT_STAGE_LABELS.slice(1, st))));
     const top = countTopRung(st);
     const rung = Math.min(top, Math.max(0, (p.countTrack && p.countTrack.rung) || 0));
-    const streepjes = `<span class="vg-rungs" title="stapje ${rung + 1} van ${top + 1}">${
-      Array.from({ length: top + 1 }, (_, i) => `<i class="${i <= rung ? 'aan' : ''}"></i>`).join('')}</span>`;
-    rijen.push(flRij(' hier niveau-bezig', flAva(p), `${COUNT_STAGE_LABELS[st]}${streepjes}`, COUNT_STAGE_VB[st]));
+    const hoever = `<small class="vg-hoever"><span class="vg-rungs" aria-hidden="true">${
+      Array.from({ length: top + 1 }, (_, i) => `<i class="${i <= rung ? 'aan' : ''}"></i>`).join('')}</span>stapje ${rung + 1} van ${top + 1}</small>`;
+    rijen.push(flRij(' hier niveau-bezig', flAva(p), `${COUNT_STAGE_LABELS[st]}${hoever}`, COUNT_STAGE_VB[st]));
 
     for (let v = st + 1; v <= Math.min(hi, st + 2); v++) rijen.push(flRij(' later', v, COUNT_STAGE_LABELS[v], COUNT_STAGE_VB[v]));
+    const tussen = hi - st - 3;
+    if (tussen > 0) rijen.push(flRij(' later vg-gat', '⋮', `nog ${tussen} ${mv(tussen, 'fase', 'fases')}`));
     if (hi > st + 2) rijen.push(flRij(' later', hi, COUNT_STAGE_LABELS[hi], COUNT_STAGE_VB[hi]));
 
     rijen.push(hi < COUNT_STAGE_MAX ? '<div class="fl-lijn">tot</div>' : flRij(' later', '🧮', 'Daarna rekenen'));
     const tt = telTip(p);
-    if (tt) tip = `<div class="grens-tip" id="grens-tip"><div>💡 ${tt.tekst}</div>
-      <button class="btn small purple" id="tel-tip-ja">${tt.knop}</button></div>`;
+    if (tt) onder = vgOnder({ fase: 'Volgende fase?', qmax: 'Grotere aantallen?', rekenen: 'Klaar om te rekenen?' }[tt.soort],
+      `<button class="btn small purple" id="tel-tip-ja" type="button">${tt.knop}</button>`);
   } else {
 
     const glyph = { '+': '+', '-': '−', 'x': '×', ':': '÷' };
@@ -26619,34 +26660,47 @@ function leerpadHtml(p) {
     kop = `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${plusMin ? ` tot ${s.max}` : ''}`;
     const alle = padRijen(s).rijen;
     const nuId = padNu(p);
-    const w = continueWorld(p) + 1;
+    verder = nuId !== 'alles';
     const nr = nuId === 'alles' ? alle.length : alle.findIndex(r => r.id === nuId);
-
-    if (nr) rijen.push(flRij(' klaar', '✓', `Stap ${nr > 1 ? '1–' + nr : 1}`));
-    const grens = grensTip(p);
+    if (nr) rijen.push(flRij(' klaar', '✓', klaarNamen(alle.slice(0, nr).map(r => r.naam))));
     if (nuId === 'alles') {
-      rijen.push(flRij(' hier niveau-bezig', flAva(p), `Alles door elkaar<small>Wereld ${w}${accentTekst(s, w, nuId)}</small>`, ''));
+      rijen.push(flRij(' hier niveau-bezig', flAva(p), 'Alles door elkaar', ''));
     } else {
       const nu = alle[nr];
-      rijen.push(flRij(' hier niveau-bezig', flAva(p), nu.naam, flVb(nu.vb)));
+
+      const pad = p.pad && p.pad.rij === nuId ? p.pad : { shows: 0, goed: 0 };
+      const goed = Math.min(PAD_GOED, pad.goed || 0);
+      const nog = PAD_GOED - goed;
+      const hoever = `<small class="vg-hoever"><span class="vg-bol" aria-hidden="true">${
+        Array.from({ length: PAD_GOED }, (_, i) => `<i class="${i < goed ? 'aan' : ''}"></i>`).join('')}</span>${
+        nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show'}</small>`;
+      rijen.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}${hoever}`, flVb(nu.vb)));
       alle.slice(nr + 1).forEach((r, i) => rijen.push(flRij(` later${r.uit ? ' overgeslagen' : ''}`, nr + 2 + i, r.naam, flVb(r.vb))));
       rijen.push(flRij(' later', '∞', 'Alles door elkaar'));
     }
-    const [tekst, knop] = !grens ? [] : grens.soort === 'grens'
-      ? [`Bijna altijd ⭐⭐⭐ tot ${s.max}. Grotere getallen?`, `Tot ${grens.naar}`]
-      : grens.naar === 'mix'
-      ? ['Bijna altijd ⭐⭐⭐. Af en toe zelf typen?', 'Afwisselen']
-      : ['Afwisselen gaat goed. Altijd zelf typen?', 'Zelf typen'];
-    if (grens) tip = `<div class="grens-tip" id="grens-tip">
-      <div>💡 ${tekst}</div>
-      <button class="btn small purple" id="grens-tip-ja" data-soort="${grens.soort}" data-v="${grens.naar}">${knop}</button></div>`;
+    const grens = grensTip(p);
+    if (grens) {
+      const [tekst, knop] = grens.soort === 'grens' ? ['Grotere getallen?', `Tot ${grens.naar}`]
+        : grens.naar === 'mix' ? ['Af en toe zelf typen?', 'Afwisselen'] : ['Altijd zelf typen?', 'Zelf typen'];
+      onder = vgOnder(tekst, `<button class="btn small purple" id="grens-tip-ja" type="button" data-soort="${grens.soort}" data-v="${grens.naar}">${knop}</button>`);
+    }
+  }
+
+  if (!onder && stand === 'pittig') onder = vgOnder('Het spel maakt het nu wat makkelijker.');
+  if (!onder && stand === 'vlot' && verder) onder = vgOnder('Gaat zelf door naar de volgende stap.');
+
+  if (onder) {
+    const i = rijen.findIndex(r => r.includes('niveau-bezig'));
+    rijen[i] = rijen[i].replace('fl-rij hier niveau-bezig', 'fl-rij hier niveau-bezig met-onder') + onder;
   }
   return `<div class="set-card vg-kaart niveau-blok">
-    <h2 class="vg-kop vg-kop-link">Leerpad <span>· ${kop}</span><button class="vg-aanpas" id="leerpad-aanpas" type="button">Aanpassen ›</button></h2>
+    <div class="vg-kop-rij"><h2 class="vg-kop">Leerpad <span>· ${kop}</span></h2>${vgLabel(stand)}</div>
     <div class="fase-ladder vg-ladder">${rijen.join('')}</div>
-    ${tip}
+    <div class="vg-voet"><button class="vg-aanpas" id="leerpad-aanpas" type="button">Aanpassen ›</button></div>
   </div>`;
 }
+
+const vgOnder = (tekst, knop) => `<div class="vg-onder"${knop ? ' id="grens-tip"' : ''}><span>${tekst}</span>${knop || ''}</div>`;
 
 
 
@@ -26658,12 +26712,14 @@ function oefentExtraHtml(p) {
     .map(([tmpl, e]) => tmpl.replace('@', e.ans == null ? '?' : e.ans));
 
 
+  if (!weak.length) return '';
+
+
   const nLearned = Object.keys(p.learned || {}).length;
   return `<div class="set-card vg-kaart">
     <h2 class="vg-kop">Oefent extra op</h2>
-    ${weak.length
-      ? `<div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>`
-      : `<div class="stats-empty">Geen lastige sommen op dit moment.</div>`}
+    ${vlotHtml(p)}
+    <div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>
     ${nLearned ? `<div class="note vg-noot">🧠 ${nLearned} geleerde ${mv(nLearned, 'som komt', 'sommen komen')} later terug.</div>` : ''}
   </div>`;
 }
@@ -26671,35 +26727,46 @@ function oefentExtraHtml(p) {
 
 
 
-function fluencyHtml(p) {
-  if (p.settings.track === 'count') return '';
+
+
+function vlotHtml(p) {
+  const glyph = { '+': '+', '-': '−', 'x': '×', ':': '÷' };
   const ops = (p.settings.ops || []).filter(o => p.opTrack[o] && p.opTrack[o].n >= 10);
   if (!ops.length) return '';
-  const avg = ops.reduce((a, o) => a + (p.opTrack[o].fast == null ? 0.5 : p.opTrack[o].fast), 0) / ops.length;
-  return `<div class="note vg-noot">⚡ ${avg >= FLUENT_MIN
-    ? 'Veel sommen komen er al vlot uit het hoofd.'
-    : 'De sommen kloppen, maar worden nog vaak uitgerekend. Het spel wacht daarom nog even met moeilijkere vraagsoorten.'}</div>`;
+  return `<div class="vg-vlot">${ops.map(o => {
+    const t = p.opTrack[o];
+    return `<span><b>${glyph[o]}</b> ${(t.fast == null ? 0.5 : t.fast) >= FLUENT_MIN ? 'vlot' : 'rekent nog'}</span>`;
+  }).join('')}</div>`;
 }
+
+
 
 
 
 
 
 function meerCijfersHtml(p) {
+  const shows = playedCount(p);
+  const answered = p.stats.correct + p.stats.wrong;
+  const getallen = [
+    [shows, mv(shows, 'show', 'shows')],
+    [answered, p.settings.track === 'count' ? mv(answered, 'vraag', 'vragen') : mv(answered, 'som', 'sommen')],
+  ];
+  if (answered) getallen.push([Math.round(100 * p.stats.correct / answered) + '%', 'goed']);
   const stars = totalStarCount(p);
   const perfect = perfectCount(p);
   const oogst = [
     ['⭐', stars, mv(stars, 'ster', 'sterren')],
     ['🌟', perfect, mv(perfect, 'perfecte show', 'perfecte shows')],
     ['🏆', `${earnedActiveCount(p)}/${activeTrophies().length}`, 'trofeeën'],
-  ].map(([ico, n, label]) => `<span class="oogst-item"><b>${ico} ${n}</b> ${label}</span>`).join('');
+  ];
   return `<details class="set-card vg-kaart vg-meer"><summary>Meer cijfers</summary>
-    <div class="oogst-rij">${oogst}</div>
-    ${fluencyHtml(p)}
+    <div class="vg-cijfers">${getallen.map(([n, w]) => `<span class="vg-getal"><b>${n}</b> ${w}</span>`).join('')}${
+      oogst.map(([ico, n, w]) => `<span class="oogst-item"><b>${ico} ${n}</b> ${w}</span>`).join('')}</div>
   </details>`;
 }
 function statsPanelHtml(p) {
-  return `<div class="settings-panel">${statusKaartHtml(p)}${leerpadHtml(p)}${oefentExtraHtml(p)}${meerCijfersHtml(p)}</div>`;
+  return `<div class="settings-panel">${stemKaartHtml(p)}${leerpadHtml(p)}${oefentExtraHtml(p)}${meerCijfersHtml(p)}</div>`;
 }
 
 
@@ -27344,12 +27411,11 @@ function openWieBlad() {
 
 function overzichtHtml() {
   const rij = key => {
-    const p = db.profiles[key], u = uitdagingStand(p);
-    const { ico, kop } = u ? STAND_TEKST[u.stand] : { ico: '🌱', kop: 'Net begonnen' };
+    const p = db.profiles[key];
     const shows = playedCount(p);
     return `<button class="ster-rij" type="button" data-key="${key}">`
       + `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
-      + `<span class="sr-tekst"><b>${esc(p.name)}</b><small><span aria-hidden="true">${ico}</span> ${kop}`
+      + `<span class="sr-tekst"><b>${esc(p.name)}</b><small>${vgLabel(vgStand(p))}`
       + `${shows ? ` · ${shows} ${mv(shows, 'show', 'shows')}` : ''}</small></span>`
       + `<span class="sr-pijl" aria-hidden="true">›</span></button>`;
   };

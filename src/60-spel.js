@@ -965,19 +965,50 @@ function groeiMoment(p, g, voor) {
   else if (max > z.max) { z.max = max; nieuw = { pil: `⬆️ Nieuw: getallen tot ${max}!` }; }
   return nieuw;
 }
-function onthoudUitkomst(p, sterren) { p.recent = (p.recent || []).concat(sterren).slice(-RECENT_N); }
-/* Zit de uitdaging goed? Uit de laatste shows, in drie standen -- en met opzet
-   een uitspraak over de uitdaging, niet over het kind:
-     pittig  drie of meer mislukte shows -- het spel maakt het nu zelf lichter
-     vlot    (bijna) alles drie sterren -- tijd voor iets nieuws
+/* Welke stap van het leerpad speelt ze nu? Rekenen: de rij (padNu), tellen: de
+   fase. Een andere modus is ook een andere stap. Alleen voor het ouderrapport:
+   het zegt waar de shows in p.stap bij horen. */
+function stapSleutel(p) {
+  return p.settings.track === 'count' ? 'fase' + countLiveStage(p) : 'pad:' + padNu(p);
+}
+/* De uitkomst onthouden, met de stap waar hij bij hoort (stap = stapSleutel van
+   vóór de show: de show die haar een stap verder brengt telde nog op de oude).
+   p.stap = { id, n }: hoeveel van de laatste shows op deze stap gespeeld zijn. */
+function onthoudUitkomst(p, sterren, stap) {
+  p.recent = (p.recent || []).concat(sterren).slice(-RECENT_N);
+  if (stap == null) return;
+  if (!p.stap || p.stap.id !== stap) p.stap = { id: stap, n: 0 };
+  p.stap.n++;
+}
+/* Past het niveau? Uit de laatste shows OP DE STAP WAAR ZE NU STAAT, in drie
+   standen -- en met opzet een uitspraak over de uitdaging, niet over het kind:
+     pittig  mislukte shows (twee, of drie op tien) -- het spel maakt het nu zelf lichter
+     vlot    (bijna) alles drie sterren -- het pad schuift zelf door, of er is een tip
      goed    de rest: een mengeling van twee en drie sterren
-   Onder de vier shows zegt het nog niets (null). */
+
+   Alleen deze stap, en niet gewoon de laatste tien: het leerpad schuift door
+   zodra ze een rij kan (padNa), en dan waren de laatste tien shows nog bijna
+   allemaal van de makkelijkere rij. Dan stond er "gaat vlot" boven de stap die
+   ze net moeilijker vindt. Onder de STAND_MIN shows op deze stap zegt het nog
+   niets (null); Voortgang zegt dan "nieuwe stap".
+
+   Een save van vóór p.stap weet niet bij welke stap zijn shows horen; die kijkt
+   zoals eerst naar de laatste tien, vanaf vier shows. */
+const STAND_MIN = 2;
 function uitdagingStand(p) {
   const r = p.recent || [];
-  if (r.length < 4) return null;
-  const drie = r.filter(v => v >= 3).length, mis = r.filter(v => v === 0).length;
-  const stand = mis >= 3 ? 'pittig' : (drie / r.length >= 0.8 ? 'vlot' : 'goed');
-  return { stand, n: r.length, drie, mis };
+  let w;
+  if (!p.stap) {
+    if (r.length < 4) return null;
+    w = r;
+  } else {
+    const n = p.stap.id === stapSleutel(p) ? Math.min(p.stap.n, r.length) : 0;
+    if (n < STAND_MIN) return null;
+    w = r.slice(-n);
+  }
+  const drie = w.filter(v => v >= 3).length, mis = w.filter(v => v === 0).length;
+  const stand = mis >= Math.max(2, Math.ceil(w.length * 0.3)) ? 'pittig' : (drie / w.length >= 0.8 ? 'vlot' : 'goed');
+  return { stand, n: w.length, drie, mis };
 }
 function showStars(g) {
   if (g.misses === 0) return 3;
@@ -1050,11 +1081,12 @@ function endLevel(success) {
   const lvl = G.lvl;
   applyRampUpdates(p, G);   // frequentie-trap van de extra uitdagingen bijstellen
   const faseVoor = G.count ? countLiveStage(p) : 0;   // voor groeiMoment
+  const stapVoor = stapSleutel(p);                     // de stap waar deze show bij hoort (zie onthoudUitkomst)
   if (G.count) {
     advanceCountStage(p, success, success && showStars(G) === 3);   // telmodus: fase mee laten klimmen/zakken
     telPlafondTel(p, success ? showStars(G) : 0);
   }
-  onthoudUitkomst(p, success ? showStars(G) : 0);   // voor de stand in Voortgang (beide takken hieronder bewaren)
+  onthoudUitkomst(p, success ? showStars(G) : 0, stapVoor);   // voor de stand in Voortgang (beide takken hieronder bewaren)
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;   // een show verder gewend aan de grens
   if (!G.count && success) telGrensDrie(p, showStars(G));   // voor de grenstip (zie grensDrieSterren)
   if (!G.count) padNa(p, success ? showStars(G) : 0);   // een show verder op haar rij van het leerpad
