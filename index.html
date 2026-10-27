@@ -14221,14 +14221,31 @@ function load() {
   let raw = null;
   try {
     raw = localStorage.getItem(LS_KEY);
+    opslagStand = raw;
     if (raw) {
       db = JSON.parse(raw);
       if (typeof db.sound !== 'boolean') db.sound = true;
       if (typeof db.haptics !== 'boolean') db.haptics = true;
 
       if (!db.profiles || typeof db.profiles !== 'object') db.profiles = {};
-      Object.values(db.profiles).forEach(migrate);
+
+
+
+
+
+      const opzij = [];
+      for (const k of Object.keys(db.profiles)) {
+        try { migrate(db.profiles[k]); }
+        catch (e) { opzij.push(k); delete db.profiles[k]; }
+      }
       normalizeProfiles();
+      if (opzij.length) {
+
+
+
+        try { localStorage.setItem(LS_KEY + '.broken', raw); } catch (e2) { }
+        return;
+      }
       save();
       return;
     }
@@ -14262,10 +14279,54 @@ let saveFailed = false;
 
 
 let demoStand = false;
-function save() {
-  if (demoStand) return;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let opslagStand = null;
+let opnieuwLaden = false;
+function anderSchreef() {
   try {
-    localStorage.setItem(LS_KEY, JSON.stringify(db));
+    const nu = localStorage.getItem(LS_KEY);
+    return nu !== null && nu !== opslagStand;
+  } catch (e) { return false; }
+}
+function laadNieuwere() {
+  if (opnieuwLaden) return;
+  opnieuwLaden = true;
+  location.reload();
+}
+function opslagNagaan() {
+  if (!demoStand && anderSchreef()) laadNieuwere();
+}
+function save() {
+  if (demoStand || opnieuwLaden) return;
+  try {
+    if (anderSchreef()) { laadNieuwere(); return; }
+    const tekst = JSON.stringify(db);
+    localStorage.setItem(LS_KEY, tekst);
+    opslagStand = tekst;
     saveFailed = false;
   } catch (e) {
     if (!saveFailed) {
@@ -14292,6 +14353,9 @@ function save() {
 
 
 
+
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') opslagNagaan(); });
+window.addEventListener('pageshow', e => { if (e.persisted) opslagNagaan(); });
 
 let opslagGevraagd = false;
 function opslagVasthouden(ouder) {

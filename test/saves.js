@@ -163,6 +163,19 @@ const FIXTURES = {
     }),
   }),
 
+  // 12 · Twee sterren, waarvan er één stuk is zoals in 11. De andere hoort
+  //      gewoon te blijven spelen; alleen de kapotte gaat opzij, en het hele
+  //      bestand blijft ongeschonden bewaard onder LS_KEY + '.broken'.
+  eenKapotteSter: () => ({
+    [LS_KEY]: JSON.stringify({
+      sound: true, haptics: true, schemaV: 2,
+      profiles: {
+        p1: oudProfiel('Lina', { level: 9, diamonds: 50, order: 0, stars: sterren(1, 8, 3) }),
+        p2: { name: 'Tess', level: 3, stars: sterren(1, 2, 2) },
+      },
+    }),
+  }),
+
 };
 
 module.exports = Object.assign({ LS_KEY, sterren, oudProfiel, opslag, isDb }, FIXTURES);

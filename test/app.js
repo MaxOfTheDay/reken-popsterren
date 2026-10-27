@@ -29,6 +29,8 @@
  * (WORLDS, worldDone, frontierWorld, grantWorldRewards, load, save, ...), plus:
  *   app.opslag()        de localStorage van deze sessie, als kaartje
  *   app.bestand()       wat er onder LS_KEY staat, ontleed
+ *   app.opslagZelf      de opslag zelf: geef hem aan laadApp om hem te delen
+ *   app.herladen()      hoe vaak de app de pagina opnieuw wilde laden
  *   app.run(code)       een stukje code in de app draaien (voor let-variabelen)
  *   app.zetSpeler(key)  cur zetten zonder de schermen (selectProfile doet DOM)
  */
@@ -225,7 +227,12 @@ const BRUG = `globalThis.__api = {
 
 function laadApp(opties) {
   opties = opties || {};
-  const opslag = nepOpslag(opties.opslag);
+  // Een opslag die al een opslag ís (app.opslagZelf van een andere instantie) wordt
+  // gedeeld in plaats van gekopieerd: zo staat het spel twee keer open op één
+  // toestel (zaak N in saves.test.js).
+  const opslag = opties.opslag && typeof opties.opslag.getItem === 'function'
+    ? opties.opslag : nepOpslag(opties.opslag);
+  let herladen = 0;
   // Geen ?debug: dat is de studio-stand, en die leest een wereldconcept uit
   // localStorage. De tests hieronder draaien op het gewone spel.
   const zoek = opties.zoek == null ? '' : opties.zoek;
@@ -248,7 +255,7 @@ function laadApp(opties) {
   ctx.sessionStorage = nepOpslag();
   ctx.document = nepDocument();
   ctx.navigator = { userAgent: 'node', vibrate: stil, language: 'nl', onLine: true, serviceWorker: undefined };
-  ctx.location = { protocol: 'file:', search: zoek, href: 'file:///index.html' + zoek, hash: '', reload: stil };
+  ctx.location = { protocol: 'file:', search: zoek, href: 'file:///index.html' + zoek, hash: '', reload: () => { herladen++; } };
   ctx.history = { state: null, pushState: stil, replaceState: stil, back: stil, length: 1 };
   ctx.screen = { width: 390, height: 844, orientation: { type: 'portrait-primary' } };
   ctx.performance = { now: () => 0 };
@@ -311,6 +318,8 @@ function laadApp(opties) {
   app.run = code => vm.runInContext(code, context, { filename: 'test/app.js:run' });
   app.zetSpeler = key => app.run('cur = ' + JSON.stringify(key));
   app.opslag = () => Object.fromEntries(opslag.map);
+  app.opslagZelf = opslag;
+  app.herladen = () => herladen;   // hoe vaak de app location.reload() vroeg
   // Wat er onder LS_KEY staat, ontleed; null als er nog niets bewaard is. Gooit
   // als het bestand onleesbaar is -- gebruik dan app.opslag() en kijk naar de
   // ruwe tekst (zie zaak I in saves.test.js).
