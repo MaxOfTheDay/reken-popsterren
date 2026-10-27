@@ -56,7 +56,9 @@ function check(ok, label, detail) {
     await page.click(`#newstar-base .chip[data-v="${base || 'meisje'}"]`);
     if (hair)  await page.click(`#newstar-hair  .chip[data-v="${hair}"]`);
     if (dress) await page.click(`#newstar-dress .chip[data-v="${dress}"]`);
-    if (track) await page.click(`#newstar-track .chip[data-v="${track}"]`);
+    // "Hoe speel je?" heeft ook geen voorkeuze meer (zie openNewStar): zonder
+    // modus geen ster, dus de helper kiest standaard de rekenshow.
+    await page.click(`#newstar-track .chip[data-v="${track || 'math'}"]`);
     if (settings) {
       await page.click('#newstar-oefen summary');
       await page.waitForTimeout(120);
@@ -157,7 +159,8 @@ function check(ok, label, detail) {
    * af, dan is dat dezelfde tik als op Klaar.
    *
    * Wat hier óók vastligt: Enter verzint geen ster als er nog iets ontbreekt.
-   * "Wie ben je?" heeft geen voorkeuze, en dat blijft een echte vraag.            */
+   * "Wie ben je?" en "Hoe speel je?" hebben geen voorkeuze, en dat blijven echte
+   * vragen.                                                                       */
   {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
@@ -173,6 +176,7 @@ function check(ok, label, detail) {
     check(r.n === 0 && r.opScherm, 'Enter maakt geen ster zonder alle antwoorden', JSON.stringify(r));
     check(r.focus !== 'newstar-name', 'Enter laat het naamveld wel los (toetsenbord weg)', String(r.focus));
     await page.click('#newstar-base .chip[data-v="meisje"]');
+    await page.click('#newstar-track .chip[data-v="math"]');
     await page.fill('#newstar-name', 'Fien');
     await page.press('#newstar-name', 'Enter');
     await page.waitForTimeout(400);
@@ -316,6 +320,7 @@ function check(ok, label, detail) {
     await page.click('#btn-newstar');
     await page.waitForTimeout(150);
     await page.click('#newstar-base .chip[data-v="meisje"]');
+    await page.click('#newstar-track .chip[data-v="math"]');
     await page.fill('#newstar-name', 'emma');
     await page.click('#newstar-go');
     await page.waitForTimeout(200);
@@ -2444,10 +2449,18 @@ function check(ok, label, detail) {
      met een regel die zegt wát er nu ingesteld staat. Dat mag de snelle weg
      (openklapper niet aanraken) op geen enkele manier veranderen. */
 
-  // 10a · dicht bij het openen, en de samenvatting zegt iets
+  // 10a · zonder modus geen openklapper; met modus dicht, en de samenvatting zegt iets
   {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
+    await page.waitForTimeout(150);
+    const leeg = await page.evaluate(() => ({
+      gekozen: document.querySelectorAll('#newstar-track .chip.on').length,
+      klapper: !!document.getElementById('newstar-oefen'),
+    }));
+    check(leeg.gekozen === 0, 'geen enkele modus staat voorgekozen', JSON.stringify(leeg));
+    check(!leeg.klapper, 'zonder modus staat er nog geen oefening-openklapper', JSON.stringify(leeg));
+    await page.click('#newstar-track .chip[data-v="math"]');
     await page.waitForTimeout(150);
     const r = await page.evaluate(() => ({
       open: document.getElementById('newstar-oefen').hasAttribute('open'),
@@ -2493,6 +2506,8 @@ function check(ok, label, detail) {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
     await page.waitForTimeout(150);
+    await page.click('#newstar-track .chip[data-v="math"]');
+    await page.waitForTimeout(150);
     await page.click('#newstar-oefen summary');
     await page.waitForTimeout(120);
     await page.click('#ns-set-max .chip[data-v="100"]');
@@ -2510,6 +2525,9 @@ function check(ok, label, detail) {
   {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
+    await page.waitForTimeout(150);
+    // eerst de rekenshow (dan pas is er een openklapper), dan naar de telmodus
+    await page.click('#newstar-track .chip[data-v="math"]');
     await page.waitForTimeout(150);
     await page.click('#newstar-oefen summary');
     await page.waitForTimeout(120);
@@ -2544,6 +2562,8 @@ function check(ok, label, detail) {
       await new Promise(r => setTimeout(r, 150));
       openNewStar('settings');
       await new Promise(r => setTimeout(r, 150));
+      document.querySelector('#newstar-track .chip[data-v="math"]').click();
+      await new Promise(r => setTimeout(r, 150));
       document.querySelector('#newstar-oefen summary').click();
       await new Promise(r => setTimeout(r, 150));
       document.querySelector('#ns-set-max .chip[data-v="100"]').click();
@@ -2559,6 +2579,8 @@ function check(ok, label, detail) {
   {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
+    await page.waitForTimeout(150);
+    await page.click('#newstar-track .chip[data-v="math"]');
     await page.waitForTimeout(150);
     await page.click('#newstar-oefen summary');
     await page.waitForTimeout(120);
@@ -2638,6 +2660,22 @@ function check(ok, label, detail) {
     check(om.n === 0 && om.naamWijst && om.basisWijst === 0,
       'zonder naam wijst hij het naamveld aan', JSON.stringify(om));
     check(!om.melding, 'ook hier zonder melding', om.melding);
+    // basis en naam gekozen, maar nog geen modus: dan wijst hij "Hoe speel je?" aan
+    await page.fill('#newstar-name', 'Zonder');
+    const modus = await page.evaluate(async () => {
+      // de ring van de vorige tik staat nog 2,4 s: eerst weg, dan pas meten
+      document.querySelectorAll('.vraagt').forEach(el => el.classList.remove('vraagt'));
+      document.getElementById('newstar-go').click();
+      await new Promise(r => setTimeout(r, 120));
+      return {
+        n: Object.keys(db.profiles).length,
+        aria: document.getElementById('newstar-go').getAttribute('aria-disabled'),
+        modusWijst: document.querySelectorAll('#newstar-track .chip.vraagt').length,
+        naamWijst: document.getElementById('newstar-name').classList.contains('vraagt'),
+      };
+    });
+    check(modus.n === 0 && modus.aria === 'true' && modus.modusWijst === 2 && !modus.naamWijst,
+      'zonder modus wijst hij "Hoe speel je?" aan', JSON.stringify(modus));
     await ctx.close();
   }
 

@@ -794,6 +794,20 @@ zaak('J', () => {
   const twee = laadApp({ opslag: een.opslag() });
   check(twee.run('appKnopTonen()') === true, 'J · knopje: wel vanaf het tweede bezoek', twee.opslag().rekenPopsterren_appknop);
   check(!/appknop|bezoek/i.test(JSON.stringify(twee.db)), 'J · knopje: de tellers staan niet in db, dus niet in de back-up', '');
+  // Op een iPhone of iPad wél meteen, zolang er nog geen ster is: daar begint de
+  // app op het beginscherm met een eigen, lege opslag. Is er al een ster, dan
+  // weer gewoon vanaf het tweede bezoek. Android blijft op het tweede bezoek.
+  const iosEen = laadApp();
+  iosEen.run(`navigator.userAgent = '${UA.iphone}'`);
+  check(iosEen.run('appKnopTonen()') === true, 'J · knopje: op een iPhone al bij het eerste bezoek, zonder ster', '');
+  iosEen.run(`db.profiles = { p1: defaultProfile('Noor', 'dress_roze') }`);
+  check(iosEen.run('appKnopTonen()') === false, 'J · knopje: maar met een ster pas vanaf het tweede bezoek', '');
+  const ipadEen = laadApp();
+  ipadEen.run(`navigator.userAgent = '${UA.ipad}'; navigator.maxTouchPoints = 5`);
+  check(ipadEen.run('appKnopTonen()') === true, 'J · knopje: op een iPad ook', '');
+  const androidEen = laadApp();
+  androidEen.run(`navigator.userAgent = '${UA.android}'`);
+  check(androidEen.run('appKnopTonen()') === false, 'J · knopje: op Android niet bij het eerste bezoek', '');
   // Onder ?debug alleen met &appknop: de browsersuites openen de pagina vaak opnieuw.
   check(laadApp({ opslag: twee.opslag(), zoek: '?debug' }).run('appKnopTonen()') === false,
     'J · knopje: onder ?debug weg', '');

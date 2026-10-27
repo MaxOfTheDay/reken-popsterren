@@ -661,6 +661,7 @@ function check(ok, label, detail) {
     let r = await page.evaluate(() => document.querySelector('.screen.active').id);
     check(r === 'screen-newstar', 'het overzicht heeft een weg naar het maakformulier', r);
     await page.click('#newstar-base .chip[data-v="jongen"]');
+    await page.click('#newstar-track .chip[data-v="math"]');
     await page.fill('#newstar-name', 'Daan');
     await page.click('#newstar-go');
     await page.waitForTimeout(400);
