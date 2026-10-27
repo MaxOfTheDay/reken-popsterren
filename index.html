@@ -9412,7 +9412,7 @@
 
 
 
-  .oefen-kaart.primary { padding: 16px 16px 14px; }
+  .oefen-kaart.primary { padding: 16px 18px 14px; }
   .oe-lbl { display: flex; align-items: center; gap: 6px; margin: 14px 2px 7px; font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
   .oe-lbl:first-child { margin-top: 0; }
   .oe-teken { padding: 1px 8px; border-radius: var(--r-sm); background: var(--lavender-wash); color: var(--purple-mid); font-size: var(--tx-label); letter-spacing: .5px; }
@@ -9747,9 +9747,11 @@
 
 
 
+  .kaart-kop { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; margin: 0 2px 10px; }
+  .kaart-kop h2 { margin: 0; white-space: nowrap; font-size: var(--tx-body); font-weight: 700; color: var(--purple-mid); }
+  .kaart-kop h2 span { color: var(--paper-ink-muted); font-weight: 600; }
 
-  .vg-kop { font-size: var(--tx-body); font-weight: 700; color: var(--purple-mid); margin: 0 2px 10px; }
-  .vg-kop span { color: var(--paper-ink-muted); font-weight: 600; }
+
 
 
 
@@ -9770,9 +9772,6 @@
   .vg-tag.pittig { background: var(--practice-bg); color: var(--practice-text); }
   .vg-tag.pittig b { background: var(--practice-text); }
 
-  .vg-kop-rij { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; margin: 0 2px 10px; }
-  .vg-kop-rij .vg-kop { margin: 0; white-space: nowrap; }
-
   .vg-ladder .fl-naam small.vg-hoever { display: flex; align-items: center; gap: 6px; font-weight: 600; }
   .vg-bol { display: inline-flex; gap: 3px; }
   .vg-bol i { width: 8px; height: 8px; border-radius: 50%; background: var(--lavender-wash-3); box-shadow: inset 0 0 0 1.5px var(--purple-light); }
@@ -9792,8 +9791,32 @@
   @media (max-width: 360px) {
     .vg-ladder .fl-rij.hier .fl-vb { display: none; }
   }
-  .vg-gat .fl-n { background: none !important; color: var(--paper-ink-muted); }
   .vg-gat .fl-naam { font-size: var(--tx-klein); }
+
+
+
+
+
+
+
+
+  .vg-ladder { gap: 0; }
+  .vg-ladder > .fl-rij { position: relative; min-height: 42px; }
+  .vg-ladder > .fl-rij::before, .vg-ladder > .fl-rij::after, .vg-ladder > .vg-onder::before {
+    content: ""; position: absolute; left: 19.5px; width: 3px; pointer-events: none;
+    background: radial-gradient(circle, var(--purple-light) 1.5px, transparent 2px) center top / 3px 6px repeat-y;
+  }
+  .vg-ladder > .fl-rij::before { top: 0; height: calc(50% - 16px); }
+  .vg-ladder > .fl-rij::after { bottom: 0; height: calc(50% - 16px); }
+  .vg-ladder > .fl-rij.klaar::after, .vg-ladder > .fl-rij.hier::before { background: var(--purple-mid); border-radius: 2px; }
+  .vg-ladder > .vg-onder { position: relative; margin-bottom: 0; }
+  .vg-ladder > .vg-onder::before { top: 0; bottom: 0; }
+  .vg-ladder > .fl-rij.vg-gat::before { height: 50%; }
+  .vg-ladder > .fl-rij.vg-gat::after { height: 50%; }
+  .vg-ladder > .fl-rij:first-child::before, .vg-ladder > .fl-rij:last-child::after,
+  .vg-ladder > .fl-rij:has(+ .fl-lijn)::after { display: none; }
+
+  .vg-gat .fl-n { background: none !important; color: transparent; }
   .vg-voet { display: flex; justify-content: flex-end; margin-top: 4px; }
   .vg-vlot { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
   .vg-vlot span {
@@ -9817,22 +9840,22 @@
   .practice-chip { background: var(--practice-bg); border: 1px solid var(--gold-light); color: var(--practice-text); border-radius: var(--r-pill); padding: 6px 13px; font-weight: 700; font-size: var(--tx-label); }
 
   .vg-meer { padding-top: 12px; padding-bottom: 12px; }
-  .vg-meer > summary {
-    list-style: none; cursor: pointer; display: flex; align-items: center; min-height: 32px;
-    font-size: var(--tx-label); font-weight: 700; color: var(--purple-mid);
-  }
+  .vg-meer > summary { list-style: none; cursor: pointer; display: flex; align-items: center; min-height: 32px; color: var(--purple-mid); }
+  .vg-meer > summary .kaart-kop { flex: 1; margin: 0 2px; }
   .vg-meer > summary::-webkit-details-marker { display: none; }
   .vg-meer > summary::after { content: '▾'; margin-left: auto; opacity: .7; }
   .vg-meer[open] > summary::after { content: '▴'; }
 
 
 
+
+
   .vg-cijfers {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 8px; margin: 8px 2px 2px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 8px; margin: 10px 2px 2px;
     font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted);
   }
-  .vg-cijfers b { display: block; font-size: var(--tx-body); }
-  .vg-getal b, .oogst-item b { font-weight: 700; color: var(--paper-ink); }
+  .vg-cijfers b { display: block; font-size: var(--tx-sub); font-weight: 700; line-height: 1.1; color: var(--paper-ink); }
+  .vg-cijfers-lijn { grid-column: 1 / -1; height: 1px; margin: -4px 0; background: var(--paper-border); }
 
   .stem-notitie { margin-top: 10px; }
   .vg-kaart > .stem-notitie:first-child { margin-top: 0; }
@@ -26403,7 +26426,7 @@ function renderNewStar() {
               <span class="sr-val">${oefenSamenvatting(s)}</span></span>
           </summary>
           <div class="set-reveal-body">
-            ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${g.html}</div>`).join('')}
+            ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${oeLbl(g.kop)}${g.html}</div>`).join('')}
             <div class="note" style="margin-top:14px">Later te wijzigen bij 👨‍👩‍👧 Voor ouders.</div>
           </div>
         </details>` : ''}
@@ -26709,6 +26732,16 @@ const flVb = vb => (vb || '').replace('▢', '<i class="fl-vak"></i>');
 
 
 
+
+
+
+
+
+
+
+const kaartKop = (titel, rechts) => `<div class="kaart-kop"><h2>${titel}</h2>${rechts || ''}</div>`;
+
+const oeLbl = (tekst, teken) => `<div class="oe-lbl">${teken ? `<span class="oe-teken">${teken}</span>` : ''}${tekst}</div>`;
 const klaarNamen = namen => namen.length > 2 ? `${namen[0]} … ${namen[namen.length - 1]}` : namen.join(', ');
 function leerpadHtml(p) {
   const s = p.settings;
@@ -26776,7 +26809,7 @@ function leerpadHtml(p) {
     rijen[i] = rijen[i].replace('fl-rij hier niveau-bezig', 'fl-rij hier niveau-bezig met-onder') + onder;
   }
   return `<div class="set-card vg-kaart niveau-blok">
-    <div class="vg-kop-rij"><h2 class="vg-kop">Leerpad <span>· ${kop}</span></h2>${vgLabel(stand)}</div>
+    ${kaartKop(`Leerpad <span>· ${kop}</span>`, vgLabel(stand))}
     <div class="fase-ladder vg-ladder">${rijen.join('')}</div>
     <div class="vg-voet"><button class="vg-aanpas" id="leerpad-aanpas" type="button">Aanpassen ›</button></div>
   </div>`;
@@ -26799,7 +26832,7 @@ function oefentExtraHtml(p) {
 
   const nLearned = Object.keys(p.learned || {}).length;
   return `<div class="set-card vg-kaart">
-    <h2 class="vg-kop">Oefent extra op</h2>
+    ${kaartKop('Oefent extra op')}
     ${vlotHtml(p)}
     <div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>
     ${nLearned ? `<div class="note vg-noot">🧠 ${nLearned} geleerde ${mv(nLearned, 'som komt', 'sommen komen')} later terug.</div>` : ''}
@@ -26838,13 +26871,14 @@ function meerCijfersHtml(p) {
   const stars = totalStarCount(p);
   const perfect = perfectCount(p);
   const oogst = [
-    ['⭐', stars, mv(stars, 'ster', 'sterren')],
-    ['🌟', perfect, mv(perfect, 'perfecte show', 'perfecte shows')],
-    ['🏆', `${earnedActiveCount(p)}/${activeTrophies().length}`, 'trofeeën'],
+    [stars, mv(stars, 'ster', 'sterren')],
+    [perfect, mv(perfect, 'perfecte show', 'perfecte shows')],
+    [`${earnedActiveCount(p)}/${activeTrophies().length}`, 'trofeeën'],
   ];
-  return `<details class="set-card vg-kaart vg-meer"><summary>Meer cijfers</summary>
-    <div class="vg-cijfers">${getallen.map(([n, w]) => `<span class="vg-getal"><b>${n}</b> ${w}</span>`).join('')}${
-      oogst.map(([ico, n, w]) => `<span class="oogst-item"><b>${ico} ${n}</b> ${w}</span>`).join('')}</div>
+  return `<details class="set-card vg-kaart vg-meer"><summary>${kaartKop('Meer cijfers')}</summary>
+    <div class="vg-cijfers">${getallen.map(([n, w]) => `<span class="vg-getal"><b>${n}</b> ${w}</span>`).join('')}
+      <span class="vg-cijfers-lijn" aria-hidden="true"></span>${
+      oogst.map(([n, w]) => `<span class="oogst-item"><b>${n}</b> ${w}</span>`).join('')}</div>
   </details>`;
 }
 function statsPanelHtml(p) {
@@ -27088,7 +27122,8 @@ function oefenGroups(s, pfx, p) {
 
 
 
-  const lbl = (tekst, teken) => `<div class="oe-lbl">${teken ? `<span class="oe-teken">${teken}</span>` : ''}${tekst}</div>`;
+
+  const lbl = oeLbl;
 
 
 
@@ -27101,12 +27136,12 @@ function oefenGroups(s, pfx, p) {
     + `<span class="oe-i" aria-hidden="true">${ico}</span><span class="oe-w">${woord}</span><span class="oe-stand" aria-hidden="true"></span></button></div>`;
   const perShow = `${lbl('Vragen per show')}${balk('set-perlevel', 'perLevel', [[5, '5'], [8, '8'], [10, '10']], s.perLevel)}`;
   if (s.track === 'count') return [{
-    kaart: 'wat', html: `${lbl('Hoeveelheden tot')}${balk('set-qmax', 'qmax', [[6, '6'], [8, '8'], [10, '10']], s.qmax || 10)}`
+    kaart: 'wat', kop: 'Hoeveelheden tot', html: `${balk('set-qmax', 'qmax', [[6, '6'], [8, '8'], [10, '10']], s.qmax || 10)}`
   }, {
-    kaart: 'pad', html: `${lbl('Leerpad')}${ladder('set-fase', 'stage',
+    kaart: 'pad', kop: 'Leerpad', html: `${ladder('set-fase', 'stage',
       stageNums.map(v => ({ v, naam: COUNT_STAGE_LABELS[v], vb: COUNT_STAGE_VB[v] })), lo, hi, p && countLiveStage(p))}`
   }, {
-    kaart: 'show', html: `${lbl('Tonen als')}${balk('set-repr', 'repr',
+    kaart: 'show', kop: 'Tonen als', html: `${balk('set-repr', 'repr',
       [['objects', 'Voorwerpen'], ['dots', 'Stippen'], ['mix', 'Mix']], s.repr || 'objects')}
       ${perShow}
       ${aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false)}`
@@ -27143,16 +27178,16 @@ function oefenGroups(s, pfx, p) {
 
 
   return [{
-    kaart: 'wat', html: `${lbl('Sommen')}
+    kaart: 'wat', kop: 'Sommen', html: `
       <div class="oe-ops" id="${pfx}set-ops" data-instelling="ops">${opDefs.map(([v, teken, woord]) =>
         `<button class="chip${s.ops.includes(v) ? ' on' : ''}" data-v="${v}" aria-label="${woord}" aria-pressed="${s.ops.includes(v)}">${teken}</button>`).join('')}</div>
       ${tablesRelevant ? `${lbl('Tafels van', '× ÷')}
       <div class="oe-tafels" id="${pfx}set-tables" data-instelling="tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>` : ''}`
   }, {
-    kaart: 'pad', html: `${lbl('Leerpad')}${ladder('set-startstap', 'padVanaf', padRijenLadder,
+    kaart: 'pad', kop: 'Leerpad', html: `${ladder('set-startstap', 'padVanaf', padRijenLadder,
       startPos, plusMin ? padR.length : Infinity, hierPos, eind, true)}`
   }, {
-    kaart: 'show', html: `${lbl('Antwoord')}${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
+    kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
       ${perShow}`
   }];
 }
@@ -27185,7 +27220,7 @@ function oefenSamenvatting(s) {
 
 function oefenenPanelHtml(p, s) {
   const cards = oefenGroups(s, '', p).map(g => `
-    <div class="set-card oefen-kaart primary" data-kaart="${g.kaart}">${g.html}</div>`).join('');
+    <div class="set-card oefen-kaart primary" data-kaart="${g.kaart}">${kaartKop(g.kop)}${g.html}</div>`).join('');
   return `<div class="settings-panel">${cards}
   </div>`;
 }

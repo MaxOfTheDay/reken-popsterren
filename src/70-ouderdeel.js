@@ -112,7 +112,7 @@ function renderNewStar() {
               <span class="sr-val">${oefenSamenvatting(s)}</span></span>
           </summary>
           <div class="set-reveal-body">
-            ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${g.html}</div>`).join('')}
+            ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${oeLbl(g.kop)}${g.html}</div>`).join('')}
             <div class="note" style="margin-top:14px">Later te wijzigen bij 👨‍👩‍👧 Voor ouders.</div>
           </div>
         </details>` : ''}
@@ -418,6 +418,16 @@ const flVb = vb => (vb || '').replace('▢', '<i class="fl-vak"></i>');
    bolletje, dan wat er komt. Rechtsboven het label (vgStand), onderaan
    "Aanpassen ›" naar dezelfde ladder op Oefeningen. Een tip staat onder haar
    stap, één regel met de knop ernaast: daar is wat hij verandert. */
+/* DE KAARTKOP. Elke kaart op Voortgang en Oefeningen begint met deze ene kop:
+   paars, even groot, met rechts eventueel iets kleins (het label op het
+   leerpad). Daaronder heten de velden van een kaart met het kleine grijze
+   label (oeLbl). Hier stonden drie soorten kop naast elkaar -- groot paars op
+   Voortgang, klein paars op Meer cijfers, klein grijs op Oefeningen -- en
+   dezelfde ladder kreeg op het ene tabblad een titel en op het andere een
+   veldlabel. ouder.test.js zaak Q houdt het bij één. */
+const kaartKop = (titel, rechts) => `<div class="kaart-kop"><h2>${titel}</h2>${rechts || ''}</div>`;
+// het kleine grijze label boven een veld in een kaart (zie kaartKop)
+const oeLbl = (tekst, teken) => `<div class="oe-lbl">${teken ? `<span class="oe-teken">${teken}</span>` : ''}${tekst}</div>`;
 const klaarNamen = namen => namen.length > 2 ? `${namen[0]} … ${namen[namen.length - 1]}` : namen.join(', ');
 function leerpadHtml(p) {
   const s = p.settings;
@@ -485,7 +495,7 @@ function leerpadHtml(p) {
     rijen[i] = rijen[i].replace('fl-rij hier niveau-bezig', 'fl-rij hier niveau-bezig met-onder') + onder;
   }
   return `<div class="set-card vg-kaart niveau-blok">
-    <div class="vg-kop-rij"><h2 class="vg-kop">Leerpad <span>· ${kop}</span></h2>${vgLabel(stand)}</div>
+    ${kaartKop(`Leerpad <span>· ${kop}</span>`, vgLabel(stand))}
     <div class="fase-ladder vg-ladder">${rijen.join('')}</div>
     <div class="vg-voet"><button class="vg-aanpas" id="leerpad-aanpas" type="button">Aanpassen ›</button></div>
   </div>`;
@@ -508,7 +518,7 @@ function oefentExtraHtml(p) {
   // zodat we merken of het blijft zitten (i.p.v. ze definitief te vergeten)
   const nLearned = Object.keys(p.learned || {}).length;
   return `<div class="set-card vg-kaart">
-    <h2 class="vg-kop">Oefent extra op</h2>
+    ${kaartKop('Oefent extra op')}
     ${vlotHtml(p)}
     <div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>
     ${nLearned ? `<div class="note vg-noot">🧠 ${nLearned} geleerde ${mv(nLearned, 'som komt', 'sommen komen')} later terug.</div>` : ''}
@@ -547,13 +557,14 @@ function meerCijfersHtml(p) {
   const stars = totalStarCount(p);
   const perfect = perfectCount(p);
   const oogst = [
-    ['⭐', stars, mv(stars, 'ster', 'sterren')],
-    ['🌟', perfect, mv(perfect, 'perfecte show', 'perfecte shows')],
-    ['🏆', `${earnedActiveCount(p)}/${activeTrophies().length}`, 'trofeeën'],
+    [stars, mv(stars, 'ster', 'sterren')],
+    [perfect, mv(perfect, 'perfecte show', 'perfecte shows')],
+    [`${earnedActiveCount(p)}/${activeTrophies().length}`, 'trofeeën'],
   ];
-  return `<details class="set-card vg-kaart vg-meer"><summary>Meer cijfers</summary>
-    <div class="vg-cijfers">${getallen.map(([n, w]) => `<span class="vg-getal"><b>${n}</b> ${w}</span>`).join('')}${
-      oogst.map(([ico, n, w]) => `<span class="oogst-item"><b>${ico} ${n}</b> ${w}</span>`).join('')}</div>
+  return `<details class="set-card vg-kaart vg-meer"><summary>${kaartKop('Meer cijfers')}</summary>
+    <div class="vg-cijfers">${getallen.map(([n, w]) => `<span class="vg-getal"><b>${n}</b> ${w}</span>`).join('')}
+      <span class="vg-cijfers-lijn" aria-hidden="true"></span>${
+      oogst.map(([n, w]) => `<span class="oogst-item"><b>${n}</b> ${w}</span>`).join('')}</div>
   </details>`;
 }
 function statsPanelHtml(p) {
@@ -732,7 +743,7 @@ const OEFEN_INSTELLINGEN = {
   math:  { wat: ['ops', 'tables'], pad: ['padVanaf', 'missNum', 'chain3'], show: ['mode', 'perLevel'] },
   count: { wat: ['qmax'], pad: ['stage'], show: ['repr', 'perLevel', 'memory'] },
 };
-function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde wat · pad · show
+function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, html }], in de volgorde wat · pad · show
   pfx = pfx || '';                       // p: het kind, als er een is (het maakformulier heeft er nog geen)
   // Het teken alleen, groot: een ouder leest + − × ÷ sneller dan "Plus" of "Delen".
   // Het woord staat er voor een schermlezer nog bij (aria-label).
@@ -789,15 +800,16 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde 
       (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn('tot', 'onder') : ''));
     return kop + (vinkjes ? `<div class="fl-plek">${rij}${vink(r)}</div>` : rij);
   }).join('')}${staart || ''}</div>`;
-  /* Kleine labels, geen titels en geen hulpregels: het voorbeeld en de vorm van
-     de bediening zeggen wat een tik doet. Drie vormen, elk voor één soort keuze:
+  /* Elke kaart heeft een kop (kop, zie kaartKop); de velden daarbinnen krijgen
+     kleine labels, geen hulpregels: het voorbeeld en de vorm van de bediening
+     zeggen wat een tik doet. Drie vormen, elk voor één soort keuze:
        tegels       meer tegelijk mag (+ − × ÷, de tafels)
        balk         één uit een rij (getallen tot, antwoord, vragen per show)
        schakelaar   aan of uit (memory, alleen bij tellen)
      en op het leerpad de vinkjes hierboven. Alles blijft .chip met een data-v
      in een houder met het oude id -- daar hangt bindOefenChips aan, en de tests
      ook. */
-  const lbl = (tekst, teken) => `<div class="oe-lbl">${teken ? `<span class="oe-teken">${teken}</span>` : ''}${tekst}</div>`;
+  const lbl = oeLbl;
   /* Eén keuze uit een rij (kiezen · mix · typen, vragen per show): een
      balk met gelijke vakken, dezelfde vorm als de moduskeuze onderaan. Van links
      naar rechts wordt het moeilijker. Eerst was dit een trap met treden die naar
@@ -810,12 +822,12 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde 
     + `<span class="oe-i" aria-hidden="true">${ico}</span><span class="oe-w">${woord}</span><span class="oe-stand" aria-hidden="true"></span></button></div>`;
   const perShow = `${lbl('Vragen per show')}${balk('set-perlevel', 'perLevel', [[5, '5'], [8, '8'], [10, '10']], s.perLevel)}`;
   if (s.track === 'count') return [{
-    kaart: 'wat', html: `${lbl('Hoeveelheden tot')}${balk('set-qmax', 'qmax', [[6, '6'], [8, '8'], [10, '10']], s.qmax || 10)}`
+    kaart: 'wat', kop: 'Hoeveelheden tot', html: `${balk('set-qmax', 'qmax', [[6, '6'], [8, '8'], [10, '10']], s.qmax || 10)}`
   }, {
-    kaart: 'pad', html: `${lbl('Leerpad')}${ladder('set-fase', 'stage',
+    kaart: 'pad', kop: 'Leerpad', html: `${ladder('set-fase', 'stage',
       stageNums.map(v => ({ v, naam: COUNT_STAGE_LABELS[v], vb: COUNT_STAGE_VB[v] })), lo, hi, p && countLiveStage(p))}`
   }, {
-    kaart: 'show', html: `${lbl('Tonen als')}${balk('set-repr', 'repr',
+    kaart: 'show', kop: 'Tonen als', html: `${balk('set-repr', 'repr',
       [['objects', 'Voorwerpen'], ['dots', 'Stippen'], ['mix', 'Mix']], s.repr || 'objects')}
       ${perShow}
       ${aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false)}`
@@ -852,16 +864,16 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde 
      Er is geen stem-schakelaar (rekenen is zonder stem, zie stemAan) en bij
      rekenen geen memory (zie memoryAan). */
   return [{
-    kaart: 'wat', html: `${lbl('Sommen')}
+    kaart: 'wat', kop: 'Sommen', html: `
       <div class="oe-ops" id="${pfx}set-ops" data-instelling="ops">${opDefs.map(([v, teken, woord]) =>
         `<button class="chip${s.ops.includes(v) ? ' on' : ''}" data-v="${v}" aria-label="${woord}" aria-pressed="${s.ops.includes(v)}">${teken}</button>`).join('')}</div>
       ${tablesRelevant ? `${lbl('Tafels van', '× ÷')}
       <div class="oe-tafels" id="${pfx}set-tables" data-instelling="tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>` : ''}`
   }, {
-    kaart: 'pad', html: `${lbl('Leerpad')}${ladder('set-startstap', 'padVanaf', padRijenLadder,
+    kaart: 'pad', kop: 'Leerpad', html: `${ladder('set-startstap', 'padVanaf', padRijenLadder,
       startPos, plusMin ? padR.length : Infinity, hierPos, eind, true)}`
   }, {
-    kaart: 'show', html: `${lbl('Antwoord')}${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
+    kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
       ${perShow}`
   }];
 }
@@ -894,7 +906,7 @@ function oefenSamenvatting(s) {
    een duim op viel na het scrollen. */
 function oefenenPanelHtml(p, s) {
   const cards = oefenGroups(s, '', p).map(g => `
-    <div class="set-card oefen-kaart primary" data-kaart="${g.kaart}">${g.html}</div>`).join('');
+    <div class="set-card oefen-kaart primary" data-kaart="${g.kaart}">${kaartKop(g.kop)}${g.html}</div>`).join('');
   return `<div class="settings-panel">${cards}
   </div>`;
 }
