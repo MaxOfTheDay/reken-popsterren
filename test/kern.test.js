@@ -39,6 +39,7 @@
  *   X  wennen aan een hogere grens      -> het plafond klimt in acht shows van 0.6 naar 1
  *   Y  het accent per wereld            -> na de laatste leerstap om de beurt zoek / drie / gewoon
  *   Z  de antwoordknoppen               -> binnen de grens, één echte fout, en het middelste kiezen loont niet
+ *   ZB de foutmelder                    -> een kort briefje zonder iets persoonlijks, en stil vanaf file://
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -1373,6 +1374,20 @@ zaak('ZA', () => {
     check(w.app.trophyBoog(wt2, q, 'busy') === Math.round(100 / zicht),
       'ZA · achter de mist telt de boog tegen de werelden die ze ziet', w.app.trophyBoog(wt2, q, 'busy') + ' bij ' + zicht + ' zichtbaar');
   }
+});
+
+
+/* ZB · De foutmelder (src/05-foutmelder.js). Het briefje heeft precies vijf velden
+   en niets dat naar een kind wijst; onder de tests (file://) staat hij uit. */
+zaak('ZB', () => {
+  const { app } = verseSter('Lotte');
+  const b = app.run("foutBriefje('TypeError: x is undefined\\nen meer', 'https://www.rekensterren.be/index.html?debug#a', 812, 9)");
+  check(JSON.stringify(Object.keys(b)) === '["wat","waar","versie","scherm","toestel"]', 'ZB · vijf velden, niet meer', JSON.stringify(Object.keys(b)));
+  check(b.wat === 'TypeError: x is undefined' && b.waar === 'index.html:812:9', 'ZB · eerste regel van de melding, bestand zonder zoekdeel', JSON.stringify(b));
+  check(JSON.stringify(b).indexOf('Lotte') === -1, 'ZB · de naam van de ster gaat niet mee', JSON.stringify(b));
+  const lang = app.run("foutBriefje('x'.repeat(500), '', 0, 0)");
+  check(lang.wat.length === 120 && lang.waar === '', 'ZB · lange melding ingekort, geen plek zonder regel', lang.wat.length + ' ' + lang.waar);
+  check(app.run('foutMeldenMag()') === false, 'ZB · vanaf file:// meldt hij niets', '');
 });
 
 klaar();
