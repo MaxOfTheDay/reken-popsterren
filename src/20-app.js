@@ -12445,6 +12445,7 @@ function endLevel(success) {
   }
   onthoudUitkomst(p, success ? showStars(G) : 0);   // voor de stand in Voortgang (beide takken hieronder bewaren)
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;   // een show verder gewend aan de grens
+  if (!G.count && success) telGrensDrie(p, lvl, showStars(G));   // voor de grenstip (zie grensDrieSterren)
   /* Wat er pas ná het eindscherm gevierd wordt (zie de staart van deze
      functie): een wereld die net uit of perfect werd. Bij een mislukte show
      blijft het leeg. */
@@ -14595,12 +14596,32 @@ function stemNotitie(naam) {
    (grensTipBasis), net als bij de grens. Geeft { soort: 'mode' | 'grens', naar }. */
 const GRENS_LADDER = [10, 20, 50, 100];
 const GRENS_TIP_SHOWS = 6;
-function grensDrieSterren(p) {
+/* GESPEELDE SHOWS, NIET HALTES. Hier stond: hoeveel haltes vanaf wereld 6 drie
+   sterren hebben. Dat zijn er hoogstens 48 (zes werelden van acht), en een halte
+   die al drie sterren had overdoen telde niet. Dus stond een kind dat overal
+   drie sterren had na één tip stil: de ouder tikte hem aan, grensTipBasis werd
+   48, en er kwam nooit meer een -- ook niet als het daarna maanden dezelfde
+   sommen speelde. Nu telt p.grensDrie elke show met drie sterren vanaf de eerste
+   wereld zonder nieuwe stap, overdoen inbegrepen (zie telGrensDrie), net zoals
+   de telmodus al shows telt (countTrack.plafond).
+
+   Een save van vóór dit veld heeft het nog niet; dan is het beginpunt de oude
+   telling, zodat grensTipBasis (die daarop gezet werd) blijft kloppen. De eerste
+   show die meetelt schrijft het veld weg; tot dan wordt er niets opgeslagen. */
+function grensDrieHaltes(p) {
   const vanaf = LEERSTAPPEN.length - 1;          // de eerste wereld zonder nieuwe stap
   if (vanaf >= WORLD_AVAIL) return 0;
   let drie = 0;
   for (let l = WORLD_START[vanaf]; l <= WORLD_LAST; l++) if ((p.stars || {})[l] >= 3) drie++;
   return drie;
+}
+function grensDrieSterren(p) {
+  return typeof p.grensDrie === 'number' ? p.grensDrie : grensDrieHaltes(p);
+}
+// Na een rekenshow (zie endLevel): drie sterren voorbij de laatste leerstap telt.
+function telGrensDrie(p, lvl, sterren) {
+  if (sterren < 3 || worldFor(lvl).index < LEERSTAPPEN.length - 1) return;
+  p.grensDrie = grensDrieSterren(p) + 1;
 }
 const MODE_LADDER = { kies: 'mix', mix: 'typ' };
 function grensTip(p) {

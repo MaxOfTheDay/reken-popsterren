@@ -1047,6 +1047,30 @@ zaak('R', () => {
   check(tip() === null, 'R · in de telmodus geen getallengrens, dus geen tip', JSON.stringify(tip()));
 });
 
+/* R2 · De grenstip na de laatste wereld. Hij telde haltes met drie sterren
+   (hoogstens 48), dus wie overal drie sterren had kreeg één tip en daarna nooit
+   meer. Nu telt elke gespeelde show met drie sterren, overdoen inbegrepen. */
+zaak('R2', () => {
+  const { app, p } = verseSter('Toegift');
+  const tip = () => app.run('grensTip(P())');
+  const n = app.run('GRENS_TIP_SHOWS');
+  const vanaf = app.run('LEERSTAPPEN.length - 1');
+  for (let l = 1; l <= app.WORLD_LAST; l++) p.stars[l] = 3;
+  p.level = app.WORLD_LAST + 1;
+  check(JSON.stringify(tip()) === JSON.stringify({ soort: 'mode', naar: 'mix' }), 'R2 · een oude save zonder teller: de haltes tellen als beginpunt', JSON.stringify(tip()));
+  check(!('grensDrie' in p), 'R2 · en er wordt niets weggeschreven zolang er niet gespeeld is', JSON.stringify(p.grensDrie));
+  p.settings.mode = 'mix';
+  p.settings.grensTipBasis = app.run('grensDrieSterren(P())');
+  check(tip() === null, 'R2 · net omgezet: het tellen begint opnieuw', JSON.stringify(tip()));
+  for (let i = 0; i < n - 1; i++) app.run(`telGrensDrie(P(), ${app.WORLD_LAST}, 3)`);
+  app.run(`telGrensDrie(P(), ${app.WORLD_LAST}, 2)`);
+  app.run(`telGrensDrie(P(), 1, 3)`);
+  check(tip() === null, 'R2 · twee sterren, of een show vóór de laatste leerstap, telt niet', JSON.stringify(tip()));
+  app.run(`telGrensDrie(P(), ${app.WORLD_START[vanaf]}, 3)`);
+  check(JSON.stringify(tip()) === JSON.stringify({ soort: 'mode', naar: 'typ' }), 'R2 · overgespeelde shows met drie sterren geven de volgende tip', JSON.stringify(tip()));
+  check(p.grensDrie === 48 + n, 'R2 · de teller loopt verder vanaf de oude telling', p.grensDrie);
+});
+
 zaak('S', () => {
   const { app } = verseSter('Tel');
   const p = app.db.profiles.p1 = app.defaultProfile('Tel', 'dress_roze', app.COUNT_OPTS);
