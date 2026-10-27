@@ -1854,7 +1854,7 @@ function check(ok, label, detail) {
         p.wens = ITEMS.filter(i => typeof i.price === 'number' && !p.owned.includes(i.id) && i.price > p.diamonds)[0].id;
         zetWensPil(p);
         const b = document.querySelector(sel);
-        return { knop: b.tagName, wens: b.classList.contains('met-wens') && !!b.querySelector('.wens-mini').textContent };
+        return { knop: b.tagName, wens: b.classList.contains('met-wens') && !!b.querySelector('.wens-mini').innerHTML };
       }, sel);
       check(pil.knop === 'BUTTON' && pil.wens, 'de 💎-pil is een knop met de wens — ' + naam, JSON.stringify(pil));
       await page.tap(sel);
@@ -1863,6 +1863,57 @@ function check(ok, label, detail) {
       check(nu === 'screen-dress', 'een tik op de 💎-pil gaat naar de kleedkamer — ' + naam, nu);
       await page.evaluate(() => { delete P().wens; });
     }
+
+    /* Genoeg gespaard: de pil wordt goud (en blijft een knop), de kleedkamer-pil
+       draagt de wens ook en brengt je naar dat kaartje, en in de lade blijft het
+       hartje naast Koop staan -- anders kon je een wens die je al kunt kopen niet
+       meer terugnemen. */
+    const goud = await page.evaluate(() => {
+      const p = P();
+      const it = ITEMS.find(i => typeof i.price === 'number' && i.price > 0 && i.cat !== 'stage' && !p.owned.includes(i.id));
+      p.wens = it.id; p.diamonds = it.price;
+      openTrophies(); zetWensPil(p);
+      const kast = document.querySelector('#screen-trophies .diamond-badge.header-right');
+      const kastGoud = kast.classList.contains('wens-klaar') && getComputedStyle(kast).backgroundColor !== 'rgba(0, 0, 0, 0.32)';
+      openKleedkamer();
+      const kleed = $('shop-diamonds').closest('.diamond-badge');
+      const kleedKnop = kleed.getAttribute('role') === 'button' && kleed.classList.contains('wens-klaar');
+      kleed.click();
+      const lade = { hart: !!document.querySelector('#dress-bar #db-wens.aan'), koop: !!document.querySelector('#dress-bar #db-buy'),
+        gekozen: shopSelectedId === it.id };
+      document.querySelector('#dress-bar #db-wens').click();
+      const terug = { wens: P().wens, hart: !!document.querySelector('#dress-bar #db-wens'), pil: kleed.getAttribute('role') };
+      return { kastGoud, kleedKnop, lade, terug };
+    });
+    check(goud.kastGoud, 'genoeg voor je wens: de 💎-pil wordt goud', JSON.stringify(goud));
+    check(goud.kleedKnop && goud.lade.gekozen, 'de kleedkamer-pil draagt de wens en brengt je naar het kaartje', JSON.stringify(goud));
+    check(goud.lade.hart && goud.lade.koop, 'een wens die je kunt kopen: het hartje blijft naast Koop', JSON.stringify(goud.lade));
+    check(goud.terug.wens === undefined && !goud.terug.hart && goud.terug.pil === null,
+      'en een tik op dat hartje neemt de wens terug', JSON.stringify(goud.terug));
+
+    // het eindscherm draagt de wens in het 💎-vakje; is er genoeg, dan gaat de tweede knop erheen
+    await page.evaluate(() => {
+      const p = P();
+      const it = ITEMS.find(i => typeof i.price === 'number' && i.price > 0 && i.cat !== 'stage' && !p.owned.includes(i.id));
+      p.wens = it.id; p.diamonds = it.price;
+      window.__wens = it.id;
+      startLevel(Math.min(p.level, WORLD_LAST));
+    });
+    await page.waitForTimeout(800);
+    const eind = await page.evaluate(() => {
+      G.stars = 3; endLevel(true);
+      const knop = $('btn-end-alt');
+      const r = { vakje: !!document.querySelector('#end-earn .earn-chip.met-wens .wens-mini'),
+        knop: knop.classList.contains('wens-klaar'), tekst: knop.textContent.trim() };
+      knop.click();
+      return r;
+    });
+    await page.waitForTimeout(900);
+    const naWens = await page.evaluate(() => ({ scherm: document.querySelector('.screen.active').id, gekozen: shopSelectedId === window.__wens }));
+    check(eind.vakje, 'het 💎-vakje op het eindscherm draagt de wens', JSON.stringify(eind));
+    check(eind.knop && /Kleedkamer/.test(eind.tekst) && naWens.scherm === 'screen-dress' && naWens.gekozen,
+      'genoeg gespaard: de Kleedkamer-knop gaat meteen naar je wens', JSON.stringify([eind, naWens]));
+    await page.evaluate(() => { delete P().wens; });
 
     // memory: ✕, en het venster pas als er een kaartje om is
     await page.goto(APP_URL + '&demo&star=p2&screen=map');
