@@ -591,13 +591,13 @@ function stemNotitie(naam) {
    daar al GRENS_TIP_SHOWS shows met drie sterren gehaald. Sterren en geen p.perf:
    die laatste is een gemiddelde over de laatste paar antwoorden en springt heen
    en weer; drie sterren in een hele reeks shows is een stand die blijft staan.
-   Alleen voor rekenen, alleen als er nog een stap op de ladder is (10, 20, 50,
-   100 -- dezelfde keuzes als op het tabblad Oefeningen).
+   Alleen voor rekenen, alleen als er nog een blok op de ladder is (10, 20,
+   100 -- dezelfde plekken als de lijn "tot" op het tabblad Oefeningen).
 
    Zet de ouder de grens om (met de tip of op Oefeningen), dan begint het tellen
    opnieuw: s.grensTipBasis onthoudt hoeveel drie-sterrenshows er toen al waren,
    en pas GRENS_TIP_SHOWS nieuwe op de nieuwe grens geven de volgende tip. Anders
-   stond direct na "tot 50" al de vraag of het niet 100 moest.
+   stond direct na "tot 20" al de vraag of het niet 100 moest.
 
    EERST HET ANTWOORDEN, DAN DE GETALLEN. Bij "kiezen uit 4" is een gok goedkoop
    (er is een hint en een tweede kans), en zelf typen is de grootste stap in
@@ -605,7 +605,7 @@ function stemNotitie(naam) {
    vriendelijker stap dan ineens tot vijftig. Dus stelt de tip eerst Afwisselen
    voor, dan Zelf typen, en pas daarna een hogere grens. Elke stap telt opnieuw
    (grensTipBasis), net als bij de grens. Geeft { soort: 'mode' | 'grens', naar }. */
-const GRENS_LADDER = [10, 20, 50, 100];
+const GRENS_LADDER = [10, 20, 100];
 const GRENS_TIP_SHOWS = 6;
 /* GESPEELDE SHOWS, NIET HALTES. Hier stond: hoeveel haltes vanaf wereld 6 drie
    sterren hebben. Dat zijn er hoogstens 48 (zes werelden van acht), en een halte
@@ -798,7 +798,7 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde 
      in een houder met het oude id -- daar hangt bindOefenChips aan, en de tests
      ook. */
   const lbl = (tekst, teken) => `<div class="oe-lbl">${teken ? `<span class="oe-teken">${teken}</span>` : ''}${tekst}</div>`;
-  /* Eén keuze uit een rij (tot 10 · 20 · 50 · 100, kiezen · mix · typen): een
+  /* Eén keuze uit een rij (kiezen · mix · typen, vragen per show): een
      balk met gelijke vakken, dezelfde vorm als de moduskeuze onderaan. Van links
      naar rechts wordt het moeilijker. Eerst was dit een trap met treden die naar
      rechts hoger werden, maar de lege treden lazen als uitgeschakeld in plaats
@@ -826,9 +826,9 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde 
        tot    onder de laatste rij binnen de grens (s.max). Dit ís de grens: de
               balk "Getallen tot" is weg, want die zei met een getal wat de
               lijn hier met de rijen zelf zegt.
-     Onder "tot" staat grijs het blok dat komt als de lijn zakt (Tot 50, of
-     Tientallen, Tot 100 en Over het tiental) -- niet alles tot het eind, alleen
-     de volgende stap. "Alles door elkaar" staat helemaal onderaan om te lezen:
+     Onder "tot" staat grijs het blok dat komt als de lijn zakt (Getallen
+     bouwen, Tientallen, Tot 100 en Over het tiental) -- niet alles tot het
+     eind, alleen de volgende stap. "Alles door elkaar" staat helemaal onderaan om te lezen:
      daar begin je niet, maar een kind voorbij de laatste rij staat daar. */
   const { rijen: padR, later: padL } = padRijen(s);
   const padAlle = padR.concat(padL);
@@ -1436,7 +1436,7 @@ function bindOefenChips(s, p, pfx, done) {
   /* Het leerpad van rekenen (zie oefenGroups): een tik verhuist de dichtstbij-
      zijnde lijn, zoals op de faseladder (even ver: "tot"). Maar "tot" is de
      grens van de getallen, en die staat altijd aan het eind van een blok (tot
-     10, 20, 50, 100). Dus:
+     10, 20, 100). Dus:
        een grijze rij onder "tot"   de lijn zakt tot onder zijn blok: de grens
                                     omhoog (grensOmhoog, met wennen)
        een rij dicht bij "tot"      de lijn komt aan het eind van het blok van

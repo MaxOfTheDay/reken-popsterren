@@ -160,6 +160,29 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     }
   }
 
+  /* ================= 2b · Getallen bouwen op de kaart =================
+     De blokken en de gekleurde cijfers staan in q.html (zie genBouwen): één
+     vakje, niets loopt over de rand, ook op een smalle telefoon. */
+  const bouw = await page.evaluate(() => {
+    const uit = [];
+    for (let i = 0; i < 120; i++) {
+      const q = genBouwen();
+      G.qs[G.idx] = q; G.count = false; G.mode = i % 2 ? 'typ' : 'kies';
+      drawQuestion();
+      const card = document.getElementById('question-text');
+      uit.push({ tmpl: q.tmpl, soort: q.soort, blanks: card.querySelectorAll('.q-blank').length,
+        overflow: card.scrollWidth > card.clientWidth + 1,
+        staven: card.querySelectorAll('.pl-staaf').length, blokjes: card.querySelectorAll('.pl-blok').length,
+        hoog: document.getElementById('question-card').offsetHeight });
+    }
+    return uit;
+  });
+  check(bouw.every(r => r.blanks === 1), 'getallen bouwen: precies één vakje op de kaart', JSON.stringify(bouw.find(r => r.blanks !== 1)));
+  check(bouw.every(r => !r.overflow), 'getallen bouwen: de kaart loopt niet over de rand', JSON.stringify(bouw.find(r => r.overflow)));
+  check(bouw.filter(r => r.soort === 'blokken').every(r => { const [t, e] = r.tmpl.match(/\d+/g).map(Number); return r.staven === t && r.blokjes === e; }),
+    'getallen bouwen: zoveel staven en blokjes als het getal zegt', JSON.stringify(bouw.filter(r => r.soort === 'blokken').slice(0, 3)));
+  check(Math.max(...bouw.map(r => r.hoog)) < 260, 'getallen bouwen: de kaart blijft binnen een redelijke hoogte', String(Math.max(...bouw.map(r => r.hoog))));
+
   /* ================= 3 · Adaptieve motor (pure logica) ================= */
   const engine = await page.evaluate(() => {
     const out = {};

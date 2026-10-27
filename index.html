@@ -401,6 +401,12 @@
     --gray-top: #90a4ae; --gray-bottom: #607d8b; --gray-shadow: #37474f;
 
 
+
+
+    --plaats-h: #8e3fc8; --plaats-t: #1f7fd6; --plaats-e: #b86f00;
+    --plaats-t-blok: #3fa4ff; --plaats-e-blok: #ffb627;
+
+
     --pink-hot: #ff4081; --pink-light: #ffd6f4;
 
 
@@ -3473,6 +3479,23 @@
     display: inline-block; min-width: .72em; padding: 0 .12em; border-radius: var(--r-sm); line-height: 1.02;
     border: 3px dashed rgba(126,87,194,.55); background: rgba(126,87,194,.08); color: var(--purple-shadow);
   }
+
+
+
+
+  .pl-h { color: var(--plaats-h); } .pl-t { color: var(--plaats-t); } .pl-e { color: var(--plaats-e); }
+  .pl-t small, .pl-e small, .pl-h small { font-size: .55em; margin-left: .04em; }
+  .pl-t .q-blank, .pl-e .q-blank { color: inherit; }
+  .pl-vis { display: flex; justify-content: center; align-items: flex-end; gap: 14px; margin: 2px 0 8px; }
+  .pl-staven { display: flex; gap: 4px; }
+  .pl-staaf {
+    display: block; width: 9px; height: 70px; border-radius: 2px;
+    background: repeating-linear-gradient(0deg, transparent 0 6px, rgba(0,0,0,.18) 6px 7px), var(--plaats-t-blok);
+    box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.18);
+  }
+  .pl-blokjes { display: grid; grid-template-columns: repeat(3, 10px); gap: 3px; align-content: end; }
+  .pl-blok { display: block; width: 10px; height: 10px; border-radius: 2px; background: var(--plaats-e-blok); box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.18); }
+  .pl-som { display: block; }
   .q-blank.done { border-style: solid; border-color: var(--green-deep); background: rgba(102,187,106,.18); color: var(--green-deep); }
 
 
@@ -14470,6 +14493,14 @@ function migrate(p) {
 
 
 
+
+
+
+
+
+  if (p.settings.max === 50) grensOmhoog(p.settings, 100);
+  if (p.settings.padVanaf === 'tot50') p.settings.padVanaf = 'bouwen100';
+  if (p.pad && Array.isArray(p.pad.klaar)) p.pad.klaar = p.pad.klaar.filter(id => id in PAD_IDX);
   if (!('pad' in p)) {
     const s = p.settings;
     p.pad = null;
@@ -21844,6 +21875,11 @@ function updateTroDot() {
 
 
 
+
+
+
+
+
 const LEERPAD = [
   { id: 'tot10',      soort: 'bereik', bereik: 10,  brug: 'nee',  naam: 'Tot 10' },
   { id: 'tot20',      soort: 'bereik', bereik: 20,  brug: 'nee',  naam: 'Tot 20' },
@@ -21852,7 +21888,7 @@ const LEERPAD = [
   { id: 'delen',      soort: 'vorm',   op: ':',                   naam: 'Delen' },
   { id: 'zoek',       soort: 'vorm',   keuze: 'missNum',          naam: 'Zoek het getal' },
   { id: 'drie',       soort: 'vorm',   keuze: 'chain3',           naam: 'Drie getallen' },
-  { id: 'tot50',      soort: 'bereik', bereik: 50,  brug: 'nee',  naam: 'Tot 50' },
+  { id: 'bouwen100',  soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Getallen bouwen', bouwen: true },
   { id: 'tientallen', soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Tientallen', tientallen: true },
   { id: 'tot100',     soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Tot 100' },
   { id: 'brug100',    soort: 'bereik', bereik: 100, brug: 'vaak', naam: 'Over het tiental' },
@@ -21860,14 +21896,19 @@ const LEERPAD = [
 const PAD_IDX = Object.fromEntries(LEERPAD.map((r, i) => [r.id, i]));
 const BRUG_VAAK = 0.5;
 const TIENTALLEN_VAAK = 0.6;
+const BOUWEN_VAAK = 0.5, BOUWEN_SOMS = 0.12;
 
 
 
 
 const PAD_VB = {
-  '+': { 10: '3 + 4', 20: '12 + 5', 50: '34 + 12', 100: '56 + 23', brug20: '8 + 5', brug100: '47 + 25', tientallen: '40 + 30' },
-  '-': { 10: '7 − 3', 20: '17 − 5', 50: '47 − 12', 100: '86 − 34', brug20: '13 − 6', brug100: '72 − 35', tientallen: '70 − 30' },
+  '+': { 10: '3 + 4', 20: '12 + 5', 100: '56 + 23', brug20: '8 + 5', brug100: '47 + 25', tientallen: '40 + 30' },
+  '-': { 10: '7 − 3', 20: '17 − 5', 100: '86 − 34', brug20: '13 − 6', brug100: '72 − 35', tientallen: '70 − 30' },
 };
+
+
+
+function plaats(p, tekst) { return `<span class="pl-${p}">${tekst}</span>`; }
 function padVoorbeeld(r, s) {
   const pm = s.ops.includes('+') ? '+' : '-';
   const tafel = Math.max(...(s.tables.length ? s.tables : [2, 5, 10]));
@@ -21875,6 +21916,7 @@ function padVoorbeeld(r, s) {
   if (r.id === 'tafels') return `${keer} × ${tafel}`;
   if (r.id === 'delen') return `${keer * tafel} : ${tafel}`;
   if (r.id === 'drie') return '3 + 4 + 2';
+  if (r.bouwen) return `${plaats('t', '4T')} ${plaats('e', '5E')}`;
   if (r.id === 'zoek') return s.ops.includes('+') ? (s.max > 10 ? '7 + ▢ = 12' : '3 + ▢ = 7')
     : s.ops.includes('-') ? '9 − ▢ = 4' : `3 × ▢ = ${3 * tafel}`;
   return PAD_VB[pm][r.brug === 'vaak' ? r.id : r.tientallen ? 'tientallen' : r.bereik];
@@ -21961,22 +22003,26 @@ function padUitOudeStap(s, stap) {
 
 
 
+
+
+
 function padStand(s, nuId, klaar) {
   const rijen = padRijen(s).rijen;
   const i = nuId === 'alles' ? rijen.length - 1 : rijen.findIndex(r => r.id === nuId);
   const tot = rijen.slice(0, Math.max(0, i) + 1);
   const nu = nuId === 'alles' ? null : tot[tot.length - 1];
-  const bereik = tot.filter(r => r.soort === 'bereik');
+  const bereik = tot.filter(r => r.soort === 'bereik' && !r.bouwen);
   const gehaald = new Set(klaar || []);
   const heeft = id => rijen.some((r, j) => r.id === id && !r.uit && (j <= i || gehaald.has(id)));
   const ops = s.ops.filter(o => (o === '+' || o === '-') ? bereik.length > 0 : heeft(o === 'x' ? 'tafels' : 'delen'));
   return {
     max: bereik.length ? bereik[bereik.length - 1].bereik : s.max,
-    brug: nu && nu.soort === 'bereik' ? nu.brug : tot.some(r => r.brug === 'vaak') ? 'vrij' : 'nee',
+    brug: nu && nu.soort === 'bereik' && !nu.bouwen ? nu.brug : tot.some(r => r.brug === 'vaak') ? 'vrij' : 'nee',
     ops: ops.length ? ops : s.ops.slice(0, 1),
     missNum: heeft('zoek'),
     chain3: heeft('drie'),
     tientallen: !!(nu && nu.tientallen),
+    bouwen: nu && nu.bouwen ? 'vaak' : heeft('bouwen100') ? 'soms' : null,
   };
 }
 
@@ -22131,6 +22177,42 @@ function genChain(s, lvl, perf) {
 
 
 
+const BOUW_SOORTEN = [['blokken', 0.45], ['tiental', 0.25], ['splits', 0.3]];
+function bouwBlokken(t, e) {
+  return `<span class="pl-vis" aria-hidden="true"><span class="pl-staven">${'<i class="pl-staaf"></i>'.repeat(t)}</span>`
+    + (e ? `<span class="pl-blokjes">${'<i class="pl-blok"></i>'.repeat(e)}</span>` : '') + '</span>';
+}
+function genBouwen() {
+  const t = rnd(1, 9);
+  const e = Math.random() < 0.15 ? 0 : rnd(1, 9);
+  const n = 10 * t + e;
+  let r = Math.random(), soort = BOUW_SOORTEN[0][0];
+  for (const [k, w] of BOUW_SOORTEN) { if (r < w) { soort = k; break; } r -= w; }
+  if (!e) soort = 'blokken';
+  const T = plaats('t', '<small>T</small>'), E = plaats('e', '<small>E</small>');
+  const q = { op: 'bouw', kind: 'bouw', soort };
+  if (soort === 'blokken') return { ...q, ans: n, tmpl: `${t}T ${e}E = @`,
+    html: `${bouwBlokken(t, e)}<span class="pl-som">= @</span>`, fouten: [10 * e + t, 10 * t, t + e, n + 10, n - 10] };
+  if (soort === 'tiental') return { ...q, ans: t, tmpl: `${n} = @T + ${e}E`,
+    html: `${plaats('t', t)}${plaats('e', e)} = ${plaats('t', '@')}${T} + ${plaats('e', e)}${E}`, fouten: [e, t + 1, t - 1, t + e] };
+  if (Math.random() < 0.5) return { ...q, ans: e, tmpl: `${n} = ${10 * t} + @`,
+    html: `${plaats('t', t)}${plaats('e', e)} = ${plaats('t', 10 * t)} + ${plaats('e', '@')}`, fouten: [t, 10 * e, e + 1] };
+  return { ...q, ans: 10 * t, tmpl: `${n} = @ + ${e}`,
+    html: `${plaats('t', t)}${plaats('e', e)} = ${plaats('t', '@')} + ${plaats('e', e)}`, fouten: [t, n, 10 * t + 10, 10 * e] };
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -22149,6 +22231,8 @@ function keuzeGrens(q, s, lvl) {
 
   if (q.op === '+' || q.op === '-') return Math.max(hoogste, 10, s.max);
 
+  if (q.op === 'bouw') return q.ans < 10 ? 10 : 99;
+
   return Math.max(10, Math.ceil(hoogste / 10) * 10);
 }
 function makeChoices(q, grens) {
@@ -22156,8 +22240,8 @@ function makeChoices(q, grens) {
   const getallen = (q.tmpl.match(/\d+/g) || []).map(Number);
   const mag = v => Number.isInteger(v) && v >= 0 && v <= grens && v !== ans;
 
-  const fouten = new Set(getallen);
-  for (let i = 0; i < getallen.length; i++)
+  const fouten = new Set(q.fouten || getallen);
+  if (!q.fouten) for (let i = 0; i < getallen.length; i++)
     for (let j = i + 1; j < getallen.length; j++) {
       fouten.add(getallen[i] + getallen[j]);
       fouten.add(Math.abs(getallen[i] - getallen[j]));
@@ -23256,6 +23340,12 @@ function buildQuestion(p, lvl, g) {
     if (rq) { if (al) al.add(rq.tmpl); return rq; }
   }
 
+  if (s.bouwen && Math.random() < (s.bouwen === 'vaak' ? BOUWEN_VAAK : BOUWEN_SOMS)) {
+    let b, poging = 0;
+    do { b = genBouwen(); } while (net.includes(b.tmpl) && ++poging < 8);
+    return b;
+  }
+
 
   let q, poging = 0;
   do { q = genQuestion(s, lvl, p.perf); } while (net.includes(q.tmpl) && ++poging < 8);
@@ -23759,7 +23849,8 @@ function drawQuestion() {
 
 
   const shown = G.mode === 'typ' ? (G.input || '?') : '?';
-  $('question-text').innerHTML = q.tmpl.replace('@', `<span class="q-blank">${shown}</span>`);
+
+  $('question-text').innerHTML = (q.html || q.tmpl).replace('@', `<span class="q-blank">${shown}</span>`);
 
 
   const pad = document.querySelector('#answer-area .numpad');
@@ -26805,7 +26896,7 @@ function stemNotitie(naam) {
 
 
 
-const GRENS_LADDER = [10, 20, 50, 100];
+const GRENS_LADDER = [10, 20, 100];
 const GRENS_TIP_SHOWS = 6;
 
 

@@ -15,9 +15,14 @@
    tabel (padRijen), en nergens anders staat een lijst stapnamen.
 
      soort 'bereik'  de getallen groeien (Tot 10, Tot 20, Over het tiental,
-                     Tot 50, Tientallen, Tot 100). Alleen bij plus of min, en
-                     alleen tot de grens die de ouder koos (s.max): dat is de
-                     lijn "tot" op de ladder.
+                     Getallen bouwen, Tientallen, Tot 100). Alleen bij plus of
+                     min, en alleen tot de grens die de ouder koos (s.max): dat
+                     is de lijn "tot" op de ladder. De blokken zijn die van
+                     school: tot 20 in het eerste leerjaar, tot 100 in het
+                     tweede. Een tussenstop "tot 50" kent het leerplan niet --
+                     daar komt honderd via de opbouw (eerst de getallen bouwen,
+                     dan hele tientallen), en het wennen (wenPlafond) doet de
+                     rest.
      soort 'vorm'    een andere soort vraag met dezelfde getallen (tafels,
                      delen, zoek het getal, drie getallen). Die laten de
                      getallen niet groeien, dus de lijn "tot" snijdt ze niet af:
@@ -48,7 +53,7 @@ const LEERPAD = [
   { id: 'delen',      soort: 'vorm',   op: ':',                   naam: 'Delen' },
   { id: 'zoek',       soort: 'vorm',   keuze: 'missNum',          naam: 'Zoek het getal' },
   { id: 'drie',       soort: 'vorm',   keuze: 'chain3',           naam: 'Drie getallen' },
-  { id: 'tot50',      soort: 'bereik', bereik: 50,  brug: 'nee',  naam: 'Tot 50' },
+  { id: 'bouwen100',  soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Getallen bouwen', bouwen: true },
   { id: 'tientallen', soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Tientallen', tientallen: true },
   { id: 'tot100',     soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Tot 100' },
   { id: 'brug100',    soort: 'bereik', bereik: 100, brug: 'vaak', naam: 'Over het tiental' },
@@ -56,14 +61,19 @@ const LEERPAD = [
 const PAD_IDX = Object.fromEntries(LEERPAD.map((r, i) => [r.id, i]));
 const BRUG_VAAK = 0.5;    // op een rij "over het tiental": zo vaak gaat een plus- of minsom erover
 const TIENTALLEN_VAAK = 0.6;   // op de rij "tientallen": zo vaak is het een som met hele tientallen
+const BOUWEN_VAAK = 0.5, BOUWEN_SOMS = 0.12;   // getallen bouwen: op zijn rij, en daarna af en toe
 /* De voorbeelden: altijd gemaakt met wat de ouder koos -- alleen min geeft
    min-voorbeelden, alleen maal een tafel die aan staat. Elk past binnen het
    bereik van zijn rij, en de bereik-rijen gaan nooit over het tiental tot de
    rij die dat brengt (zaak ZF meet het na). */
 const PAD_VB = {
-  '+': { 10: '3 + 4', 20: '12 + 5', 50: '34 + 12', 100: '56 + 23', brug20: '8 + 5', brug100: '47 + 25', tientallen: '40 + 30' },
-  '-': { 10: '7 − 3', 20: '17 − 5', 50: '47 − 12', 100: '86 − 34', brug20: '13 − 6', brug100: '72 − 35', tientallen: '70 − 30' },
+  '+': { 10: '3 + 4', 20: '12 + 5', 100: '56 + 23', brug20: '8 + 5', brug100: '47 + 25', tientallen: '40 + 30' },
+  '-': { 10: '7 − 3', 20: '17 − 5', 100: '86 − 34', brug20: '13 − 6', brug100: '72 − 35', tientallen: '70 − 30' },
 };
+/* Een cijfer in de kleur van zijn plaats: H paars, T blauw, E goud -- dezelfde
+   kleuren als de blokken van Getallen bouwen (zie .pl-* in het stijlblad), op
+   de ladder én in de show. */
+function plaats(p, tekst) { return `<span class="pl-${p}">${tekst}</span>`; }
 function padVoorbeeld(r, s) {
   const pm = s.ops.includes('+') ? '+' : '-';
   const tafel = Math.max(...(s.tables.length ? s.tables : [2, 5, 10]));
@@ -71,6 +81,7 @@ function padVoorbeeld(r, s) {
   if (r.id === 'tafels') return `${keer} × ${tafel}`;
   if (r.id === 'delen') return `${keer * tafel} : ${tafel}`;
   if (r.id === 'drie') return '3 + 4 + 2';
+  if (r.bouwen) return `${plaats('t', '4T')} ${plaats('e', '5E')}`;
   if (r.id === 'zoek') return s.ops.includes('+') ? (s.max > 10 ? '7 + ▢ = 12' : '3 + ▢ = 7')
     : s.ops.includes('-') ? '9 − ▢ = 4' : `3 × ▢ = ${3 * tafel}`;
   return PAD_VB[pm][r.brug === 'vaak' ? r.id : r.tientallen ? 'tientallen' : r.bereik];
@@ -126,8 +137,8 @@ function padVanafRij(s, speel) {
 /* Een save van vóór het leerpad had een leerstap per wereld (1 tot 6, de
    hoogste van de wereld en "vanaf"). Waar staat ze nu? Op de eerste rij van
    haar pad die minstens speelt wat die stap speelde -- nooit makkelijker dan
-   ze gewend was, wel soms iets verder (stap 1 bij tot 50 speelde al tot 25,
-   dat is hier de rij Tot 50). Stap 6 was "alles door elkaar": dat blijft het.
+   ze gewend was, wel soms iets verder (stap 1 bij tot 100 speelde al tot 50,
+   dat is hier de rij Tientallen). Stap 6 was "alles door elkaar": dat blijft het.
    Zie migrate. Geeft een rij-id of 'alles'. */
 function padUitOudeStap(s, stap) {
   const speel = padRijen(s).rijen.filter(r => !r.uit);
@@ -145,10 +156,13 @@ function padUitOudeStap(s, stap) {
 }
 /* Wat er op haar rij speelt: de instellingen zoals de vraagmaker ze leest.
    Cumulatief -- alles van de rijen tot en met deze doet mee:
-     max      het bereik van de laatste bereik-rij (zonder: de grens)
+     max      het bereik van de laatste bereik-rij (zonder: de grens) -- maar
+              Getallen bouwen telt daar niet mee: dat bouwt de getallen tot
+              honderd, de sommen blijven nog bij wat ze kon
      brug     op een bereik-rij die van de rij zelf (nieuwe getallen eerst
               zonder over het tiental, op "over het tiental" vaak); daarna vrij,
               als "over het tiental" er al was
+     bouwen   'vaak' op Getallen bouwen zelf, daarna 'soms' (zie buildQuestion)
      ops      + − vanaf de eerste bereik-rij, × vanaf Tafels, : vanaf Delen
      missNum, chain3   zoek het getal en drie getallen, vanaf hun rij en als ze
               aangevinkt zijn
@@ -162,17 +176,18 @@ function padStand(s, nuId, klaar) {
   const i = nuId === 'alles' ? rijen.length - 1 : rijen.findIndex(r => r.id === nuId);
   const tot = rijen.slice(0, Math.max(0, i) + 1);
   const nu = nuId === 'alles' ? null : tot[tot.length - 1];
-  const bereik = tot.filter(r => r.soort === 'bereik');
+  const bereik = tot.filter(r => r.soort === 'bereik' && !r.bouwen);
   const gehaald = new Set(klaar || []);
   const heeft = id => rijen.some((r, j) => r.id === id && !r.uit && (j <= i || gehaald.has(id)));
   const ops = s.ops.filter(o => (o === '+' || o === '-') ? bereik.length > 0 : heeft(o === 'x' ? 'tafels' : 'delen'));
   return {
     max: bereik.length ? bereik[bereik.length - 1].bereik : s.max,
-    brug: nu && nu.soort === 'bereik' ? nu.brug : tot.some(r => r.brug === 'vaak') ? 'vrij' : 'nee',
+    brug: nu && nu.soort === 'bereik' && !nu.bouwen ? nu.brug : tot.some(r => r.brug === 'vaak') ? 'vrij' : 'nee',
     ops: ops.length ? ops : s.ops.slice(0, 1),
     missNum: heeft('zoek'),
     chain3: heeft('drie'),
     tientallen: !!(nu && nu.tientallen),
+    bouwen: nu && nu.bouwen ? 'vaak' : heeft('bouwen100') ? 'soms' : null,
   };
 }
 // De instellingen voor de vraagmaker: die van de ouder, met haar rij erover.
@@ -314,6 +329,42 @@ function genChain(s, lvl, perf) {
   if (sum > effMax) { a = 1; b = 1; c = Math.max(1, effMax - 2); sum = a + b + c; }
   return { tmpl: `${a} + ${b} + ${c} = @`, ans: sum, op: '+', kind: 'chain' };
 }
+/* ---- Getallen bouwen -----------------------------------------------------
+   Wat een getal tot honderd ís: tientallen en eenheden. Het tweede leerjaar
+   bouwt honderd zo op, vóór er gerekend wordt met die getallen (zie de rij in
+   LEERPAD). Drie soorten, elk één getal als antwoord, zodat kiezen, typen, de
+   hint en alle beloningen gewoon werken:
+     blokken   staafjes en blokjes, welk getal is het?      = 45
+     tiental   45 = ▢T + 5E: hoeveel tientallen?             4
+     splits    45 = 40 + ▢, of 45 = ▢ + 5                    5 of 40
+   De som op de kaart staat in q.html (met de blokken en de kleuren); q.tmpl is
+   dezelfde vraag als gewone tekst, en q.fouten zijn de fouten die een kind hier
+   echt maakt: de cijfers omgedraaid (54), alleen de tientallen (40), de cijfers
+   opgeteld (9), een tiental ernaast. Geen zwakke-sommenpoel: die is van de
+   klassieke sommen (zie incWeak). */
+const BOUW_SOORTEN = [['blokken', 0.45], ['tiental', 0.25], ['splits', 0.3]];
+function bouwBlokken(t, e) {
+  return `<span class="pl-vis" aria-hidden="true"><span class="pl-staven">${'<i class="pl-staaf"></i>'.repeat(t)}</span>`
+    + (e ? `<span class="pl-blokjes">${'<i class="pl-blok"></i>'.repeat(e)}</span>` : '') + '</span>';
+}
+function genBouwen() {
+  const t = rnd(1, 9);
+  const e = Math.random() < 0.15 ? 0 : rnd(1, 9);
+  const n = 10 * t + e;
+  let r = Math.random(), soort = BOUW_SOORTEN[0][0];
+  for (const [k, w] of BOUW_SOORTEN) { if (r < w) { soort = k; break; } r -= w; }
+  if (!e) soort = 'blokken';      // 40 = ▢T + 0E en 40 = 40 + ▢ lezen als een strikvraag
+  const T = plaats('t', '<small>T</small>'), E = plaats('e', '<small>E</small>');
+  const q = { op: 'bouw', kind: 'bouw', soort };
+  if (soort === 'blokken') return { ...q, ans: n, tmpl: `${t}T ${e}E = @`,
+    html: `${bouwBlokken(t, e)}<span class="pl-som">= @</span>`, fouten: [10 * e + t, 10 * t, t + e, n + 10, n - 10] };
+  if (soort === 'tiental') return { ...q, ans: t, tmpl: `${n} = @T + ${e}E`,
+    html: `${plaats('t', t)}${plaats('e', e)} = ${plaats('t', '@')}${T} + ${plaats('e', e)}${E}`, fouten: [e, t + 1, t - 1, t + e] };
+  if (Math.random() < 0.5) return { ...q, ans: e, tmpl: `${n} = ${10 * t} + @`,
+    html: `${plaats('t', t)}${plaats('e', e)} = ${plaats('t', 10 * t)} + ${plaats('e', '@')}`, fouten: [t, 10 * e, e + 1] };
+  return { ...q, ans: 10 * t, tmpl: `${n} = @ + ${e}`,
+    html: `${plaats('t', t)}${plaats('e', e)} = ${plaats('t', '@')} + ${plaats('e', e)}`, fouten: [t, n, 10 * t + 10, 10 * e] };
+}
 /* ---- De vier antwoordknoppen --------------------------------------------
    Drie foute keuzes naast het goede antwoord. Die moeten je laten rekenen, en
    dat deden ze niet. Hier stond: het antwoord ±1, ±2 en ±10. Dan staat het
@@ -344,6 +395,8 @@ function keuzeGrens(q, s, lvl) {
   // de bijsturing op hoe het gaat -- daarom ook nooit onder wat er al staat).
   // s is vraagInst: max is het bereik van de rij, niet de grens van de ouder.
   if (q.op === '+' || q.op === '-') return Math.max(hoogste, 10, s.max);
+  // getallen bouwen: een cijfer blijft onder de tien, een getal onder de honderd
+  if (q.op === 'bouw') return q.ans < 10 ? 10 : 99;
   // tafels: tot het volgende tiental
   return Math.max(10, Math.ceil(hoogste / 10) * 10);
 }
@@ -351,9 +404,9 @@ function makeChoices(q, grens) {
   const ans = q.ans;
   const getallen = (q.tmpl.match(/\d+/g) || []).map(Number);
   const mag = v => Number.isInteger(v) && v >= 0 && v <= grens && v !== ans;
-  // fouten die een kind echt maakt
-  const fouten = new Set(getallen);
-  for (let i = 0; i < getallen.length; i++)
+  // fouten die een kind echt maakt (een vraag kan ze zelf meegeven, zie genBouwen)
+  const fouten = new Set(q.fouten || getallen);
+  if (!q.fouten) for (let i = 0; i < getallen.length; i++)
     for (let j = i + 1; j < getallen.length; j++) {
       fouten.add(getallen[i] + getallen[j]);             // plus i.p.v. min, of er één vergeten
       fouten.add(Math.abs(getallen[i] - getallen[j]));   // min i.p.v. plus
@@ -1450,6 +1503,12 @@ function buildQuestion(p, lvl, g) {
   if (Math.random() < 0.12) {
     const rq = pickRefresh(p, s, mag);
     if (rq) { if (al) al.add(rq.tmpl); return rq; }
+  }
+  // getallen bouwen: vaak op zijn eigen rij, daarna af en toe (zie padStand)
+  if (s.bouwen && Math.random() < (s.bouwen === 'vaak' ? BOUWEN_VAAK : BOUWEN_SOMS)) {
+    let b, poging = 0;
+    do { b = genBouwen(); } while (net.includes(b.tmpl) && ++poging < 8);
+    return b;
   }
   // een verse som, maar niet precies die van net (een paar pogingen, en dan
   // toch: bij "tot 10" met alleen plus is de pot klein)

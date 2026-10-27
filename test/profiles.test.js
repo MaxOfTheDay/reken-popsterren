@@ -2551,7 +2551,7 @@ function check(ok, label, detail) {
   // 10c · wat een ouder vooraf instelt, komt ook echt in het profiel
   {
     const { ctx, page } = await fresh();
-    await makeStar(page, { name: 'Maal', settings: { 'set-ops': 'x', 'set-startstap': ['grijs', 'grijs'] } });
+    await makeStar(page, { name: 'Maal', settings: { 'set-ops': 'x', 'set-startstap': 'grijs' } });
     const s = await page.evaluate(() => Object.values(db.profiles)[0].settings);
     check(s.ops.includes('x'), 'een vooraf gekozen bewerking landt in het profiel', JSON.stringify(s.ops));
     check(s.max === 100, 'een vooraf gekozen bereik landt in het profiel', `max=${s.max}`);
@@ -2574,7 +2574,7 @@ function check(ok, label, detail) {
       val: document.querySelector('#newstar-oefen .sr-val').textContent,
     }));
     check(r.open === true, 'de openklapper blijft open na een tik erin', `open=${r.open}`);
-    check(/tot 50/.test(r.val), 'de samenvatting loopt mee met de keuze', r.val);
+    check(/tot 100/.test(r.val), 'de samenvatting loopt mee met de keuze', r.val);
     await ctx.close();
   }
 
@@ -2628,7 +2628,7 @@ function check(ok, label, detail) {
       return { zus: db.profiles[k].settings.max, concept: newStar.settings.max };
     });
     check(r.zus === 20, 'een tik op het maakformulier laat de bestaande ster met rust', `max=${r.zus}`);
-    check(r.concept === 50, 'diezelfde tik komt wél in het concept terecht', `max=${r.concept}`);
+    check(r.concept === 100, 'diezelfde tik komt wél in het concept terecht', `max=${r.concept}`);
     await ctx.close();
   }
 

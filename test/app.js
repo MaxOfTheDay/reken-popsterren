@@ -225,7 +225,7 @@ const BRUG = `globalThis.__api = {
   wereldAccent, planSpecials,
   // het leerpad: de rijen, waar ze staat, en hoe ze verder gaat
   LEERPAD, PAD_IDX, PAD_MIN_SHOWS, PAD_MAX_SHOWS, padRijen, padNu, padNa, padStand, padVanafRij, vraagInst, padUitOudeStap,
-  genTriple, genMissing, genChain,
+  genTriple, genMissing, genChain, genBouwen,
   // de antwoordknoppen
   genQuestion, keuzeGrens, makeChoices,
   // herhalen wat bewaard staat: alleen wat nog bij de instellingen past

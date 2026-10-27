@@ -574,6 +574,23 @@
     display: inline-block; min-width: .72em; padding: 0 .12em; border-radius: var(--r-sm); line-height: 1.02;
     border: 3px dashed rgba(126,87,194,.55); background: rgba(126,87,194,.08); color: var(--purple-shadow);
   }
+  /* Getallen bouwen (zie genBouwen): elk cijfer in de kleur van zijn plaats, en
+     de blokken van school -- een staaf van tien, een blokje van één. De T en E
+     achter een cijfer zijn klein: het getal is het belangrijke. Het vakje neemt
+     de kleur van zijn plaats over, zodat je ziet wélk cijfer er ontbreekt. */
+  .pl-h { color: var(--plaats-h); } .pl-t { color: var(--plaats-t); } .pl-e { color: var(--plaats-e); }
+  .pl-t small, .pl-e small, .pl-h small { font-size: .55em; margin-left: .04em; }
+  .pl-t .q-blank, .pl-e .q-blank { color: inherit; }
+  .pl-vis { display: flex; justify-content: center; align-items: flex-end; gap: 14px; margin: 2px 0 8px; }
+  .pl-staven { display: flex; gap: 4px; }
+  .pl-staaf {
+    display: block; width: 9px; height: 70px; border-radius: 2px;
+    background: repeating-linear-gradient(0deg, transparent 0 6px, rgba(0,0,0,.18) 6px 7px), var(--plaats-t-blok);
+    box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.18);
+  }
+  .pl-blokjes { display: grid; grid-template-columns: repeat(3, 10px); gap: 3px; align-content: end; }
+  .pl-blok { display: block; width: 10px; height: 10px; border-radius: 2px; background: var(--plaats-e-blok); box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.18); }
+  .pl-som { display: block; }
   .q-blank.done { border-style: solid; border-color: var(--green-deep); background: rgba(102,187,106,.18); color: var(--green-deep); }
   /* De som valt dicht (zie die kop in de JS). klikt: het goede antwoord is net
      geland en plopt één keer. rustig: na een tweede misser staat het goede
