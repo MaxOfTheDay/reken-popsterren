@@ -104,14 +104,15 @@
       width: var(--podium-w); margin-left: calc(var(--podium-w) / -2);
       border-bottom-left-radius: var(--r-md); border-bottom-right-radius: var(--r-md);
     }
-    /* Twee zwevende knopjes hangen met right: 14px aan de rechter VENSTERrand, en
+    /* Twee zwevende knopjes hangen met right: 14px aan de rechterrand van het
+       venster (de memory-knop aan die van #screen-map, die even breed is), en
        die rand is hier niet meer de rand van het scherm: de memory-knop kwam op
        een breed venster een halve monitor naast de wereldkaart te staan, en het
        terug-pijltje van Werelden naast de reis. Ze horen aan de rand van hun
        eigen podium, met dezelfde 14px lucht als op een telefoon -- waar die twee
        randen samenvallen en er dus niets verandert. max() houdt ze binnen boord
        als het podium toch de volle breedte pakt.
-       Hun hóógte laat dit met rust: die hangt al aan --nav-h en aan
+       Hun hóógte laat dit met rust: die hangt al aan --fab-onder en aan
        --balk-ruimte, en die schuiven met de balk mee. */
     #screen-map .mem-fab { right: max(14px, calc(50vw - var(--podium-w) / 2 + 14px)); }
     #screen-journey .reis-terug { right: max(14px, calc(50vw - var(--balk-w) / 2 + 14px)); }

@@ -34,6 +34,9 @@
  *      een kindervinger, het blauwe vlak schuift mee en een schermlezer weet waar je is
  *   G  🗺️ op je eigen kaart: niets opnieuw opbouwen, terugglijden naar haar halte
  *      en daar één huppel -- en nooit Werelden
+ *   I  terug op de kaart (uit de kleedkamer) zoomt de memory-knop mee in en
+ *      landt waar hij hoort, ook als het venster gegroeid is -- geen sprong na
+ *      afloop
  *
  * De reden voor C: --vh-drift mag nooit onder nul lopen. Zou hij dat wel doen,
  * dan schoof de bediening bij een openschuivend toetsenbord juist eráchter.
@@ -345,6 +348,61 @@ async function zetOnderrandAan(page) {
       `G · ${wat} · terug naar haar halte`, `${r.thuis} -> ${r.weg} -> ${r.na}`);
     check(r.huppel === !rustig, `G · ${wat} · ${rustig ? 'geen huppel' : 'en daar één huppel'}`, String(r.huppel));
     check(fouten.length === 0, `G · ${wat} · geen javascript-fouten`, fouten.join(' | '));
+    await ctx.close();
+  }
+
+  /* ---- I · de memory-knop springt niet na een terugkeer naar de kaart ----
+     #screen-map zoomt bij aankomst in, en een transform op een voorouder maakt van
+     position:fixed 'tegen dat scherm'. Stond .mem-fab fixed, dan hing hij zolang
+     de zoom liep aan de onderrand van het scherm (het slot) en daarna aan die van
+     het venster: na een vervaagde statusbalk een sprong van precies die balk, bij
+     élke terugkeer. Gemeten per beeldje, ná de verf (rAF + setTimeout): waar hij
+     staat moet altijd zijn rustplek zijn, meegeschaald met het scherm.
+     Sinds zaak H neemt show() een gegroeid venster bij de schermwissel alsnog
+     over (vhVolg), en dan vallen scherm en venster weer samen. Dat is precies
+     waarom het hier uitstaat: deze zaak gaat over de knop, en die moet ook goed
+     staan als die twee níét samenvallen (een toetsenbord, of een groei die nog
+     niet is overgenomen). */
+  {
+    const ctx = await browser.newContext({ viewport: { width: BREED, height: HOOG } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    const fouten = [];
+    page.on('pageerror', e => fouten.push(e.message));
+    await page.goto(APP_URL + '&demo&star=p1&screen=map');
+    await page.waitForTimeout(700);
+    await page.setViewportSize({ width: BREED, height: HOOG + STATUSBALK });
+    await page.waitForTimeout(300);
+    const r = await page.evaluate(async () => {
+      const wacht = ms => new Promise(res => setTimeout(res, ms));
+      $('mem-fab').style.display = 'flex';
+      window.vhVolg = () => false;
+      navTik('dress'); await wacht(900);
+      const beelden = [];
+      navTik('map');
+      const t0 = performance.now();
+      while (performance.now() - t0 < 900) {
+        await new Promise(res => requestAnimationFrame(() => setTimeout(res, 0)));
+        const f = $('mem-fab').getBoundingClientRect(), s = $('screen-map').getBoundingClientRect();
+        beelden.push({ f: [f.left, f.bottom], s: [s.left, s.top, s.width] });
+      }
+      const rust = beelden[beelden.length - 1];
+      let ergst = 0;
+      for (const b of beelden) {
+        const k = b.s[2] / rust.s[2];
+        const x = b.s[0] + (rust.f[0] - rust.s[0]) * k, y = b.s[1] + (rust.f[1] - rust.s[1]) * k;
+        ergst = Math.max(ergst, Math.abs(b.f[0] - x), Math.abs(b.f[1] - y));
+      }
+      return { ergst, beelden: beelden.length, onder: rust.f[1], nav: $('main-nav').getBoundingClientRect().top,
+               drift: getComputedStyle(document.documentElement).getPropertyValue('--vh-drift').trim() };
+    });
+    check(r.beelden > 5 && r.ergst <= 2,
+      'I · de memory-knop zoomt mee in en springt niet na afloop',
+      `grootste afwijking ${r.ergst.toFixed(1)}px over ${r.beelden} beeldjes (drift ${r.drift})`);
+    check(Math.abs(r.onder - r.nav) <= 1,
+      'I · en hij landt met zijn onderrand op de navigatiebalk',
+      `onderrand ${r.onder.toFixed(1)}, balk ${r.nav.toFixed(1)}`);
+    check(fouten.length === 0, 'I · geen javascript-fouten', fouten.join(' | '));
     await ctx.close();
   }
 
