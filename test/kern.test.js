@@ -43,6 +43,7 @@
  *   ZC de stem                          -> zegt woorden, geen emoji of tekens
  *   ZE oefenen                          -> elke instelling één bediening, in de kaart waar hij hoort
  *   ZF leerpad                          -> naam en voorbeeld van elke stap kloppen met de gekozen sommen
+ *   ZG onomkeerbaar                     -> elke rode ja-knop gaat door gevaarVraag, met Weg en Terug
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -1552,6 +1553,32 @@ zaak('ZF', () => {
     factoren.add(t.op === 'x' ? t.a : t.c);
   }
   check(factoren.size === 10 && Math.max(...factoren) === 10, 'ZF · wereld 1, zwak kind: de tafel loopt van × 1 tot × 10', [...factoren].sort((a, b) => a - b).join());
+});
+
+/* ================= ZG · Onomkeerbaar: één vraag, één vorm ================= */
+/* Wissen, verwijderen en terugzetten schreven hun venster elk met de hand, en
+   liepen daardoor uiteen. Nu gaat alles wat iets weggooit door gevaarVraag
+   (70-ouderdeel). showConfirm tekent de rode ja-knop, dus wie hem ergens anders
+   rechtstreeks aanroept, maakt een vierde eigen venster -- zonder Weg/Blijft,
+   zonder back-upregel en zonder Terug. */
+zaak('ZG', () => {
+  const bron = harnas.appScript();
+  const plekken = [];
+  const re = /\bshowConfirm\(/g;
+  let m;
+  while ((m = re.exec(bron))) {
+    const voor = bron.slice(0, m.index);
+    const fn = [...voor.matchAll(/function\s+([\w$]+)\s*\(/g)].pop();
+    plekken.push(/function\s*$/.test(voor) ? 'definitie' : fn ? fn[1] : '?');
+  }
+  const los = plekken.filter(n => n !== 'definitie' && n !== 'gevaarVraag');
+  check(plekken.includes('gevaarVraag') && !los.length,
+    'ZG · showConfirm wordt alleen vanuit gevaarVraag aangeroepen', los.join(', '));
+
+  const { app } = verseSter('Weg');
+  const run = app.run;
+  check(run('opsomming')(['Sem']) === 'Sem' && run('opsomming')(['Sem', 'Noor']) === 'Sem en Noor'
+    && run('opsomming')(['Sem', 'Noor', 'Lina']) === 'Sem, Noor en Lina', 'ZG · opsomming: "Sem, Noor en Lina"', '');
 });
 
 klaar();
