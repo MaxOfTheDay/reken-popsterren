@@ -185,26 +185,6 @@
   .set-card.secundair .set-card-head { margin-bottom: 10px; }
   .set-card.secundair .set-card-head h2 { font-size: var(--tx-body); color: var(--paper-ink); }
   .set-card.secundair .set-card-head .ico { font-size: 16px; width: 30px; height: 30px; }
-  /* Wissen zat als permanent zichtbaar rood vlak onderaan het instellingenscherm,
-     altijd in beeld naast gewone instellingen. Nu zit het achter een rustige
-     openklapper: het rode vlak bestáát pas als een ouder er zelf om vraagt.
-     <details> i.p.v. eigen JS -- toetsenbord en schermlezer krijgen we gratis. */
-  .danger-reveal { margin-top: 12px; }
-  .danger-reveal > summary {
-    list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
-    min-height: 44px; box-sizing: border-box; padding: 9px 15px;
-    font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted);
-    border: 1.5px solid var(--paper-border); border-radius: var(--r-pill);
-  }
-  .danger-reveal > summary::-webkit-details-marker { display: none; }
-  .danger-reveal > summary::after { content: '▾'; opacity: .7; }
-  .danger-reveal[open] > summary { color: var(--danger-title); border-color: var(--danger-border); }
-  .danger-reveal[open] > summary::after { content: '▴'; }
-  .danger-reveal .danger-zone { margin-top: 10px; }
-  /* twee openklappers onder elkaar (wissen, verwijderen): lucht ertussen, zodat
-     het twee losse vragen blijven en geen lijstje om achteloos door te tikken */
-  .danger-reveal + .danger-reveal { margin-top: 10px; }
-  .danger-zone .d b { color: var(--danger-title); font-weight: 700; }
   /* de tweede, vervangende actie in de back-upkaart: een streepje erboven, zodat
      "maken" en "terugzetten" niet als twee knoppen van hetzelfde soort lezen */
   /* De onderregel van de rij Back-up (zie backupStandHtml): grijs zoals elke
@@ -318,6 +298,13 @@
   .fl-rij .fl-lijn.boven { top: -10px; }
   .fl-rij .fl-lijn.onder { bottom: -10px; }
   .fl-rij .fl-lijn::before { flex: 0 0 18px; }
+  /* De stille kop boven een blok op het leerpad van rekenen (Tot 20, Tot 50,
+     Tot 100): alleen als er meer dan één blok staat. Klein en gedempt, zodat
+     hij groepeert zonder een lijn te lijken -- de lijnen zijn vanaf en tot. */
+  .fl-blok {
+    margin: 8px 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase;
+    color: var(--paper-ink-muted);
+  }
   /* De vinkjes op het leerpad van rekenen (zie oefenGroups): elke stap heeft er
      één, in één kolom rechts. Het vinkje is een eigen knop naast de rij, dus
      de rij en het vinkje staan samen in een .fl-plek. Het raakvlak is 40px
@@ -358,7 +345,7 @@
   .fl-rij.eind:not(.hier) { color: var(--paper-ink-muted); }
   .vg-ladder .fl-rij.klaar, .vg-ladder .fl-rij.later { color: var(--paper-ink-muted); }
   .vg-ladder .fl-rij.later .fl-vb { opacity: .7; }
-  .vg-ladder .fl-naam small { display: block; font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted); margin-top: 1px; }
+  .fl-naam small { display: block; font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted); margin-top: 1px; }
   /* ---- De moduskeuze: twee helften, niet twee pillen --------------------
      Dit is de zwaarste keuze van het scherm (ze verandert alles eronder), dus
      krijgt ze de volle breedte in plaats van twee pillen die links samendrommen.
@@ -746,12 +733,6 @@
   .data-btns.naast { flex-wrap: nowrap; gap: 8px; }
   .data-btns.naast .btn { flex: 1; min-width: 0; white-space: nowrap; padding-left: 8px; padding-right: 8px; }
 
-  .danger-zone {
-    background: var(--danger-bg); border: 1.5px dashed var(--danger-border); border-radius: var(--r-lg); padding: 15px 18px;
-    display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
-  }
-  .danger-zone .t { font-size: var(--tx-label); font-weight: 700; color: var(--danger-title); }
-  .danger-zone .d { font-size: var(--tx-klein); color: var(--danger-desc); font-weight: 500; margin-top: 2px; max-width: 42ch; }
   .danger-btn { background: linear-gradient(180deg, var(--red-danger-500), var(--red-danger-shadow)); color: var(--c-white); border: none; border-radius: var(--r-sm); padding: 10px 16px; font-family: inherit; font-weight: 700; font-size: var(--tx-label); cursor: pointer; box-shadow: 0 var(--btn-lip-sm) 0 var(--red-danger-shadow); white-space: nowrap; }
   .danger-btn:active { transform: translateY(3px); box-shadow: none; }
 
@@ -859,13 +840,35 @@
   /* het blad van één ster heeft geen titel: haar pop staat er bovenaan */
   .modal h3:empty { display: none; }
   /* Het blad van één ster (wieBladHtml): haar pop, meisje of jongen, de naam,
-     hoe ze speelt, en onder een lijn de twee openklappers die iets onomkeerbaars
+     hoe ze speelt, en onder een lijn de twee rijen die iets onomkeerbaars
      doen. */
   .wie-blad { gap: 12px; }
   .wie-blad .wb-pop { display: flex; justify-content: center; margin-top: -4px; }
   .wie-blad .name-edit-wrap { max-width: none; }
-  .wb-gevaar { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding-top: 12px; border-top: 1px solid var(--paper-border); }
-  .wb-gevaar .danger-reveal { width: 100%; margin: 0; }
+  .wb-gevaar { display: flex; flex-direction: column; padding-top: 8px; border-top: 1px solid var(--paper-border); }
+  /* dezelfde rij als op het overzicht (.gear-item), maar in rode letters: wat
+     hier staat, gooit iets weg. De pijl blijft paars -- hij zegt "hier gaat iets
+     open", net als overal. */
+  .wb-gevaar .gi-label { color: var(--danger-title); }
+  .wb-gevaar .gi-sub { color: var(--danger-desc); font-weight: 500; }
+
+  /* De vraag van gevaarVraag: Weg en Blijft in het rode vlak, links uitgelijnd
+     zodat de twee woorden onder elkaar beginnen, en eronder de back-upregel in
+     amber (een herinnering, geen gevaar -- zie .backup-stand.oud). */
+  .gv-lijst {
+    display: flex; flex-direction: column; gap: 6px; text-align: left;
+    background: var(--danger-bg); border: 1.5px dashed var(--danger-border); border-radius: var(--r-md); padding: 10px 13px;
+    font-size: var(--tx-klein); font-weight: 500; color: var(--danger-desc);
+  }
+  .gv-lijst b { color: var(--danger-title); font-weight: 700; }
+  .gv-backup {
+    display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 10px; padding: 9px 13px; min-height: 44px;
+    border: none; border-radius: var(--r-md); background: var(--practice-bg); cursor: pointer;
+    font-family: inherit; font-size: var(--tx-klein); font-weight: 600; color: var(--practice-text); text-align: left;
+  }
+  .gv-backup .gv-wanneer { flex: 1; min-width: 0; }
+  .gv-backup b { color: var(--purple-mid); font-weight: 700; white-space: nowrap; }
+  .gv-backup.klaar { background: var(--green-badge-bg); color: var(--green-deep); cursor: default; }
   .wie-blad #set-base { margin-bottom: 0; }
   /* "Hoe speelt ze?": dezelfde twee helften als meisje of jongen erboven, met
      een klein label, want hier staat het niet vanzelf (zie wieBladHtml) */
