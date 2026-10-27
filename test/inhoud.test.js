@@ -735,10 +735,12 @@ zaak('J', () => {
     check(is === wil, `J · ${naam} krijgt de uitleg voor '${wil}'`, is);
   });
 
-  // Op het overzicht: een rij "Als app" onder Geluid, vóór de back-up, die het blad opent.
+  // Op het overzicht: één kaart met rijen -- Geluid, de back-up, en als laatste
+  // "Als app" (die verdwijnt als het spel geïnstalleerd is; dan schuift er niets).
   const ov = overzicht(a, UA.android);
-  const geluid = ov.indexOf('id="set-sound"'), rij = ov.indexOf('id="set-alsapp"'), back = ov.indexOf('<h2>Back-up</h2>');
-  check(geluid > -1 && rij > geluid && back > rij, 'J · overzicht: Geluid, dan Als app, dan de back-up', `${geluid} / ${rij} / ${back}`);
+  const geluid = ov.indexOf('id="set-sound"'), back = ov.indexOf('id="set-backup"'), rij = ov.indexOf('id="set-alsapp"');
+  check(geluid > -1 && back > geluid && rij > back, 'J · overzicht: Geluid, dan de back-up, dan Als app', `${geluid} / ${back} / ${rij}`);
+  check(!ov.includes('<h2>Back-up</h2>') && !ov.includes('id="set-export"'), 'J · overzicht: de back-up is een rij, geen kaart met knoppen', '');
   check(!ov.includes('set-beginscherm'), 'J · overzicht: de uitleg staat in het blad, niet in een kaart', '');
   // De kaart zelf (alleen nog op de lege pagina, zie beheerEmptyHtml).
   const and = html(a, UA.android), kaart = 0;
@@ -794,6 +796,20 @@ zaak('J', () => {
   const twee = laadApp({ opslag: een.opslag() });
   check(twee.run('appKnopTonen()') === true, 'J · knopje: wel vanaf het tweede bezoek', twee.opslag().rekenPopsterren_appknop);
   check(!/appknop|bezoek/i.test(JSON.stringify(twee.db)), 'J · knopje: de tellers staan niet in db, dus niet in de back-up', '');
+  // Op een iPhone of iPad wél meteen, zolang er nog geen ster is: daar begint de
+  // app op het beginscherm met een eigen, lege opslag. Is er al een ster, dan
+  // weer gewoon vanaf het tweede bezoek. Android blijft op het tweede bezoek.
+  const iosEen = laadApp();
+  iosEen.run(`navigator.userAgent = '${UA.iphone}'`);
+  check(iosEen.run('appKnopTonen()') === true, 'J · knopje: op een iPhone al bij het eerste bezoek, zonder ster', '');
+  iosEen.run(`db.profiles = { p1: defaultProfile('Noor', 'dress_roze') }`);
+  check(iosEen.run('appKnopTonen()') === false, 'J · knopje: maar met een ster pas vanaf het tweede bezoek', '');
+  const ipadEen = laadApp();
+  ipadEen.run(`navigator.userAgent = '${UA.ipad}'; navigator.maxTouchPoints = 5`);
+  check(ipadEen.run('appKnopTonen()') === true, 'J · knopje: op een iPad ook', '');
+  const androidEen = laadApp();
+  androidEen.run(`navigator.userAgent = '${UA.android}'`);
+  check(androidEen.run('appKnopTonen()') === false, 'J · knopje: op Android niet bij het eerste bezoek', '');
   // Onder ?debug alleen met &appknop: de browsersuites openen de pagina vaak opnieuw.
   check(laadApp({ opslag: twee.opslag(), zoek: '?debug' }).run('appKnopTonen()') === false,
     'J · knopje: onder ?debug weg', '');

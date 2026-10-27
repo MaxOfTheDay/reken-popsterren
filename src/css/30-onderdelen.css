@@ -737,25 +737,50 @@
   button.diamond-badge:active { transform: scale(.95); }
   /* Mijn wens op de kaart: het emoji van je wens achter je diamanten, en een
      streepje onderaan de pil dat volloopt naarmate je spaart (--wens, gezet door
-     zetWensPil). Is er genoeg, dan fonkelt hij zachtjes. Zonder wens staat er
-     niets en is de pil precies wat hij was. */
+     zetWensPil). Zonder wens staat er niets en is de pil precies wat hij was. */
   .wens-mini:empty { display: none; }
-  .wens-mini { font-size: .95em; line-height: 1; margin-left: 2px; }
+  .wens-mini { font-size: .95em; line-height: 1; margin-left: 2px; display: inline-flex; align-items: center; }
+  /* Een wens zonder emoji (een outfit, een kapsel) draagt zijn eigen tekening, op
+     de hoogte van een letter: dezelfde tekening als op zijn kaartje (itemThumb),
+     zonder het vak van 52 eromheen. */
+  .wens-tek { display: inline-flex; align-items: center; }
+  .wens-tek .item-thumb { height: auto; margin: 0; transform: none; }
+  .wens-tek .item-thumb svg { height: 1.45em; width: auto; filter: none; }
   .diamond-badge.met-wens { position: relative; }
   .diamond-badge.met-wens::after {
     content: ''; position: absolute; left: 10px; right: 10px; bottom: 3px; height: 3px;
     border-radius: var(--r-pill); pointer-events: none;
     background: linear-gradient(90deg, var(--gold-accent) var(--wens, 0%), rgba(255,255,255,.18) var(--wens, 0%));
   }
-  /* Fonkelen met transform en niet met een groeiende gloed: dat draait op de
-     compositor en kost ook op een oude tablet niets (zie .item-card.just-bought). */
-  .diamond-badge.wens-klaar .wens-mini { display: inline-block; animation: wensFonkel 1.4s ease-in-out infinite; }
+  /* GENOEG GESPAARD: de hele pil wordt goud. Het was een wiebelend emoji op een
+     vol streepje, en dat zag een kind makkelijk over het hoofd. Goud is in deze
+     app "hier ligt iets voor je klaar" -- de 🎁-pil in de kast (.gold-pill) en de
+     cadeaumedailles -- en daarom is dit dezelfde stof en dezelfde trage
+     ademhaling (beloningKlop, 65-kast). Het streepje mag weg: de kleur zegt
+     "vol". Met de schermen erbij in de selector, want op de kaart en in Werelden
+     zet een id-regel (40-kaart, 60-reis) de zwevende --hud-stof, en die komt
+     later in het stijlblad. */
+  :is(#screen-map, #screen-journey, #screen-trophies, #screen-dress) .diamond-badge.wens-klaar {
+    background: rgba(var(--goud-rgb), .9); color: var(--ink-on-gold); text-shadow: none;
+    box-shadow: 0 0 14px rgba(var(--goud-rgb), .45), 0 3px 10px rgba(8,1,20,.35);
+    animation: beloningKlop 2.4s ease-in-out infinite;
+  }
+  .diamond-badge.wens-klaar::after { display: none; }
+  /* De kleedkamer-pil is alleen een knop zolang er een wens is (zie zetWensPil) */
+  .diamond-badge[role="button"] { cursor: pointer; }
+  .diamond-badge[role="button"]:active { transform: scale(.95); }
+  /* Het emoji van een volle wens wiebelt nog wel waar het vakje níét goud wordt:
+     het 💎-vakje op het eindscherm (zie eindWens). Met transform en niet met een
+     groeiende gloed: dat draait op de compositor en kost op een oude tablet niets. */
+  .earn-chip.wens-klaar > .wens-mini { animation: wensFonkel 1.4s ease-in-out infinite; }
   @keyframes wensFonkel {
     0%, 100% { transform: scale(1) rotate(0); }
     50%      { transform: scale(1.25) rotate(-8deg); }
   }
-  @media (prefers-reduced-motion: reduce) { .diamond-badge.wens-klaar .wens-mini { animation: none; } }
-  @keyframes pulseBtn { 0%,100% { transform: scale(1); } 50% { transform: scale(1.09); } }
+  @media (prefers-reduced-motion: reduce) {
+    .earn-chip.wens-klaar > .wens-mini,
+    :is(#screen-map, #screen-journey, #screen-trophies, #screen-dress) .diamond-badge.wens-klaar { animation: none; }
+  }
 
 
   /* ---- Het podium -----------------------------------------------------------

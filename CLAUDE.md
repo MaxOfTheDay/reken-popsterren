@@ -121,7 +121,10 @@ app moet het doen op een oude tablet in een woonkamer, zonder net. Alles wat het
 spel nodig heeft ligt naast `index.html` (ook het lettertype staat in
 `assets/font/`); houd dat zo. Er gaat bij een gewone start nog precies één
 verzoek naar buiten en dat is het meetscriptje uit regel 2 — niets van het spel
-wacht erop, dus zonder net mist er niets dan een telling.
+wacht erop, dus zonder net mist er niets dan een telling. **Overzetten** (de
+sterren met een code naar een ander toestel, `= Overzetten` in `src/20-app.js`)
+praat alleen met zijn Worker als een ouder daar zelf op tikt; zie
+`docs/OVERZETTEN.md`.
 
 ## Waar de dingen staan
 
@@ -133,6 +136,7 @@ en waarop je het vindt:
 | zoek op | wat |
 |---|---|
 | `src/00-vh-lock.js` | de vensterhoogte vastleggen. Moet als eerste draaien — vandaar het volgnummer |
+| `src/05-foutmelder.js` | de **foutmelder**: telt anoniem de scriptfouten die kinderen tegenkomen, voor de zondagrapportage. Zo vroeg mogelijk, zodat ook een fout bij het opstarten meetelt. Zie `docs/FOUTEN.md` |
 | `src/10-feestjes.js` | de **gedeelde feestjes**: `motionOff`, toast, praise, confetti, sparkle, danspasjes, confirm/notice. Wat élk scherm mag gebruiken om te zeggen dat er iets gebeurd is |
 | `src/15-kaart-en-weg.js` | de **vormleer van de wereldkaart**: haltes, de weg erlangs, het streeppatroon, `ZONE`, `showWorld`. Rekent in procenten van de tekening en kent geen scherm. De kaart, de reis én de wereldstudio leunen erop |
 | `src/17-kaartstand.js` | de **kaartstand**: vijftien namen die zeggen waar de kaart naar kijkt (`viewWorldIdx`), wat de eerstvolgende opbouw moet doen (`pendingTravel`, `reisDoel`, `kaartFocus`, `netAf`) en wat er nu loopt (`overgangBezig`, `vluchtOp`, `wereldReisOp`). Begin hier als je aan een overgang werkt |

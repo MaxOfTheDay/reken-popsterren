@@ -537,7 +537,6 @@
     min-height: 44px; min-width: 46px; flex: none;
   }
   .tab-btn .tab-ico { font-size: 21px; line-height: 1; filter: var(--emoji-schaduw); }
-  .tab-label { white-space: nowrap; }
   .tab-btn:active { transform: scale(.95); }
   /* Wat niet gekozen is staat iets stiller (zoals .nav-item); het vlak eronder
      is het licht (zie .shop-tabs .tab-btn verderop, na .tab-btn.active). */
@@ -979,6 +978,11 @@
   .dress-bar .db-sub { flex: 0 1 auto; min-width: 0; font-size: var(--tx-klein); opacity: .92; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dress-bar .db-highlight { color: var(--gold-accent); font-weight: 700; }
   .dress-bar .btn.small { white-space: nowrap; flex-shrink: 0; }
+  /* Op de smalste telefoons past "naam · Nog 190 💎" niet naast het hartje en
+     Speel: allebei werden ze afgekapt, en dan was juist het bedrag weg. Daar valt
+     de naam (met zijn puntje) weg en blijft het emoji staan -- het blauwe kaartje
+     en de pop zeggen al welk spulletje het is. Zie renderDressBar. */
+  @media (max-width: 359px) { .dress-bar .db-woord { display: none; } }
   /* Mijn wens: het hartje in de lade (zie "= Mijn wens" in de app). Een rond
      knopje naast "Speel", leeg (🤍) of vol (💖). Geen tekst: het hart zegt het. */
   .wens-knop {

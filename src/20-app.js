@@ -406,8 +406,8 @@ const ITEMS = [
   { id: 'mic_zilver', cat: 'mic', name: 'Zilver', full: 'Zilveren microfoon', price: 30, color: '#cfd8dc' },
   { id: 'mic_blauw',  cat: 'mic', name: 'Blauw',   full: 'Blauwe microfoon', price: 35, color: '#42a5f5' },
   { id: 'mic_groen',  cat: 'mic', name: 'Groen',   full: 'Groene microfoon', price: 40, color: '#66bb6a' },
-  { id: 'mic_pintje', cat: 'mic', name: 'Pintje',  full: 'Pintjemicrofoon',       price: 45, emoji: '🍺' },
-  { id: 'mic_bubbels', cat: 'mic', name: 'Bubbels', full: 'Bubbelsmicrofoon',      price: 50, emoji: '🥂' },
+  { id: 'mic_pintje', cat: 'mic', name: 'Pintje',  full: 'Pintjesmicrofoon',      price: 45, emoji: '🍺' },
+  { id: 'mic_bubbels', cat: 'mic', name: 'Bubbels', full: 'Bubbelmicrofoon',       price: 50, emoji: '🥂' },
   { id: 'mic_zwart',  cat: 'mic', name: 'Rock', full: 'Rockmicrofoon', price: 55, color: '#37474f' },
   { id: 'mic_toverstaf', cat: 'mic', name: 'Toverstaf', full: 'Toverstafmicrofoon', price: 70, emoji: '🪄' },
   { id: 'mic_goud',   cat: 'mic', name: 'Goud',   full: 'Gouden microfoon', price: 60, color: '#ffd54f' },
@@ -416,7 +416,7 @@ const ITEMS = [
   { id: 'mic_ijsje',  cat: 'mic', name: 'IJsje',  full: 'IJsjesmicrofoon', price: 45, emoji: '🍦' },
   { id: 'mic_vuur',   cat: 'mic', name: 'Vuur',   full: 'Vuurmicrofoon',   price: 75, emoji: '🔥' },
   // de gekke microfoons: ook gewoon een emoji op de steel
-  { id: 'mic_banaan', cat: 'mic', name: 'Banaan', full: 'Banaanmicrofoon', price: 20, emoji: '🍌' },
+  { id: 'mic_banaan', cat: 'mic', name: 'Banaan', full: 'Bananenmicrofoon', price: 20, emoji: '🍌' },
   { id: 'mic_friet',  cat: 'mic', name: 'Frietje', full: 'Frietjesmicrofoon', price: 30, emoji: '🍟' },
   { id: 'mic_wcrol',  cat: 'mic', name: 'Wc-rol', full: 'Wc-rolmicrofoon', price: 35, emoji: '🧻' },
   { id: 'mic_regenboog', cat: 'mic', name: 'Regenboog', full: 'Regenboogmicrofoon', price: 100, color: 'RAINBOW' },
@@ -522,7 +522,7 @@ const ITEMS = [
   { id: 'pet_eend',   cat: 'pet', name: 'Eendje Kwak',   price: 15,  emoji: '🦆' },
   { id: 'pet_slak',   cat: 'pet', name: 'Slak Turbo',    price: 25,  emoji: '🐌' },
   { id: 'pet_kogelvis',cat:'pet', name: 'Kogelvis',      price: 45,  emoji: '🐡' },
-  { id: 'pet_ufo',    cat: 'pet', name: 'Ufo-tje',       price: 90,  emoji: '🛸' },
+  { id: 'pet_ufo',    cat: 'pet', name: 'Ufootje',       price: 90,  emoji: '🛸' },
   { id: 'pet_pauw',   cat: 'pet', name: 'Pauw',          price: 250, emoji: '🦚' },
   // Podium
   /* Een podium is waar ze op staat: de schijf onder haar voeten in de spiegel (en
@@ -961,7 +961,7 @@ const WORLDS = [
     art: 'assets/world/ruimte-map.webp',
     feest: ['🪐', '🚀', '🌙', '👽', '☄️'],
     schat: {
-      naam: 'UFO-hoedje', emoji: '🛸', view: '72.2 -1 55.7 46',
+      naam: 'Ufohoedje', emoji: '🛸', view: '72.2 -1 55.7 46',
       svg: '<g transform="translate(0 -2) scale(1)"><g transform="translate(19.23 -1.85) scale(0.8077)"><g stroke-linejoin="round" stroke-linecap="round"><line x1="100" y1="13" x2="100" y2="19" stroke="#221c36" stroke-width="2"/><circle cx="100" cy="10" r="4" fill="#ffd54f" stroke="#221c36" stroke-width="2"/><ellipse cx="100" cy="37" rx="30" ry="9" fill="#cfd9ff" stroke="#221c36" stroke-width="2.4"/><path d="M82 37 Q100 30 118 37" fill="none" stroke="#ffffff" stroke-width="1.6"/><path d="M86 37 Q86 25 100 20 Q114 25 114 37 L114 42 Q100 46 86 42 Z" fill="#7fe7ff" stroke="#221c36" stroke-width="2.4"/><ellipse cx="100" cy="31" rx="8" ry="5.5" fill="#21558c" stroke="#221c36" stroke-width="1.8"/><circle cx="100" cy="31" r="2.2" fill="#8adfff"/><path d="M68 42 Q100 58 132 42 L125 52 Q100 59 75 52 Z" fill="#6d5bd0" stroke="#221c36" stroke-width="2.5"/><path d="M78 45 Q100 54 122 45" fill="none" stroke="#9f90f0" stroke-width="2"/><circle cx="82" cy="51" r="4" fill="#ffd54f" stroke="#221c36" stroke-width="1.8"/><circle cx="94" cy="54" r="4" fill="#ffd54f" stroke="#221c36" stroke-width="1.8"/><circle cx="106" cy="54" r="4" fill="#ffd54f" stroke="#221c36" stroke-width="1.8"/><circle cx="118" cy="51" r="4" fill="#ffd54f" stroke="#221c36" stroke-width="1.8"/><circle cx="77" cy="24" r="3.2" fill="#fff1a8" stroke="#21558c" stroke-width="1.4"/><circle cx="123" cy="20" r="2.6" fill="#fff1a8" stroke="#21558c" stroke-width="1.2"/></g></g></g>',
     },
     theme: { road: '#ecf0f3', sky: '#333177', deep: '#0d0c31', glow: '#21558c' },
@@ -2207,7 +2207,7 @@ const TROPHIES = [
   { id: 'leer-brug',   emoji: '🌉', name: 'Over de brug',   desc: '10 sommen over de tien goed',
     voor: p => !telModus(p) && p.settings.max > 10 && p.settings.ops.some(o => o === '+' || o === '-'),
     has: p => leerTel(p, 'brug') >= 10, progress: p => trophyProgress(leerTel(p, 'brug'), 10, 'sommen over de tien') },
-  { id: 'leer-zoek',   emoji: '🔍', name: 'Speurneus',      desc: '10 keer zoek het getal goed',
+  { id: 'leer-zoek',   emoji: '🔍', name: 'Speurneus',      desc: '10 keer het getal gevonden',
     voor: p => !telModus(p) && p.settings.missNum !== false && p.settings.ops.some(o => o === '+' || o === '-' || o === 'x'),
     has: p => leerTel(p, 'zoek') >= 10, progress: p => trophyProgress(leerTel(p, 'zoek'), 10, 'zoeksommen') },
   { id: 'leer-drie',   emoji: '🧩', name: 'Drie op een rij', desc: '10 sommen met drie getallen goed',
@@ -2432,8 +2432,13 @@ function defaultProfile(name, dress, opts) {
   // Gratis starthaar en -kleren zodat elke ster er meteen anders uitziet, zonder de
   // winkelprijs van die items te veranderen. freebies telt ze mee, dus
   // "spulletjes gekocht" begint gewoon op 0.
+  /* Alle startkleuren uit het maakformulier horen erbij. Hier stonden alleen de
+     standaardstukken plus wat er gekozen was, en dan verkocht de kleedkamer
+     daarna voor 15 tot 24 diamanten wat op het formulier nog gratis te kiezen
+     viel. Dit geldt alleen voor een nieuwe ster: een bestaande opslag wordt
+     niet aangevuld (en zijn freebies blijven kloppen). */
   const hair = opts.hair || 'hair_blond';
-  const owned = ['hair_blond', 'dress_roze', 'dress_paars', 'shoes_roze', 'stage_disco'];
+  const owned = START_HAIR.concat(START_DRESS, ['shoes_roze', 'stage_disco']);
   if (dress && !owned.includes(dress)) owned.push(dress);
   if (hair && !owned.includes(hair)) owned.push(hair);
   return {
@@ -3277,6 +3282,21 @@ function somZin(q) {
   if (!q || !q.tmpl) return '';
   return q.tmpl.split(' ').map(t => SOM_WOORD[t] || numWord(parseInt(t, 10))).join(' ') + '?';
 }
+/* Wat de stem hardop zegt, zonder tekens. Sommige zinnen komen rechtstreeks uit
+   een balk of een kaartje ("nog 2 shows met ⭐⭐⭐", "🔒 Nog niet", "Sterrenhit ·
+   Brons"), en een stem leest een emoji voor als zijn naam: "ster ster ster",
+   "slot". Dus op één plek, voor élke zin: een rij sterren wordt "drie sterren",
+   het middenpuntje een kleine adempauze, en de rest van de emoji valt weg.
+   De tekst in beeld blijft zoals hij is. */
+function spreekbaar(text) {
+  return String(text)
+    .replace(/(?:⭐️?)+/g, m => { const n = m.replace(/️/g, '').length; return n === 1 ? ' ster ' : ` ${numWord(n)} sterren `; })
+    .replace(/\s*·\s*/g, ', ')
+    .replace(/[\p{Extended_Pictographic}️‍]/gu, '')
+    .replace(/\s+([,.!?])/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 function cancelSpeech() { try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {} }
 // Leest een zin voor. Volgt bewust de geluid-aan/uit-knop (stil = ook geen stem).
 function speak(text, opts) {
@@ -3290,6 +3310,8 @@ function speak(text, opts) {
   // Niet tegen een vergrendeld scherm praten: de stem van Android loopt gewoon
   // door met het scherm uit. Wat er nog te zeggen viel, zie stemTerug.
   if (document.hidden) { if (opts.onEnd) opts.onEnd(); return; }
+  text = spreekbaar(text);
+  if (!text) { if (opts.onEnd) opts.onEnd(); return; }
   try {
     /* Alleen afbreken als er ook iets klinkt. Safari (iPad, iPhone) slikt soms het
        begin van een nieuwe zin in als cancel() en speak() vlak na elkaar komen,
@@ -4130,7 +4152,7 @@ function vonkje(bijLogo) {
   el.style.left = Math.round(plek.x) + 'px';
   el.style.top = Math.round(plek.y) + 'px';
   el.style.fontSize = Math.round(bijLogo ? vonkTussen(15, 19) : vonkTussen(8, 13)) + 'px';
-  el.style.opacity = (bijLogo ? .95 : vonkTussen(.55, .8)).toFixed(2);
+  el.style.setProperty('--piek', (bijLogo ? .95 : vonkTussen(.55, .8)).toFixed(2));   // niet style.opacity: zie .vonk-laag
   el.style.animationDuration = Math.round(vonkTussen(VONKJES.duurMin, VONKJES.duurMax)) + 'ms';
   el.classList.add('aan');
   // Geen timer voor het uitzetten: de animatie meldt zelf wanneer ze klaar is.
@@ -4754,6 +4776,9 @@ function renderProfiles() {
   // alleen op het lege scherm: wat is dit spel (zie de opmaak van #over-hint)
   const hint = $('over-hint');
   if (hint) hint.style.display = n ? 'none' : 'flex';
+  // en eronder: al gespeeld op een ander toestel? (zie = Overzetten)
+  const codeHint = $('code-hint');
+  if (codeHint) codeHint.style.display = !n && overzetMag() ? 'flex' : 'none';
   renderGeluid();
   appKnopZet();
   /* HIER WORDT NIET MEER GEZWAAID. Dit scherm had zijn eigen begroeting: alle
@@ -7295,7 +7320,7 @@ function reisLabel(b, doel) {
   if (b.i === doel) return b.world.name + ' — hier ben je nu' + sterren;
   if (!b.open) return b.world.name + ' — nog op slot';
   return b.world.name + (b.vol ? ' — helemaal vol' : b.uit ? ' — uitgespeeld' : '')
-    + sterren + ', ga er heen';
+    + sterren + ', ga erheen';
 }
 /* Eén stip per show van een wereld, in showvolgorde -- dezelfde volgorde als de
    haltes op zijn wereldkaart. Drie standen, en alleen de eerste is goud:
@@ -7363,7 +7388,7 @@ function slotWereld(knop, doel) {
 function slotToast(doel) {
   const w = WORLDS[doel];
   // één teken: het slotje. Het wereldicoon erachter was een tweede emoji in één regel.
-  showToast(w ? `🔒 Speel eerst ${esc(w.name)}` : '🔒 Nog niet');
+  showToast(w ? `🔒 Speel eerst de ${esc(w.name)} uit` : '🔒 Nog niet');
   toastWeg(2200);
 }
 /* De baan opbouwen. Alles hier komt uit reisPlaatsen() en uit de staphoogte in het
@@ -10955,7 +10980,7 @@ function vraagMemoryStop() {
   sndClick();
   renderGeluid();
   $('quit-titel').textContent = '🎤 Memory stoppen?';
-  $('quit-zin').textContent = 'Je 💎 houd je.';
+  $('quit-zin').textContent = 'Je 💎 mag je houden.';
   $('quit-modal').classList.add('open');
   syncBackGuard();
 }
@@ -11035,6 +11060,10 @@ function finishMemory(m) {
   // De bonus is verdiend, ook als het kind al weg is; alleen het feestje niet meer.
   p.diamonds += bonus; m.earned += bonus;
   save();
+  // het feestje wacht tot het kind weer kijkt (zie alsZichtbaar); de bonus niet
+  alsZichtbaar(() => memoryFeest(m, p));
+}
+function memoryFeest(m, p) {
   if (M !== m) return;
   telStraks($('mem-diamonds'), p.diamonds);
   sndGroot();
@@ -11535,7 +11564,7 @@ function renderQuestion() {
     if (G.idx === G.goldIdx) built.gold = true;
     // telmodus: kondig de gouden vraag hoorbaar aan (lees-vrij) -- de prompt wordt
     // toch alleen uitgesproken, niet getoond, dus dit dubbelt niets in beeld
-    if (built.gold && G.count && built.prompt) built.prompt = 'Gouden vraag! Deze telt drie keer. ' + built.prompt;
+    if (built.gold && G.count && built.prompt) built.prompt = 'Gouden vraag! Die geeft drie keer zoveel diamanten. ' + built.prompt;
     G.qs[G.idx] = built;
   }
   const q = G.qs[G.idx];
@@ -12245,9 +12274,31 @@ function livesText() {
   const left = Math.max(0, 3 - G.errors);
   return '❤️'.repeat(left) + '🤍'.repeat(3 - left);
 }
+/* De show wacht op je. Een telefoon die op slot gaat of een kind dat even naar
+   een andere app gaat, laat de show op Android en op een tablet nog een tijd
+   doorlopen: de volgende som kwam dan zonder kijker, zijn spotlicht liep leeg
+   (weg +1 💎), de telmodus las hem voor aan een vergrendeld scherm, en na de
+   laatste som speelde het hele eindfeest voor niemand. Een iPhone legt de pagina
+   stil en had dit niet. Nu wacht elke stap die vanzelf komt tot de app weer in
+   beeld is, en gaat dan gewoon verder.
+   Eén wachter tegelijk: wie twee keer vraagt, krijgt alleen de laatste. */
+let zichtbaarWacht = null;
+function alsZichtbaar(fn) {
+  if (zichtbaarWacht) document.removeEventListener('visibilitychange', zichtbaarWacht);
+  zichtbaarWacht = null;
+  if (!document.hidden) { fn(); return; }
+  zichtbaarWacht = () => {
+    if (document.hidden) return;
+    document.removeEventListener('visibilitychange', zichtbaarWacht);
+    zichtbaarWacht = null;
+    fn();
+  };
+  document.addEventListener('visibilitychange', zichtbaarWacht);
+}
 function nextStep() {
   hideToast();
   if (!G) return;
+  if (document.hidden) { const g = G; alsZichtbaar(() => { if (G === g) nextStep(); }); return; }
   if (G.errors >= 3) { endLevel(false); return; }
   G.idx++;
   if (G.idx >= G.total) endLevel(true);
@@ -12418,6 +12469,7 @@ function endLevel(success) {
   }
   onthoudUitkomst(p, success ? showStars(G) : 0);   // voor de stand in Voortgang (beide takken hieronder bewaren)
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;   // een show verder gewend aan de grens
+  if (!G.count && success) telGrensDrie(p, lvl, showStars(G));   // voor de grenstip (zie grensDrieSterren)
   /* Wat er pas ná het eindscherm gevierd wordt (zie de staart van deze
      functie): een wereld die net uit of perfect werd. Bij een mislukte show
      blijft het leeg. */
@@ -12437,6 +12489,7 @@ function endLevel(success) {
   if (fanBonus > 0) p.diamonds += fanBonus;
   const verdiend = G.earned + fanBonus;
   let opbrengst = verdiend;   // alles van deze show, de sterrenbonus erbij (zie hieronder)
+  let wens = null;            // de wens in het 💎-vakje (zie eindWens)
   $('end-avatar').innerHTML = pasLaag(avatarSVG(p, 150));
   applyStage($('end-stage'), p);
   // hetzelfde decor als tijdens de show: het applaus valt in de zaal waar ze stond
@@ -12484,6 +12537,7 @@ function endLevel(success) {
        */
     opbrengst = verdiend + bonus;
     $('end-earn').innerHTML = `<span class="earn-chip dia">💎 +${opbrengst}</span>`;
+    wens = eindWens(p, opbrengst);
     /* Eén mijlpaal, en alleen als er écht iets gehaald is: iets nieuws dat het
        kind nu kan (groeiMoment), of een trofee die klaarligt -- die laatste als
        gouden pil, tikbaar.
@@ -12523,7 +12577,13 @@ function endLevel(success) {
     const nieuwPodium = nieuwSpul ? podiumVan(nieuwSpul.id) : null;
     $('btn-end-alt').textContent = nieuwPodium ? '🎪 Naar je podium'
       : nieuwSpul ? `👕 Pas je ${nieuwSpul.name}` : '👕 Kleedkamer';
-    const naar = nieuwPodium || nieuwSpul;
+    /* Genoeg gespaard voor je wens? Dan gaat de gewone Kleedkamer-knop naar dát
+       spulletje, met de wens ervoor en een gouden rand (zie eindWens). Een nieuw
+       wereldspulletje gaat voor: dat moment is er maar één keer, de wens wacht. */
+    const naarWens = !nieuwSpul && wens && wens.klaar ? wens.it : null;
+    if (naarWens) $('btn-end-alt').innerHTML = `${wensTekenHTML(naarWens)} Kleedkamer`;
+    $('btn-end-alt').classList.toggle('wens-klaar', !!naarWens);
+    const naar = nieuwPodium || nieuwSpul || naarWens;
     $('btn-end-alt').onclick = naar
       ? () => { sndClick(); naTik(() => openKleedkamerItem(naar.id)); }
       : () => { sndClick(); naTik(openKleedkamer); };
@@ -12535,7 +12595,7 @@ function endLevel(success) {
     // publieksteller hierboven zijn al bijgeschreven, en die horen bewaard.
     save();
     $('end-title').textContent = '🎭 Bijna!';
-    zin = 'Bijna! Probeer het nog eens.';
+    zin = 'Bijna! Probeer nog eens.';
     $('end-stars').textContent = '💪';
     // Geen regel eronder: hier stond "Oefening baart kunst — probeer het nog
     // eens!", een spreekwoord voor grote mensen over twee regels, vlak boven
@@ -12547,9 +12607,11 @@ function endLevel(success) {
     // de enige plek in het spel die een kind liet zien wat ze níét kreeg; zonder
     // het vakje schuiven de knoppen gewoon een regel op.
     $('end-earn').innerHTML = verdiend > 0 ? `<span class="earn-chip dia">💎 +${verdiend}</span>` : '';
+    wens = eindWens(p, verdiend);
     $('btn-end-next').textContent = '🔁 Opnieuw proberen';
     $('btn-end-next').onclick = () => { sndClick(); naTik(() => startLevel(lvl)); };
     $('btn-end-alt').textContent = '🗺️ Kaart';
+    $('btn-end-alt').classList.remove('wens-klaar');
     $('btn-end-alt').onclick = () => { sndClick(); naTik(() => goMap(lvl)); };
   }
   /* DE VOLGORDE op het eindscherm: eerst de sterren, dan wat ze opleveren, dan
@@ -12558,7 +12620,9 @@ function endLevel(success) {
      -- en pas daarna landden de sterren die dat allemaal verdiend hadden. Nu
      telt de teller op vanaf wat er vóór de show stond. */
   telNu($('end-diamonds'), p.diamonds - opbrengst);
-  telStraks($('end-diamonds'), p.diamonds, eindKomtOp(success));
+  const aankomst = eindKomtOp(success);
+  telStraks($('end-diamonds'), p.diamonds, aankomst);
+  eindWensVul(wens, aankomst);   // het streepje loopt vol als de diamanten landen
   G = null;
   /* De stille wissel van toonHub, en geen kale show(). Die liet het eindscherm
      met screenIn uit het niets opkomen terwijl de zaal op het eerste beeldje al
@@ -13304,6 +13368,7 @@ function paintShop() {
      schrijft die hem en mag deze regel er niet overheen -- anders staat het
      eindbedrag er al voordat het kind de diamanten heeft zien gaan. */
   zetTeller($('shop-diamonds'), p.diamonds);
+  zetWensPil(p);   // de 💎-pil draagt ook hier de wens (zie "= Mijn wens")
   /* De pop, en het podium onder haar voeten. Hier stond ooit applyStage(): het
      oude decorvlak áchter haar, met drie emoji in de hoeken -- dat beantwoordde de
      vraag van dit scherm ("hoe ziet mijn ster eruit?") met iets anders. Wat er nu
@@ -13368,7 +13433,8 @@ function surpriseOutfit() {
    Eén spulletje dat je nog niet kunt betalen, vastgezet met een hartje in de lade
    onderaan. De 💎-pil op de kaart draagt het dan mee: het emoji van je wens naast
    je diamanten, met een streepje eronder dat volloopt naarmate je spaart. Is er
-   genoeg, dan fonkelt de pil, en tikken brengt je meteen naar dát spulletje.
+   genoeg, dan wordt de pil goud, en tikken brengt je meteen naar dát spulletje.
+   Het eindscherm draagt hem ook (eindWens): daar krijg je de diamanten.
 
    Waarom: de droomspulletjes kosten vier tot zes shows. Dat is een goed doel,
    maar een kind van zes houdt "ik spaar voor het draakje" niet vijf shows lang
@@ -13395,42 +13461,90 @@ function zetWens(id) {
     toastWeg(1300);
   }
 }
-// Het emoji van de wens, of anders het teken van zijn lade (👕 voor kleren...).
-function wensTeken(it) {
-  if (it.emoji) return it.emoji;
-  const c = CATS.find(c2 => c2.id === it.cat);
-  return c ? c.ico : '💖';
+/* Het teken van de wens: zijn emoji, of anders zijn eigen kleine tekening. Hier
+   stond het teken van zijn lade (👕 voor kleren, 💇 voor haar) -- maar ruim de
+   helft van de winkel heeft geen emoji (kapsels, outfits, schoenen, micro's), en
+   dan zag elke outfit-wens er in de pil hetzelfde uit: een shirtje. Nu is het de
+   tekening van het kaartje zelf, op de maat van een letter (.wens-tek). */
+function wensTekenHTML(it) {
+  return it.emoji ? esc(it.emoji) : `<span class="wens-tek">${itemThumb(it)}</span>`;
 }
 /* De 💎-pil bijwerken: met wens, of gewoon zoals hij altijd was. Dezelfde pil
    staat op de drie schermen met de tabbladbalk -- de kaart, Werelden en de kast
    -- en is daar alle drie dezelfde knop. Hij was alleen op de kaart een knop: op
    Werelden en in de kast zag hij er precies zo uit, maar deed een tik niets, en
    stond de wens er niet bij. In de show, op het eindscherm en in memory blijft
-   hij een gewone teller: daar is ze aan het spelen. */
-const WENS_PILLEN = ['map-diamonds', 'reis-diamonds', 'trophy-diamonds'];
+   hij een gewone teller: daar is ze aan het spelen.
+
+   De kleedkamer heeft hem sinds oktober 2026 ook, met de wens erbij: dat was de
+   enige 💎-pil met tabbladbalk zonder. Daar is hij alleen een knop zolang er een
+   wens is -- een tik brengt je dan naar dat kaartje, met Koop of Speel in de
+   lade. Zonder wens is hij er een teller: "naar de kleedkamer" vanuit de
+   kleedkamer zou een knop zijn die niets doet.
+
+   Is er genoeg gespaard (.wens-klaar), dan wordt de hele pil goud: hetzelfde goud
+   als de 🎁-pil in de kast, en dat betekent in deze app "hier ligt iets voor je
+   klaar, tik maar". Daarom is hij overal waar hij goud kan worden ook een knop.
+   Een tik koopt niets -- kopen is de enige stap die niet terug kan, en die blijft
+   achter de Koop-knop in de lade. Hij brengt je er alleen heen. */
+const WENS_PILLEN = ['map-diamonds', 'reis-diamonds', 'trophy-diamonds', 'shop-diamonds'];
 function zetWensPil(p) {
   const it = wensItem(p);
   WENS_PILLEN.forEach(id => {
     const pil = $(id) && $(id).closest('.diamond-badge');
     const plek = pil && pil.querySelector('.wens-mini');
     if (!plek) return;
+    const kleed = id === 'shop-diamonds';
     if (!it) {
-      plek.textContent = '';
+      plek.innerHTML = '';
+      plek.removeAttribute('data-wens');
       pil.classList.remove('met-wens', 'wens-klaar');
       pil.style.removeProperty('--wens');
-      pil.onclick = () => navTik('dress');
-      pil.setAttribute('aria-label', 'Naar de kleedkamer');
+      if (kleed) {
+        pil.onclick = null;
+        pil.removeAttribute('role'); pil.removeAttribute('tabindex'); pil.removeAttribute('aria-label');
+      } else {
+        pil.onclick = () => navTik('dress');
+        pil.setAttribute('aria-label', 'Naar de kleedkamer');
+      }
       return;
     }
     const klaar = p.diamonds >= it.price;
-    plek.textContent = wensTeken(it);
+    // alleen opnieuw tekenen als het een ander spulletje is: de pil wordt vaak bijgewerkt
+    if (plek.dataset.wens !== it.id) { plek.innerHTML = wensTekenHTML(it); plek.dataset.wens = it.id; }
     pil.classList.add('met-wens');
     pil.classList.toggle('wens-klaar', klaar);
     pil.style.setProperty('--wens', Math.min(100, Math.round(100 * p.diamonds / it.price)) + '%');
     pil.onclick = () => { sndClick(); openKleedkamerItem(it.id); };
+    if (kleed) { pil.setAttribute('role', 'button'); pil.tabIndex = 0; }
     pil.setAttribute('aria-label', klaar ? `Je wens: ${it.full || it.name} -- je kunt hem kopen!`
       : `Je wens: ${it.full || it.name}, nog ${it.price - p.diamonds} diamanten`);
   });
+}
+/* De wens op het eindscherm. Het moment waarop ze diamanten krijgt zei niets over
+   waarvoor ze spaart; nu draagt het 💎-vakje dezelfde wens en hetzelfde streepje
+   als de pil op de kaart. Het streepje begint op wat er vóór de show was en loopt
+   vol als de diamanten in de teller landen (eindWensVul).
+
+   Genoeg? Dan wordt het vakje níét goud: het is geen knop, en twee gouden dingen
+   voor één tik is er één te veel. Het vakje houdt een vol streepje en een
+   wiebelende wens, en de tweede knop neemt het over: de wens ervoor en een gouden
+   rand, en hij gaat meteen naar dát spulletje. Alleen als die knop nog gewoon
+   "Kleedkamer" is -- een nieuw wereldspulletje of podium gaat voor (zie endLevel). */
+function eindWens(p, opbrengst) {
+  const vakje = $('end-earn').querySelector('.earn-chip');
+  const it = wensItem(p);
+  if (!vakje || !it) return null;
+  const deel = n => Math.max(0, Math.min(1, n / it.price));
+  vakje.classList.add('met-wens');
+  vakje.style.setProperty('--wens-f', deel(p.diamonds - opbrengst).toFixed(3));
+  vakje.insertAdjacentHTML('beforeend', `<span class="wens-mini" aria-hidden="true">${wensTekenHTML(it)}</span>`);
+  return { it, vakje, na: deel(p.diamonds), klaar: p.diamonds >= it.price };
+}
+function eindWensVul(w, wanneer) {
+  if (!w) return;
+  const vul = () => { w.vakje.style.setProperty('--wens-f', w.na.toFixed(3)); w.vakje.classList.toggle('wens-klaar', w.klaar); };
+  if (wanneer > 0) setTimeout(vul, wanneer); else vul();
 }
 
 /* De lade onderaan: naam links, dé knop rechts. Bij te weinig diamanten geen dood
@@ -13460,12 +13574,14 @@ function renderDressBar(it, p) {
   if (tekort > 0) {
     /* Te duur? Dan kan het je wens worden (zie "= Mijn wens"): het hartje zet hem
        vast, en de 💎-pil op de kaart draagt hem tot hij te koop is. */
-    const gewenst = p.wens === it.id;
+    /* Op een smalle telefoon (320) paste dit niet: de naam én "Nog 190 💎" werden
+       allebei afgekapt, en dan was juist het bedrag weg. Daar valt de naam weg
+       (.db-woord, zie 75-kleedkamer) en blijft het emoji staan: welk spulletje het
+       is, zeggen het blauwe kaartje en de pop al. */
     bar.innerHTML = `
-      <div class="db-info"><span class="db-name">${naam(it)}</span>
-        <span class="db-sub">· Nog <span class="db-highlight">${tekort}</span> 💎</span></div>
-      <button class="wens-knop${gewenst ? ' aan' : ''}" id="db-wens" type="button"
-        aria-pressed="${gewenst}" aria-label="${gewenst ? 'Geen wens meer' : 'Maak er je wens van'}">${gewenst ? '💖' : '🤍'}</button>
+      <div class="db-info"><span class="db-name">${it.emoji ? it.emoji + ' ' : ''}<span class="db-woord">${it.full || it.name}</span></span>
+        <span class="db-sub"><span class="db-woord">· </span>Nog <span class="db-highlight">${tekort}</span> 💎</span></div>
+      ${wensKnop(it, p)}
       <button class="btn small" id="db-earn">Speel</button>`;
     $('db-wens').onclick = () => zetWens(it.id);
     /* De show waar de kaart je nu heen stuurt. Is alles uit, dan staat p.level op
@@ -13476,10 +13592,23 @@ function renderDressBar(it, p) {
     $('db-earn').onclick = () => { sndClick(); startLevel(Math.min(P().level, WORLD_LAST)); };
     return;
   }
+  /* Genoeg voor je wens? Dan blijft het hartje naast Koop staan. Hier verdween
+     het zodra je genoeg had, en dan kon je je wens niet meer terugnemen zonder
+     hem te kopen -- terwijl de pil op de kaart er goud om bleef staan. Een
+     spulletje dat je al kunt kopen wordt geen nieuwe wens: daar is Koop voor. */
+  const wens = p.wens === it.id;
   bar.innerHTML = `
     <div class="db-info"><span class="db-name">${naam(it)}</span></div>
+    ${wens ? wensKnop(it, p) : ''}
     <button class="btn small" id="db-buy">Koop · ${it.price} 💎</button>`;
+  if (wens) $('db-wens').onclick = () => zetWens(it.id);
   $('db-buy').onclick = () => confirmShopBuy(it.id);
+}
+// Het hartje in de lade: leeg (🤍) of vol (💖). Geen tekst: het hart zegt het.
+function wensKnop(it, p) {
+  const gewenst = p.wens === it.id;
+  return `<button class="wens-knop${gewenst ? ' aan' : ''}" id="db-wens" type="button"
+        aria-pressed="${gewenst}" aria-label="${gewenst ? 'Geen wens meer' : 'Maak er je wens van'}">${gewenst ? '💖' : '🤍'}</button>`;
 }
 
 /* De lade onderaan voor een podium dat nog niet van jou is: zijn drie stukken als
@@ -13560,7 +13689,7 @@ function slotBel(bij, w, wereldIdx) {
   const bel = document.createElement('button');
   bel.type = 'button';
   bel.className = 'slot-bel';
-  bel.setAttribute('aria-label', `Speel de ${w.name} uit`);
+  bel.setAttribute('aria-label', `Speel eerst de ${w.name} uit`);
   bel.innerHTML = `<span aria-hidden="true">🗺️ ${w.icon || '🌍'} → 🔓</span>`;
   const r = bij.getBoundingClientRect();
   bel.style.left = Math.round(r.left + r.width / 2) + 'px';
@@ -13569,7 +13698,7 @@ function slotBel(bij, w, wereldIdx) {
   document.body.appendChild(bel);
   slotBelTimer = setTimeout(() => bel.remove(), SLOT_BEL_DUUR);
   // in de lees-vrije telmodus zegt de stem het (speak zwijgt daarbuiten zelf)
-  speak(`Speel de ${w.name} uit.`);
+  speak(`Speel eerst de ${w.name} uit.`);
 }
 // Naar de kaart van één wereld, zoals de Werelden-lijst dat doet: reisDoel is één
 // opdracht aan de eerstvolgende kaart (zie src/17-kaartstand.js).
@@ -13990,7 +14119,12 @@ function openNewStar(from) {
     // doorklikt nooit merken dat er iets te kiezen valt -- precies de aanname
     // waar deze versie vanaf wil.
     name: '', base: null, hair: 'hair_blond', dress: 'dress_roze',
-    settings: defaultProfile('', 'dress_roze').settings,
+    /* De modus ook bewust leeg, om dezelfde reden als base. Hier stond Rekenen
+       al aan, en "Hoe speel je?" staat op een telefoon en een liggende tablet
+       onder de Klaar-balk: een ouder kon klaar zijn zonder de vraag gezien te
+       hebben, en een kleuter belandde zo in de sommen. Nu wijst Klaar hem aan
+       (wijsOntbrekende), net als "wie ben je?". */
+    settings: Object.assign(defaultProfile('', 'dress_roze').settings, { track: null }),
     open: false          // de openklapper begint dicht, elke keer opnieuw
   };
   renderNewStar();
@@ -14027,7 +14161,7 @@ function renderNewStar() {
      ook is, je ziet er alleen de omtrek van. */
   const wacht = !n.base;
   const preview = defaultProfile(n.name || '…', n.dress, { hair: n.hair, base: n.base || 'jongen' });
-  const ok = !!n.name.trim() && !!n.base;
+  const ok = nieuweSterKlaar();
   // Elke chip-tik bouwt dit paneel opnieuw op. Met een opengeklapt paneel eronder
   // is dat merkbaar: zonder de scrolstand vast te houden springt het formulier
   // bij élke tik naar boven (n.open doet hetzelfde voor de openklapper zelf).
@@ -14035,7 +14169,7 @@ function renderNewStar() {
   const keep = scr ? scr.scrollTop : 0;
   /* De twee zwaarste keuzes ("wie ben je?" en "hoe speel je?") als twee volle
      helften met het icoon boven het woord: exact het onderdeel dat het ouderdeel
-     voor dezelfde vragen gebruikt (zie modeChip in oefenenPanelHtml). Ze stonden
+     voor dezelfde vragen gebruikt (zie half in oefenenPanelHtml). Ze stonden
      hier als gewone pillen -- dezelfde vraag, twee verschillende bedieningen. */
   const halfChip = (v, ico, label, on) => `<button class="chip gestapeld${on ? ' on' : ''}" data-v="${v}">`
     + `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${label}</span></button>`;
@@ -14068,10 +14202,11 @@ function renderNewStar() {
             ${halfChip('count', '🧸', 'Leren tellen', s.track === 'count')}
             ${halfChip('math', '🧮', 'Rekenen', s.track === 'math')}
           </div>
-          <div class="note">${s.track === 'count'
+          ${s.track ? `<div class="note">${s.track === 'count'
             ? 'Nog niet lezen: tellen met plaatjes.'
-            : 'Met cijfers en sommen.'}</div></div>
-        <details class="set-reveal" id="newstar-oefen"${n.open ? ' open' : ''}>
+            : 'Met cijfers en sommen.'}</div>` : ''}</div>
+        <!-- De oefening hangt van de modus af, dus pas zichtbaar als die gekozen is. -->
+        ${s.track ? `<details class="set-reveal" id="newstar-oefen"${n.open ? ' open' : ''}>
           <summary>
             <span class="sr-ico" aria-hidden="true">⚙️</span>
             <span class="sr-text"><span class="sr-title">Oefening</span>
@@ -14081,7 +14216,7 @@ function renderNewStar() {
             ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${g.html}</div>`).join('')}
             <div class="note" style="margin-top:14px">Later te wijzigen bij 👨‍👩‍👧 Voor ouders.</div>
           </div>
-        </details>
+        </details>` : ''}
       </div>
       <div class="newstar-voet">
         <button class="btn newstar-go" id="newstar-go" aria-disabled="${ok ? 'false' : 'true'}">🌟 Klaar!</button>
@@ -14142,7 +14277,7 @@ function renderNewStar() {
 }
 /* Staat de Klaar-knop op "kan"? Eén bron, gelezen door de knop zelf en door het
    naamveld terwijl er getypt wordt. */
-function nieuweSterKlaar() { return !!(newStar && newStar.name.trim() && newStar.base); }
+function nieuweSterKlaar() { return !!(newStar && newStar.name.trim() && newStar.base && newStar.settings.track); }
 function merkKlaarKnop() {
   const go = $('newstar-go');
   if (go) go.setAttribute('aria-disabled', nieuweSterKlaar() ? 'false' : 'true');
@@ -14162,10 +14297,11 @@ function merkKlaarKnop() {
    is precies wat het formulier onhandelbaar maakte. */
 function wijsOntbrekende() {
   if (!newStar) return;
-  const basisMist = !newStar.base;
-  const doelen = basisMist
-    ? [...($('newstar-base') || { querySelectorAll: () => [] }).querySelectorAll('.chip')]
-    : [$('newstar-name')].filter(Boolean);
+  // van boven naar onder: wie ben je, de naam, en dan hoe je speelt
+  const chips = id => [...($(id) || { querySelectorAll: () => [] }).querySelectorAll('.chip')];
+  const doelen = !newStar.base ? chips('newstar-base')
+    : !newStar.name.trim() ? [$('newstar-name')].filter(Boolean)
+    : chips('newstar-track');
   if (!doelen.length) return;
   sndClick();
   const anker = doelen[0];
@@ -14189,7 +14325,7 @@ function createStar() {
   // pas hier valideren, niet tijdens het typen: een veld dat zichzelf corrigeert
   // terwijl je bezig bent is niet te gebruiken (zie de opmerking bij set-name)
   const name = newStar.name.trim().replace(/\s+/g, ' ').slice(0, 12);
-  if (!name || !newStar.base) return wijsOntbrekende();
+  if (!name || !newStar.base || !newStar.settings.track) return wijsOntbrekende();
   const taken = Object.values(db.profiles).some(p => p.name.toLowerCase() === name.toLowerCase());
   if (taken) {
     showToast('⚠️ Die naam bestaat al');
@@ -14271,7 +14407,7 @@ function closeSettings() {
   save();
   goProfiles();
 }
-/* ← linksboven, en de terugknop van Android (zie backAction): van één ster
+/* ← linksboven, en de terugknop van Android (zie backTarget): van één ster
    terug naar het overzicht, en van het overzicht het ouderdeel uit. */
 function ouderTerug() {
   if (!setKey || !db.profiles[setKey]) return closeSettings();
@@ -14326,7 +14462,7 @@ function statusKaartHtml(p) {
     ({ ico, kop } = STAND_TEKST[u.stand]);
     klas = u.stand;
     zin = `<span class="vg-reeks">${(p.recent || []).map(v => `<i class="r${v}"></i>`).join('')}</span>`
-      + (u.stand === 'pittig' ? ' Het spel maakt het lichter.' : '');
+      + (u.stand === 'pittig' ? ' Het spel maakt het nu wat makkelijker.' : '');
   }
   const shows = playedCount(p);
   const answered = p.stats.correct + p.stats.wrong;
@@ -14568,12 +14704,32 @@ function stemNotitie(naam) {
    (grensTipBasis), net als bij de grens. Geeft { soort: 'mode' | 'grens', naar }. */
 const GRENS_LADDER = [10, 20, 50, 100];
 const GRENS_TIP_SHOWS = 6;
-function grensDrieSterren(p) {
+/* GESPEELDE SHOWS, NIET HALTES. Hier stond: hoeveel haltes vanaf wereld 6 drie
+   sterren hebben. Dat zijn er hoogstens 48 (zes werelden van acht), en een halte
+   die al drie sterren had overdoen telde niet. Dus stond een kind dat overal
+   drie sterren had na één tip stil: de ouder tikte hem aan, grensTipBasis werd
+   48, en er kwam nooit meer een -- ook niet als het daarna maanden dezelfde
+   sommen speelde. Nu telt p.grensDrie elke show met drie sterren vanaf de eerste
+   wereld zonder nieuwe stap, overdoen inbegrepen (zie telGrensDrie), net zoals
+   de telmodus al shows telt (countTrack.plafond).
+
+   Een save van vóór dit veld heeft het nog niet; dan is het beginpunt de oude
+   telling, zodat grensTipBasis (die daarop gezet werd) blijft kloppen. De eerste
+   show die meetelt schrijft het veld weg; tot dan wordt er niets opgeslagen. */
+function grensDrieHaltes(p) {
   const vanaf = LEERSTAPPEN.length - 1;          // de eerste wereld zonder nieuwe stap
   if (vanaf >= WORLD_AVAIL) return 0;
   let drie = 0;
   for (let l = WORLD_START[vanaf]; l <= WORLD_LAST; l++) if ((p.stars || {})[l] >= 3) drie++;
   return drie;
+}
+function grensDrieSterren(p) {
+  return typeof p.grensDrie === 'number' ? p.grensDrie : grensDrieHaltes(p);
+}
+// Na een rekenshow (zie endLevel): drie sterren voorbij de laatste leerstap telt.
+function telGrensDrie(p, lvl, sterren) {
+  if (sterren < 3 || worldFor(lvl).index < LEERSTAPPEN.length - 1) return;
+  p.grensDrie = grensDrieSterren(p) + 1;
 }
 const MODE_LADDER = { kies: 'mix', mix: 'typ' };
 function grensTip(p) {
@@ -14690,7 +14846,7 @@ function oefenGroups(s, pfx, p) {       // -> [{ ico, title, sub, secundair?, ht
 
      Er is geen schakelaar en geen keuzevenster: je tikt op de stap zelf. Rekenen
      heeft alleen "vanaf", dus daar verhuist die lijn. Tellen heeft er twee, en
-     dan verhuist de dichtstbijzijnde (zie zetFase in bindOefenChips). Hiervoor
+     dan verhuist de dichtstbijzijnde (zie de faseladder in bindOefenChips). Hiervoor
      stond de telstart in een openklapper "Begint je kind hoger?" met twaalf
      losse nummers: een tweede lijst van dezelfde fases.
 
@@ -14858,8 +15014,8 @@ function oefenenPanelHtml(p, s) {
      .paper     -- de knoppen die iets vervángen (terugzetten). De bevestiging
                    erachter is ongewijzigd -- dit is de vindbaarheid, niet de
                    beveiliging.
-   Komt er ooit een account of een cloud bij, dan groeit dát uit de back-upkaart
-   -- geen eigen kaart of eigen kopje ernaast. */
+   Wat er sindsdien bij kwam (overzetten naar een ander toestel) groeide uit de
+   back-up, niet ernaast: het staat in hetzelfde blad (openBackupBlad). */
 /* Geluid: één rij, de eerste onder "Voor alle sterren" -- het geldt voor het
    hele toestel, niet voor één kind. Dezelfde rij als in "Show stoppen?" (zie
    renderGeluid); de hele rij is de schakelaar. */
@@ -14869,37 +15025,38 @@ function geluidRijHtml() {
         <span class="gi-ico" aria-hidden="true">${db.sound ? '🔊' : '🔇'}</span><span class="gi-label">Geluid<span class="gi-sub">Muziek en de stem die voorleest</span></span><span class="gi-state${db.sound ? '' : ' off'}" id="set-sound-state">${db.sound ? 'Aan' : 'Uit'}</span>
       </button>`;
 }
-/* Wat voor alle sterren geldt, onderaan het overzicht. Twee kaarten:
+/* Wat voor alle sterren geldt, onderaan het overzicht: één kaart met stille
+   rijen, in deze volgorde:
 
-     * de stille rijen -- Geluid, en "Als app ›" zolang het spel nog in de
-       browser draait. Die tweede opent hetzelfde blad als het knopje op de
-       sterrenkeuze (openAppBlad); hier stond eerst een eigen kaart met de
-       uitleg in zinnen, en het blad zegt het beter, met de stappen erbij.
-     * de back-up -- de enige kaart waar een ouder voor terug moet komen, want
-       er is geen cloud. De ondertitel is de zin die een ouder het meest moet
-       weten: alles staat alleen op dit toestel. Maken en terugzetten staan naast
-       elkaar; wat terugzetten vervangt, zegt de vraag die erna komt. */
+     * Geluid -- de schakelaar.
+     * Back-up › -- de datum van de laatste back-up, grijs. Nooit, of langer dan
+       BACKUP_OUD_DAGEN geleden, dan is die datum amber met een stipje: de
+       herinnering blijft, maar een ouder die hier voor iets anders komt kijkt
+       niet meer tegen een gele balk en twee grote knoppen aan. Een back-up maak
+       je zelden; de knoppen staan in het blad erachter (openBackupBlad).
+     * Als app › -- zolang het spel nog in de browser draait. Die opent hetzelfde
+       blad als het knopje op de sterrenkeuze (openAppBlad). Hij staat als laatste
+       omdat hij verdwijnt zodra het spel geïnstalleerd is: dan schuift er niets.
+
+   Hier stond eerst een eigen back-upkaart met een amber regel en Maken naast
+   Terugzetten. Die vroeg bij elk bezoek even hard om aandacht als de sterren
+   erboven, voor iets wat een ouder een paar keer per jaar doet. */
 function appWideCardsHtml() {
   const alsApp = (beginschermNetErop || speeltAlsApp()) ? '' : `
       <button class="gear-item" id="set-alsapp" type="button">
         <span class="gi-ico" aria-hidden="true">📲</span><span class="gi-label">Als app</span><span class="gi-pijl" aria-hidden="true">›</span>
       </button>`;
   return `
-    <div class="set-card geluid-kaart">${geluidRijHtml()}${alsApp}
+    <div class="set-card geluid-kaart">${geluidRijHtml()}
+      <button class="gear-item" id="set-backup" type="button">
+        <span class="gi-ico" aria-hidden="true">🗄️</span><span class="gi-label">Back-up${backupStandHtml()}</span><span class="gi-pijl" aria-hidden="true">›</span>
+      </button>${alsApp}
     </div>
-    <div class="set-card">
-      <div class="set-card-head"><div class="ico">🗄️</div><div><h2>Back-up</h2><div class="sub">Alles staat alleen op dit toestel</div></div></div>
-      ${backupStandHtml()}
-      <div class="data-btns naast">
-        <button class="btn small purple" id="set-export">💾 Maken</button>
-        <button class="btn small paper" id="set-import">📂 Terugzetten</button>
-      </div>
-      ${importInvoerHtml()}
-    </div>`;
+    ${importInvoerHtml()}`;
 }
 /* Wanneer de laatste back-up was. Amber zolang er nooit een was of de laatste
    langer dan vier weken geleden is -- vier weken spelen is te veel om kwijt te
-   raken; groen daarna. Alleen hier, in het ouderdeel: een kind krijgt hier nooit
+   raken; grijs daarna. Alleen hier, in het ouderdeel: een kind krijgt hier nooit
    een melding over te zien. */
 const BACKUP_OUD_DAGEN = 28;
 function backupDagen(nu) {
@@ -14910,18 +15067,21 @@ function backupOud(nu) {
   const dagen = backupDagen(nu);
   return dagen === null || dagen > BACKUP_OUD_DAGEN;
 }
-function backupStandHtml(nu) {
+function backupWanneer(nu) {
   const dagen = backupDagen(nu);
-  const wanneer = dagen === null ? null
-    : dagen === 0 ? 'vandaag'
-    : dagen === 1 ? 'gisteren'
+  return dagen === null ? 'Nog nooit gemaakt'
+    : dagen === 0 ? 'Vandaag'
+    : dagen === 1 ? 'Gisteren'
     : dagen < 14 ? `${dagen} dagen geleden`
     : dagen < 60 ? `${Math.floor(dagen / 7)} weken geleden`
     : `${Math.floor(dagen / 30)} maanden geleden`;
+}
+// De onderregel van de rij Back-up. Dezelfde id als de oude regel in de kaart, dus
+// exportData werkt hem ter plekke bij.
+function backupStandHtml(nu) {
   const oud = backupOud(nu);
-  const tekst = wanneer ? `Laatste back-up: ${wanneer}` : 'Nog nooit een back-up gemaakt';
-  return `<div class="backup-stand${oud ? ' oud' : ''}" id="set-backup-stand">`
-    + `<span aria-hidden="true">${oud ? '⚠️' : '✓'}</span> ${tekst}</div>`;
+  return `<span class="gi-sub backup-stand${oud ? ' oud' : ''}" id="set-backup-stand">${backupWanneer(nu)}`
+    + (oud ? '<span class="gi-dot" aria-hidden="true"></span>' : '') + '</span>';
 }
 // Het verborgen bestandsveld achter "terugzetten". Eén keer per paneel, en in
 // beide panelen (met en zonder sterren) onder hetzelfde id -- bindSettings bindt
@@ -14995,13 +15155,24 @@ function deelOver() {
    waar begin je? Een ster maken is de tweede mogelijkheid, en die staat hier
    gewoon als knop (de kiezer met zijn "+" is er zonder sterren niet). */
 function beheerEmptyHtml() {
-  return `<div class="settings-panel">
-    <div class="set-card">
-      <div class="set-card-head"><div class="ico">🌟</div><div><h2>Nog geen sterren</h2><div class="sub">Al gespeeld op een ander toestel? Zet de back-up hier terug.</div></div></div>
-      <div class="data-btns">
+  /* Met overzetten erbij (zie = Overzetten) zijn er twee manieren om je sterren
+     terug te krijgen: een code van het andere toestel, of een bestand. Twee
+     tegels naast elkaar, de code eerst -- dat is de snelste. Zonder overzetten
+     (vanaf file://) blijft het de ene volle knop. */
+  const terug = overzetMag()
+    ? `<div class="bb-tegels">
+        <button class="bb-tegel" id="oz-code" type="button">${ozIco('code')}Code invullen</button>
+        <button class="bb-tegel" id="set-import" type="button">${ozIco('terug')}Back-up terugzetten</button>
+      </div>
+      <div class="data-btns"><button class="btn small paper" id="set-newstar">➕ Nieuwe ster maken</button></div>`
+    : `<div class="data-btns">
         <button class="btn small purple" id="set-import">📂 Back-up terugzetten…</button>
         <button class="btn small paper" id="set-newstar">➕ Nieuwe ster maken</button>
-      </div>
+      </div>`;
+  return `<div class="settings-panel">
+    <div class="set-card">
+      <div class="set-card-head"><div class="ico">🌟</div><div><h2>Nog geen sterren</h2><div class="sub">Al gespeeld op een ander toestel?${overzetMag() ? '' : ' Zet de back-up hier terug.'}</div></div></div>
+      ${terug}
       ${importInvoerHtml()}
     </div>${beginschermKaartHtml(false)}${ouderVoetHtml()}
   </div>`;
@@ -15474,6 +15645,8 @@ function bindSettings(p, s) {
   on('stem-aan', 'onclick', () => { if (!db.sound) toggleSound(); renderSettings(); });
   on('set-sound', 'onclick', toggleSound);
   on('set-alsapp', 'onclick', () => openAppBlad(false));
+  on('set-backup', 'onclick', openBackupBlad);
+  on('oz-code', 'onclick', () => openCodeBlad(false));
   // het overzicht: een tik op een ster opent haar pagina
   document.querySelectorAll('#set-sterren .ster-rij[data-key]').forEach(b => {
     b.onclick = () => openSter(b.dataset.key);
@@ -15513,6 +15686,42 @@ function exportData() {
   // de regel bovenaan de kaart meteen bijwerken, zonder het hele paneel te herbouwen
   const stand = $('set-backup-stand');
   if (stand) stand.outerHTML = backupStandHtml();
+  const blad = $('bb-stand');
+  if (blad) blad.outerHTML = backupBladStandHtml();
+}
+
+/* Is dit een save van óns? Hiervoor stond hier "heeft p1 én p2". Die sleutels
+   zijn niet meer heilig: een familie kan één ster hebben, of vijf, of er net
+   eentje verwijderd hebben. Dus kijken we naar de vórm van elk profiel in plaats
+   van naar de namen van de sleutels -- en meteen streng genoeg dat migrate() er
+   verderop niet op stukloopt. Een lege back-up (familie wiste iedereen) mag ook;
+   data.sound is dan het merkteken dat dit een bestand van óns is.
+   Gedeeld door het back-upbestand en overzetten (= Overzetten): één keuring. */
+function backupVormOk(data) {
+  const profs = data && typeof data === 'object' ? data.profiles : null;
+  const okShape = p => !!p && typeof p === 'object' && typeof p.name === 'string'
+    && Array.isArray(p.owned) && !!p.stars && typeof p.stars === 'object'
+    && !!p.equipped && typeof p.equipped === 'object';
+  return !!profs && typeof profs === 'object' && !Array.isArray(profs)
+    && Object.values(profs).every(okShape)
+    && (Object.keys(profs).length > 0 || typeof data.sound === 'boolean');
+}
+/* Een gekeurde save in de plaats van de huidige zetten. false = niets veranderd.
+   Eerst in een lokale kopie bijwerken en pas daarna de echte db vervangen:
+   migrate() kan op een beschadigd profiel gooien, en dat gebeurde hiervoor ná
+   "db = data" -- dan was de app dood terwijl de opslag nog goed was. */
+function backupToepassen(data) {
+  const next = data;
+  if (typeof next.sound !== 'boolean') next.sound = true;
+  if (typeof next.haptics !== 'boolean') next.haptics = true;
+  try { Object.values(next.profiles).forEach(migrate); }
+  catch (e) { return false; }
+  db = next;             // normalizeProfiles leest de globale db
+  normalizeProfiles();
+  cur = null;
+  setKey = null;         // naar het overzicht: daar staan alle teruggezette sterren
+  save();
+  return true;
 }
 
 // Een eerder opgeslagen back-upbestand inlezen en terugzetten. Overschrijft
@@ -15524,20 +15733,7 @@ function importData(file) {
     let data;
     try {
       data = JSON.parse(reader.result);
-      // Hiervoor stond hier "heeft p1 én p2". Die sleutels zijn niet meer heilig:
-      // een familie kan één ster hebben, of vijf, of er net eentje verwijderd
-      // hebben. Dus kijken we naar de vórm van elk profiel in plaats van naar de
-      // namen van de sleutels -- en meteen streng genoeg dat migrate() er verderop
-      // niet op stukloopt. Een lege back-up (familie wiste iedereen) mag ook;
-      // data.sound is dan het merkteken dat dit een bestand van óns is.
-      const profs = data && typeof data === 'object' ? data.profiles : null;
-      const okShape = p => !!p && typeof p === 'object' && typeof p.name === 'string'
-        && Array.isArray(p.owned) && !!p.stars && typeof p.stars === 'object'
-        && !!p.equipped && typeof p.equipped === 'object';
-      const ok = profs && typeof profs === 'object' && !Array.isArray(profs)
-        && Object.values(profs).every(okShape)
-        && (Object.keys(profs).length > 0 || typeof data.sound === 'boolean');
-      if (!ok) throw new Error('ongeldig back-upbestand');
+      if (!backupVormOk(data)) throw new Error('ongeldig back-upbestand');
     } catch (e) {
       showNotice('Oeps!', 'Kon dit bestand niet lezen. Kies een geldig back-upbestand.');
       return;
@@ -15547,19 +15743,7 @@ function importData(file) {
       'Dit vervangt de huidige diamanten, sterren en spulletjes van alle profielen door de inhoud van dit back-upbestand. Dit kan niet ongedaan gemaakt worden.',
       'Ja, terugzetten',
       () => {
-        // Eerst in een lokale kopie bijwerken en pas daarna de echte db vervangen:
-        // migrate() kan op een beschadigd profiel gooien, en dat gebeurde hiervoor
-        // ná "db = data" -- dan was de app dood terwijl de opslag nog goed was.
-        const next = data;
-        if (typeof next.sound !== 'boolean') next.sound = true;
-        if (typeof next.haptics !== 'boolean') next.haptics = true;
-        try { Object.values(next.profiles).forEach(migrate); }
-        catch (e) { showNotice('Oeps!', 'Dit back-upbestand is beschadigd; er is niets veranderd.'); return; }
-        db = next;             // normalizeProfiles leest de globale db
-        normalizeProfiles();
-        cur = null;
-        setKey = null;         // naar het overzicht: daar staan alle teruggezette sterren
-        save();
+        if (!backupToepassen(data)) { showNotice('Oeps!', 'Dit back-upbestand is beschadigd; er is niets veranderd.'); return; }
         renderSettings();
         // gelukt is geen vraag: een melding, geen venster om weg te tikken
         showToast('✓ Back-up geladen');
@@ -15569,6 +15753,289 @@ function importData(file) {
   };
   reader.onerror = () => showNotice('Oeps!', 'Kon dit bestand niet lezen.');
   reader.readAsText(file);
+}
+
+/* ================= Het back-upblad =========================================
+   Achter de rij "Back-up ›" op het overzicht van Voor ouders. Bovenaan wanneer
+   de laatste was, daaronder vier tegels in twee paren:
+     Bestand        Maken · Terugzetten        (exportData / importData)
+     Ander toestel  Overzetten · Code invullen (= Overzetten, hieronder)
+   Het tweede paar staat er alleen als overzetten kan (overzetMag). */
+function backupBladStandHtml() {
+  const oud = backupOud();
+  const w = backupWanneer();
+  const tekst = (backupDagen() === null ? 'Nog nooit een back-up gemaakt' : 'Laatste back-up: ' + w.toLowerCase())
+    + ' · alles staat alleen op dit toestel';
+  return `<div class="bb-stand${oud ? ' oud' : ''}" id="bb-stand">${oud ? '<span class="gi-dot" aria-hidden="true"></span>' : ''}${tekst}</div>`;
+}
+function openBackupBlad() {
+  sndClick();
+  const tegel = (id, ico, t) => `<button class="bb-tegel" id="${id}" type="button">${ico}${t}</button>`;
+  $('confirm-title').innerHTML = '🗄️ Back-up';
+  $('confirm-body').innerHTML = `<div class="bb-blad">${backupBladStandHtml()}
+      <div class="bb-kop">Bestand</div>
+      <div class="bb-tegels">${tegel('bb-maak', ozIco('maak'), 'Maken')}${tegel('bb-terug', ozIco('terug'), 'Terugzetten')}</div>`
+    + (overzetMag() ? `<div class="bb-kop">Ander toestel</div>
+      <div class="bb-tegels">${tegel('bb-zet', ozIco('zet'), 'Overzetten')}${tegel('bb-code', ozIco('code'), 'Code invullen')}</div>` : '')
+    + '</div>';
+  $('confirm-actions').innerHTML = '<button class="btn small paper" id="bb-dicht">Sluiten</button>';
+  $('bb-dicht').onclick = closeConfirmModal;
+  $('bb-maak').onclick = exportData;
+  // het bestandsveld staat in het paneel (importInvoerHtml); de vraag erna gebruikt
+  // dit venster opnieuw, dus eerst dicht
+  $('bb-terug').onclick = () => { closeConfirmModal(); const f = $('set-import-file'); if (f) f.click(); };
+  const z = $('bb-zet'), c = $('bb-code');
+  if (z) z.onclick = openOverzetBlad;
+  if (c) c.onclick = () => openCodeBlad(false);
+  $('confirm-modal').classList.add('open');
+  syncBackGuard();
+}
+
+/* ================= Overzetten ===============================================
+   Je sterren naar een ander toestel, met een code van zes cijfers. Voor de
+   iPhone vooral: de app op het beginscherm krijgt een eigen opslag, los van
+   Safari, en begint dus leeg -- ook als er in Safari al weken gespeeld is. En
+   voor een nieuwe telefoon of tablet.
+
+     toestel A  "Overzetten"     -> de hele save naar de ontvanger, een code terug
+     toestel B  "Code invullen"  -> de save terug, de ontvanger gooit hem weg
+                "Zet op dit toestel" / "Vervangen" -> backupToepassen
+
+   Het is een kopie, geen verhuizing: A houdt zijn sterren. Het is ook dezelfde
+   save als het back-upbestand (JSON.stringify(db)), met dezelfde keuring
+   (backupVormOk) en dezelfde vervanging (backupToepassen) -- er is geen tweede
+   weg om sterren terug te zetten.
+
+   DE ONTVANGER is een Cloudflare Worker (worker/overzetten.js, docs/OVERZETTEN.md):
+   een code leeft een kwartier en werkt één keer, raden wordt per adres geremd,
+   en er blijft niets van over. Er gaat pas iets naar buiten als een ouder hier op
+   een knop tikt; een gewone start doet niets.
+
+   overzetMag: alleen op https (de ontvanger neemt alleen rekensterren.be aan, en
+   vanaf file:// is er geen herkomst). ?debug&overzet zet hem ook vanaf file://
+   aan, zodat de browsertests er met een nagebootste ontvanger doorheen kunnen. */
+// Een functie en geen const: overzetMag wordt al bij het opstarten gelezen
+// (renderProfiles), en dit stuk staat ná de code die dat doet (CLAUDE.md, regel 0).
+function overzetAdres() { return 'https://rekensterren-overzetten.maxheyrman.workers.dev/'; }
+function overzetMag() {
+  if (!overzetAdres()) return false;
+  const q = location.search || '';
+  return location.protocol === 'https:' || (/[?&]debug\b/.test(q) && /[?&]overzet\b/.test(q));
+}
+// Getekende iconen, in de lijn van de tegeltjes in het blad "als app". Ook een
+// functie, om dezelfde reden als overzetAdres.
+function ozIco(naam) {
+  const i = d => `<svg class="oz-i" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+  return i({
+    zet: '<rect x="2" y="5" width="8" height="14" rx="2"/><rect x="14" y="5" width="8" height="14" rx="2"/><path d="M8 12h8M13.5 9.5 16 12l-2.5 2.5"/>',
+    code: '<rect x="3" y="6" width="18" height="12" rx="3"/><path d="M7 12h.01M10.5 12h.01M14 12h.01M17.5 12h.01"/>',
+    maak: '<path d="M12 3v11M7.5 9.5 12 14l4.5-4.5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
+    terug: '<path d="M12 14V3M7.5 7.5 12 3l4.5 4.5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
+  }[naam]);
+}
+const OVERZET_POLL = 3000;   // hoe vaak het toestel met de code vraagt of hij al opgehaald is
+
+// Eén aanroep. Geeft { status, data } of gooit bij geen net. text/plain: dan is
+// er geen preflight nodig (zie de Worker).
+async function ozVraag(pad, body) {
+  const r = await fetch(overzetAdres() + pad, {
+    method: 'POST', headers: { 'Content-Type': 'text/plain' }, body, cache: 'no-store',
+  });
+  let data = null;
+  try { data = await r.json(); } catch (e) { data = null; }
+  return { status: r.status, data };
+}
+function ozFoutTekst(status) {
+  if (status === 0) return navigator.onLine === false ? 'Geen internet' : 'Dat lukte niet. Probeer het nog eens.';
+  if (status === 429) return 'Even te veel geprobeerd. Wacht tien minuten.';
+  if (status === 413) return 'Te veel om over te zetten. Maak een back-upbestand.';
+  return 'Dat lukte niet. Probeer het nog eens.';
+}
+function ozSterren(p) {
+  return Object.values(p.stars || {}).reduce((a, b) => a + (Number(b) || 0), 0);
+}
+function ozKaart(p, soort) {
+  const sterren = soort === 'ok' ? '' : `<small><span aria-hidden="true">⭐</span> ${ozSterren(p)}</small>`;
+  return `<div class="oz-ster${soort ? ' ' + soort : ''}"><span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
+    + `<b>${esc(p.name)}</b>${sterren}${soort === 'ok' ? '<span class="oz-vink" aria-hidden="true">✓</span>' : ''}</div>`;
+}
+// De profielen van een save, in hun eigen volgorde (zoals profileKeys dat doet).
+function ozProfielen(data) {
+  return Object.keys(data.profiles).sort((a, b) => {
+    const pa = data.profiles[a], pb = data.profiles[b];
+    const d = (pa.order == null ? 90 : pa.order) - (pb.order == null ? 90 : pb.order);
+    return d !== 0 ? d : (a < b ? -1 : 1);
+  }).map(k => data.profiles[k]);
+}
+function ozCodeHtml(code, soort, nu) {
+  let h = `<div class="oz-code${soort ? ' ' + soort : ''}" aria-hidden="true">`;
+  for (let i = 0; i < 6; i++) {
+    if (i === 3) h += '<span class="oz-gat"></span>';
+    h += `<span class="oz-c${i === nu ? ' nu' : ''}">${code[i] || ''}</span>`;
+  }
+  return h + '</div>';
+}
+function ozToon(titel, body, acties) {
+  $('confirm-title').innerHTML = titel;
+  $('confirm-body').innerHTML = `<div class="oz-blad" id="oz-blad">${body}</div>`;
+  $('confirm-actions').innerHTML = acties;
+  $('confirm-modal').classList.add('open');
+  syncBackGuard();
+}
+const ozOpen = nr => { const b = $('oz-blad'); return !!b && b.dataset.nr === String(nr) && $('confirm-modal').classList.contains('open'); };
+let ozNr = 0;   // elk blad een eigen nummer: een antwoord voor een gesloten blad doet niets
+
+/* ---- Toestel A: de code tonen ---- */
+function openOverzetBlad() {
+  sndClick();
+  const nr = ++ozNr;
+  const gezichten = profileKeys().map(k => `<span class="oz-mini">${avatarSVG(db.profiles[k], 60)}</span>`).join('');
+  ozToon(ozIco('zet') + ' Naar ander toestel',
+    `<div class="oz-mee">${gezichten}</div>${ozCodeHtml('', 'laden')}<div class="oz-onder" id="oz-onder"></div>`,
+    '<button class="btn small paper" id="oz-dicht">Sluiten</button>');
+  $('oz-blad').dataset.nr = nr;
+  $('oz-dicht').onclick = closeConfirmModal;
+  ozVraag('zet', JSON.stringify(db)).then(
+    r => {
+      if (!ozOpen(nr)) return;
+      if (r.status !== 201 || !r.data || !/^\d{6}$/.test(r.data.code)) { ozZetFout(nr, r.status); return; }
+      ozToonCode(nr, r.data);
+    },
+    () => { if (ozOpen(nr)) ozZetFout(nr, 0); });
+}
+function ozZetFout(nr, status) {
+  $('oz-blad').innerHTML = `<div class="oz-fout">${ozFoutTekst(status)}</div>`;
+  $('confirm-actions').innerHTML = '<button class="btn small paper" id="oz-dicht">Sluiten</button><button class="btn small purple" id="oz-weer">Opnieuw</button>';
+  $('oz-dicht').onclick = closeConfirmModal;
+  $('oz-weer').onclick = openOverzetBlad;
+}
+function ozToonCode(nr, { code, tot, sleutel }) {
+  const duur = 15 * 60 * 1000;
+  const rest = Math.max(0, Math.min(duur, tot - Date.now()));
+  const mee = $('oz-blad').querySelector('.oz-mee');
+  $('oz-blad').innerHTML = (mee ? mee.outerHTML : '')
+    + `<div role="img" aria-label="Code ${code.split('').join(' ')}">${ozCodeHtml(code)}</div>`
+    // de balk loopt leeg in de tijd die nog rest: een animatie van een kwartier die
+    // al (duur - rest) gevorderd is
+    + `<div class="oz-tijd"><i style="animation-duration:${duur}ms;animation-delay:-${duur - rest}ms"></i></div>`
+    + `<div class="oz-waar">Daar: <span class="ab-kbd">${ozIco('code')} Code invullen</span></div>`
+    + '<div class="oz-wacht" aria-hidden="true"><i></i><i></i><i></i></div>';
+  $('oz-blad').classList.add('met-code');
+  const vraag = () => {
+    if (!ozOpen(nr)) return;
+    if (document.hidden) { setTimeout(vraag, OVERZET_POLL); return; }
+    ozVraag('stand', JSON.stringify({ code, sleutel })).then(r => {
+      if (!ozOpen(nr)) return;
+      if (r.data && r.data.opgehaald) { ozOvergezet(); return; }
+      if (r.data && r.data.verlopen) { ozVerlopen(); return; }
+      setTimeout(vraag, OVERZET_POLL);
+    }, () => setTimeout(vraag, OVERZET_POLL));
+  };
+  setTimeout(vraag, OVERZET_POLL);
+}
+function ozOvergezet() {
+  $('confirm-title').innerHTML = ozIco('zet') + ' Overgezet';
+  $('oz-blad').classList.remove('met-code');
+  $('oz-blad').innerHTML = `<div class="oz-sterren">${profileKeys().map(k => ozKaart(db.profiles[k], 'ok')).join('')}</div>`;
+  $('confirm-actions').innerHTML = '<button class="btn small purple" id="oz-dicht">Klaar</button>';
+  $('oz-dicht').onclick = closeConfirmModal;
+  sndClick();
+}
+function ozVerlopen() {
+  $('oz-blad').classList.remove('met-code');
+  $('oz-blad').innerHTML = '<div class="oz-fout">Deze code is verlopen.</div>';
+  $('confirm-actions').innerHTML = '<button class="btn small paper" id="oz-dicht">Sluiten</button><button class="btn small purple" id="oz-weer">Nieuwe code</button>';
+  $('oz-dicht').onclick = closeConfirmModal;
+  $('oz-weer').onclick = openOverzetBlad;
+}
+
+/* ---- Toestel B: de code invullen ----
+   Zes vakjes, met één echt invoerveld er onzichtbaar overheen: dan krijgt een
+   telefoon het grote cijferklavier (inputmode numeric) en kan iOS een code uit
+   een bericht voorstellen (one-time-code). Bij het zesde cijfer gaat hij meteen
+   weg -- geen "Ophalen"-knop. Klopt hij niet, dan worden de vakjes rood en
+   begint het volgende cijfer opnieuw. vanStart: geopend vanaf het lege
+   beginscherm (dan daarheen terug, met confetti), anders vanuit Voor ouders. */
+function openCodeBlad(vanStart) {
+  sndClick();
+  const nr = ++ozNr;
+  ozToon(ozIco('code') + ' Code invullen',
+    `<div class="oz-invoer">${ozCodeHtml('', '', 0)}
+       <input id="oz-veld" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" aria-label="Code van zes cijfers"></div>
+     <div class="oz-onder" id="oz-onder"><div class="oz-waar">Andere toestel: <span class="ab-kbd">⚙️ › Back-up › Overzetten</span></div></div>`,
+    '<button class="btn small paper" id="oz-dicht">Annuleer</button>');
+  $('oz-blad').dataset.nr = nr;
+  $('oz-dicht').onclick = closeConfirmModal;
+  const veld = $('oz-veld');
+  let fout = '', bezig = false;
+  const teken = () => {
+    const v = veld.value;
+    const soort = fout ? 'fout' : bezig ? 'laden' : '';
+    $('oz-blad').querySelector('.oz-code').outerHTML = ozCodeHtml(fout || v, soort, fout || bezig ? -1 : Math.min(v.length, 5));
+  };
+  veld.oninput = () => {
+    if (bezig) return;
+    const v = veld.value.replace(/\D/g, '').slice(0, 6);
+    veld.value = v;
+    if (fout) { fout = ''; $('oz-onder').innerHTML = ''; }
+    teken();
+    if (v.length < 6) return;
+    bezig = true;
+    teken();
+    ozVraag('haal', JSON.stringify({ code: v })).then(
+      r => {
+        if (!ozOpen(nr)) return;
+        bezig = false;
+        let data = r.data && r.data.save;
+        if (r.status === 200 && backupVormOk(data)) { veld.blur(); ozGevonden(data, vanStart); return; }
+        fout = v;
+        veld.value = '';
+        $('oz-onder').innerHTML = `<div class="oz-fout">${r.status === 404 || r.status === 400 ? 'Klopt niet of is verlopen' : r.status === 200 ? 'Deze sterren konden niet gelezen worden' : ozFoutTekst(r.status)}</div>`;
+        teken();
+      },
+      () => {
+        if (!ozOpen(nr)) return;
+        bezig = false; fout = v; veld.value = '';
+        $('oz-onder').innerHTML = `<div class="oz-fout">${ozFoutTekst(0)}</div>`;
+        teken();
+      });
+  };
+  // in dezelfde tik als de knop: alleen dan opent een telefoon het klavier
+  veld.focus();
+}
+
+/* Wat er in de save zit, vóór er iets verandert. De pop van elke ster met haar
+   sterren; staan er op dit toestel al sterren, dan staan die er grijs onder,
+   met de zin dat ze verdwijnen -- en heet de knop "Vervangen". Pas die knop zet
+   de save in de plaats (backupToepassen); Annuleer laat alles staan. */
+function ozGevonden(data, vanStart) {
+  let kopie;
+  try {
+    kopie = JSON.parse(JSON.stringify(data));
+    Object.values(kopie.profiles).forEach(migrate);   // de kaartjes tekenen een gemigreerde kopie
+  } catch (e) {
+    $('oz-onder').innerHTML = '<div class="oz-fout">Deze sterren konden niet gelezen worden</div>';
+    return;
+  }
+  const nieuw = ozProfielen(kopie);
+  const hier = profileKeys().map(k => db.profiles[k]);
+  $('confirm-title').innerHTML = '<span aria-hidden="true">⭐</span> Sterren gevonden';
+  $('oz-blad').innerHTML = `<div class="oz-sterren">${nieuw.map(p => ozKaart(p)).join('')}</div>`
+    + (nieuw.length ? '' : '<div class="oz-waar">Er staan geen sterren in.</div>')
+    + (hier.length ? `<div class="oz-vervang"><div class="oz-sterren">${hier.map(p => ozKaart(p, 'weg')).join('')}</div>`
+      + '<span>Staat nu op dit toestel en verdwijnt</span></div>' : '');
+  $('confirm-actions').innerHTML = '<button class="btn small paper" id="oz-dicht">Annuleer</button>'
+    + `<button class="btn small purple" id="oz-ja">${hier.length ? 'Vervangen' : 'Zet op dit toestel'}</button>`;
+  $('oz-dicht').onclick = closeConfirmModal;
+  $('oz-ja').onclick = () => {
+    closeConfirmModal();
+    if (!backupToepassen(data)) { showNotice('Oeps!', 'Deze sterren zijn beschadigd; er is niets veranderd.'); return; }
+    if ($('screen-settings').classList.contains('active')) renderSettings();
+    renderProfiles();
+    showToast('✓ Sterren overgezet');
+    toastWeg(2400);
+    if (vanStart) confetti(50);
+  };
 }
 
 /* ================= Op het beginscherm =======================================
@@ -15700,7 +16167,11 @@ addEventListener('appinstalled', () => {
 
    WANNEER. Alleen op de sterrenkeuze, alleen in de browser (speeltAlsApp), en
    pas vanaf het tweede bezoek: wie het spel voor het eerst opent, moet eerst
-   kunnen spelen. "Niet nu" laat het twee weken met rust; na drie keer "Niet nu"
+   kunnen spelen. Behalve op een iPhone of iPad zolang er nog geen ster is: daar
+   krijgt de app op het beginscherm een eigen, lege opslag, dus wat er in Safari
+   gespeeld is gaat niet mee (zie het blad). Vóór de eerste ster is installeren
+   gratis; erna kost het een back-up. Op Android en de computer gaan de sterren
+   gewoon mee, dus daar blijft het bij het tweede bezoek. "Niet nu" laat het twee weken met rust; na drie keer "Niet nu"
    komt het knopje niet meer terug. De kaart in Beheer blijft wél -- het knopje
    gaat weg, de weg niet.
 
@@ -15749,7 +16220,8 @@ function appKnopTonen(nu) {
   const zoek = location.search || '';
   if (zoek.indexOf('debug') !== -1 && zoek.indexOf('appknop') === -1) return false;
   const s = appKnopLees();
-  if ((s.bezoek | 0) < APPKNOP.vanafBezoek) return false;
+  const iosLeeg = /^ios/.test(beginschermSoort()) && profileKeys().length === 0;
+  if ((s.bezoek | 0) < APPKNOP.vanafBezoek && !iosLeeg) return false;
   if ((s.nee | 0) >= APPKNOP.maxNee) return false;
   return !(s.rustTot > (nu || Date.now()));
 }
@@ -15815,8 +16287,14 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
         + stap(2, `Kies ${erbij}`);
     }
     html += stap(3, `Tik op ${kbd('Voeg toe')}`);
-    if (hasStars) html += '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ Voor ouders, en zet hem daar in de app terug.</div>';
-    return { html, installeer: false };
+    /* De app op het beginscherm krijgt een eigen opslag, los van Safari: hij begint
+       leeg. Met overzetten (= Overzetten) neem je je sterren mee met een code --
+       de knop staat onderaan dit blad; anders blijft het de weg via een bestand. */
+    const meenemen = hasStars && overzetMag();
+    if (hasStars) html += meenemen
+      ? '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Neem je sterren mee met een code.</div>'
+      : '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ › Back-up, en zet hem in de app terug.</div>';
+    return { html, installeer: false, meenemen };
   }
   if (soort === 'android' && kanInstalleren) {
     html += '<div class="ab-noot">Je sterren blijven gewoon staan.</div>';
@@ -15830,13 +16308,16 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
 function openAppBlad(vanKnop) {
   sndClick();
   const hasStars = profileKeys().length > 0;   // zoals in Beheer: wie een ster heeft, heeft iets te redden
-  const { html, installeer } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel, isSafari26());
+  const { html, installeer, meenemen } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel, isSafari26());
   $('confirm-title').innerHTML = ico('erbij') + ' Rekensterren als app';
   $('confirm-body').innerHTML = `<div id="app-blad">${html}</div>`;
   $('confirm-actions').innerHTML =
     `<button class="btn small paper" id="app-blad-dicht">${vanKnop ? 'Niet nu' : 'Sluiten'}</button>`
-    + (installeer ? '<button class="btn small purple" id="app-blad-installeer">Installeren</button>' : '');
+    + (installeer ? '<button class="btn small purple" id="app-blad-installeer">Installeren</button>' : '')
+    + (meenemen ? `<button class="btn small purple" id="app-blad-mee">${ozIco('zet')} Sterren meenemen</button>` : '');
   $('app-blad-dicht').onclick = vanKnop ? appKnopNietNu : closeConfirmModal;
+  const mee = $('app-blad-mee');
+  if (mee) mee.onclick = openOverzetBlad;
   const ik = $('app-blad-installeer');
   if (ik) ik.onclick = () => {
     const e = installVoorstel;
@@ -15911,7 +16392,7 @@ function backTarget() {
 function toonStopKaart() {
   $('confirm-title').textContent = '👋 Stoppen?';
   $('confirm-body').textContent = 'Druk nog eens op terug om te stoppen.';
-  $('confirm-actions').innerHTML = `<button class="btn" id="stop-blijf">Blijven spelen</button>`;
+  $('confirm-actions').innerHTML = `<button class="btn" id="stop-blijf">Doorspelen</button>`;
   $('stop-blijf').onclick = () => { sndClick(); closeConfirmModal(); };
   $('confirm-modal').classList.add('open');
   syncBackGuard();

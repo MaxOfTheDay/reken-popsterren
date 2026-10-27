@@ -56,7 +56,9 @@ function check(ok, label, detail) {
     await page.click(`#newstar-base .chip[data-v="${base || 'meisje'}"]`);
     if (hair)  await page.click(`#newstar-hair  .chip[data-v="${hair}"]`);
     if (dress) await page.click(`#newstar-dress .chip[data-v="${dress}"]`);
-    if (track) await page.click(`#newstar-track .chip[data-v="${track}"]`);
+    // "Hoe speel je?" heeft ook geen voorkeuze meer (zie openNewStar): zonder
+    // modus geen ster, dus de helper kiest standaard de rekenshow.
+    await page.click(`#newstar-track .chip[data-v="${track || 'math'}"]`);
     if (settings) {
       await page.click('#newstar-oefen summary');
       await page.waitForTimeout(120);
@@ -157,7 +159,8 @@ function check(ok, label, detail) {
    * af, dan is dat dezelfde tik als op Klaar.
    *
    * Wat hier óók vastligt: Enter verzint geen ster als er nog iets ontbreekt.
-   * "Wie ben je?" heeft geen voorkeuze, en dat blijft een echte vraag.            */
+   * "Wie ben je?" en "Hoe speel je?" hebben geen voorkeuze, en dat blijven echte
+   * vragen.                                                                       */
   {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
@@ -173,6 +176,7 @@ function check(ok, label, detail) {
     check(r.n === 0 && r.opScherm, 'Enter maakt geen ster zonder alle antwoorden', JSON.stringify(r));
     check(r.focus !== 'newstar-name', 'Enter laat het naamveld wel los (toetsenbord weg)', String(r.focus));
     await page.click('#newstar-base .chip[data-v="meisje"]');
+    await page.click('#newstar-track .chip[data-v="math"]');
     await page.fill('#newstar-name', 'Fien');
     await page.press('#newstar-name', 'Enter');
     await page.waitForTimeout(400);
@@ -316,6 +320,7 @@ function check(ok, label, detail) {
     await page.click('#btn-newstar');
     await page.waitForTimeout(150);
     await page.click('#newstar-base .chip[data-v="meisje"]');
+    await page.click('#newstar-track .chip[data-v="math"]');
     await page.fill('#newstar-name', 'emma');
     await page.click('#newstar-go');
     await page.waitForTimeout(200);
@@ -459,7 +464,7 @@ function check(ok, label, detail) {
     check(duw === 0, 'na de eerste wachtpost komt er geen pushState meer bij (Chrome zou de app dan overslaan)', 'pushState ' + duw + 'x');
     /* De bodem: op de sterrenkeuze vraagt terug eerst of je wil stoppen. Het
        kaartje zet géén wachtpost terug, zodat de volgende druk de app verlaat;
-       "Blijven spelen" zet hem wél terug (hergebruikt, weer zonder pushState). */
+       "Doorspelen" zet hem wél terug (hergebruikt, weer zonder pushState). */
     await page.click('.ster-tegel'); await page.waitForTimeout(600);
     await page.goBack(); await page.waitForTimeout(500);
     await page.goBack(); await page.waitForTimeout(500);
@@ -471,7 +476,7 @@ function check(ok, label, detail) {
     await page.click('#stop-blijf'); await page.waitForTimeout(500);
     k = await page.evaluate(() => ({ kaart: document.getElementById('confirm-modal').classList.contains('open'),
       wacht: !!(history.state && history.state.rpGuard), duw: window.__duw }));
-    check(!k.kaart && k.wacht && k.duw === 0, 'Blijven spelen sluit het kaartje en zet de wachtpost terug, zonder pushState', JSON.stringify(k));
+    check(!k.kaart && k.wacht && k.duw === 0, 'Doorspelen sluit het kaartje en zet de wachtpost terug, zonder pushState', JSON.stringify(k));
     await page.keyboard.press('Escape'); await page.waitForTimeout(300);
     check(!(await page.evaluate(() => document.getElementById('confirm-modal').classList.contains('open'))),
       'Escape op de sterrenkeuze toont geen stopkaartje (dat praat over de terugknop)', '');
@@ -510,7 +515,7 @@ function check(ok, label, detail) {
     await page.tap('#stop-blijf'); await page.waitForTimeout(400);
     k = await page.evaluate(() => ({ kaart: document.getElementById('confirm-modal').classList.contains('open'),
       wacht: !!(history.state && history.state.rpGuard) }));
-    check(!k.kaart && k.wacht, 'na Blijven spelen neemt de gewone wachtpost het over', JSON.stringify(k));
+    check(!k.kaart && k.wacht, 'na Doorspelen neemt de gewone wachtpost het over', JSON.stringify(k));
     /* Op een aanraakscherm vangt de terugwachter élke terug, niet alleen de
        eerste: dan beweegt de history niet, en speelt Chrome geen veeg-animatie
        met een oude schermafdruk (het flitsen na een paar keer terug). Escape is
@@ -1863,7 +1868,7 @@ function check(ok, label, detail) {
         p.wens = ITEMS.filter(i => typeof i.price === 'number' && !p.owned.includes(i.id) && i.price > p.diamonds)[0].id;
         zetWensPil(p);
         const b = document.querySelector(sel);
-        return { knop: b.tagName, wens: b.classList.contains('met-wens') && !!b.querySelector('.wens-mini').textContent };
+        return { knop: b.tagName, wens: b.classList.contains('met-wens') && !!b.querySelector('.wens-mini').innerHTML };
       }, sel);
       check(pil.knop === 'BUTTON' && pil.wens, 'de 💎-pil is een knop met de wens — ' + naam, JSON.stringify(pil));
       await page.tap(sel);
@@ -1872,6 +1877,57 @@ function check(ok, label, detail) {
       check(nu === 'screen-dress', 'een tik op de 💎-pil gaat naar de kleedkamer — ' + naam, nu);
       await page.evaluate(() => { delete P().wens; });
     }
+
+    /* Genoeg gespaard: de pil wordt goud (en blijft een knop), de kleedkamer-pil
+       draagt de wens ook en brengt je naar dat kaartje, en in de lade blijft het
+       hartje naast Koop staan -- anders kon je een wens die je al kunt kopen niet
+       meer terugnemen. */
+    const goud = await page.evaluate(() => {
+      const p = P();
+      const it = ITEMS.find(i => typeof i.price === 'number' && i.price > 0 && i.cat !== 'stage' && !p.owned.includes(i.id));
+      p.wens = it.id; p.diamonds = it.price;
+      openTrophies(); zetWensPil(p);
+      const kast = document.querySelector('#screen-trophies .diamond-badge.header-right');
+      const kastGoud = kast.classList.contains('wens-klaar') && getComputedStyle(kast).backgroundColor !== 'rgba(0, 0, 0, 0.32)';
+      openKleedkamer();
+      const kleed = $('shop-diamonds').closest('.diamond-badge');
+      const kleedKnop = kleed.getAttribute('role') === 'button' && kleed.classList.contains('wens-klaar');
+      kleed.click();
+      const lade = { hart: !!document.querySelector('#dress-bar #db-wens.aan'), koop: !!document.querySelector('#dress-bar #db-buy'),
+        gekozen: shopSelectedId === it.id };
+      document.querySelector('#dress-bar #db-wens').click();
+      const terug = { wens: P().wens, hart: !!document.querySelector('#dress-bar #db-wens'), pil: kleed.getAttribute('role') };
+      return { kastGoud, kleedKnop, lade, terug };
+    });
+    check(goud.kastGoud, 'genoeg voor je wens: de 💎-pil wordt goud', JSON.stringify(goud));
+    check(goud.kleedKnop && goud.lade.gekozen, 'de kleedkamer-pil draagt de wens en brengt je naar het kaartje', JSON.stringify(goud));
+    check(goud.lade.hart && goud.lade.koop, 'een wens die je kunt kopen: het hartje blijft naast Koop', JSON.stringify(goud.lade));
+    check(goud.terug.wens === undefined && !goud.terug.hart && goud.terug.pil === null,
+      'en een tik op dat hartje neemt de wens terug', JSON.stringify(goud.terug));
+
+    // het eindscherm draagt de wens in het 💎-vakje; is er genoeg, dan gaat de tweede knop erheen
+    await page.evaluate(() => {
+      const p = P();
+      const it = ITEMS.find(i => typeof i.price === 'number' && i.price > 0 && i.cat !== 'stage' && !p.owned.includes(i.id));
+      p.wens = it.id; p.diamonds = it.price;
+      window.__wens = it.id;
+      startLevel(Math.min(p.level, WORLD_LAST));
+    });
+    await page.waitForTimeout(800);
+    const eind = await page.evaluate(() => {
+      G.stars = 3; endLevel(true);
+      const knop = $('btn-end-alt');
+      const r = { vakje: !!document.querySelector('#end-earn .earn-chip.met-wens .wens-mini'),
+        knop: knop.classList.contains('wens-klaar'), tekst: knop.textContent.trim() };
+      knop.click();
+      return r;
+    });
+    await page.waitForTimeout(900);
+    const naWens = await page.evaluate(() => ({ scherm: document.querySelector('.screen.active').id, gekozen: shopSelectedId === window.__wens }));
+    check(eind.vakje, 'het 💎-vakje op het eindscherm draagt de wens', JSON.stringify(eind));
+    check(eind.knop && /Kleedkamer/.test(eind.tekst) && naWens.scherm === 'screen-dress' && naWens.gekozen,
+      'genoeg gespaard: de Kleedkamer-knop gaat meteen naar je wens', JSON.stringify([eind, naWens]));
+    await page.evaluate(() => { delete P().wens; });
 
     // memory: ✕, en het venster pas als er een kaartje om is
     await page.goto(APP_URL + '&demo&star=p2&screen=map');
@@ -2458,10 +2514,18 @@ function check(ok, label, detail) {
      met een regel die zegt wát er nu ingesteld staat. Dat mag de snelle weg
      (openklapper niet aanraken) op geen enkele manier veranderen. */
 
-  // 10a · dicht bij het openen, en de samenvatting zegt iets
+  // 10a · zonder modus geen openklapper; met modus dicht, en de samenvatting zegt iets
   {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
+    await page.waitForTimeout(150);
+    const leeg = await page.evaluate(() => ({
+      gekozen: document.querySelectorAll('#newstar-track .chip.on').length,
+      klapper: !!document.getElementById('newstar-oefen'),
+    }));
+    check(leeg.gekozen === 0, 'geen enkele modus staat voorgekozen', JSON.stringify(leeg));
+    check(!leeg.klapper, 'zonder modus staat er nog geen oefening-openklapper', JSON.stringify(leeg));
+    await page.click('#newstar-track .chip[data-v="math"]');
     await page.waitForTimeout(150);
     const r = await page.evaluate(() => ({
       open: document.getElementById('newstar-oefen').hasAttribute('open'),
@@ -2507,6 +2571,8 @@ function check(ok, label, detail) {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
     await page.waitForTimeout(150);
+    await page.click('#newstar-track .chip[data-v="math"]');
+    await page.waitForTimeout(150);
     await page.click('#newstar-oefen summary');
     await page.waitForTimeout(120);
     await page.click('#ns-set-max .chip[data-v="100"]');
@@ -2524,6 +2590,9 @@ function check(ok, label, detail) {
   {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
+    await page.waitForTimeout(150);
+    // eerst de rekenshow (dan pas is er een openklapper), dan naar de telmodus
+    await page.click('#newstar-track .chip[data-v="math"]');
     await page.waitForTimeout(150);
     await page.click('#newstar-oefen summary');
     await page.waitForTimeout(120);
@@ -2558,6 +2627,8 @@ function check(ok, label, detail) {
       await new Promise(r => setTimeout(r, 150));
       openNewStar('settings');
       await new Promise(r => setTimeout(r, 150));
+      document.querySelector('#newstar-track .chip[data-v="math"]').click();
+      await new Promise(r => setTimeout(r, 150));
       document.querySelector('#newstar-oefen summary').click();
       await new Promise(r => setTimeout(r, 150));
       document.querySelector('#ns-set-max .chip[data-v="100"]').click();
@@ -2573,6 +2644,8 @@ function check(ok, label, detail) {
   {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
+    await page.waitForTimeout(150);
+    await page.click('#newstar-track .chip[data-v="math"]');
     await page.waitForTimeout(150);
     await page.click('#newstar-oefen summary');
     await page.waitForTimeout(120);
@@ -2652,6 +2725,22 @@ function check(ok, label, detail) {
     check(om.n === 0 && om.naamWijst && om.basisWijst === 0,
       'zonder naam wijst hij het naamveld aan', JSON.stringify(om));
     check(!om.melding, 'ook hier zonder melding', om.melding);
+    // basis en naam gekozen, maar nog geen modus: dan wijst hij "Hoe speel je?" aan
+    await page.fill('#newstar-name', 'Zonder');
+    const modus = await page.evaluate(async () => {
+      // de ring van de vorige tik staat nog 2,4 s: eerst weg, dan pas meten
+      document.querySelectorAll('.vraagt').forEach(el => el.classList.remove('vraagt'));
+      document.getElementById('newstar-go').click();
+      await new Promise(r => setTimeout(r, 120));
+      return {
+        n: Object.keys(db.profiles).length,
+        aria: document.getElementById('newstar-go').getAttribute('aria-disabled'),
+        modusWijst: document.querySelectorAll('#newstar-track .chip.vraagt').length,
+        naamWijst: document.getElementById('newstar-name').classList.contains('vraagt'),
+      };
+    });
+    check(modus.n === 0 && modus.aria === 'true' && modus.modusWijst === 2 && !modus.naamWijst,
+      'zonder modus wijst hij "Hoe speel je?" aan', JSON.stringify(modus));
     await ctx.close();
   }
 

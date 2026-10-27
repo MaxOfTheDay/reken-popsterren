@@ -141,16 +141,16 @@
   /* En de pil zelf mag nu ook krimpen: min-width:0 zet de standaard grid-bodem
      (nooit kleiner dan de eigen inhoud) opzij. Wat er dan wijkt is niet de knop
      als geheel -- dat zou weer tegen de buren aan lopen -- maar alleen de
-     wereldnaam, met een stille ellips (.wp-here-naam hieronder). Dat gebeurt in
+     wereldnaam, met een stille ellips. Dat gebeurde in
      de praktijk hooguit op de kleinste telefoons met de langste namen; overal
-     elders past alles gewoon voluit.
+     elders paste alles gewoon voluit.
 
      MAX-WIDTH IS WAT HET WERK DOET, niet min-width. Een grid-item met
      justify-self: center krijgt de breedte van zijn eigen inhoud, en die
      inhoud (naam op één regel) is breder dan de kolom: de pil liep dan aan
      twee kanten over zijn buren heen en de ellips kwam nooit. Onderwaterwereld
      schoof zo op een gewone iPhone met de globe onder de 💎-pil. max-width: 100%
-     klemt hem op zijn kolom, en dán krimpt .wp-here-naam zoals bedoeld.
+     klemt hem op zijn kolom, en dán krimpte de naam zoals bedoeld.
      test/kop.test.js zaak A meet het na. */
   #screen-map .world-pick { min-width: 0; max-width: 100%; }
   /* Sinds oktober 2026 staat er alleen de globe in de pil (zie renderMapTitle):
@@ -517,7 +517,7 @@
   .screen.hub { padding-bottom: calc(var(--balk-ruimte) + 14px); }
 
   /* ---- Spel ----
-     Zelfde donkerpaarse .hub-sticky-kop als Kaart/Kleedkamer/Trofeeënkast: ✕ stoppen ·
+     Zelfde donkerpaarse .hub-sticky als Kaart/Kleedkamer/Trofeeënkast: ✕ stoppen ·
      wereld · 💎 op de eerste regel, hartjes + vraag-voortgang samen gecentreerd op de tweede.
      #screen-game heeft (anders dan de andere hub-schermen) overal gelijke 8px padding.
      Dat stond hier vroeger nog een keer als een eigen kop-regel met -8px/16px/10px erin

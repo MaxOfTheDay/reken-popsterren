@@ -122,6 +122,7 @@ zaak('C · de eerste keuze', () => {
 /* ---- D · De volgorde in het rek. Twee groepen, en die volgorde is het antwoord
    op "wat heb ik, en wat kan ik kiezen?". Binnen een groep loopt de prijs op. --- */
 zaak('D · de volgorde', () => {
+  // dress_oranje is het goedkoopste koopje: de vijf startkleuren zijn van haar
   const { app, p } = verseSter();
   p.owned.push('dress_disco');   // duur, maar van haar: hoort dus bóven de koopjes
   const lijst = rek(app, 'dress');
@@ -129,7 +130,7 @@ zaak('D · de volgorde', () => {
   const groepen = lijst.map(groep);
   check(groepen.join() === groepen.slice().sort().join(),
     'D · eerst van jou, dan te koop', JSON.stringify(lijst));
-  check(lijst.indexOf('dress_disco') < lijst.indexOf('dress_geel'),
+  check(lijst.indexOf('dress_disco') < lijst.indexOf('dress_oranje'),
     'D · een duur stuk dat al van je is staat bóven een goedkoop koopje', JSON.stringify(lijst));
   const koop = lijst.filter(id => groep(id) === 1).map(id => app.item(id).price);
   check(koop.join() === koop.slice().sort((a, b) => a - b).join(),
@@ -154,7 +155,7 @@ zaak('E · net gekocht', () => {
   const erna = rek(app, 'dress');
   check(tijdens.join() === voor.join(),
     'E · tijdens het feestje staat alles nog waar het stond', JSON.stringify([voor, tijdens]));
-  check(erna.indexOf('dress_rood') < erna.indexOf('dress_geel'),
+  check(erna.indexOf('dress_rood') < erna.indexOf('dress_oranje'),
     'E · en daarna staat het bij haar eigen spullen', JSON.stringify(erna));
 });
 
@@ -282,8 +283,9 @@ zaak('I · mijn wens', () => {
   check(app.run('wensItem(P())') === null, 'I · een verse ster heeft geen wens', '');
   app.run(`P().wens = 'pet_draak'`);
   check(app.run('wensItem(P()) && wensItem(P()).id') === 'pet_draak', 'I · een wens is het spulletje zelf', '');
-  check(app.run(`wensTeken(item('pet_draak'))`) === '🐉' && app.run(`wensTeken(item('dress_geel'))`) === '👕',
-    'I · de pil toont het emoji, of anders het teken van de lade', '');
+  const kleed = app.run(`wensTekenHTML(item('dress_geel'))`);
+  check(app.run(`wensTekenHTML(item('pet_draak'))`) === '🐉' && /wens-tek/.test(kleed) && /<svg/.test(kleed),
+    'I · de pil toont het emoji, of anders de tekening van het spulletje zelf', kleed.slice(0, 80));
   // al van jou: dan is het geen wens meer, ook zonder dat er iets opgeruimd is
   p.owned.push('pet_draak');
   check(app.run('wensItem(P())') === null, 'I · wat al van jou is, is geen wens', '');

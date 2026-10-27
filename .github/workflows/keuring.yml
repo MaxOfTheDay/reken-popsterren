@@ -6,6 +6,7 @@
 #
 #   keuring   npm run check: de vier Node-suites (± 2 s) plus de vraag of
 #             index.html gelijkloopt met src/ (zaak H) -- geen npm install nodig
+#             plus de ontvanger van Overzetten (worker/overzetten.js, kaal Node)
 #             en bij een PR: is er een bestaande tekening vervangen zonder dat
 #             ART_CACHE in sw.js omhoog ging (test/tekeningen.js)
 #   sterren   de kortste browsersuite die het beginscherm echt opbouwt. Die ziet
@@ -30,6 +31,7 @@ jobs:
           node-version: 22
       - run: npm run check
       - run: npm run test:hub
+      - run: npm run test:overzetten
       - if: github.event_name == 'pull_request'
         run: node test/tekeningen.js origin/${{ github.base_ref }}
 

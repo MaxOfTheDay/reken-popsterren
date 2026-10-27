@@ -99,6 +99,7 @@ check` zegt het als de twee uit elkaar zijn gelopen.
 | een wereld, spulletje of trofee wilt toevoegen | `docs/UITBREIDEN.md` |
 | tests wilt draaien of begrijpen | `docs/TESTEN.md` |
 | aan het laden, de cache of het bijwerken komt | `docs/LADEN.md` |
+| wilt weten welke fouten kinderen tegenkomen | `docs/FOUTEN.md` |
 | een wereldtekening laat maken | `docs/WORLD-ART-BRIEF.md` |
 | aan de prijzen of de economie komt | `docs/DIAMANTEN.md` |
 | wilt weten waarom de voortgang zo werkt | `docs/PROGRESSION-REVIEW.md` |

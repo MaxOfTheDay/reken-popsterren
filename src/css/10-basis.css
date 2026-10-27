@@ -223,7 +223,6 @@
     margin: 10px 0 4px;
     text-align: center;
   }
-  .subtitle { opacity: .92; margin-bottom: 18px; text-align: center; font-size: var(--tx-body); font-weight: 500; }
 
   .btn {
     font-family: inherit; font-size: var(--tx-sub); font-weight: 600; color: var(--purple-shadow);
@@ -352,11 +351,17 @@
     color: #fff7dc; text-shadow: 0 0 7px rgba(var(--warm-licht-rgb), .9);
   }
   /* Kort en klein: opkomen, even staan, weer weg. Alleen doorzichtigheid en een
-     minieme draai-en-schaal, dus het kost niets en het verschuift niets. */
+     minieme draai-en-schaal, dus het kost niets en het verschuift niets.
+     Hoe helder hij op zijn hoogtepunt wordt zet de JS in --piek, en niet in
+     style.opacity. Dat stond er eerst, en een inline opacity doet tijdens de
+     animatie niets (de keyframes winnen) maar blijft ná de animatie wél staan:
+     elk vonkje dimde uit en floepte dan op volle maat weer aan, en bleef daar
+     hangen tot het de volgende keer ergens anders opdook. Drie stilstaande
+     sterretjes die om de paar tellen verspringen -- dát was de flikkering. */
   .vonk-laag .vonk.aan { animation: vonkje 800ms ease-in-out; }
   @keyframes vonkje {
     0%   { opacity: 0; transform: scale(.3) rotate(-20deg); }
-    40%  { opacity: 1; transform: scale(1) rotate(0deg); }
+    40%  { opacity: var(--piek, 1); transform: scale(1) rotate(0deg); }
     100% { opacity: 0; transform: scale(.55) rotate(16deg); }
   }
   /* Beperkte beweging: de JS plant hier niets in (zie landingLeeft) en het laagje

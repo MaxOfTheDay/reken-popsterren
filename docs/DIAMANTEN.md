@@ -163,8 +163,11 @@ is:
    naast de kaart en de kast, en stopte op 125 sterren (rond wereld 7) terwijl er
    264 zijn. Zijn 225 💎 over de hele tournee (± 5% van het inkomen) mist niemand.
 4. **Mijn wens.** Een hartje in de lade zet één te duur spulletje vast als wens;
-   de 💎-pil op de kaart toont dan zijn emoji en een streepje dat volloopt, en
-   fonkelt zodra je hem kunt kopen. Eén veld in de opslag (`p.wens`), dat kopen
+   de 💎-pil (kaart, Werelden, kast én kleedkamer) toont dan zijn emoji of eigen
+   tekening en een streepje dat volloopt, en wordt goud zodra je hem kunt kopen —
+   een tik brengt je naar dat spulletje, kopen doe je daar. Het 💎-vakje op het
+   eindscherm draagt hetzelfde streepje; is er genoeg, dan gaat de
+   Kleedkamer-knop er meteen heen. Eén veld in de opslag (`p.wens`), dat kopen
    weer opruimt.
 
 Bewust níét gedaan: spullen per wereld laten vrijkomen. De winkel blijft helemaal
