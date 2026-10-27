@@ -266,15 +266,6 @@
   .set-field .lbl { font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink); }
   .set-card .note, .set-field .note { font-size: var(--tx-klein); color: var(--paper-ink-muted); font-weight: 500; }
   .chip-row { display: flex; flex-wrap: wrap; gap: 7px; }
-  /* FASE 5D.1 -- drie keuzes die samen één vraag beantwoorden ("hoe tonen we de
-     antwoorden?") horen op één regel te staan. Met de natuurlijke breedte viel
-     "🎲 Mix" op een telefoon van 390 als enige op een tweede regel, en dan leest
-     hij als een losse extra optie in plaats van als de derde van drie.
-     Gelijke delen met een bodembreedte: past het niet meer (een heel smal
-     venster of grote systeemletters), dan wikkelt het gewoon weer -- liever twee
-     nette regels dan drie samengeperste kolommen. Gemeten: op 320px past het
-     nog, op 280px wikkelt het. De vorm zelf staat bij .chip.gestapeld hieronder;
-     hier is alleen de naam van de rij, want .chip-row doet de rest al. */
   /* ---- De ladder: fases in tellen, het leerpad in rekenen (zie oefenGroups) --
      Elke stap een rij. Het is nog steeds .chip -- daar hangt de bediening aan --
      maar dan als lijstregel: geen pil, geen paarse vulling. Wat het kind speelt
@@ -302,6 +293,11 @@
   .fl-rij.voor .fl-n, .fl-rij.uit .fl-n { background: var(--lavender-wash-3); color: var(--purple-mid); }
   .fl-rij.voor, .fl-rij.uit { opacity: .5; }
   .fl-naam { flex: 1; min-width: 0; }
+  /* Overgeslagen (zie leerpadStappen): de stap blijft op zijn plek en houdt
+     zijn nummer, doorgestreept. Gedempt zoals .voor, maar de streep zegt dat
+     het een keuze is en niet "nog niet". */
+  .fl-rij.overgeslagen .fl-n, .fl-rij.overgeslagen .fl-naam, .fl-rij.overgeslagen .fl-vb { opacity: .4; }
+  .fl-rij.overgeslagen .fl-naam { text-decoration: line-through; text-decoration-thickness: 2px; }
   .fl-vb { flex: none; min-width: 92px; text-align: right; font-weight: 700; letter-spacing: .3px; white-space: nowrap; }
   .fl-vak {
     display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 4px; opacity: .55;
@@ -322,6 +318,39 @@
   .fl-rij .fl-lijn.boven { top: -10px; }
   .fl-rij .fl-lijn.onder { bottom: -10px; }
   .fl-rij .fl-lijn::before { flex: 0 0 18px; }
+  /* De vinkjes op het leerpad van rekenen (zie oefenGroups): elke stap heeft er
+     één, in één kolom rechts. Het vinkje is een eigen knop naast de rij, dus
+     de rij en het vinkje staan samen in een .fl-plek. Het raakvlak is 40px
+     breed en zo hoog als de rij; het rondje zelf 24px.
+       .aan    vol paars met een wit vinkje: hoort erbij, tik = overslaan
+       (leeg)  alleen een rand: overgeslagen, tik = weer mee
+       .vast   een stil vinkje zonder rondje: hoort er altijd bij, tikt niet */
+  .fl-plek { display: flex; align-items: center; }
+  .fl-plek > .fl-rij { flex: 1; min-width: 0; }
+  .fl-vink {
+    flex: none; display: grid; place-items: center; width: 40px; align-self: stretch; padding: 0;
+    border: none; background: none; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .fl-vink::before {
+    content: ""; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; box-sizing: border-box;
+    border: 2.5px solid var(--purple-light); color: var(--c-white); font-size: 14px; font-weight: 900; line-height: 1;
+    transition: background var(--t-tik) ease, border-color var(--t-tik) ease, transform var(--t-tik) ease;
+  }
+  .fl-vink.aan::before { content: "✓"; background: var(--purple-mid); border-color: transparent; }
+  .fl-vink:active::before { transform: scale(.88); }
+  .fl-vink.vast { cursor: default; }
+  .fl-vink.vast::before { content: "✓"; border-color: transparent; color: var(--purple-light); opacity: .55; }
+  /* "Alles door elkaar" heeft geen voorbeeld; een lege kolom van 92px kneep daar
+     alleen de naam af. */
+  .fl-vb:empty { min-width: 0; }
+  /* Op een smalle telefoon kost de kolom vinkjes de naam zijn ruimte: dan
+     krimpt de voorbeeldkolom tot wat erin staat, en het raakvlak van het vinkje
+     tot 34px (het rondje blijft 24). */
+  @media (max-width: 360px) {
+    .fase-ladder.met-vinkjes .fl-rij { gap: 8px; padding-left: 6px; padding-right: 4px; }
+    .fase-ladder.met-vinkjes .fl-vb { min-width: 0; }
+    .fl-vink { width: 34px; }
+  }
   /* De rijen om te lezen (zie flRij zonder v): geen knop, dus ook geen hover.
      "Alles door elkaar" achteraan het leerpad op Oefenen, en het hele leerpad in
      Voortgang: daar is gehad stil met een ✓, en wat nog komt licht. */
@@ -359,10 +388,6 @@
   .mode-row .chip.gestapeld .mc-ico { font-size: 21px; }
   /* Wie: meisje of jongen boven het naamveld (zie wieBladHtml) */
   #set-base { margin-bottom: 10px; }
-  /* Dezelfde vorm, een maat kleiner: drie op een rij op een telefoon van 390,
-     en op 320 wikkelt hij naar 2 + 1 in plaats van de woorden af te knijpen. */
-  .drie-op-een-rij .chip.gestapeld { gap: 1px; padding: 6px 5px 7px; font-size: var(--tx-klein); min-width: 78px; }
-  .drie-op-een-rij .chip.gestapeld .mc-ico { font-size: 17px; }
   .chip {
     font-family: inherit; font-size: var(--tx-label); font-weight: 600; cursor: pointer; text-align: center; min-width: 44px;
     border: 2px solid var(--paper-border); background: var(--c-white); color: var(--purple-mid); border-radius: var(--r-pill); padding: 7px 15px;
@@ -380,18 +405,18 @@
     border: 1.5px solid var(--paper-border); box-shadow: inset 0 -2px 3px rgba(0,0,0,.16);
   }
   .chip.swatch.on .sw { border-color: rgba(255,255,255,.75); }
-  /* ---- Oefenen: twee kaarten en een schakelaar (zie oefenGroups) ---------
-     Alles hieronder is nog .chip -- daar hangt de bediening aan -- maar in vier
+  /* ---- Oefenen: drie kaarten en de moduskeuze (zie oefenGroups) ----------
+     Alles hieronder is nog .chip -- daar hangt de bediening aan -- maar in
      vormen die elk zeggen wat een tik doet:
        .oe-ops    tegels, meer tegelijk mag (+ − × ÷)
-       .oe-seg    een balk met gelijke vakken, één keuze (tot, antwoord)
        .oe-tafels tegeltjes, meer tegelijk mag
-       .oe-rij    een rij zoals de geluidsrij: icoon, woord, stand
+       .oe-seg    een balk met gelijke vakken, één keuze (tot, antwoord, per show)
+       .oe-rij    een rij met een schakelaar: aan of uit (voorlezen, memory)
+     en op het leerpad de vinkjes (.fl-vink, zie de ladder hierboven).
      Gekozen is overal dezelfde volle paarse vulling, zonder vinkje erbij. Deze
      regels staan ná .chip, dus ze winnen op volgorde waar de specificiteit
      gelijk is. */
   .oefen-kaart.primary { padding: 16px 16px 14px; }
-  .oefen-kaart.secundair { padding: 6px 14px; background: var(--paper-tint); }
   .oe-lbl { display: flex; align-items: center; gap: 6px; margin: 14px 2px 7px; font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
   .oe-lbl:first-child { margin-top: 0; }
   .oe-teken { padding: 1px 8px; border-radius: var(--r-sm); background: var(--lavender-wash); color: var(--purple-mid); font-size: var(--tx-label); letter-spacing: .5px; }
@@ -412,6 +437,9 @@
     color: var(--purple-mid); font-size: var(--tx-label); font-weight: 700; line-height: 1;
   }
   .oe-seg .chip.on { background: var(--purple-mid); color: var(--c-white); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
+  /* "Voorwerpen" is het langste woord in een balk; op 320 raakte het de randen
+     van zijn vak. Een maat kleiner op een smalle telefoon. */
+  @media (max-width: 360px) { .oe-seg .chip { font-size: var(--tx-klein); } }
   .oe-tafels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
   .oe-tafels .chip { min-width: 0; height: 42px; padding: 0; border-radius: var(--r-sm); font-size: var(--tx-body); font-weight: 700; }
   /* De rijen. De hele rij is de knop (role=switch); de stand rechts is het
@@ -426,19 +454,19 @@
   .oefen-kaart > .oe-rij:first-child, .oefen-kaart > div:first-child > .oe-rij.chip { border-top: none; }
   .oe-i { width: 28px; flex: none; text-align: center; font-size: 20px; }
   .oe-w { flex: 1; min-width: 0; }
-  .oe-som { font-weight: 700; letter-spacing: .5px; }
-  .oe-som i { display: inline-block; width: 20px; height: 20px; vertical-align: -4px; border: 2px dashed var(--purple-light); border-radius: 6px; }
-  .oe-stand { min-width: 46px; padding: 5px 10px; border-radius: var(--r-pill); text-align: center; font-size: var(--tx-klein); font-weight: 700; background: var(--lavender-wash-3); color: var(--paper-ink-muted); }
-  .oe-rij.on .oe-stand { background: var(--purple-mid); color: var(--c-white); }
-  /* Het kleine keuzerijtje: dezelfde balk, een maat kleiner (10 - 3 = 7). */
-  .oe-mini { display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: var(--lavender-wash); }
-  .oe-mini .chip, .oe-mini .chip:hover {
-    display: flex; align-items: center; justify-content: center; min-width: 36px; height: 30px; padding: 0 6px;
-    border: none; border-radius: 7px; background: none; box-shadow: none; font-size: var(--tx-klein); font-weight: 700; line-height: 1;
+  /* De stand is een schakelaar zonder woord: een baan met een knopje dat naar
+     rechts schuift en paars wordt. Hier stond "Aan"/"Uit" in een pilletje, en
+     dat was naast de balken en de vinkjes nog een vierde vorm voor een keuze. */
+  .oe-stand {
+    flex: none; position: relative; width: 40px; height: 24px; border-radius: 12px;
+    background: var(--lavender-wash-3); transition: background var(--t-tik) ease;
   }
-  .oe-mini .chip.on { background: var(--purple-mid); color: var(--c-white); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
-  .oe-rij-blok { flex-wrap: wrap; }
-  .oe-rij-blok .chip-row { flex-basis: 100%; }
+  .oe-stand::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--c-white); box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform var(--t-tik) ease;
+  }
+  .oe-rij.on .oe-stand { background: var(--purple-mid); }
+  .oe-rij.on .oe-stand::after { transform: translateX(16px); }
   /* De modus: twee gelijke helften onderaan, op de donkere achtergrond. Dezelfde
      vorm als de tabbalk bovenaan (.segmented), maar stiller: geen blauw, alleen
      een lichter vlak voor wat aanstaat. Geen pijl -- tellen en rekenen zijn twee
@@ -616,10 +644,9 @@
      dus die zetten we hier terug -- met dezelfde id ervoor, anders verliezen ze. */
   #screen-newstar .oe-seg .chip, #screen-newstar .oe-seg .chip:hover,
   #screen-newstar .oe-rij.chip, #screen-newstar .oe-rij.chip:hover, #screen-newstar .oe-rij.chip.on,
-  #screen-newstar .oe-mini .chip, #screen-newstar .oe-mini .chip:hover,
   #screen-newstar .fase-ladder .chip.fl-rij { background: none; border: none; }
   #screen-newstar .fase-ladder .chip.fl-rij:hover { background: var(--lavender-wash-2); }
-  #screen-newstar .oe-mini .chip.on, #screen-newstar .oe-seg .chip.on,
+  #screen-newstar .oe-seg .chip.on,
   #screen-newstar .oe-ops .chip.on, #screen-newstar .oe-tafels .chip.on { background: var(--purple-mid); }
 
   /* Klaar! blijft in beeld. Het formulier is één vel (basis, naam, haar, kleren,

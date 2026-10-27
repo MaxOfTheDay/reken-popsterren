@@ -280,7 +280,8 @@ function countStageTypes(stage) {
   const speelbaar = types.filter(t => t !== 'listen');
   return speelbaar.length ? speelbaar : ['match'];
 }
-// Hoogste toegestane fase: zonder cijfers stopt het bij fase 5 (fases 6–8 gebruiken cijfers/redeneren).
+// Hoogste toegestane fase: de lijn "tot" van de ouder (stageMax). Een oude save
+// met cijfers uit stopt bij fase 5 (zie migrate: die zet daar nu "tot").
 // Met hoeveelheden onder de tien stopt het vóór fase 12: die gaat tot twintig.
 function countMaxStage(s) {
   const top = (s.qmax || 10) < 10 ? 11 : COUNT_STAGE_MAX;
@@ -618,7 +619,8 @@ function tapHTML(card) {
    hoeveel het er zijn. */
 function bindTap(card, q, drawId) {
   let geteld = 0;
-  const cijfers = P().settings.numerals !== false;
+  // geen cijfers zolang de ouder "tot" onder de cijferfase (6) houdt
+  const cijfers = countMaxStage(P().settings) >= 6;
   card.querySelectorAll('.tap-obj').forEach(b => {
     b.onclick = () => {
       if (!G || !G.count || drawId !== countDrawId || b.classList.contains('geteld')) return;

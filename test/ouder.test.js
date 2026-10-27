@@ -341,18 +341,7 @@ function check(ok, label, detail) {
     check(r.stage === 1 && r.max === 4 && r.vanaf === 1 && r.hier === 2,
       'een fase boven "vanaf" zet "vanaf" daar, en het kind zakt niet mee', JSON.stringify(r));
     check(r.plek === plek, 'na vijf tikken staat elke fase nog precies waar hij stond', `${plek} -> ${r.plek}`);
-    // cijfers uit: dan bestaan de fases boven 5 niet meer als keuze, maar de
-    // instelling blijft staan (niet-destructief, zie countMaxStage)
-    await page.evaluate(() => { setKey = 'p1'; db.profiles.p1.settings.stageMax = 11; save(); renderSettings(); });
-    await page.waitForTimeout(150);
-    await page.click('#set-numerals .chip[data-v="off"]');
-    await page.waitForTimeout(200);
-    r = await page.evaluate(() => ({
-      chips: document.querySelectorAll('#set-fase .chip').length,
-      bewaard: db.profiles.p1.settings.stageMax,
-    }));
-    check(r.chips === 5, 'zonder cijfers worden er maar vijf fases aangeboden', 'chips=' + r.chips);
-    check(r.bewaard === 11, 'en de gekozen bovengrens blijft bewaard', 'stageMax=' + r.bewaard);
+    check(!(await page.$('#set-numerals')), 'er is geen losse schakelaar "Cijfers" meer: "tot" doet het', '');
     await ctx.close();
   }
 
@@ -398,6 +387,33 @@ function check(ok, label, detail) {
     await page.waitForTimeout(200);
     r = await pad();
     check(r.start === 1 && r.vanaf === 1 && r.lijnen === 1 && r.stap === 1, 'terug naar stap 1 zet de lijn weer bovenaan', JSON.stringify(r));
+    /* De vinkjes: overslaan haalt de stap niet weg. Hij blijft staan,
+       doorgestreept, met zijn nummer, en niets schuift op. */
+    await page.click('#set-max .chip[data-v="20"]');
+    await page.waitForTimeout(200);
+    const vinkjes = () => page.evaluate(() => ({
+      vinkjes: [...document.querySelectorAll('#set-startstap .fl-vink')].map(v => v.matches('button') ? (v.classList.contains('aan') ? 'aan' : 'uit') : 'vast'),
+      over: [...document.querySelectorAll('#set-startstap .chip.overgeslagen')].map(c => +c.dataset.v),
+      nummers: [...document.querySelectorAll('#set-startstap .chip .fl-n')].map(n => n.textContent).join(','),
+      plek: [...document.querySelectorAll('#set-startstap .chip')].map(c => c.offsetTop).join(','),
+      chain3: db.profiles.p1.settings.chain3, start: db.profiles.p1.settings.startStap,
+      extra: !!document.getElementById('set-extra'),
+    }));
+    let v = await vinkjes();
+    check(v.vinkjes.join(',') === 'vast,vast,vast,aan,aan,vast' && !v.extra,
+      'elke stap een vinkje: stil bij de vaste, vol bij zoek en drie getallen; geen losse schakelaars meer', JSON.stringify(v));
+    const voor = v;
+    await page.click('#set-startstap .fl-vink[data-instelling="chain3"]');
+    await page.waitForTimeout(200);
+    v = await vinkjes();
+    check(v.chain3 === false && v.over.join(',') === '5' && v.vinkjes[4] === 'uit',
+      'een tik op het vinkje slaat drie getallen over: doorgestreept, niet weg', JSON.stringify(v));
+    check(v.plek === voor.plek && v.nummers === voor.nummers && v.start === voor.start,
+      'en er schuift niets op, en "vanaf" blijft waar hij stond', JSON.stringify({ voor, v }));
+    await page.click('#set-startstap .fl-vink[data-instelling="chain3"]');
+    await page.waitForTimeout(200);
+    v = await vinkjes();
+    check(v.chain3 === true && !v.over.length, 'nog een tik neemt hem weer mee', JSON.stringify(v));
     await ctx.close();
   }
 
@@ -847,25 +863,25 @@ function check(ok, label, detail) {
   }
 
   /* ================= N · Drie weergavekeuzes op één regel ================= */
-  /* "Voorwerpen / Stippen / Mix" beantwoorden samen één vraag, dus horen ze op
-     één regel. Met het icoon naast het woord paste dat niet (127px nodig, 105
-     beschikbaar) en viel Mix als enige op een tweede regel. Wat hier vastligt:
-     op de telefoonmaten drie gelijke kolommen met elk label op één regel, en op
-     iets onmogelijk smals wikkelt het netjes in plaats van de woorden te
-     knijpen. */
+  /* "Voorwerpen / Stippen / Mix" beantwoorden samen één vraag: één uit drie.
+     Dat is een balk, net als "Antwoord" en "Vragen per show" (zie oefenGroups),
+     met drie gelijke vakken op één regel. Wat hier vastligt: op de
+     telefoonmaten past elk woord in zijn vak, zonder af te breken of uit te
+     steken. */
   {
     const { ctx, page } = await fresh();
     await page.evaluate(() => { db.profiles.p1.settings.track = 'count'; save(); });
     const meet = () => page.evaluate(() => {
       const chips = [...document.querySelectorAll('#set-repr .chip')];
-      const tops = new Set(chips.map(c => Math.round(c.getBoundingClientRect().top)));
-      const regelhoogte = chips[0].querySelector('.mc-label').getBoundingClientRect().height;
       return {
-        n: chips.length, regels: tops.size,
+        n: chips.length, balk: !!document.querySelector('.oe-seg#set-repr'),
+        regels: new Set(chips.map(c => Math.round(c.getBoundingClientRect().top))).size,
         breedtes: chips.map(c => Math.round(c.getBoundingClientRect().width)),
-        hoogte: Math.round(chips[0].getBoundingClientRect().height),
-        labelsEenRegel: chips.every(c => c.querySelector('.mc-label').getBoundingClientRect().height <= regelhoogte + 1),
-        iconen: chips.every(c => !!c.querySelector('.mc-ico')),
+        // het woord zelf meten: in een gecentreerd vak steekt een te lang woord
+        // aan twee kanten uit, en dan ziet scrollWidth dat niet
+        past: chips.every(c => { const r = document.createRange(); r.selectNodeContents(c);
+          const t = r.getBoundingClientRect(), b = c.getBoundingClientRect();
+          return t.left >= b.left + 4 && t.right <= b.right - 4; }),
         gekozen: document.querySelectorAll('#set-repr .chip.on').length,
       };
     });
@@ -874,19 +890,11 @@ function check(ok, label, detail) {
       await open(page, 'p1', 'oefenen');
       await page.waitForTimeout(350);
       const r = await meet();
-      check(r.n === 3 && r.regels === 1, `op ${w}px staan de drie keuzes op één regel`, JSON.stringify(r));
+      check(r.n === 3 && r.balk && r.regels === 1, `op ${w}px staan de drie keuzes als balk op één regel`, JSON.stringify(r));
       check(new Set(r.breedtes).size === 1, `en ze zijn even breed op ${w}px`, JSON.stringify(r.breedtes));
-      check(r.labelsEenRegel, `zonder dat een woord afbreekt op ${w}px`, JSON.stringify(r));
-      check(r.hoogte >= 44, `en het raakvlak blijft comfortabel op ${w}px`, 'hoogte=' + r.hoogte);
-      check(r.iconen && r.gekozen === 1, `icoon en gekozen stand blijven op ${w}px`, JSON.stringify(r));
+      check(r.past, `en elk woord past in zijn vak op ${w}px`, JSON.stringify(r));
+      check(r.gekozen === 1, `met één gekozen op ${w}px`, JSON.stringify(r));
     }
-    // onmogelijk smal: liever wikkelen dan knijpen
-    await page.setViewportSize({ width: 280, height: 653 });
-    await open(page, 'p1', 'oefenen');
-    await page.waitForTimeout(350);
-    const smal = await meet();
-    check(smal.regels === 2 && smal.labelsEenRegel,
-      'op een onmogelijk smal venster wikkelt de rij i.p.v. de woorden', JSON.stringify(smal));
     await ctx.close();
   }
 
