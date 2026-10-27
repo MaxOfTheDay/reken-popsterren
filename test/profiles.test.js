@@ -1824,17 +1824,31 @@ function check(ok, label, detail) {
       const d = document.querySelector('.tour-stop.locked .dot').getBoundingClientRect();
       return { x: d.left + d.width / 2, y: d.top + d.height / 2 };
     });
+    // de ring van de aankomst eraf, zodat we de ring van déze tik zien komen
+    await page.evaluate(() => document.querySelector('.tour-stop.next').classList.remove('aangekomen'));
     await page.touchscreen.tap(plek.x, plek.y);
     await page.waitForTimeout(80);
-    const slot = await page.evaluate(() => ({
+    const staat = () => page.evaluate(() => ({
       scherm: document.querySelector('.screen.active').id,
       nee: !!document.querySelector('.tour-stop.locked .dot.nee'),
       ring: !!document.querySelector('.tour-stop.next.aangekomen'),
       huppel: !!document.querySelector('.tour-hero .avatar-holder.move-huppel'),
     }));
+    const slot = await staat();
     check(slot.scherm === 'screen-map', 'een halte op slot start geen show', slot.scherm);
     check(slot.nee, 'een tik op een halte op slot laat hem nee wiebelen', JSON.stringify(slot));
-    check(slot.ring && slot.huppel, 'en haar eigen halte antwoordt: ring en huppel', JSON.stringify(slot));
+    // precies de groet: eerst zij, de ring pas als ze landt (GROET.landt)
+    check(slot.huppel && !slot.ring, 'zij huppelt meteen, haar halte ringt nog niet', JSON.stringify(slot));
+    await page.waitForTimeout(520);
+    const later = await staat();
+    check(later.ring, 'haar halte ringt als ze landt, net als bij de groet', JSON.stringify(later));
+
+    // de 🗺 nog eens op je eigen kaart: dezelfde "hier ben je", met de ring
+    await page.waitForTimeout(900);
+    await page.evaluate(() => document.querySelector('.tour-stop.next').classList.remove('aangekomen'));
+    await page.evaluate(() => kaartThuis());
+    await page.waitForTimeout(1300);
+    check((await staat()).ring, 'de 🗺 nog eens op je eigen kaart laat haar halte ook ringen', 'geen ring');
 
     // de 💎-pil op Werelden en in de kast: dezelfde knop, met de wens erbij
     for (const [naam, open, sel] of [

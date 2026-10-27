@@ -6625,7 +6625,6 @@ function kaartGroet(mag) {
      gaat er een wereld open of koos je er net een op de reis, dan legt díe
      beweging al uit waarom je hier bent. Na een level-up huppelt de ster over de
      route naar de volgende halte -- dát is de aankomst. */
-  pulsTimer = setTimeout(() => { pulsTimer = null; haltePuls(); }, MOTION.totaal + GROET.landt);
   groetTimer = setTimeout(() => {
     groetTimer = null;
     const map = $('tour-map');
@@ -6636,8 +6635,23 @@ function kaartGroet(mag) {
        opvangt -- daar opent goMap() de kaart en schuift er meteen een ander
        scherm overheen. */
     if (!el || !el.isConnected || !$('screen-map').classList.contains('active')) return;
-    if (zetPas(el, GROET.pas)) pasUit(el);
+    hierBenIk(el);
   }, MOTION.totaal);
+}
+/* "Hier ben je": zij huppelt, en haar halte ringt op het moment dat haar voeten
+   hem raken (GROET.landt). Eén beweging, op één plek, voor de drie momenten die
+   dat zeggen: de groet bij aankomst, de 🗺 nog eens op je eigen kaart
+   (kaartThuis), en een tik op een halte op slot (slotHalte: "niet daar -- hier").
+   Ze stonden eerst los, en liepen meteen uit de pas: op slot ringde de halte al
+   bij de tik, dus was de ring weg voor ze landde. Een tik op háár is dit niet --
+   dat is zij die jou antwoordt, en daar blijft het bij de huppel (kaartTik).
+   Geeft true als ze huppelt; zonder beweging gebeurt er niets, ook geen ring. */
+function hierBenIk(el) {
+  if (!zetPas(el, GROET.pas)) return false;
+  pasUit(el);
+  clearTimeout(pulsTimer);
+  pulsTimer = setTimeout(() => { pulsTimer = null; haltePuls(); }, GROET.landt);
+  return true;
 }
 /* EN HIJ STOPT ALS JE WEGGAAT. Een huppel hoort bij de kaart; loopt hij door
    terwijl je er al vanaf bent, dan staat er 950ms lang een pop te bewegen op een
@@ -6725,7 +6739,7 @@ function kaartThuis() {
     groetTimer = null;
     const el = map.querySelector('.tour-hero .avatar-holder');
     if (!el || !el.isConnected || el.classList.contains('dancing')) return;
-    if (zetPas(el, HUPPEL)) pasUit(el);
+    hierBenIk(el);   // dezelfde "hier ben je" als de groet: huppel, dan de ring
   };
   // dezelfde halte als waar de kaart bij het openen op uitkomt (zie kaartHierDoel)
   const hier = kaartHierDoel(map);
@@ -8319,8 +8333,8 @@ function haltKnop(shown, nodes, i, stand) {
    dus viel hij door naar de tekening. Werelden antwoordt op een wereld op slot
    met een wiebel en een zin; de kaart doet het zonder woorden. De halte wiebelt
    "nee" (de beweging van het slotje in Werelden), en haar eigen halte zegt waar
-   het wél is: de aankomstring, en zij huppelt (zie haltePuls en kaartTik -- dat
-   laatste geeft ook het klankje). Staat zij niet op deze kaart (een uitstapje),
+   het wél is, met precies de groet van de kaart: zij huppelt, en haar halte
+   ringt als ze landt (zie hierBenIk). Staat zij niet op deze kaart (een uitstapje),
    dan is er alleen de wiebel en het tikje. Niet tijdens een overgang of vlucht:
    dan beweegt de kaart al. */
 function slotHalte(b) {
@@ -8332,11 +8346,13 @@ function slotHalte(b) {
     dot.classList.add('nee');
     setTimeout(() => dot.classList.remove('nee'), 600);
   }
+  sndTap();
   const map = $('tour-map');
-  const ster = map && map.querySelector('.tour-stop.next .tour-hero');
-  if (!ster) { sndTap(); return; }
-  haltePuls();
-  kaartTik(ster, ster.closest('.tour-stop'));
+  const el = map && map.querySelector('.tour-stop.next .tour-hero .avatar-holder');
+  if (!el || el.classList.contains('dancing')) return;
+  clearTimeout(groetTimer);   // een groet die nog moest komen: dit ís hem al
+  groetTimer = null;
+  hierBenIk(el);
 }
 /* Hoe hoog de kop en de navigatiebalk werkelijk zijn. De wereldknoppen gaan daar
    tussenin staan, en die maten hangen af van het lettertype, de veilige zones van
