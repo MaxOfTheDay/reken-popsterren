@@ -381,62 +381,16 @@ function statusKaartHtml(p) {
       ? '<button class="btn small purple stem-aan" id="stem-aan" type="button">🔊 Zet aan</button>' : ''}</div>` : ''}
   </div>`;
 }
-/* Wat de werelden leren, in de volgorde van LEERSTAPPEN. Een stap die met deze
-   instellingen niets kán brengen valt weg: over het tiental kan niet tot tien,
-   drie getallen is alleen plus, zoek het getal bestaat niet bij alleen delen.
-   Een stap is een naam met een voorbeeldsom erbij, geen zin: "8 + 5" zegt
-   sneller wat "over het tiental" betekent dan een uitleg. */
-/* naam en vb staan uit elkaar: op de ladder (zie flRij) staat het voorbeeld in
-   een eigen kolom rechts, zodat het niet verschuift als er een lijn tussen komt.
-   Voortgang en Oefeningen tekenen het pad met dezelfde rijen. */
-/* OVERSLAAN IS GEEN WEGHALEN. Zoek het getal en drie getallen kan de ouder
-   uitzetten (keuze: de naam van de vlag). Zo'n stap blijft op het pad staan,
-   doorgestreept (uit: true), en houdt zijn nummer. Eerst viel hij weg, en dan
-   schoof alles erachter een nummer op -- en stond dezelfde keuze nog een keer
-   als losse schakelaar in een andere kaart. */
-/* DE STAP ZEGT WAT HIJ SPEELT. Een naam is het echte bereik ("Tot 10", "Tot 20"),
-   uitgerekend zoals genTriple het doet (LEERSTAPPEN[0].t), en het voorbeeld is
-   gemaakt met wat de ouder koos: alleen min geeft min-voorbeelden, alleen maal
-   maal-voorbeelden met een tafel die aan staat. Eerst stond er "Kleine sommen
-   3 + 4" (wat bij tot 100 sommen tot vijftig waren), en "7 + ▢ = 12" bij
-   alleen maal.
-   Een stap die niets bijbrengt valt weg, en de wereld die hij had speelt dan
-   de stap ervoor: bij tot 10 zijn stap 1 en 2 dezelfde sommen, en een tafel is
-   altijd heel (zie genTriple), dus bij alleen × en ÷ zijn de eerste drie
-   werelden één stap "Hele tafels".
-   test/kern.test.js zaak ZF houdt het vast: geen teken dat niet gekozen is,
-   geen getal boven het bereik van de stap, geen tafel die uit staat. */
-const PAD_VB = {
-  '+': { 10: '3 + 4', 20: '12 + 5', 25: '15 + 4', 50: '34 + 12', 100: '56 + 23' },
-  '-': { 10: '7 − 3', 20: '17 − 5', 25: '24 − 3', 50: '47 − 12', 100: '86 − 34' },
-};
-function leerpadStappen(s) {
-  const plusMin = s.ops.includes('+') || s.ops.includes('-');
-  const pm = s.ops.includes('+') ? '+' : '-';          // het voorbeeld van plus en min: plus als dat er is
-  const tafel = Math.max(...(s.tables.length ? s.tables : [2, 5, 10]));
-  const klein = Math.max(10, Math.round(s.max * LEERSTAPPEN[0].t));
-  const som = n => PAD_VB[pm][n] || PAD_VB[pm][10];
-  const zoek = s.ops.includes('+') ? (s.max > 10 ? '7 + ▢ = 12' : '3 + ▢ = 7')
-    : s.ops.includes('-') ? '9 − ▢ = 4' : `3 × ▢ = ${3 * tafel}`;
-  const keer = tafel === 7 ? 8 : 7;                     // 7 × 7 leest als een vergissing
-  const tafelVb = s.ops.includes('x') ? `${keer} × ${tafel}` : `${keer * tafel} : ${tafel}`;
-  const stap = (naam, vb, keuze) => ({ naam, vb, keuze, uit: !!keuze && s[keuze] === false });
-  return [
-    plusMin ? stap(`Tot ${klein}`, som(klein)) : stap('Hele tafels', tafelVb),
-    plusMin && s.max > klein && stap(`Tot ${s.max}`, som(s.max)),
-    plusMin && s.max > 10 && stap('Over het tiental', pm === '+' ? '8 + 5' : '13 − 6'),
-    s.ops.some(o => o !== ':') && stap('Zoek het getal', zoek, 'missNum'),
-    s.ops.includes('+') && stap('Drie getallen', '3 + 4 + 2', 'chain3'),
-    stap('Alles door elkaar', ''),
-  ].map((st, i) => st && { ...st, wereld: i + 1 }).filter(Boolean);
-}
-// Het accent van een wereld na de laatste leerstap (zie wereldAccent), als het er is.
-function accentTekst(s, w) {
-  const a = wereldAccent(w);
-  if (a === 'miss' && s.missNum !== false) {
-    const zoek = leerpadStappen(s).find(st => st.keuze === 'missNum');
-    if (zoek) return ' · extra ' + zoek.vb;
-  }
+/* Het leerpad van rekenen staat in 55-vragen (LEERPAD, padRijen): Voortgang en
+   Oefeningen tekenen allebei die rijen, met naam en voorbeeld. OVERSLAAN IS GEEN
+   WEGHALEN: zoek het getal en drie getallen kan de ouder uitvinken (keuze: de
+   naam van de vlag); zo'n rij blijft staan, doorgestreept, en houdt zijn nummer.
+   Eerst viel hij weg, en dan schoof alles erachter een nummer op. */
+// Het accent van een wereld voorbij de laatste rij (zie wereldAccent), als het er is.
+function accentTekst(s, w, nuId) {
+  const a = wereldAccent(WORLD_START[w - 1] || 1, nuId);
+  const zoek = padRijen(s).rijen.find(r => r.id === 'zoek' && !r.uit);
+  if (a === 'miss' && zoek) return ' · extra ' + zoek.vb;
   if (a === 'chain' && s.chain3 !== false && s.ops.includes('+')) return ' · extra 3 + 4 + 2';
   return '';
 }
@@ -504,17 +458,21 @@ function leerpadHtml(p) {
     const glyph = { '+': '+', '-': '−', 'x': '×', ':': '÷' };
     const plusMin = s.ops.includes('+') || s.ops.includes('-');
     kop = `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${plusMin ? ` tot ${s.max}` : ''}`;
-    const stappen = leerpadStappen(s);
+    const alle = padRijen(s).rijen;
+    const nuId = padNu(p);
     const w = continueWorld(p) + 1;                    // de wereld waar het kind nu speelt
-    const laatste = LEERSTAPPEN.length;
-    // een overgeslagen stap is nooit waar ze nu is: dan is het de stap ervoor
-    const nu = stappen.filter(st => !st.uit && st.wereld <= Math.min(Math.max(w, s.startStap || 1), laatste)).pop();
-    const nr = stappen.indexOf(nu);                    // = hoeveel stappen er al achter liggen
+    const nr = nuId === 'alles' ? alle.length : alle.findIndex(r => r.id === nuId);   // = hoeveel rijen er al achter liggen
     // genummerd op plaats, net als de ladder op Oefeningen
     if (nr) rijen.push(flRij(' klaar', '✓', `Stap ${nr > 1 ? '1–' + nr : 1}`));
     const grens = grensTip(p);
-    rijen.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}<small>Wereld ${w}${accentTekst(s, w)}</small>`, flVb(nu.vb)));
-    stappen.slice(nr + 1).forEach((st, i) => rijen.push(flRij(` later${st.uit ? ' overgeslagen' : ''}`, nr + 2 + i, st.naam, flVb(st.vb))));
+    if (nuId === 'alles') {
+      rijen.push(flRij(' hier niveau-bezig', flAva(p), `Alles door elkaar<small>Wereld ${w}${accentTekst(s, w, nuId)}</small>`, ''));
+    } else {
+      const nu = alle[nr];
+      rijen.push(flRij(' hier niveau-bezig', flAva(p), nu.naam, flVb(nu.vb)));
+      alle.slice(nr + 1).forEach((r, i) => rijen.push(flRij(` later${r.uit ? ' overgeslagen' : ''}`, nr + 2 + i, r.naam, flVb(r.vb))));
+      rijen.push(flRij(' later', '∞', 'Alles door elkaar'));
+    }
     const [tekst, knop] = !grens ? [] : grens.soort === 'grens'
       ? [`Bijna altijd ⭐⭐⭐ tot ${s.max}. Grotere getallen?`, `Tot ${grens.naar}`]
       : grens.naar === 'mix'
@@ -606,14 +564,13 @@ function stemNotitie(naam) {
 }
 /* Een tip voor de ouder: de getallengrens omhoog.
 
-   De werelden leren elk iets nieuws (zie LEERSTAPPEN), maar die stappen houden
-   op: vanaf de wereld ná de laatste stap is het "alles door elkaar", binnen de
-   grens die de ouder koos. Het spel zet die grens zelf niet hoger -- dat is de
+   Het leerpad (zie LEERPAD) houdt op bij de lijn "tot": daarna is het "alles
+   door elkaar", binnen de grens die de ouder koos. Het spel zet die grens zelf niet hoger -- dat is de
    keuze van de ouder, en een kind dat ineens tot honderd moet zonder dat iemand
    het wist is geen verrassing maar een tegenvaller. Dus zegt het hier wanneer
    het tijd lijkt, en doet de ouder het met één tik (of niet).
 
-   Wanneer: het kind speelt (of speelde) voorbij de laatste leerstap, en heeft
+   Wanneer: het kind speelt voorbij de laatste rij van het leerpad, en heeft
    daar al GRENS_TIP_SHOWS shows met drie sterren gehaald. Sterren en geen p.perf:
    die laatste is een gemiddelde over de laatste paar antwoorden en springt heen
    en weer; drie sterren in een hele reeks shows is een stand die blijft staan.
@@ -638,15 +595,19 @@ const GRENS_TIP_SHOWS = 6;
    die al drie sterren had overdoen telde niet. Dus stond een kind dat overal
    drie sterren had na één tip stil: de ouder tikte hem aan, grensTipBasis werd
    48, en er kwam nooit meer een -- ook niet als het daarna maanden dezelfde
-   sommen speelde. Nu telt p.grensDrie elke show met drie sterren vanaf de eerste
-   wereld zonder nieuwe stap, overdoen inbegrepen (zie telGrensDrie), net zoals
-   de telmodus al shows telt (countTrack.plafond).
+   sommen speelde. Nu telt p.grensDrie elke show met drie sterren op "alles door
+   elkaar", overdoen inbegrepen (zie telGrensDrie), net zoals de telmodus al
+   shows telt (countTrack.plafond).
 
    Een save van vóór dit veld heeft het nog niet; dan is het beginpunt de oude
    telling, zodat grensTipBasis (die daarop gezet werd) blijft kloppen. De eerste
-   show die meetelt schrijft het veld weg; tot dan wordt er niets opgeslagen. */
+   show die meetelt schrijft het veld weg; tot dan wordt er niets opgeslagen.
+   Die oude telling begon bij wereld 6 (index 5): de eerste wereld zonder nieuwe
+   stap, toen een stap nog een wereld was. Dat getal hoort bij die oude saves en
+   verandert dus niet mee met het leerpad. */
+const GRENS_OUD_VANAF = 5;
 function grensDrieHaltes(p) {
-  const vanaf = LEERSTAPPEN.length - 1;          // de eerste wereld zonder nieuwe stap
+  const vanaf = GRENS_OUD_VANAF;
   if (vanaf >= WORLD_AVAIL) return 0;
   let drie = 0;
   for (let l = WORLD_START[vanaf]; l <= WORLD_LAST; l++) if ((p.stars || {})[l] >= 3) drie++;
@@ -655,9 +616,9 @@ function grensDrieHaltes(p) {
 function grensDrieSterren(p) {
   return typeof p.grensDrie === 'number' ? p.grensDrie : grensDrieHaltes(p);
 }
-// Na een rekenshow (zie endLevel): drie sterren voorbij de laatste leerstap telt.
-function telGrensDrie(p, lvl, sterren) {
-  if (sterren < 3 || worldFor(lvl).index < LEERSTAPPEN.length - 1) return;
+// Na een rekenshow (zie endLevel): drie sterren voorbij de laatste rij telt.
+function telGrensDrie(p, sterren) {
+  if (sterren < 3 || padNu(p) !== 'alles') return;
   p.grensDrie = grensDrieSterren(p) + 1;
 }
 const MODE_LADDER = { kies: 'mix', mix: 'typ' };
@@ -713,6 +674,8 @@ function naarRekenen(p) {
   s.max = 10;
   s.mode = 'kies';
   s.grensTipBasis = grensDrieSterren(p);
+  s.padVanaf = null;
+  p.pad = null;                 // het leerpad begint vooraan (zie padNu)
 }
 
 // Tabblad "Oefening" — alle bewerkbare instellingen, gegroepeerd in kaarten.
@@ -749,7 +712,7 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
    instelling met twee bedieningen, of een bediening in de verkeerde kaart, valt
    daar om. Komt er een instelling bij, dan kiest hij hier eerst zijn kaart. */
 const OEFEN_INSTELLINGEN = {
-  math:  { wat: ['ops', 'max', 'tables'], pad: ['startStap', 'missNum', 'chain3'], show: ['mode', 'perLevel'] },
+  math:  { wat: ['ops', 'tables'], pad: ['padVanaf', 'missNum', 'chain3'], show: ['mode', 'perLevel'] },
   count: { wat: ['qmax'], pad: ['stage'], show: ['repr', 'perLevel', 'memory'] },
 };
 function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde wat · pad · show
@@ -770,9 +733,9 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde 
      "vanaf" en "tot"; wat erbuiten valt is gedempt. In het bolletje van de stap
      waar het kind nu is staat haar eigen pop in plaats van het nummer.
 
-     Er is geen keuzevenster: je tikt op de stap zelf. Rekenen heeft alleen
-     "vanaf", dus daar verhuist die lijn. Tellen heeft er twee, en dan verhuist
-     de dichtstbijzijnde (zie de faseladder in bindOefenChips). "tot" is ook wat
+     Er is geen keuzevenster: je tikt op de stap zelf, en dan verhuist de
+     dichtstbijzijnde lijn (zie bindOefenChips). Bij rekenen is "tot" de grens
+     van plus en min, en een grijze rij eronder aantikken laat hem zakken. "tot" is ook wat
      vroeger de schakelaar "Cijfers" deed: tot fase 5 komen er geen cijfers.
 
      DE LIJNEN NEMEN GEEN PLAATS IN. Eerst was een lijn een eigen regel tussen
@@ -794,7 +757,8 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde 
      Alleen de stappen die een vinkje kunnen hebben krijgen er een kolom voor:
      een schakelaar op twee rijen en een gat op de rest las als half af.
 
-     rijen: [{ v, naam, vb, keuze?, uit? }]. hi = Infinity: geen "tot" (rekenen).
+     rijen: [{ v, naam, vb, keuze?, uit?, kop? }] -- kop: een stille blokkop erboven.
+     hi = Infinity: geen "tot" (rekenen zonder plus of min).
      staart: een rij om te lezen achteraan (zie het leerpad van rekenen). */
   const ava = p ? flAva(p) : '';
   const lijn = (woord, kant) => `<span class="fl-lijn ${kant}" aria-hidden="true">${woord}</span>`;
@@ -802,10 +766,11 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde 
     : `<button class="fl-vink${r.uit ? '' : ' aan'}" type="button" data-instelling="${r.keuze}" role="checkbox"`
       + ` aria-checked="${!r.uit}" aria-label="${r.naam}"></button>`;
   const ladder = (id, instelling, rijen, lo, hi, hier, staart, vinkjes) => `<div class="fase-ladder naad${vinkjes ? ' met-vinkjes' : ''}" id="${pfx}${id}" data-instelling="${instelling}">${rijen.map((r, i) => {
+    const kop = r.kop ? `<div class="fl-blok" aria-hidden="true">${r.kop}</div>` : '';
     const rij = flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}${r.uit ? ' overgeslagen' : ''}`,
       r.v === hier && ava ? ava : i + 1, r.naam, r.vb, r.v,
       (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn('tot', 'onder') : ''));
-    return vinkjes ? `<div class="fl-plek">${rij}${vink(r)}</div>` : rij;
+    return kop + (vinkjes ? `<div class="fl-plek">${rij}${vink(r)}</div>` : rij);
   }).join('')}${staart || ''}</div>`;
   /* Kleine labels, geen titels en geen hulpregels: het voorbeeld en de vorm van
      de bediening zeggen wat een tik doet. Drie vormen, elk voor één soort keuze:
@@ -838,25 +803,31 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde 
       ${perShow}
       ${aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false)}`
   }];
-  /* Het leerpad van rekenen: de stappen van de werelden (zie leerpadStappen),
-     zonder "alles door elkaar" -- daar begin je niet. "vanaf" staat boven de
-     eerste stap die het spel nog speelt; is de gekozen stap met deze
-     instellingen weggevallen (tot 20 of over het tiental bij tot 10), dan is
-     dat de stap ervoor: die speelt in zijn wereld dezelfde sommen. Het kind staat op max(wereld, start), net als in leerStap. */
-  const stappen = leerpadStappen(s).filter(st => st.wereld < LEERSTAPPEN.length);
-  const start = Math.min(s.startStap || 1, stappen[stappen.length - 1].wereld);
-  const startRij = stappen.filter(st => st.wereld <= start).pop().wereld;
-  const wNu = p ? Math.max(continueWorld(p) + 1, start) : 0;
-  const nuStap = Math.min(wNu, stappen[stappen.length - 1].wereld);
-  /* "Alles door elkaar" staat er wél, als laatste rij om te lezen: daar begin je
-     niet, maar een kind dat voorbij de laatste stap speelt staat daar. Zonder
-     die rij stond haar pop op Oefeningen op "Drie getallen", terwijl Voortgang
-     (terecht) "Alles door elkaar" zei. */
-  const voorbij = !!p && wNu >= LEERSTAPPEN.length;
-  const eind = `<div class="fl-plek">${flRij(` eind${voorbij ? ' hier' : ''}`, voorbij ? ava : stappen.length + 1, 'Alles door elkaar')}`
+  /* Het leerpad van rekenen: de rijen van LEERPAD die op háár pad staan (zie
+     padRijen), genummerd op plaats. Twee lijnen, net als bij tellen:
+       vanaf  boven de rij waar het spel minstens begint (s.padVanaf)
+       tot    onder de laatste rij binnen de grens (s.max). Dit ís de grens: de
+              balk "Getallen tot" is weg, want die zei met een getal wat de
+              lijn hier met de rijen zelf zegt.
+     Onder "tot" staat grijs het blok dat komt als de lijn zakt (Tot 50, of
+     Tientallen, Tot 100 en Over het tiental) -- niet alles tot het eind, alleen
+     de volgende stap. "Alles door elkaar" staat helemaal onderaan om te lezen:
+     daar begin je niet, maar een kind voorbij de laatste rij staat daar. */
+  const { rijen: padR, later: padL } = padRijen(s);
+  const padAlle = padR.concat(padL);
+  const blok = r => r.soort === 'bereik' && r.bereik > 20 ? r.bereik : 20;
+  const blokken = plusMin && new Set(padAlle.map(blok)).size > 1;
+  const speel = padR.filter(r => !r.uit);
+  const startPos = speel.length ? padR.indexOf(padVanafRij(s, speel)) + 1 : 1;
+  const nuId = p && padNu(p);
+  const voorbij = nuId === 'alles';
+  const hierPos = p && !voorbij ? padR.findIndex(r => r.id === nuId) + 1 : 0;
+  const eind = `<div class="fl-plek">${flRij(` eind${voorbij ? ' hier' : ''}`, voorbij && ava ? ava : '∞',
+    'Alles door elkaar<small>alles tot de lijn, gemengd</small>')}`
     + '<span class="fl-vink vast" aria-hidden="true"></span></div>';
-  // haar pop staat op de stap waar ze speelt, en een overgeslagen stap speelt ze niet
-  const hier = p && !voorbij && stappen.filter(st => st.wereld <= nuStap && !st.uit).pop();
+  // een stille kop boven elk blok, alleen als er meer dan één blok staat
+  const padRijenLadder = padAlle.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb), keuze: r.keuze, uit: r.uit,
+    kop: blokken && (i === 0 || blok(padAlle[i - 1]) !== blok(r)) ? `Tot ${blok(r)}` : '' }));
   /* + − en × ÷ hebben elk hun eigen maat, en die staat er alleen als ze geldt.
      "Getallen tot" gold vroeger ongezegd ook voor de tafels: met tot 20 en de
      tafel van 7 kwam er nooit meer dan 7 × 2. Nu is "tot" alleen van plus en
@@ -867,13 +838,11 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, html }], in de volgorde 
     kaart: 'wat', html: `${lbl('Sommen')}
       <div class="oe-ops" id="${pfx}set-ops" data-instelling="ops">${opDefs.map(([v, teken, woord]) =>
         `<button class="chip${s.ops.includes(v) ? ' on' : ''}" data-v="${v}" aria-label="${woord}" aria-pressed="${s.ops.includes(v)}">${teken}</button>`).join('')}</div>
-      ${plusMin ? `${lbl('Getallen tot', '+ −')}${balk('set-max', 'max', [[10, '10'], [20, '20'], [50, '50'], [100, '100']], s.max)}` : ''}
       ${tablesRelevant ? `${lbl('Tafels van', '× ÷')}
       <div class="oe-tafels" id="${pfx}set-tables" data-instelling="tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>` : ''}`
   }, {
-    kaart: 'pad', html: `${lbl('Leerpad')}${ladder('set-startstap', 'startStap',
-      stappen.map(st => ({ v: st.wereld, naam: st.naam, vb: flVb(st.vb), keuze: st.keuze, uit: st.uit })),
-      startRij, Infinity, hier && hier.wereld, eind, true)}`
+    kaart: 'pad', html: `${lbl('Leerpad')}${ladder('set-startstap', 'padVanaf', padRijenLadder,
+      startPos, plusMin ? padR.length : Infinity, hierPos, eind, true)}`
   }, {
     kaart: 'show', html: `${lbl('Antwoord')}${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
       ${perShow}`
@@ -893,7 +862,8 @@ function oefenSamenvatting(s) {
   const tot = (s.ops.includes('+') || s.ops.includes('-')) ? ` · tot ${s.max}` : '';
   const tafels = (s.ops.includes('x') || s.ops.includes(':'))
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
-  const start = (s.startStap || 1) > 1 && leerpadStappen(s).filter(st => st.wereld > 1 && st.wereld <= s.startStap).pop();
+  const rijen = padRijen(s).rijen.filter(r => !r.uit);
+  const start = s.padVanaf && rijen.length && padVanafRij(s, rijen) !== rijen[0] && padVanafRij(s, rijen);
   return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}`
        + ` · ${modes[s.mode] || s.mode}${start ? ` · vanaf ${start.naam.toLowerCase()}` : ''}`
        + ` · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
@@ -1407,18 +1377,14 @@ function bindOefenChips(s, p, pfx, done) {
     } else s.tables.push(v);
   });
   // enkelkeuze-chips
-  bind('set-max', c => {
-    grensOmhoog(s, parseInt(c.dataset.v, 10));
-    if (p) s.grensTipBasis = grensDrieSterren(p);   // de tip telt opnieuw (zie grensTip)
-  });
   bind('set-mode', c => {
     s.mode = c.dataset.v;
     if (p) s.grensTipBasis = grensDrieSterren(p);   // ook een antwoordstap telt opnieuw
   });
   bind('set-perlevel', c => { s.perLevel = parseInt(c.dataset.v, 10); });
-  /* De vinkjes op het leerpad: een stap overslaan of weer meenemen (zoek het
+  /* De vinkjes op het leerpad: een rij overslaan of weer meenemen (zoek het
      getal, drie getallen; elk los, standaard aan). Het vinkje is geen .chip --
-     dan zou bind hierboven er ook "vanaf" mee zetten. */
+     dan zou bind hieronder er ook een lijn mee verhuizen. */
   const pad = $((pfx || '') + 'set-startstap');
   if (pad) pad.querySelectorAll('.fl-vink[data-instelling]').forEach(b => b.onclick = () => {
     const k = b.dataset.instelling;
@@ -1451,8 +1417,31 @@ function bindOefenChips(s, p, pfx, done) {
       p.countTrack.stage = Math.min(st, countMaxStage(s)); // live-stand binnen bereik
     }
   });
-  // het leerpad van rekenen: een tik zet "vanaf" (zie leerStap)
-  bind('set-startstap', c => { s.startStap = parseInt(c.dataset.v, 10); });
+  /* Het leerpad van rekenen (zie oefenGroups): een tik verhuist de dichtstbij-
+     zijnde lijn, zoals op de faseladder (even ver: "tot"). Maar "tot" is de
+     grens van de getallen, en die staat altijd aan het eind van een blok (tot
+     10, 20, 50, 100). Dus:
+       een grijze rij onder "tot"   de lijn zakt tot onder zijn blok: de grens
+                                    omhoog (grensOmhoog, met wennen)
+       een rij dicht bij "tot"      de lijn komt aan het eind van het blok van
+                                    die rij -- de vormen horen bij het blok tot
+                                    20. Is dat al het laatste blok, dan is er
+                                    niets af te snijden en verhuist "vanaf".
+     Haar plek op het pad blijft (padNu): "vanaf" tilt haar hoogstens mee omhoog. */
+  bind('set-startstap', c => {
+    const v = parseInt(c.dataset.v, 10);
+    const { rijen, later } = padRijen(s);
+    const r = rijen.concat(later)[v - 1];
+    if (!r) return false;
+    const grens = naar => { grensOmhoog(s, naar); if (p) s.grensTipBasis = grensDrieSterren(p); };   // de tip telt opnieuw (zie grensTip)
+    if (v > rijen.length) return grens(r.bereik);
+    const speel = rijen.filter(x => !x.uit);
+    const lo = speel.length ? rijen.indexOf(padVanafRij(s, speel)) + 1 : 1, hi = rijen.length;
+    const blok = r.soort === 'bereik' ? r.bereik : 20;
+    const plusMin = s.ops.includes('+') || s.ops.includes('-');   // zonder plus en min is er geen "tot"
+    if (plusMin && !(v < lo || v - lo < hi - v) && blok < s.max) return grens(blok);
+    s.padVanaf = v === 1 ? null : r.id;
+  });
   bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); telPlafondOpnieuw(p); });
   bind('set-memory', c => { s.memory = (c.dataset.v === 'on'); });
   bind('set-repr', c => { s.repr = c.dataset.v; });

@@ -7,57 +7,208 @@
    Omdat het gezochte getal altijd één getal is, blijven meerkeuze, typen, hints,
    zwakke-sommen en álle beloningen ongewijzigd werken. */
 
-/* ---- De leerstap: elke wereld leert iets nieuws ------------------------
-   Een wereld is niet alleen een nieuwe tekening maar ook een nieuwe stap in het
-   rekenen, binnen het plafond dat de ouder zette ("getallen tot 20"):
+/* ---- Het leerpad: één ladder, in de volgorde van school -----------------
+   Wat een rekenkind leert staat in één tabel, LEERPAD, in de volgorde waarin
+   een Vlaamse school het brengt. De instellingen bovenaan Oefeningen (+ − × ÷,
+   de tafels, de grens) zeggen welke rijen op háár pad staan; de volgorde zelf
+   verandert nooit. Oefeningen, Voortgang en de vraagmaker lezen alle drie deze
+   tabel (padRijen), en nergens anders staat een lijst stapnamen.
 
-     stap  wereld  wat er nieuw is
-     1     1       sommen tot de helft van het plafond (bij "tot 20": tot 10)
-     2     2       het hele plafond, zonder over een tiental heen (12 + 5, 17 − 4)
-     3     3       over het tiental heen, en dat vaak (8 + 5, 13 − 6)
-     4     4       zoek het getal (3 + ▢ = 7), zodra de gewone som beheerst is
-     5     5       drie getallen (3 + 4 + 2), zodra zoek-het-getal er een wereld
-                   eerder bij kwam -- nooit twee nieuwe dingen tegelijk
-     6     6       alles door elkaar
-   Een wereld die later bijkomt krijgt stap 6: alles, zoals de laatste.
+     soort 'bereik'  de getallen groeien (Tot 10, Tot 20, Over het tiental,
+                     Tot 50, Tientallen, Tot 100). Alleen bij plus of min, en
+                     alleen tot de grens die de ouder koos (s.max): dat is de
+                     lijn "tot" op de ladder.
+     soort 'vorm'    een andere soort vraag met dezelfde getallen (tafels,
+                     delen, zoek het getal, drie getallen). Die laten de
+                     getallen niet groeien, dus de lijn "tot" snijdt ze niet af:
+                     ze staan in de tabel vóór alles boven twintig, en daarmee
+                     altijd boven de lijn. Bij "tot 10" is het pad dus Tot 10,
+                     Zoek het getal, Drie getallen -- zoals het altijd was.
 
-   Waarom. De moeilijkheid liep op het shownummer: 0.35 + 0.07 per show, en dat
-   stond bij show 10 op het plafond. Daarna waren de sommen in wereld 2 tot en
-   met 6 van dezelfde soort, met een andere tekening erachter. Zoek-het-getal
-   kwam op show 25 en drie getallen nooit: die wachtte op "ronde 5", en die begon
-   bij show 49 -- één voorbij de laatste show die er is.
+   Op een rij zijn is cumulatief: alles van de rijen ervoor speelt mee (zie
+   padStand). Een nieuwe rij is dus "dit erbij", nooit "alleen nog dit".
 
-   Wat blijft: de bijsturing op hoe het gaat (perf, ±0.25 op de moeilijkheid, dus
-   een kind dat worstelt krijgt in elke stap lichtere sommen) en de beheersing-
-   poorten van de extra uitdagingen (opMastered, pauze bij worstelen). Zoek-het-
-   getal begint op dezelfde show als altijd: show 1 van wereld 4 ís show 25. De
-   wereld verandert niets aan hoe een som eruitziet -- dat blijft overal gelijk.
-   Wat hij verandert is wát er te leren valt. */
-const LEERSTAPPEN = [
-  { t: 0.5, brug: 'nee' },
-  { t: 1,   brug: 'nee' },
-  { t: 1,   brug: 'vaak' },
-  { t: 1,   brug: 'vrij' },
-  { t: 1,   brug: 'vrij' },
-  { t: 1,   brug: 'vrij' },
+   VOORTGANG OP BEHEERSING, NIET OP DE WERELD. Hier was een stap eerst een
+   wereldnummer: wereld 3 was "over het tiental", hoe het ook ging. Een stap die
+   met de instellingen niet kon, liet zijn wereld de vorige herhalen (alleen ÷:
+   vijf werelden dezelfde sommen), er was geen plek voor nieuwe onderwerpen
+   zonder iedereen een wereld op te schuiven, en de grotere getallen kwamen
+   buiten het pad om, in één keer. Nu blijft ze op een rij tot ze hem kan
+   (padNa), en de werelden zijn alleen nog de reis.
+
+   Een nieuw onderwerp is één rij hier, met zijn plek, zijn voorwaarde (past),
+   zijn voorbeeld (vb) en wat het aan de vragen verandert (padStand) -- geen
+   nieuw scherm, geen nieuwe instelling. test/kern.test.js zaak ZF houdt de
+   volgorde en de voorbeelden vast. */
+const LEERPAD = [
+  { id: 'tot10',      soort: 'bereik', bereik: 10,  brug: 'nee',  naam: 'Tot 10' },
+  { id: 'tot20',      soort: 'bereik', bereik: 20,  brug: 'nee',  naam: 'Tot 20' },
+  { id: 'brug20',     soort: 'bereik', bereik: 20,  brug: 'vaak', naam: 'Over het tiental' },
+  { id: 'tafels',     soort: 'vorm',   op: 'x',                   naam: 'Tafels' },
+  { id: 'delen',      soort: 'vorm',   op: ':',                   naam: 'Delen' },
+  { id: 'zoek',       soort: 'vorm',   keuze: 'missNum',          naam: 'Zoek het getal' },
+  { id: 'drie',       soort: 'vorm',   keuze: 'chain3',           naam: 'Drie getallen' },
+  { id: 'tot50',      soort: 'bereik', bereik: 50,  brug: 'nee',  naam: 'Tot 50' },
+  { id: 'tientallen', soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Tientallen', tientallen: true },
+  { id: 'tot100',     soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Tot 100' },
+  { id: 'brug100',    soort: 'bereik', bereik: 100, brug: 'vaak', naam: 'Over het tiental' },
 ];
-const STAP_ZOEK = 4;      // vanaf deze stap mag zoek-het-getal (zie opReady)
-const STAP_DRIE = 5;      // vanaf deze stap mogen drie getallen (zie chainReady)
-const BRUG_VAAK = 0.5;    // in stap 3: zo vaak gaat een plus- of minsom over het tiental
-/* De ouder kan hoger laten beginnen (Oefenen, het leerpad: s.startStap). Dan is
-   de stap in een wereld de hoogste van de twee: met start "over het tiental"
-   mengt wereld 1 al 8 + 5 erdoor, en vanaf wereld 3 verandert er niets. Het is
-   een instelling en geen voortgang: sterren en werelden blijven wat ze zijn. */
-function leerStap(lvl, s) { return Math.max(worldFor(lvl).index + 1, (s && s.startStap) || 1); }
-function stapVan(lvl, s) { return LEERSTAPPEN[Math.min(leerStap(lvl, s), LEERSTAPPEN.length) - 1]; }
-// Moeilijkheid 0..1: de basis van de stap, bijgestuurd op vaardigheid (perf 0..1 → ±0.25).
-function moeilijkheid(lvl, perf, s) {
-  const skillAdj = ((perf == null ? 0.5 : perf) - 0.5) * 0.5;
-  return Math.max(0.2, Math.min(1, stapVan(lvl, s).t + skillAdj, wenPlafond(s)));
+const PAD_IDX = Object.fromEntries(LEERPAD.map((r, i) => [r.id, i]));
+const BRUG_VAAK = 0.5;    // op een rij "over het tiental": zo vaak gaat een plus- of minsom erover
+const TIENTALLEN_VAAK = 0.6;   // op de rij "tientallen": zo vaak is het een som met hele tientallen
+/* De voorbeelden: altijd gemaakt met wat de ouder koos -- alleen min geeft
+   min-voorbeelden, alleen maal een tafel die aan staat. Elk past binnen het
+   bereik van zijn rij, en de bereik-rijen gaan nooit over het tiental tot de
+   rij die dat brengt (zaak ZF meet het na). */
+const PAD_VB = {
+  '+': { 10: '3 + 4', 20: '12 + 5', 50: '34 + 12', 100: '56 + 23', brug20: '8 + 5', brug100: '47 + 25', tientallen: '40 + 30' },
+  '-': { 10: '7 − 3', 20: '17 − 5', 50: '47 − 12', 100: '86 − 34', brug20: '13 − 6', brug100: '72 − 35', tientallen: '70 − 30' },
+};
+function padVoorbeeld(r, s) {
+  const pm = s.ops.includes('+') ? '+' : '-';
+  const tafel = Math.max(...(s.tables.length ? s.tables : [2, 5, 10]));
+  const keer = tafel === 7 ? 8 : 7;                   // 7 × 7 leest als een vergissing
+  if (r.id === 'tafels') return `${keer} × ${tafel}`;
+  if (r.id === 'delen') return `${keer * tafel} : ${tafel}`;
+  if (r.id === 'drie') return '3 + 4 + 2';
+  if (r.id === 'zoek') return s.ops.includes('+') ? (s.max > 10 ? '7 + ▢ = 12' : '3 + ▢ = 7')
+    : s.ops.includes('-') ? '9 − ▢ = 4' : `3 × ▢ = ${3 * tafel}`;
+  return PAD_VB[pm][r.brug === 'vaak' ? r.id : r.tientallen ? 'tientallen' : r.bereik];
 }
-/* Wennen aan een hogere grens. Vanaf wereld 2 staat t al op 1, dus "tot 50"
-   gaf meteen het hele nieuwe bereik (37 + 8, over het tiental) aan een kind
-   dat net nog tot twintig rekende. Nu klimt het plafond in WEN_SHOWS shows van
+// Kan deze rij met deze instellingen? (bereik: ook binnen de grens -- zie padRijen)
+function padPast(r, s) {
+  const plusMin = s.ops.includes('+') || s.ops.includes('-');
+  if (r.soort === 'bereik') return plusMin && (r.brug !== 'vaak' || r.bereik > 10);
+  if (r.op) return s.ops.includes(r.op);
+  if (r.id === 'zoek') return s.ops.some(o => o !== ':');
+  if (r.id === 'drie') return s.ops.includes('+');
+  return true;
+}
+/* Het pad van dit kind: { rijen, later }. rijen = wat ze speelt (tot de grens),
+   later = het volgende blok erachter, grijs op de ladder: dat komt er als de
+   lijn "tot" zakt. Elke rij: { id, naam, vb, keuze, uit, ... } -- uit = de ouder
+   vinkte hem weg; hij blijft staan, doorgestreept, en ze slaat hem over. */
+function padRijen(s) {
+  const plusMin = s.ops.includes('+') || s.ops.includes('-');
+  const rij = r => ({ ...r, vb: padVoorbeeld(r, s), uit: !!r.keuze && s[r.keuze] === false });
+  const rijen = LEERPAD.filter(r => padPast(r, s) && (r.soort !== 'bereik' || r.bereik <= s.max)).map(rij);
+  const volgende = plusMin && LEERPAD.filter(r => r.soort === 'bereik' && r.bereik > s.max)
+    .reduce((m, r) => Math.min(m, r.bereik), Infinity);
+  const later = plusMin ? LEERPAD.filter(r => r.soort === 'bereik' && r.bereik === volgende && padPast(r, s)).map(rij) : [];
+  return { rijen, later };
+}
+/* Waar staat ze? p.pad = { rij, shows, goed, klaar }: klaar zijn de rijen die
+   ze gehaald heeft (zie padNa), rij de rij waar shows en goed over tellen. Ze
+   staat op de eerste rij van haar pad die nog niet klaar is, en nooit vóór
+   "vanaf" (s.padVanaf). Zo kan het pad onder haar veranderen zonder dat er iets
+   verloren gaat: zet de ouder × aan, dan komt Tafels terug ook als ze al verder
+   was; laat de ouder de lijn "tot" zakken, dan komen de nieuwe getallen op hun
+   plek -- ook Tot 20 bij een kind dat tot tien al alles door elkaar deed, al
+   staat die rij in de tabel vóór Zoek het getal. Geeft het id, of 'alles' als
+   er geen rij meer open is. Verandert niets. */
+function padNu(p) {
+  const speel = padRijen(p.settings).rijen.filter(r => !r.uit);
+  if (!speel.length) return 'alles';
+  const vanaf = PAD_IDX[padVanafRij(p.settings, speel).id];
+  const klaar = new Set((p.pad && p.pad.klaar) || []);
+  const r = speel.find(x => PAD_IDX[x.id] >= vanaf && !klaar.has(x.id));
+  return r ? r.id : 'alles';
+}
+/* "vanaf" op dit pad: de eerste rij die ze speelt op of na s.padVanaf. Valt die
+   achter de lijn "tot" (de ouder zette de grens lager), dan is het de laatste
+   rij: vanaf kan nooit onder tot staan, net als bij tellen. */
+function padVanafRij(s, speel) {
+  speel = speel || padRijen(s).rijen.filter(r => !r.uit);
+  const v = PAD_IDX[s.padVanaf];
+  if (v == null) return speel[0];
+  return speel.find(r => PAD_IDX[r.id] >= v) || speel[speel.length - 1];
+}
+/* Een save van vóór het leerpad had een leerstap per wereld (1 tot 6, de
+   hoogste van de wereld en "vanaf"). Waar staat ze nu? Op de eerste rij van
+   haar pad die minstens speelt wat die stap speelde -- nooit makkelijker dan
+   ze gewend was, wel soms iets verder (stap 1 bij tot 50 speelde al tot 25,
+   dat is hier de rij Tot 50). Stap 6 was "alles door elkaar": dat blijft het.
+   Zie migrate. Geeft een rij-id of 'alles'. */
+function padUitOudeStap(s, stap) {
+  const speel = padRijen(s).rijen.filter(r => !r.uit);
+  if (stap >= 6 || !speel.length) return 'alles';
+  const plusMin = s.ops.includes('+') || s.ops.includes('-');
+  const bereik = stap === 1 ? Math.max(10, Math.round(s.max * 0.5)) : s.max;
+  const r = speel.find(x => {
+    const st = padStand(s, x.id);
+    return (!plusMin || st.max >= bereik)
+      && (stap < 3 || !plusMin || s.max <= 10 || st.brug !== 'nee')
+      && (stap < 4 || !speel.some(y => y.id === 'zoek') || st.missNum)
+      && (stap < 5 || !speel.some(y => y.id === 'drie') || st.chain3);
+  });
+  return r ? r.id : 'alles';
+}
+/* Wat er op haar rij speelt: de instellingen zoals de vraagmaker ze leest.
+   Cumulatief -- alles van de rijen tot en met deze doet mee:
+     max      het bereik van de laatste bereik-rij (zonder: de grens)
+     brug     op een bereik-rij die van de rij zelf (nieuwe getallen eerst
+              zonder over het tiental, op "over het tiental" vaak); daarna vrij,
+              als "over het tiental" er al was
+     ops      + − vanaf de eerste bereik-rij, × vanaf Tafels, : vanaf Delen
+     missNum, chain3   zoek het getal en drie getallen, vanaf hun rij en als ze
+              aangevinkt zijn
+     tientallen  alleen op de rij zelf: vaak een som met hele tientallen
+   Op 'alles' is het alles tot de lijn, gemengd.
+   klaar (p.pad.klaar): een vorm die ze al haalde blijft meedoen, ook als ze
+   terug moet naar een rij ervoor (de lijn "tot" zakte, zie padNu): wie de
+   tafels kent, verliest ze niet omdat Tot 20 er nog tussen kwam. */
+function padStand(s, nuId, klaar) {
+  const rijen = padRijen(s).rijen;
+  const i = nuId === 'alles' ? rijen.length - 1 : rijen.findIndex(r => r.id === nuId);
+  const tot = rijen.slice(0, Math.max(0, i) + 1);
+  const nu = nuId === 'alles' ? null : tot[tot.length - 1];
+  const bereik = tot.filter(r => r.soort === 'bereik');
+  const gehaald = new Set(klaar || []);
+  const heeft = id => rijen.some((r, j) => r.id === id && !r.uit && (j <= i || gehaald.has(id)));
+  const ops = s.ops.filter(o => (o === '+' || o === '-') ? bereik.length > 0 : heeft(o === 'x' ? 'tafels' : 'delen'));
+  return {
+    max: bereik.length ? bereik[bereik.length - 1].bereik : s.max,
+    brug: nu && nu.soort === 'bereik' ? nu.brug : tot.some(r => r.brug === 'vaak') ? 'vrij' : 'nee',
+    ops: ops.length ? ops : s.ops.slice(0, 1),
+    missNum: heeft('zoek'),
+    chain3: heeft('drie'),
+    tientallen: !!(nu && nu.tientallen),
+  };
+}
+// De instellingen voor de vraagmaker: die van de ouder, met haar rij erover.
+function vraagInst(p) { return { ...p.settings, ...padStand(p.settings, padNu(p), p.pad && p.pad.klaar) }; }
+/* Na een rekenshow: een show verder op haar rij. Ze gaat door als ze hem kan --
+   minstens PAD_MIN_SHOWS shows erop en de laatste twee met drie sterren -- of
+   na PAD_MAX_SHOWS shows toch: zo is ze nooit trager dan toen elke stap één
+   wereld (acht shows) duurde. Wat ze nog lastig vindt komt daarna terug via de
+   zwakke sommen, niet doordat ze op de rij blijft hangen. */
+const PAD_MIN_SHOWS = 3, PAD_MAX_SHOWS = 8, PAD_GOED = 2;
+function padNa(p, sterren) {
+  const nu = padNu(p);
+  if (nu === 'alles') return false;
+  const pad = p.pad = p.pad || { klaar: [] };
+  if (!Array.isArray(pad.klaar)) pad.klaar = [];
+  if (pad.rij !== nu) Object.assign(pad, { rij: nu, shows: 0, goed: 0 });
+  pad.shows++;
+  pad.goed = sterren >= 3 ? pad.goed + 1 : 0;
+  if (!((pad.shows >= PAD_MIN_SHOWS && pad.goed >= PAD_GOED) || pad.shows >= PAD_MAX_SHOWS)) return false;
+  /* Klaar: deze rij, en alles ervoor op haar pad -- ook wat "vanaf" oversloeg.
+     Zet de ouder "vanaf" daarna terug, dan hoeft ze dat niet alsnog te doen. */
+  padRijen(p.settings).rijen.forEach(r => {
+    if (PAD_IDX[r.id] <= PAD_IDX[nu] && !pad.klaar.includes(r.id)) pad.klaar.push(r.id);
+  });
+  Object.assign(pad, { rij: padNu(p), shows: 0, goed: 0 });
+  return true;
+}
+// Moeilijkheid 0..1, bijgestuurd op vaardigheid (perf 0..1 → ±0.25): een kind
+// dat worstelt krijgt op elke rij lichtere sommen, nooit zwaardere dan de rij.
+function moeilijkheid(perf, s) {
+  const skillAdj = ((perf == null ? 0.5 : perf) - 0.5) * 0.5;
+  return Math.max(0.2, Math.min(1, 1 + skillAdj, wenPlafond(s)));
+}
+/* Wennen aan een hogere grens. Een bereik-rij speelt meteen zijn hele bereik,
+   dus "tot 50" gaf een kind dat net nog tot twintig rekende meteen 37 + 12.
+   Nu klimt het plafond in WEN_SHOWS shows van
    WEN_VAN naar 1: van twintig naar vijftig begint dus rond de dertig. s.wennen
    telt af (zie endLevel) en wordt gezet als de grens omhoog gaat, met de tip of
    op Oefeningen (zie grensOmhoog). Omlaag is meteen: kleiner hoeft niet te wennen. */
@@ -81,18 +232,28 @@ function overTiental(a, b, c, op) {
   return false;
 }
 
-// Bouwt één geldige, niet-negatieve, exacte drieling voor een bewerking.
-// Alles komt uit de moeilijkheidslogica hierboven (leerstap + vaardigheid).
+/* Bouwt één geldige, niet-negatieve, exacte drieling voor een bewerking.
+   s zijn de instellingen zoals vraagInst ze maakt: die van de ouder met haar
+   rij op het leerpad erover (max, brug, tientallen). lvl doet niet meer mee --
+   de wereld zegt niet meer wat er te leren valt (zie "Het leerpad"). */
 function genTriple(s, lvl, perf, op) {
   // Zo krijgt een kind dat worstelt lichtere sommen en een sterk kind wat pittigere.
-  const t = moeilijkheid(lvl, perf, s);
+  const t = moeilijkheid(perf, s);
   const effMax = Math.max(10, Math.round(s.max * t)); // binnen ingestelde grens
   const tables = s.tables.length ? s.tables : [2, 5, 10];
   let a, b, c, sym;
   if (op === '+' || op === '-') {
-    /* De tiental-regel van deze stap. Onder de 11 kán een som niet over het
+    /* De tiental-regel van haar rij. Onder de 11 kán een som niet over het
        tiental, dus dan valt er niets te kiezen en wordt er ook niet gezocht. */
-    const brug = stapVan(lvl, s).brug;
+    const brug = s.brug || 'vrij';
+    /* De rij "tientallen": vaak een som met hele tientallen (40 + 30, 70 − 30),
+       de rest gewoon -- het nieuwe is er het meest, niet als enige. */
+    if (s.tientallen && effMax >= 20 && Math.random() < TIENTALLEN_VAAK) {
+      const T = Math.floor(effMax / 10);
+      if (op === '+') { a = 10 * rnd(1, T - 1); b = 10 * rnd(1, T - a / 10); c = a + b; }
+      else { a = 10 * rnd(2, T); b = 10 * rnd(1, a / 10 - 1); c = a - b; }
+      return { a, b, c, sym: op === '+' ? '+' : '−', op, t, effMax };
+    }
     const wilBrug = brug === 'vaak' && effMax > 10 && Math.random() < BRUG_VAAK;
     const magBrug = brug !== 'nee';
     let poging = 0;
@@ -142,7 +303,7 @@ function genMissing(s, lvl, perf, op) {
 // ingestelde bovengrens; elke term is bescheiden (≈ hooguit de helft), zodat het
 // hoofdrekenen behapbaar blijft. 0-termen mogen, maar niet te vaak.
 function genChain(s, lvl, perf) {
-  const t = moeilijkheid(lvl, perf, s);
+  const t = moeilijkheid(perf, s);
   const effMax = Math.max(10, Math.round(s.max * t));
   const cap = Math.max(1, Math.floor(effMax / 2));
   let a, b, c, sum, tries = 0;
@@ -179,9 +340,10 @@ function genChain(s, lvl, perf) {
 function keuzeGrens(q, s, lvl) {
   const getallen = (q.tmpl.match(/\d+/g) || []).map(Number).concat(q.ans);
   const hoogste = Math.max(...getallen);
-  // plus en min: de grens van de leerstap, zoals genTriple hem rekent (zonder
-  // de bijsturing op hoe het gaat -- daarom ook nooit onder wat er al staat)
-  if (q.op === '+' || q.op === '-') return Math.max(hoogste, 10, Math.round(s.max * stapVan(lvl, s).t));
+  // plus en min: het bereik van haar rij, zoals genTriple het rekent (zonder
+  // de bijsturing op hoe het gaat -- daarom ook nooit onder wat er al staat).
+  // s is vraagInst: max is het bereik van de rij, niet de grens van de ouder.
+  if (q.op === '+' || q.op === '-') return Math.max(hoogste, 10, s.max);
   // tafels: tot het volgende tiental
   return Math.max(10, Math.ceil(hoogste / 10) * 10);
 }
@@ -957,7 +1119,7 @@ function buildMemoryDeck(p) {
 /* De rekenvariant: een som en zijn antwoord vormen een paar. Elk antwoord komt
    maar één keer voor, anders passen er twee sommen bij hetzelfde getal. Eerst de
    sommen die ze lastig vindt en die nog passen (zwaarste eerst), de rest uit dezelfde maker als de
-   show, op de stap van de wereld waar ze nu is. */
+   show, op haar rij van het leerpad. */
 function memSomDeck(p) {
   const pairs = MEM_MIN_PAREN;
   const gekozen = [], antwoorden = new Set();
@@ -965,12 +1127,13 @@ function memSomDeck(p) {
     if (gekozen.length >= pairs || antwoorden.has(ans) || !/ = @$/.test(tmpl)) return;
     antwoorden.add(ans); gekozen.push({ som: tmpl.replace(/ = @$/, ''), v: ans });
   };
-  Object.entries(p.weak || {}).filter(([tmpl, e]) => pastNog(tmpl, e, p.settings))
+  const inst = vraagInst(p);
+  Object.entries(p.weak || {}).filter(([tmpl, e]) => pastNog(tmpl, e, inst))
     .sort((a, b) => b[1].w - a[1].w).slice(0, 2)
     .forEach(([tmpl, e]) => neem(tmpl, e.ans));
   const lvl = WORLD_START[continueWorld(p)] || 1;
   for (let poging = 0; gekozen.length < pairs && poging < 60; poging++) {
-    const q = genQuestion(p.settings, lvl, p.perf);
+    const q = genQuestion(inst, lvl, p.perf);
     neem(q.tmpl, q.ans);
   }
   const cards = [];
@@ -1278,19 +1441,20 @@ function buildQuestion(p, lvl, g) {
   if (g) for (let i = Math.max(0, g.idx - HERHAAL_AFSTAND); i < g.idx; i++) if (g.qs[i]) net.push(g.qs[i].tmpl);
   const al = g && g.herhaald;
   const mag = k => !net.includes(k) && !(al && al.has(k));
+  const s = (g && g.inst) || vraagInst(p);      // haar rij op het leerpad (zie vraagInst)
   if (Math.random() < 0.35) {
-    const wq = pickWeak(p, p.settings, mag);
+    const wq = pickWeak(p, s, mag);
     if (wq) { if (al) al.add(wq.tmpl); return wq; }
   }
   // onderhoud: af en toe een som die al geleerd is maar lang niet langskwam
   if (Math.random() < 0.12) {
-    const rq = pickRefresh(p, p.settings, mag);
+    const rq = pickRefresh(p, s, mag);
     if (rq) { if (al) al.add(rq.tmpl); return rq; }
   }
   // een verse som, maar niet precies die van net (een paar pogingen, en dan
   // toch: bij "tot 10" met alleen plus is de pot klein)
   let q, poging = 0;
-  do { q = genQuestion(p.settings, lvl, p.perf); } while (net.includes(q.tmpl) && ++poging < 8);
+  do { q = genQuestion(s, lvl, p.perf); } while (net.includes(q.tmpl) && ++poging < 8);
   return q;
 }
 
@@ -1305,7 +1469,7 @@ function buildQuestion(p, lvl, g) {
 // pogingen en of het (met hysterese) op pauze staat.
 function ot(p, op) {
   let t = p.opTrack[op];
-  if (!t) { t = { n: 0, acc: 0.5, paused: false, unlockStap: null, fast: 0.5 }; p.opTrack[op] = t; }
+  if (!t) { t = { n: 0, acc: 0.5, paused: false, fast: 0.5 }; p.opTrack[op] = t; }
   if (t.fast == null) t.fast = 0.5;   // bestaande spelers: neutraal beginnen
   return t;
 }
@@ -1336,31 +1500,22 @@ function opMastered(p, op) {
   // voldoende pogingen gaat de poort alsnog open.
   return (t.fast == null ? 0.5 : t.fast) >= FLUENT_MIN || t.n >= PATIENCE_N;
 }
-// Klaar voor zoek-het-getal bij deze bewerking: vanaf leerstap STAP_ZOEK (wereld
-// 4), beheerst, niet op pauze.
-function opReady(p, op, stap) {
+/* Klaar voor zoek het getal bij deze bewerking: haar rij op het leerpad heeft
+   het (s.missNum, zie padStand), de bewerking speelt al (s.ops: × pas vanaf de
+   rij Tafels), ze beheerst hem, en ze staat er niet op pauze. s = vraagInst.
+   Wanneer het komt zegt het leerpad; "nooit twee nieuwe dingen tegelijk" ook:
+   zoek het getal en drie getallen zijn twee rijen, en een rij duurt tot ze hem
+   kan. */
+function opReady(p, op, s) {
   const t = p.opTrack[op];
-  if (!t || stap < STAP_ZOEK || t.paused) return false;
+  if (!s.missNum || !s.ops.includes(op) || !t || t.paused) return false;
   return opMastered(p, op);
 }
-// Klaar voor drie-getallen (alleen optellen): vanaf leerstap STAP_DRIE (wereld 5),
-// tel-beheersing, en pas nadat zoek-het-getal voor + in een éérdere wereld is
-// losgekomen — nooit twee nieuwe dingen in dezelfde wereld. Werkt met de
-// tel-beheersing, ook als de ouder missNum uit heeft.
-function chainReady(p, s, stap) {
-  const ct = p.chainTrack;
-  if (stap < STAP_DRIE || ct.paused) return false;
-  if (!opMastered(p, '+')) return false;
-  const plus = p.opTrack['+'];
-  if (!plus || plus.unlockStap == null || stap - plus.unlockStap < 1) return false;
-  return true;
-}
-// Zet de "sinds-stap"-stempel zodra een bewerking beheerst is (voor de chain-gate).
-function refreshReadiness(p, stap) {
-  ['+', '-', 'x', ':'].forEach(op => {
-    const t = ot(p, op);
-    if (stap >= STAP_ZOEK && opMastered(p, op) && t.unlockStap == null) t.unlockStap = stap;
-  });
+// Klaar voor drie getallen (alleen optellen): haar rij heeft het, ze beheerst
+// het optellen, en ze staat er niet op pauze.
+function chainReady(p, s) {
+  if (!s.chain3 || !s.ops.includes('+') || p.chainTrack.paused) return false;
+  return opMastered(p, '+');
 }
 // Werkt de per-bewerking-nauwkeurigheid bij ná de definitieve afronding van een
 // klassieke som (niet bij een tussentijdse herkansing). Pauze met hysterese,
@@ -1410,25 +1565,25 @@ function pickSlots(total, count, avoid) {
 // Roostert de speciale vragen van dit optreden in: hoeveel, welk type, welke plek.
 // Zolang drie-getallen nog in de introductiefase zit (trap < 2) mag er hoogstens
 // één speciale vraag per ronde zijn — óf zoek-het-getal, óf drie-getallen, nooit beide.
-/* Na de laatste leerstap is het "alles door elkaar", en dan voelt wereld 7
-   precies als wereld 6. Dus krijgt elke wereld daarna om de beurt een accent:
+/* Voorbij de laatste rij is het "alles door elkaar", en dan voelt de ene wereld
+   precies als de vorige. Dus krijgt elke wereld dan om de beurt een accent:
    een gewone, een met extra zoek-het-getal, een met extra drie getallen. Er
    komt niets nieuws bij en niets wordt moeilijker -- het zijn dezelfde vragen,
    alleen vaker die ene soort, en alleen als die soort al vrij is (opReady,
-   chainReady). Zo heeft elke wereld iets eigens zonder dat de ouder iets hoeft. */
+   chainReady). Zo heeft elke wereld iets eigens zonder dat de ouder iets hoeft.
+   Op een rij van het leerpad is er geen accent: daar is de rij zelf het nieuwe. */
 const WERELD_ACCENT = [null, 'miss', 'chain'];
-function wereldAccent(stap) {
-  return stap < LEERSTAPPEN.length ? null : WERELD_ACCENT[(stap - LEERSTAPPEN.length) % WERELD_ACCENT.length];
+function wereldAccent(lvl, nuId) {
+  return nuId === 'alles' ? WERELD_ACCENT[worldFor(lvl).index % WERELD_ACCENT.length] : null;
 }
-function planSpecials(p, s, total, stap, goldIdx) {
-  refreshReadiness(p, stap);
-  const missOps = (s.missNum ? s.ops : []).filter(o => ['+', '-', 'x'].includes(o) && opReady(p, o, stap));
+// s = vraagInst (haar rij erover), accent = wereldAccent
+function planSpecials(p, s, total, accent, goldIdx) {
+  const missOps = s.ops.filter(o => ['+', '-', 'x'].includes(o) && opReady(p, o, s));
   const missAvail = missOps.length > 0;
-  const chainAvail = !!s.chain3 && chainReady(p, s, stap);
+  const chainAvail = chainReady(p, s);
   const twoOk = s.perLevel >= 8;   // 2 speciale vragen alleen bij lange optredens (≥8)
   const both = missAvail && chainAvail;
   let types = [];
-  const accent = wereldAccent(stap);
   if (accent === 'miss' && missAvail) {
     types = twoOk ? ['miss', 'miss'] : ['miss'];
   } else if (accent === 'chain' && chainAvail) {

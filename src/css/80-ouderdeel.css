@@ -298,6 +298,13 @@
   .fl-rij .fl-lijn.boven { top: -10px; }
   .fl-rij .fl-lijn.onder { bottom: -10px; }
   .fl-rij .fl-lijn::before { flex: 0 0 18px; }
+  /* De stille kop boven een blok op het leerpad van rekenen (Tot 20, Tot 50,
+     Tot 100): alleen als er meer dan één blok staat. Klein en gedempt, zodat
+     hij groepeert zonder een lijn te lijken -- de lijnen zijn vanaf en tot. */
+  .fl-blok {
+    margin: 8px 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase;
+    color: var(--paper-ink-muted);
+  }
   /* De vinkjes op het leerpad van rekenen (zie oefenGroups): elke stap heeft er
      één, in één kolom rechts. Het vinkje is een eigen knop naast de rij, dus
      de rij en het vinkje staan samen in een .fl-plek. Het raakvlak is 40px
@@ -338,7 +345,7 @@
   .fl-rij.eind:not(.hier) { color: var(--paper-ink-muted); }
   .vg-ladder .fl-rij.klaar, .vg-ladder .fl-rij.later { color: var(--paper-ink-muted); }
   .vg-ladder .fl-rij.later .fl-vb { opacity: .7; }
-  .vg-ladder .fl-naam small { display: block; font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted); margin-top: 1px; }
+  .fl-naam small { display: block; font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted); margin-top: 1px; }
   /* ---- De moduskeuze: twee helften, niet twee pillen --------------------
      Dit is de zwaarste keuze van het scherm (ze verandert alles eronder), dus
      krijgt ze de volle breedte in plaats van twee pillen die links samendrommen.
