@@ -4771,6 +4771,9 @@ function renderProfiles() {
   // alleen op het lege scherm: wat is dit spel (zie de opmaak van #over-hint)
   const hint = $('over-hint');
   if (hint) hint.style.display = n ? 'none' : 'flex';
+  // en eronder: al gespeeld op een ander toestel? (zie = Overzetten)
+  const codeHint = $('code-hint');
+  if (codeHint) codeHint.style.display = !n && overzetMag() ? 'flex' : 'none';
   renderGeluid();
   appKnopZet();
   /* HIER WORDT NIET MEER GEZWAAID. Dit scherm had zijn eigen begroeting: alle
@@ -14906,8 +14909,8 @@ function oefenenPanelHtml(p, s) {
      .paper     -- de knoppen die iets vervángen (terugzetten). De bevestiging
                    erachter is ongewijzigd -- dit is de vindbaarheid, niet de
                    beveiliging.
-   Komt er ooit een account of een cloud bij, dan groeit dát uit de back-upkaart
-   -- geen eigen kaart of eigen kopje ernaast. */
+   Wat er sindsdien bij kwam (overzetten naar een ander toestel) groeide uit de
+   back-up, niet ernaast: het staat in hetzelfde blad (openBackupBlad). */
 /* Geluid: één rij, de eerste onder "Voor alle sterren" -- het geldt voor het
    hele toestel, niet voor één kind. Dezelfde rij als in "Show stoppen?" (zie
    renderGeluid); de hele rij is de schakelaar. */
@@ -14917,37 +14920,38 @@ function geluidRijHtml() {
         <span class="gi-ico" aria-hidden="true">${db.sound ? '🔊' : '🔇'}</span><span class="gi-label">Geluid<span class="gi-sub">Muziek en de stem die voorleest</span></span><span class="gi-state${db.sound ? '' : ' off'}" id="set-sound-state">${db.sound ? 'Aan' : 'Uit'}</span>
       </button>`;
 }
-/* Wat voor alle sterren geldt, onderaan het overzicht. Twee kaarten:
+/* Wat voor alle sterren geldt, onderaan het overzicht: één kaart met stille
+   rijen, in deze volgorde:
 
-     * de stille rijen -- Geluid, en "Als app ›" zolang het spel nog in de
-       browser draait. Die tweede opent hetzelfde blad als het knopje op de
-       sterrenkeuze (openAppBlad); hier stond eerst een eigen kaart met de
-       uitleg in zinnen, en het blad zegt het beter, met de stappen erbij.
-     * de back-up -- de enige kaart waar een ouder voor terug moet komen, want
-       er is geen cloud. De ondertitel is de zin die een ouder het meest moet
-       weten: alles staat alleen op dit toestel. Maken en terugzetten staan naast
-       elkaar; wat terugzetten vervangt, zegt de vraag die erna komt. */
+     * Geluid -- de schakelaar.
+     * Back-up › -- de datum van de laatste back-up, grijs. Nooit, of langer dan
+       BACKUP_OUD_DAGEN geleden, dan is die datum amber met een stipje: de
+       herinnering blijft, maar een ouder die hier voor iets anders komt kijkt
+       niet meer tegen een gele balk en twee grote knoppen aan. Een back-up maak
+       je zelden; de knoppen staan in het blad erachter (openBackupBlad).
+     * Als app › -- zolang het spel nog in de browser draait. Die opent hetzelfde
+       blad als het knopje op de sterrenkeuze (openAppBlad). Hij staat als laatste
+       omdat hij verdwijnt zodra het spel geïnstalleerd is: dan schuift er niets.
+
+   Hier stond eerst een eigen back-upkaart met een amber regel en Maken naast
+   Terugzetten. Die vroeg bij elk bezoek even hard om aandacht als de sterren
+   erboven, voor iets wat een ouder een paar keer per jaar doet. */
 function appWideCardsHtml() {
   const alsApp = (beginschermNetErop || speeltAlsApp()) ? '' : `
       <button class="gear-item" id="set-alsapp" type="button">
         <span class="gi-ico" aria-hidden="true">📲</span><span class="gi-label">Als app</span><span class="gi-pijl" aria-hidden="true">›</span>
       </button>`;
   return `
-    <div class="set-card geluid-kaart">${geluidRijHtml()}${alsApp}
+    <div class="set-card geluid-kaart">${geluidRijHtml()}
+      <button class="gear-item" id="set-backup" type="button">
+        <span class="gi-ico" aria-hidden="true">🗄️</span><span class="gi-label">Back-up${backupStandHtml()}</span><span class="gi-pijl" aria-hidden="true">›</span>
+      </button>${alsApp}
     </div>
-    <div class="set-card">
-      <div class="set-card-head"><div class="ico">🗄️</div><div><h2>Back-up</h2><div class="sub">Alles staat alleen op dit toestel</div></div></div>
-      ${backupStandHtml()}
-      <div class="data-btns naast">
-        <button class="btn small purple" id="set-export">💾 Maken</button>
-        <button class="btn small paper" id="set-import">📂 Terugzetten</button>
-      </div>
-      ${importInvoerHtml()}
-    </div>`;
+    ${importInvoerHtml()}`;
 }
 /* Wanneer de laatste back-up was. Amber zolang er nooit een was of de laatste
    langer dan vier weken geleden is -- vier weken spelen is te veel om kwijt te
-   raken; groen daarna. Alleen hier, in het ouderdeel: een kind krijgt hier nooit
+   raken; grijs daarna. Alleen hier, in het ouderdeel: een kind krijgt hier nooit
    een melding over te zien. */
 const BACKUP_OUD_DAGEN = 28;
 function backupDagen(nu) {
@@ -14958,18 +14962,21 @@ function backupOud(nu) {
   const dagen = backupDagen(nu);
   return dagen === null || dagen > BACKUP_OUD_DAGEN;
 }
-function backupStandHtml(nu) {
+function backupWanneer(nu) {
   const dagen = backupDagen(nu);
-  const wanneer = dagen === null ? null
-    : dagen === 0 ? 'vandaag'
-    : dagen === 1 ? 'gisteren'
+  return dagen === null ? 'Nog nooit gemaakt'
+    : dagen === 0 ? 'Vandaag'
+    : dagen === 1 ? 'Gisteren'
     : dagen < 14 ? `${dagen} dagen geleden`
     : dagen < 60 ? `${Math.floor(dagen / 7)} weken geleden`
     : `${Math.floor(dagen / 30)} maanden geleden`;
+}
+// De onderregel van de rij Back-up. Dezelfde id als de oude regel in de kaart, dus
+// exportData werkt hem ter plekke bij.
+function backupStandHtml(nu) {
   const oud = backupOud(nu);
-  const tekst = wanneer ? `Laatste back-up: ${wanneer}` : 'Nog nooit een back-up gemaakt';
-  return `<div class="backup-stand${oud ? ' oud' : ''}" id="set-backup-stand">`
-    + `<span aria-hidden="true">${oud ? '⚠️' : '✓'}</span> ${tekst}</div>`;
+  return `<span class="gi-sub backup-stand${oud ? ' oud' : ''}" id="set-backup-stand">${backupWanneer(nu)}`
+    + (oud ? '<span class="gi-dot" aria-hidden="true"></span>' : '') + '</span>';
 }
 // Het verborgen bestandsveld achter "terugzetten". Eén keer per paneel, en in
 // beide panelen (met en zonder sterren) onder hetzelfde id -- bindSettings bindt
@@ -15043,13 +15050,24 @@ function deelOver() {
    waar begin je? Een ster maken is de tweede mogelijkheid, en die staat hier
    gewoon als knop (de kiezer met zijn "+" is er zonder sterren niet). */
 function beheerEmptyHtml() {
-  return `<div class="settings-panel">
-    <div class="set-card">
-      <div class="set-card-head"><div class="ico">🌟</div><div><h2>Nog geen sterren</h2><div class="sub">Al gespeeld op een ander toestel? Zet de back-up hier terug.</div></div></div>
-      <div class="data-btns">
+  /* Met overzetten erbij (zie = Overzetten) zijn er twee manieren om je sterren
+     terug te krijgen: een code van het andere toestel, of een bestand. Twee
+     tegels naast elkaar, de code eerst -- dat is de snelste. Zonder overzetten
+     (vanaf file://) blijft het de ene volle knop. */
+  const terug = overzetMag()
+    ? `<div class="bb-tegels">
+        <button class="bb-tegel" id="oz-code" type="button">${ozIco('code')}Code invullen</button>
+        <button class="bb-tegel" id="set-import" type="button">${ozIco('terug')}Back-up terugzetten</button>
+      </div>
+      <div class="data-btns"><button class="btn small paper" id="set-newstar">➕ Nieuwe ster maken</button></div>`
+    : `<div class="data-btns">
         <button class="btn small purple" id="set-import">📂 Back-up terugzetten…</button>
         <button class="btn small paper" id="set-newstar">➕ Nieuwe ster maken</button>
-      </div>
+      </div>`;
+  return `<div class="settings-panel">
+    <div class="set-card">
+      <div class="set-card-head"><div class="ico">🌟</div><div><h2>Nog geen sterren</h2><div class="sub">Al gespeeld op een ander toestel?${overzetMag() ? '' : ' Zet de back-up hier terug.'}</div></div></div>
+      ${terug}
       ${importInvoerHtml()}
     </div>${beginschermKaartHtml(false)}${ouderVoetHtml()}
   </div>`;
@@ -15522,6 +15540,8 @@ function bindSettings(p, s) {
   on('stem-aan', 'onclick', () => { if (!db.sound) toggleSound(); renderSettings(); });
   on('set-sound', 'onclick', toggleSound);
   on('set-alsapp', 'onclick', () => openAppBlad(false));
+  on('set-backup', 'onclick', openBackupBlad);
+  on('oz-code', 'onclick', () => openCodeBlad(false));
   // het overzicht: een tik op een ster opent haar pagina
   document.querySelectorAll('#set-sterren .ster-rij[data-key]').forEach(b => {
     b.onclick = () => openSter(b.dataset.key);
@@ -15561,6 +15581,42 @@ function exportData() {
   // de regel bovenaan de kaart meteen bijwerken, zonder het hele paneel te herbouwen
   const stand = $('set-backup-stand');
   if (stand) stand.outerHTML = backupStandHtml();
+  const blad = $('bb-stand');
+  if (blad) blad.outerHTML = backupBladStandHtml();
+}
+
+/* Is dit een save van óns? Hiervoor stond hier "heeft p1 én p2". Die sleutels
+   zijn niet meer heilig: een familie kan één ster hebben, of vijf, of er net
+   eentje verwijderd hebben. Dus kijken we naar de vórm van elk profiel in plaats
+   van naar de namen van de sleutels -- en meteen streng genoeg dat migrate() er
+   verderop niet op stukloopt. Een lege back-up (familie wiste iedereen) mag ook;
+   data.sound is dan het merkteken dat dit een bestand van óns is.
+   Gedeeld door het back-upbestand en overzetten (= Overzetten): één keuring. */
+function backupVormOk(data) {
+  const profs = data && typeof data === 'object' ? data.profiles : null;
+  const okShape = p => !!p && typeof p === 'object' && typeof p.name === 'string'
+    && Array.isArray(p.owned) && !!p.stars && typeof p.stars === 'object'
+    && !!p.equipped && typeof p.equipped === 'object';
+  return !!profs && typeof profs === 'object' && !Array.isArray(profs)
+    && Object.values(profs).every(okShape)
+    && (Object.keys(profs).length > 0 || typeof data.sound === 'boolean');
+}
+/* Een gekeurde save in de plaats van de huidige zetten. false = niets veranderd.
+   Eerst in een lokale kopie bijwerken en pas daarna de echte db vervangen:
+   migrate() kan op een beschadigd profiel gooien, en dat gebeurde hiervoor ná
+   "db = data" -- dan was de app dood terwijl de opslag nog goed was. */
+function backupToepassen(data) {
+  const next = data;
+  if (typeof next.sound !== 'boolean') next.sound = true;
+  if (typeof next.haptics !== 'boolean') next.haptics = true;
+  try { Object.values(next.profiles).forEach(migrate); }
+  catch (e) { return false; }
+  db = next;             // normalizeProfiles leest de globale db
+  normalizeProfiles();
+  cur = null;
+  setKey = null;         // naar het overzicht: daar staan alle teruggezette sterren
+  save();
+  return true;
 }
 
 // Een eerder opgeslagen back-upbestand inlezen en terugzetten. Overschrijft
@@ -15572,20 +15628,7 @@ function importData(file) {
     let data;
     try {
       data = JSON.parse(reader.result);
-      // Hiervoor stond hier "heeft p1 én p2". Die sleutels zijn niet meer heilig:
-      // een familie kan één ster hebben, of vijf, of er net eentje verwijderd
-      // hebben. Dus kijken we naar de vórm van elk profiel in plaats van naar de
-      // namen van de sleutels -- en meteen streng genoeg dat migrate() er verderop
-      // niet op stukloopt. Een lege back-up (familie wiste iedereen) mag ook;
-      // data.sound is dan het merkteken dat dit een bestand van óns is.
-      const profs = data && typeof data === 'object' ? data.profiles : null;
-      const okShape = p => !!p && typeof p === 'object' && typeof p.name === 'string'
-        && Array.isArray(p.owned) && !!p.stars && typeof p.stars === 'object'
-        && !!p.equipped && typeof p.equipped === 'object';
-      const ok = profs && typeof profs === 'object' && !Array.isArray(profs)
-        && Object.values(profs).every(okShape)
-        && (Object.keys(profs).length > 0 || typeof data.sound === 'boolean');
-      if (!ok) throw new Error('ongeldig back-upbestand');
+      if (!backupVormOk(data)) throw new Error('ongeldig back-upbestand');
     } catch (e) {
       showNotice('Oeps!', 'Kon dit bestand niet lezen. Kies een geldig back-upbestand.');
       return;
@@ -15595,19 +15638,7 @@ function importData(file) {
       'Dit vervangt de huidige diamanten, sterren en spulletjes van alle profielen door de inhoud van dit back-upbestand. Dit kan niet ongedaan gemaakt worden.',
       'Ja, terugzetten',
       () => {
-        // Eerst in een lokale kopie bijwerken en pas daarna de echte db vervangen:
-        // migrate() kan op een beschadigd profiel gooien, en dat gebeurde hiervoor
-        // ná "db = data" -- dan was de app dood terwijl de opslag nog goed was.
-        const next = data;
-        if (typeof next.sound !== 'boolean') next.sound = true;
-        if (typeof next.haptics !== 'boolean') next.haptics = true;
-        try { Object.values(next.profiles).forEach(migrate); }
-        catch (e) { showNotice('Oeps!', 'Dit back-upbestand is beschadigd; er is niets veranderd.'); return; }
-        db = next;             // normalizeProfiles leest de globale db
-        normalizeProfiles();
-        cur = null;
-        setKey = null;         // naar het overzicht: daar staan alle teruggezette sterren
-        save();
+        if (!backupToepassen(data)) { showNotice('Oeps!', 'Dit back-upbestand is beschadigd; er is niets veranderd.'); return; }
         renderSettings();
         // gelukt is geen vraag: een melding, geen venster om weg te tikken
         showToast('✓ Back-up geladen');
@@ -15617,6 +15648,288 @@ function importData(file) {
   };
   reader.onerror = () => showNotice('Oeps!', 'Kon dit bestand niet lezen.');
   reader.readAsText(file);
+}
+
+/* ================= Het back-upblad =========================================
+   Achter de rij "Back-up ›" op het overzicht van Voor ouders. Bovenaan wanneer
+   de laatste was, daaronder vier tegels in twee paren:
+     Bestand        Maken · Terugzetten        (exportData / importData)
+     Ander toestel  Overzetten · Code invullen (= Overzetten, hieronder)
+   Het tweede paar staat er alleen als overzetten kan (overzetMag). */
+function backupBladStandHtml() {
+  const oud = backupOud();
+  const w = backupWanneer();
+  const tekst = backupDagen() === null ? 'Nog nooit een back-up gemaakt' : 'Laatste back-up: ' + w.toLowerCase();
+  return `<div class="bb-stand${oud ? ' oud' : ''}" id="bb-stand">${oud ? '<span class="gi-dot" aria-hidden="true"></span>' : ''}${tekst}</div>`;
+}
+function openBackupBlad() {
+  sndClick();
+  const tegel = (id, ico, t) => `<button class="bb-tegel" id="${id}" type="button">${ico}${t}</button>`;
+  $('confirm-title').innerHTML = '🗄️ Back-up';
+  $('confirm-body').innerHTML = `<div class="bb-blad">${backupBladStandHtml()}
+      <div class="bb-kop">Bestand · alles staat alleen op dit toestel</div>
+      <div class="bb-tegels">${tegel('bb-maak', ozIco('maak'), 'Maken')}${tegel('bb-terug', ozIco('terug'), 'Terugzetten')}</div>`
+    + (overzetMag() ? `<div class="bb-kop">Ander toestel</div>
+      <div class="bb-tegels">${tegel('bb-zet', ozIco('zet'), 'Overzetten')}${tegel('bb-code', ozIco('code'), 'Code invullen')}</div>` : '')
+    + '</div>';
+  $('confirm-actions').innerHTML = '<button class="btn small paper" id="bb-dicht">Sluiten</button>';
+  $('bb-dicht').onclick = closeConfirmModal;
+  $('bb-maak').onclick = exportData;
+  // het bestandsveld staat in het paneel (importInvoerHtml); de vraag erna gebruikt
+  // dit venster opnieuw, dus eerst dicht
+  $('bb-terug').onclick = () => { closeConfirmModal(); const f = $('set-import-file'); if (f) f.click(); };
+  const z = $('bb-zet'), c = $('bb-code');
+  if (z) z.onclick = openOverzetBlad;
+  if (c) c.onclick = () => openCodeBlad(false);
+  $('confirm-modal').classList.add('open');
+  syncBackGuard();
+}
+
+/* ================= Overzetten ===============================================
+   Je sterren naar een ander toestel, met een code van zes cijfers. Voor de
+   iPhone vooral: de app op het beginscherm krijgt een eigen opslag, los van
+   Safari, en begint dus leeg -- ook als er in Safari al weken gespeeld is. En
+   voor een nieuwe telefoon of tablet.
+
+     toestel A  "Overzetten"     -> de hele save naar de ontvanger, een code terug
+     toestel B  "Code invullen"  -> de save terug, de ontvanger gooit hem weg
+                "Zet op dit toestel" / "Vervangen" -> backupToepassen
+
+   Het is een kopie, geen verhuizing: A houdt zijn sterren. Het is ook dezelfde
+   save als het back-upbestand (JSON.stringify(db)), met dezelfde keuring
+   (backupVormOk) en dezelfde vervanging (backupToepassen) -- er is geen tweede
+   weg om sterren terug te zetten.
+
+   DE ONTVANGER is een Cloudflare Worker (worker/overzetten.js, docs/OVERZETTEN.md):
+   een code leeft een kwartier en werkt één keer, raden wordt per adres geremd,
+   en er blijft niets van over. Er gaat pas iets naar buiten als een ouder hier op
+   een knop tikt; een gewone start doet niets.
+
+   overzetMag: alleen op https (de ontvanger neemt alleen rekensterren.be aan, en
+   vanaf file:// is er geen herkomst). ?debug&overzet zet hem ook vanaf file://
+   aan, zodat de browsertests er met een nagebootste ontvanger doorheen kunnen. */
+// Een functie en geen const: overzetMag wordt al bij het opstarten gelezen
+// (renderProfiles), en dit stuk staat ná de code die dat doet (CLAUDE.md, regel 0).
+function overzetAdres() { return 'https://rekensterren-overzetten.maxheyrman.workers.dev/'; }
+function overzetMag() {
+  if (!overzetAdres()) return false;
+  const q = location.search || '';
+  return location.protocol === 'https:' || (/[?&]debug\b/.test(q) && /[?&]overzet\b/.test(q));
+}
+// Getekende iconen, in de lijn van de tegeltjes in het blad "als app". Ook een
+// functie, om dezelfde reden als overzetAdres.
+function ozIco(naam) {
+  const i = d => `<svg class="oz-i" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+  return i({
+    zet: '<rect x="2" y="5" width="8" height="14" rx="2"/><rect x="14" y="5" width="8" height="14" rx="2"/><path d="M8 12h8M13.5 9.5 16 12l-2.5 2.5"/>',
+    code: '<rect x="3" y="6" width="18" height="12" rx="3"/><path d="M7 12h.01M10.5 12h.01M14 12h.01M17.5 12h.01"/>',
+    maak: '<path d="M12 3v11M7.5 9.5 12 14l4.5-4.5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
+    terug: '<path d="M12 14V3M7.5 7.5 12 3l4.5 4.5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
+  }[naam]);
+}
+const OVERZET_POLL = 3000;   // hoe vaak het toestel met de code vraagt of hij al opgehaald is
+
+// Eén aanroep. Geeft { status, data } of gooit bij geen net. text/plain: dan is
+// er geen preflight nodig (zie de Worker).
+async function ozVraag(pad, body) {
+  const r = await fetch(overzetAdres() + pad, {
+    method: 'POST', headers: { 'Content-Type': 'text/plain' }, body, cache: 'no-store',
+  });
+  let data = null;
+  try { data = await r.json(); } catch (e) { data = null; }
+  return { status: r.status, data };
+}
+function ozFoutTekst(status) {
+  if (status === 0) return navigator.onLine === false ? 'Geen internet' : 'Dat lukte niet. Probeer het nog eens.';
+  if (status === 429) return 'Even te veel geprobeerd. Wacht tien minuten.';
+  if (status === 413) return 'Te veel om over te zetten. Maak een back-upbestand.';
+  return 'Dat lukte niet. Probeer het nog eens.';
+}
+function ozSterren(p) {
+  return Object.values(p.stars || {}).reduce((a, b) => a + (Number(b) || 0), 0);
+}
+function ozKaart(p, soort) {
+  const sterren = soort === 'ok' ? '' : `<small><span aria-hidden="true">⭐</span> ${ozSterren(p)}</small>`;
+  return `<div class="oz-ster${soort ? ' ' + soort : ''}"><span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
+    + `<b>${esc(p.name)}</b>${sterren}${soort === 'ok' ? '<span class="oz-vink" aria-hidden="true">✓</span>' : ''}</div>`;
+}
+// De profielen van een save, in hun eigen volgorde (zoals profileKeys dat doet).
+function ozProfielen(data) {
+  return Object.keys(data.profiles).sort((a, b) => {
+    const pa = data.profiles[a], pb = data.profiles[b];
+    const d = (pa.order == null ? 90 : pa.order) - (pb.order == null ? 90 : pb.order);
+    return d !== 0 ? d : (a < b ? -1 : 1);
+  }).map(k => data.profiles[k]);
+}
+function ozCodeHtml(code, soort, nu) {
+  let h = `<div class="oz-code${soort ? ' ' + soort : ''}" aria-hidden="true">`;
+  for (let i = 0; i < 6; i++) {
+    if (i === 3) h += '<span class="oz-gat"></span>';
+    h += `<span class="oz-c${i === nu ? ' nu' : ''}">${code[i] || ''}</span>`;
+  }
+  return h + '</div>';
+}
+function ozToon(titel, body, acties) {
+  $('confirm-title').innerHTML = titel;
+  $('confirm-body').innerHTML = `<div class="oz-blad" id="oz-blad">${body}</div>`;
+  $('confirm-actions').innerHTML = acties;
+  $('confirm-modal').classList.add('open');
+  syncBackGuard();
+}
+const ozOpen = nr => { const b = $('oz-blad'); return !!b && b.dataset.nr === String(nr) && $('confirm-modal').classList.contains('open'); };
+let ozNr = 0;   // elk blad een eigen nummer: een antwoord voor een gesloten blad doet niets
+
+/* ---- Toestel A: de code tonen ---- */
+function openOverzetBlad() {
+  sndClick();
+  const nr = ++ozNr;
+  const gezichten = profileKeys().map(k => `<span class="oz-mini">${avatarSVG(db.profiles[k], 60)}</span>`).join('');
+  ozToon(ozIco('zet') + ' Naar ander toestel',
+    `<div class="oz-mee">${gezichten}</div>${ozCodeHtml('', 'laden')}<div class="oz-onder" id="oz-onder"></div>`,
+    '<button class="btn small paper" id="oz-dicht">Sluiten</button>');
+  $('oz-blad').dataset.nr = nr;
+  $('oz-dicht').onclick = closeConfirmModal;
+  ozVraag('zet', JSON.stringify(db)).then(
+    r => {
+      if (!ozOpen(nr)) return;
+      if (r.status !== 201 || !r.data || !/^\d{6}$/.test(r.data.code)) { ozZetFout(nr, r.status); return; }
+      ozToonCode(nr, r.data);
+    },
+    () => { if (ozOpen(nr)) ozZetFout(nr, 0); });
+}
+function ozZetFout(nr, status) {
+  $('oz-blad').innerHTML = `<div class="oz-fout">${ozFoutTekst(status)}</div>`;
+  $('confirm-actions').innerHTML = '<button class="btn small paper" id="oz-dicht">Sluiten</button><button class="btn small purple" id="oz-weer">Opnieuw</button>';
+  $('oz-dicht').onclick = closeConfirmModal;
+  $('oz-weer').onclick = openOverzetBlad;
+}
+function ozToonCode(nr, { code, tot, sleutel }) {
+  const duur = 15 * 60 * 1000;
+  const rest = Math.max(0, Math.min(duur, tot - Date.now()));
+  const mee = $('oz-blad').querySelector('.oz-mee');
+  $('oz-blad').innerHTML = (mee ? mee.outerHTML : '')
+    + ozCodeHtml(code) + `<span class="sr-tekst">Code ${code.split('').join(' ')}</span>`
+    // de balk loopt leeg in de tijd die nog rest: een animatie van een kwartier die
+    // al (duur - rest) gevorderd is
+    + `<div class="oz-tijd"><i style="animation-duration:${duur}ms;animation-delay:-${duur - rest}ms"></i></div>`
+    + `<div class="oz-waar">Daar: <span class="ab-kbd">${ozIco('code')} Code invullen</span></div>`
+    + '<div class="oz-wacht" aria-hidden="true"><i></i><i></i><i></i></div>';
+  $('oz-blad').classList.add('met-code');
+  const vraag = () => {
+    if (!ozOpen(nr)) return;
+    if (document.hidden) { setTimeout(vraag, OVERZET_POLL); return; }
+    ozVraag('stand', JSON.stringify({ code, sleutel })).then(r => {
+      if (!ozOpen(nr)) return;
+      if (r.data && r.data.opgehaald) { ozOvergezet(); return; }
+      if (r.data && r.data.verlopen) { ozVerlopen(); return; }
+      setTimeout(vraag, OVERZET_POLL);
+    }, () => setTimeout(vraag, OVERZET_POLL));
+  };
+  setTimeout(vraag, OVERZET_POLL);
+}
+function ozOvergezet() {
+  $('confirm-title').innerHTML = ozIco('zet') + ' Overgezet';
+  $('oz-blad').classList.remove('met-code');
+  $('oz-blad').innerHTML = `<div class="oz-sterren">${profileKeys().map(k => ozKaart(db.profiles[k], 'ok')).join('')}</div>`;
+  $('confirm-actions').innerHTML = '<button class="btn small purple" id="oz-dicht">Klaar</button>';
+  $('oz-dicht').onclick = closeConfirmModal;
+  sndClick();
+}
+function ozVerlopen() {
+  $('oz-blad').classList.remove('met-code');
+  $('oz-blad').innerHTML = '<div class="oz-fout">Deze code is verlopen.</div>';
+  $('confirm-actions').innerHTML = '<button class="btn small paper" id="oz-dicht">Sluiten</button><button class="btn small purple" id="oz-weer">Nieuwe code</button>';
+  $('oz-dicht').onclick = closeConfirmModal;
+  $('oz-weer').onclick = openOverzetBlad;
+}
+
+/* ---- Toestel B: de code invullen ----
+   Zes vakjes, met één echt invoerveld er onzichtbaar overheen: dan krijgt een
+   telefoon het grote cijferklavier (inputmode numeric) en kan iOS een code uit
+   een bericht voorstellen (one-time-code). Bij het zesde cijfer gaat hij meteen
+   weg -- geen "Ophalen"-knop. Klopt hij niet, dan worden de vakjes rood en
+   begint het volgende cijfer opnieuw. vanStart: geopend vanaf het lege
+   beginscherm (dan daarheen terug, met confetti), anders vanuit Voor ouders. */
+function openCodeBlad(vanStart) {
+  sndClick();
+  const nr = ++ozNr;
+  ozToon(ozIco('code') + ' Code invullen',
+    `<div class="oz-invoer">${ozCodeHtml('', '', 0)}
+       <input id="oz-veld" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" aria-label="Code van zes cijfers"></div>
+     <div class="oz-onder" id="oz-onder"><div class="oz-waar">Andere toestel: <span class="ab-kbd">⚙️ › Back-up › Overzetten</span></div></div>`,
+    '<button class="btn small paper" id="oz-dicht">Annuleer</button>');
+  $('oz-blad').dataset.nr = nr;
+  $('oz-dicht').onclick = closeConfirmModal;
+  const veld = $('oz-veld');
+  let fout = '', bezig = false;
+  const teken = () => {
+    const v = veld.value;
+    const soort = fout ? 'fout' : bezig ? 'laden' : '';
+    $('oz-blad').querySelector('.oz-code').outerHTML = ozCodeHtml(fout || v, soort, fout || bezig ? -1 : Math.min(v.length, 5));
+  };
+  veld.oninput = () => {
+    if (bezig) return;
+    const v = veld.value.replace(/\D/g, '').slice(0, 6);
+    veld.value = v;
+    if (fout) { fout = ''; $('oz-onder').innerHTML = ''; }
+    teken();
+    if (v.length < 6) return;
+    bezig = true;
+    teken();
+    ozVraag('haal', JSON.stringify({ code: v })).then(
+      r => {
+        if (!ozOpen(nr)) return;
+        bezig = false;
+        let data = r.data && r.data.save;
+        if (r.status === 200 && backupVormOk(data)) { veld.blur(); ozGevonden(data, vanStart); return; }
+        fout = v;
+        veld.value = '';
+        $('oz-onder').innerHTML = `<div class="oz-fout">${r.status === 404 || r.status === 400 ? 'Klopt niet of is verlopen' : r.status === 200 ? 'Deze sterren konden niet gelezen worden' : ozFoutTekst(r.status)}</div>`;
+        teken();
+      },
+      () => {
+        if (!ozOpen(nr)) return;
+        bezig = false; fout = v; veld.value = '';
+        $('oz-onder').innerHTML = `<div class="oz-fout">${ozFoutTekst(0)}</div>`;
+        teken();
+      });
+  };
+  // in dezelfde tik als de knop: alleen dan opent een telefoon het klavier
+  veld.focus();
+}
+
+/* Wat er in de save zit, vóór er iets verandert. De pop van elke ster met haar
+   sterren; staan er op dit toestel al sterren, dan staan die er grijs onder,
+   met de zin dat ze verdwijnen -- en heet de knop "Vervangen". Pas die knop zet
+   de save in de plaats (backupToepassen); Annuleer laat alles staan. */
+function ozGevonden(data, vanStart) {
+  let kopie;
+  try {
+    kopie = JSON.parse(JSON.stringify(data));
+    Object.values(kopie.profiles).forEach(migrate);   // de kaartjes tekenen een gemigreerde kopie
+  } catch (e) {
+    $('oz-onder').innerHTML = '<div class="oz-fout">Deze sterren konden niet gelezen worden</div>';
+    return;
+  }
+  const nieuw = ozProfielen(kopie);
+  const hier = profileKeys().map(k => db.profiles[k]);
+  $('confirm-title').innerHTML = '<span aria-hidden="true">⭐</span> Sterren gevonden';
+  $('oz-blad').innerHTML = `<div class="oz-sterren">${nieuw.map(p => ozKaart(p)).join('')}</div>`
+    + (nieuw.length ? '' : '<div class="oz-waar">Er staan geen sterren in.</div>')
+    + (hier.length ? `<div class="oz-vervang"><div class="oz-sterren">${hier.map(p => ozKaart(p, 'weg')).join('')}</div>`
+      + '<span>Staat nu op dit toestel en verdwijnt</span></div>' : '');
+  $('confirm-actions').innerHTML = '<button class="btn small paper" id="oz-dicht">Annuleer</button>'
+    + `<button class="btn small purple" id="oz-ja">${hier.length ? 'Vervangen' : 'Zet op dit toestel'}</button>`;
+  $('oz-dicht').onclick = closeConfirmModal;
+  $('oz-ja').onclick = () => {
+    closeConfirmModal();
+    if (!backupToepassen(data)) { showNotice('Oeps!', 'Deze sterren zijn beschadigd; er is niets veranderd.'); return; }
+    if ($('screen-settings').classList.contains('active')) renderSettings();
+    renderProfiles();
+    showToast('✓ Sterren overgezet');
+    toastWeg(2400);
+    if (vanStart) confetti(50);
+  };
 }
 
 /* ================= Op het beginscherm =======================================
@@ -15863,8 +16176,14 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
         + stap(2, `Kies ${erbij}`);
     }
     html += stap(3, `Tik op ${kbd('Voeg toe')}`);
-    if (hasStars) html += '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ Voor ouders, en zet hem daar in de app terug.</div>';
-    return { html, installeer: false };
+    /* De app op het beginscherm krijgt een eigen opslag, los van Safari: hij begint
+       leeg. Met overzetten (= Overzetten) neem je je sterren mee met een code --
+       de knop staat onderaan dit blad; anders blijft het de weg via een bestand. */
+    const meenemen = hasStars && overzetMag();
+    if (hasStars) html += meenemen
+      ? '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Neem je sterren mee met een code.</div>'
+      : '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ Voor ouders, en zet hem daar in de app terug.</div>';
+    return { html, installeer: false, meenemen };
   }
   if (soort === 'android' && kanInstalleren) {
     html += '<div class="ab-noot">Je sterren blijven gewoon staan.</div>';
@@ -15878,13 +16197,16 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
 function openAppBlad(vanKnop) {
   sndClick();
   const hasStars = profileKeys().length > 0;   // zoals in Beheer: wie een ster heeft, heeft iets te redden
-  const { html, installeer } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel, isSafari26());
+  const { html, installeer, meenemen } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel, isSafari26());
   $('confirm-title').innerHTML = ico('erbij') + ' Rekensterren als app';
   $('confirm-body').innerHTML = `<div id="app-blad">${html}</div>`;
   $('confirm-actions').innerHTML =
     `<button class="btn small paper" id="app-blad-dicht">${vanKnop ? 'Niet nu' : 'Sluiten'}</button>`
-    + (installeer ? '<button class="btn small purple" id="app-blad-installeer">Installeren</button>' : '');
+    + (installeer ? '<button class="btn small purple" id="app-blad-installeer">Installeren</button>' : '')
+    + (meenemen ? `<button class="btn small purple" id="app-blad-mee">${ozIco('zet')} Sterren meenemen</button>` : '');
   $('app-blad-dicht').onclick = vanKnop ? appKnopNietNu : closeConfirmModal;
+  const mee = $('app-blad-mee');
+  if (mee) mee.onclick = openOverzetBlad;
   const ik = $('app-blad-installeer');
   if (ik) ik.onclick = () => {
     const e = installVoorstel;

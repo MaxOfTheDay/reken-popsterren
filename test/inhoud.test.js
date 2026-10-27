@@ -735,10 +735,12 @@ zaak('J', () => {
     check(is === wil, `J · ${naam} krijgt de uitleg voor '${wil}'`, is);
   });
 
-  // Op het overzicht: een rij "Als app" onder Geluid, vóór de back-up, die het blad opent.
+  // Op het overzicht: één kaart met rijen -- Geluid, de back-up, en als laatste
+  // "Als app" (die verdwijnt als het spel geïnstalleerd is; dan schuift er niets).
   const ov = overzicht(a, UA.android);
-  const geluid = ov.indexOf('id="set-sound"'), rij = ov.indexOf('id="set-alsapp"'), back = ov.indexOf('<h2>Back-up</h2>');
-  check(geluid > -1 && rij > geluid && back > rij, 'J · overzicht: Geluid, dan Als app, dan de back-up', `${geluid} / ${rij} / ${back}`);
+  const geluid = ov.indexOf('id="set-sound"'), back = ov.indexOf('id="set-backup"'), rij = ov.indexOf('id="set-alsapp"');
+  check(geluid > -1 && back > geluid && rij > back, 'J · overzicht: Geluid, dan de back-up, dan Als app', `${geluid} / ${back} / ${rij}`);
+  check(!ov.includes('<h2>Back-up</h2>') && !ov.includes('id="set-export"'), 'J · overzicht: de back-up is een rij, geen kaart met knoppen', '');
   check(!ov.includes('set-beginscherm'), 'J · overzicht: de uitleg staat in het blad, niet in een kaart', '');
   // De kaart zelf (alleen nog op de lege pagina, zie beheerEmptyHtml).
   const and = html(a, UA.android), kaart = 0;

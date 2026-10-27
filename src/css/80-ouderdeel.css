@@ -207,15 +207,15 @@
   .danger-zone .d b { color: var(--danger-title); font-weight: 700; }
   /* de tweede, vervangende actie in de back-upkaart: een streepje erboven, zodat
      "maken" en "terugzetten" niet als twee knoppen van hetzelfde soort lezen */
-  /* De regel "Laatste back-up: ..." boven de knop (zie backupStandHtml). Amber
-     is een herinnering en geen gevaar -- vandaar de oefen-oranje en niet de
-     danger-kleuren; groen is "het is in orde", in het groen van Voortgang. */
-  .backup-stand {
-    display: flex; align-items: center; gap: 8px; margin: 0 0 11px; padding: 9px 12px;
-    border-radius: var(--r-sm); font-size: var(--tx-label); font-weight: 600;
-    background: var(--stat-green-bg); color: var(--stat-green-tekst); border: 1px solid var(--stat-green-rand);
+  /* De onderregel van de rij Back-up (zie backupStandHtml): grijs zoals elke
+     onderregel, amber met een stipje als het tijd wordt. Amber is een
+     herinnering en geen gevaar -- vandaar de oefen-oranje en niet de
+     danger-kleuren. Geen vlak en geen rand meer: het is één rij in een lijst. */
+  .gear-item .gi-sub.backup-stand.oud { color: var(--practice-text); }
+  .gi-dot {
+    display: inline-block; width: 8px; height: 8px; margin-left: 6px; border-radius: 50%;
+    background: var(--gold-cta-bottom); vertical-align: 1px; flex: none;
   }
-  .backup-stand.oud { background: var(--practice-bg); color: var(--practice-text); border-color: var(--practice-rand); }
   /* Dezelfde openklapper, maar voor een gewone keuze i.p.v. een gevaarlijke: de
      oefeninstellingen bij het maken van een ster. Vandaar de papierkleuren i.p.v.
      het rood, en een volle breedte met twee regels i.p.v. een pil -- de tweede
@@ -896,3 +896,112 @@
     100% { opacity: 0; transform: translate(var(--drift, 0px), -46px) scale(.85); }
   }
 
+  /* ---- Het back-upblad en Overzetten (zie = Het back-upblad, = Overzetten) ----
+     Twee bladen in het gewone venster (#confirm-modal). Tegels in plaats van
+     knoppen: vier handelingen van hetzelfde gewicht, elk met een getekend icoon
+     in de lijn van de voordelen in het blad "als app". */
+  .oz-i {
+    width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round; flex: none;
+  }
+  #confirm-title .oz-i { vertical-align: -4px; }
+  .bb-stand {
+    display: flex; align-items: center; justify-content: center; gap: 2px;
+    font-size: var(--tx-klein); color: var(--paper-ink-muted); text-align: center;
+  }
+  .bb-stand.oud { color: var(--practice-text); }
+  .bb-stand .gi-dot { margin: 0 6px 0 0; }
+  .bb-kop {
+    margin: 14px 2px 6px; font-size: var(--tx-mini); font-weight: 700; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--paper-ink-muted); text-align: left;
+  }
+  .bb-tegels { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .settings-panel .bb-tegels { margin-bottom: 10px; }
+  .bb-tegel {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    min-height: 84px; padding: 12px 6px; border-radius: var(--r-sm);
+    background: var(--paper-tint); border: 1.5px solid var(--paper-border);
+    font-family: inherit; font-size: var(--tx-label); font-weight: 700; color: var(--purple-deep);
+    cursor: pointer; transition: background var(--t-tik) ease;
+  }
+  .bb-tegel .oz-i { width: 28px; height: 28px; color: var(--purple-light); }
+  .bb-tegel:hover { background: var(--lavender-wash); }
+  .bb-tegel:active { background: var(--lavender-wash-3); }
+
+  .oz-blad { text-align: center; }
+  .oz-mee { display: flex; justify-content: center; padding-left: 10px; margin: 0 0 8px; }
+  .oz-mini {
+    position: relative; display: inline-block; width: 40px; height: 40px; margin-left: -10px;
+    border-radius: 50%; overflow: hidden; background: var(--lavender-wash); border: 3px solid var(--paper-surface);
+  }
+  .oz-mini svg { position: absolute; left: 50%; top: -2px; transform: translateX(-50%); }
+  /* zes vakjes, drie en drie */
+  .oz-code { display: flex; justify-content: center; gap: 6px; margin: 4px 0 10px; }
+  .oz-c {
+    display: flex; align-items: center; justify-content: center; width: 42px; height: 58px;
+    border-radius: 14px; background: var(--paper-tint); border: 2px solid var(--paper-border);
+    font-size: 32px; font-weight: 700; color: var(--purple-deep); font-variant-numeric: tabular-nums;
+  }
+  .oz-gat { width: 6px; }
+  .oz-c.nu { border-color: var(--purple-light); box-shadow: 0 0 0 4px var(--lavender-wash); }
+  .oz-c.nu:empty::after { content: ''; width: 2px; height: 28px; background: var(--purple-light); animation: oz-knipper 1s steps(1) infinite; }
+  @keyframes oz-knipper { 50% { opacity: 0; } }
+  .oz-code.laden .oz-c { animation: oz-wacht 1.2s ease-in-out infinite; }
+  .oz-code.laden .oz-c:nth-child(2) { animation-delay: .1s; } .oz-code.laden .oz-c:nth-child(3) { animation-delay: .2s; }
+  .oz-code.laden .oz-c:nth-child(5) { animation-delay: .3s; } .oz-code.laden .oz-c:nth-child(6) { animation-delay: .4s; }
+  .oz-code.laden .oz-c:nth-child(7) { animation-delay: .5s; }
+  @keyframes oz-wacht { 50% { background: var(--lavender-wash-3); } }
+  .oz-code.fout .oz-c { border-color: var(--red-500); background: var(--danger-bg); color: var(--red-answer-600); animation: oz-schud .3s; }
+  @keyframes oz-schud { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+  /* het echte invoerveld ligt onzichtbaar over de vakjes heen; 16px, anders
+     zoomt iOS in zodra hij focus krijgt */
+  .oz-invoer { position: relative; }
+  .oz-invoer input {
+    position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px;
+    border: 0; background: transparent; color: transparent; caret-color: transparent;
+  }
+  /* de tijd die de code nog geldt: een balk die leegloopt (de duur staat op het
+     element zelf, zie ozToonCode) */
+  .oz-tijd { height: 6px; margin: 0 18px 14px; border-radius: 3px; background: var(--lavender-wash-3); overflow: hidden; }
+  .oz-tijd i {
+    display: block; height: 100%; border-radius: 3px; transform-origin: left;
+    background: linear-gradient(90deg, var(--purple-deep), var(--purple-light));
+    animation-name: oz-tijd; animation-timing-function: linear; animation-fill-mode: forwards;
+  }
+  @keyframes oz-tijd { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+  .oz-waar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; font-size: var(--tx-klein); color: var(--paper-ink-muted); }
+  .oz-blad .ab-kbd {
+    display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 8px;
+    background: var(--paper-muted-bg); color: var(--paper-ink); font-weight: 700; white-space: nowrap;
+  }
+  .oz-blad .ab-kbd .oz-i { width: 16px; height: 16px; }
+  .oz-wacht { display: flex; justify-content: center; gap: 6px; margin-top: 14px; }
+  .oz-wacht i { width: 7px; height: 7px; border-radius: 50%; background: var(--purple-light); opacity: .35; animation: oz-punt 1.2s ease-in-out infinite; }
+  .oz-wacht i:nth-child(2) { animation-delay: .2s; } .oz-wacht i:nth-child(3) { animation-delay: .4s; }
+  @keyframes oz-punt { 40% { opacity: 1; } }
+  .oz-fout { font-size: var(--tx-klein); font-weight: 700; color: var(--red-answer-600); }
+  /* de sterren die meekomen (of meegingen): de pop, haar naam, haar sterren */
+  .oz-sterren { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 2px 0 6px; }
+  .oz-ster { position: relative; width: 96px; padding: 6px 4px 8px; border-radius: 18px; background: var(--paper-tint); }
+  .oz-ster .who-portrait { display: block; width: 72px; height: 72px; margin: 0 auto; background: var(--lavender-wash); border-color: var(--paper-surface); box-shadow: none; }
+  .oz-ster .who-portrait svg { top: -4px; }
+  .oz-ster b { display: block; margin-top: 2px; font-size: var(--tx-label); color: var(--paper-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .oz-ster small { display: block; font-size: var(--tx-klein); font-weight: 700; color: var(--practice-text); }
+  .oz-vink {
+    position: absolute; top: 6px; right: 6px; display: flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 50%; background: var(--stat-green); color: var(--c-white);
+    font-size: 14px; font-weight: 700; box-shadow: 0 0 0 3px var(--paper-surface);
+  }
+  .oz-vervang {
+    display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; padding: 8px;
+    border-radius: var(--r-sm); background: var(--practice-bg); border: 1px solid var(--practice-rand);
+    font-size: var(--tx-mini); font-weight: 700; color: var(--practice-text); text-align: left;
+  }
+  .oz-vervang .oz-sterren { margin: 0; gap: 6px; flex-wrap: nowrap; }
+  .oz-vervang span:last-child { max-width: 120px; }
+  .oz-ster.weg { width: 66px; padding: 4px 2px 6px; opacity: .5; filter: grayscale(1); background: transparent; }
+  .oz-ster.weg .who-portrait { width: 48px; height: 48px; }
+  .oz-ster.weg .who-portrait svg { transform: translateX(-50%) scale(.7); transform-origin: top center; }
+  @media (prefers-reduced-motion: reduce) {
+    .oz-code.fout .oz-c, .oz-code.laden .oz-c, .oz-wacht i { animation: none; }
+  }

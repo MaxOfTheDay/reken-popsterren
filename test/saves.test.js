@@ -420,7 +420,7 @@ zaak('K', () => {
 /* ================= M · De laatste back-up =================
    db.backupAt is het enige veld buiten de profielen dat de ouder iets vertelt
    over de veiligheid van de sterren. Het moet een heropening overleven, en de
-   regel in de back-upkaart moet zeggen wat er is: nooit, recent of te lang
+   onderregel van de rij Back-up moet zeggen wat er is: nooit, recent of te lang
    geleden. */
 zaak('M', () => {
   const app = laadApp({ opslag: F.tweeSterren() });
@@ -428,8 +428,8 @@ zaak('M', () => {
   check(/Nog nooit/.test(app.backupStandHtml(nu)) && / oud"/.test(app.backupStandHtml(nu)),
     'M · zonder back-up: "nog nooit", in amber', app.backupStandHtml(nu));
   app.db.backupAt = new Date(nu - 2 * 3600000).toISOString();
-  check(/vandaag/.test(app.backupStandHtml(nu)) && !/ oud"/.test(app.backupStandHtml(nu)),
-    'M · van vandaag: groen', app.backupStandHtml(nu));
+  check(/Vandaag/.test(app.backupStandHtml(nu)) && !/ oud"/.test(app.backupStandHtml(nu)),
+    'M · van vandaag: gewoon grijs', app.backupStandHtml(nu));
   app.db.backupAt = new Date(nu - 10 * dag).toISOString();
   check(/10 dagen geleden/.test(app.backupStandHtml(nu)), 'M · tien dagen: in dagen', app.backupStandHtml(nu));
   app.db.backupAt = new Date(nu - 35 * dag).toISOString();
