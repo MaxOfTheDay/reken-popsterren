@@ -2432,8 +2432,13 @@ function defaultProfile(name, dress, opts) {
   // Gratis starthaar en -kleren zodat elke ster er meteen anders uitziet, zonder de
   // winkelprijs van die items te veranderen. freebies telt ze mee, dus
   // "spulletjes gekocht" begint gewoon op 0.
+  /* Alle startkleuren uit het maakformulier horen erbij. Hier stonden alleen de
+     standaardstukken plus wat er gekozen was, en dan verkocht de kleedkamer
+     daarna voor 15 tot 24 diamanten wat op het formulier nog gratis te kiezen
+     viel. Dit geldt alleen voor een nieuwe ster: een bestaande opslag wordt
+     niet aangevuld (en zijn freebies blijven kloppen). */
   const hair = opts.hair || 'hair_blond';
-  const owned = ['hair_blond', 'dress_roze', 'dress_paars', 'shoes_roze', 'stage_disco'];
+  const owned = START_HAIR.concat(START_DRESS, ['shoes_roze', 'stage_disco']);
   if (dress && !owned.includes(dress)) owned.push(dress);
   if (hair && !owned.includes(hair)) owned.push(hair);
   return {
@@ -14018,7 +14023,12 @@ function openNewStar(from) {
     // doorklikt nooit merken dat er iets te kiezen valt -- precies de aanname
     // waar deze versie vanaf wil.
     name: '', base: null, hair: 'hair_blond', dress: 'dress_roze',
-    settings: defaultProfile('', 'dress_roze').settings,
+    /* De modus ook bewust leeg, om dezelfde reden als base. Hier stond Rekenen
+       al aan, en "Hoe speel je?" staat op een telefoon en een liggende tablet
+       onder de Klaar-balk: een ouder kon klaar zijn zonder de vraag gezien te
+       hebben, en een kleuter belandde zo in de sommen. Nu wijst Klaar hem aan
+       (wijsOntbrekende), net als "wie ben je?". */
+    settings: Object.assign(defaultProfile('', 'dress_roze').settings, { track: null }),
     open: false          // de openklapper begint dicht, elke keer opnieuw
   };
   renderNewStar();
@@ -14055,7 +14065,7 @@ function renderNewStar() {
      ook is, je ziet er alleen de omtrek van. */
   const wacht = !n.base;
   const preview = defaultProfile(n.name || '…', n.dress, { hair: n.hair, base: n.base || 'jongen' });
-  const ok = !!n.name.trim() && !!n.base;
+  const ok = nieuweSterKlaar();
   // Elke chip-tik bouwt dit paneel opnieuw op. Met een opengeklapt paneel eronder
   // is dat merkbaar: zonder de scrolstand vast te houden springt het formulier
   // bij élke tik naar boven (n.open doet hetzelfde voor de openklapper zelf).
@@ -14096,10 +14106,11 @@ function renderNewStar() {
             ${halfChip('count', '🧸', 'Leren tellen', s.track === 'count')}
             ${halfChip('math', '🧮', 'Rekenen', s.track === 'math')}
           </div>
-          <div class="note">${s.track === 'count'
+          ${s.track ? `<div class="note">${s.track === 'count'
             ? 'Nog niet lezen: tellen met plaatjes.'
-            : 'Met cijfers en sommen.'}</div></div>
-        <details class="set-reveal" id="newstar-oefen"${n.open ? ' open' : ''}>
+            : 'Met cijfers en sommen.'}</div>` : ''}</div>
+        <!-- De oefening hangt van de modus af, dus pas zichtbaar als die gekozen is. -->
+        ${s.track ? `<details class="set-reveal" id="newstar-oefen"${n.open ? ' open' : ''}>
           <summary>
             <span class="sr-ico" aria-hidden="true">⚙️</span>
             <span class="sr-text"><span class="sr-title">Oefening</span>
@@ -14109,7 +14120,7 @@ function renderNewStar() {
             ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${g.html}</div>`).join('')}
             <div class="note" style="margin-top:14px">Later te wijzigen bij 👨‍👩‍👧 Voor ouders.</div>
           </div>
-        </details>
+        </details>` : ''}
       </div>
       <div class="newstar-voet">
         <button class="btn newstar-go" id="newstar-go" aria-disabled="${ok ? 'false' : 'true'}">🌟 Klaar!</button>
@@ -14170,7 +14181,7 @@ function renderNewStar() {
 }
 /* Staat de Klaar-knop op "kan"? Eén bron, gelezen door de knop zelf en door het
    naamveld terwijl er getypt wordt. */
-function nieuweSterKlaar() { return !!(newStar && newStar.name.trim() && newStar.base); }
+function nieuweSterKlaar() { return !!(newStar && newStar.name.trim() && newStar.base && newStar.settings.track); }
 function merkKlaarKnop() {
   const go = $('newstar-go');
   if (go) go.setAttribute('aria-disabled', nieuweSterKlaar() ? 'false' : 'true');
@@ -14190,10 +14201,11 @@ function merkKlaarKnop() {
    is precies wat het formulier onhandelbaar maakte. */
 function wijsOntbrekende() {
   if (!newStar) return;
-  const basisMist = !newStar.base;
-  const doelen = basisMist
-    ? [...($('newstar-base') || { querySelectorAll: () => [] }).querySelectorAll('.chip')]
-    : [$('newstar-name')].filter(Boolean);
+  // van boven naar onder: wie ben je, de naam, en dan hoe je speelt
+  const chips = id => [...($(id) || { querySelectorAll: () => [] }).querySelectorAll('.chip')];
+  const doelen = !newStar.base ? chips('newstar-base')
+    : !newStar.name.trim() ? [$('newstar-name')].filter(Boolean)
+    : chips('newstar-track');
   if (!doelen.length) return;
   sndClick();
   const anker = doelen[0];
@@ -14217,7 +14229,7 @@ function createStar() {
   // pas hier valideren, niet tijdens het typen: een veld dat zichzelf corrigeert
   // terwijl je bezig bent is niet te gebruiken (zie de opmerking bij set-name)
   const name = newStar.name.trim().replace(/\s+/g, ' ').slice(0, 12);
-  if (!name || !newStar.base) return wijsOntbrekende();
+  if (!name || !newStar.base || !newStar.settings.track) return wijsOntbrekende();
   const taken = Object.values(db.profiles).some(p => p.name.toLowerCase() === name.toLowerCase());
   if (taken) {
     showToast('⚠️ Die naam bestaat al');
@@ -15748,7 +15760,11 @@ addEventListener('appinstalled', () => {
 
    WANNEER. Alleen op de sterrenkeuze, alleen in de browser (speeltAlsApp), en
    pas vanaf het tweede bezoek: wie het spel voor het eerst opent, moet eerst
-   kunnen spelen. "Niet nu" laat het twee weken met rust; na drie keer "Niet nu"
+   kunnen spelen. Behalve op een iPhone of iPad zolang er nog geen ster is: daar
+   krijgt de app op het beginscherm een eigen, lege opslag, dus wat er in Safari
+   gespeeld is gaat niet mee (zie het blad). Vóór de eerste ster is installeren
+   gratis; erna kost het een back-up. Op Android en de computer gaan de sterren
+   gewoon mee, dus daar blijft het bij het tweede bezoek. "Niet nu" laat het twee weken met rust; na drie keer "Niet nu"
    komt het knopje niet meer terug. De kaart in Beheer blijft wél -- het knopje
    gaat weg, de weg niet.
 
@@ -15797,7 +15813,8 @@ function appKnopTonen(nu) {
   const zoek = location.search || '';
   if (zoek.indexOf('debug') !== -1 && zoek.indexOf('appknop') === -1) return false;
   const s = appKnopLees();
-  if ((s.bezoek | 0) < APPKNOP.vanafBezoek) return false;
+  const iosLeeg = /^ios/.test(beginschermSoort()) && profileKeys().length === 0;
+  if ((s.bezoek | 0) < APPKNOP.vanafBezoek && !iosLeeg) return false;
   if ((s.nee | 0) >= APPKNOP.maxNee) return false;
   return !(s.rustTot > (nu || Date.now()));
 }
