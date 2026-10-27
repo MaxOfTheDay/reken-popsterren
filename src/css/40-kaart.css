@@ -524,12 +524,9 @@
      uitgerekend; nu zet het scherm alleen --rand en --kop-gap om (zie .screen) en volgt
      de kop daaruit. */
   #screen-game { padding: 8px; justify-content: flex-start; }
-  /* Levens en voortgang stonden hier als één rij van elf bijna gelijke rondjes:
-     drie hartjes plus acht stippen, twee betekenissen in dezelfde vorm. Nu twee
-     vormen: hartjes links (hoeveel fouten mag ik nog), één balk in vakjes rechts
-     (hoe ver ben ik). Die balk (.segbar) is gedeeld met het memory-spel. */
+  /* De voortgang van de show: één balk in vakjes (hoe ver ben ik, en hoe ging
+     elke vraag). Die balk (.segbar) is gedeeld met het memory-spel. */
   .game-progress-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
-  .notes-left { font-size: var(--tx-sub); letter-spacing: 1px; white-space: nowrap; }
   .segbar { display: flex; gap: 3px; width: min(48vw, 190px); }
   .segbar > span {
     flex: 1; height: 9px; border-radius: var(--r-pill);
@@ -544,7 +541,6 @@
   .segbar > span.done.mis { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.5); }
   .segbar > span.goudvraag { box-shadow: 0 0 0 1.5px var(--gold-accent), 0 0 7px rgba(var(--goud-gloed-rgb),.7); }
   @media (max-width: 430px) {
-    .notes-left { font-size: var(--tx-body); letter-spacing: 0; }
     .segbar { width: min(44vw, 150px); }
   }
 
@@ -588,6 +584,9 @@
      hij op zijn grootst, dan sprong het getal bij het landen in één beeld 18%
      groter -- een schokje, precies op het moment waar je naar kijkt. */
   .q-blank.done.klikt { animation: somKlikt 300ms ease-out; }
+  /* een getikt cijfer (typmodus) landt met een kleinere plop dan het antwoord */
+  .q-blank.tikt { animation: somTikt 180ms ease-out; }
+  @keyframes somTikt { 0% { transform: none; } 40% { transform: scale(1.08); } 100% { transform: none; } }
   @keyframes somKlikt { 0% { transform: none; } 35% { transform: scale(1.14); } 100% { transform: none; } }
   .q-blank.done.rustig {
     border-color: rgba(126,87,194,.55); background: rgba(126,87,194,.08); color: var(--purple-shadow);
@@ -598,7 +597,7 @@
     position: fixed; z-index: 55; margin: 0; pointer-events: none; box-sizing: border-box;
     display: flex; align-items: center; justify-content: center; will-change: transform;
   }
-  @media (prefers-reduced-motion: reduce) { .q-blank.done.klikt, .q-blank.done.rustig { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .q-blank.done.klikt, .q-blank.done.rustig, .q-blank.tikt { animation: none; } }
   /* de spotlight-bonus leeft ín de somkaart: een gouden randje dat langzaam dooft —
      geen aparte tijdbalk-rij die als "haast je!" leest. Dun en zacht goud: het is
      een bonus om naar te kijken als je wilt, geen klok die je aanspreekt. In de
@@ -651,4 +650,9 @@
   .num-btn.ok { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
   /* wissen is neutraal (grijs), niet rood: rood = fout antwoord, dat verwarren we niet */
   .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); font-size: 22px; }
+  /* ⌫ en ✔ slapen tot er een cijfer staat (zie drawQuestion): dan nodigen alleen
+     de cijfers uit, en zie je meteen wanneer je klaar kunt zeggen. Ingedrukt en
+     zonder lip, zodat ze ook niet als knop ogen. */
+  .num-btn { transition: opacity var(--t-tik) ease, filter var(--t-tik) ease; }
+  .numpad:not(.heeft) .num-btn:is(.ok, .del) { opacity: .38; filter: saturate(.4); box-shadow: none; transform: translateY(3px); cursor: default; }
 
