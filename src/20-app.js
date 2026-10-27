@@ -11192,7 +11192,17 @@ function startLevel(lvl, eigenOvergang) {
   // Vragen worden nu per stuk gebouwd (zodat zwakke sommen kunnen terugkomen); vooraf enkel
   // de gouden-vraag-index kiezen: hoogstens één per optreden, ± elke 2 shows, nooit de eerste.
   const count = s.track === 'count';
-  const goldIdx = (s.perLevel > 1 && Math.random() < 0.5) ? rnd(1, s.perLevel - 1) : -1;
+  /* DE FINALE. De laatste show van een wereld is de show die zijn prijs wint, en
+     tot hier speelde hij precies als show 1 tot 7. Nu eindigt hij altijd op de
+     gouden vraag: het laatste vakje in de balk is vanaf de eerste vraag goud, dus
+     ze ziet het slot al aankomen. Verder is hij níét anders -- niet moeilijker en
+     niet langer: wie hem mist, mist de prijs van de wereld, en dat hoort aan
+     dezelfde sommen te hangen als de rest. Het licht erbij staat bij bundelAan. */
+  const wl = worldFor(lvl);
+  const finale = wl.nr === wl.levels;
+  const goldIdx = s.perLevel <= 1 ? -1
+    : finale ? s.perLevel - 1
+    : Math.random() < 0.5 ? rnd(1, s.perLevel - 1) : -1;
   // Extra-uitdaging-vragen (zoek-het-getal / drie getallen) vooraf inroosteren op
   // vaste plekken; de gewone vragen worden per stuk gebouwd (incl. zwakke herhaling).
   // In de telmodus komen die niet voor -- daar bouwt genCount elke vraag.
@@ -11208,8 +11218,7 @@ function startLevel(lvl, eigenOvergang) {
         uitslag: [] };   // per vraag: 'goed' | 'hint' | 'mis' -- zie showBalk
   // De kop zegt hetzelfde als de kaart: welke wereld, en de hoeveelste show erin.
   // Hiervoor stond hier de stad uit CITIES -- dan wees de kaart je IJswereld binnen
-  // en heette het optreden daarna "Rome".
-  const wl = worldFor(lvl);
+  // en heette het optreden daarna "Rome". (wl staat hierboven, bij de finale.)
   $('game-lvl-label').innerHTML = `${wl.world.icon} ${esc(korteNaam(wl.world))}`
     + `<span class="world-sub">Show ${wl.nr} / ${wl.levels}</span>`;
   telNu($('game-diamonds'), p.diamonds);
@@ -11219,6 +11228,7 @@ function startLevel(lvl, eigenOvergang) {
   // podiumkader van applyStage op het app-verloop.
   applyStage($('show-stage'), p);
   applyVenue($('screen-game'), wl.world, lvl);
+  $('screen-game').classList.toggle('finale', finale);
   bundelAan();
   // kan er een cijferblok komen? dan houdt zij er vanaf de eerste vraag ruimte
   // voor (zie "ZIJ GROEIT MEE" in 50-zaal)
@@ -11276,13 +11286,21 @@ function quitGame() {
    en doet dit niets; bij beperkte beweging is het licht er gewoon. */
 const BUNDEL_AAN = { na: 220, duur: 520 };
 function bundelAan() {
-  const b = $('screen-game').querySelector('.venue-bundel');
+  const scherm = $('screen-game');
+  const b = scherm.querySelector('.venue-bundel');
   if (!b || !b.animate || motionOff()) return;
-  if (!$('screen-game').classList.contains('venue-aan')) return;
+  if (!scherm.classList.contains('venue-aan')) return;
   b.animate([
     { opacity: 0, transform: 'translateX(-50%) scaleY(.82)' },
     { opacity: 1, transform: 'translateX(-50%) scaleY(1)' }],
     { duration: BUNDEL_AAN.duur, delay: BUNDEL_AAN.na, easing: MOTION.uit, fill: 'backwards' });
+  /* In de finale gaan daarna de twee zijbundels aan, één keer, een tel na de
+     eerste: eerst het gewone licht, dan "en nu de grote". Alleen opacity -- hun
+     schuine stand staat in het stijlblad (.venue-finale) en blijft van hen. */
+  if (!scherm.classList.contains('finale')) return;
+  scherm.querySelectorAll('.venue-finale').forEach(f => f.animate(
+    [{ opacity: 0 }, { opacity: 1 }],
+    { duration: BUNDEL_AAN.duur, delay: BUNDEL_AAN.na + BUNDEL_AAN.duur, easing: MOTION.uit, fill: 'backwards' }));
 }
 
 function renderQuestion() {

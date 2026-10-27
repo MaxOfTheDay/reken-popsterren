@@ -207,6 +207,23 @@
     -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 22%);
     mask-image: linear-gradient(180deg, transparent 0%, #000 22%);
   }
+  /* DE FINALE: de laatste show van een wereld (zie startLevel). Twee bundels van
+     opzij die schuin op haar vallen, onder de gewone door. Lichter dan die, en
+     zonder kleur van zichzelf: het is hetzelfde zaallicht, alleen méér ervan.
+     Ze draaien om hun voet (op haar podium), dus ze raken haar op elke maat. */
+  .venue-finale { display: none; pointer-events: none; }
+  .venue-aan.finale .venue-finale {
+    display: block; position: absolute; z-index: 0;
+    bottom: 10%; width: 80%; height: 280%; transform-origin: 50% 100%;
+    background: linear-gradient(180deg, rgba(var(--goud-glans-rgb),0) 0%, rgba(var(--goud-glans-rgb),.30) 40%,
+                                rgba(var(--warm-licht-rgb),.12) 85%, rgba(var(--warm-licht-rgb),0));
+    -webkit-clip-path: polygon(47% 0, 53% 0, 100% 100%, 0 100%);
+    clip-path: polygon(47% 0, 53% 0, 100% 100%, 0 100%);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 30%);
+    mask-image: linear-gradient(180deg, transparent 0%, #000 30%);
+  }
+  .venue-aan.finale .venue-finale.links { left: -30%; transform: rotate(24deg); }
+  .venue-aan.finale .venue-finale.rechts { right: -30%; transform: rotate(-24deg); }
   /* De richel waar ze op staat: een ellips onder haar voeten met een warme lip
      aan de voorkant. Dit is wat "zij staat ergens" van "zij zweeft" onderscheidt. */
   .venue-aan .venue-vloer {
