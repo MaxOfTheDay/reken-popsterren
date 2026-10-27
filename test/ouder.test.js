@@ -27,7 +27,7 @@
  *   M  de inschatting toont geen percentage, en p.perf draait er ongewijzigd door
  *   N  de drie weergavekeuzes staan op één regel, en wikkelen alleen als het moet
  *   O  op het beginscherm: de uitlegkaart na de back-up, per browser, en weg in de app
- *   P  Voortgang: status uit de laatste shows, één stap "nu", de oogst dicht
+ *   P  Voortgang: één label op het leerpad, één stap "nu", de oogst dicht
  *   Q  opstarten en instellingen: wie net speelde, geluid aan, meisje/jongen, het maakformulier
  *   T  de back-up is één rij met een blad erachter; overzetten met een code, langs
  *      een nagebootste ontvanger: neerleggen, ophalen, één keer, vervangen, annuleren
@@ -1041,25 +1041,28 @@ function check(ok, label, detail) {
     }
   }
 
-  /* ================= P · Voortgang: drie vragen ================= */
-  /* Voortgang beantwoordt eerst "gaat het goed?" en dan "wat komt er nu?". De
-     stand komt uit de laatste shows (p.recent), niet uit een totaal sinds het
-     begin: een kind dat het nu lastig heeft hoort oranje te krijgen, ook als
-     het vorige maand alles in één keer deed. De oogst staat dicht. */
+  /* ================= P · Voortgang: past het niveau? ================= */
+  /* Voortgang beantwoordt "waar staat ze, past het, moet ik iets doen?" in één
+     kaart, het leerpad: één label rechtsboven (uit de shows op haar stap van nu,
+     zie kern zaak ZH), één regel onder haar stap als er iets gebeurt, en de
+     tellers sinds het begin dicht onder Meer cijfers. */
   {
     const { ctx, page } = await fresh();
     const lees = async () => page.evaluate(() => ({
       kaarten: [...document.querySelectorAll('#settings-body .vg-kop')].map(e => e.textContent.trim()),
-      stand: document.querySelector('.vg-status').className,
-      kop: document.querySelector('.vg-status b').textContent,
+      labels: [...document.querySelectorAll('#settings-body .vg-tag')].map(e => e.dataset.stand),
+      onder: (document.querySelector('.vg-onder') || {}).textContent || '',
       meerOpen: document.querySelector('.vg-meer').open,
       nu: document.querySelectorAll('.vg-ladder .hier').length,
       tip: !!document.getElementById('grens-tip'),
+      oud: document.querySelectorAll('.vg-status, .vg-reeks').length,
     }));
     const met = async (recent, extra) => {
       await page.evaluate(([rc, ex]) => {
         const p = db.profiles.p1;
         p.recent = rc;
+        p.stap = rc.length ? { id: stapSleutel(p), n: rc.length } : undefined;
+        if (!rc.length) delete p.stap;
         if (ex) Object.assign(p.settings, ex);
         save();
       }, [recent, extra || null]);
@@ -1068,24 +1071,28 @@ function check(ok, label, detail) {
       return lees();
     };
     let r = await met([]);
-    check(/Hoe gaat het met/.test(r.kaarten[0]) && /Leerpad/.test(r.kaarten[1]) && /extra/.test(r.kaarten[2]),
-      'P · rekenen: status, leerpad, extra oefenen', JSON.stringify(r.kaarten));
-    check(/nieuw/.test(r.stand) && /Net begonnen/.test(r.kop), 'P · zonder shows: net begonnen', r.kop);
+    check(/Leerpad/.test(r.kaarten[0]) && r.kaarten.length === 1,
+      'P · rekenen, zonder lastige sommen: alleen het leerpad (en Meer cijfers)', JSON.stringify(r.kaarten));
+    check(r.oud === 0, 'P · geen aparte statuskaart meer', String(r.oud));
+    check(r.labels.join() === 'nieuw', 'P · zonder shows: één label, net begonnen', JSON.stringify(r.labels));
     check(r.meerOpen === false, 'P · "meer cijfers" staat dicht', String(r.meerOpen));
     check(r.nu === 1, 'P · er is precies één stap "nu" op het pad', String(r.nu));
     r = await met([3, 2, 3, 2, 3, 3, 2, 3]);
-    const bolletjes = await page.evaluate(() => [...document.querySelectorAll('.vg-reeks i')].map(i => i.className).join(','));
-    check(bolletjes === 'r3,r2,r3,r2,r3,r3,r2,r3', 'P · één bolletje per show, in volgorde', bolletjes);
-    check(/goed/.test(r.stand), 'P · drie en twee sterren door elkaar: de uitdaging zit goed', r.kop);
-    r = await met([3, 3, 3, 3, 3, 3, 3, 3, 3, 2]);
-    check(/vlot/.test(r.stand), 'P · bijna alles drie sterren: vlot', r.kop);
+    check(r.labels.join() === 'goed' && !r.onder, 'P · drie en twee sterren door elkaar: past goed, en dan geen regel eronder', JSON.stringify(r));
+    r = await met([3, 3, 3, 3, 3]);
+    check(r.labels.join() === 'vlot' && /zelf door/.test(r.onder) && !r.tip,
+      'P · alles drie sterren: gaat vlot, het pad schuift zelf door', JSON.stringify(r));
     r = await met([3, 3, 3, 3, 3, 3, 3, 0, 0, 0]);
-    check(/pittig/.test(r.stand), 'P · drie mislukte shows: pittig, ook na een goede reeks', r.kop);
+    check(r.labels.join() === 'pittig' && /makkelijker/.test(r.onder), 'P · mislukte shows: even pittig, en wat het spel doet', JSON.stringify(r));
+    // lastige sommen: dan is er een kaart
+    await page.evaluate(() => { db.profiles.p1.weak = { '8 + @ = 13': { w: 3, ans: 5 } }; save(); });
+    r = await met([3, 2, 3]);
+    check(r.kaarten.length === 2 && /extra/.test(r.kaarten[1]), 'P · met lastige sommen staat "Oefent extra op" er', JSON.stringify(r.kaarten));
     // de telmodus heeft geen sommenkaart
     r = await met([3, 3, 3, 3], { track: 'count', stage: 1, stageMax: 12, numerals: true });
-    check(r.kaarten.length === 2 && !/extra/.test(r.kaarten.join(' ')),
+    check(r.kaarten.length === 1 && !/extra/.test(r.kaarten.join(' ')),
       'P · in de telmodus geen sommenkaart', JSON.stringify(r.kaarten));
-    check(r.nu === 1, 'P · ook daar één stap "nu"', String(r.nu));
+    check(r.nu === 1 && r.labels.length === 1, 'P · ook daar één stap "nu" en één label', JSON.stringify(r));
     await ctx.close();
   }
 
