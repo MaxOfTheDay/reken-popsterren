@@ -425,7 +425,8 @@ is. De beloftes, op de kaart, in de kleedkamer, in de kast en op de reis:
   opnieuw vast en zet de drift terug op nul;
 - **alleen de hoogte, maar écht** (zaak H) — split-screen of een pc-venster dat
   je alleen in de hoogte trekt legt het slot ook opnieuw vast; met een tekstveld
-  open is een kleiner venster het toetsenbord en blijft het slot staan; en de
+  open is een kleiner venster het toetsenbord en blijft het slot staan; systeembalken
+  die na een druk op terug even terugkomen (een klein stukje lager) ook; en de
   groei van de statusbalk wordt bij de volgende `show()` alsnog overgenomen,
   zodat er geen strook onder de app blijft.
 - **de memory-knop springt niet na een terugkeer naar de kaart** (zaak I) — de
