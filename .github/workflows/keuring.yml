@@ -12,6 +12,8 @@
 #   sterren   de kortste browsersuite die het beginscherm echt opbouwt. Die ziet
 #             wat check niet kan zien: een const die te vroeg gelezen wordt en een
 #             lege pagina geeft (CLAUDE.md, regel 0)
+#             en daarna schuiven: geen scherm schuift verder dan er iets te zien
+#             valt, en wat geen lijst is past op elke maat (test/schuiven.test.js)
 name: keuring
 
 on:
@@ -45,3 +47,4 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
       - run: npm run test:sterren
+      - run: npm run test:schuiven

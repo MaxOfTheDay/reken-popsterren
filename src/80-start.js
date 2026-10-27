@@ -199,6 +199,9 @@ landingLeeft();
 // "= Het spelogo komt binnen".
 logoIntro();
 syncBackGuard();
+// de ruimte onder de balken: meten voor het eerste scherm, en daarna bijhouden
+onderVrijWaarnemen();
+onderVrijOpnieuw();
 /* ---- Ontwikkelaarsschakelaars (alleen met ?debug in de URL) ----
    Bestaat om twee redenen: de geautomatiseerde tests kijken via __game() in de
    lopende show mee, en wie aan het uiterlijk werkt moet élk scherm kunnen zien
@@ -251,6 +254,9 @@ if (location.search.indexOf('debug') !== -1) {
   }
   if (loadWorldDraft()) console.log('wereldconcept uit localStorage geladen (' + WORLDS.length + ' werelden)');
   window.__game = () => G;
+  // een beeldscherm dat niet past, meldt zich in de console (zie schuifWacht)
+  schuifWachtAan = true;
+  addEventListener('resize', schuifWacht);
   window.__db = () => db;
   if (dbg.has('demo')) {
     // Geen save(): dit is een kijk-opstelling, geen opslag. Bij herladen wordt

@@ -1275,13 +1275,6 @@
     /* De onscherpe wereld ligt op #screen-map en niet op .tour-map: dat laatste is
        een scrollvak, en een laagje daarin zou met de kaart mee wegschuiven. */
     #screen-map { isolation: isolate; }
-    /* En dicht, want de rand hieronder is groter dan het scherm (14% maal 8 is
-       112%), en een vergroting telt mee voor wat er te scrollen valt: het hele
-       kaartscherm schoof hier 6% van de hoogte op (46px op 1024x768) en liet
-       onderaan een donkere band zien. Op deze maten past alles al -- de kaart
-       zelf schuift in .tour-map, als hij dat moet -- dus er is hier niets dat
-       #screen-map zelf hoeft te scrollen. */
-    #screen-map { overflow: hidden; }
     /* EÉN DOEK, KLEIN GETEKEND. De rand is de wereld nog een keer, onscherp en
        donker. Hij stond hier als twee lagen: een verloop (de wereldkleuren) en
        daarop de grote tekening met blur(36px) over het hele venster. Dat ging op
@@ -1305,7 +1298,11 @@
       background-image: var(--art, none), linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 100%);
       background-size: cover; background-position: 50% 50%;
       filter: blur(4.5px) brightness(.46) saturate(.8); }
-    #screen-map::after { z-index: -2; }
+    /* fixed en niet absolute: de vergroting hierboven steekt 6% buiten het scherm,
+       en een absolute laag telt mee voor wat er in #screen-map te schuiven valt --
+       dan was de kaart 46px te hoog (zie test/schuiven.test.js zaak D). Een vaste
+       laag telt niet mee, en het vak is hetzelfde: de kaart vult het venster. */
+    #screen-map::after { z-index: -2; position: fixed; }
     /* Dezelfde rand als losse laag, voor de twee momenten waarop hij moet
        overvloeien in plaats van knippen:
          .vlucht-doek  tijdens de vlucht tussen kaart en Werelden, net onder de
