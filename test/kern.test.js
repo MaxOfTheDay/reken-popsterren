@@ -1175,6 +1175,22 @@ zaak('V', () => {
   check(app.uitdagingStand(p) === null, 'V · een oude save zonder recente shows: geen stand, geen fout', '');
   app.onthoudUitkomst(p, 2);
   check(p.recent.length === 1, 'V · en hij begint gewoon te tellen', JSON.stringify(p.recent));
+  // een ster van vóór p.recent, met 48 shows: niet meer "Net begonnen"
+  const { app: a2, p: oud } = verseSter('Oud');
+  delete oud.recent; a2.migrate(oud);
+  for (let l = 1; l <= 48; l++) oud.stars[l] = l % 4 ? 3 : 2;
+  const reeks = a2.recenteReeks(oud);
+  check(reeks.length === a2.RECENT_N, 'V · een oude ster: de laatste tien uit haar sterren', JSON.stringify(reeks));
+  check(a2.uitdagingStand(oud) && a2.uitdagingStand(oud).stand === 'goed', 'V · en dus een stand, geen "Net begonnen"', JSON.stringify(a2.uitdagingStand(oud)));
+  check(!(oud.recent && oud.recent.length), 'V · het aanvullen wordt niet bewaard', JSON.stringify(oud.recent));
+  a2.onthoudUitkomst(oud, 0); a2.onthoudUitkomst(oud, 0); a2.onthoudUitkomst(oud, 0);
+  check(a2.recenteReeks(oud).slice(-3).join() === '0,0,0' && a2.uitdagingStand(oud).stand === 'pittig',
+    'V · nieuwe shows schuiven er achteraan bij', JSON.stringify(a2.recenteReeks(oud)));
+  // een verse ster telt haar eerste shows niet dubbel
+  const { app: a3, p: vers } = verseSter('Vers');
+  vers.stars[1] = 3; vers.stars[2] = 3; a3.onthoudUitkomst(vers, 3); a3.onthoudUitkomst(vers, 3);
+  check(a3.recenteReeks(vers).length === 2 && a3.uitdagingStand(vers) === null,
+    'V · een verse ster: haar eigen shows, niet dubbel', JSON.stringify(a3.recenteReeks(vers)));
 });
 
 zaak('W', () => {

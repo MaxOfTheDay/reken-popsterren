@@ -23512,8 +23512,28 @@ function onthoudUitkomst(p, sterren) { p.recent = (p.recent || []).concat(sterre
 
 
 
-function uitdagingStand(p) {
+
+
+
+
+
+
+function recenteReeks(p) {
   const r = p.recent || [];
+  const tekort = Math.min(RECENT_N - r.length, playedCount(p) - r.length);
+  if (tekort <= 0) return r;
+  const oud = Object.keys(p.stars || {}).map(Number).filter(l => p.stars[l] > 0)
+    .sort((a, b) => b - a).slice(0, tekort).reverse().map(l => p.stars[l]);
+  return oud.concat(r);
+}
+
+
+
+
+
+
+function uitdagingStand(p) {
+  const r = recenteReeks(p);
   if (r.length < 4) return null;
   const drie = r.filter(v => v >= 3).length, mis = r.filter(v => v === 0).length;
   const stand = mis >= 3 ? 'pittig' : (drie / r.length >= 0.8 ? 'vlot' : 'goed');
@@ -25503,7 +25523,7 @@ function statusKaartHtml(p) {
   if (u) {
     ({ ico, kop } = STAND_TEKST[u.stand]);
     klas = u.stand;
-    zin = `<span class="vg-reeks">${(p.recent || []).map(v => `<i class="r${v}"></i>`).join('')}</span>`
+    zin = `<span class="vg-reeks">${recenteReeks(p).map(v => `<i class="r${v}"></i>`).join('')}</span>`
       + (u.stand === 'pittig' ? ' Het spel maakt het lichter.' : '');
   }
   const shows = playedCount(p);

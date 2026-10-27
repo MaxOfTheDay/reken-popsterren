@@ -217,7 +217,7 @@ const BRUG = `globalThis.__api = {
   COUNT_OPTS, COUNT_STAGE_MAX, countTopRung, countMaxStage, countLiveStage,
   updateCountAcc, advanceCountStage, telPlafondTel, telPlafondOpnieuw, stemAan, somZin,
   // het ouderrapport: de laatste shows
-  RECENT_N, onthoudUitkomst, uitdagingStand, groeiMoment, wenPlafond, grensOmhoog, WEN_SHOWS, moeilijkheid,
+  RECENT_N, onthoudUitkomst, recenteReeks, uitdagingStand, groeiMoment, wenPlafond, grensOmhoog, WEN_SHOWS, moeilijkheid,
   wereldAccent, planSpecials,
   // de antwoordknoppen
   genQuestion, keuzeGrens, makeChoices,

@@ -12096,6 +12096,26 @@ function groeiMoment(p, g, voor) {
   return nieuw;
 }
 function onthoudUitkomst(p, sterren) { p.recent = (p.recent || []).concat(sterren).slice(-RECENT_N); }
+/* De laatste shows zoals Voortgang ze leest: p.recent, aangevuld met wat er
+   al vóór dat veld gespeeld was. Een ster van vóór p.recent begon met een lege
+   lijst en bleef "Net begonnen" tot ze vier nieuwe shows speelde, ook met
+   achtenveertig shows achter de rug. Wat daar ontbreekt komt uit p.stars: de
+   hoogste haltes eerst, want die zijn het laatst gehaald. Alleen zoveel als
+   p.recent niet zelf verklaart (playedCount min wat er al in staat), anders
+   telt een verse ster haar eerste twee shows dubbel.
+
+   Alleen gelezen, nooit bewaard: zodra er tien nieuwe shows zijn valt het
+   aanvullen vanzelf weg. Het is een benadering -- p.stars kent per halte het
+   beste resultaat en geen mislukte show, dus uit de aanvulling alleen komt
+   nooit "pittig". */
+function recenteReeks(p) {
+  const r = p.recent || [];
+  const tekort = Math.min(RECENT_N - r.length, playedCount(p) - r.length);
+  if (tekort <= 0) return r;
+  const oud = Object.keys(p.stars || {}).map(Number).filter(l => p.stars[l] > 0)
+    .sort((a, b) => b - a).slice(0, tekort).reverse().map(l => p.stars[l]);
+  return oud.concat(r);
+}
 /* Zit de uitdaging goed? Uit de laatste shows, in drie standen -- en met opzet
    een uitspraak over de uitdaging, niet over het kind:
      pittig  drie of meer mislukte shows -- het spel maakt het nu zelf lichter
@@ -12103,7 +12123,7 @@ function onthoudUitkomst(p, sterren) { p.recent = (p.recent || []).concat(sterre
      goed    de rest: een mengeling van twee en drie sterren
    Onder de vier shows zegt het nog niets (null). */
 function uitdagingStand(p) {
-  const r = p.recent || [];
+  const r = recenteReeks(p);
   if (r.length < 4) return null;
   const drie = r.filter(v => v >= 3).length, mis = r.filter(v => v === 0).length;
   const stand = mis >= 3 ? 'pittig' : (drie / r.length >= 0.8 ? 'vlot' : 'goed');
@@ -14082,7 +14102,7 @@ const STAND_TEKST = {
    dat er iets moet.
 
    Onder de kop geen zin ("Laatste 10 shows: 7× drie sterren, 1 niet gelukt")
-   maar de shows zelf: één bolletje per show uit p.recent, vol goud voor drie
+   maar de shows zelf: één bolletje per show uit recenteReeks, vol goud voor drie
    sterren, licht voor minder, een ring voor een mislukte. Dat leest in één
    blik, en wie het wil narekenen kan tellen. */
 function statusKaartHtml(p) {
@@ -14093,7 +14113,7 @@ function statusKaartHtml(p) {
   if (u) {
     ({ ico, kop } = STAND_TEKST[u.stand]);
     klas = u.stand;
-    zin = `<span class="vg-reeks">${(p.recent || []).map(v => `<i class="r${v}"></i>`).join('')}</span>`
+    zin = `<span class="vg-reeks">${recenteReeks(p).map(v => `<i class="r${v}"></i>`).join('')}</span>`
       + (u.stand === 'pittig' ? ' Het spel maakt het lichter.' : '');
   }
   const shows = playedCount(p);
