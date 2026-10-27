@@ -4509,6 +4509,18 @@
   .toast.blauw, .praise.blauw { border-color: rgba(41,182,246,.8); box-shadow: var(--e-2), 0 0 20px rgba(41,182,246,.3); }
   .praise.blauw .praise-headline { color: var(--c-white); text-shadow: none; }
   .toast.docked { top: 98px; }
+
+
+
+
+  .toast.onder { top: auto; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
+  .toast.met-knop { pointer-events: auto; padding-right: 8px; }
+  .toast.met-knop .toast-main { display: flex; align-items: center; white-space: nowrap; }
+  .toast-terug {
+    font-family: inherit; font-size: inherit; font-weight: 700; color: var(--gold-light);
+    background: none; border: none; border-left: 1px solid rgba(255,255,255,.3); cursor: pointer;
+    margin-left: 12px; padding: 6px 10px 6px 12px; min-height: 36px;
+  }
   .toast.show { display: flex; animation: toastIn .3s ease forwards; }
   @keyframes toastIn {
     from { opacity: 0; transform: translateY(-8px); }
@@ -9176,26 +9188,6 @@
 
 
 
-  .danger-reveal { margin-top: 12px; }
-  .danger-reveal > summary {
-    list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
-    min-height: 44px; box-sizing: border-box; padding: 9px 15px;
-    font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted);
-    border: 1.5px solid var(--paper-border); border-radius: var(--r-pill);
-  }
-  .danger-reveal > summary::-webkit-details-marker { display: none; }
-  .danger-reveal > summary::after { content: '▾'; opacity: .7; }
-  .danger-reveal[open] > summary { color: var(--danger-title); border-color: var(--danger-border); }
-  .danger-reveal[open] > summary::after { content: '▴'; }
-  .danger-reveal .danger-zone { margin-top: 10px; }
-
-
-  .danger-reveal + .danger-reveal { margin-top: 10px; }
-  .danger-zone .d b { color: var(--danger-title); font-weight: 700; }
-
-
-
-
 
 
   .gear-item .gi-sub.backup-stand.oud { color: var(--practice-text); }
@@ -9740,12 +9732,6 @@
   .data-btns.naast { flex-wrap: nowrap; gap: 8px; }
   .data-btns.naast .btn { flex: 1; min-width: 0; white-space: nowrap; padding-left: 8px; padding-right: 8px; }
 
-  .danger-zone {
-    background: var(--danger-bg); border: 1.5px dashed var(--danger-border); border-radius: var(--r-lg); padding: 15px 18px;
-    display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
-  }
-  .danger-zone .t { font-size: var(--tx-label); font-weight: 700; color: var(--danger-title); }
-  .danger-zone .d { font-size: var(--tx-klein); color: var(--danger-desc); font-weight: 500; margin-top: 2px; max-width: 42ch; }
   .danger-btn { background: linear-gradient(180deg, var(--red-danger-500), var(--red-danger-shadow)); color: var(--c-white); border: none; border-radius: var(--r-sm); padding: 10px 16px; font-family: inherit; font-weight: 700; font-size: var(--tx-label); cursor: pointer; box-shadow: 0 var(--btn-lip-sm) 0 var(--red-danger-shadow); white-space: nowrap; }
   .danger-btn:active { transform: translateY(3px); box-shadow: none; }
 
@@ -9858,8 +9844,30 @@
   .wie-blad { gap: 12px; }
   .wie-blad .wb-pop { display: flex; justify-content: center; margin-top: -4px; }
   .wie-blad .name-edit-wrap { max-width: none; }
-  .wb-gevaar { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding-top: 12px; border-top: 1px solid var(--paper-border); }
-  .wb-gevaar .danger-reveal { width: 100%; margin: 0; }
+  .wb-gevaar { display: flex; flex-direction: column; padding-top: 8px; border-top: 1px solid var(--paper-border); }
+
+
+
+  .wb-gevaar .gi-label { color: var(--danger-title); }
+  .wb-gevaar .gi-sub { color: var(--danger-desc); font-weight: 500; }
+
+
+
+
+  .gv-lijst {
+    display: flex; flex-direction: column; gap: 6px; text-align: left;
+    background: var(--danger-bg); border: 1.5px dashed var(--danger-border); border-radius: var(--r-md); padding: 10px 13px;
+    font-size: var(--tx-klein); font-weight: 500; color: var(--danger-desc);
+  }
+  .gv-lijst b { color: var(--danger-title); font-weight: 700; }
+  .gv-backup {
+    display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 10px; padding: 9px 13px; min-height: 44px;
+    border: none; border-radius: var(--r-md); background: var(--practice-bg); cursor: pointer;
+    font-family: inherit; font-size: var(--tx-klein); font-weight: 600; color: var(--practice-text); text-align: left;
+  }
+  .gv-backup .gv-wanneer { flex: 1; min-width: 0; }
+  .gv-backup b { color: var(--purple-mid); font-weight: 700; white-space: nowrap; }
+  .gv-backup.klaar { background: var(--green-badge-bg); color: var(--green-deep); cursor: default; }
   .wie-blad #set-base { margin-bottom: 0; }
 
 
@@ -11223,6 +11231,8 @@ function showToast(txt, onTap, sub, soort) {
   t.classList.toggle('goud', soort === 'goud');
   t.classList.toggle('blauw', soort === 'blauw');
   t.classList.toggle('met-sub', !!sub);
+
+  t.classList.remove('onder', 'met-knop');
   t.innerHTML = `<div class="toast-main">${txt}</div>` + (sub ? `<div class="toast-sub">${sub}</div>` : '');
   t.style.display = 'flex';
   t.classList.remove('show');
@@ -27233,10 +27243,48 @@ function beheerEmptyHtml() {
 
 
 
+function gevaarVraag({ titel, weg, blijft, ja, nee, doe }) {
+  showConfirm(titel, '', ja, () => {
+    const { melding, terug } = doe();
+    if (melding) meldMetTerug(melding, terug);
+  });
+  $('confirm-body').innerHTML = `<div class="gv-lijst"><div><b>Weg:</b> ${weg}</div>`
+    + (blijft ? `<div><b>Blijft:</b> ${blijft}</div>` : '') + '</div>'
+    + (profileKeys().length && backupOud() ? `<button class="gv-backup" id="gv-backup" type="button">`
+      + `<span aria-hidden="true">🗄️</span><span class="gv-wanneer">${backupDagen() === null ? 'Geen back-up' : `Back-up ${backupWanneer().replace(' geleden', '')} oud`}</span>`
+      + '<b>Eerst maken ›</b></button>' : '');
+  const bk = $('gv-backup');
+  if (bk) bk.onclick = () => {
+    sndClick();
+    exportData();
+    bk.outerHTML = '<div class="gv-backup klaar"><span aria-hidden="true">✓</span><span class="gv-wanneer">Back-up gemaakt</span></div>';
+  };
+  if (nee) $('confirm-no').onclick = nee;
+}
 
 
 
 
+
+const TERUG_DUUR = 6000;
+function meldMetTerug(melding, terug) {
+  showToast(`${melding}<button class="toast-terug" type="button">↶ Terug</button>`);
+  const t = $('toast');
+  t.classList.add('onder', 'met-knop');
+  t.querySelector('.toast-terug').onclick = () => {
+    sndClick();
+    hideToast();
+    terug();
+    save();
+    if ($('screen-settings').classList.contains('active')) { renderSettings(); settingsToTop(); }
+    renderProfiles();
+  };
+  toastWeg(TERUG_DUUR);
+}
+
+function opsomming(woorden) {
+  return woorden.length < 2 ? woorden.join('') : woorden.slice(0, -1).join(', ') + ' en ' + woorden[woorden.length - 1];
+}
 
 
 
@@ -27262,30 +27310,17 @@ function wieBladHtml(p) {
       <div class="chip-row mode-row" id="set-track" role="group" aria-label="Tellen of rekenen">${[['count', '🧸', 'Leren tellen'], ['math', '🧮', 'Rekenen']].map(([v, ico, woord]) =>
         `<button class="chip gestapeld${(p.settings.track === 'count') === (v === 'count') ? ' on' : ''}" data-v="${v}">`
         + `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${woord}</span></button>`).join('')}</div></div>
+    <!-- twee rijen in rode letters: ze zeggen wat er gebeurt en openen elk één
+         vraag (gevaarVraag). Geen openklapper meer ervoor -- die herhaalde
+         dezelfde uitleg als de vraag erachter, en klapte het blad open tot de knop
+         op een smalle telefoon onder de rand viel. -->
     <div class="wb-gevaar">
-      <!-- rode vlak bestaat pas als een ouder er zelf om vraagt; een permanent
-           zichtbare wisknop hoort niet tussen gewone instellingen te staan -->
-      <details class="danger-reveal" id="set-danger">
-        <summary>Voortgang wissen…</summary>
-        <div class="danger-zone">
-          <div><div class="t">⚠️ Voortgang van <span class="set-naam">${esc(p.name)}</span> wissen</div>
-            <div class="d"><b>Weg:</b> alle diamanten, sterren, trofeeën en gekochte spulletjes.<br>
-              <b>Blijft:</b> de naam, de startoutfit en alle oefeninstellingen.</div></div>
-          <button class="danger-btn" id="set-reset">Wissen</button>
-        </div>
-      </details>
-      <!-- verwijderen hoort bij "wie deze ster is", niet bij "opnieuw beginnen":
-           het ene haalt haar wég, het andere laat haar juist blijven -->
-      <details class="danger-reveal" id="set-danger-del">
-        <!-- één tekstvak: de summary is flex met een gat, en anders valt dat gat
-             tussen de naam en "verwijderen" -->
-        <summary><span><span class="set-naam">${esc(p.name)}</span> verwijderen…</span></summary>
-        <div class="danger-zone">
-          <div><div class="t">⚠️ <span class="set-naam">${esc(p.name)}</span> verwijderen</div>
-            <div class="d">Helemaal weg van dit toestel, met alle diamanten, sterren en spulletjes. De andere sterren blijven. Kan niet ongedaan gemaakt worden.</div></div>
-          <button class="danger-btn" id="set-delete">Verwijderen</button>
-        </div>
-      </details>
+      <button class="gear-item" id="set-reset" type="button"><span class="gi-ico" aria-hidden="true">🔄</span>`
+        + `<span class="gi-label">Voortgang wissen<span class="gi-sub">Alles op nul, <span class="set-naam">${esc(p.name)}</span> blijft</span></span>`
+        + `<span class="gi-pijl" aria-hidden="true">›</span></button>
+      <button class="gear-item" id="set-delete" type="button"><span class="gi-ico" aria-hidden="true">🗑️</span>`
+        + `<span class="gi-label"><span class="set-naam">${esc(p.name)}</span> verwijderen<span class="gi-sub">Weg van dit toestel</span></span>`
+        + `<span class="gi-pijl" aria-hidden="true">›</span></button>
     </div>
   </div>`;
 }
@@ -27597,19 +27632,15 @@ function bindWie(p) {
     e.preventDefault();
     e.target.blur();
   });
-
-
-  document.querySelectorAll('#confirm-body .danger-reveal').forEach(dg => {
-    dg.ontoggle = () => { if (dg.open) sndClick(); };
-  });
   on('set-reset', 'onclick', () => {
-    showConfirm(
-      '⚠️ Weet je het zeker?',
-      `Alle voortgang, diamanten, sterren en spulletjes van ${p.name} wissen?`
-      + ` De naam, de startoutfit en alle oefeninstellingen blijven staan.`
-      + ` Dit kan niet ongedaan gemaakt worden.`,
-      'Ja, wissen',
-      () => {
+    sndClick();
+    gevaarVraag({
+      titel: `Voortgang van ${p.name} wissen?`,
+      weg: 'alle diamanten, sterren, trofeeën en spulletjes.',
+      blijft: `${esc(p.name)} zelf: naam, figuur, startoutfit en oefeninstellingen.`,
+      ja: 'Ja, wissen',
+      nee: openWieBlad,
+      doe: () => {
 
 
 
@@ -27619,15 +27650,14 @@ function bindWie(p) {
 
 
         const opts = { ...p.settings, hair: p.startHair || 'hair_blond', base: p.base };
-        const order = p.order;
-        db.profiles[setKey] = defaultProfile(p.name, dress, opts);
-        db.profiles[setKey].order = order;
+        const key = setKey;
+        db.profiles[key] = defaultProfile(p.name, dress, opts);
+        db.profiles[key].order = p.order;
         save(); renderSettings();
-        showToast('✓ Voortgang gewist');
-        toastWeg(1800);
-      }
-    );
-    $('confirm-no').onclick = openWieBlad;
+
+        return { melding: '✓ Voortgang gewist', terug: () => { db.profiles[key] = p; } };
+      },
+    });
   });
 
 
@@ -27658,23 +27688,35 @@ function bindWie(p) {
     openWieBlad();
   });
   on('set-delete', 'onclick', () => {
-    showConfirm(
-      '⚠️ Ster verwijderen?',
-      `${p.name} helemaal verwijderen, met alle voortgang, diamanten en spulletjes? Dit kan niet ongedaan gemaakt worden.`,
-      'Ja, verwijderen',
-      () => {
-        const naam = p.name;
-        delete db.profiles[setKey];
-        if (cur === setKey) cur = null;
+    sndClick();
+    const andere = profileKeys().filter(k => k !== setKey).map(k => esc(db.profiles[k].name));
+    gevaarVraag({
+      titel: `${p.name} verwijderen?`,
+      weg: `${esc(p.name)}, met alle diamanten, sterren, trofeeën en spulletjes.`,
+
+      blijft: andere.length ? opsomming(andere) + '.' : '',
+      ja: 'Ja, verwijderen',
+      nee: openWieBlad,
+      doe: () => {
+        const key = setKey;
+        delete db.profiles[key];
+        if (cur === key) cur = null;
         setKey = null;
         save();
         if (profileKeys().length) { renderSettings(); settingsToTop(); }
         else closeSettings();
-        showToast(`✓ ${esc(naam)} is verwijderd`);
-        toastWeg(1800);
-      }
-    );
-    $('confirm-no').onclick = openWieBlad;
+        return {
+          melding: `✓ ${esc(p.name)} is verwijderd`,
+          terug: () => {
+
+            const k = db.profiles[key] ? nextProfileKey() : key;
+            db.profiles[k] = p;
+
+            if ($('screen-settings').classList.contains('active')) setKey = k;
+          },
+        };
+      },
+    });
   });
 }
 function bindSettings(p, s) {
@@ -27811,18 +27853,21 @@ function importData(file) {
       showNotice('Oeps!', 'Kon dit bestand niet lezen. Kies een geldig back-upbestand.');
       return;
     }
-    showConfirm(
-      '📂 Back-up terugzetten?',
-      'Dit vervangt de huidige diamanten, sterren en spulletjes van alle profielen door de inhoud van dit back-upbestand. Dit kan niet ongedaan gemaakt worden.',
-      'Ja, terugzetten',
-      () => {
-        if (!backupToepassen(data)) { showNotice('Oeps!', 'Dit back-upbestand is beschadigd; er is niets veranderd.'); return; }
+    const hier = profileKeys().map(k => esc(db.profiles[k].name));
+    gevaarVraag({
+      titel: 'Back-up terugzetten?',
+      weg: hier.length ? `wat er nu op dit toestel staat: ${opsomming(hier)}.` : 'niets, er staan hier nog geen sterren.',
+      ja: 'Ja, terugzetten',
+      doe: () => {
+        const oud = db;
+        if (!backupToepassen(data)) {
+          showNotice('Oeps!', 'Dit back-upbestand is beschadigd; er is niets veranderd.');
+          return { melding: '', terug: null };
+        }
         renderSettings();
-
-        showToast('✓ Back-up geladen');
-        toastWeg(2200);
-      }
-    );
+        return { melding: '✓ Back-up geladen', terug: () => { db = oud; cur = null; setKey = null; } };
+      },
+    });
   };
   reader.onerror = () => showNotice('Oeps!', 'Kon dit bestand niet lezen.');
   reader.readAsText(file);
@@ -28093,11 +28138,15 @@ function ozGevonden(data, vanStart) {
   $('oz-dicht').onclick = closeConfirmModal;
   $('oz-ja').onclick = () => {
     closeConfirmModal();
+    const oud = db;
     if (!backupToepassen(data)) { showNotice('Oeps!', 'Deze sterren zijn beschadigd; er is niets veranderd.'); return; }
     if ($('screen-settings').classList.contains('active')) renderSettings();
     renderProfiles();
-    showToast('✓ Sterren overgezet');
-    toastWeg(2400);
+
+
+
+    if (hier.length) meldMetTerug('✓ Sterren overgezet', () => { db = oud; cur = null; setKey = null; });
+    else { showToast('✓ Sterren overgezet'); toastWeg(2400); }
     if (vanStart) confetti(50);
   };
 }

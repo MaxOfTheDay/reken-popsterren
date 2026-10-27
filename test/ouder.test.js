@@ -15,8 +15,8 @@
  *   B  oefeninstellingen zijn per kind, en lekken niet naar de buur
  *   C  de kiezer wisselt de context; het onderdeel blijft staan
  *   D  de faseladder en de startfase houden elkaar in het gareel (en tonen het bereik)
- *   E  voortgang wissen: eerst vragen, dan wissen -- en de instellingen blijven
- *   F  een ster verwijderen noemt haar bij naam en vraagt eerst
+ *   E  voortgang wissen: eerst vragen, dan wissen -- de instellingen blijven, en Terug draait het terug
+ *   F  een ster verwijderen noemt haar bij naam, vraagt eerst, en Terug brengt haar terug
  *   G  back-up eruit en er weer in: byte voor byte dezelfde voortgang
  *   H  een kapotte back-up verandert niets
  *   I  de plakkende kop krimpt bij scrollen, maar wie en wat blijven in beeld --
@@ -447,19 +447,8 @@ function check(ok, label, detail) {
     });
     await open(page, 'p1', 'beheer');
     await page.waitForTimeout(150);
-    // drie tikken, en niet één: openklappen, de knop, en dan pas ja
-    // Niet op offsetParent of getClientRects kijken: in een dichte <details>
-    // houdt Chromium de opmaak van de inhoud gewoon staan (verborgen met
-    // content-visibility, niet met display:none) -- de knop heeft daar dus nog
-    // een maat en een rechthoek. checkVisibility() kijkt wél naar die
-    // verborgen-door-een-voorouder-vraag, en dat is precies wat hier telt.
-    const zichtbaar = (page, id) => page.evaluate(i =>
-      document.getElementById(i).checkVisibility({ contentVisibilityAuto: true, opacityProperty: true, visibilityProperty: true }), id);
-    let r = await page.evaluate(() => ({ open: document.getElementById('set-danger').open }));
-    r.knopZichtbaar = await zichtbaar(page, 'set-reset');
-    check(!r.open && !r.knopZichtbaar, 'de wisknop bestaat pas als een ouder erom vraagt', JSON.stringify(r));
-    await page.click('#set-danger summary');
-    await page.waitForTimeout(150);
+    // twee tikken: de rij, en dan pas ja
+    let r;
     await page.click('#set-reset');
     await page.waitForTimeout(150);
     r = await page.evaluate(() => ({
@@ -470,7 +459,8 @@ function check(ok, label, detail) {
     check(r.gevraagd, 'wissen vraagt eerst om bevestiging', 'geen venster');
     check(r.nogSterren === 2, 'en wist nog niets zolang er niet bevestigd is', 'sterren=' + r.nogSterren);
     check(/Anna/.test(r.tekst), 'de vraag noemt het kind bij naam', r.tekst);
-    check(/blijven staan/.test(r.tekst), 'en zegt ook wat er blíjft', r.tekst);
+    check(/Weg:/.test(r.tekst) && /Blijft:/.test(r.tekst), 'en zegt wat er weggaat én wat er blíjft', r.tekst);
+    check(/Geen back-up/.test(r.tekst), 'zonder back-up staat dat er ook bij', r.tekst);
     // eerst nee
     await page.click('#confirm-no');
     await page.waitForTimeout(150);
@@ -479,8 +469,6 @@ function check(ok, label, detail) {
     r = await page.evaluate(() => !!document.querySelector('#confirm-body .wie-blad'));
     check(r, 'en brengt je terug in haar blad', String(r));
     // en nu ja
-    await page.click('#set-danger summary');
-    await page.waitForTimeout(150);
     await page.click('#set-reset');
     await page.waitForTimeout(120);
     await page.click('#confirm-yes');
@@ -500,6 +488,19 @@ function check(ok, label, detail) {
     check(r.max === 100 && r.mode === 'typ',
       'en haar oefeninstellingen blijven staan -- precies wat de vraag belooft', JSON.stringify(r));
     check(r.buur.sterren === 0 && r.buur.naam === 'Bas', 'de andere ster is niet aangeraakt', JSON.stringify(r.buur));
+    // en een vergissing is nog even terug te draaien, vanuit de melding onderaan
+    r = await page.evaluate(() => {
+      const t = document.getElementById('toast'), k = t.querySelector('.toast-terug');
+      return { knop: !!k, onder: t.getBoundingClientRect().top > innerHeight / 2, tik: getComputedStyle(t).pointerEvents };
+    });
+    check(r.knop && r.onder && r.tik === 'auto', 'de melding staat onderaan, met een knop Terug', JSON.stringify(r));
+    await page.click('#toast .toast-terug');
+    await page.waitForTimeout(200);
+    r = await page.evaluate(() => ({
+      sterren: Object.keys(db.profiles.p1.stars).length, dia: db.profiles.p1.diamonds,
+      opgeslagen: Object.keys(JSON.parse(localStorage.getItem(LS_KEY)).profiles.p1.stars).length,
+    }));
+    check(r.sterren === 2 && r.dia === 99 && r.opgeslagen === 2, 'Terug zet de voortgang precies terug, ook in de opslag', JSON.stringify(r));
     await ctx.close();
   }
 
@@ -508,21 +509,13 @@ function check(ok, label, detail) {
     const { ctx, page } = await fresh();
     await open(page, 'p2', 'beheer');
     await page.waitForTimeout(150);
-    let r = await page.evaluate(() => ({ open: document.getElementById('set-danger-del').open }));
-    r.zichtbaar = await page.evaluate(() =>
-      document.getElementById('set-delete').checkVisibility({ contentVisibilityAuto: true, opacityProperty: true, visibilityProperty: true }));
-    check(!r.open && !r.zichtbaar, 'de verwijderknop zit achter een openklapper', JSON.stringify(r));
-    // de openklapper zelf noemt haar ook, en loopt mee als de naam verandert
-    r = await page.evaluate(() => document.querySelector('#set-danger-del summary').textContent);
-    check(/^Bas verwijderen/.test(r.trim()), 'de openklapper noemt de ster bij naam', r);
+    // de rij zelf noemt haar, en loopt mee als de naam verandert
+    let r = await page.evaluate(() => document.querySelector('#set-delete .gi-label').textContent);
+    check(/^Bas verwijderen/.test(r.trim()), 'de rij noemt de ster bij naam', r);
     await page.fill('#set-name', 'Bastiaan');
-    r = await page.evaluate(() => document.querySelector('#set-danger-del summary').textContent);
+    r = await page.evaluate(() => document.querySelector('#set-delete .gi-label').textContent);
     check(/^Bastiaan verwijderen/.test(r.trim()), 'en past zich aan als de naam verandert', r);
     await page.fill('#set-name', 'Bas');
-    await page.click('#set-danger-del summary');
-    await page.waitForTimeout(150);
-    r = await page.evaluate(() => document.querySelector('#set-danger-del .danger-zone .t').textContent);
-    check(/Bas/.test(r), 'het rode vlak noemt de ster die verdwijnt', r);
     await page.click('#set-delete');
     await page.waitForTimeout(150);
     r = await page.evaluate(() => ({
@@ -532,6 +525,16 @@ function check(ok, label, detail) {
     }));
     check(r.gevraagd && /Bas/.test(r.tekst) && r.n === 2,
       'verwijderen vraagt eerst, met de naam erin', JSON.stringify(r));
+    check(/Blijft: Anna/.test(r.tekst), 'en zegt wie er blijft', r.tekst);
+    await page.click('#confirm-yes');
+    await page.waitForTimeout(250);
+    r = await page.evaluate(() => ({ n: Object.keys(db.profiles).length, setKey }));
+    check(r.n === 1 && r.setKey === null, 'ja: Bas is weg en je staat op het overzicht', JSON.stringify(r));
+    await page.click('#toast .toast-terug');
+    await page.waitForTimeout(250);
+    r = await page.evaluate(() => ({ naam: db.profiles.p2 && db.profiles.p2.name, setKey,
+      kop: document.querySelector('#settings-wie .wie-naam').textContent }));
+    check(r.naam === 'Bas' && r.setKey === 'p2' && r.kop === 'Bas', 'Terug brengt Bas terug, op zijn eigen pagina', JSON.stringify(r));
     await ctx.close();
   }
 
@@ -572,7 +575,7 @@ function check(ok, label, detail) {
       nu: Object.keys(db.profiles).length,
     }));
     check(r.gevraagd, 'terugzetten vraagt eerst om bevestiging', 'geen venster');
-    check(/vervangt/i.test(r.tekst), 'en zegt dat het vervángt', r.tekst);
+    check(/Weg:.*Anna/.test(r.tekst), 'en zegt wat er verdwijnt', r.tekst);
     check(r.nu === 1, 'en verandert nog niets zolang er niet bevestigd is', 'n=' + r.nu);
     await page.click('#confirm-yes');
     await page.waitForTimeout(400);

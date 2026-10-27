@@ -952,6 +952,18 @@
   .toast.blauw, .praise.blauw { border-color: rgba(41,182,246,.8); box-shadow: var(--e-2), 0 0 20px rgba(41,182,246,.3); }
   .praise.blauw .praise-headline { color: var(--c-white); text-shadow: none; }
   .toast.docked { top: 98px; }
+  /* Met "↶ Terug" erin (meldMetTerug, na iets onomkeerbaars): onderaan, zodat
+     hij niet over de rij of de tabs valt waar je net naar kijkt, en aantikbaar --
+     alleen dan, de gewone melding laat elke tik door. Eén regel: de melding en
+     de knop naast elkaar, gescheiden door een streepje. */
+  .toast.onder { top: auto; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
+  .toast.met-knop { pointer-events: auto; padding-right: 8px; }
+  .toast.met-knop .toast-main { display: flex; align-items: center; white-space: nowrap; }
+  .toast-terug {
+    font-family: inherit; font-size: inherit; font-weight: 700; color: var(--gold-light);
+    background: none; border: none; border-left: 1px solid rgba(255,255,255,.3); cursor: pointer;
+    margin-left: 12px; padding: 6px 10px 6px 12px; min-height: 36px;
+  }
   .toast.show { display: flex; animation: toastIn .3s ease forwards; }
   @keyframes toastIn {
     from { opacity: 0; transform: translateY(-8px); }
