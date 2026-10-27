@@ -861,7 +861,7 @@ function isIpadVan(a, ua, punten) {
 }
 
 /* ================= K · De studiokeuring =================
-   De wereldstudio kijkt de werelden na met wereldControle (in src/20-app.js), en
+   De wereldstudio kijkt de werelden na met wereldControle (in src/20-gegevens.js), en
    noemt een punt "blokkeert" als een kind er nu last van heeft. Precies die
    punten horen deze keuring te laten omvallen, en niets anders -- anders zegt de
    studio "in orde" en valt het vastleggen daarna om, of andersom.

@@ -17,7 +17,7 @@
  *   overzicht({ concept, basis })       // hetzelfde, met het concept uit de studio erop
  *
  * Het concept: wat de wereldstudio in localStorage heeft staan (zie
- * WORLD_DRAFT_KEY en WORLD_DRAFT_BASIS_KEY in src/20-app.js). De studiopagina
+ * WORLD_DRAFT_KEY en WORLD_DRAFT_BASIS_KEY in src/20-gegevens.js). De studiopagina
  * stuurt het mee, en het wordt hier op precies dezelfde manier op het spel
  * gelegd als in de browser: loadWorldDraft() uit index.html, in de nagebootste
  * browser van test/app.js. Zo ziet het overzicht een nieuwe wereld al vóórdat hij
@@ -85,7 +85,7 @@ function watAnders(app, w, ship) {
      - released: uitbrengen is de stáp na het nakijken, geen wijziging eraan;
      - de cijfers achter de komma van haltes en stuurpunten: een sleep levert er
        twaalf, het blok dat Opslaan schrijft er één (zie blokTerug hieronder).
-   De sleutels op volgorde, om dezelfde reden als vasteVorm in src/20-app.js: de
+   De sleutels op volgorde, om dezelfde reden als vasteVorm in src/20-gegevens.js: de
    studio bouwt theme in haar eigen volgorde op. */
 function vinger(w) {
   const vast = (x, rond) => Array.isArray(x) ? x.map(y => vast(y, rond))
@@ -212,7 +212,7 @@ function overzicht(opties) {
 
 /* Het blok dat "Opslaan" zou schrijven, en of er precies uitkomt wat erin ging.
 
-   worldsSource() in src/20-app.js zet het blok in vorm. Gooit het daarbij ooit iets
+   worldsSource() in src/20-gegevens.js zet het blok in vorm. Gooit het daarbij ooit iets
    weg -- een veld dat het niet kent, een waarde die het anders schrijft -- dan is
    een wereld na opslaan stil een stukje kwijt, en dat merk je pas als een kind het
    mist. Dus wordt het blok eerst proefgelezen, los van alles, en vergeleken met de
@@ -231,7 +231,7 @@ function blokTerug(app) {
   }
   const ok = app.sameWorld(rond(terug), rond(app.WORLDS));
   return { ok, bron, tekst: ok ? '' : 'het blok zou niet precies teruggeven wat er in je concept staat, '
-    + 'dus er zou iets stil verloren gaan. Dat is een fout in worldsSource (src/20-app.js).' };
+    + 'dus er zou iets stil verloren gaan. Dat is een fout in worldsSource (src/20-gegevens.js).' };
 }
 
 /* Het blok in de vorm zetten die de studio schrijft (npm run werelden:netjes).

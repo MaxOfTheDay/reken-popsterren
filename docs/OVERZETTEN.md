@@ -54,7 +54,7 @@ curl -X POST https://api.cloudflare.com/client/v4/accounts/<id>/workers/scripts/
 
 Een latere versie uploaden gaat met dezelfde `PUT`, maar **zonder** het stuk
 `migrations` (de klassen bestaan dan al). Het adres staat in `overzetAdres()` in
-`src/20-app.js`.
+`src/70-ouderdeel.js`.
 
 ## Testen
 

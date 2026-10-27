@@ -232,4 +232,4 @@ een tabblad: geen adresbalk (dus geen in- en uitklappende browserbalk) en
 In die stand staat de rij *Als app* (ouderdeel → het overzicht) er niet:
 het spel herkent de app aan `display-mode` (`fullscreen`, `standalone`,
 `minimal-ui`) of aan `navigator.standalone` op iOS. Het installeren zelf laat de
-app aan de browser -- zie "= Op het beginscherm" in `src/20-app.js`.
+app aan de browser -- zie "= Op het beginscherm" in `src/70-ouderdeel.js`.

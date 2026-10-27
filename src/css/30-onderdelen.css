@@ -824,7 +824,7 @@
   .pod-vlek::before     { background: radial-gradient(ellipse, rgba(60,40,10,.38) 2.4px, transparent 4.5px) 0 0 / 20px 12px; }
   .pod-gras::before     { background: repeating-linear-gradient(90deg, transparent 0 8px, rgba(255,255,255,.18) 8px 16px); }
   /* De prijs van een wereld: zijn podium met de schat erop (zie "= De prijs van
-     een wereld" in 20-app.js). Eén bouwsteen voor de kaart, de reis, Podia, het
+     een wereld" in src/25-kern.js). Eén bouwsteen voor de kaart, de reis, Podia, het
      wereldfeest en de kast; --wp is zijn breedte en al het andere schaalt mee.
      De vier standen zitten in drie klassen. Bleek (nog niet af) en het silhouet
      (nog geheim) zijn een filter: het zijn kleine stilstaande stukjes, en een

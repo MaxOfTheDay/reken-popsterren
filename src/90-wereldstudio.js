@@ -1037,7 +1037,7 @@ function startMapEdit() {
      De weg zonder code. Een AI (of een tekenprogramma) levert SVG; de studio
      maakt die schoon, zet hem op het hoofd, toont hem op de pop en keurt hem, en
      bewaart hem als gegevens bij de wereld (w.schat, zie schatItem in
-     src/20-app.js). Vanaf dan is het een gewoon spulletje: de kleedkamer, het
+     src/20-gegevens.js). Vanaf dan is het een gewoon spulletje: de kleedkamer, het
      wereldfeest en Probeer tonen hem, en hij gaat met Opslaan mee het project in.
 
      Alleen voor een wereld zonder handgemaakte schat. Een wereld die er al een uit
@@ -2415,7 +2415,7 @@ function startMapEdit() {
         commit();
       })
       .catch(() => setOut('Opslaan kan alleen met de studioserver (npm run studio).\n'
-        + 'Zonder server: Geavanceerd → Kopieer blok, en plak het in src/20-app.js.'));
+        + 'Zonder server: Geavanceerd → Kopieer blok, en plak het in src/20-gegevens.js.'));
   };
   /* ------------------------------------------------------------ contrast
      De regel die bepaalt of een tekening wérkt stond tot nu toe als advies in de

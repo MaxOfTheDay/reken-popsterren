@@ -68,7 +68,7 @@ const BLOKKEN = [
    De wereldstudio is ongeveer een vijfde van alle JavaScript, en geen kind
    draait hem ooit: hij gaat pas aan met ?debug&mapedit. Toch las elke tablet hem
    bij elke start mee. Nu staat hij in studio.js, en haalt het spel hem pas op als
-   de studio opengaat (zie laadStudio in 20-app.js).
+   de studio opengaat (zie laadStudio in src/80-start.js).
 
    Dat kan zonder iets van de harde regels op te geven:
      - een klassiek script dat het spel zelf aanmaakt werkt ook vanaf file://
