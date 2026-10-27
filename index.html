@@ -5454,50 +5454,37 @@
 
 
 
+
+
+
+
+
+
+
+
+
   .tour-stop .stop-schat {
-    position: absolute; z-index: 2; left: 50%; top: -2.4cqw; margin-left: 2.6cqw;
-    width: 6.4cqw; height: 6.4cqw;
-    display: grid; place-items: center; font-size: 5cqw; line-height: 1;
+    position: absolute; z-index: 2; left: 50%; top: -9.5cqw; margin-left: 4.2cqw;
+    width: 11.5cqw; height: 11.5cqw; border-radius: 2.6cqw;
+    background: var(--halte-sticker); rotate: 6deg;
+    box-shadow: 0 0.55cqw 0 var(--ster-lip), 0 1.2cqw 2.4cqw rgba(0,0,0,.28);
     pointer-events: none;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    filter: drop-shadow(0.3cqw 0 0 var(--halte-sticker)) drop-shadow(-0.3cqw 0 0 var(--halte-sticker))
-            drop-shadow(0 0.3cqw 0 var(--halte-sticker)) drop-shadow(0 -0.3cqw 0 var(--halte-sticker))
-            drop-shadow(0 0.35cqw 0 var(--ster-lip));
   }
-
-
-
-  .tour-stop .stop-schat.met-prijs {
-    width: 11cqw; height: 9.5cqw; margin-left: 3.8cqw; top: -8cqw; font-size: 0;
-    filter: drop-shadow(0.45cqw 0 0 var(--halte-sticker)) drop-shadow(-0.45cqw 0 0 var(--halte-sticker))
-            drop-shadow(0 0.45cqw 0 var(--halte-sticker)) drop-shadow(0 -0.45cqw 0 var(--halte-sticker))
-            drop-shadow(0 0.5cqw 0 var(--ster-lip));
+  .tour-stop .stop-schat::after {
+    content: ''; position: absolute; left: 1.2cqw; bottom: -1.5cqw; width: 2.6cqw; height: 2.6cqw;
+    background: var(--halte-sticker); clip-path: polygon(0 100%, 0 0, 100% 0);
   }
-  .tour-stop .stop-schat.met-prijs .wereldprijs.geheim .wp-schat { filter: brightness(0) opacity(.85); }
+  .tour-stop .stop-schat.links { margin-left: -15.7cqw; rotate: -6deg; }
+  .tour-stop .stop-schat.links::after { left: auto; right: 1.2cqw; clip-path: polygon(100% 100%, 0 0, 100% 0); }
+  .tour-stop .stop-schat svg { position: absolute; inset: 1.3cqw; width: calc(100% - 2.6cqw); height: calc(100% - 2.6cqw); display: block; }
+  .tour-stop .stop-schat .thumb-emo { position: absolute; inset: 0; display: grid; place-items: center;
+    font-size: 7cqw; line-height: 1; }
 
 
 
   .tour-stop .stop-schat { animation: prijsOp .45s var(--ease-plop) .55s backwards; }
   @keyframes prijsOp { from { opacity: 0; scale: .3; } to { opacity: 1; scale: 1; } }
   @media (prefers-reduced-motion: reduce) { .tour-stop .stop-schat { animation: none; } }
-
-  .tour-stop .stop-schat.met-prijs .wereldprijs .podium { opacity: 1; filter: grayscale(.6) brightness(.8);
-    box-shadow: 0 var(--pod-dik) 0 var(--ps), 0 var(--pod-dik) 0 1px var(--pr); }
 
 
 
@@ -20209,11 +20196,15 @@ function haltKnop(shown, nodes, i, stand) {
 
 
 
+
+
+
+
   const laatste = i === nodes.length - 1 && lvl === playable;
   const schat = laatste ? beloningItem(shown.world) : null;
-  const prijs = (schat && !p.owned.includes(schat.id)) ? wereldPrijsHTML(p, shown.index, '11cqw') : '';
   const schatTeken = (schat && !p.owned.includes(schat.id))
-    ? `<span class="stop-schat${prijs ? ' met-prijs' : ''}" aria-hidden="true">${prijs || '🎁'}</span>` : '';
+    ? `<span class="stop-schat${n.x > 70 ? ' links' : ''}" aria-hidden="true">`
+      + (schat.thumb ? schat.thumb(curBase()) : `<span class="thumb-emo">${schat.emoji || '🎁'}</span>`) + '</span>' : '';
   b.innerHTML = `${hero}<div class="stop-body"><div class="dot">${i + 1}</div>`
     + `${schatTeken}${sterrenRij}</div>`;
 

@@ -445,13 +445,13 @@
   .reis-glans .rg-ster { fill: var(--ster-vol); stroke: var(--ster-vol-rand); stroke-width: 1.6; }
   /* De prijs van de wereld in de hoek (zie renderReis): op de plek van het vinkje
      en het ornament, binnen de kaart (die knipt af). Met
-     dezelfde witte stickerrand als op de kaart (.stop-schat.met-prijs). */
+     dezelfde witte stickerrand als de stickers op de kaart. */
   .reis-prijs { position: absolute; right: 3px; top: 2px; z-index: 3; pointer-events: none;
     filter: drop-shadow(1.5px 0 0 var(--halte-sticker)) drop-shadow(-1.5px 0 0 var(--halte-sticker))
             drop-shadow(0 1.5px 0 var(--halte-sticker)) drop-shadow(0 -1.5px 0 var(--halte-sticker))
             drop-shadow(0 2px 3px rgba(10,2,26,.7)); }
   /* met de stickerrand eromheen mag het silhouet donker en het podium vol: zo
-     leest hij op een lichte tekening net zo goed als op een donkere (zie de kaart) */
+     leest hij op een lichte tekening net zo goed als op een donkere */
   .reis-prijs .wereldprijs.geheim .wp-schat { filter: brightness(0) opacity(.85); }
   .reis-prijs .wereldprijs:not(.af) .podium { opacity: 1; }
 
