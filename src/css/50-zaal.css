@@ -645,33 +645,29 @@
     backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: 0 4px 14px rgba(0,0,0,.32);
   }
-  .mem-fab span { font-size: var(--tx-mini); font-weight: 700; }
+
   /* wat het oplevert stáát er nu op: het was een knop zonder beloofde beloning.
      Met een plus ervoor ("💎 +9"), net als het opbrengstvakje op het eindscherm:
      zonder plus was het precies de prijspil uit de kleedkamer ("💎 15"), en las
      het als betalen om te mogen spelen. */
   .mem-fab .mem-pay { font-size: var(--tx-mini); font-weight: 700; opacity: .88; letter-spacing: .01em; }
   .mem-fab:active { transform: scale(.95); }
-  /* ---- Op het kortste scherm: het woord eraf --------------------------------
+  /* ---- Zonder woord -----------------------------------------------------------
      Op 320x568 is het knopje 67x70 en staat de onderste halte van de Piratenwereld
      er pal achter: het hárt van halte 26 viel binnen het knopje, dus een tik daarop
      startte het memoryspel in plaats van de show. Opgemeten met elementFromPoint,
      en het gold ook vóór deze fase -- de kaart stond er alleen net vaak genoeg
      geschoven dat controle 7f het niet zag (zie de opmerking bij die controle).
 
-     Wat eraf gaat is het woord "Memory", niet de knop: het microfoontje en wat hij
+     Wat eraf ging was het woord "Memory", niet de knop: het microfoontje en wat hij
      oplevert (💎 9) blijven staan. Daarmee wordt hij 50x56 in plaats van 67x70, en
      schuiven zijn linker- en bovenrand voorbij het hart van élke halte in élke
-     wereld. Het plaatje zegt het al, het woord kost de ruimte.
+     wereld. Het plaatje zegt het al, het woord kost de ruimte -- en sinds oktober
+     2026 staat het woord er op geen enkel scherm meer (Max: weinig tekst); de
+     knop is overal die 50x56.
 
      .world-back ging hier eerst in dezelfde adem een maatje kleiner, omdat hij
      middenonder stond. Hij staat nu bovenin, onder de kop (zie .world-back). */
-  @media (max-height: 620px) {
-    /* > span, niet span: het bedrag zit als eigen <span> ín .mem-pay, en zonder de
-       directe-kindselector verdween dát nummer mee -- dan stond er "💎" zonder
-       getal, precies de knop-zonder-beloofde-beloning die hierboven is opgelost. */
-    .mem-fab > span:not(.mem-pay) { display: none; }
-  }
   /* de kaartjes stonden klein in het midden met ~430px lucht eromheen; ze mogen
      de ruimte gewoon gebruiken -- het is een spel dat je op afstand van tafel speelt */
   .mem-arena { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; }
@@ -693,9 +689,12 @@
     box-shadow: 0 4px 0 rgba(0,0,0,.18);
   }
   .mem-back {
-    font-size: clamp(26px, 8vw, 40px); font-size: 34cqw;
+    font-size: clamp(26px, 8vw, 40px); font-size: 40cqw;
     background: linear-gradient(150deg, var(--purple-input-top), var(--purple-input-bottom));
     border: 2px solid rgba(255,255,255,.35);
+    /* op de rug staat het teken van de wereld (startMemory); 🎵 is een donker,
+       eenkleurig teken en verdween bijna in het violet -- een zachte gloed erachter */
+    text-shadow: 0 0 12px rgba(255,255,255,.6);
   }
   .mem-face {
     transform: rotateY(180deg); background: var(--c-white);
@@ -711,16 +710,24 @@
   /* Memory-kaartjes zijn klein: elke weergave krijgt een eigen compacte maat die
      écht binnen de kaart past (geen transform:scale -- dan blijft de layout-box
      te groot en wordt de inhoud afgekapt). */
-  .mem-face .cg-obj { font-size: clamp(12px, 3.6vw, 17px); font-size: 13cqw; }
-  .mem-face .ct-num { font-size: clamp(26px, 10vw, 40px); font-size: 30cqw; font-weight: 700; color: var(--purple-shadow); }
-  .mem-face .cgroup { gap: 2px 3px; max-width: 96%; }
-  .mem-face .cframe { gap: 2.5px; }
-  .mem-face .cframe .tf-cell { width: 12px; height: 12px; width: 12cqw; height: 12cqw; border-width: 1.5px; border-radius: 4px; }
+  /* Hoe minder dingen, hoe groter elk ding. Eerst was alles 13cqw: één
+     lieveheersbeestje stond als een stipje midden op een kaart van 180px. De
+     trap houdt ook een groep van tien binnen een kaart van drie kolommen. */
+  .mem-face .cg-obj { font-size: clamp(12px, 3.6vw, 17px); font-size: 17cqw; }
+  .mem-face .cgroup.n1 .cg-obj { font-size: 46cqw; }
+  .mem-face .cgroup.n2 .cg-obj { font-size: 34cqw; }
+  .mem-face .cgroup.n3 .cg-obj, .mem-face .cgroup.n4 .cg-obj { font-size: 26cqw; }
+  .mem-face .cgroup.n5 .cg-obj, .mem-face .cgroup.n6 .cg-obj { font-size: 21cqw; }
+  .mem-face .ct-num { font-size: clamp(26px, 10vw, 40px); font-size: 46cqw; font-weight: 700; color: var(--purple-shadow); }
+  .mem-face .ct-som { font-weight: 700; color: var(--purple-shadow); white-space: nowrap; line-height: 1; }
+  .mem-face .cgroup { gap: 2cqw 3cqw; max-width: 92%; }
+  .mem-face .cframe { gap: 2cqw; }
+  .mem-face .cframe .tf-cell { width: 12px; height: 12px; width: 15cqw; height: 15cqw; border-width: 1.5px; border-radius: 4px; }
   /* een voorwerp ín een raamvakje moet in dat vakje passen -- losse groepjes
      (.cgroup, hierboven) mogen juist groter */
-  .mem-face .cframe .cg-obj { font-size: 8cqw; }
-  .mem-face .dframe { column-gap: 2.5px; row-gap: 3px; }
-  .mem-face .dframe .df-cell { width: 10px; height: 10px; width: 10cqw; height: 10cqw; border-width: 1px; border-radius: 3px; }
+  .mem-face .cframe .cg-obj { font-size: 10cqw; }
+  .mem-face .dframe { column-gap: 2cqw; row-gap: 2cqw; }
+  .mem-face .dframe .df-cell { width: 10px; height: 10px; width: 15cqw; height: 15cqw; border-width: 1px; border-radius: 4px; }
   .mem-done { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(24,6,44,.55); z-index: 40; }
   /* Hetzelfde zwevende glas als de eindkaart van de show (--paneel, zie .pop-panel
      in 40-kaart): het was wit papier met een lichtblauw vakje, de taal van Voor
