@@ -463,6 +463,8 @@ if (require.main === module) {
       console.log('bouw: index.html loopt gelijk met src/ ('
         + BLOKKEN.map(b => bronnen(b).length + ' ' + b.naam).join(', ') + ').');
     } else {
+      // en meteen de samenvoegregel voor versie.txt in deze kloon (zie .gitattributes)
+      require('./samenvoegen.js').zetRegel(WORTEL);
       const uit = bouw();
       console.log('bouw: ' + BLOKKEN.map(b => bronnen(b).length + ' ' + b.naam).join(' + ')
         + ' -> index.html' + (uit.gewijzigd ? '' : ' (stond al goed)'));

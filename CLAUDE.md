@@ -34,6 +34,13 @@ Op GitHub draait bij elke PR en elke push naar main dezelfde keuring, plus `hub`
 en `test:sterren` (`.github/workflows/keuring.yml`). Dat is het vangnet voor
 wat níét via de studio gaat; het vervangt `npm test` op je eigen machine niet.
 
+Main mergen in je tak, en dan `npm run bouw`: dat is altijd de volgorde.
+`index.html` voegt vanzelf samen (de blokken volgen `src/` regel voor regel), en
+`versie.txt` botst niet meer -- `.gitattributes` houdt daar de eigen kant en de
+bouw zet het goede getal neer. Die regel moet wel in de kloon staan; `npm run
+bouw` en de studio zetten hem zelf (`test/samenvoegen.js`). Vergeet je de bouw,
+dan valt zaak H om.
+
 Raak je aan het uiterlijk, draai dan ook `npm run shots` (schermafdrukken om
 mee te vergelijken) of `npm run achtergrondproef`.
 

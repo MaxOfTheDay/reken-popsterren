@@ -32,6 +32,7 @@ const merk = require('./merk.js');
 const versie = require('./versie.js');
 const bouwer = require('./bouw.js');
 const { allesDraaien } = require('./suites.js');
+const { zetRegel } = require('./samenvoegen.js');
 // Alleen om bij het starten al om te vallen als de studiopagina stuk is; de
 // pagina zelf wordt per verzoek opnieuw ingelezen (zie de route /studio).
 require('./hub.js');
@@ -1256,6 +1257,8 @@ function poortVrij(port) {
 }
 
 async function start() {
+  // versie.txt botst niet meer bij een merge (zie .gitattributes)
+  zetRegel(ROOT);
   const naar = process.argv.map(a => /^--naar(=(.*))?$/.exec(a)).filter(Boolean)[0];
   if (naar) {
     /* Draait er al een studio, dan wisselen we niet: dat zou de werkmap onder díé
