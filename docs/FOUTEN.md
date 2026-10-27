@@ -22,7 +22,13 @@ Een regelnummer zegt alleen iets samen met de versie: zoek de commit waarin
 in díe `index.html` op die regel.
 
 De melder staat uit zolang `FOUT_ADRES` leeg is, en altijd vanaf `file://`,
-localhost en onder `?debug`.
+localhost en onder `?debug`. Nakijken op een echt toestel: open
+`https://www.rekensterren.be/?foutproef`. Dat gooit één opzettelijke fout
+("proef: ..."); de rapportage laat briefjes met "proef:" weg.
+
+De Worker staat online als `rekensterren-fouten` op
+`https://rekensterren-fouten.maxheyrman.workers.dev/` (opgezet 2026-10-27 via
+de API; het token van de rapportage mag Workers schrijven).
 
 ## Opzetten (één keer)
 
@@ -46,7 +52,7 @@ curl -X POST https://api.cloudflare.com/client/v4/accounts/<id>/analytics_engine
   SELECT blob1 AS wat, blob2 AS waar, blob3 AS versie, blob4 AS scherm,
          blob5 AS toestel, blob6 AS systeem, SUM(_sample_interval) AS keer
   FROM rekensterren_fouten
-  WHERE timestamp > NOW() - INTERVAL '7' DAY
+  WHERE timestamp > NOW() - INTERVAL '7' DAY AND blob1 NOT LIKE '%proef:%'
   GROUP BY wat, waar, versie, scherm, toestel, systeem
   ORDER BY keer DESC LIMIT 25"
 ```
