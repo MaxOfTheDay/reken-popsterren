@@ -7536,6 +7536,11 @@
   #trophy-shelves.schuift .trophy-card.ready .temoji::after,
   #trophy-shelves.schuift .trophy-card.ready .temoji,
   #trophy-shelves.schuift .trophy-card.ready .pw-medal { animation-play-state: paused; }
+
+
+  #trophy-shelves .trophy-card.buiten .temoji::after,
+  #trophy-shelves .trophy-card.buiten .temoji,
+  #trophy-shelves .trophy-card.buiten .pw-medal { animation-play-state: paused; }
   @keyframes giftWiggle {
     0%, 58%, 100% { transform: rotate(0) translateY(0); }
     66% { transform: rotate(-9deg); } 74% { transform: rotate(8deg); }
@@ -15091,6 +15096,12 @@ function applyStage(el, p) {
 
 
 
+
+
+
+
+
+
 const KNIPPER = { tik: 250, min: 3000, max: 7000, dicht: 130, dubbel: .18, tussen: 280, uitDePas: 900 };
 let knipperLaatst = 0;
 const KNIPPER_POPS = '.screen.active .avatar-holder.levend, #screen-map.active .tour-hero .avatar-holder';
@@ -15098,10 +15109,17 @@ function knipOog(pop) {
   pop.classList.add('knipoog');
   setTimeout(() => pop.classList.remove('knipoog'), KNIPPER.dicht);
 }
+let knipperKlok = null;
+function knipperWek(na = KNIPPER.tik) {
+  clearTimeout(knipperKlok);
+  knipperKlok = setTimeout(knipperLus, na);
+}
 function knipperLus() {
+  knipperKlok = null;
   if (document.hidden || motionOff()) return;
   const nu = Date.now();
-  document.querySelectorAll(KNIPPER_POPS).forEach(pop => {
+  const pops = document.querySelectorAll(KNIPPER_POPS);
+  pops.forEach(pop => {
     const wacht = () => KNIPPER.min + Math.random() * (KNIPPER.max - KNIPPER.min);
     if (!pop.knipperOp) { pop.knipperOp = nu + Math.random() * KNIPPER.max; return; }
     if (nu < pop.knipperOp) return;
@@ -15113,8 +15131,16 @@ function knipperLus() {
     if (Math.random() < KNIPPER.dubbel) setTimeout(() => knipOog(pop), KNIPPER.tussen);
     pop.knipperOp = nu + wacht();
   });
+
+
+
+  if (!pops.length) return;
+  let eerst = Infinity;
+  pops.forEach(pop => { eerst = Math.min(eerst, pop.knipperOp); });
+  knipperWek(Math.max(KNIPPER.tik, eerst - nu));
 }
-setInterval(knipperLus, KNIPPER.tik);
+knipperWek();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) knipperWek(); });
 
 
 
@@ -15171,6 +15197,7 @@ function show(id) {
 
   if (id !== 'screen-journey') reisStopWaarnemer();
   if (navId) updateTroDot();
+  knipperWek();
   syncBackGuard();
 }
 
@@ -16548,8 +16575,8 @@ function terugUitlijnen() {
   if (!terug || terug.hidden || !pil || !scherm) return;
   const p = pil.getBoundingClientRect(), s = scherm.getBoundingClientRect();
   if (!p.width || !s.width) return;
-  terug.style.setProperty('--wp-mid', Math.round((p.left + p.right) / 2 - s.left) + 'px');
-  terug.style.setProperty('--wp-onder', Math.round(p.bottom - s.top + 8) + 'px');
+  stijlVar(terug, '--wp-mid', Math.round((p.left + p.right) / 2 - s.left) + 'px');
+  stijlVar(terug, '--wp-onder', Math.round(p.bottom - s.top + 8) + 'px');
 }
 
 
@@ -16854,10 +16881,13 @@ function wisselSchuifUit(el) { el.style.removeProperty('--schuif'); }
 function schermWeg(el, naarBinnen, punt) {
   if (!el || !el.animate || motionOff()) return;
   schermAnimsStop(el);
-  el.classList.add('wegvallend');
+
+
+
 
 
   if (punt) el.style.transformOrigin = oorsprongPct(el, punt);
+  el.classList.add('wegvallend');
   const op = () => {
     el.classList.remove('wegvallend');
     el.style.transformOrigin = '';
@@ -17524,6 +17554,13 @@ function duikIn(lvl, kaart, spel, punt, klaar) {
 
 
   if (!cur || !kaart.classList.contains('active')) { klaar(); return; }
+
+
+
+
+
+
+  const oorsprong = oorsprongPct(kaart, punt);
   schermWeg(kaart, true, punt);
 
 
@@ -17536,7 +17573,7 @@ function duikIn(lvl, kaart, spel, punt, klaar) {
   startLevel(lvl, true);
   spel.classList.add('komt-op');
   navMee(true);
-  spel.style.transformOrigin = oorsprongPct(spel, punt);
+  spel.style.transformOrigin = oorsprong;
   spel.style.pointerEvents = 'none';
 
 
@@ -19600,10 +19637,20 @@ function meetChroom() {
   const scherm = $('screen-map');
   const kop = scherm.querySelector('.hub-sticky');
   const nav = $('main-nav');
-  if (kop && kop.offsetHeight) scherm.style.setProperty('--kop-h', (kop.offsetHeight + 12) + 'px');
-  if (nav && nav.offsetHeight) scherm.style.setProperty('--nav-h',
+  if (kop && kop.offsetHeight) stijlVar(scherm, '--kop-h', (kop.offsetHeight + 12) + 'px');
+  if (nav && nav.offsetHeight) stijlVar(scherm, '--nav-h',
     (nav.offsetHeight + (innerHeight - nav.getBoundingClientRect().bottom) + 12) + 'px');
   terugUitlijnen();
+}
+
+
+
+
+
+
+
+function stijlVar(el, naam, waarde) {
+  if (el.style.getPropertyValue(naam) !== waarde) el.style.setProperty(naam, waarde);
 }
 
 
@@ -20302,6 +20349,24 @@ function kastSchuift() {
   clearTimeout(kastStilTimer);
   kastStilTimer = setTimeout(() => planken.classList.remove('schuift'), 200);
 }
+
+
+
+
+
+
+
+
+
+let kastZicht = null;
+function kastZichtVolg() {
+  if (typeof IntersectionObserver !== 'function') return;
+  if (!kastZicht) kastZicht = new IntersectionObserver(rij => rij.forEach(e =>
+    e.target.classList.toggle('buiten', !e.isIntersecting)), { rootMargin: '48px 0px' });
+  kastZicht.disconnect();
+  $('trophy-shelves').querySelectorAll('.trophy-card.ready, .trophy-card.ladder.top')
+    .forEach(kaart => kastZicht.observe(kaart));
+}
 function kastGescrold() { gescrold($('screen-trophies')); }
 
 function gescrold(sc) { if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4); }
@@ -20439,6 +20504,7 @@ function renderShelves() {
   });
   justClaimed = null;
   kastBalk(null);
+  kastZichtVolg();
   save();
   updateTroDot();
 }

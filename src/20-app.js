@@ -3717,7 +3717,13 @@ function applyStage(el, p) {
    en zo kost een knipoog daar twee keer tekenen en verder niets. De volgende
    knipoog van elke pop hangt aan de pop zelf (een nieuwe tekening begint op een
    toevallig moment), en er draait maar één klokje voor allemaal. Alleen in het
-   scherm dat open is, met het tabblad zichtbaar, en als er beweging mag. */
+   scherm dat open is, met het tabblad zichtbaar, en als er beweging mag.
+
+   Dat klokje tikt niet op de maat maar slaapt tot de eerstvolgende knipoog, en
+   staat stil waar geen pop staat (het ouderdeel, een tabblad op de achtergrond).
+   Eerst was het een setInterval van vier keer per seconde, op elk scherm: weinig
+   werk per tik, maar het liet een telefoon nooit tot rust komen. show() en het
+   terugkomen van het tabblad wekken hem (knipperWek). */
 const KNIPPER = { tik: 250, min: 3000, max: 7000, dicht: 130, dubbel: .18, tussen: 280, uitDePas: 900 };
 let knipperLaatst = 0;
 const KNIPPER_POPS = '.screen.active .avatar-holder.levend, #screen-map.active .tour-hero .avatar-holder';
@@ -3725,10 +3731,17 @@ function knipOog(pop) {
   pop.classList.add('knipoog');
   setTimeout(() => pop.classList.remove('knipoog'), KNIPPER.dicht);
 }
+let knipperKlok = null;
+function knipperWek(na = KNIPPER.tik) {
+  clearTimeout(knipperKlok);
+  knipperKlok = setTimeout(knipperLus, na);
+}
 function knipperLus() {
+  knipperKlok = null;
   if (document.hidden || motionOff()) return;
   const nu = Date.now();
-  document.querySelectorAll(KNIPPER_POPS).forEach(pop => {
+  const pops = document.querySelectorAll(KNIPPER_POPS);
+  pops.forEach(pop => {
     const wacht = () => KNIPPER.min + Math.random() * (KNIPPER.max - KNIPPER.min);
     if (!pop.knipperOp) { pop.knipperOp = nu + Math.random() * KNIPPER.max; return; }
     if (nu < pop.knipperOp) return;
@@ -3740,8 +3753,16 @@ function knipperLus() {
     if (Math.random() < KNIPPER.dubbel) setTimeout(() => knipOog(pop), KNIPPER.tussen);
     pop.knipperOp = nu + wacht();
   });
+  // Geen pop in beeld: stilstaan tot show() of het tabblad hem wekt. Anders
+  // slapen tot de eerstvolgende is (nooit korter dan een tik: zo vangt hij ook
+  // een pop die er tussendoor bij komt, op zijn laatst bij haar eigen beurt).
+  if (!pops.length) return;
+  let eerst = Infinity;
+  pops.forEach(pop => { eerst = Math.min(eerst, pop.knipperOp); });
+  knipperWek(Math.max(KNIPPER.tik, eerst - nu));
 }
-setInterval(knipperLus, KNIPPER.tik);
+knipperWek();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) knipperWek(); });
 
 /* ================= Schermen ================= */
 /* De reis hoort bij Kaart: hij is dezelfde plek, alleen verder weg. Daardoor
@@ -3798,6 +3819,7 @@ function show(id) {
   // de tekening-ophaler van de reis kijkt naar een scherm dat er niet meer is
   if (id !== 'screen-journey') reisStopWaarnemer();
   if (navId) updateTroDot();
+  knipperWek();   // het knipperklokje kijkt naar de poppen van het nieuwe scherm
   syncBackGuard();   // elk schermwissel loopt door hier heen -- zie "Terug-navigatie" onderaan
 }
 // Kaart is altijd "thuis" (goMap() start zelf al altijd bij de huidige wereld,
@@ -5175,8 +5197,8 @@ function terugUitlijnen() {
   if (!terug || terug.hidden || !pil || !scherm) return;
   const p = pil.getBoundingClientRect(), s = scherm.getBoundingClientRect();
   if (!p.width || !s.width) return;
-  terug.style.setProperty('--wp-mid', Math.round((p.left + p.right) / 2 - s.left) + 'px');
-  terug.style.setProperty('--wp-onder', Math.round(p.bottom - s.top + 8) + 'px');
+  stijlVar(terug, '--wp-mid', Math.round((p.left + p.right) / 2 - s.left) + 'px');
+  stijlVar(terug, '--wp-onder', Math.round(p.bottom - s.top + 8) + 'px');
 }
 /* Dezelfde vorm als worldFor(), maar opgezocht op wereldnummer i.p.v. op level --
    nodig om een eerdere wereld te kunnen tónen zonder p.level aan te raken.
@@ -5481,10 +5503,13 @@ function wisselSchuifUit(el) { el.style.removeProperty('--schuif'); }
 function schermWeg(el, naarBinnen, punt) {
   if (!el || !el.animate || motionOff()) return;
   schermAnimsStop(el);   // een tweede tik stapelt geen tweede animatie
-  el.classList.add('wegvallend');
   // draaipunt: de aangetikte halte, zodat de beweging om díe plek gaat en niet om
   // het midden van het scherm. Dat is het enige wat de continuïteit draagt.
+  // Gemeten vóór .wegvallend: dan staat de opmaak nog zoals hij net getekend is
+  // en kost de meting niets. Erna moest de browser eerst het hele scherm opnieuw
+  // opmaken (het stapt uit de kolom), alleen om dit ene getal te geven.
   if (punt) el.style.transformOrigin = oorsprongPct(el, punt);
+  el.classList.add('wegvallend');
   const op = () => {
     el.classList.remove('wegvallend');           // meteen uit de opmaak: scheelt een volle laag
     el.style.transformOrigin = '';
@@ -6151,6 +6176,13 @@ function duikIn(lvl, kaart, spel, punt, klaar) {
      op en de zaal kwam eroverheen -- of, na terug naar de sterrenkeuze, viel
      startLevel om omdat er geen ster meer was. */
   if (!cur || !kaart.classList.contains('active')) { klaar(); return; }
+  /* Het draaipunt van de zaal is dat van de kaart. Beide schermen vullen hetzelfde
+     vak (nagemeten staand, liggend, telefoon en tablet), dus komt er hetzelfde
+     getal uit -- maar de kaart staat er al opgemaakt, en de zaal die startLevel
+     zojuist bouwde nog niet. Hem daar meten liet de browser het hele spelscherm
+     opmaken midden in de tik (6x geremd: zo'n 200 ms), en dat was het haperen
+     aan het begin van de duik. */
+  const oorsprong = oorsprongPct(kaart, punt);
   schermWeg(kaart, true, punt);            // 2 -- de hele kaart, om het aangetikte punt
 
   /* 3 -- het spel staat er nú al, ook al zie je het nog niet.
@@ -6163,7 +6195,7 @@ function duikIn(lvl, kaart, spel, punt, klaar) {
   startLevel(lvl, true);
   spel.classList.add('komt-op');
   navMee(true);                            // de balk van de kaart gaat mét de kaart weg
-  spel.style.transformOrigin = oorsprongPct(spel, punt);
+  spel.style.transformOrigin = oorsprong;
   spel.style.pointerEvents = 'none';       // niet op een bewegend doel kunnen tikken
   // Alleen beweging, geen doorzichtigheid: de zaal staat er ondoorzichtig onder de
   // kaart, en de kaart doft eroverheen weg. Zie de regel bij MOTION -- en let op de
@@ -8227,10 +8259,20 @@ function meetChroom() {
   const scherm = $('screen-map');
   const kop = scherm.querySelector('.hub-sticky');
   const nav = $('main-nav');
-  if (kop && kop.offsetHeight) scherm.style.setProperty('--kop-h', (kop.offsetHeight + 12) + 'px');
-  if (nav && nav.offsetHeight) scherm.style.setProperty('--nav-h',
+  if (kop && kop.offsetHeight) stijlVar(scherm, '--kop-h', (kop.offsetHeight + 12) + 'px');
+  if (nav && nav.offsetHeight) stijlVar(scherm, '--nav-h',
     (nav.offsetHeight + (innerHeight - nav.getBoundingClientRect().bottom) + 12) + 'px');
   terugUitlijnen();
+}
+/* Een maat alleen opschrijven als hij verandert. Bij elke aankomst op de kaart
+   meten meetChroom, terugUitlijnen en kopOpzij na elkaar, en elke meting moet de
+   opmaak van het hele scherm klaar hebben. Schrijft de vorige er een variabele
+   tussen -- ook al is het dezelfde waarde als er al stond -- dan rekent de
+   browser alles opnieuw uit voor de volgende: drie keer achter elkaar, in het
+   eerste beeldje van de overgang (6x geremd: zo'n 250 ms). Meestal is de maat
+   gewoon nog dezelfde als de vorige keer, en dan kost de meting nu één keer. */
+function stijlVar(el, naam, waarde) {
+  if (el.style.getPropertyValue(naam) !== waarde) el.style.setProperty(naam, waarde);
 }
 /* Schuift de kaart (liggend, of een tablet), dan staat de halte waar zij staat in
    het midden. renderTourMap doet dit bij elke opbouw, de draai hieronder ook, en
@@ -8929,6 +8971,24 @@ function kastSchuift() {
   clearTimeout(kastStilTimer);
   kastStilTimer = setTimeout(() => planken.classList.remove('schuift'), 200);
 }
+/* En wat buiten beeld staat, staat helemaal stil. Een klare trofee wiebelt en
+   glanst eindeloos (twee animaties per kaart), en een kind dat de kast een tijd
+   niet opende heeft er zo tien klaarliggen -- de meeste onder de rand. Die liepen
+   allemaal door, en maakten de kast het drukste scherm van het spel terwijl er
+   niemand keek (gemeten: tien klare trofeeën, 4x geremd, de grafische kaart was
+   de helft van elke seconde bezig). Nu krijgt een kaart die uit beeld is
+   .buiten, en dan pauzeert 70-feest.css hem. Komt hij terug in beeld, dan loopt
+   hij verder waar hij was. De rand van 48px: dan wiebelt hij al voordat hij in
+   beeld schuift, en niet pas als hij er al staat. */
+let kastZicht = null;
+function kastZichtVolg() {
+  if (typeof IntersectionObserver !== 'function') return;
+  if (!kastZicht) kastZicht = new IntersectionObserver(rij => rij.forEach(e =>
+    e.target.classList.toggle('buiten', !e.isIntersecting)), { rootMargin: '48px 0px' });
+  kastZicht.disconnect();
+  $('trophy-shelves').querySelectorAll('.trophy-card.ready, .trophy-card.ladder.top')
+    .forEach(kaart => kastZicht.observe(kaart));
+}
 function kastGescrold() { gescrold($('screen-trophies')); }
 // De kop krijgt zijn laag zodra er iets onder schuift (4px tegen een trillende duim).
 function gescrold(sc) { if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4); }
@@ -9066,6 +9126,7 @@ function renderShelves() {
   });
   justClaimed = null;   // shimmer geldt maar voor deze ene render
   kastBalk(null);       // de kaartjes zijn nieuw, dus is er niets meer getikt
+  kastZichtVolg();      // alleen wat in beeld staat glanst (zie kastZichtVolg)
   save();
   updateTroDot();
 }
