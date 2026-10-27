@@ -933,7 +933,6 @@
   /* De Aandoen-knop op het wereldfeest: de enige knop op die laag. Het is de
      gewone .btn.small (de Koop-knop van de lade), alleen met wat lucht erboven. */
   .wereld-feest .wf-aan { margin-top: 12px; padding: 9px 22px; }
-  .wereld-feest .wf-aan + .wf-verder { margin-top: 7px; }
   /* De actiebalk: naam + prijs + dé knop, altijd in beeld boven de navigatie.
      FASE 5B.1 -- hij hoort bij die navigatie en was van ander materiaal gemaakt:
      dekkender, minder waas, een échte rand in plaats van een ring, een andere
