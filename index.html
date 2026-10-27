@@ -2262,7 +2262,12 @@
 
 
   @media (max-height: 480px) {
-    #screen-profile { justify-content: flex-start; padding-top: 12px; }
+
+
+
+
+
+    #screen-profile { justify-content: flex-start; padding-top: 12px; padding-bottom: 6px; }
     .spellogo { margin-top: 0; }
 
 
@@ -4829,6 +4834,13 @@
 
 
 
+    #screen-map { overflow: hidden; }
+
+
+
+
+
+
 
 
 
@@ -7005,12 +7017,16 @@
 
 
 
+
+
+
+
   #screen-trophies:not(.kunst).app-sfeer::before { filter: brightness(.6) saturate(.85); }
   #screen-trophies { --lade: rgb(40,12,68); --lade-onder: calc(var(--balk-ruimte) + 14px); }
   #trophy-shelves {
     width: min(100% + var(--rand, 12px) * 2, var(--kolom) + 24px); max-width: none; flex-shrink: 0;
     contain: layout style;
-    margin-top: 4px; padding: 6px 12px calc(var(--lade-onder) + 16px);
+    margin-top: 4px; padding: 6px 12px var(--lade-onder);
     margin-bottom: calc(var(--lade-onder) * -1);
     background: var(--lade); border-radius: 26px 26px 0 0;
     box-shadow: inset 0 1.5px 0 rgba(255,255,255,.14),
@@ -7875,7 +7891,12 @@
 
 
 
-  #screen-dress { padding-bottom: calc(var(--balk-ruimte) + 80px); }
+
+
+
+
+  #screen-dress { padding-bottom: calc(var(--balk-ruimte) + 14px); }
+  #screen-dress.met-lade { padding-bottom: calc(var(--balk-ruimte) + 80px); }
 
 
 
@@ -8216,7 +8237,11 @@
 
       padding-right: max(28px, calc((100% - var(--kolom)) / 2));
 
-      grid-template-rows: calc(60px + var(--lade-kop)) auto;
+
+
+
+
+      grid-template-rows: calc(60px + var(--lade-kop)) max-content;
     }
     #screen-dress { --lade-kop: 88px; }
     #screen-dress > .hub-sticky {
@@ -8481,7 +8506,8 @@
 
 
 
-  #screen-dress { --lade: rgb(40,12,68); --lade-onder: calc(var(--balk-ruimte) + 80px); }
+  #screen-dress { --lade: rgb(40,12,68); --lade-onder: calc(var(--balk-ruimte) + 14px); }
+  #screen-dress.met-lade { --lade-onder: calc(var(--balk-ruimte) + 80px); }
   #screen-dress.met-podiumbalk { --lade-onder: calc(var(--balk-ruimte) + 190px); }
   #screen-dress .shop-tabs-wrap {
     width: min(100% + 24px, var(--kolom) + 24px); max-width: none; margin-top: 6px;
@@ -24687,6 +24713,7 @@ let dressReturnTo = null;
 function openKleedkamer() {
   shopCat = 'dress'; shopSelectedId = null; dressReturnTo = null;
   toonHub('screen-dress');
+  ladeRuimteOpnieuw();
   renderShop();
   $('screen-dress').scrollTop = 0;
 }
@@ -24707,6 +24734,7 @@ function resumeKleedkamer() {
 function openKleedkamerCat(cat) {
   shopCat = cat; shopSelectedId = null; dressReturnTo = 'trophies';
   toonHub('screen-dress');
+  ladeRuimteOpnieuw();
   renderShop();
   $('screen-dress').scrollTop = 0;
 }
@@ -24729,6 +24757,7 @@ function openKleedkamerItem(id) {
   const podium = (isBeloning(it.id) && !p.owned.includes(it.id)) ? podiumVan(it.id) : null;
   shopCat = podium ? PODIA_CAT : it.cat; shopSelectedId = null; podiumStuk = null; dressReturnTo = null;
   toonHub('screen-dress');
+  ladeRuimteOpnieuw();
   renderShop();
   if (podium) id = podium.id;
 
@@ -24828,7 +24857,8 @@ function renderShop() {
     b.onclick = () => {
       sndClick();
       if (aan) return;
-      shopCat = c.id; shopSelectedId = null; podiumStuk = null; renderShop();
+      shopCat = c.id; shopSelectedId = null; podiumStuk = null;
+      ladeRuimteOpnieuw(); renderShop();
       $('screen-dress').scrollTop = 0;
     };
     tabs.appendChild(b);
@@ -25113,13 +25143,26 @@ function paintShop() {
   }
   popKleren($('shop-avatar'), avatarSVG(preview, 165, true));
   renderDressBar(selected, p);
-
-  const lade = $('dress-bar');
-  $('screen-dress').classList.toggle('met-podiumbalk', lade.classList.contains('podium-bar') && lade.style.display !== 'none');
+  ladeRuimte();
   $('item-grid').querySelectorAll('.item-card').forEach(card => {
     const it = item(card.dataset.item);
     if (it) dressCardState(card, it, p);
   });
+}
+
+
+
+
+
+
+function ladeRuimte() {
+  const scherm = $('screen-dress'), lade = $('dress-bar');
+  if (lade.style.display === 'none') return;
+  scherm.classList.add('met-lade');
+  if (lade.classList.contains('podium-bar')) scherm.classList.add('met-podiumbalk');
+}
+function ladeRuimteOpnieuw() {
+  $('screen-dress').classList.remove('met-lade', 'met-podiumbalk');
 }
 function previewProfile(p, it) {
   const preview = { ...p, equipped: { ...p.equipped } };
@@ -25466,7 +25509,7 @@ function openPodia(ev) {
   if (ev) ev.stopPropagation();
   sndClick();
   shopCat = PODIA_CAT; shopSelectedId = null; podiumStuk = null;
-  renderShop();
+  ladeRuimteOpnieuw(); renderShop();
   $('screen-dress').scrollTop = 0;
 }
 

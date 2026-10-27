@@ -237,7 +237,12 @@
      bovenkant weglopen zonder scrollbalk -- dus daar zetten we het centreren uit
      en mag het scherm gewoon scrollen. */
   @media (max-height: 480px) {
-    #screen-profile { justify-content: flex-start; padding-top: 12px; }
+    /* Onderaan 6 lucht en geen 30 (zie #screen-profile in 10-basis): op een telefoon
+       liggend (640x360) was dat precies wat het lege scherm -- logo, de "?" en
+       "Wat is Rekensterren?" -- 24px te hoog maakte. Dan schoof het hele scherm,
+       half logo weg en een strook onderaan, voor niets. Het raakvlak van die
+       laatste regel is 44 hoog met de tekst in het midden: lucht genoeg. */
+    #screen-profile { justify-content: flex-start; padding-top: 12px; padding-bottom: 6px; }
     .spellogo { margin-top: 0; }
     /* En smaller dan de kolom van dit scherm: liggend is de breedte er in
        overvloed en de hóógte het probleem, dus een tegel die de volle 560 pakt

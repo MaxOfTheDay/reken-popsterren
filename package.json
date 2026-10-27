@@ -34,6 +34,7 @@
     "test:overzetten": "node test/overzetten.test.js",
     "test:tekeningen": "node test/tekeningen.js",
     "test:onderrand": "node test/onderrand.test.js",
+    "test:schuiven": "node test/schuiven.test.js",
     "test:kop": "node test/kop.test.js",
     "test:snel": "node test/alles.js"
   },

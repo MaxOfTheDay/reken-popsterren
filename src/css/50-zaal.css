@@ -1275,6 +1275,13 @@
     /* De onscherpe wereld ligt op #screen-map en niet op .tour-map: dat laatste is
        een scrollvak, en een laagje daarin zou met de kaart mee wegschuiven. */
     #screen-map { isolation: isolate; }
+    /* En dicht, want de rand hieronder is groter dan het scherm (14% maal 8 is
+       112%), en een vergroting telt mee voor wat er te scrollen valt: het hele
+       kaartscherm schoof hier 6% van de hoogte op (46px op 1024x768) en liet
+       onderaan een donkere band zien. Op deze maten past alles al -- de kaart
+       zelf schuift in .tour-map, als hij dat moet -- dus er is hier niets dat
+       #screen-map zelf hoeft te scrollen. */
+    #screen-map { overflow: hidden; }
     /* EÉN DOEK, KLEIN GETEKEND. De rand is de wereld nog een keer, onscherp en
        donker. Hij stond hier als twee lagen: een verloop (de wereldkleuren) en
        daarop de grote tekening met blur(36px) over het hele venster. Dat ging op

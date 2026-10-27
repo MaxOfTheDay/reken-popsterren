@@ -48,6 +48,7 @@ npm run test:vlucht     # de zoom tussen de wereldkaart en Werelden
 npm run test:beloning
 npm run test:studio      # de wereldstudio (?debug&mapedit)
 npm run test:onderrand   # de zwevende bediening onderaan blijft staan
+npm run test:schuiven    # geen scherm schuift verder dan er iets te zien valt
 npm run test:kop         # de kop van de kaart: niets overlapt, op geen enkele maat
 npm run test:hub         # de Dev Studio (npm run studio) — kaal Node
 npm run test:overzetten  # de ontvanger van Overzetten (worker/overzetten.js) — kaal Node
@@ -435,6 +436,22 @@ is. De beloftes, op de kaart, in de kleedkamer, in de kast en op de reis:
   op de navigatiebalk landen — ook als het venster en het slot niet even hoog zijn.
 
 Zie `docs/LADEN.md`, "Venster, veilige zone en toetsenbord", voor de maten zelf.
+
+### `test/schuiven.test.js` — schuiven alleen waar er iets te zien is
+
+Elk scherm is een scrollvak, en dat schuift ook als het maar een paar pixels te
+hoog is. Dan voelt de app los onder je vinger: een kleedkamerlade waar alles in
+past kon toch de lege ruimte in, en een kaart op een liggende tablet schoof 46px
+op. Niets breekt, dus geen andere suite zag het. Deze suite opent de schermen op
+vijf maten (staand, liggend, tablet) en meet per scrollvak hoe ver het schuift
+tegen hoe ver het moet om het onderste echte ding 8px boven de navigatie te
+krijgen. De beloftes:
+
+- **niemand schuift veel verder dan nodig** (zaak A), elke kleedkamerlade apart;
+- **de kleedkamer en de kast zijn tot onderaan te schuiven** (zaak B) — liggend
+  breed bleef de onderste rij van het rek eerst onder de navigatie;
+- **de lade krijgt ruimte zodra hij opengaat, en houdt die tot een andere lade**
+  (zaak C) — bij het dichtgaan teruggeven liet het rek springen.
 
 ### `test/kop.test.js` — de kop van de wereldkaart
 

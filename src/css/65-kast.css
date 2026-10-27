@@ -139,7 +139,11 @@
      padding van het vlak en de negatieve marge geeft die terug, zodat er geen
      pixel extra te scrollen valt. Een korte kast op een hoog scherm (een tablet
      staand) houdt dan nog op halverwege; de schaduwen tekenen het vlak daar door
-     tot onder de rand -- schaduw en geen min-height, want die zou scrollen. */
+     tot onder de rand -- schaduw en geen min-height, want die zou scrollen.
+     Onder de laatste plank staat zo dezelfde lucht als onder het laatste kaartje
+     in de kleedkamer: 14 boven de balk (de padding van .screen.hub). Hier kwam
+     er nog 16 bij, en dan schoof een kast die op een liggende tablet helemaal
+     paste toch nog 36px de lege lade in. */
   /* De kamer erachter gedempt, zoals in de kleedkamer: het lichtste op het scherm
      horen de kaartjes in de lade te zijn, niet de gloed eromheen. Een echte
      schermtekening (.kunst) heeft zijn eigen sluier en blijft zoals hij is. */
@@ -148,7 +152,7 @@
   #trophy-shelves {
     width: min(100% + var(--rand, 12px) * 2, var(--kolom) + 24px); max-width: none; flex-shrink: 0;
     contain: layout style;
-    margin-top: 4px; padding: 6px 12px calc(var(--lade-onder) + 16px);
+    margin-top: 4px; padding: 6px 12px var(--lade-onder);
     margin-bottom: calc(var(--lade-onder) * -1);
     background: var(--lade); border-radius: 26px 26px 0 0;
     box-shadow: inset 0 1.5px 0 rgba(255,255,255,.14),
