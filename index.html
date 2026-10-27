@@ -10566,7 +10566,11 @@ addEventListener('resize', () => {
 
 
 
-const FOUT_ADRES = '';
+
+
+
+
+const FOUT_ADRES = 'https://rekensterren-fouten.maxheyrman.workers.dev/';
 const FOUT_MAX = 3;
 const foutGezien = [];
 
@@ -10647,6 +10651,10 @@ addEventListener('unhandledrejection', e => {
   const m = plek.match(/^(.*):(\d+):(\d+)$/);
   meldFout('belofte: ' + bericht, m ? m[1] : '', m ? m[2] : 0, m ? m[3] : 0);
 });
+
+if ((location.search || '').indexOf('foutproef') !== -1) {
+  setTimeout(() => { throw new Error('proef: de foutmelder werkt'); }, 0);
+}
 
 
 
