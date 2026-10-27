@@ -321,7 +321,7 @@ let WERELDEN = null, BEELDEN = null, VERSIE = null;
    keek deze lijst naar iets anders dan het kijkvak ernaast.
 
    De sleutels zijn die van het spel (WORLD_DRAFT_KEY en WORLD_DRAFT_BASIS_KEY in
-   src/20-app.js); test/hub.test.js kijkt na dat ze gelijk blijven. Het concept
+   src/20-gegevens.js); test/hub.test.js kijkt na dat ze gelijk blijven. Het concept
    wordt hier niet uitgelegd: de server legt het met de code van het spel op het
    spel van nu (zie overzicht in test/werelden.js). */
 const CONCEPT_KEY = 'rekenPopsterren_wereldconcept';

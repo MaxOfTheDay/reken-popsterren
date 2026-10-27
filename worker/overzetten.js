@@ -1,4 +1,4 @@
-/* De ontvanger van "Overzetten" (src/20-app.js, = Overzetten), als Cloudflare
+/* De ontvanger van "Overzetten" (src/70-ouderdeel.js, = Overzetten), als Cloudflare
    Worker. Hoort niet bij het spel: deze code draait bij Cloudflare, niet in de
    browser. Zie docs/OVERZETTEN.md voor het opzetten.
 

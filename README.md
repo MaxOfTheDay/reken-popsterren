@@ -68,7 +68,7 @@ Wie iets aan het spel verandert heeft aan deze vijf genoeg om zich te
 oriënteren; de rest staat als commentaar bij de code zelf.
 
 * **Wereld** — een stuk van de reis met een eigen tekening en sfeer.
-  Alles wat de app over een wereld weet staat in `WORLDS` in `src/20-app.js`.
+  Alles wat de app over een wereld weet staat in `WORLDS` in `src/20-gegevens.js`.
 * **Show (level)** — één optreden. Levels lopen dóór de werelden heen: `p.level`
   is één getal van 1 tot `WORLD_LAST + 1`.
 * **Ster** — wat een show opleverde (1, 2 of 3). `p.stars[level]`. Dít is de
@@ -81,8 +81,9 @@ oriënteren; de rest staat als commentaar bij de code zelf.
 ## Waar dingen staan
 
 De code staat in `src/`, het stijlblad in `src/css/`, en de markup in
-`index.html` zelf. Het spel zelf is `src/20-app.js`, en bovenaan dát bestand
-staat een inhoudsopgave die álle secties noemt.
+`index.html` zelf. Het spel zelf staat in `src/20-gegevens.js` tot en met
+`src/80-start.js`, en bovenaan het eerste staat een inhoudsopgave die álle
+secties noemt, met het bestand waar ze in staan.
 Zoek op de sectienaam (bijvoorbeeld `= Telmodus` of `= De hele tournee`) om
 ergens te komen; regelnummers staan er bewust niet bij, want die verouderen
 meteen. Het stijlblad heeft dezelfde soort koppen.
@@ -105,7 +106,7 @@ check` zegt het als de twee uit elkaar zijn gelopen.
 | wilt weten waarom de voortgang zo werkt | `docs/PROGRESSION-REVIEW.md` |
 | aan kleur of letter komt | het blok **DE AFSPRAAK** bovenaan `src/css/00-afspraak.css`, en `docs/UITBREIDEN.md` |
 | aan het uiterlijk werkt | `docs/ART-PLAN.md`, `docs/ART-DIRECTION.md` |
-| aan geluid of trillen komt | `docs/AUDIO-REVIEW.md`, en de secties `= Geluid` en `= Trilfeedback` in `src/20-app.js` |
+| aan geluid of trillen komt | `docs/AUDIO-REVIEW.md`, en de secties `= Geluid` en `= Trilfeedback` in `src/30-zintuigen.js` |
 | het logo of het app-icoon vervangt | `docs/MERK.md` |
 | de over-pagina (rekensterren.be/over/) of het promofilmpje aanpast | `over/index.html` (staat op zichzelf, geen bouwstap) en `promo/LEESMIJ.md` |
 

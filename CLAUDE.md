@@ -62,7 +62,7 @@ omgevallen; regel 0 is er om te voorkomen dat er een vijfde bijkomt.
    mogen dus overal staan, maar een `const` of `let` op het hoogste niveau niet:
    wie die leest vóórdat zijn regel gedraaid heeft, krijgt een ReferenceError en
    een lege pagina. Zo horen `10-feestjes.js` en `15-kaart-en-weg.js` vóór
-   `20-app.js`: `stilStaan` leest `MOVE_CLASSES` en `goMap` leest
+   de spelbestanden (`20-` tot en met `80-`): `stilStaan` leest `MOVE_CLASSES` en `goMap` leest
    `pendingTravel`, en allebei gebeurt al bij het opstarten. Zet je zo'n bestand
    erachter, dan valt de pagina meteen om met "Cannot access ... before
    initialization" — voor allebei nagemeten in een echte browser.
@@ -131,7 +131,7 @@ spel nodig heeft ligt naast `index.html` (ook het lettertype staat in
 `assets/font/`); houd dat zo. Er gaat bij een gewone start nog precies één
 verzoek naar buiten en dat is het meetscriptje uit regel 2 — niets van het spel
 wacht erop, dus zonder net mist er niets dan een telling. **Overzetten** (de
-sterren met een code naar een ander toestel, `= Overzetten` in `src/20-app.js`)
+sterren met een code naar een ander toestel, `= Overzetten` in `src/70-ouderdeel.js`)
 praat alleen met zijn Worker als een ouder daar zelf op tikt; zie
 `docs/OVERZETTEN.md`.
 
@@ -149,7 +149,18 @@ en waarop je het vindt:
 | `src/10-feestjes.js` | de **gedeelde feestjes**: `motionOff`, toast, praise, confetti, sparkle, danspasjes, confirm/notice. Wat élk scherm mag gebruiken om te zeggen dat er iets gebeurd is |
 | `src/15-kaart-en-weg.js` | de **vormleer van de wereldkaart**: haltes, de weg erlangs, het streeppatroon, `ZONE`, `showWorld`. Rekent in procenten van de tekening en kent geen scherm. De kaart, de reis én de wereldstudio leunen erop |
 | `src/17-kaartstand.js` | de **kaartstand**: vijftien namen die zeggen waar de kaart naar kijkt (`viewWorldIdx`), wat de eerstvolgende opbouw moet doen (`pendingTravel`, `reisDoel`, `kaartFocus`, `netAf`) en wat er nu loopt (`overgangBezig`, `vluchtOp`, `wereldReisOp`). Begin hier als je aan een overgang werkt |
-| `src/20-app.js` | **het spel.** Hier schrijf je meestal. Bovenaan staat de inhoudsopgave van alle secties |
+| `src/20-gegevens.js` | **het spel** begint hier: bovenaan de inhoudsopgave van álle secties tot en met `80-start.js`, met het bestand waar elk in staat. Daaronder de tabellen: `ITEMS`, `WORLDS` (het machinale blok), `wereldControle` |
+| `src/25-kern.js` | de regels zonder scherm: de voortgang, wereldbeloningen, podia, `TROPHIES`, de opslag |
+| `src/30-zintuigen.js` | trillen, geluid, de stem, de pop tekenen |
+| `src/35-schermen.js` | `show()`, de sterrenkeuze, de logo-intro, wat er geladen wordt |
+| `src/40-beweging.js` | wereld naar wereld, de bewegingstaal kaart ⇄ zaal, `goMap` |
+| `src/45-tournee.js` | de hele tournee |
+| `src/50-kast.js` | de trofeeënkast en het wereldfeest |
+| `src/55-vragen.js` | de vragen: rekenen, telmodus, memory, extra uitdagingen |
+| `src/60-spel.js` | de show zelf: `renderQuestion`, `submitAnswer`, `endLevel`, de som die dichtvalt |
+| `src/65-kleedkamer.js` | de kleedkamer en de wens |
+| `src/70-ouderdeel.js` | nieuwe ster, Voor ouders, back-up, Overzetten, Speel als app |
+| `src/80-start.js` | terug-navigatie, het opstarten, alles achter `?debug` |
 | `src/90-wereldstudio.js` | de **wereldstudio** — alleen bereikbaar met `?debug&mapedit`. Ruim een vijfde van de JavaScript, en het gewone spel raakt het nooit aan. De bouw zet hem niet in `index.html` maar in `studio.js` ernaast, dat pas opgehaald wordt als de studio opengaat (`laadStudio`). Sla het over tenzij je er expliciet aan werkt |
 | `src/99-servicewerker.js` | het aanmelden van `sw.js` en het doorgeven van de tekeningenlijst |
 | `src/css/*.css` | **het stijlblad**, in dertien stukken (zie hieronder) |
@@ -234,6 +245,12 @@ Het commentaar in `src/` is de belangrijkste documentatie die er is en het
 wordt bijgehouden. Haal het niet weg om regels te besparen -- de bouw laat het
 al weg uit wat een kind downloadt -- en laat een uitleg niet achter bij code die
 je verandert.
+
+Wat er in een commentaar hoort: **waarom** het zo staat, en waar je over
+struikelt als je het anders doet. Wat er vroeger stond en hoe het zo gekomen is
+hoort in de commit, niet in de code -- `git log -S` vindt het terug. Een
+"hier stond ooit ..." mag alleen blijven als het je tegenhoudt om dezelfde fout
+opnieuw te maken; dan is het een valkuil en geen geschiedenis.
 
 En zet in dit soort bestanden geen tellingen neer (controles, regels, suites):
 die verjaren net zo snel als regelnummers. Wie het wil weten draait

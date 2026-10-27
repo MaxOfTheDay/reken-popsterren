@@ -2416,7 +2416,7 @@ function startMapEdit() {
         commit();
       })
       .catch(() => setOut('Opslaan kan alleen met de studioserver (npm run studio).\n'
-        + 'Zonder server: Geavanceerd → Kopieer blok, en plak het in src/20-app.js.'));
+        + 'Zonder server: Geavanceerd → Kopieer blok, en plak het in src/20-gegevens.js.'));
   };
 
 
