@@ -246,6 +246,12 @@ wordt bijgehouden. Haal het niet weg om regels te besparen -- de bouw laat het
 al weg uit wat een kind downloadt -- en laat een uitleg niet achter bij code die
 je verandert.
 
+Wat er in een commentaar hoort: **waarom** het zo staat, en waar je over
+struikelt als je het anders doet. Wat er vroeger stond en hoe het zo gekomen is
+hoort in de commit, niet in de code -- `git log -S` vindt het terug. Een
+"hier stond ooit ..." mag alleen blijven als het je tegenhoudt om dezelfde fout
+opnieuw te maken; dan is het een valkuil en geen geschiedenis.
+
 En zet in dit soort bestanden geen tellingen neer (controles, regels, suites):
 die verjaren net zo snel als regelnummers. Wie het wil weten draait
 `npm run check`.

@@ -33,6 +33,8 @@
  *   M  de over-pagina     -- over/ staat op zichzelf: wat hij noemt bestaat, hij
  *                           leidt terug naar het spel, en het filmpje laadt pas
  *                           als iemand het afspeelt
+ *   N  twee talen, één regel -- een mediaregel die JavaScript zelf vraagt,
+ *                           staat letterlijk zo in het stijlblad
  *
  * Draaien:
  *   npm run test:inhoud      (of: npm test voor alle suites)
@@ -1049,6 +1051,25 @@ zaak('M', () => {
     const mb = fs.statSync(path.join(WORTEL, 'promo', f)).size / 1e6;
     check(mb <= 4.5, `M · ${f} is de lichte webversie (≤ 4,5 MB)`, `${mb.toFixed(1)} MB`);
   });
+});
+
+/* ================= N · Mediaregels in twee talen ================= */
+/* Een paar keer moet JavaScript weten wat het stijlblad al besliste: hangt de
+   lade naast haar (LADE_NAAST), heeft een wereld een onscherpe rand
+   (BREED_PODIUM)? Dat staat dan twee keer, als @media en als matchMedia. Past
+   iemand de ene aan en de andere niet, dan breekt er niets hoorbaar: de balk
+   staat alleen in de verkeerde kolom, of een vlucht krijgt een rand die er op het
+   scherm niet is. Daarom: elke naam hier staat letterlijk als @media in het
+   gebouwde stijlblad. DOCK_LAAG hoort er niet bij -- die regel heeft het
+   stijlblad niet, alleen het script meet ermee. */
+zaak('N', () => {
+  const html = fs.readFileSync(path.join(WORTEL, 'index.html'), 'utf8');
+  const stijl = html.slice(html.indexOf('<style>'), html.indexOf('</style>'));
+  for (const naam of ['BREED_PODIUM', 'LADE_NAAST']) {
+    const m = html.match(new RegExp(`const ${naam} = '([^']+)'`));
+    check(!!m, `N · ${naam} staat nog in het script`, '');
+    if (m) check(stijl.includes('@media ' + m[1] + ' {'), `N · ${naam} staat letterlijk zo als @media in het stijlblad`, m[1]);
+  }
 });
 
 klaar();
