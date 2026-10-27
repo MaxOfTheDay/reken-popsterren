@@ -41,6 +41,13 @@
      hoogte: opzij stak het buiten de kop, en dan kapt die de pil af. Twee
      klassen, want de regel van .gold-pill staat later in het stijlblad. */
   .gold-pill.kast-cadeau::after { left: 0; right: 0; }
+  /* De 💎-pil draagt hier ook de wens (zie zetWensPil). Op de smalste telefoons
+     staan er dan drie pillen in de kop, en bij een saldo van vier cijfers werd
+     de 🎁-pil afgekapt: dezelfde smalle stand als op de kaart (40-kaart). */
+  @media (max-width: 389px) {
+    #screen-trophies .diamond-badge.met-wens { font-size: var(--tx-body); gap: 4px; padding-inline: 10px; }
+    #screen-trophies .wens-mini { font-size: .85em; margin-left: 0; }
+  }
   /* ---- De plakkende kop, twee standen ----
      Bovenaan staat de kop in de kamer, zonder plaat -- net als in de kleedkamer:
      de twee pillen op de kamer, en eronder begint de kast (de lade, zie
