@@ -285,10 +285,8 @@ function drawQuestion() {
   // Overal hetzelfde, lees-vrije gouden-vraag-signaal (emoji voorop, ook in de rekenmodus).
   $('gold-banner').textContent = q.gold ? '🌟 3× 💎 🌟' : '';
   // "nog eens voorlezen" hoort alleen bij de lees-vrije telmodus (in de rekenmodus
-  // staat de som gewoon te lezen en wordt er niets uitgesproken)
-  // -- en bij een rekensom die voorgelezen wordt (Voorlezen, zie stemAan)
-  const lezen = !G.count && stemAan(P());
-  $('btn-replay').style.display = G.count || lezen ? 'flex' : 'none';
+  // staat de som gewoon te lezen en wordt er niets uitgesproken, zie stemAan)
+  $('btn-replay').style.display = G.count ? 'flex' : 'none';
   somVluchtWeg();   // een getal dat nog naar de vorige som vloog, hoort daar niet meer bij
   if (G.count) { drawCountQuestion(q); return; }
   /* Typen begint met hetzelfde ?-vakje als kiezen, en de cijfers komen erin.
@@ -301,9 +299,6 @@ function drawQuestion() {
   // doet, is een knop die liegt (zie .numpad.heeft in het stijlblad)
   const pad = document.querySelector('#answer-area .numpad');
   if (pad) pad.classList.toggle('heeft', G.mode === 'typ' && G.input !== '');
-  // drawQuestion tekent opnieuw bij elke cijfertik (typmodus): alleen de eerste
-  // keer per som voorlezen, anders begint de stem bij elk cijfer opnieuw
-  if (lezen && !q.voorgelezen) { q.voorgelezen = true; speak(somZin(q)); }
 }
 function numpadPress(n) {
   if (!G || G.lock) return;
@@ -684,7 +679,7 @@ function antwoordGoed(q, p, btnEl) {
      waar het kind een gelijke groep aantikt (1, 2, 4) is dit het enige moment
      dat het telwoord bij de hoeveelheid klinkt -- en precies die koppeling
      ("het laatste getal is hoeveel het er zijn") is waar tellen om draait.
-     speak() zwijgt zelf in de rekenmodus zonder Voorlezen (zie stemAan).
+     speak() zwijgt zelf in de rekenmodus (zie stemAan).
      Hij klinkt onderaan, via zegEnDan: de volgende vraag wacht erop. */
   /* Kort: alleen het getal. Met "Knap gedaan!" erachter duurde de lof zo'n twee
      seconden, en de volgende vraag wacht erop -- in de telmodus, waar daarna ook
@@ -1249,8 +1244,8 @@ function endLevel(success) {
      trofee, het wereldfeest -- maar het eindscherm was alleen tekst, en dan zegt
      het een kind dat nog niet leest alleen iets via de sterren. Eén korte zin,
      ná de laatste toon (EINDE.beloning, of de stille klok) zodat hij er niet
-     doorheen praat. speak() zwijgt zelf in de rekenmodus (tenzij Voorlezen aan
-     staat, zie stemAan) en met geluid uit.
+     doorheen praat. speak() zwijgt zelf in de rekenmodus (zie stemAan) en met
+     geluid uit.
 
      Niet als er een wereldfeest volgt: dat leest zijn eigen zin voor, en een
      nieuwe zin breekt de vorige af. Dan is de wereld het nieuws. */

@@ -773,7 +773,6 @@ function defaultProfile(name, dress, opts) {
       numerals: opts.numerals !== false,            // fase 6 (cijfers) toestaan
       qmax: opts.qmax || 10,                         // hoogste hoeveelheid waar het spel naartoe mag groeien (6/8/10)
       memory: opts.memory !== false,                // memory-spelletje op de kaart (standaard aan)
-      voorlezen: opts.voorlezen === true,           // rekenmodus: de sommen hardop voorlezen (zie stemAan)
       startStap: opts.startStap || 1                // rekenmodus: de leerstap waar het spel minstens begint (zie leerStap)
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
@@ -940,6 +939,7 @@ function migrate(p) {
   }
   if (p.settings.qmax == null) p.settings.qmax = 10;
   if (p.settings.memory == null) p.settings.memory = true;
+  delete p.settings.voorlezen;   // de schakelaar Voorlezen bestaat niet meer (zie stemAan)
   if (!p.countTrack) p.countTrack = { stage: p.settings.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 };
   if (p.countTrack.rung == null) p.countTrack.rung = 0;
   if (p.countTrack.streak == null) p.countTrack.streak = 0;

@@ -1890,9 +1890,8 @@ function goMap(vanLvl) {
   zetWensPil(p);
   $('map-tournee-label').classList.remove('bezig');   // zie pilTik
   $('map-portrait').innerHTML = avatarSVG(p, 80);
-  // Memory-knop: voor elke ster met het memory-spel aan (rekenkinderen krijgen
-  // de sommenvariant, zie memSomDeck)
-  const memOn = p.settings.memory !== false;
+  // Memory-knop: alleen voor een telkind met het memory-spel aan (zie memoryAan)
+  const memOn = memoryAan(p);
   $('mem-fab').style.display = memOn ? 'flex' : 'none';
   if (memOn) $('mem-fab-pay').textContent = memPayout(p);
   const o = kaartOpdracht(p, vanLvl, uitShow);

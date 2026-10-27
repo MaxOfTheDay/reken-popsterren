@@ -193,9 +193,17 @@ function check(ok, label, detail) {
     check(r.gekozenMax === '20' && r.gekozenMode === 'kies',
       'de velden tonen de waarden van het gekozen kind', JSON.stringify(r));
     check(/Bas/.test(r.kop), 'en de kop zegt over wie het gaat', r.kop);
-    // Bas naar de telmodus: dat mag Anna niet raken
-    await page.click('#set-track .chip[data-v="count"]');
+    // Bas naar de telmodus: dat mag Anna niet raken. De modus staat niet op
+    // Oefeningen maar in zijn blad (een tik op zijn naam, zie wieBladHtml)
+    check(await page.evaluate(() => !document.querySelector('#settings-body #set-track, .settings-panel #set-track')),
+      'tellen of rekenen staat niet meer op Oefeningen', 'er staat nog een modusknop');
+    await page.evaluate(() => openWieBlad());
+    await page.click('#confirm-body #set-track .chip[data-v="count"]');
     await page.waitForTimeout(150);
+    check(await page.evaluate(() => $('confirm-modal').classList.contains('open')
+      && document.querySelector('#confirm-body #set-track .chip.on').dataset.v === 'count'),
+      'het blad blijft open en toont de nieuwe modus', 'blad dicht of oude modus');
+    await page.evaluate(() => closeConfirmModal());
     r = await page.evaluate(() => ({
       anna: db.profiles.p1.settings.track, bas: db.profiles.p2.settings.track,
       basFase: !!document.getElementById('set-fase'),
