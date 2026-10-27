@@ -283,8 +283,9 @@ zaak('I · mijn wens', () => {
   check(app.run('wensItem(P())') === null, 'I · een verse ster heeft geen wens', '');
   app.run(`P().wens = 'pet_draak'`);
   check(app.run('wensItem(P()) && wensItem(P()).id') === 'pet_draak', 'I · een wens is het spulletje zelf', '');
-  check(app.run(`wensTeken(item('pet_draak'))`) === '🐉' && app.run(`wensTeken(item('dress_geel'))`) === '👕',
-    'I · de pil toont het emoji, of anders het teken van de lade', '');
+  const kleed = app.run(`wensTekenHTML(item('dress_geel'))`);
+  check(app.run(`wensTekenHTML(item('pet_draak'))`) === '🐉' && /wens-tek/.test(kleed) && /<svg/.test(kleed),
+    'I · de pil toont het emoji, of anders de tekening van het spulletje zelf', kleed.slice(0, 80));
   // al van jou: dan is het geen wens meer, ook zonder dat er iets opgeruimd is
   p.owned.push('pet_draak');
   check(app.run('wensItem(P())') === null, 'I · wat al van jou is, is geen wens', '');

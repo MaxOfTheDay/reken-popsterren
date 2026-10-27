@@ -12473,6 +12473,7 @@ function endLevel(success) {
   if (fanBonus > 0) p.diamonds += fanBonus;
   const verdiend = G.earned + fanBonus;
   let opbrengst = verdiend;   // alles van deze show, de sterrenbonus erbij (zie hieronder)
+  let wens = null;            // de wens in het 💎-vakje (zie eindWens)
   $('end-avatar').innerHTML = pasLaag(avatarSVG(p, 150));
   applyStage($('end-stage'), p);
   // hetzelfde decor als tijdens de show: het applaus valt in de zaal waar ze stond
@@ -12520,6 +12521,7 @@ function endLevel(success) {
        */
     opbrengst = verdiend + bonus;
     $('end-earn').innerHTML = `<span class="earn-chip dia">💎 +${opbrengst}</span>`;
+    wens = eindWens(p, opbrengst);
     /* Eén mijlpaal, en alleen als er écht iets gehaald is: iets nieuws dat het
        kind nu kan (groeiMoment), of een trofee die klaarligt -- die laatste als
        gouden pil, tikbaar.
@@ -12559,7 +12561,13 @@ function endLevel(success) {
     const nieuwPodium = nieuwSpul ? podiumVan(nieuwSpul.id) : null;
     $('btn-end-alt').textContent = nieuwPodium ? '🎪 Naar je podium'
       : nieuwSpul ? `👕 Pas je ${nieuwSpul.name}` : '👕 Kleedkamer';
-    const naar = nieuwPodium || nieuwSpul;
+    /* Genoeg gespaard voor je wens? Dan gaat de gewone Kleedkamer-knop naar dát
+       spulletje, met de wens ervoor en een gouden rand (zie eindWens). Een nieuw
+       wereldspulletje gaat voor: dat moment is er maar één keer, de wens wacht. */
+    const naarWens = !nieuwSpul && wens && wens.klaar ? wens.it : null;
+    if (naarWens) $('btn-end-alt').innerHTML = `${wensTekenHTML(naarWens)} Kleedkamer`;
+    $('btn-end-alt').classList.toggle('wens-klaar', !!naarWens);
+    const naar = nieuwPodium || nieuwSpul || naarWens;
     $('btn-end-alt').onclick = naar
       ? () => { sndClick(); naTik(() => openKleedkamerItem(naar.id)); }
       : () => { sndClick(); naTik(openKleedkamer); };
@@ -12583,9 +12591,11 @@ function endLevel(success) {
     // de enige plek in het spel die een kind liet zien wat ze níét kreeg; zonder
     // het vakje schuiven de knoppen gewoon een regel op.
     $('end-earn').innerHTML = verdiend > 0 ? `<span class="earn-chip dia">💎 +${verdiend}</span>` : '';
+    wens = eindWens(p, verdiend);
     $('btn-end-next').textContent = '🔁 Opnieuw proberen';
     $('btn-end-next').onclick = () => { sndClick(); naTik(() => startLevel(lvl)); };
     $('btn-end-alt').textContent = '🗺️ Kaart';
+    $('btn-end-alt').classList.remove('wens-klaar');
     $('btn-end-alt').onclick = () => { sndClick(); naTik(() => goMap(lvl)); };
   }
   /* DE VOLGORDE op het eindscherm: eerst de sterren, dan wat ze opleveren, dan
@@ -12594,7 +12604,9 @@ function endLevel(success) {
      -- en pas daarna landden de sterren die dat allemaal verdiend hadden. Nu
      telt de teller op vanaf wat er vóór de show stond. */
   telNu($('end-diamonds'), p.diamonds - opbrengst);
-  telStraks($('end-diamonds'), p.diamonds, eindKomtOp(success));
+  const aankomst = eindKomtOp(success);
+  telStraks($('end-diamonds'), p.diamonds, aankomst);
+  eindWensVul(wens, aankomst);   // het streepje loopt vol als de diamanten landen
   G = null;
   /* De stille wissel van toonHub, en geen kale show(). Die liet het eindscherm
      met screenIn uit het niets opkomen terwijl de zaal op het eerste beeldje al
@@ -13340,6 +13352,7 @@ function paintShop() {
      schrijft die hem en mag deze regel er niet overheen -- anders staat het
      eindbedrag er al voordat het kind de diamanten heeft zien gaan. */
   zetTeller($('shop-diamonds'), p.diamonds);
+  zetWensPil(p);   // de 💎-pil draagt ook hier de wens (zie "= Mijn wens")
   /* De pop, en het podium onder haar voeten. Hier stond ooit applyStage(): het
      oude decorvlak áchter haar, met drie emoji in de hoeken -- dat beantwoordde de
      vraag van dit scherm ("hoe ziet mijn ster eruit?") met iets anders. Wat er nu
@@ -13404,7 +13417,8 @@ function surpriseOutfit() {
    Eén spulletje dat je nog niet kunt betalen, vastgezet met een hartje in de lade
    onderaan. De 💎-pil op de kaart draagt het dan mee: het emoji van je wens naast
    je diamanten, met een streepje eronder dat volloopt naarmate je spaart. Is er
-   genoeg, dan fonkelt de pil, en tikken brengt je meteen naar dát spulletje.
+   genoeg, dan wordt de pil goud, en tikken brengt je meteen naar dát spulletje.
+   Het eindscherm draagt hem ook (eindWens): daar krijg je de diamanten.
 
    Waarom: de droomspulletjes kosten vier tot zes shows. Dat is een goed doel,
    maar een kind van zes houdt "ik spaar voor het draakje" niet vijf shows lang
@@ -13431,42 +13445,90 @@ function zetWens(id) {
     toastWeg(1300);
   }
 }
-// Het emoji van de wens, of anders het teken van zijn lade (👕 voor kleren...).
-function wensTeken(it) {
-  if (it.emoji) return it.emoji;
-  const c = CATS.find(c2 => c2.id === it.cat);
-  return c ? c.ico : '💖';
+/* Het teken van de wens: zijn emoji, of anders zijn eigen kleine tekening. Hier
+   stond het teken van zijn lade (👕 voor kleren, 💇 voor haar) -- maar ruim de
+   helft van de winkel heeft geen emoji (kapsels, outfits, schoenen, micro's), en
+   dan zag elke outfit-wens er in de pil hetzelfde uit: een shirtje. Nu is het de
+   tekening van het kaartje zelf, op de maat van een letter (.wens-tek). */
+function wensTekenHTML(it) {
+  return it.emoji ? esc(it.emoji) : `<span class="wens-tek">${itemThumb(it)}</span>`;
 }
 /* De 💎-pil bijwerken: met wens, of gewoon zoals hij altijd was. Dezelfde pil
    staat op de drie schermen met de tabbladbalk -- de kaart, Werelden en de kast
    -- en is daar alle drie dezelfde knop. Hij was alleen op de kaart een knop: op
    Werelden en in de kast zag hij er precies zo uit, maar deed een tik niets, en
    stond de wens er niet bij. In de show, op het eindscherm en in memory blijft
-   hij een gewone teller: daar is ze aan het spelen. */
-const WENS_PILLEN = ['map-diamonds', 'reis-diamonds', 'trophy-diamonds'];
+   hij een gewone teller: daar is ze aan het spelen.
+
+   De kleedkamer heeft hem sinds oktober 2026 ook, met de wens erbij: dat was de
+   enige 💎-pil met tabbladbalk zonder. Daar is hij alleen een knop zolang er een
+   wens is -- een tik brengt je dan naar dat kaartje, met Koop of Speel in de
+   lade. Zonder wens is hij er een teller: "naar de kleedkamer" vanuit de
+   kleedkamer zou een knop zijn die niets doet.
+
+   Is er genoeg gespaard (.wens-klaar), dan wordt de hele pil goud: hetzelfde goud
+   als de 🎁-pil in de kast, en dat betekent in deze app "hier ligt iets voor je
+   klaar, tik maar". Daarom is hij overal waar hij goud kan worden ook een knop.
+   Een tik koopt niets -- kopen is de enige stap die niet terug kan, en die blijft
+   achter de Koop-knop in de lade. Hij brengt je er alleen heen. */
+const WENS_PILLEN = ['map-diamonds', 'reis-diamonds', 'trophy-diamonds', 'shop-diamonds'];
 function zetWensPil(p) {
   const it = wensItem(p);
   WENS_PILLEN.forEach(id => {
     const pil = $(id) && $(id).closest('.diamond-badge');
     const plek = pil && pil.querySelector('.wens-mini');
     if (!plek) return;
+    const kleed = id === 'shop-diamonds';
     if (!it) {
-      plek.textContent = '';
+      plek.innerHTML = '';
+      plek.removeAttribute('data-wens');
       pil.classList.remove('met-wens', 'wens-klaar');
       pil.style.removeProperty('--wens');
-      pil.onclick = () => navTik('dress');
-      pil.setAttribute('aria-label', 'Naar de kleedkamer');
+      if (kleed) {
+        pil.onclick = null;
+        pil.removeAttribute('role'); pil.removeAttribute('tabindex'); pil.removeAttribute('aria-label');
+      } else {
+        pil.onclick = () => navTik('dress');
+        pil.setAttribute('aria-label', 'Naar de kleedkamer');
+      }
       return;
     }
     const klaar = p.diamonds >= it.price;
-    plek.textContent = wensTeken(it);
+    // alleen opnieuw tekenen als het een ander spulletje is: de pil wordt vaak bijgewerkt
+    if (plek.dataset.wens !== it.id) { plek.innerHTML = wensTekenHTML(it); plek.dataset.wens = it.id; }
     pil.classList.add('met-wens');
     pil.classList.toggle('wens-klaar', klaar);
     pil.style.setProperty('--wens', Math.min(100, Math.round(100 * p.diamonds / it.price)) + '%');
     pil.onclick = () => { sndClick(); openKleedkamerItem(it.id); };
+    if (kleed) { pil.setAttribute('role', 'button'); pil.tabIndex = 0; }
     pil.setAttribute('aria-label', klaar ? `Je wens: ${it.full || it.name} -- je kunt hem kopen!`
       : `Je wens: ${it.full || it.name}, nog ${it.price - p.diamonds} diamanten`);
   });
+}
+/* De wens op het eindscherm. Het moment waarop ze diamanten krijgt zei niets over
+   waarvoor ze spaart; nu draagt het 💎-vakje dezelfde wens en hetzelfde streepje
+   als de pil op de kaart. Het streepje begint op wat er vóór de show was en loopt
+   vol als de diamanten in de teller landen (eindWensVul).
+
+   Genoeg? Dan wordt het vakje níét goud: het is geen knop, en twee gouden dingen
+   voor één tik is er één te veel. Het vakje houdt een vol streepje en een
+   wiebelende wens, en de tweede knop neemt het over: de wens ervoor en een gouden
+   rand, en hij gaat meteen naar dát spulletje. Alleen als die knop nog gewoon
+   "Kleedkamer" is -- een nieuw wereldspulletje of podium gaat voor (zie endLevel). */
+function eindWens(p, opbrengst) {
+  const vakje = $('end-earn').querySelector('.earn-chip');
+  const it = wensItem(p);
+  if (!vakje || !it) return null;
+  const deel = n => Math.max(0, Math.min(1, n / it.price));
+  vakje.classList.add('met-wens');
+  vakje.style.setProperty('--wens-f', deel(p.diamonds - opbrengst).toFixed(3));
+  vakje.insertAdjacentHTML('beforeend', `<span class="wens-mini" aria-hidden="true">${wensTekenHTML(it)}</span>`);
+  return { it, vakje, na: deel(p.diamonds), klaar: p.diamonds >= it.price };
+}
+function eindWensVul(w, wanneer) {
+  if (!w) return;
+  const vul = () => { w.vakje.style.setProperty('--wens-f', w.na.toFixed(3)); w.vakje.classList.toggle('wens-klaar', w.klaar); };
+  if (wanneer > 0) setTimeout(vul, wanneer); else vul();
 }
 
 /* De lade onderaan: naam links, dé knop rechts. Bij te weinig diamanten geen dood
@@ -13496,12 +13558,14 @@ function renderDressBar(it, p) {
   if (tekort > 0) {
     /* Te duur? Dan kan het je wens worden (zie "= Mijn wens"): het hartje zet hem
        vast, en de 💎-pil op de kaart draagt hem tot hij te koop is. */
-    const gewenst = p.wens === it.id;
+    /* Op een smalle telefoon (320) paste dit niet: de naam én "Nog 190 💎" werden
+       allebei afgekapt, en dan was juist het bedrag weg. Daar valt de naam weg
+       (.db-woord, zie 75-kleedkamer) en blijft het emoji staan: welk spulletje het
+       is, zeggen het blauwe kaartje en de pop al. */
     bar.innerHTML = `
-      <div class="db-info"><span class="db-name">${naam(it)}</span>
-        <span class="db-sub">· Nog <span class="db-highlight">${tekort}</span> 💎</span></div>
-      <button class="wens-knop${gewenst ? ' aan' : ''}" id="db-wens" type="button"
-        aria-pressed="${gewenst}" aria-label="${gewenst ? 'Geen wens meer' : 'Maak er je wens van'}">${gewenst ? '💖' : '🤍'}</button>
+      <div class="db-info"><span class="db-name">${it.emoji ? it.emoji + ' ' : ''}<span class="db-woord">${it.full || it.name}</span></span>
+        <span class="db-sub"><span class="db-woord">· </span>Nog <span class="db-highlight">${tekort}</span> 💎</span></div>
+      ${wensKnop(it, p)}
       <button class="btn small" id="db-earn">Speel</button>`;
     $('db-wens').onclick = () => zetWens(it.id);
     /* De show waar de kaart je nu heen stuurt. Is alles uit, dan staat p.level op
@@ -13512,10 +13576,23 @@ function renderDressBar(it, p) {
     $('db-earn').onclick = () => { sndClick(); startLevel(Math.min(P().level, WORLD_LAST)); };
     return;
   }
+  /* Genoeg voor je wens? Dan blijft het hartje naast Koop staan. Hier verdween
+     het zodra je genoeg had, en dan kon je je wens niet meer terugnemen zonder
+     hem te kopen -- terwijl de pil op de kaart er goud om bleef staan. Een
+     spulletje dat je al kunt kopen wordt geen nieuwe wens: daar is Koop voor. */
+  const wens = p.wens === it.id;
   bar.innerHTML = `
     <div class="db-info"><span class="db-name">${naam(it)}</span></div>
+    ${wens ? wensKnop(it, p) : ''}
     <button class="btn small" id="db-buy">Koop · ${it.price} 💎</button>`;
+  if (wens) $('db-wens').onclick = () => zetWens(it.id);
   $('db-buy').onclick = () => confirmShopBuy(it.id);
+}
+// Het hartje in de lade: leeg (🤍) of vol (💖). Geen tekst: het hart zegt het.
+function wensKnop(it, p) {
+  const gewenst = p.wens === it.id;
+  return `<button class="wens-knop${gewenst ? ' aan' : ''}" id="db-wens" type="button"
+        aria-pressed="${gewenst}" aria-label="${gewenst ? 'Geen wens meer' : 'Maak er je wens van'}">${gewenst ? '💖' : '🤍'}</button>`;
 }
 
 /* De lade onderaan voor een podium dat nog niet van jou is: zijn drie stukken als

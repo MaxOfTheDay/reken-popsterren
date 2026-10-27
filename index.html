@@ -2763,9 +2763,14 @@
 
 
 
-
   .wens-mini:empty { display: none; }
-  .wens-mini { font-size: .95em; line-height: 1; margin-left: 2px; }
+  .wens-mini { font-size: .95em; line-height: 1; margin-left: 2px; display: inline-flex; align-items: center; }
+
+
+
+  .wens-tek { display: inline-flex; align-items: center; }
+  .wens-tek .item-thumb { height: auto; margin: 0; transform: none; }
+  .wens-tek .item-thumb svg { height: 1.45em; width: auto; filter: none; }
   .diamond-badge.met-wens { position: relative; }
   .diamond-badge.met-wens::after {
     content: ''; position: absolute; left: 10px; right: 10px; bottom: 3px; height: 3px;
@@ -2774,12 +2779,33 @@
   }
 
 
-  .diamond-badge.wens-klaar .wens-mini { display: inline-block; animation: wensFonkel 1.4s ease-in-out infinite; }
+
+
+
+
+
+
+  :is(#screen-map, #screen-journey, #screen-trophies, #screen-dress) .diamond-badge.wens-klaar {
+    background: rgba(var(--goud-rgb), .9); color: var(--ink-on-gold); text-shadow: none;
+    box-shadow: 0 0 14px rgba(var(--goud-rgb), .45), 0 3px 10px rgba(8,1,20,.35);
+    animation: beloningKlop 2.4s ease-in-out infinite;
+  }
+  .diamond-badge.wens-klaar::after { display: none; }
+
+  .diamond-badge[role="button"] { cursor: pointer; }
+  .diamond-badge[role="button"]:active { transform: scale(.95); }
+
+
+
+  .earn-chip.wens-klaar > .wens-mini { animation: wensFonkel 1.4s ease-in-out infinite; }
   @keyframes wensFonkel {
     0%, 100% { transform: scale(1) rotate(0); }
     50%      { transform: scale(1.25) rotate(-8deg); }
   }
-  @media (prefers-reduced-motion: reduce) { .diamond-badge.wens-klaar .wens-mini { animation: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .earn-chip.wens-klaar > .wens-mini,
+    :is(#screen-map, #screen-journey, #screen-trophies, #screen-dress) .diamond-badge.wens-klaar { animation: none; }
+  }
 
 
 
@@ -7765,6 +7791,28 @@
 
 
 
+  .earn-chip.met-wens { position: relative; }
+  .earn-chip.met-wens::before, .earn-chip.met-wens::after {
+    content: ''; position: absolute; left: 12px; right: 12px; bottom: 4px; height: 3px;
+    border-radius: var(--r-pill); pointer-events: none;
+  }
+  .earn-chip.met-wens::before { background: rgba(255,255,255,.18); }
+  .earn-chip.met-wens::after {
+    background: var(--gold-accent); transform-origin: left center;
+    transform: scaleX(var(--wens-f, 0)); transition: transform 520ms ease-out;
+  }
+
+
+
+  .end-actions .btn.soft.wens-klaar {
+    border: 2px solid rgba(var(--goud-rgb), .85);
+    box-shadow: inset 0 1.5px 0 rgba(255,255,255,.18), 0 0 14px rgba(var(--goud-rgb), .3), 0 3px 0 rgba(0,0,0,.28);
+  }
+  .end-actions .btn.soft.wens-klaar .wens-tek .item-thumb svg { height: 1.3em; }
+
+
+
+
 
   .end-milestone { margin: 0 0 14px; min-height: 40px; display: flex; align-items: center; justify-content: center; }
   .end-milestone:empty { display: none; }
@@ -8798,6 +8846,11 @@
   .dress-bar .db-sub { flex: 0 1 auto; min-width: 0; font-size: var(--tx-klein); opacity: .92; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dress-bar .db-highlight { color: var(--gold-accent); font-weight: 700; }
   .dress-bar .btn.small { white-space: nowrap; flex-shrink: 0; }
+
+
+
+
+  @media (max-width: 359px) { .dress-bar .db-woord { display: none; } }
 
 
   .wens-knop {
@@ -10409,7 +10462,7 @@
              de laden (Podia ook) staan in de balk onder de spiegel. De lege cel
              houdt de terugknop en het saldo op hun plek, gelijk met de kast. -->
         <div class="header-title" aria-hidden="true"></div>
-        <div class="diamond-badge header-right">💎 <span id="shop-diamonds">0</span></div>
+        <div class="diamond-badge header-right">💎 <span id="shop-diamonds">0</span><span id="shop-wens" class="wens-mini"></span></div>
       </div>
       <div class="stage-wrap">
         <!-- FASE 5B.1 -- een spiegel en geen podium. Dit was een .stage: dezelfde
@@ -24124,6 +24177,7 @@ function endLevel(success) {
   if (fanBonus > 0) p.diamonds += fanBonus;
   const verdiend = G.earned + fanBonus;
   let opbrengst = verdiend;
+  let wens = null;
   $('end-avatar').innerHTML = pasLaag(avatarSVG(p, 150));
   applyStage($('end-stage'), p);
 
@@ -24171,6 +24225,7 @@ function endLevel(success) {
 
     opbrengst = verdiend + bonus;
     $('end-earn').innerHTML = `<span class="earn-chip dia">💎 +${opbrengst}</span>`;
+    wens = eindWens(p, opbrengst);
 
 
 
@@ -24210,7 +24265,13 @@ function endLevel(success) {
     const nieuwPodium = nieuwSpul ? podiumVan(nieuwSpul.id) : null;
     $('btn-end-alt').textContent = nieuwPodium ? '🎪 Naar je podium'
       : nieuwSpul ? `👕 Pas je ${nieuwSpul.name}` : '👕 Kleedkamer';
-    const naar = nieuwPodium || nieuwSpul;
+
+
+
+    const naarWens = !nieuwSpul && wens && wens.klaar ? wens.it : null;
+    if (naarWens) $('btn-end-alt').innerHTML = `${wensTekenHTML(naarWens)} Kleedkamer`;
+    $('btn-end-alt').classList.toggle('wens-klaar', !!naarWens);
+    const naar = nieuwPodium || nieuwSpul || naarWens;
     $('btn-end-alt').onclick = naar
       ? () => { sndClick(); naTik(() => openKleedkamerItem(naar.id)); }
       : () => { sndClick(); naTik(openKleedkamer); };
@@ -24234,9 +24295,11 @@ function endLevel(success) {
 
 
     $('end-earn').innerHTML = verdiend > 0 ? `<span class="earn-chip dia">💎 +${verdiend}</span>` : '';
+    wens = eindWens(p, verdiend);
     $('btn-end-next').textContent = '🔁 Opnieuw proberen';
     $('btn-end-next').onclick = () => { sndClick(); naTik(() => startLevel(lvl)); };
     $('btn-end-alt').textContent = '🗺️ Kaart';
+    $('btn-end-alt').classList.remove('wens-klaar');
     $('btn-end-alt').onclick = () => { sndClick(); naTik(() => goMap(lvl)); };
   }
 
@@ -24245,7 +24308,9 @@ function endLevel(success) {
 
 
   telNu($('end-diamonds'), p.diamonds - opbrengst);
-  telStraks($('end-diamonds'), p.diamonds, eindKomtOp(success));
+  const aankomst = eindKomtOp(success);
+  telStraks($('end-diamonds'), p.diamonds, aankomst);
+  eindWensVul(wens, aankomst);
   G = null;
 
 
@@ -24991,6 +25056,7 @@ function paintShop() {
 
 
   zetTeller($('shop-diamonds'), p.diamonds);
+  zetWensPil(p);
 
 
 
@@ -25065,6 +25131,7 @@ function surpriseOutfit() {
 
 
 
+
 function wensItem(p) {
   const it = p.wens ? item(p.wens) : null;
   return (it && typeof it.price === 'number' && !p.owned.includes(it.id)) ? it : null;
@@ -25083,10 +25150,12 @@ function zetWens(id) {
   }
 }
 
-function wensTeken(it) {
-  if (it.emoji) return it.emoji;
-  const c = CATS.find(c2 => c2.id === it.cat);
-  return c ? c.ico : '💖';
+
+
+
+
+function wensTekenHTML(it) {
+  return it.emoji ? esc(it.emoji) : `<span class="wens-tek">${itemThumb(it)}</span>`;
 }
 
 
@@ -25094,30 +25163,76 @@ function wensTeken(it) {
 
 
 
-const WENS_PILLEN = ['map-diamonds', 'reis-diamonds', 'trophy-diamonds'];
+
+
+
+
+
+
+
+
+
+
+
+
+const WENS_PILLEN = ['map-diamonds', 'reis-diamonds', 'trophy-diamonds', 'shop-diamonds'];
 function zetWensPil(p) {
   const it = wensItem(p);
   WENS_PILLEN.forEach(id => {
     const pil = $(id) && $(id).closest('.diamond-badge');
     const plek = pil && pil.querySelector('.wens-mini');
     if (!plek) return;
+    const kleed = id === 'shop-diamonds';
     if (!it) {
-      plek.textContent = '';
+      plek.innerHTML = '';
+      plek.removeAttribute('data-wens');
       pil.classList.remove('met-wens', 'wens-klaar');
       pil.style.removeProperty('--wens');
-      pil.onclick = () => navTik('dress');
-      pil.setAttribute('aria-label', 'Naar de kleedkamer');
+      if (kleed) {
+        pil.onclick = null;
+        pil.removeAttribute('role'); pil.removeAttribute('tabindex'); pil.removeAttribute('aria-label');
+      } else {
+        pil.onclick = () => navTik('dress');
+        pil.setAttribute('aria-label', 'Naar de kleedkamer');
+      }
       return;
     }
     const klaar = p.diamonds >= it.price;
-    plek.textContent = wensTeken(it);
+
+    if (plek.dataset.wens !== it.id) { plek.innerHTML = wensTekenHTML(it); plek.dataset.wens = it.id; }
     pil.classList.add('met-wens');
     pil.classList.toggle('wens-klaar', klaar);
     pil.style.setProperty('--wens', Math.min(100, Math.round(100 * p.diamonds / it.price)) + '%');
     pil.onclick = () => { sndClick(); openKleedkamerItem(it.id); };
+    if (kleed) { pil.setAttribute('role', 'button'); pil.tabIndex = 0; }
     pil.setAttribute('aria-label', klaar ? `Je wens: ${it.full || it.name} -- je kunt hem kopen!`
       : `Je wens: ${it.full || it.name}, nog ${it.price - p.diamonds} diamanten`);
   });
+}
+
+
+
+
+
+
+
+
+
+
+function eindWens(p, opbrengst) {
+  const vakje = $('end-earn').querySelector('.earn-chip');
+  const it = wensItem(p);
+  if (!vakje || !it) return null;
+  const deel = n => Math.max(0, Math.min(1, n / it.price));
+  vakje.classList.add('met-wens');
+  vakje.style.setProperty('--wens-f', deel(p.diamonds - opbrengst).toFixed(3));
+  vakje.insertAdjacentHTML('beforeend', `<span class="wens-mini" aria-hidden="true">${wensTekenHTML(it)}</span>`);
+  return { it, vakje, na: deel(p.diamonds), klaar: p.diamonds >= it.price };
+}
+function eindWensVul(w, wanneer) {
+  if (!w) return;
+  const vul = () => { w.vakje.style.setProperty('--wens-f', w.na.toFixed(3)); w.vakje.classList.toggle('wens-klaar', w.klaar); };
+  if (wanneer > 0) setTimeout(vul, wanneer); else vul();
 }
 
 
@@ -25147,12 +25262,14 @@ function renderDressBar(it, p) {
   if (tekort > 0) {
 
 
-    const gewenst = p.wens === it.id;
+
+
+
+
     bar.innerHTML = `
-      <div class="db-info"><span class="db-name">${naam(it)}</span>
-        <span class="db-sub">· Nog <span class="db-highlight">${tekort}</span> 💎</span></div>
-      <button class="wens-knop${gewenst ? ' aan' : ''}" id="db-wens" type="button"
-        aria-pressed="${gewenst}" aria-label="${gewenst ? 'Geen wens meer' : 'Maak er je wens van'}">${gewenst ? '💖' : '🤍'}</button>
+      <div class="db-info"><span class="db-name">${it.emoji ? it.emoji + ' ' : ''}<span class="db-woord">${it.full || it.name}</span></span>
+        <span class="db-sub"><span class="db-woord">· </span>Nog <span class="db-highlight">${tekort}</span> 💎</span></div>
+      ${wensKnop(it, p)}
       <button class="btn small" id="db-earn">Speel</button>`;
     $('db-wens').onclick = () => zetWens(it.id);
 
@@ -25163,10 +25280,23 @@ function renderDressBar(it, p) {
     $('db-earn').onclick = () => { sndClick(); startLevel(Math.min(P().level, WORLD_LAST)); };
     return;
   }
+
+
+
+
+  const wens = p.wens === it.id;
   bar.innerHTML = `
     <div class="db-info"><span class="db-name">${naam(it)}</span></div>
+    ${wens ? wensKnop(it, p) : ''}
     <button class="btn small" id="db-buy">Koop · ${it.price} 💎</button>`;
+  if (wens) $('db-wens').onclick = () => zetWens(it.id);
   $('db-buy').onclick = () => confirmShopBuy(it.id);
+}
+
+function wensKnop(it, p) {
+  const gewenst = p.wens === it.id;
+  return `<button class="wens-knop${gewenst ? ' aan' : ''}" id="db-wens" type="button"
+        aria-pressed="${gewenst}" aria-label="${gewenst ? 'Geen wens meer' : 'Maak er je wens van'}">${gewenst ? '💖' : '🤍'}</button>`;
 }
 
 

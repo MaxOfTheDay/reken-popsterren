@@ -324,6 +324,28 @@
      hetzelfde ding als waar hij vandaan kwam. Ook de lof in de show gebruikt dit
      vakje (zie showPraise). */
   .earn-chip.dia { background: rgba(0,0,0,.32); color: var(--c-white); }
+  /* De wens in het 💎-vakje (zie eindWens): hetzelfde streepje als onder de pil
+     op de kaart, maar hier loopt het vol als de diamanten in de teller landen.
+     Daarom geen kleurverloop zoals daar (dat kan niet overlopen) maar een baan
+     (::before) met een vulling erop die schaalt (::after, --wens-f van 0 tot 1). */
+  .earn-chip.met-wens { position: relative; }
+  .earn-chip.met-wens::before, .earn-chip.met-wens::after {
+    content: ''; position: absolute; left: 12px; right: 12px; bottom: 4px; height: 3px;
+    border-radius: var(--r-pill); pointer-events: none;
+  }
+  .earn-chip.met-wens::before { background: rgba(255,255,255,.18); }
+  .earn-chip.met-wens::after {
+    background: var(--gold-accent); transform-origin: left center;
+    transform: scaleX(var(--wens-f, 0)); transition: transform 520ms ease-out;
+  }
+  /* Genoeg gespaard: de tweede knop gaat naar je wens (zie endLevel), en dat is te
+     zien aan een gouden rand -- het vakje erboven blijft donker, want dát is geen
+     knop. Eén gouden ding voor één tik. */
+  .end-actions .btn.soft.wens-klaar {
+    border: 2px solid rgba(var(--goud-rgb), .85);
+    box-shadow: inset 0 1.5px 0 rgba(255,255,255,.18), 0 0 14px rgba(var(--goud-rgb), .3), 0 3px 0 rgba(0,0,0,.28);
+  }
+  .end-actions .btn.soft.wens-klaar .wens-tek .item-thumb svg { height: 1.3em; }
   /* Mijlpaal: precies één regel, en alleen als er iets gehaald is -- een trofee
      die klaarligt, in de gouden pil (de ster-status is met pensioen). De derde stand
      ("nog 13 ⭐ tot ...", gestippeld en stil) is weg; zie endLevel. Is er niets te
