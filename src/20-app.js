@@ -11019,6 +11019,10 @@ function finishMemory(m) {
   // De bonus is verdiend, ook als het kind al weg is; alleen het feestje niet meer.
   p.diamonds += bonus; m.earned += bonus;
   save();
+  // het feestje wacht tot het kind weer kijkt (zie alsZichtbaar); de bonus niet
+  alsZichtbaar(() => memoryFeest(m, p));
+}
+function memoryFeest(m, p) {
   if (M !== m) return;
   telStraks($('mem-diamonds'), p.diamonds);
   sndGroot();
@@ -12229,9 +12233,31 @@ function livesText() {
   const left = Math.max(0, 3 - G.errors);
   return '❤️'.repeat(left) + '🤍'.repeat(3 - left);
 }
+/* De show wacht op je. Een telefoon die op slot gaat of een kind dat even naar
+   een andere app gaat, laat de show op Android en op een tablet nog een tijd
+   doorlopen: de volgende som kwam dan zonder kijker, zijn spotlicht liep leeg
+   (weg +1 💎), de telmodus las hem voor aan een vergrendeld scherm, en na de
+   laatste som speelde het hele eindfeest voor niemand. Een iPhone legt de pagina
+   stil en had dit niet. Nu wacht elke stap die vanzelf komt tot de app weer in
+   beeld is, en gaat dan gewoon verder.
+   Eén wachter tegelijk: wie twee keer vraagt, krijgt alleen de laatste. */
+let zichtbaarWacht = null;
+function alsZichtbaar(fn) {
+  if (zichtbaarWacht) document.removeEventListener('visibilitychange', zichtbaarWacht);
+  zichtbaarWacht = null;
+  if (!document.hidden) { fn(); return; }
+  zichtbaarWacht = () => {
+    if (document.hidden) return;
+    document.removeEventListener('visibilitychange', zichtbaarWacht);
+    zichtbaarWacht = null;
+    fn();
+  };
+  document.addEventListener('visibilitychange', zichtbaarWacht);
+}
 function nextStep() {
   hideToast();
   if (!G) return;
+  if (document.hidden) { const g = G; alsZichtbaar(() => { if (G === g) nextStep(); }); return; }
   if (G.errors >= 3) { endLevel(false); return; }
   G.idx++;
   if (G.idx >= G.total) endLevel(true);
@@ -12402,6 +12428,7 @@ function endLevel(success) {
   }
   onthoudUitkomst(p, success ? showStars(G) : 0);   // voor de stand in Voortgang (beide takken hieronder bewaren)
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;   // een show verder gewend aan de grens
+  if (!G.count && success) telGrensDrie(p, lvl, showStars(G));   // voor de grenstip (zie grensDrieSterren)
   /* Wat er pas ná het eindscherm gevierd wordt (zie de staart van deze
      functie): een wereld die net uit of perfect werd. Bij een mislukte show
      blijft het leeg. */
@@ -14552,12 +14579,32 @@ function stemNotitie(naam) {
    (grensTipBasis), net als bij de grens. Geeft { soort: 'mode' | 'grens', naar }. */
 const GRENS_LADDER = [10, 20, 50, 100];
 const GRENS_TIP_SHOWS = 6;
-function grensDrieSterren(p) {
+/* GESPEELDE SHOWS, NIET HALTES. Hier stond: hoeveel haltes vanaf wereld 6 drie
+   sterren hebben. Dat zijn er hoogstens 48 (zes werelden van acht), en een halte
+   die al drie sterren had overdoen telde niet. Dus stond een kind dat overal
+   drie sterren had na één tip stil: de ouder tikte hem aan, grensTipBasis werd
+   48, en er kwam nooit meer een -- ook niet als het daarna maanden dezelfde
+   sommen speelde. Nu telt p.grensDrie elke show met drie sterren vanaf de eerste
+   wereld zonder nieuwe stap, overdoen inbegrepen (zie telGrensDrie), net zoals
+   de telmodus al shows telt (countTrack.plafond).
+
+   Een save van vóór dit veld heeft het nog niet; dan is het beginpunt de oude
+   telling, zodat grensTipBasis (die daarop gezet werd) blijft kloppen. De eerste
+   show die meetelt schrijft het veld weg; tot dan wordt er niets opgeslagen. */
+function grensDrieHaltes(p) {
   const vanaf = LEERSTAPPEN.length - 1;          // de eerste wereld zonder nieuwe stap
   if (vanaf >= WORLD_AVAIL) return 0;
   let drie = 0;
   for (let l = WORLD_START[vanaf]; l <= WORLD_LAST; l++) if ((p.stars || {})[l] >= 3) drie++;
   return drie;
+}
+function grensDrieSterren(p) {
+  return typeof p.grensDrie === 'number' ? p.grensDrie : grensDrieHaltes(p);
+}
+// Na een rekenshow (zie endLevel): drie sterren voorbij de laatste leerstap telt.
+function telGrensDrie(p, lvl, sterren) {
+  if (sterren < 3 || worldFor(lvl).index < LEERSTAPPEN.length - 1) return;
+  p.grensDrie = grensDrieSterren(p) + 1;
 }
 const MODE_LADDER = { kies: 'mix', mix: 'typ' };
 function grensTip(p) {
