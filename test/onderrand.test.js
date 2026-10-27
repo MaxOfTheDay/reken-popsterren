@@ -24,13 +24,17 @@
  *
  *   A  de zwevende bediening onderaan beweegt niet mee als de balk vervaagt
  *   B  en het slot zelf blijft ook staan -- de app groeit niet alsnog mee
- *   C  een kleiner venster is het toetsenbord: de bediening blijft in beeld
+ *   C  een kleiner venster: de bediening blijft in beeld
  *   D  draaien is een échte andere maat en legt het slot opnieuw vast
+ *   H  alleen de hoogte, maar écht (split-screen, een pc-venster): nieuw slot;
+ *      met een tekstveld open is het het toetsenbord en blijft het slot staan;
+ *      en de groei van de statusbalk wordt bij de volgende schermwissel alsnog
+ *      overgenomen, zodat er geen strook onder de app blijft
  *   F  de navigatie zelf: zo breed als haar knoppen, knoppen groot genoeg voor
  *      een kindervinger, het blauwe vlak schuift mee en een schermlezer weet waar je is
  *   G  🗺️ op je eigen kaart: niets opnieuw opbouwen, terugglijden naar haar halte
  *      en daar één huppel -- en nooit Werelden
- *   H  terug op de kaart (uit de kleedkamer) zoomt de memory-knop mee in en
+ *   I  terug op de kaart (uit de kleedkamer) zoomt de memory-knop mee in en
  *      landt waar hij hoort, ook als het venster gegroeid is -- geen sprong na
  *      afloop
  *
@@ -190,6 +194,60 @@ async function zetOnderrandAan(page) {
     await ctx.close();
   }
 
+  /* ---- H · alleen de hoogte, maar dan écht ----
+     --vh-lock keek eerst alleen naar de breedte. Een venster dat alleen hoger of
+     lager werd (de deler van split-screen, een pc-venster) liet de app dan op zijn
+     oude maat staan: een lege vlakte eronder, of de onderkant van het scherm af.
+     Nu telt een hoogte zonder nieuwe breedte nog maar in twee gevallen niet: het
+     toetsenbord (er staat een tekstveld open) en de statusbalk (een kleine groei),
+     en die laatste wordt bij de volgende schermwissel alsnog overgenomen. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: BREED, height: HOOG } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    const fouten = [];
+    page.on('pageerror', e => fouten.push(e.message));
+    await page.goto(APP_URL + '&demo&star=p1&screen=map');
+    await page.waitForTimeout(700);
+    const stand = () => page.evaluate(() => {
+      const cs = getComputedStyle(document.documentElement);
+      return { slot: cs.getPropertyValue('--vh-lock').trim(), drift: cs.getPropertyValue('--vh-drift').trim(),
+               body: Math.round(document.body.getBoundingClientRect().height) };
+    });
+    const maat = async h => { await page.setViewportSize({ width: BREED, height: h }); await page.waitForTimeout(300); return stand(); };
+
+    let s = await maat(HOOG + 300);
+    check(s.slot === (HOOG + 300) + 'px' && s.drift === '0px' && s.body === HOOG + 300,
+      'H · een venster dat flink hoger wordt krijgt een nieuw slot', JSON.stringify(s));
+    s = await maat(HOOG);
+    check(s.slot === HOOG + 'px' && s.body === HOOG,
+      'H · en een venster dat lager wordt ook: de app valt niet onder het scherm', JSON.stringify(s));
+
+    await page.evaluate(() => {
+      const i = document.createElement('input'); i.id = 'proef-veld'; i.type = 'text';
+      document.body.appendChild(i); i.focus();
+    });
+    s = await maat(HOOG - 300);
+    check(s.slot === HOOG + 'px' && s.drift === '0px',
+      'H · met een tekstveld open is een kleiner venster het toetsenbord: het slot blijft staan', JSON.stringify(s));
+    s = await maat(HOOG);
+    await page.evaluate(() => document.getElementById('proef-veld').remove());
+    check(s.slot === HOOG + 'px' && s.drift === '0px',
+      'H · en als het toetsenbord dichtgaat staat alles weer zoals het was', JSON.stringify(s));
+
+    s = await maat(HOOG + STATUSBALK);
+    check(s.slot === HOOG + 'px' && s.drift === STATUSBALK + 'px',
+      'H · de statusbalk die vervaagt verandert het slot niet meteen', JSON.stringify(s));
+    await page.evaluate(() => show('screen-trophies'));
+    await page.waitForTimeout(200);
+    s = await stand();
+    check(s.slot === (HOOG + STATUSBALK) + 'px' && s.drift === '0px' && s.body === HOOG + STATUSBALK,
+      'H · maar bij de volgende schermwissel vult de app het hele venster', JSON.stringify(s));
+
+    check(fouten.length === 0, 'H · geen javascript-fouten', fouten.join(' | '));
+    await ctx.close();
+  }
+
   /* ---- F · de navigatie zelf ----
      Sinds de balk alleen iconen draagt is hij zo breed als zijn drie knoppen
      (zie .nav-item in 40-kaart.css). Hier de afspraken die daarbij horen, op een
@@ -293,13 +351,18 @@ async function zetOnderrandAan(page) {
     await ctx.close();
   }
 
-  /* ---- H · de memory-knop springt niet na een terugkeer naar de kaart ----
+  /* ---- I · de memory-knop springt niet na een terugkeer naar de kaart ----
      #screen-map zoomt bij aankomst in, en een transform op een voorouder maakt van
      position:fixed 'tegen dat scherm'. Stond .mem-fab fixed, dan hing hij zolang
      de zoom liep aan de onderrand van het scherm (het slot) en daarna aan die van
      het venster: na een vervaagde statusbalk een sprong van precies die balk, bij
      élke terugkeer. Gemeten per beeldje, ná de verf (rAF + setTimeout): waar hij
-     staat moet altijd zijn rustplek zijn, meegeschaald met het scherm. */
+     staat moet altijd zijn rustplek zijn, meegeschaald met het scherm.
+     Sinds zaak H neemt show() een gegroeid venster bij de schermwissel alsnog
+     over (vhVolg), en dan vallen scherm en venster weer samen. Dat is precies
+     waarom het hier uitstaat: deze zaak gaat over de knop, en die moet ook goed
+     staan als die twee níét samenvallen (een toetsenbord, of een groei die nog
+     niet is overgenomen). */
   {
     const ctx = await browser.newContext({ viewport: { width: BREED, height: HOOG } });
     await cacheFonts(ctx);
@@ -313,6 +376,7 @@ async function zetOnderrandAan(page) {
     const r = await page.evaluate(async () => {
       const wacht = ms => new Promise(res => setTimeout(res, ms));
       $('mem-fab').style.display = 'flex';
+      window.vhVolg = () => false;
       navTik('dress'); await wacht(900);
       const beelden = [];
       navTik('map');
@@ -333,12 +397,12 @@ async function zetOnderrandAan(page) {
                drift: getComputedStyle(document.documentElement).getPropertyValue('--vh-drift').trim() };
     });
     check(r.beelden > 5 && r.ergst <= 2,
-      'H · de memory-knop zoomt mee in en springt niet na afloop',
+      'I · de memory-knop zoomt mee in en springt niet na afloop',
       `grootste afwijking ${r.ergst.toFixed(1)}px over ${r.beelden} beeldjes (drift ${r.drift})`);
     check(Math.abs(r.onder - r.nav) <= 1,
-      'H · en hij landt met zijn onderrand op de navigatiebalk',
+      'I · en hij landt met zijn onderrand op de navigatiebalk',
       `onderrand ${r.onder.toFixed(1)}, balk ${r.nav.toFixed(1)}`);
-    check(fouten.length === 0, 'H · geen javascript-fouten', fouten.join(' | '));
+    check(fouten.length === 0, 'I · geen javascript-fouten', fouten.join(' | '));
     await ctx.close();
   }
 

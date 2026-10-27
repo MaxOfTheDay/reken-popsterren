@@ -399,16 +399,21 @@ is. De beloftes, op de kaart, in de kleedkamer, in de kast en op de reis:
   verschil dat deze suite zoekt is de hele hoogte van een statusbalk;
 - **en het slot zelf blijft ook staan** — `--vh-lock` en de hoogte van `<body>`
   veranderen niet, en `--vh-drift` is precies de balk die wegging;
-- **een kleiner venster is het toetsenbord** — `--vh-drift` loopt nooit onder
-  nul, anders zou een openschuivend toetsenbord de bediening er juist áchter
+- **een kleiner venster houdt de bediening in beeld** — `--vh-drift` loopt nooit
+  onder nul, anders zou een openschuivend toetsenbord de bediening er juist áchter
   duwen in plaats van ervoor;
 - **draaien is wel een échte andere maat** — een andere bréédte legt het slot
-  opnieuw vast en zet de drift terug op nul.
-- **de memory-knop springt niet na een terugkeer naar de kaart** — de kaart
-  zoomt bij aankomst in, en een transform maakt van `position: fixed` stilletjes
-  "tegen het scherm". Per beeldje gemeten (ná de verf) moet de knop op zijn
-  rustplek staan, meegeschaald met het scherm, en daarna met zijn onderrand op
-  de navigatiebalk landen — ook met een gegroeid venster.
+  opnieuw vast en zet de drift terug op nul;
+- **alleen de hoogte, maar écht** (zaak H) — split-screen of een pc-venster dat
+  je alleen in de hoogte trekt legt het slot ook opnieuw vast; met een tekstveld
+  open is een kleiner venster het toetsenbord en blijft het slot staan; en de
+  groei van de statusbalk wordt bij de volgende `show()` alsnog overgenomen,
+  zodat er geen strook onder de app blijft.
+- **de memory-knop springt niet na een terugkeer naar de kaart** (zaak I) — de
+  kaart zoomt bij aankomst in, en een transform maakt van `position: fixed`
+  stilletjes "tegen het scherm". Per beeldje gemeten (ná de verf) moet de knop op
+  zijn rustplek staan, meegeschaald met het scherm, en daarna met zijn onderrand
+  op de navigatiebalk landen — ook als het venster en het slot niet even hoog zijn.
 
 Zie `docs/LADEN.md`, "Venster, veilige zone en toetsenbord", voor de maten zelf.
 
