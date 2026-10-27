@@ -510,6 +510,21 @@ zaak('H', () => {
     const mis = require('./bouw').achterstand();
     check(!mis, 'H · stijlblad en scriptblok komen uit src/ (draai `npm run bouw`)', mis || '');
   }
+  /* De versie-afdruk wordt twee keer uitgerekend: door de bouw (versie.txt) en
+     door het spel zelf, op zijn eigen stijlblad en scriptblok (zie "Een nieuwe
+     versie" in 99-servicewerker.js). Rekenen ze verschillend, dan ziet elk toestel
+     na elke lange pauze een "nieuwe" versie en herlaadt het voor niets. */
+  {
+    const b = require('./bouw');
+    const proef = 'Rekensterren ✨ — één, twee, drie\n';
+    check(typeof app.versieVan === 'function' && app.versieVan(proef) === b.versieVan(proef),
+      'H · het spel en de bouw rekenen dezelfde versie-afdruk uit',
+      typeof app.versieVan === 'function' ? app.versieVan(proef) + ' tegen ' + b.versieVan(proef) : 'versieVan ontbreekt');
+    const st = html.slice(html.indexOf('<style>') + 7, html.indexOf('</style>'));
+    const sc = html.slice(html.indexOf('<script>') + 8, html.indexOf('</' + 'script>', html.indexOf('<script>')));
+    check(b.versieUit(html) === b.versieVan(st + sc) + '\n',
+      'H · de afdruk is die van precies het stijlblad en het scriptblok', 'versieUit leest iets anders');
+  }
 
   /* 3. Tekeningen van een verstandig formaat.
      Geen begroting (die staat bij B, per wereld) maar een vangrail: een bestand

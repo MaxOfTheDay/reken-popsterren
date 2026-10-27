@@ -45,6 +45,7 @@ npm run test:studio      # de wereldstudio (?debug&mapedit)
 npm run test:onderrand   # de zwevende bediening onderaan blijft staan
 npm run test:kop         # de kop van de kaart: niets overlapt, op geen enkele maat
 npm run test:hub         # de Dev Studio (npm run studio) — kaal Node
+npm run test:tekeningen  # een vervangen tekening liet ART_CACHE omhoog gaan — kaal Node, tegen origin/main
 ```
 
 `npm run check` heeft geen `node_modules` nodig: het draait op kaal Node. Wie
