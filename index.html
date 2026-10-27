@@ -3728,6 +3728,23 @@
   }
 
 
+
+
+  .venue-finale { display: none; pointer-events: none; }
+  .venue-aan.finale .venue-finale {
+    display: block; position: absolute; z-index: 0;
+    bottom: 10%; width: 80%; height: 280%; transform-origin: 50% 100%;
+    background: linear-gradient(180deg, rgba(var(--goud-glans-rgb),0) 0%, rgba(var(--goud-glans-rgb),.30) 40%,
+                                rgba(var(--warm-licht-rgb),.12) 85%, rgba(var(--warm-licht-rgb),0));
+    -webkit-clip-path: polygon(47% 0, 53% 0, 100% 100%, 0 100%);
+    clip-path: polygon(47% 0, 53% 0, 100% 100%, 0 100%);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 30%);
+    mask-image: linear-gradient(180deg, transparent 0%, #000 30%);
+  }
+  .venue-aan.finale .venue-finale.links { left: -30%; transform: rotate(24deg); }
+  .venue-aan.finale .venue-finale.rechts { right: -30%; transform: rotate(-24deg); }
+
+
   .venue-aan .venue-vloer {
     left: 50%; bottom: -5%; width: 132%; height: 30%; transform: translateX(-50%);
     border-radius: 50%;
@@ -10155,6 +10172,9 @@
            dus in dezelfde doos als zij en schuiven met elke indeling mee. -->
       <div class="show-panel">
         <div class="venue-bundel" aria-hidden="true"></div>
+        <!-- de finale (laatste show van een wereld): twee bundels van opzij erbij -->
+        <div class="venue-finale links" aria-hidden="true"></div>
+        <div class="venue-finale rechts" aria-hidden="true"></div>
         <div class="venue-vloer" aria-hidden="true"></div>
         <div class="stage stage-frame show-stage" id="show-stage">
           <div class="avatar-holder idle levend" id="game-avatar-inner"></div>
@@ -22666,7 +22686,17 @@ function startLevel(lvl, eigenOvergang) {
 
 
   const count = s.track === 'count';
-  const goldIdx = (s.perLevel > 1 && Math.random() < 0.5) ? rnd(1, s.perLevel - 1) : -1;
+
+
+
+
+
+
+  const wl = worldFor(lvl);
+  const finale = wl.nr === wl.levels;
+  const goldIdx = s.perLevel <= 1 ? -1
+    : finale ? s.perLevel - 1
+    : Math.random() < 0.5 ? rnd(1, s.perLevel - 1) : -1;
 
 
 
@@ -22683,7 +22713,6 @@ function startLevel(lvl, eigenOvergang) {
 
 
 
-  const wl = worldFor(lvl);
   $('game-lvl-label').innerHTML = `${wl.world.icon} ${esc(korteNaam(wl.world))}`
     + `<span class="world-sub">Show ${wl.nr} / ${wl.levels}</span>`;
   telNu($('game-diamonds'), p.diamonds);
@@ -22693,6 +22722,7 @@ function startLevel(lvl, eigenOvergang) {
 
   applyStage($('show-stage'), p);
   applyVenue($('screen-game'), wl.world, lvl);
+  $('screen-game').classList.toggle('finale', finale);
   bundelAan();
 
 
@@ -22750,13 +22780,21 @@ function quitGame() {
 
 const BUNDEL_AAN = { na: 220, duur: 520 };
 function bundelAan() {
-  const b = $('screen-game').querySelector('.venue-bundel');
+  const scherm = $('screen-game');
+  const b = scherm.querySelector('.venue-bundel');
   if (!b || !b.animate || motionOff()) return;
-  if (!$('screen-game').classList.contains('venue-aan')) return;
+  if (!scherm.classList.contains('venue-aan')) return;
   b.animate([
     { opacity: 0, transform: 'translateX(-50%) scaleY(.82)' },
     { opacity: 1, transform: 'translateX(-50%) scaleY(1)' }],
     { duration: BUNDEL_AAN.duur, delay: BUNDEL_AAN.na, easing: MOTION.uit, fill: 'backwards' });
+
+
+
+  if (!scherm.classList.contains('finale')) return;
+  scherm.querySelectorAll('.venue-finale').forEach(f => f.animate(
+    [{ opacity: 0 }, { opacity: 1 }],
+    { duration: BUNDEL_AAN.duur, delay: BUNDEL_AAN.na + BUNDEL_AAN.duur, easing: MOTION.uit, fill: 'backwards' }));
 }
 
 function renderQuestion() {
