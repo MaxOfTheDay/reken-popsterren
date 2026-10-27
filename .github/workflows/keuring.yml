@@ -9,17 +9,27 @@
 #             plus de ontvanger van Overzetten (worker/overzetten.js, kaal Node)
 #             en bij een PR: is er een bestaande tekening vervangen zonder dat
 #             ART_CACHE in sw.js omhoog ging (test/tekeningen.js)
-#   sterren   de kortste browsersuite die het beginscherm echt opbouwt. Die ziet
-#             wat check niet kan zien: een const die te vroeg gelezen wordt en een
-#             lege pagina geeft (CLAUDE.md, regel 0)
-#             en daarna schuiven: geen scherm schuift verder dan er iets te zien
-#             valt, en wat geen lijst is past op elke maat (test/schuiven.test.js)
+#   browser   de browsersuites, elk in een eigen job zodat ze naast elkaar
+#             lopen: sterren (de kortste die het beginscherm echt opbouwt; die
+#             ziet een const die te vroeg gelezen wordt en een lege pagina geeft,
+#             CLAUDE.md regel 0) en schuiven (geen scherm schuift verder dan er
+#             iets te zien valt, en wat geen lijst is past op elke maat)
+#
+# Bij een push naar main die een PR binnenhaalt slaat browser over: precies
+# die samenvoeging is in de PR al door een browser gegaan. Een push met de hand
+# naar main krijgt de hele ronde. Een nieuwe push op dezelfde PR-tak breekt de
+# vorige ronde af -- die keurt een versie die niemand meer gaat mergen.
 name: keuring
 
 on:
   pull_request:
   push:
     branches: [main]
+
+concurrency:
+  group: keuring-${{ github.ref }}
+  # main breekt niet af: elke stap op main krijgt zijn eigen uitslag
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   keuring:
@@ -37,7 +47,15 @@ jobs:
       - if: github.event_name == 'pull_request'
         run: node test/tekeningen.js origin/${{ github.base_ref }}
 
-  sterren:
+  browser:
+    if: >-
+      github.event_name == 'pull_request' ||
+      !startsWith(github.event.head_commit.message, 'Merge pull request #')
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [sterren, schuiven]
+    name: browser (${{ matrix.suite }})
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,5 +64,4 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:sterren
-      - run: npm run test:schuiven
+      - run: npm run test:${{ matrix.suite }}
