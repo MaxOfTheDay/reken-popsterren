@@ -3184,6 +3184,11 @@ const SFX = {
 function playSfx(naam, opts) {
   const def = SFX[naam];
   if (!def) return;
+  /* Weg is weg: een app die niet in beeld is, maakt geen geluid. Zo'n klankje
+     komt van een timer die nog liep toen het scherm op slot ging, en een
+     stilgelegde context bewaart het tot hij weer wakker is -- dan klonken er bij
+     terugkomst een paar tegelijk. Ook geen trilling: die voelt niemand. */
+  if (document.hidden) return;
   opts = opts || {};
   /* De herhaalrem staat vóór het trillen: een klankje dat overgeslagen wordt, wordt
      helemaal overgeslagen. Hij is er voor de cijfertoetsen en voor snel achter
@@ -3282,6 +3287,9 @@ function speak(text, opts) {
   const cp = cur ? P() : null;
   if (cp && cp.settings && !stemAan(cp)) { if (opts.onEnd) opts.onEnd(); return; }
   if (!db.sound || !hasSpeech() || !text) { if (opts.onEnd) opts.onEnd(); return; }
+  // Niet tegen een vergrendeld scherm praten: de stem van Android loopt gewoon
+  // door met het scherm uit. Wat er nog te zeggen viel, zie stemTerug.
+  if (document.hidden) { if (opts.onEnd) opts.onEnd(); return; }
   try {
     /* Alleen afbreken als er ook iets klinkt. Safari (iPad, iPhone) slikt soms het
        begin van een nieuwe zin in als cancel() en speak() vlak na elkaar komen,
@@ -3328,6 +3336,28 @@ if (typeof window !== 'undefined' && window.speechSynthesis) {
   refreshVoices();
   speechSynthesis.onvoiceschanged = refreshVoices;
 }
+// Gaat de app weg (scherm op slot, ander scherm), dan zwijgt de stem meteen --
+// ook wat er nog in de rij stond. Zie speak en stemTerug.
+document.addEventListener('visibilitychange', () => { if (document.hidden) cancelSpeech(); });
+/* De stem ontgrendelen op de eerste tik. Safari (iPhone, iPad) laat spraak pas
+   toe na een zin die in een tik begon; daarna mag ook een timer praten. De
+   eerste telvraag van een bezoek komt van een timer (de show gaat eerst open),
+   en bleef dan stil. Dus zeggen we bij de eerste tik een lege zin, zonder
+   volume. Met het geluid uit wacht dit op een tik met het geluid aan -- het
+   aanzetten zelf is er ook een. Andere browsers merken er niets van. */
+let stemOpen = false;
+function stemOntgrendel() {
+  if (stemOpen || !db.sound || !hasSpeech()) return;
+  stemOpen = true;
+  document.removeEventListener('pointerdown', stemOntgrendel, true);
+  try {
+    if (speechSynthesis.speaking || speechSynthesis.pending) return;   // er klinkt al iets: open
+    const u = new SpeechSynthesisUtterance('');
+    u.volume = 0;
+    speechSynthesis.speak(u);
+  } catch (e) { /* dan maar niet */ }
+}
+document.addEventListener('pointerdown', stemOntgrendel, { capture: true, passive: true });
 
 /* ---- Niet inzoomen ----
    De viewport zegt user-scalable=no, en Android houdt zich daaraan. Safari op iPhone
@@ -10123,8 +10153,17 @@ function countStageInfo(stage) {
   }
 }
 function countTopRung(stage) { return countStageInfo(stage).rungs - 1; }
-// Kan de app nú praten? (geluid aan én een browser die spraak ondersteunt)
-function canSpeak() { return !!db.sound && hasSpeech(); }
+/* Kan de app nú praten? Geluid aan, een browser die spraak ondersteunt, en een
+   Nederlandse stem. Zonder die stem praat het toestel toch, maar met zijn eigen
+   (vaak Engelse) stem: "zes" wordt dan iets dat een kind niet herkent, en een
+   luistervraag een gok. Is de stemmenlijst nog leeg, dan weten we het niet --
+   sommige Android-browsers vullen hem nooit en praten toch -- en dan geldt de
+   stem als aanwezig. */
+function canSpeak() { return !!db.sound && hasSpeech() && !geenNlStem(); }
+function geenNlStem() {
+  if (!_voices.length) refreshVoices();
+  return _voices.length > 0 && !nlVoice();
+}
 // De vraagsoorten die op dit moment écht speelbaar zijn. Een luistervraag toont
 // alleen een oor: zonder stem is er niets om op af te gaan. Dan liever een
 // zichtbare opgave uit dezelfde fase-familie dan een gokvraag.
@@ -10602,6 +10641,9 @@ function countAlong(objs, n, lead, drawId) {
 }
 function replayPrompt() {
   sndClick();
+  leesVraagOpnieuw();
+}
+function leesVraagOpnieuw() {
   const q = G && G.qs && G.qs[G.idx];
   if (!q) return;
   if (q.along && q.card && q.card.kind === 'group') {
@@ -10613,6 +10655,25 @@ function replayPrompt() {
     speak(q.prompt || somZin(q));   // een rekensom heeft geen prompt: die lezen we voor
   }
 }
+/* Terug in de app, midden in een vraag: lees hem nog eens voor. Hij werd
+   misschien voorgelezen aan een vergrendeld scherm, of de stem werd bij het
+   weggaan afgebroken (zie cancelSpeech hierboven) -- en een kind dat niet leest,
+   ziet anders een stille vraag. Alleen voor de vraag die er bij het weggaan al
+   stond en nog open was: komt er bij terugkomst een nieuwe vraag op, dan leest
+   die zichzelf voor. speak() zwijgt zelf in de rekenmodus zonder Voorlezen. */
+let stemWegVraag = null;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    const q = G && G.qs && G.qs[G.idx];
+    stemWegVraag = q && !G.lock && $('screen-game').classList.contains('active') ? q : null;
+    return;
+  }
+  const q = stemWegVraag;
+  stemWegVraag = null;
+  if (!q || !G || G.lock || G.qs[G.idx] !== q) return;
+  if (!$('screen-game').classList.contains('active') || $('quit-modal').classList.contains('open')) return;
+  leesVraagOpnieuw();
+});
 // Nauwkeurigheid van de telmodus (voor de fase-klim) + de rung bínnen de fase:
 // 3× in-één-keer-goed op rij → rung omhoog; een misser → rung omlaag.
 function updateCountAcc(p, correct, firstTry) {
@@ -14459,7 +14520,7 @@ function stemNotitie(naam) {
      van het toestel en niet van het spel. */
   if (!nlVoice()) return '🗣️ Geen Nederlandse stem op dit toestel.'
     + '<details class="stem-hoe"><summary>Hoe?</summary>Kies een Nederlandse stem bij de spraakinstellingen van het toestel'
-    + ' (tekst-naar-spraak). Zonder klinkt het voorlezen met een vreemde uitspraak.</details>';
+    + ' (tekst-naar-spraak). Zonder klinkt het voorlezen met een vreemde uitspraak, en valt de luisteroefening (fase 5) weg.</details>';
   return '';
 }
 /* Een tip voor de ouder: de getallengrens omhoog.
