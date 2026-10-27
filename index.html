@@ -4164,7 +4164,7 @@
     backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: 0 4px 14px rgba(0,0,0,.32);
   }
-  .mem-fab span { font-size: var(--tx-mini); font-weight: 700; }
+
 
 
 
@@ -4185,16 +4185,13 @@
 
 
 
-  @media (max-height: 620px) {
 
 
-
-    .mem-fab > span:not(.mem-pay) { display: none; }
-  }
 
 
   .mem-arena { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; }
-  .mem-grid { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); align-items: start; gap: 12px; width: min(96vw, var(--kolom)); }
+  .mem-grid { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); align-items: start; gap: 12px; width: min(100vw - 32px, var(--kolom)); }
+
   .mem-card {
     position: relative; aspect-ratio: 1 / 1; border: none; background: none; cursor: pointer; padding: 0;
     perspective: 600px;
@@ -4211,9 +4208,12 @@
     box-shadow: 0 4px 0 rgba(0,0,0,.18);
   }
   .mem-back {
-    font-size: clamp(26px, 8vw, 40px); font-size: 34cqw;
+    font-size: clamp(26px, 8vw, 40px); font-size: 40cqw;
     background: linear-gradient(150deg, var(--purple-input-top), var(--purple-input-bottom));
     border: 2px solid rgba(255,255,255,.35);
+
+
+    text-shadow: 0 0 12px rgba(255,255,255,.6);
   }
   .mem-face {
     transform: rotateY(180deg); background: var(--c-white);
@@ -4229,24 +4229,36 @@
 
 
 
-  .mem-face .cg-obj { font-size: clamp(12px, 3.6vw, 17px); font-size: 13cqw; }
-  .mem-face .ct-num { font-size: clamp(26px, 10vw, 40px); font-size: 30cqw; font-weight: 700; color: var(--purple-shadow); }
-  .mem-face .cgroup { gap: 2px 3px; max-width: 96%; }
-  .mem-face .cframe { gap: 2.5px; }
-  .mem-face .cframe .tf-cell { width: 12px; height: 12px; width: 12cqw; height: 12cqw; border-width: 1.5px; border-radius: 4px; }
 
 
-  .mem-face .cframe .cg-obj { font-size: 8cqw; }
-  .mem-face .dframe { column-gap: 2.5px; row-gap: 3px; }
-  .mem-face .dframe .df-cell { width: 10px; height: 10px; width: 10cqw; height: 10cqw; border-width: 1px; border-radius: 3px; }
+
+  .mem-face .cg-obj { font-size: clamp(12px, 3.6vw, 17px); font-size: 17cqw; }
+  .mem-face .cgroup.n1 .cg-obj { font-size: 46cqw; }
+  .mem-face .cgroup.n2 .cg-obj { font-size: 34cqw; }
+  .mem-face .cgroup.n3 .cg-obj, .mem-face .cgroup.n4 .cg-obj { font-size: 26cqw; }
+  .mem-face .cgroup.n5 .cg-obj, .mem-face .cgroup.n6 .cg-obj { font-size: 21cqw; }
+  .mem-face .ct-num { font-size: clamp(26px, 10vw, 40px); font-size: 46cqw; font-weight: 700; color: var(--purple-shadow); }
+  .mem-face .ct-som { font-weight: 700; color: var(--purple-shadow); white-space: nowrap; line-height: 1; }
+  .mem-face .cgroup { gap: 2cqw 3cqw; max-width: 92%; }
+  .mem-face .cframe { gap: 2cqw; }
+  .mem-face .cframe .tf-cell { width: 12px; height: 12px; width: 15cqw; height: 15cqw; border-width: 1.5px; border-radius: 4px; }
+
+
+  .mem-face .cframe .cg-obj { font-size: 10cqw; }
+  .mem-face .dframe { column-gap: 2cqw; row-gap: 2cqw; }
+  .mem-face .dframe .df-cell { width: 10px; height: 10px; width: 15cqw; height: 15cqw; border-width: 1px; border-radius: 4px; }
   .mem-done { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(24,6,44,.55); z-index: 40; }
-  .mem-done-card { background: var(--c-white); border-radius: var(--r-lg); padding: 22px 26px; text-align: center; box-shadow: var(--e-3); }
+
+
+
+  .mem-done-card {
+    border-radius: var(--r-lg); padding: 22px 26px; text-align: center;
+    border: 1.5px solid var(--paneel-rand); background: var(--paneel);
+    backdrop-filter: var(--paneel-waas); -webkit-backdrop-filter: var(--paneel-waas);
+    box-shadow: var(--e-3), inset 0 1px 0 rgba(255,255,255,.12);
+  }
   .mem-done-title { font-size: 54px; line-height: 1; }
   .mem-done-earn { margin: 12px auto 4px; }
-
-
-
-  .mem-done-card .earn-chip.dia { color: var(--paper-ink); background: var(--paper-muted-bg); }
   .mem-done-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
 
 
@@ -10048,7 +10060,7 @@
     <!-- de weg terug naar de wereld waar ze speelt; alleen zichtbaar als ze elders kijkt -->
     <button class="world-back" id="world-back" hidden></button>
     <!-- Memory-spel: alleen zichtbaar voor een telmodus-ster met memory aan -->
-    <button class="mem-fab" id="mem-fab" onclick="naTik(startMemory)" style="display:none" aria-label="Memory-spel">🎤<span>Memory</span><span class="mem-pay">💎 +<span id="mem-fab-pay">0</span></span></button>
+    <button class="mem-fab" id="mem-fab" onclick="naTik(startMemory)" style="display:none" aria-label="Memory-spel">🎤<span class="mem-pay">💎 +<span id="mem-fab-pay">0</span></span></button>
   </div>
 
   <!-- ===== Werelden (fase 4B) =====
@@ -10093,7 +10105,7 @@
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="vraagMemoryStop()" aria-label="Memory stoppen" title="Memory stoppen"><svg class="ico" aria-hidden="true"><use href="#ico-kruis"/></svg></button>
-        <div class="header-title">🎤 Memory</div>
+        <div class="header-title" aria-label="Memory"></div>
         <div class="diamond-badge header-right">💎 <span id="mem-diamonds">0</span></div>
       </div>
       <!-- zelfde balk als in de show: hier is elk vakje een gevonden paar -->
@@ -10110,7 +10122,7 @@
         <div class="mem-done-earn earn-chip dia" id="mem-done-earn"></div>
         <div class="mem-done-btns">
           <button class="btn" onclick="naTik(startMemory)">🎤 Nog een keer</button>
-          <button class="btn paper" onclick="naTik(exitMemory)">🗺️ Kaart</button>
+          <button class="btn soft" onclick="naTik(exitMemory)">🗺️ Kaart</button>
         </div>
       </div>
     </div>
@@ -18087,7 +18099,8 @@ function goMap(vanLvl) {
   $('map-tournee-label').classList.remove('bezig');
   $('map-portrait').innerHTML = avatarSVG(p, 80);
 
-  const memOn = p.settings.track === 'count' && p.settings.memory !== false;
+
+  const memOn = p.settings.memory !== false;
   $('mem-fab').style.display = memOn ? 'flex' : 'none';
   if (memOn) $('mem-fab-pay').textContent = memPayout(p);
   const o = kaartOpdracht(p, vanLvl, uitShow);
@@ -22052,12 +22065,21 @@ function countReveal(q, klaar) {
 
 
 
+
+
+
+
+
+
 let M = null;
 
 
 
-const MEM_PAIR_GAIN = 2, MEM_DONE_BONUS = 3;
+const MEM_PAIR_GAIN = 2, MEM_DONE_BONUS = 3, MEM_MIN_PAREN = 4;
 function memFaceHTML(c) {
+
+
+  if (c.som) return `<span class="ct-som" style="font-size:${Math.min(28, Math.round(130 / c.som.length))}cqw">${c.som}</span>`;
   if (c.repr === 'numeral') return `<span class="ct-num">${c.v}</span>`;
   if (c.repr === 'frame') return frameHTML(c.v, c.emoji, 'objects');
   if (c.repr === 'dots') return groupHTML(c.v, '', 'dots');
@@ -22065,11 +22087,14 @@ function memFaceHTML(c) {
 }
 
 
+
 function buildMemoryDeck(p) {
+  if (p.settings.track !== 'count') return memSomDeck(p);
   const stage = countLiveStage(p);
   const d = countDifficulty(p, stage);
   const max = Math.max(3, Math.min(10, d.effMax));
-  let pairs = 3 + (d.rung >= 1 ? 1 : 0) + (d.rung >= 2 ? 1 : 0);
+
+  let pairs = MEM_MIN_PAREN + (d.rung >= 1 ? 1 : 0) + (d.rung >= 2 ? 1 : 0);
   pairs = Math.min(pairs, max);
   const numOK = p.settings.numerals !== false && stage >= 6;
   const vals = shuffle(Array.from({ length: max }, (_, i) => i + 1)).slice(0, pairs);
@@ -22085,17 +22110,49 @@ function buildMemoryDeck(p) {
   });
   return { cards: shuffle(cards), pairs };
 }
+
+
+
+
+function memSomDeck(p) {
+  const pairs = MEM_MIN_PAREN;
+  const gekozen = [], antwoorden = new Set();
+  const neem = (tmpl, ans) => {
+    if (gekozen.length >= pairs || antwoorden.has(ans) || !/ = @$/.test(tmpl)) return;
+    antwoorden.add(ans); gekozen.push({ som: tmpl.replace(/ = @$/, ''), v: ans });
+  };
+  Object.entries(p.weak || {}).sort((a, b) => b[1].w - a[1].w).slice(0, 2)
+    .forEach(([tmpl, e]) => neem(tmpl, e.ans));
+  const lvl = WORLD_START[continueWorld(p)] || 1;
+  for (let poging = 0; gekozen.length < pairs && poging < 60; poging++) {
+    const q = genQuestion(p.settings, lvl, p.perf);
+    neem(q.tmpl, q.ans);
+  }
+  const cards = [];
+  gekozen.forEach(g => cards.push({ v: g.v, som: g.som }, { v: g.v, repr: 'numeral' }));
+  return { cards: shuffle(cards), pairs: gekozen.length };
+}
+
+function memZin(a, b) {
+  const s = a.som || b.som;
+  if (!s) return numWord(a.v);
+  return s.split(' ').map(t => SOM_WOORD[t] || numWord(parseInt(t, 10))).join(' ') + ' is ' + numWord(a.v);
+}
 function startMemory() {
   sndClick();
   const p = P();
   const { cards, pairs } = buildMemoryDeck(p);
   M = { cards, pairs, flipped: [], matched: 0, lock: false, earned: 0 };
+
+
+  const wi = viewWorldIdx != null && WORLDS[viewWorldIdx] ? viewWorldIdx : continueWorld(p);
+  const rug = (WORLDS[wi] && WORLDS[wi].icon) || '🎤';
   $('mem-done').style.display = 'none';
   telNu($('mem-diamonds'), p.diamonds);
   const grid = $('mem-grid');
   grid.style.setProperty('--cols', Math.min(pairs, 4));
   grid.innerHTML = cards.map((c, i) =>
-    `<button class="mem-card" data-i="${i}"><span class="mem-inner"><span class="mem-back">🎤</span><span class="mem-face">${memFaceHTML(c)}</span></span></button>`
+    `<button class="mem-card" data-i="${i}"><span class="mem-inner"><span class="mem-back">${rug}</span><span class="mem-face">${memFaceHTML(c)}</span></span></button>`
   ).join('');
   grid.querySelectorAll('.mem-card').forEach(b => b.onclick = () => flipCard(parseInt(b.dataset.i, 10), b));
   renderSegBar($('mem-progress'), pairs, 0, false);
@@ -22103,7 +22160,7 @@ function startMemory() {
 
 
   requestAnimationFrame(() => memFitCols(grid, cards.length));
-  speak('Zoek de twee kaartjes met evenveel.');
+  speak(p.settings.track === 'count' ? 'Zoek de twee kaartjes met evenveel.' : 'Zoek de som bij zijn antwoord.');
 }
 
 
@@ -22121,9 +22178,12 @@ function memFitCols(grid, n) {
 
 
   grid.style.width = '';
-  const w = grid.getBoundingClientRect().width;
 
-  const h = screen.clientHeight - (sticky ? sticky.getBoundingClientRect().height : 0) - 56;
+
+
+  const w = grid.clientWidth;
+
+  const h = screen.clientHeight - (sticky ? sticky.offsetHeight : 0) - 56;
   if (!w || h <= 0) return;
   const fits = [];
   for (let c = 2; c <= n; c++) {
@@ -22170,7 +22230,6 @@ function flipCard(i, btn) {
   M.gedraaid = true;
   btn.classList.add('open');
   sndClick();
-  speak(numWord(c.v));
   M.flipped.push({ c, btn });
   if (M.flipped.length < 2) return;
   M.lock = true;
@@ -22187,7 +22246,7 @@ function flipCard(i, btn) {
       a.btn.classList.remove('open'); b.btn.classList.remove('open');
       a.btn.classList.add('snap'); b.btn.classList.add('snap');
       setTimeout(() => { a.btn.classList.remove('snap'); b.btn.classList.remove('snap'); }, 440);
-      onMemMatch(b.btn);
+      onMemMatch(b.btn, memZin(a.c, b.c));
       M.flipped = []; M.lock = false;
     }, 450);
   } else {
@@ -22208,7 +22267,7 @@ function flipCard(i, btn) {
     }, MEM_DRAAI + MEM_KIJK);
   }
 }
-function onMemMatch(fromBtn) {
+function onMemMatch(fromBtn, zin) {
   const p = P();
   M.matched++;
   renderSegBar($('mem-progress'), M.pairs, M.matched, false);
@@ -22221,8 +22280,10 @@ function onMemMatch(fromBtn) {
   sparkle(fromBtn, ['⭐', '✨', '💛']);
   const trofees = checkTrophies(p);
   if (trofees.length) updateTroDot();
-  if (M.matched >= M.pairs) { const m = M; setTimeout(() => finishMemory(m), 650); }
 
+
+  speak(zin);
+  if (M.matched >= M.pairs) { const m = M; setTimeout(() => finishMemory(m), 650); }
   else speak(pick(['Goed zo!', 'Ja!', 'Knap!', 'Gevonden!']), { wacht: true });
 }
 function finishMemory(m) {
@@ -22236,7 +22297,7 @@ function finishMemory(m) {
   sndGroot();
   confetti(28);
   flyDiamonds($('mem-grid'), $('mem-diamonds'), 3);
-  speak('Wauw! Je hebt ze allemaal gevonden!');
+  speak('Wauw! Je hebt ze allemaal gevonden!', { wacht: true });
   $('mem-done-earn').textContent = '💎 +' + M.earned;
   $('mem-done').style.display = 'flex';
 
@@ -25964,6 +26025,7 @@ function oefenGroups(s, pfx, p) {
   }, {
     secundair: true, html: `
       ${aanUit('set-voorlezen', '🔊', 'Voorlezen', s.voorlezen === true)}
+      ${aanUit('set-memory', '🃏', 'Memory', s.memory !== false)}
       <div id="${pfx}set-extra">
         ${schakel('missNum', '🔍', '<span class="oe-som">4 + <i></i> = 9</span>', s.missNum !== false, 'Zoek het getal')}
         ${schakel('chain3', '➕', '<span class="oe-som">2 + 3 + 4</span>', s.chain3 !== false, 'Drie getallen')}

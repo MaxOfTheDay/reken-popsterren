@@ -6676,8 +6676,9 @@ function goMap(vanLvl) {
   zetWensPil(p);
   $('map-tournee-label').classList.remove('bezig');   // zie pilTik
   $('map-portrait').innerHTML = avatarSVG(p, 80);
-  // Memory-knop: alleen voor een telmodus-ster met het memory-spel aan
-  const memOn = p.settings.track === 'count' && p.settings.memory !== false;
+  // Memory-knop: voor elke ster met het memory-spel aan (rekenkinderen krijgen
+  // de sommenvariant, zie memSomDeck)
+  const memOn = p.settings.memory !== false;
   $('mem-fab').style.display = memOn ? 'flex' : 'none';
   if (memOn) $('mem-fab-pay').textContent = memPayout(p);
   const o = kaartOpdracht(p, vanLvl, uitShow);
@@ -10640,26 +10641,38 @@ function countReveal(q, klaar) {
    Clara's favoriete spelvorm, ingezet als reken-oefening: draai twee kaartjes
    om en vind de PAREN met evenveel — dezelfde hoeveelheid in een andere vorm
    (voorwerpen ↔ stippen ↔ tienraam ↔ cijfer). Traint subitiseren, het koppelen
-   van weergaven én het geheugen. Gesproken + visueel, dus lees-vrij. Beloningen
-   lopen via dezelfde diamant-pijplijn (kleedkamer, trofeeën blijven meetellen). */
+   van weergaven én het geheugen. Beloningen lopen via dezelfde diamant-pijplijn
+   (kleedkamer, trofeeën blijven meetellen).
+
+   Sinds oktober 2026 ook voor rekenkinderen: daar hoort een som bij zijn
+   antwoord (3 + 4 ↔ 7), eerst uit de sommen die ze lastig vindt (p.weak), dus
+   het is ongemerkt herhalen. En het getal wordt pas uitgesproken als het paar
+   gevonden is: eerst zei de stem het bij elke kaart, en dan kon je op het gehoor
+   matchen zonder te tellen. */
 let M = null;
 // Eén kaartje omzetten in beeld: voorwerpen, stippen, tienraam of cijfer.
 // wat een memory-potje oplevert -- gedeeld door het spel zelf en door de belofte
 // op de knop op de kaart (zie memPayout)
-const MEM_PAIR_GAIN = 2, MEM_DONE_BONUS = 3;
+const MEM_PAIR_GAIN = 2, MEM_DONE_BONUS = 3, MEM_MIN_PAREN = 4;
 function memFaceHTML(c) {
+  /* een som past op een kaart als de letter met de lengte meekrimpt ("3 + 4"
+     tegen "48 + 37"); in cqw, dus ook mee met de kaart zelf */
+  if (c.som) return `<span class="ct-som" style="font-size:${Math.min(28, Math.round(130 / c.som.length))}cqw">${c.som}</span>`;
   if (c.repr === 'numeral') return `<span class="ct-num">${c.v}</span>`;
   if (c.repr === 'frame') return frameHTML(c.v, c.emoji, 'objects');
   if (c.repr === 'dots') return groupHTML(c.v, '', 'dots');
   return groupHTML(c.v, c.emoji, 'objects');
 }
 // Bouwt het kaartspel: P paren (elk een unieke hoeveelheid) in twee verschillende
-// weergaven. Aantal paren en bereik groeien mee met de fase/rung.
+// weergaven. Aantal paren en bereik groeien mee met de fase/rung. Een rekenkind
+// krijgt de sommenvariant (memSomDeck).
 function buildMemoryDeck(p) {
+  if (p.settings.track !== 'count') return memSomDeck(p);
   const stage = countLiveStage(p);
   const d = countDifficulty(p, stage);
   const max = Math.max(3, Math.min(10, d.effMax));   // memory blijft binnen de tien, ook in fase 12
-  let pairs = 3 + (d.rung >= 1 ? 1 : 0) + (d.rung >= 2 ? 1 : 0);   // 3..5
+  // minstens vier paren: met drie was een potje na een twintigtal tellen al uit
+  let pairs = MEM_MIN_PAREN + (d.rung >= 1 ? 1 : 0) + (d.rung >= 2 ? 1 : 0);   // 4..6
   pairs = Math.min(pairs, max);                                    // niet meer paren dan er hoeveelheden zijn
   const numOK = p.settings.numerals !== false && stage >= 6;
   const vals = shuffle(Array.from({ length: max }, (_, i) => i + 1)).slice(0, pairs);
@@ -10675,17 +10688,49 @@ function buildMemoryDeck(p) {
   });
   return { cards: shuffle(cards), pairs };
 }
+/* De rekenvariant: een som en zijn antwoord vormen een paar. Elk antwoord komt
+   maar één keer voor, anders passen er twee sommen bij hetzelfde getal. Eerst de
+   sommen die ze lastig vindt (zwaarste eerst), de rest uit dezelfde maker als de
+   show, op de stap van de wereld waar ze nu is. */
+function memSomDeck(p) {
+  const pairs = MEM_MIN_PAREN;
+  const gekozen = [], antwoorden = new Set();
+  const neem = (tmpl, ans) => {
+    if (gekozen.length >= pairs || antwoorden.has(ans) || !/ = @$/.test(tmpl)) return;
+    antwoorden.add(ans); gekozen.push({ som: tmpl.replace(/ = @$/, ''), v: ans });
+  };
+  Object.entries(p.weak || {}).sort((a, b) => b[1].w - a[1].w).slice(0, 2)
+    .forEach(([tmpl, e]) => neem(tmpl, e.ans));
+  const lvl = WORLD_START[continueWorld(p)] || 1;
+  for (let poging = 0; gekozen.length < pairs && poging < 60; poging++) {
+    const q = genQuestion(p.settings, lvl, p.perf);
+    neem(q.tmpl, q.ans);
+  }
+  const cards = [];
+  gekozen.forEach(g => cards.push({ v: g.v, som: g.som }, { v: g.v, repr: 'numeral' }));
+  return { cards: shuffle(cards), pairs: gekozen.length };
+}
+// Wat de stem zegt als een paar gevonden is: het getal, of de hele som.
+function memZin(a, b) {
+  const s = a.som || b.som;
+  if (!s) return numWord(a.v);
+  return s.split(' ').map(t => SOM_WOORD[t] || numWord(parseInt(t, 10))).join(' ') + ' is ' + numWord(a.v);
+}
 function startMemory() {
   sndClick();
   const p = P();
   const { cards, pairs } = buildMemoryDeck(p);
   M = { cards, pairs, flipped: [], matched: 0, lock: false, earned: 0 };
+  /* Op de rug het teken van de wereld waar je naar kijkt (de kaart achter dit
+     scherm), niet altijd dezelfde microfoon: zo hoort het potje bij de reis. */
+  const wi = viewWorldIdx != null && WORLDS[viewWorldIdx] ? viewWorldIdx : continueWorld(p);
+  const rug = (WORLDS[wi] && WORLDS[wi].icon) || '🎤';
   $('mem-done').style.display = 'none';
   telNu($('mem-diamonds'), p.diamonds);
   const grid = $('mem-grid');
   grid.style.setProperty('--cols', Math.min(pairs, 4));   // voorlopige waarde; memFitCols meet zo de echte
   grid.innerHTML = cards.map((c, i) =>
-    `<button class="mem-card" data-i="${i}"><span class="mem-inner"><span class="mem-back">🎤</span><span class="mem-face">${memFaceHTML(c)}</span></span></button>`
+    `<button class="mem-card" data-i="${i}"><span class="mem-inner"><span class="mem-back">${rug}</span><span class="mem-face">${memFaceHTML(c)}</span></span></button>`
   ).join('');
   grid.querySelectorAll('.mem-card').forEach(b => b.onclick = () => flipCard(parseInt(b.dataset.i, 10), b));
   renderSegBar($('mem-progress'), pairs, 0, false);
@@ -10693,7 +10738,7 @@ function startMemory() {
   // pas ná show() heeft de arena een maat: kies dan het aantal kolommen dat de
   // kaartjes zo groot mogelijk maakt binnen die ruimte
   requestAnimationFrame(() => memFitCols(grid, cards.length));
-  speak('Zoek de twee kaartjes met evenveel.');
+  speak(p.settings.track === 'count' ? 'Zoek de twee kaartjes met evenveel.' : 'Zoek de som bij zijn antwoord.');
 }
 // Zoveel mogelijk kaart per kaartje: probeer elk aantal kolommen en houd het
 // aantal dat het grootste vierkantje oplevert binnen de beschikbare arena. Het
@@ -10711,9 +10756,12 @@ function memFitCols(grid, n) {
   // eerst de vorige inzet loslaten: anders meten we de breedte die we zelf de
   // vorige keer hebben opgelegd, en krimpt het raster elke ronde verder
   grid.style.width = '';
-  const w = grid.getBoundingClientRect().width;
+  /* Layoutmaten (clientWidth/offsetHeight), geen getBoundingClientRect: dit draait
+     terwijl het scherm nog inzoomt (komt-op), en de omtrek telt die schaal mee.
+     Het raster kwam daardoor ~3% te breed uit, tot 3px van de rand. */
+  const w = grid.clientWidth;
   // 56px marge: de arena en het scherm hebben zelf ook nog padding
-  const h = screen.clientHeight - (sticky ? sticky.getBoundingClientRect().height : 0) - 56;
+  const h = screen.clientHeight - (sticky ? sticky.offsetHeight : 0) - 56;
   if (!w || h <= 0) return;
   const fits = [];
   for (let c = 2; c <= n; c++) {
@@ -10759,8 +10807,7 @@ function flipCard(i, btn) {
   const c = M.cards[i];
   M.gedraaid = true;   // vanaf nu vraagt de ✕ eerst (zie vraagMemoryStop)
   btn.classList.add('open');
-  sndClick();
-  speak(numWord(c.v));
+  sndClick();   // geen getal meer: dat komt pas bij een gevonden paar (zie onMemMatch)
   M.flipped.push({ c, btn });
   if (M.flipped.length < 2) return;
   M.lock = true;
@@ -10777,7 +10824,7 @@ function flipCard(i, btn) {
       a.btn.classList.remove('open'); b.btn.classList.remove('open');
       a.btn.classList.add('snap'); b.btn.classList.add('snap');   // 'klik samen'-bounce
       setTimeout(() => { a.btn.classList.remove('snap'); b.btn.classList.remove('snap'); }, 440);
-      onMemMatch(b.btn);
+      onMemMatch(b.btn, memZin(a.c, b.c));
       M.flipped = []; M.lock = false;
     }, 450);
   } else {
@@ -10798,7 +10845,7 @@ function flipCard(i, btn) {
     }, MEM_DRAAI + MEM_KIJK);
   }
 }
-function onMemMatch(fromBtn) {
+function onMemMatch(fromBtn, zin) {
   const p = P();
   M.matched++;
   renderSegBar($('mem-progress'), M.pairs, M.matched, false);
@@ -10811,8 +10858,10 @@ function onMemMatch(fromBtn) {
   sparkle(fromBtn, ['⭐', '✨', '💛']);
   const trofees = checkTrophies(p);
   if (trofees.length) updateTroDot();
+  // eerst wat je gevonden hebt ("zeven", "drie plus vier is zeven"), dan de lof
+  // erachter aan, niet eroverheen (wacht)
+  speak(zin);
   if (M.matched >= M.pairs) { const m = M; setTimeout(() => finishMemory(m), 650); }
-  // achter het getal van de tweede kaart aan, niet eroverheen (wacht)
   else speak(pick(['Goed zo!', 'Ja!', 'Knap!', 'Gevonden!']), { wacht: true });
 }
 function finishMemory(m) {
@@ -10826,7 +10875,7 @@ function finishMemory(m) {
   sndGroot();
   confetti(28);
   flyDiamonds($('mem-grid'), $('mem-diamonds'), 3);
-  speak('Wauw! Je hebt ze allemaal gevonden!');
+  speak('Wauw! Je hebt ze allemaal gevonden!', { wacht: true });
   $('mem-done-earn').textContent = '💎 +' + M.earned;
   $('mem-done').style.display = 'flex';
   // eerst de achtergrond, dan de kaart erop (popIn, 40-kaart) -- hij stond er in één klap
@@ -14554,6 +14603,7 @@ function oefenGroups(s, pfx, p) {       // -> [{ ico, title, sub, secundair?, ht
   }, {
     secundair: true, html: `
       ${aanUit('set-voorlezen', '🔊', 'Voorlezen', s.voorlezen === true)}
+      ${aanUit('set-memory', '🃏', 'Memory', s.memory !== false)}
       <div id="${pfx}set-extra">
         ${schakel('missNum', '🔍', '<span class="oe-som">4 + <i></i> = 9</span>', s.missNum !== false, 'Zoek het getal')}
         ${schakel('chain3', '➕', '<span class="oe-som">2 + 3 + 4</span>', s.chain3 !== false, 'Drie getallen')}
