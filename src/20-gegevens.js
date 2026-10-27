@@ -42,7 +42,7 @@
      Trilfeedback ....... haptics
      Geluid ............. de SFX-tabel: klankjes op naam van de gebeurtenis,
                           live gemaakt met oscillatoren. Geen bestanden
-     Gesproken opdrachten  nl-BE stem — telmodus, en rekenen met Voorlezen aan (zie stemAan)
+     Gesproken opdrachten  nl-BE stem — alleen de telmodus (zie stemAan)
      Avatar (SVG) ....... de pop tekenen (BASES: meisje of jongen)
 
    ---- 35-schermen.js: welk scherm staat aan -------------------------------
@@ -68,7 +68,7 @@
      Wereldfeest ........ wereld uit en/of overal drie sterren (fase 4D.1)
 
    ---- 55-vragen.js: wat er gevraagd wordt ---------------------------------
-     Vragen maken ....... rekenmodus: de leerstap per wereld (LEERSTAPPEN),
+     Vragen maken ....... rekenmodus: het leerpad (LEERPAD, padNu, padNa),
                           genTriple/genQuestion/genMissing/genChain
      Telmodus ........... lees-vrije vragen: fases, rungs, genCount, rendering
      Memory-spel ........ los kaartspel (lees-vrij)

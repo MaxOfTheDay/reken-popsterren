@@ -352,6 +352,8 @@ function showToast(txt, onTap, sub, soort) {
   t.classList.toggle('goud', soort === 'goud');
   t.classList.toggle('blauw', soort === 'blauw');
   t.classList.toggle('met-sub', !!sub);
+  // die twee zet meldMetTerug er zelf bij (zie 70-ouderdeel); een volgende melding is weer gewoon
+  t.classList.remove('onder', 'met-knop');
   t.innerHTML = `<div class="toast-main">${txt}</div>` + (sub ? `<div class="toast-sub">${sub}</div>` : '');
   t.style.display = 'flex';
   t.classList.remove('show');

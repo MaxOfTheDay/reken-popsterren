@@ -401,6 +401,12 @@
     --gray-top: #90a4ae; --gray-bottom: #607d8b; --gray-shadow: #37474f;
 
 
+
+
+    --plaats-h: #8e3fc8; --plaats-t: #1f7fd6; --plaats-e: #b86f00;
+    --plaats-t-blok: #3fa4ff; --plaats-e-blok: #ffb627;
+
+
     --pink-hot: #ff4081; --pink-light: #ffd6f4;
 
 
@@ -3437,10 +3443,7 @@
   #screen-game { padding: 8px; justify-content: flex-start; }
 
 
-
-
   .game-progress-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
-  .notes-left { font-size: var(--tx-sub); letter-spacing: 1px; white-space: nowrap; }
   .segbar { display: flex; gap: 3px; width: min(48vw, 190px); }
   .segbar > span {
     flex: 1; height: 9px; border-radius: var(--r-pill);
@@ -3455,7 +3458,6 @@
   .segbar > span.done.mis { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.5); }
   .segbar > span.goudvraag { box-shadow: 0 0 0 1.5px var(--gold-accent), 0 0 7px rgba(var(--goud-gloed-rgb),.7); }
   @media (max-width: 430px) {
-    .notes-left { font-size: var(--tx-body); letter-spacing: 0; }
     .segbar { width: min(44vw, 150px); }
   }
 
@@ -3489,6 +3491,23 @@
     display: inline-block; min-width: .72em; padding: 0 .12em; border-radius: var(--r-sm); line-height: 1.02;
     border: 3px dashed rgba(126,87,194,.55); background: rgba(126,87,194,.08); color: var(--purple-shadow);
   }
+
+
+
+
+  .pl-h { color: var(--plaats-h); } .pl-t { color: var(--plaats-t); } .pl-e { color: var(--plaats-e); }
+  .pl-t small, .pl-e small, .pl-h small { font-size: .55em; margin-left: .04em; }
+  .pl-t .q-blank, .pl-e .q-blank { color: inherit; }
+  .pl-vis { display: flex; justify-content: center; align-items: flex-end; gap: 14px; margin: 2px 0 8px; }
+  .pl-staven { display: flex; gap: 4px; }
+  .pl-staaf {
+    display: block; width: 9px; height: 70px; border-radius: 2px;
+    background: repeating-linear-gradient(0deg, transparent 0 6px, rgba(0,0,0,.18) 6px 7px), var(--plaats-t-blok);
+    box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.18);
+  }
+  .pl-blokjes { display: grid; grid-template-columns: repeat(3, 10px); gap: 3px; align-content: end; }
+  .pl-blok { display: block; width: 10px; height: 10px; border-radius: 2px; background: var(--plaats-e-blok); box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.18); }
+  .pl-som { display: block; }
   .q-blank.done { border-style: solid; border-color: var(--green-deep); background: rgba(102,187,106,.18); color: var(--green-deep); }
 
 
@@ -3499,6 +3518,9 @@
 
 
   .q-blank.done.klikt { animation: somKlikt 300ms ease-out; }
+
+  .q-blank.tikt { animation: somTikt 180ms ease-out; }
+  @keyframes somTikt { 0% { transform: none; } 40% { transform: scale(1.08); } 100% { transform: none; } }
   @keyframes somKlikt { 0% { transform: none; } 35% { transform: scale(1.14); } 100% { transform: none; } }
   .q-blank.done.rustig {
     border-color: rgba(126,87,194,.55); background: rgba(126,87,194,.08); color: var(--purple-shadow);
@@ -3509,7 +3531,7 @@
     position: fixed; z-index: 55; margin: 0; pointer-events: none; box-sizing: border-box;
     display: flex; align-items: center; justify-content: center; will-change: transform;
   }
-  @media (prefers-reduced-motion: reduce) { .q-blank.done.klikt, .q-blank.done.rustig { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .q-blank.done.klikt, .q-blank.done.rustig, .q-blank.tikt { animation: none; } }
 
 
 
@@ -3562,6 +3584,11 @@
   .num-btn.ok { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
 
   .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); font-size: 22px; }
+
+
+
+  .num-btn { transition: opacity var(--t-tik) ease, filter var(--t-tik) ease; }
+  .numpad:not(.heeft) .num-btn:is(.ok, .del) { opacity: .38; filter: saturate(.4); box-shadow: none; transform: translateY(3px); cursor: default; }
 
 
 
@@ -3864,14 +3891,11 @@
 
   .venue-aan .screen-header .diamond-badge { font-size: var(--tx-body); padding: 6px 13px; }
 
-
   .venue-aan .game-progress-row {
     padding: 5px 14px 6px; border-radius: var(--r-pill);
     background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
   }
-
-  .venue-aan .notes-left { font-size: var(--tx-label); opacity: .92; }
   .venue-aan .segbar > span { height: 8px; }
 
 
@@ -3896,8 +3920,15 @@
     justify-self: center; width: 100%; max-width: 380px; min-width: 0;
     height: 44px; box-sizing: border-box; padding: 0 16px; gap: 10px;
   }
-  #screen-game .screen-header .segbar { flex: 1; width: auto; max-width: 260px; }
-  #screen-game .screen-header .segbar > span { height: 9px; }
+  #screen-game .screen-header .game-progress-row { padding: 0 18px; }
+  #screen-game .screen-header .segbar { flex: 1; width: auto; max-width: 320px; gap: 5px; }
+  #screen-game .screen-header .segbar > span { height: 11px; }
+
+
+  @media (max-width: 359px) {
+    #screen-game .screen-header .segbar { gap: 4px; }
+    #screen-game .screen-header .segbar > span { height: 8px; }
+  }
 
   #screen-game .screen-header .game-progress-row { grid-column: 2; }
   #screen-game .screen-header .header-right, #screen-end .screen-header .header-right { grid-column: 3; }
@@ -4369,6 +4400,15 @@
 
 
 
+
+  @media (orientation: landscape) and (max-height: 500px) {
+    .numpad { grid-template-columns: repeat(6, 1fr); width: min(56vw, 470px); gap: 8px; }
+    .num-btn { padding: 10px 0; font-size: 24px; }
+    .num-btn:is([data-n="6"], [data-n="7"], [data-n="8"], [data-n="9"], [data-n="0"], .ok) { order: 1; }
+  }
+
+
+
   @media (min-height: 780px) {
     .question-card { font-size: clamp(46px, 13vw, 62px); padding: 22px 30px 30px; }
   }
@@ -4403,6 +4443,12 @@
   @media (min-width: 900px) and (min-height: 760px) {
     .show-stage { width: 240px; height: 202px; }
     .question-card { font-size: clamp(50px, 6vw, 68px); }
+  }
+
+
+  @media (min-aspect-ratio: 1/1) and (min-width: 900px) and (min-height: 700px) {
+    .numpad { width: min(40vw, 390px); gap: 12px; }
+    .num-btn { font-size: 32px; padding: 15px 0; }
   }
 
 
@@ -4498,6 +4544,18 @@
   .toast.blauw, .praise.blauw { border-color: rgba(41,182,246,.8); box-shadow: var(--e-2), 0 0 20px rgba(41,182,246,.3); }
   .praise.blauw .praise-headline { color: var(--c-white); text-shadow: none; }
   .toast.docked { top: 98px; }
+
+
+
+
+  .toast.onder { top: auto; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
+  .toast.met-knop { pointer-events: auto; padding-right: 8px; }
+  .toast.met-knop .toast-main { display: flex; align-items: center; white-space: nowrap; }
+  .toast-terug {
+    font-family: inherit; font-size: inherit; font-weight: 700; color: var(--gold-light);
+    background: none; border: none; border-left: 1px solid rgba(255,255,255,.3); cursor: pointer;
+    margin-left: 12px; padding: 6px 10px 6px 12px; min-height: 36px;
+  }
   .toast.show { display: flex; animation: toastIn .3s ease forwards; }
   @keyframes toastIn {
     from { opacity: 0; transform: translateY(-8px); }
@@ -5405,50 +5463,37 @@
 
 
 
+
+
+
+
+
+
+
+
+
   .tour-stop .stop-schat {
-    position: absolute; z-index: 2; left: 50%; top: -2.4cqw; margin-left: 2.6cqw;
-    width: 6.4cqw; height: 6.4cqw;
-    display: grid; place-items: center; font-size: 5cqw; line-height: 1;
+    position: absolute; z-index: 2; left: 50%; top: -9.5cqw; margin-left: 4.2cqw;
+    width: 11.5cqw; height: 11.5cqw; border-radius: 2.6cqw;
+    background: var(--halte-sticker); rotate: 6deg;
+    box-shadow: 0 0.55cqw 0 var(--ster-lip), 0 1.2cqw 2.4cqw rgba(0,0,0,.28);
     pointer-events: none;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    filter: drop-shadow(0.3cqw 0 0 var(--halte-sticker)) drop-shadow(-0.3cqw 0 0 var(--halte-sticker))
-            drop-shadow(0 0.3cqw 0 var(--halte-sticker)) drop-shadow(0 -0.3cqw 0 var(--halte-sticker))
-            drop-shadow(0 0.35cqw 0 var(--ster-lip));
   }
-
-
-
-  .tour-stop .stop-schat.met-prijs {
-    width: 11cqw; height: 9.5cqw; margin-left: 3.8cqw; top: -8cqw; font-size: 0;
-    filter: drop-shadow(0.45cqw 0 0 var(--halte-sticker)) drop-shadow(-0.45cqw 0 0 var(--halte-sticker))
-            drop-shadow(0 0.45cqw 0 var(--halte-sticker)) drop-shadow(0 -0.45cqw 0 var(--halte-sticker))
-            drop-shadow(0 0.5cqw 0 var(--ster-lip));
+  .tour-stop .stop-schat::after {
+    content: ''; position: absolute; left: 1.2cqw; bottom: -1.5cqw; width: 2.6cqw; height: 2.6cqw;
+    background: var(--halte-sticker); clip-path: polygon(0 100%, 0 0, 100% 0);
   }
-  .tour-stop .stop-schat.met-prijs .wereldprijs.geheim .wp-schat { filter: brightness(0) opacity(.85); }
+  .tour-stop .stop-schat.links { margin-left: -15.7cqw; rotate: -6deg; }
+  .tour-stop .stop-schat.links::after { left: auto; right: 1.2cqw; clip-path: polygon(100% 100%, 0 0, 100% 0); }
+  .tour-stop .stop-schat svg { position: absolute; inset: 1.3cqw; width: calc(100% - 2.6cqw); height: calc(100% - 2.6cqw); display: block; }
+  .tour-stop .stop-schat .thumb-emo { position: absolute; inset: 0; display: grid; place-items: center;
+    font-size: 7cqw; line-height: 1; }
 
 
 
   .tour-stop .stop-schat { animation: prijsOp .45s var(--ease-plop) .55s backwards; }
   @keyframes prijsOp { from { opacity: 0; scale: .3; } to { opacity: 1; scale: 1; } }
   @media (prefers-reduced-motion: reduce) { .tour-stop .stop-schat { animation: none; } }
-
-  .tour-stop .stop-schat.met-prijs .wereldprijs .podium { opacity: 1; filter: grayscale(.6) brightness(.8);
-    box-shadow: 0 var(--pod-dik) 0 var(--ps), 0 var(--pod-dik) 0 1px var(--pr); }
 
 
 
@@ -9147,26 +9192,6 @@
 
 
 
-  .danger-reveal { margin-top: 12px; }
-  .danger-reveal > summary {
-    list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
-    min-height: 44px; box-sizing: border-box; padding: 9px 15px;
-    font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted);
-    border: 1.5px solid var(--paper-border); border-radius: var(--r-pill);
-  }
-  .danger-reveal > summary::-webkit-details-marker { display: none; }
-  .danger-reveal > summary::after { content: '▾'; opacity: .7; }
-  .danger-reveal[open] > summary { color: var(--danger-title); border-color: var(--danger-border); }
-  .danger-reveal[open] > summary::after { content: '▴'; }
-  .danger-reveal .danger-zone { margin-top: 10px; }
-
-
-  .danger-reveal + .danger-reveal { margin-top: 10px; }
-  .danger-zone .d b { color: var(--danger-title); font-weight: 700; }
-
-
-
-
 
 
   .gear-item .gi-sub.backup-stand.oud { color: var(--practice-text); }
@@ -9233,15 +9258,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
   .fase-ladder { display: flex; flex-direction: column; gap: 2px; }
   .fase-ladder .fl-rij {
     display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 5px 8px;
@@ -9260,6 +9276,11 @@
   .fl-rij.voor .fl-n, .fl-rij.uit .fl-n { background: var(--lavender-wash-3); color: var(--purple-mid); }
   .fl-rij.voor, .fl-rij.uit { opacity: .5; }
   .fl-naam { flex: 1; min-width: 0; }
+
+
+
+  .fl-rij.overgeslagen .fl-n, .fl-rij.overgeslagen .fl-naam, .fl-rij.overgeslagen .fl-vb { opacity: .4; }
+  .fl-rij.overgeslagen .fl-naam { text-decoration: line-through; text-decoration-thickness: 2px; }
   .fl-vb { flex: none; min-width: 92px; text-align: right; font-weight: 700; letter-spacing: .3px; white-space: nowrap; }
   .fl-vak {
     display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 4px; opacity: .55;
@@ -9283,11 +9304,51 @@
 
 
 
+  .fl-blok {
+    margin: 8px 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase;
+    color: var(--paper-ink-muted);
+  }
+
+
+
+
+
+
+
+  .fl-plek { display: flex; align-items: center; }
+  .fl-plek > .fl-rij { flex: 1; min-width: 0; }
+  .fl-vink {
+    flex: none; display: grid; place-items: center; width: 40px; align-self: stretch; padding: 0;
+    border: none; background: none; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .fl-vink::before {
+    content: ""; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; box-sizing: border-box;
+    border: 2.5px solid var(--purple-light); color: var(--c-white); font-size: 14px; font-weight: 900; line-height: 1;
+    transition: background var(--t-tik) ease, border-color var(--t-tik) ease, transform var(--t-tik) ease;
+  }
+  .fl-vink.aan::before { content: "✓"; background: var(--purple-mid); border-color: transparent; }
+  .fl-vink:active::before { transform: scale(.88); }
+  .fl-vink.vast { cursor: default; }
+  .fl-vink.vast::before { content: "✓"; border-color: transparent; color: var(--purple-light); opacity: .55; }
+
+
+  .fl-vb:empty { min-width: 0; }
+
+
+
+  @media (max-width: 360px) {
+    .fase-ladder.met-vinkjes .fl-rij { gap: 8px; padding-left: 6px; padding-right: 4px; }
+    .fase-ladder.met-vinkjes .fl-vb { min-width: 0; }
+    .fl-vink { width: 34px; }
+  }
+
+
+
   .fl-rij.eind .fl-n, .vg-ladder .fl-rij.later .fl-n { background: var(--lavender-wash-3); color: var(--purple-mid); }
   .fl-rij.eind:not(.hier) { color: var(--paper-ink-muted); }
   .vg-ladder .fl-rij.klaar, .vg-ladder .fl-rij.later { color: var(--paper-ink-muted); }
   .vg-ladder .fl-rij.later .fl-vb { opacity: .7; }
-  .vg-ladder .fl-naam small { display: block; font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted); margin-top: 1px; }
+  .fl-naam small { display: block; font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted); margin-top: 1px; }
 
 
 
@@ -9317,10 +9378,6 @@
   .mode-row .chip.gestapeld .mc-ico { font-size: 21px; }
 
   #set-base { margin-bottom: 10px; }
-
-
-  .drie-op-een-rij .chip.gestapeld { gap: 1px; padding: 6px 5px 7px; font-size: var(--tx-klein); min-width: 78px; }
-  .drie-op-een-rij .chip.gestapeld .mc-ico { font-size: 17px; }
   .chip {
     font-family: inherit; font-size: var(--tx-label); font-weight: 600; cursor: pointer; text-align: center; min-width: 44px;
     border: 2px solid var(--paper-border); background: var(--c-white); color: var(--purple-mid); border-radius: var(--r-pill); padding: 7px 15px;
@@ -9348,8 +9405,8 @@
 
 
 
+
   .oefen-kaart.primary { padding: 16px 16px 14px; }
-  .oefen-kaart.secundair { padding: 6px 14px; background: var(--paper-tint); }
   .oe-lbl { display: flex; align-items: center; gap: 6px; margin: 14px 2px 7px; font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
   .oe-lbl:first-child { margin-top: 0; }
   .oe-teken { padding: 1px 8px; border-radius: var(--r-sm); background: var(--lavender-wash); color: var(--purple-mid); font-size: var(--tx-label); letter-spacing: .5px; }
@@ -9370,6 +9427,9 @@
     color: var(--purple-mid); font-size: var(--tx-label); font-weight: 700; line-height: 1;
   }
   .oe-seg .chip.on { background: var(--purple-mid); color: var(--c-white); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
+
+
+  @media (max-width: 360px) { .oe-seg .chip { font-size: var(--tx-klein); } }
   .oe-tafels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
   .oe-tafels .chip { min-width: 0; height: 42px; padding: 0; border-radius: var(--r-sm); font-size: var(--tx-body); font-weight: 700; }
 
@@ -9384,29 +9444,19 @@
   .oefen-kaart > .oe-rij:first-child, .oefen-kaart > div:first-child > .oe-rij.chip { border-top: none; }
   .oe-i { width: 28px; flex: none; text-align: center; font-size: 20px; }
   .oe-w { flex: 1; min-width: 0; }
-  .oe-som { font-weight: 700; letter-spacing: .5px; }
-  .oe-som i { display: inline-block; width: 20px; height: 20px; vertical-align: -4px; border: 2px dashed var(--purple-light); border-radius: 6px; }
-  .oe-stand { min-width: 46px; padding: 5px 10px; border-radius: var(--r-pill); text-align: center; font-size: var(--tx-klein); font-weight: 700; background: var(--lavender-wash-3); color: var(--paper-ink-muted); }
-  .oe-rij.on .oe-stand { background: var(--purple-mid); color: var(--c-white); }
 
-  .oe-mini { display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: var(--lavender-wash); }
-  .oe-mini .chip, .oe-mini .chip:hover {
-    display: flex; align-items: center; justify-content: center; min-width: 36px; height: 30px; padding: 0 6px;
-    border: none; border-radius: 7px; background: none; box-shadow: none; font-size: var(--tx-klein); font-weight: 700; line-height: 1;
+
+
+  .oe-stand {
+    flex: none; position: relative; width: 40px; height: 24px; border-radius: 12px;
+    background: var(--lavender-wash-3); transition: background var(--t-tik) ease;
   }
-  .oe-mini .chip.on { background: var(--purple-mid); color: var(--c-white); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
-  .oe-rij-blok { flex-wrap: wrap; }
-  .oe-rij-blok .chip-row { flex-basis: 100%; }
-
-
-
-
-  .oe-modus { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-md); background: rgba(0,0,0,.26); }
-  .oe-modus .chip, .oe-modus .chip:hover {
-    flex: 1 1 0; min-height: 44px; padding: 8px 6px; border: none; border-radius: var(--r-sm);
-    background: none; box-shadow: none; color: rgba(255,255,255,.7); font-size: var(--tx-label);
+  .oe-stand::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--c-white); box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform var(--t-tik) ease;
   }
-  .oe-modus .chip.on { background: rgba(255,255,255,.16); color: var(--c-white); box-shadow: none; }
+  .oe-rij.on .oe-stand { background: var(--purple-mid); }
+  .oe-rij.on .oe-stand::after { transform: translateX(16px); }
 
 
 
@@ -9574,10 +9624,9 @@
 
   #screen-newstar .oe-seg .chip, #screen-newstar .oe-seg .chip:hover,
   #screen-newstar .oe-rij.chip, #screen-newstar .oe-rij.chip:hover, #screen-newstar .oe-rij.chip.on,
-  #screen-newstar .oe-mini .chip, #screen-newstar .oe-mini .chip:hover,
   #screen-newstar .fase-ladder .chip.fl-rij { background: none; border: none; }
   #screen-newstar .fase-ladder .chip.fl-rij:hover { background: var(--lavender-wash-2); }
-  #screen-newstar .oe-mini .chip.on, #screen-newstar .oe-seg .chip.on,
+  #screen-newstar .oe-seg .chip.on,
   #screen-newstar .oe-ops .chip.on, #screen-newstar .oe-tafels .chip.on { background: var(--purple-mid); }
 
 
@@ -9687,15 +9736,8 @@
   .data-btns.naast { flex-wrap: nowrap; gap: 8px; }
   .data-btns.naast .btn { flex: 1; min-width: 0; white-space: nowrap; padding-left: 8px; padding-right: 8px; }
 
-  .danger-zone {
-    background: var(--danger-bg); border: 1.5px dashed var(--danger-border); border-radius: var(--r-lg); padding: 15px 18px;
-    display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
-  }
-  .danger-zone .t { font-size: var(--tx-label); font-weight: 700; color: var(--danger-title); }
-  .danger-zone .d { font-size: var(--tx-klein); color: var(--danger-desc); font-weight: 500; margin-top: 2px; max-width: 42ch; }
   .danger-btn { background: linear-gradient(180deg, var(--red-danger-500), var(--red-danger-shadow)); color: var(--c-white); border: none; border-radius: var(--r-sm); padding: 10px 16px; font-family: inherit; font-weight: 700; font-size: var(--tx-label); cursor: pointer; box-shadow: 0 var(--btn-lip-sm) 0 var(--red-danger-shadow); white-space: nowrap; }
   .danger-btn:active { transform: translateY(3px); box-shadow: none; }
-
 
 
 
@@ -9704,42 +9746,69 @@
   .vg-kop span { color: var(--paper-ink-muted); font-weight: 600; }
 
 
-  .vg-status {
-    display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r-md);
-    background: var(--lavender-wash);
+
+  .vg-tag {
+    display: inline-flex; align-items: center; gap: 5px; flex: none; white-space: nowrap; vertical-align: middle;
+    padding: 4px 10px 4px 5px; border-radius: var(--r-pill);
+    font-size: var(--tx-klein); font-weight: 700; line-height: 1.1;
+    background: var(--lavender-wash); color: var(--paper-ink-muted);
   }
-  .vg-status.goed { background: var(--stat-green-bg); }
-  .vg-status.vlot { background: var(--goud-tint); }
-  .vg-status.pittig { background: var(--practice-bg); }
-  .vg-dot { font-size: 28px; line-height: 1; flex: none; }
-  .vg-status b { display: block; font-size: var(--tx-body); font-weight: 700; color: var(--paper-ink); }
-  .vg-status span { display: block; font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted); margin-top: 2px; }
-
-  .vg-getallen {
-    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin: 10px 4px 0;
-    font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted);
+  .vg-tag b, .sr-tekst .vg-tag b {
+    display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%;
+    font-size: 11px; font-weight: 800; line-height: 1; color: var(--c-white); background: var(--paper-ink-muted);
   }
-  .vg-status span.vg-reeks { display: flex; gap: 4px; margin-top: 5px; }
-  .vg-reeks i { display: block; flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--gold-accent); }
-  .vg-reeks i.r2, .vg-reeks i.r1 { background: var(--gold-light); }
-  .vg-reeks i.r0 { background: none; border: 2px solid var(--practice-text); box-sizing: border-box; }
-  .vg-getal b { font-size: var(--tx-body); font-weight: 700; color: var(--paper-ink); }
+  .vg-tag.goed { background: var(--stat-green-bg); color: var(--stat-green-tekst); }
+  .vg-tag.goed b { background: var(--stat-green-tekst); }
+  .vg-tag.vlot, .vg-tag.meer { background: var(--goud-tint); color: var(--ink-on-gold-card); }
+  .vg-tag.vlot b, .vg-tag.meer b { background: var(--ink-on-gold-card); }
+  .vg-tag.pittig { background: var(--practice-bg); color: var(--practice-text); }
+  .vg-tag.pittig b { background: var(--practice-text); }
+
+  .vg-kop-rij { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; margin: 0 2px 10px; }
+  .vg-kop-rij .vg-kop { margin: 0; white-space: nowrap; }
+
+  .vg-ladder .fl-naam small.vg-hoever { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+  .vg-bol { display: inline-flex; gap: 3px; }
+  .vg-bol i { width: 8px; height: 8px; border-radius: 50%; background: var(--lavender-wash-3); box-shadow: inset 0 0 0 1.5px var(--purple-light); }
+  .vg-bol i.aan { background: var(--purple-mid); box-shadow: none; }
+
+  .vg-ladder .fl-rij.met-onder { border-radius: var(--r-sm) var(--r-sm) 0 0; }
+  .vg-onder {
+    display: flex; align-items: center; gap: 10px; margin: 0 0 4px; padding: 2px 10px 10px 48px;
+    background: var(--lavender-wash); border-radius: 0 0 var(--r-sm) var(--r-sm);
+    font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted);
+  }
+  .vg-onder span { flex: 1; min-width: 0; }
+  .vg-onder .btn { flex: none; }
 
 
-  .vg-kop-link { display: flex; align-items: baseline; gap: 6px; }
+
+  @media (max-width: 360px) {
+    .vg-ladder .fl-rij.hier .fl-vb { display: none; }
+  }
+  .vg-gat .fl-n { background: none !important; color: var(--paper-ink-muted); }
+  .vg-gat .fl-naam { font-size: var(--tx-klein); }
+  .vg-voet { display: flex; justify-content: flex-end; margin-top: 4px; }
+  .vg-vlot { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+  .vg-vlot span {
+    padding: 3px 10px; border-radius: var(--r-pill); border: 1.5px solid var(--paper-border); background: var(--paper-tint);
+    font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted);
+  }
+  .vg-vlot b { color: var(--paper-ink); margin-right: 2px; }
+
+
   .vg-aanpas {
-    margin-left: auto; padding: 4px 2px; border: none; background: none; cursor: pointer; white-space: nowrap;
+    padding: 4px 2px; border: none; background: none; cursor: pointer; white-space: nowrap;
     font: inherit; font-size: var(--tx-klein); font-weight: 700; color: var(--purple-mid);
   }
 
-  .vg-rungs { display: inline-flex; gap: 3px; margin-left: 8px; vertical-align: 1px; }
+  .vg-rungs { display: inline-flex; gap: 3px; }
   .vg-rungs i { width: 14px; height: 6px; border-radius: 3px; background: var(--lavender-wash-3); }
   .vg-rungs i.aan { background: var(--purple-mid); }
   .vg-kaart > .note { margin-top: 8px; }
   .vg-noot { margin-top: 10px; }
   .practice-chips { display: flex; flex-wrap: wrap; gap: 7px; }
   .practice-chip { background: var(--practice-bg); border: 1px solid var(--gold-light); color: var(--practice-text); border-radius: var(--r-pill); padding: 6px 13px; font-weight: 700; font-size: var(--tx-label); }
-  .stats-empty { font-size: var(--tx-klein); color: var(--green-deep); font-weight: 600; }
 
   .vg-meer { padding-top: 12px; padding-bottom: 12px; }
   .vg-meer > summary {
@@ -9752,23 +9821,15 @@
 
 
 
-  .oogst-rij {
-    display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 8px 2px 0;
+  .vg-cijfers {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 8px; margin: 8px 2px 2px;
     font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted);
   }
-  .oogst-item b { font-weight: 700; color: var(--paper-ink); }
-
-
-  .grens-tip {
-    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px;
-    padding: 10px 13px; border-radius: var(--r-sm); border: 1px dashed var(--purple-mid);
-    font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink);
-  }
-  .grens-tip > div { flex: 1 1 150px; }
-
-  .grens-tip .tip-klein { color: var(--paper-ink-muted); }
+  .vg-cijfers b { display: block; font-size: var(--tx-body); }
+  .vg-getal b, .oogst-item b { font-weight: 700; color: var(--paper-ink); }
 
   .stem-notitie { margin-top: 10px; }
+  .vg-kaart > .stem-notitie:first-child { margin-top: 0; }
 
   .stem-notitie .stem-aan { display: flex; margin-top: 8px; }
 
@@ -9801,12 +9862,40 @@
   .modal h3:empty { display: none; }
 
 
+
   .wie-blad { gap: 12px; }
   .wie-blad .wb-pop { display: flex; justify-content: center; margin-top: -4px; }
   .wie-blad .name-edit-wrap { max-width: none; }
-  .wb-gevaar { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding-top: 12px; border-top: 1px solid var(--paper-border); }
-  .wb-gevaar .danger-reveal { width: 100%; margin: 0; }
+  .wb-gevaar { display: flex; flex-direction: column; padding-top: 8px; border-top: 1px solid var(--paper-border); }
+
+
+
+  .wb-gevaar .gi-label { color: var(--danger-title); }
+  .wb-gevaar .gi-sub { color: var(--danger-desc); font-weight: 500; }
+
+
+
+
+  .gv-lijst {
+    display: flex; flex-direction: column; gap: 6px; text-align: left;
+    background: var(--danger-bg); border: 1.5px dashed var(--danger-border); border-radius: var(--r-md); padding: 10px 13px;
+    font-size: var(--tx-klein); font-weight: 500; color: var(--danger-desc);
+  }
+  .gv-lijst b { color: var(--danger-title); font-weight: 700; }
+  .gv-backup {
+    display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 10px; padding: 9px 13px; min-height: 44px;
+    border: none; border-radius: var(--r-md); background: var(--practice-bg); cursor: pointer;
+    font-family: inherit; font-size: var(--tx-klein); font-weight: 600; color: var(--practice-text); text-align: left;
+  }
+  .gv-backup .gv-wanneer { flex: 1; min-width: 0; }
+  .gv-backup b { color: var(--purple-mid); font-weight: 700; white-space: nowrap; }
+  .gv-backup.klaar { background: var(--green-badge-bg); color: var(--green-deep); cursor: default; }
   .wie-blad #set-base { margin-bottom: 0; }
+
+
+  .wie-blad .wb-modus { padding-top: 4px; }
+  .wie-blad .wb-modus .lbl { text-align: center; }
+  .wie-blad #set-track { margin-bottom: 0; }
 
 
   .modal-body { font-size: var(--tx-label); color: var(--paper-ink-muted); margin-bottom: 14px; }
@@ -10326,7 +10415,6 @@
         <!-- wereld + show: alleen nog voor de voorlezer (zie "Eén rij" in 50-zaal) -->
         <div class="header-title" id="game-lvl-label"></div>
         <div class="game-progress-row">
-          <span class="notes-left" id="notes-left"></span>
           <div class="segbar" id="qprogress" role="progressbar" aria-label="Voortgang in de show"></div>
         </div>
         <div class="diamond-badge header-right">💎 <span id="game-diamonds">0</span></div>
@@ -11165,6 +11253,8 @@ function showToast(txt, onTap, sub, soort) {
   t.classList.toggle('goud', soort === 'goud');
   t.classList.toggle('blauw', soort === 'blauw');
   t.classList.toggle('met-sub', !!sub);
+
+  t.classList.remove('onder', 'met-knop');
   t.innerHTML = `<div class="toast-main">${txt}</div>` + (sub ? `<div class="toast-sub">${sub}</div>` : '');
   t.style.display = 'flex';
   t.classList.remove('show');
@@ -14221,8 +14311,7 @@ function defaultProfile(name, dress, opts) {
       numerals: opts.numerals !== false,
       qmax: opts.qmax || 10,
       memory: opts.memory !== false,
-      voorlezen: opts.voorlezen === true,
-      startStap: opts.startStap || 1
+      padVanaf: opts.padVanaf || null
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
 
@@ -14244,6 +14333,7 @@ function defaultProfile(name, dress, opts) {
     stats: { correct: 0, wrong: 0 },
     leer: { brug: 0, zoek: 0, drie: 0 },
     recent: [],
+    pad: null,
     gezien: {}
   };
 }
@@ -14377,8 +14467,48 @@ function migrate(p) {
   }
   if (p.settings.repr == null) p.settings.repr = 'objects';
   if (p.settings.numerals == null) p.settings.numerals = true;
+
+
+
+
+  if (p.settings.numerals === false) {
+    p.settings.stageMax = Math.min(p.settings.stageMax || COUNT_STAGE_MAX, 5);
+    p.settings.stage = Math.min(p.settings.stage || 1, p.settings.stageMax);
+    p.settings.numerals = true;
+  }
   if (p.settings.qmax == null) p.settings.qmax = 10;
   if (p.settings.memory == null) p.settings.memory = true;
+  delete p.settings.voorlezen;
+
+
+
+
+
+
+
+
+
+
+
+
+
+  if (p.settings.max === 50) grensOmhoog(p.settings, 100);
+  if (p.settings.padVanaf === 'tot50') p.settings.padVanaf = 'bouwen100';
+  if (p.pad && Array.isArray(p.pad.klaar)) p.pad.klaar = p.pad.klaar.filter(id => id in PAD_IDX);
+  if (!('pad' in p)) {
+    const s = p.settings;
+    p.pad = null;
+    if (s.track !== 'count') {
+      const stap = Math.min(6, Math.max(continueWorld(p) + 1, s.startStap || 1));
+      const rij = stap > 1 ? padUitOudeStap(s, stap) : null;
+      if (rij) p.pad = { rij, shows: 0, goed: 0, klaar: padRijen(s).rijen
+        .filter(r => rij === 'alles' || PAD_IDX[r.id] < PAD_IDX[rij]).map(r => r.id) };
+    }
+    const vanaf = (s.startStap || 1) > 1 ? padUitOudeStap(s, s.startStap) : null;
+    s.padVanaf = vanaf === 'alles' ? (padRijen(s).rijen.slice(-1)[0] || {}).id || null : vanaf;
+  }
+  if (p.settings.padVanaf === undefined) p.settings.padVanaf = null;
+  delete p.settings.startStap;
   if (!p.countTrack) p.countTrack = { stage: p.settings.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 };
   if (p.countTrack.rung == null) p.countTrack.rung = 0;
   if (p.countTrack.streak == null) p.countTrack.streak = 0;
@@ -15029,7 +15159,8 @@ function hasSpeech() { return 'speechSynthesis' in window; }
 
 
 
-function stemAan(p) { return p.settings.track === 'count' || p.settings.voorlezen === true; }
+
+function stemAan(p) { return p.settings.track === 'count'; }
 
 
 
@@ -15058,7 +15189,6 @@ function cancelSpeech() { try { if (window.speechSynthesis) speechSynthesis.canc
 
 function speak(text, opts) {
   opts = opts || {};
-
 
 
   const cp = cur ? P() : null;
@@ -15161,6 +15291,11 @@ async function keepAwake() {
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
 document.addEventListener('pointerdown', keepAwake, { passive: true });
+
+
+
+
+document.addEventListener('touchstart', () => {}, { passive: true });
 keepAwake();
 
 
@@ -18667,8 +18802,7 @@ function goMap(vanLvl) {
   $('map-tournee-label').classList.remove('bezig');
   $('map-portrait').innerHTML = avatarSVG(p, 80);
 
-
-  const memOn = p.settings.memory !== false;
+  const memOn = memoryAan(p);
   $('mem-fab').style.display = memOn ? 'flex' : 'none';
   if (memOn) $('mem-fab-pay').textContent = memPayout(p);
   const o = kaartOpdracht(p, vanLvl, uitShow);
@@ -20162,11 +20296,15 @@ function haltKnop(shown, nodes, i, stand) {
 
 
 
+
+
+
+
   const laatste = i === nodes.length - 1 && lvl === playable;
   const schat = laatste ? beloningItem(shown.world) : null;
-  const prijs = (schat && !p.owned.includes(schat.id)) ? wereldPrijsHTML(p, shown.index, '11cqw') : '';
   const schatTeken = (schat && !p.owned.includes(schat.id))
-    ? `<span class="stop-schat${prijs ? ' met-prijs' : ''}" aria-hidden="true">${prijs || '🎁'}</span>` : '';
+    ? `<span class="stop-schat${n.x > 70 ? ' links' : ''}" aria-hidden="true">`
+      + (schat.thumb ? schat.thumb(curBase()) : `<span class="thumb-emo">${schat.emoji || '🎁'}</span>`) + '</span>' : '';
   b.innerHTML = `${hero}<div class="stop-body"><div class="dot">${i + 1}</div>`
     + `${schatTeken}${sterrenRij}</div>`;
 
@@ -21812,27 +21950,193 @@ function updateTroDot() {
 
 
 
-const LEERSTAPPEN = [
-  { t: 0.5, brug: 'nee' },
-  { t: 1,   brug: 'nee' },
-  { t: 1,   brug: 'vaak' },
-  { t: 1,   brug: 'vrij' },
-  { t: 1,   brug: 'vrij' },
-  { t: 1,   brug: 'vrij' },
+
+
+
+
+
+
+
+
+
+
+
+
+const LEERPAD = [
+  { id: 'tot10',      soort: 'bereik', bereik: 10,  brug: 'nee',  naam: 'Tot 10' },
+  { id: 'tot20',      soort: 'bereik', bereik: 20,  brug: 'nee',  naam: 'Tot 20' },
+  { id: 'brug20',     soort: 'bereik', bereik: 20,  brug: 'vaak', naam: 'Over het tiental' },
+  { id: 'tafels',     soort: 'vorm',   op: 'x',                   naam: 'Tafels' },
+  { id: 'delen',      soort: 'vorm',   op: ':',                   naam: 'Delen' },
+  { id: 'zoek',       soort: 'vorm',   keuze: 'missNum',          naam: 'Zoek het getal' },
+  { id: 'drie',       soort: 'vorm',   keuze: 'chain3',           naam: 'Drie getallen' },
+  { id: 'bouwen100',  soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Getallen bouwen', bouwen: true },
+  { id: 'tientallen', soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Tientallen', tientallen: true },
+  { id: 'tot100',     soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Tot 100' },
+  { id: 'brug100',    soort: 'bereik', bereik: 100, brug: 'vaak', naam: 'Over het tiental' },
 ];
-const STAP_ZOEK = 4;
-const STAP_DRIE = 5;
+const PAD_IDX = Object.fromEntries(LEERPAD.map((r, i) => [r.id, i]));
 const BRUG_VAAK = 0.5;
+const TIENTALLEN_VAAK = 0.6;
+const BOUWEN_VAAK = 0.5, BOUWEN_SOMS = 0.12;
 
 
 
 
-function leerStap(lvl, s) { return Math.max(worldFor(lvl).index + 1, (s && s.startStap) || 1); }
-function stapVan(lvl, s) { return LEERSTAPPEN[Math.min(leerStap(lvl, s), LEERSTAPPEN.length) - 1]; }
+const PAD_VB = {
+  '+': { 10: '3 + 4', 20: '12 + 5', 100: '56 + 23', brug20: '8 + 5', brug100: '47 + 25', tientallen: '40 + 30' },
+  '-': { 10: '7 − 3', 20: '17 − 5', 100: '86 − 34', brug20: '13 − 6', brug100: '72 − 35', tientallen: '70 − 30' },
+};
 
-function moeilijkheid(lvl, perf, s) {
+
+
+function plaats(p, tekst) { return `<span class="pl-${p}">${tekst}</span>`; }
+function padVoorbeeld(r, s) {
+  const pm = s.ops.includes('+') ? '+' : '-';
+  const tafel = Math.max(...(s.tables.length ? s.tables : [2, 5, 10]));
+  const keer = tafel === 7 ? 8 : 7;
+  if (r.id === 'tafels') return `${keer} × ${tafel}`;
+  if (r.id === 'delen') return `${keer * tafel} : ${tafel}`;
+  if (r.id === 'drie') return '3 + 4 + 2';
+  if (r.bouwen) return `${plaats('t', '4T')} ${plaats('e', '5E')}`;
+  if (r.id === 'zoek') return s.ops.includes('+') ? (s.max > 10 ? '7 + ▢ = 12' : '3 + ▢ = 7')
+    : s.ops.includes('-') ? '9 − ▢ = 4' : `3 × ▢ = ${3 * tafel}`;
+  return PAD_VB[pm][r.brug === 'vaak' ? r.id : r.tientallen ? 'tientallen' : r.bereik];
+}
+
+function padPast(r, s) {
+  const plusMin = s.ops.includes('+') || s.ops.includes('-');
+  if (r.soort === 'bereik') return plusMin && (r.brug !== 'vaak' || r.bereik > 10);
+  if (r.op) return s.ops.includes(r.op);
+  if (r.id === 'zoek') return s.ops.some(o => o !== ':');
+  if (r.id === 'drie') return s.ops.includes('+');
+  return true;
+}
+
+
+
+
+function padRijen(s) {
+  const plusMin = s.ops.includes('+') || s.ops.includes('-');
+  const rij = r => ({ ...r, vb: padVoorbeeld(r, s), uit: !!r.keuze && s[r.keuze] === false });
+  const rijen = LEERPAD.filter(r => padPast(r, s) && (r.soort !== 'bereik' || r.bereik <= s.max)).map(rij);
+  const volgende = plusMin && LEERPAD.filter(r => r.soort === 'bereik' && r.bereik > s.max)
+    .reduce((m, r) => Math.min(m, r.bereik), Infinity);
+  const later = plusMin ? LEERPAD.filter(r => r.soort === 'bereik' && r.bereik === volgende && padPast(r, s)).map(rij) : [];
+  return { rijen, later };
+}
+
+
+
+
+
+
+
+
+
+function padNu(p) {
+  const speel = padRijen(p.settings).rijen.filter(r => !r.uit);
+  if (!speel.length) return 'alles';
+  const vanaf = PAD_IDX[padVanafRij(p.settings, speel).id];
+  const klaar = new Set((p.pad && p.pad.klaar) || []);
+  const r = speel.find(x => PAD_IDX[x.id] >= vanaf && !klaar.has(x.id));
+  return r ? r.id : 'alles';
+}
+
+
+
+function padVanafRij(s, speel) {
+  speel = speel || padRijen(s).rijen.filter(r => !r.uit);
+  const v = PAD_IDX[s.padVanaf];
+  if (v == null) return speel[0];
+  return speel.find(r => PAD_IDX[r.id] >= v) || speel[speel.length - 1];
+}
+
+
+
+
+
+
+function padUitOudeStap(s, stap) {
+  const speel = padRijen(s).rijen.filter(r => !r.uit);
+  if (stap >= 6 || !speel.length) return 'alles';
+  const plusMin = s.ops.includes('+') || s.ops.includes('-');
+  const bereik = stap === 1 ? Math.max(10, Math.round(s.max * 0.5)) : s.max;
+  const r = speel.find(x => {
+    const st = padStand(s, x.id);
+    return (!plusMin || st.max >= bereik)
+      && (stap < 3 || !plusMin || s.max <= 10 || st.brug !== 'nee')
+      && (stap < 4 || !speel.some(y => y.id === 'zoek') || st.missNum)
+      && (stap < 5 || !speel.some(y => y.id === 'drie') || st.chain3);
+  });
+  return r ? r.id : 'alles';
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function padStand(s, nuId, klaar) {
+  const rijen = padRijen(s).rijen;
+  const i = nuId === 'alles' ? rijen.length - 1 : rijen.findIndex(r => r.id === nuId);
+  const tot = rijen.slice(0, Math.max(0, i) + 1);
+  const nu = nuId === 'alles' ? null : tot[tot.length - 1];
+  const bereik = tot.filter(r => r.soort === 'bereik' && !r.bouwen);
+  const gehaald = new Set(klaar || []);
+  const heeft = id => rijen.some((r, j) => r.id === id && !r.uit && (j <= i || gehaald.has(id)));
+  const ops = s.ops.filter(o => (o === '+' || o === '-') ? bereik.length > 0 : heeft(o === 'x' ? 'tafels' : 'delen'));
+  return {
+    max: bereik.length ? bereik[bereik.length - 1].bereik : s.max,
+    brug: nu && nu.soort === 'bereik' && !nu.bouwen ? nu.brug : tot.some(r => r.brug === 'vaak') ? 'vrij' : 'nee',
+    ops: ops.length ? ops : s.ops.slice(0, 1),
+    missNum: heeft('zoek'),
+    chain3: heeft('drie'),
+    tientallen: !!(nu && nu.tientallen),
+    bouwen: nu && nu.bouwen ? 'vaak' : heeft('bouwen100') ? 'soms' : null,
+  };
+}
+
+function vraagInst(p) { return { ...p.settings, ...padStand(p.settings, padNu(p), p.pad && p.pad.klaar) }; }
+
+
+
+
+
+const PAD_MIN_SHOWS = 3, PAD_MAX_SHOWS = 8, PAD_GOED = 2;
+function padNa(p, sterren) {
+  const nu = padNu(p);
+  if (nu === 'alles') return false;
+  const pad = p.pad = p.pad || { klaar: [] };
+  if (!Array.isArray(pad.klaar)) pad.klaar = [];
+  if (pad.rij !== nu) Object.assign(pad, { rij: nu, shows: 0, goed: 0 });
+  pad.shows++;
+  pad.goed = sterren >= 3 ? pad.goed + 1 : 0;
+  if (!((pad.shows >= PAD_MIN_SHOWS && pad.goed >= PAD_GOED) || pad.shows >= PAD_MAX_SHOWS)) return false;
+
+
+  padRijen(p.settings).rijen.forEach(r => {
+    if (PAD_IDX[r.id] <= PAD_IDX[nu] && !pad.klaar.includes(r.id)) pad.klaar.push(r.id);
+  });
+  Object.assign(pad, { rij: padNu(p), shows: 0, goed: 0 });
+  return true;
+}
+
+
+function moeilijkheid(perf, s) {
   const skillAdj = ((perf == null ? 0.5 : perf) - 0.5) * 0.5;
-  return Math.max(0.2, Math.min(1, stapVan(lvl, s).t + skillAdj, wenPlafond(s)));
+  return Math.max(0.2, Math.min(1, 1 + skillAdj, wenPlafond(s)));
 }
 
 
@@ -21862,16 +22166,26 @@ function overTiental(a, b, c, op) {
 
 
 
+
+
 function genTriple(s, lvl, perf, op) {
 
-  const t = moeilijkheid(lvl, perf, s);
+  const t = moeilijkheid(perf, s);
   const effMax = Math.max(10, Math.round(s.max * t));
   const tables = s.tables.length ? s.tables : [2, 5, 10];
   let a, b, c, sym;
   if (op === '+' || op === '-') {
 
 
-    const brug = stapVan(lvl, s).brug;
+    const brug = s.brug || 'vrij';
+
+
+    if (s.tientallen && effMax >= 20 && Math.random() < TIENTALLEN_VAAK) {
+      const T = Math.floor(effMax / 10);
+      if (op === '+') { a = 10 * rnd(1, T - 1); b = 10 * rnd(1, T - a / 10); c = a + b; }
+      else { a = 10 * rnd(2, T); b = 10 * rnd(1, a / 10 - 1); c = a - b; }
+      return { a, b, c, sym: op === '+' ? '+' : '−', op, t, effMax };
+    }
     const wilBrug = brug === 'vaak' && effMax > 10 && Math.random() < BRUG_VAAK;
     const magBrug = brug !== 'nee';
     let poging = 0;
@@ -21887,12 +22201,14 @@ function genTriple(s, lvl, perf, op) {
 
 
 
+
+
     b = pick(tables);
-    a = rnd(1, Math.max(1, Math.round(10 * t)));
+    a = rnd(1, 10);
     c = a * b; sym = '×';
   } else {
     b = pick(tables);
-    const q = rnd(1, Math.max(1, Math.round(10 * t)));
+    const q = rnd(1, 10);
     a = q * b; c = q; sym = ':';
   }
   return { a, b, c, sym, op, t, effMax };
@@ -21919,7 +22235,7 @@ function genMissing(s, lvl, perf, op) {
 
 
 function genChain(s, lvl, perf) {
-  const t = moeilijkheid(lvl, perf, s);
+  const t = moeilijkheid(perf, s);
   const effMax = Math.max(10, Math.round(s.max * t));
   const cap = Math.max(1, Math.floor(effMax / 2));
   let a, b, c, sum, tries = 0;
@@ -21929,6 +22245,42 @@ function genChain(s, lvl, perf) {
   } while (tries < 8 && (sum > effMax || sum < 3 || ((a === 0 || b === 0 || c === 0) && Math.random() < 0.7)));
   if (sum > effMax) { a = 1; b = 1; c = Math.max(1, effMax - 2); sum = a + b + c; }
   return { tmpl: `${a} + ${b} + ${c} = @`, ans: sum, op: '+', kind: 'chain' };
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+const BOUW_SOORTEN = [['blokken', 0.45], ['tiental', 0.25], ['splits', 0.3]];
+function bouwBlokken(t, e) {
+  return `<span class="pl-vis" aria-hidden="true"><span class="pl-staven">${'<i class="pl-staaf"></i>'.repeat(t)}</span>`
+    + (e ? `<span class="pl-blokjes">${'<i class="pl-blok"></i>'.repeat(e)}</span>` : '') + '</span>';
+}
+function genBouwen() {
+  const t = rnd(1, 9);
+  const e = Math.random() < 0.15 ? 0 : rnd(1, 9);
+  const n = 10 * t + e;
+  let r = Math.random(), soort = BOUW_SOORTEN[0][0];
+  for (const [k, w] of BOUW_SOORTEN) { if (r < w) { soort = k; break; } r -= w; }
+  if (!e) soort = 'blokken';
+  const T = plaats('t', '<small>T</small>'), E = plaats('e', '<small>E</small>');
+  const q = { op: 'bouw', kind: 'bouw', soort };
+  if (soort === 'blokken') return { ...q, ans: n, tmpl: `${t}T ${e}E = @`,
+    html: `${bouwBlokken(t, e)}<span class="pl-som">= @</span>`, fouten: [10 * e + t, 10 * t, t + e, n + 10, n - 10] };
+  if (soort === 'tiental') return { ...q, ans: t, tmpl: `${n} = @T + ${e}E`,
+    html: `${plaats('t', t)}${plaats('e', e)} = ${plaats('t', '@')}${T} + ${plaats('e', e)}${E}`, fouten: [e, t + 1, t - 1, t + e] };
+  if (Math.random() < 0.5) return { ...q, ans: e, tmpl: `${n} = ${10 * t} + @`,
+    html: `${plaats('t', t)}${plaats('e', e)} = ${plaats('t', 10 * t)} + ${plaats('e', '@')}`, fouten: [t, 10 * e, e + 1] };
+  return { ...q, ans: 10 * t, tmpl: `${n} = @ + ${e}`,
+    html: `${plaats('t', t)}${plaats('e', e)} = ${plaats('t', '@')} + ${plaats('e', e)}`, fouten: [t, n, 10 * t + 10, 10 * e] };
 }
 
 
@@ -21958,7 +22310,10 @@ function keuzeGrens(q, s, lvl) {
   const hoogste = Math.max(...getallen);
 
 
-  if (q.op === '+' || q.op === '-') return Math.max(hoogste, 10, Math.round(s.max * stapVan(lvl, s).t));
+
+  if (q.op === '+' || q.op === '-') return Math.max(hoogste, 10, s.max);
+
+  if (q.op === 'bouw') return q.ans < 10 ? 10 : 99;
 
   return Math.max(10, Math.ceil(hoogste / 10) * 10);
 }
@@ -21967,8 +22322,8 @@ function makeChoices(q, grens) {
   const getallen = (q.tmpl.match(/\d+/g) || []).map(Number);
   const mag = v => Number.isInteger(v) && v >= 0 && v <= grens && v !== ans;
 
-  const fouten = new Set(getallen);
-  for (let i = 0; i < getallen.length; i++)
+  const fouten = new Set(q.fouten || getallen);
+  if (!q.fouten) for (let i = 0; i < getallen.length; i++)
     for (let j = i + 1; j < getallen.length; j++) {
       fouten.add(getallen[i] + getallen[j]);
       fouten.add(Math.abs(getallen[i] - getallen[j]));
@@ -22059,6 +22414,7 @@ function countStageTypes(stage) {
   const speelbaar = types.filter(t => t !== 'listen');
   return speelbaar.length ? speelbaar : ['match'];
 }
+
 
 
 function countMaxStage(s) {
@@ -22397,7 +22753,8 @@ function tapHTML(card) {
 
 function bindTap(card, q, drawId) {
   let geteld = 0;
-  const cijfers = P().settings.numerals !== false;
+
+  const cijfers = countMaxStage(P().settings) >= 6;
   card.querySelectorAll('.tap-obj').forEach(b => {
     b.onclick = () => {
       if (!G || !G.count || drawId !== countDrawId || b.classList.contains('geteld')) return;
@@ -22688,6 +23045,13 @@ let M = null;
 
 
 const MEM_PAIR_GAIN = 2, MEM_DONE_BONUS = 3, MEM_MIN_PAREN = 4;
+
+
+
+
+
+
+function memoryAan(p) { return p.settings.track === 'count' && p.settings.memory !== false; }
 function memFaceHTML(c) {
 
 
@@ -22733,11 +23097,13 @@ function memSomDeck(p) {
     if (gekozen.length >= pairs || antwoorden.has(ans) || !/ = @$/.test(tmpl)) return;
     antwoorden.add(ans); gekozen.push({ som: tmpl.replace(/ = @$/, ''), v: ans });
   };
-  Object.entries(p.weak || {}).sort((a, b) => b[1].w - a[1].w).slice(0, 2)
+  const inst = vraagInst(p);
+  Object.entries(p.weak || {}).filter(([tmpl, e]) => pastNog(tmpl, e, inst))
+    .sort((a, b) => b[1].w - a[1].w).slice(0, 2)
     .forEach(([tmpl, e]) => neem(tmpl, e.ans));
   const lvl = WORLD_START[continueWorld(p)] || 1;
   for (let poging = 0; gekozen.length < pairs && poging < 60; poging++) {
-    const q = genQuestion(p.settings, lvl, p.perf);
+    const q = genQuestion(inst, lvl, p.perf);
     neem(q.tmpl, q.ans);
   }
   const cards = [];
@@ -22982,16 +23348,31 @@ function demoteLearned(p, q) { if (p.learned) delete p.learned[q.tmpl]; }
 
 
 
+
+
+
+
+
+
+
+function pastNog(tmpl, e, s) {
+  const ops = s.ops.length ? s.ops : ['+'];
+  if (!ops.includes(e.op)) return false;
+  const getallen = (tmpl.match(/\d+/g) || []).map(Number);
+  if (e.op === '+' || e.op === '-') return Math.max(e.ans, ...getallen) <= s.max;
+  const tables = s.tables.length ? s.tables : [2, 5, 10];
+  return tables.includes(getallen[1]);
+}
+
+
+
 function pickRefresh(p, s, mag) {
   if (!p.learned) return null;
-  const ops = s.ops.length ? s.ops : ['+'];
   const now = qClock(p);
   let best = null, bestOver = -1;
   for (const k of Object.keys(p.learned)) {
     const e = p.learned[k];
-
-    const teGroot = (e.op === '+' || e.op === '-') && e.ans > s.max;
-    if (!ops.includes(e.op) || teGroot || (mag && !mag(k))) continue;
+    if (!pastNog(k, e, s) || (mag && !mag(k))) continue;
     const over = now - e.due;
     if (over >= 0 && over > bestOver) { best = k; bestOver = over; }
   }
@@ -23002,8 +23383,7 @@ function pickRefresh(p, s, mag) {
 
 
 function pickWeak(p, s, mag) {
-  const ops = s.ops.length ? s.ops : ['+'];
-  const keys = Object.keys(p.weak).filter(k => ops.includes(p.weak[k].op) && (!mag || mag(k)));
+  const keys = Object.keys(p.weak).filter(k => pastNog(k, p.weak[k], s) && (!mag || mag(k)));
   if (!keys.length) return null;
   const pool = [];
   keys.forEach(k => { for (let i = 0; i < p.weak[k].w; i++) pool.push(k); });
@@ -23031,19 +23411,26 @@ function buildQuestion(p, lvl, g) {
   if (g) for (let i = Math.max(0, g.idx - HERHAAL_AFSTAND); i < g.idx; i++) if (g.qs[i]) net.push(g.qs[i].tmpl);
   const al = g && g.herhaald;
   const mag = k => !net.includes(k) && !(al && al.has(k));
+  const s = (g && g.inst) || vraagInst(p);
   if (Math.random() < 0.35) {
-    const wq = pickWeak(p, p.settings, mag);
+    const wq = pickWeak(p, s, mag);
     if (wq) { if (al) al.add(wq.tmpl); return wq; }
   }
 
   if (Math.random() < 0.12) {
-    const rq = pickRefresh(p, p.settings, mag);
+    const rq = pickRefresh(p, s, mag);
     if (rq) { if (al) al.add(rq.tmpl); return rq; }
+  }
+
+  if (s.bouwen && Math.random() < (s.bouwen === 'vaak' ? BOUWEN_VAAK : BOUWEN_SOMS)) {
+    let b, poging = 0;
+    do { b = genBouwen(); } while (net.includes(b.tmpl) && ++poging < 8);
+    return b;
   }
 
 
   let q, poging = 0;
-  do { q = genQuestion(p.settings, lvl, p.perf); } while (net.includes(q.tmpl) && ++poging < 8);
+  do { q = genQuestion(s, lvl, p.perf); } while (net.includes(q.tmpl) && ++poging < 8);
   return q;
 }
 
@@ -23058,7 +23445,7 @@ function buildQuestion(p, lvl, g) {
 
 function ot(p, op) {
   let t = p.opTrack[op];
-  if (!t) { t = { n: 0, acc: 0.5, paused: false, unlockStap: null, fast: 0.5 }; p.opTrack[op] = t; }
+  if (!t) { t = { n: 0, acc: 0.5, paused: false, fast: 0.5 }; p.opTrack[op] = t; }
   if (t.fast == null) t.fast = 0.5;
   return t;
 }
@@ -23091,29 +23478,20 @@ function opMastered(p, op) {
 }
 
 
-function opReady(p, op, stap) {
+
+
+
+
+function opReady(p, op, s) {
   const t = p.opTrack[op];
-  if (!t || stap < STAP_ZOEK || t.paused) return false;
+  if (!s.missNum || !s.ops.includes(op) || !t || t.paused) return false;
   return opMastered(p, op);
 }
 
 
-
-
-function chainReady(p, s, stap) {
-  const ct = p.chainTrack;
-  if (stap < STAP_DRIE || ct.paused) return false;
-  if (!opMastered(p, '+')) return false;
-  const plus = p.opTrack['+'];
-  if (!plus || plus.unlockStap == null || stap - plus.unlockStap < 1) return false;
-  return true;
-}
-
-function refreshReadiness(p, stap) {
-  ['+', '-', 'x', ':'].forEach(op => {
-    const t = ot(p, op);
-    if (stap >= STAP_ZOEK && opMastered(p, op) && t.unlockStap == null) t.unlockStap = stap;
-  });
+function chainReady(p, s) {
+  if (!s.chain3 || !s.ops.includes('+') || p.chainTrack.paused) return false;
+  return opMastered(p, '+');
 }
 
 
@@ -23169,19 +23547,19 @@ function pickSlots(total, count, avoid) {
 
 
 
+
 const WERELD_ACCENT = [null, 'miss', 'chain'];
-function wereldAccent(stap) {
-  return stap < LEERSTAPPEN.length ? null : WERELD_ACCENT[(stap - LEERSTAPPEN.length) % WERELD_ACCENT.length];
+function wereldAccent(lvl, nuId) {
+  return nuId === 'alles' ? WERELD_ACCENT[worldFor(lvl).index % WERELD_ACCENT.length] : null;
 }
-function planSpecials(p, s, total, stap, goldIdx) {
-  refreshReadiness(p, stap);
-  const missOps = (s.missNum ? s.ops : []).filter(o => ['+', '-', 'x'].includes(o) && opReady(p, o, stap));
+
+function planSpecials(p, s, total, accent, goldIdx) {
+  const missOps = s.ops.filter(o => ['+', '-', 'x'].includes(o) && opReady(p, o, s));
   const missAvail = missOps.length > 0;
-  const chainAvail = !!s.chain3 && chainReady(p, s, stap);
+  const chainAvail = chainReady(p, s);
   const twoOk = s.perLevel >= 8;
   const both = missAvail && chainAvail;
   let types = [];
-  const accent = wereldAccent(stap);
   if (accent === 'miss' && missAvail) {
     types = twoOk ? ['miss', 'miss'] : ['miss'];
   } else if (accent === 'chain' && chainAvail) {
@@ -23290,13 +23668,16 @@ function startLevel(lvl, eigenOvergang) {
 
 
 
-  const plan = count ? [] : planSpecials(p, s, s.perLevel, leerStap(lvl, s), goldIdx);
+
+
+  const inst = count ? null : vraagInst(p);
+  const plan = count ? [] : planSpecials(p, inst, s.perLevel, wereldAccent(lvl, padNu(p)), goldIdx);
 
 
 
 
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
-  G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
+  G = { lvl, inst, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
         klaarBijStart: (p.readyTrophies || []).slice(),
         missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0,
         uitslag: [] };
@@ -23395,8 +23776,8 @@ function renderQuestion() {
     if (G.count) { built = genCount(p); }
     else {
       const plan = G.plan[G.idx];
-      if (plan && plan.type === 'miss') { built = genMissing(s, G.lvl, p.perf, plan.op); G.missShown++; }
-      else if (plan && plan.type === 'chain') { built = genChain(s, G.lvl, p.perf); G.chainShown++; }
+      if (plan && plan.type === 'miss') { built = genMissing(G.inst, G.lvl, p.perf, plan.op); G.missShown++; }
+      else if (plan && plan.type === 'chain') { built = genChain(G.inst, G.lvl, p.perf); G.chainShown++; }
       else built = buildQuestion(p, G.lvl, G);
     }
     if (G.idx === G.goldIdx) built.gold = true;
@@ -23412,7 +23793,6 @@ function renderQuestion() {
   G.retried = false;
 
   showBalk(G.idx);
-  $('notes-left').textContent = livesText();
   drawQuestion();
   vraagKomtIn($('question-card'), G.idx === 0);
 
@@ -23423,7 +23803,7 @@ function renderQuestion() {
     return;
   }
   if (G.mode === 'kies') {
-    const choices = makeChoices(q, keuzeGrens(q, s, G.lvl));
+    const choices = makeChoices(q, keuzeGrens(q, G.inst, G.lvl));
     area.innerHTML = '<div class="choices">' +
       choices.map(c => `<button class="choice-btn" data-v="${c}">${c}</button>`).join('') + '</div>';
     area.querySelectorAll('.choice-btn').forEach(b => {
@@ -23432,9 +23812,9 @@ function renderQuestion() {
   } else {
     area.innerHTML = `<div class="numpad">
       ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="num-btn" data-n="${n}">${n}</button>`).join('')}
-      <button class="num-btn del" data-n="del">⌫</button>
+      <button class="num-btn del" data-n="del" aria-label="Wissen">⌫</button>
       <button class="num-btn" data-n="0">0</button>
-      <button class="num-btn ok" data-n="ok">✔</button>
+      <button class="num-btn ok" data-n="ok" aria-label="Klaar">✔</button>
     </div>`;
     area.querySelectorAll('.num-btn').forEach(b => {
       b.onclick = () => numpadPress(b.dataset.n);
@@ -23509,6 +23889,7 @@ function kaartWiebelt(kaart) {
 
 
 
+
 function showBalk(done, hasNow) {
   const el = $('qprogress');
   renderSegBar(el, G.total, done, hasNow);
@@ -23542,23 +23923,31 @@ function drawQuestion() {
   $('gold-banner').textContent = q.gold ? '🌟 3× 💎 🌟' : '';
 
 
-
-  const lezen = !G.count && stemAan(P());
-  $('btn-replay').style.display = G.count || lezen ? 'flex' : 'none';
+  $('btn-replay').style.display = G.count ? 'flex' : 'none';
   somVluchtWeg();
   if (G.count) { drawCountQuestion(q); return; }
-  const shown = G.mode === 'typ' ? G.input : '?';
-  $('question-text').innerHTML = q.tmpl.replace('@', `<span class="q-blank">${shown}</span>`);
 
 
-  if (lezen && !q.voorgelezen) { q.voorgelezen = true; speak(somZin(q)); }
+
+
+  const shown = G.mode === 'typ' ? (G.input || '?') : '?';
+
+  $('question-text').innerHTML = (q.html || q.tmpl).replace('@', `<span class="q-blank">${shown}</span>`);
+
+
+  const pad = document.querySelector('#answer-area .numpad');
+  if (pad) pad.classList.toggle('heeft', G.mode === 'typ' && G.input !== '');
 }
 function numpadPress(n) {
   if (!G || G.lock) return;
-  if (n === 'del') { G.input = G.input.slice(0, -1); }
+  if (n === 'del') { if (G.input === '') return; G.input = G.input.slice(0, -1); sndClick(); }
   else if (n === 'ok') { if (G.input !== '') submitAnswer(parseInt(G.input, 10), null); return; }
   else if (G.input.length < 3) { G.input += n; sndClick(); }
+  else return;
   drawQuestion();
+
+
+  if (n !== 'del') { const vak = document.querySelector('#question-text .q-blank'); if (vak) vak.classList.add('tikt'); }
 }
 document.addEventListener('keydown', e => {
   if (!G || G.lock) return;
@@ -23983,7 +24372,6 @@ function antwoordFout(q, p, val, btnEl) {
 
 
 
-
   if (G.retried) sndMis(); else sndWrong();
   oepsGezicht();
 
@@ -24020,8 +24408,12 @@ function tweedeMisser(q, p, btnEl) {
   save();
   if (btnEl) btnEl.classList.add('bad');
 
+
+
+
+  showBalk(G.idx + 1, false);
+
   if (G.count) {
-    loseHeart();
 
 
     const show = G;
@@ -24036,7 +24428,6 @@ function tweedeMisser(q, p, btnEl) {
 
 
 
-  loseHeart();
   hideToast();
   const g = G;
   setTimeout(() => {
@@ -24044,6 +24435,9 @@ function tweedeMisser(q, p, btnEl) {
     if (G.mode === 'kies') {
       const cb = [...document.querySelectorAll('.choice-btn')].find(b => parseInt(b.dataset.v, 10) === q.ans);
       if (cb) cb.classList.add('good', 'rustig');
+
+
+      document.querySelectorAll('#answer-area .tegel-pijl').forEach(el => el.remove());
     }
 
 
@@ -24089,7 +24483,6 @@ function oepsGezicht() {
 
 
 
-
 let zaalTimer = null;
 function zaalJuicht() {
   const z = $('game-venue');
@@ -24097,20 +24490,6 @@ function zaalJuicht() {
   z.classList.add('juist');
   clearTimeout(zaalTimer);
   zaalTimer = setTimeout(() => z.classList.remove('juist'), 380);
-}
-function loseHeart() {
-  const el = $('notes-left');
-  const left = Math.max(0, 3 - G.errors);
-  el.textContent = '❤️'.repeat(left) + '💔' + '🤍'.repeat(Math.max(0, 2 - left));
-  el.classList.remove('shake');
-  void el.offsetWidth;
-  el.classList.add('shake');
-  setTimeout(() => { el.classList.remove('shake'); if (G) el.textContent = livesText(); }, 900);
-}
-
-function livesText() {
-  const left = Math.max(0, 3 - G.errors);
-  return '❤️'.repeat(left) + '🤍'.repeat(3 - left);
 }
 
 
@@ -24121,6 +24500,12 @@ function livesText() {
 
 
 let zichtbaarWacht = null;
+
+
+
+
+
+const MIS_GRENS = 3;
 function alsZichtbaar(fn) {
   if (zichtbaarWacht) document.removeEventListener('visibilitychange', zichtbaarWacht);
   zichtbaarWacht = null;
@@ -24137,9 +24522,8 @@ function nextStep() {
   hideToast();
   if (!G) return;
   if (document.hidden) { const g = G; alsZichtbaar(() => { if (G === g) nextStep(); }); return; }
-  if (G.errors >= 3) { endLevel(false); return; }
   G.idx++;
-  if (G.idx >= G.total) endLevel(true);
+  if (G.idx >= G.total) endLevel(G.errors < MIS_GRENS);
   else renderQuestion();
 }
 
@@ -24216,19 +24600,50 @@ function groeiMoment(p, g, voor) {
   else if (max > z.max) { z.max = max; nieuw = { pil: `⬆️ Nieuw: getallen tot ${max}!` }; }
   return nieuw;
 }
-function onthoudUitkomst(p, sterren) { p.recent = (p.recent || []).concat(sterren).slice(-RECENT_N); }
+
+
+
+function stapSleutel(p) {
+  return p.settings.track === 'count' ? 'fase' + countLiveStage(p) : 'pad:' + padNu(p);
+}
+
+
+
+function onthoudUitkomst(p, sterren, stap) {
+  p.recent = (p.recent || []).concat(sterren).slice(-RECENT_N);
+  if (stap == null) return;
+  if (!p.stap || p.stap.id !== stap) p.stap = { id: stap, n: 0 };
+  p.stap.n++;
+}
 
 
 
 
 
 
+
+
+
+
+
+
+
+
+const STAND_MIN = 2;
 function uitdagingStand(p) {
   const r = p.recent || [];
-  if (r.length < 4) return null;
-  const drie = r.filter(v => v >= 3).length, mis = r.filter(v => v === 0).length;
-  const stand = mis >= 3 ? 'pittig' : (drie / r.length >= 0.8 ? 'vlot' : 'goed');
-  return { stand, n: r.length, drie, mis };
+  let w;
+  if (!p.stap) {
+    if (r.length < 4) return null;
+    w = r;
+  } else {
+    const n = p.stap.id === stapSleutel(p) ? Math.min(p.stap.n, r.length) : 0;
+    if (n < STAND_MIN) return null;
+    w = r.slice(-n);
+  }
+  const drie = w.filter(v => v >= 3).length, mis = w.filter(v => v === 0).length;
+  const stand = mis >= Math.max(2, Math.ceil(w.length * 0.3)) ? 'pittig' : (drie / w.length >= 0.8 ? 'vlot' : 'goed');
+  return { stand, n: w.length, drie, mis };
 }
 function showStars(g) {
   if (g.misses === 0) return 3;
@@ -24301,13 +24716,15 @@ function endLevel(success) {
   const lvl = G.lvl;
   applyRampUpdates(p, G);
   const faseVoor = G.count ? countLiveStage(p) : 0;
+  const stapVoor = stapSleutel(p);
   if (G.count) {
     advanceCountStage(p, success, success && showStars(G) === 3);
     telPlafondTel(p, success ? showStars(G) : 0);
   }
-  onthoudUitkomst(p, success ? showStars(G) : 0);
+  onthoudUitkomst(p, success ? showStars(G) : 0, stapVoor);
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;
-  if (!G.count && success) telGrensDrie(p, lvl, showStars(G));
+  if (!G.count && success) telGrensDrie(p, showStars(G));
+  if (!G.count) padNa(p, success ? showStars(G) : 0);
 
 
 
@@ -26278,80 +26695,47 @@ function openSter(key) {
 
 
 
+
+
+
+
+
+
+
+
 const STAND_TEKST = {
-  goed:   { ico: '🟢', kop: 'Zit goed' },
-  vlot:   { ico: '🟡', kop: 'Gaat vlot' },
-  pittig: { ico: '🟠', kop: 'Even pittig' },
+  goed:   { ico: '✓', kop: 'Past goed' },
+  vlot:   { ico: '↑', kop: 'Gaat vlot' },
+  pittig: { ico: '↓', kop: 'Even pittig' },
+  meer:   { ico: '★', kop: 'Klaar voor meer' },
+  stap:   { ico: '•', kop: 'Nieuwe stap' },
+  nieuw:  { ico: '•', kop: 'Net begonnen' },
 };
 
 
 
 
-
-
-
-
-
-
-function statusKaartHtml(p) {
-  const s = p.settings;
-  const isCount = s.track === 'count';
+function vgStand(p) {
+  if (p.settings.track === 'count' ? telTip(p) : grensTip(p)) return 'meer';
   const u = uitdagingStand(p);
-  let ico = '🌱', kop = 'Net begonnen', zin = 'Na een paar shows zie je hier hoe het gaat.', klas = 'nieuw';
-  if (u) {
-    ({ ico, kop } = STAND_TEKST[u.stand]);
-    klas = u.stand;
-    zin = `<span class="vg-reeks">${(p.recent || []).map(v => `<i class="r${v}"></i>`).join('')}</span>`
-      + (u.stand === 'pittig' ? ' Het spel maakt het nu wat makkelijker.' : '');
-  }
-  const shows = playedCount(p);
-  const answered = p.stats.correct + p.stats.wrong;
-  const getallen = [
-    [shows, mv(shows, 'show', 'shows')],
-    [answered, isCount ? mv(answered, 'vraag', 'vragen') : mv(answered, 'som', 'sommen')],
-  ];
-  if (answered) getallen.push([Math.round(100 * p.stats.correct / answered) + '%', 'goed']);
+  if (u) return u.stand;
+  return p.stap ? 'stap' : 'nieuw';
+}
+function vgLabel(stand) {
+  const t = STAND_TEKST[stand];
+  return `<span class="vg-tag ${stand}" data-stand="${stand}"><b aria-hidden="true">${t.ico}</b>${t.kop}</span>`;
+}
 
+function stemKaartHtml(p) {
   const stem = stemAan(p) ? stemNotitie(p.name) : '';
-  return `<div class="set-card vg-kaart">
-    <h2 class="vg-kop">Hoe gaat het met ${esc(p.name)}?</h2>
-    <div class="vg-status ${klas}"><span class="vg-dot" aria-hidden="true">${ico}</span>
-      <div><b>${kop}</b><span>${zin}</span></div></div>
-    <div class="vg-getallen">${getallen.map(([n, w]) => `<span class="vg-getal"><b>${n}</b> ${w}</span>`).join('')}</div>
-    ${stem ? `<div class="note stem-notitie">${stem}${!db.sound
-      ? '<button class="btn small purple stem-aan" id="stem-aan" type="button">🔊 Zet aan</button>' : ''}</div>` : ''}
-  </div>`;
+  return stem ? `<div class="set-card vg-kaart"><div class="note stem-notitie">${stem}${!db.sound
+    ? '<button class="btn small purple stem-aan" id="stem-aan" type="button">🔊 Zet aan</button>' : ''}</div></div>` : '';
 }
 
 
 
 
 
-
-
-
-
-function leerpadStappen(s) {
-  const plusMin = s.ops.includes('+') || s.ops.includes('-');
-  const klein = !plusMin ? '2 × 3' : s.ops.includes('+') ? '3 + 4' : '7 − 3';
-  const tot = { 10: '6 + 3', 20: '12 + 5', 50: '34 + 12', 100: '56 + 27' }[s.max] || '12 + 5';
-  const stap = (naam, vb) => ({ naam, vb });
-  return [
-    stap('Kleine sommen', klein),
-    plusMin ? stap(`Tot ${s.max}`, tot) : stap('Hele tafels', '7 × 8'),
-    plusMin && s.max > 10 && stap('Over het tiental', '8 + 5'),
-    s.missNum !== false && stap('Zoek het getal', '7 + ▢ = 12'),
-    s.chain3 !== false && s.ops.includes('+') && stap('Drie getallen', '3 + 4 + 2'),
-    stap('Alles door elkaar', ''),
-  ].map((st, i) => st && { ...st, wereld: i + 1 }).filter(Boolean);
-}
-
-function accentTekst(s, w) {
-  const a = wereldAccent(w);
-  if (a === 'miss' && s.missNum !== false) return ' · extra 7 + ▢ = 12';
-  if (a === 'chain' && s.chain3 !== false && s.ops.includes('+')) return ' · extra 3 + 4 + 2';
-  return '';
-}
 
 
 
@@ -26390,57 +26774,82 @@ const flVb = vb => (vb || '').replace('▢', '<i class="fl-vak"></i>');
 
 
 
+
+
+const klaarNamen = namen => namen.length > 2 ? `${namen[0]} … ${namen[namen.length - 1]}` : namen.join(', ');
 function leerpadHtml(p) {
   const s = p.settings;
+  const stand = vgStand(p);
   const rijen = [];
-  let kop, tip = '';
+  let kop, onder = '', verder;
   if (s.track === 'count') {
     const st = countLiveStage(p), hi = countMaxStage(s);
     kop = 'tellen';
-    if (st > 1) rijen.push(flRij(' klaar', '✓', `Fase ${st > 2 ? '1–' + (st - 1) : 1}`));
+    verder = st < hi;
+    if (st > 1) rijen.push(flRij(' klaar', '✓', klaarNamen(COUNT_STAGE_LABELS.slice(1, st))));
     const top = countTopRung(st);
     const rung = Math.min(top, Math.max(0, (p.countTrack && p.countTrack.rung) || 0));
-    const streepjes = `<span class="vg-rungs" title="stapje ${rung + 1} van ${top + 1}">${
-      Array.from({ length: top + 1 }, (_, i) => `<i class="${i <= rung ? 'aan' : ''}"></i>`).join('')}</span>`;
-    rijen.push(flRij(' hier niveau-bezig', flAva(p), `${COUNT_STAGE_LABELS[st]}${streepjes}`, COUNT_STAGE_VB[st]));
+    const hoever = `<small class="vg-hoever"><span class="vg-rungs" aria-hidden="true">${
+      Array.from({ length: top + 1 }, (_, i) => `<i class="${i <= rung ? 'aan' : ''}"></i>`).join('')}</span>stapje ${rung + 1} van ${top + 1}</small>`;
+    rijen.push(flRij(' hier niveau-bezig', flAva(p), `${COUNT_STAGE_LABELS[st]}${hoever}`, COUNT_STAGE_VB[st]));
 
     for (let v = st + 1; v <= Math.min(hi, st + 2); v++) rijen.push(flRij(' later', v, COUNT_STAGE_LABELS[v], COUNT_STAGE_VB[v]));
+    const tussen = hi - st - 3;
+    if (tussen > 0) rijen.push(flRij(' later vg-gat', '⋮', `nog ${tussen} ${mv(tussen, 'fase', 'fases')}`));
     if (hi > st + 2) rijen.push(flRij(' later', hi, COUNT_STAGE_LABELS[hi], COUNT_STAGE_VB[hi]));
 
     rijen.push(hi < COUNT_STAGE_MAX ? '<div class="fl-lijn">tot</div>' : flRij(' later', '🧮', 'Daarna rekenen'));
     const tt = telTip(p);
-    if (tt) tip = `<div class="grens-tip" id="grens-tip"><div>💡 ${tt.tekst}</div>
-      <button class="btn small purple" id="tel-tip-ja">${tt.knop}</button></div>`;
+    if (tt) onder = vgOnder({ fase: 'Volgende fase?', qmax: 'Grotere aantallen?', rekenen: 'Klaar om te rekenen?' }[tt.soort],
+      `<button class="btn small purple" id="tel-tip-ja" type="button">${tt.knop}</button>`);
   } else {
 
     const glyph = { '+': '+', '-': '−', 'x': '×', ':': '÷' };
     const plusMin = s.ops.includes('+') || s.ops.includes('-');
     kop = `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${plusMin ? ` tot ${s.max}` : ''}`;
-    const stappen = leerpadStappen(s);
-    const w = continueWorld(p) + 1;
-    const laatste = LEERSTAPPEN.length;
-    const nu = stappen.filter(st => st.wereld <= Math.min(Math.max(w, s.startStap || 1), laatste)).pop();
-    const nr = stappen.indexOf(nu);
+    const alle = padRijen(s).rijen;
+    const nuId = padNu(p);
+    verder = nuId !== 'alles';
+    const nr = nuId === 'alles' ? alle.length : alle.findIndex(r => r.id === nuId);
+    if (nr) rijen.push(flRij(' klaar', '✓', klaarNamen(alle.slice(0, nr).map(r => r.naam))));
+    if (nuId === 'alles') {
+      rijen.push(flRij(' hier niveau-bezig', flAva(p), 'Alles door elkaar', ''));
+    } else {
+      const nu = alle[nr];
 
-    if (nr) rijen.push(flRij(' klaar', '✓', `Stap ${nr > 1 ? '1–' + nr : 1}`));
+      const pad = p.pad && p.pad.rij === nuId ? p.pad : { shows: 0, goed: 0 };
+      const goed = Math.min(PAD_GOED, pad.goed || 0);
+      const nog = PAD_GOED - goed;
+      const hoever = `<small class="vg-hoever"><span class="vg-bol" aria-hidden="true">${
+        Array.from({ length: PAD_GOED }, (_, i) => `<i class="${i < goed ? 'aan' : ''}"></i>`).join('')}</span>${
+        nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show'}</small>`;
+      rijen.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}${hoever}`, flVb(nu.vb)));
+      alle.slice(nr + 1).forEach((r, i) => rijen.push(flRij(` later${r.uit ? ' overgeslagen' : ''}`, nr + 2 + i, r.naam, flVb(r.vb))));
+      rijen.push(flRij(' later', '∞', 'Alles door elkaar'));
+    }
     const grens = grensTip(p);
-    rijen.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}<small>Wereld ${w}${accentTekst(s, w)}</small>`, flVb(nu.vb)));
-    stappen.slice(nr + 1).forEach((st, i) => rijen.push(flRij(' later', nr + 2 + i, st.naam, flVb(st.vb))));
-    const [tekst, knop] = !grens ? [] : grens.soort === 'grens'
-      ? [`Bijna altijd ⭐⭐⭐ tot ${s.max}. Grotere getallen?`, `Tot ${grens.naar}`]
-      : grens.naar === 'mix'
-      ? ['Bijna altijd ⭐⭐⭐. Af en toe zelf typen?', 'Afwisselen']
-      : ['Afwisselen gaat goed. Altijd zelf typen?', 'Zelf typen'];
-    if (grens) tip = `<div class="grens-tip" id="grens-tip">
-      <div>💡 ${tekst}</div>
-      <button class="btn small purple" id="grens-tip-ja" data-soort="${grens.soort}" data-v="${grens.naar}">${knop}</button></div>`;
+    if (grens) {
+      const [tekst, knop] = grens.soort === 'grens' ? ['Grotere getallen?', `Tot ${grens.naar}`]
+        : grens.naar === 'mix' ? ['Af en toe zelf typen?', 'Afwisselen'] : ['Altijd zelf typen?', 'Zelf typen'];
+      onder = vgOnder(tekst, `<button class="btn small purple" id="grens-tip-ja" type="button" data-soort="${grens.soort}" data-v="${grens.naar}">${knop}</button>`);
+    }
+  }
+
+  if (!onder && stand === 'pittig') onder = vgOnder('Het spel maakt het nu wat makkelijker.');
+  if (!onder && stand === 'vlot' && verder) onder = vgOnder('Gaat zelf door naar de volgende stap.');
+
+  if (onder) {
+    const i = rijen.findIndex(r => r.includes('niveau-bezig'));
+    rijen[i] = rijen[i].replace('fl-rij hier niveau-bezig', 'fl-rij hier niveau-bezig met-onder') + onder;
   }
   return `<div class="set-card vg-kaart niveau-blok">
-    <h2 class="vg-kop vg-kop-link">Leerpad <span>· ${kop}</span><button class="vg-aanpas" id="leerpad-aanpas" type="button">Aanpassen ›</button></h2>
+    <div class="vg-kop-rij"><h2 class="vg-kop">Leerpad <span>· ${kop}</span></h2>${vgLabel(stand)}</div>
     <div class="fase-ladder vg-ladder">${rijen.join('')}</div>
-    ${tip}
+    <div class="vg-voet"><button class="vg-aanpas" id="leerpad-aanpas" type="button">Aanpassen ›</button></div>
   </div>`;
 }
+
+const vgOnder = (tekst, knop) => `<div class="vg-onder"${knop ? ' id="grens-tip"' : ''}><span>${tekst}</span>${knop || ''}</div>`;
 
 
 
@@ -26452,12 +26861,14 @@ function oefentExtraHtml(p) {
     .map(([tmpl, e]) => tmpl.replace('@', e.ans == null ? '?' : e.ans));
 
 
+  if (!weak.length) return '';
+
+
   const nLearned = Object.keys(p.learned || {}).length;
   return `<div class="set-card vg-kaart">
     <h2 class="vg-kop">Oefent extra op</h2>
-    ${weak.length
-      ? `<div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>`
-      : `<div class="stats-empty">Geen lastige sommen op dit moment.</div>`}
+    ${vlotHtml(p)}
+    <div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>
     ${nLearned ? `<div class="note vg-noot">🧠 ${nLearned} geleerde ${mv(nLearned, 'som komt', 'sommen komen')} later terug.</div>` : ''}
   </div>`;
 }
@@ -26465,35 +26876,46 @@ function oefentExtraHtml(p) {
 
 
 
-function fluencyHtml(p) {
-  if (p.settings.track === 'count') return '';
+
+
+function vlotHtml(p) {
+  const glyph = { '+': '+', '-': '−', 'x': '×', ':': '÷' };
   const ops = (p.settings.ops || []).filter(o => p.opTrack[o] && p.opTrack[o].n >= 10);
   if (!ops.length) return '';
-  const avg = ops.reduce((a, o) => a + (p.opTrack[o].fast == null ? 0.5 : p.opTrack[o].fast), 0) / ops.length;
-  return `<div class="note vg-noot">⚡ ${avg >= FLUENT_MIN
-    ? 'Veel sommen komen er al vlot uit het hoofd.'
-    : 'De sommen kloppen, maar worden nog vaak uitgerekend. Het spel wacht daarom nog even met moeilijkere vraagsoorten.'}</div>`;
+  return `<div class="vg-vlot">${ops.map(o => {
+    const t = p.opTrack[o];
+    return `<span><b>${glyph[o]}</b> ${(t.fast == null ? 0.5 : t.fast) >= FLUENT_MIN ? 'vlot' : 'rekent nog'}</span>`;
+  }).join('')}</div>`;
 }
+
+
 
 
 
 
 
 function meerCijfersHtml(p) {
+  const shows = playedCount(p);
+  const answered = p.stats.correct + p.stats.wrong;
+  const getallen = [
+    [shows, mv(shows, 'show', 'shows')],
+    [answered, p.settings.track === 'count' ? mv(answered, 'vraag', 'vragen') : mv(answered, 'som', 'sommen')],
+  ];
+  if (answered) getallen.push([Math.round(100 * p.stats.correct / answered) + '%', 'goed']);
   const stars = totalStarCount(p);
   const perfect = perfectCount(p);
   const oogst = [
     ['⭐', stars, mv(stars, 'ster', 'sterren')],
     ['🌟', perfect, mv(perfect, 'perfecte show', 'perfecte shows')],
     ['🏆', `${earnedActiveCount(p)}/${activeTrophies().length}`, 'trofeeën'],
-  ].map(([ico, n, label]) => `<span class="oogst-item"><b>${ico} ${n}</b> ${label}</span>`).join('');
+  ];
   return `<details class="set-card vg-kaart vg-meer"><summary>Meer cijfers</summary>
-    <div class="oogst-rij">${oogst}</div>
-    ${fluencyHtml(p)}
+    <div class="vg-cijfers">${getallen.map(([n, w]) => `<span class="vg-getal"><b>${n}</b> ${w}</span>`).join('')}${
+      oogst.map(([ico, n, w]) => `<span class="oogst-item"><b>${ico} ${n}</b> ${w}</span>`).join('')}</div>
   </details>`;
 }
 function statsPanelHtml(p) {
-  return `<div class="settings-panel">${statusKaartHtml(p)}${leerpadHtml(p)}${oefentExtraHtml(p)}${meerCijfersHtml(p)}</div>`;
+  return `<div class="settings-panel">${stemKaartHtml(p)}${leerpadHtml(p)}${oefentExtraHtml(p)}${meerCijfersHtml(p)}</div>`;
 }
 
 
@@ -26541,8 +26963,7 @@ function stemNotitie(naam) {
 
 
 
-
-const GRENS_LADDER = [10, 20, 50, 100];
+const GRENS_LADDER = [10, 20, 100];
 const GRENS_TIP_SHOWS = 6;
 
 
@@ -26556,8 +26977,12 @@ const GRENS_TIP_SHOWS = 6;
 
 
 
+
+
+
+const GRENS_OUD_VANAF = 5;
 function grensDrieHaltes(p) {
-  const vanaf = LEERSTAPPEN.length - 1;
+  const vanaf = GRENS_OUD_VANAF;
   if (vanaf >= WORLD_AVAIL) return 0;
   let drie = 0;
   for (let l = WORLD_START[vanaf]; l <= WORLD_LAST; l++) if ((p.stars || {})[l] >= 3) drie++;
@@ -26567,8 +26992,8 @@ function grensDrieSterren(p) {
   return typeof p.grensDrie === 'number' ? p.grensDrie : grensDrieHaltes(p);
 }
 
-function telGrensDrie(p, lvl, sterren) {
-  if (sterren < 3 || worldFor(lvl).index < LEERSTAPPEN.length - 1) return;
+function telGrensDrie(p, sterren) {
+  if (sterren < 3 || padNu(p) !== 'alles') return;
   p.grensDrie = grensDrieSterren(p) + 1;
 }
 const MODE_LADDER = { kies: 'mix', mix: 'typ' };
@@ -26606,14 +27031,12 @@ function telTip(p) {
 
   if (qnaar && hi === COUNT_STAGE_MAX - 1 && (s.stageMax || COUNT_STAGE_MAX) >= COUNT_STAGE_MAX) return qtip();
   if (hi < COUNT_STAGE_MAX) {
-    if (s.numerals === false && hi === 5) return { soort: 'cijfers',
-      tekst: 'Fase 5 gaat foutloos. Cijfers erbij?', knop: 'Cijfers aan', doe: p => { p.settings.numerals = true; p.settings.stageMax = Math.max(p.settings.stageMax || 0, 6); } };
     return { soort: 'fase',
       tekst: `Fase ${hi} gaat foutloos. Verder groeien?`, knop: `Tot fase ${hi + 1}`, doe: p => { p.settings.stageMax = hi + 1; } };
   }
   if (qnaar) return qtip();
   return { soort: 'rekenen',
-    tekst: 'De laatste fase gaat foutloos. Klaar om te rekenen? <span class="tip-klein">Plus en min tot 10, de stem leest mee.</span>', knop: 'Naar rekenen', doe: naarRekenen };
+    tekst: 'De laatste fase gaat foutloos. Klaar om te rekenen? <span class="tip-klein">Plus en min tot 10, ze leest de sommen zelf.</span>', knop: 'Naar rekenen', doe: naarRekenen };
 }
 
 
@@ -26625,8 +27048,9 @@ function naarRekenen(p) {
   s.ops = ['+', '-'];
   s.max = 10;
   s.mode = 'kies';
-  s.voorlezen = true;
   s.grensTipBasis = grensDrieSterren(p);
+  s.padVanaf = null;
+  p.pad = null;
 }
 
 
@@ -26649,6 +27073,23 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+const OEFEN_INSTELLINGEN = {
+  math:  { wat: ['ops', 'tables'], pad: ['padVanaf', 'missNum', 'chain3'], show: ['mode', 'perLevel'] },
+  count: { wat: ['qmax'], pad: ['stage'], show: ['repr', 'perLevel', 'memory'] },
+};
 function oefenGroups(s, pfx, p) {
   pfx = pfx || '';
 
@@ -26656,26 +27097,9 @@ function oefenGroups(s, pfx, p) {
   const opDefs = [['+', '+', 'Plus'], ['-', '−', 'Min'], ['x', '×', 'Maal'], [':', '÷', 'Delen']];
   const plusMin = s.ops.includes('+') || s.ops.includes('-');
   const tablesRelevant = s.ops.includes('x') || s.ops.includes(':');
-
-
-
-  const availMax = s.numerals ? COUNT_STAGE_MAX : 5;
+  const availMax = COUNT_STAGE_MAX;
   const stageNums = [];
   for (let v = 1; v <= availMax; v++) stageNums.push(v);
-
-
-
-
-
-
-
-
-
-
-
-  const reprChip = (v, ico, label, on) => chip(v,
-    `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${label}</span>`,
-    on, 'gestapeld');
   const lo = Math.min(Math.max(1, s.stage || 1), availMax);
   const hi = Math.min(Math.max(lo, s.stageMax || availMax), availMax);
 
@@ -26702,14 +27126,27 @@ function oefenGroups(s, pfx, p) {
 
 
 
+
+
+
+
+
+
+
+
+
   const ava = p ? flAva(p) : '';
   const lijn = (woord, kant) => `<span class="fl-lijn ${kant}" aria-hidden="true">${woord}</span>`;
-  const ladder = (id, rijen, lo, hi, hier, staart) => `<div class="fase-ladder naad" id="${pfx}${id}">${rijen.map((r, i) =>
-    flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}`, r.v === hier && ava ? ava : i + 1, r.naam, r.vb, r.v,
-      (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn('tot', 'onder') : ''))).join('')}${staart || ''}</div>`;
-
-
-
+  const vink = r => !r.keuze ? '<span class="fl-vink vast" aria-hidden="true"></span>'
+    : `<button class="fl-vink${r.uit ? '' : ' aan'}" type="button" data-instelling="${r.keuze}" role="checkbox"`
+      + ` aria-checked="${!r.uit}" aria-label="${r.naam}"></button>`;
+  const ladder = (id, instelling, rijen, lo, hi, hier, staart, vinkjes) => `<div class="fase-ladder naad${vinkjes ? ' met-vinkjes' : ''}" id="${pfx}${id}" data-instelling="${instelling}">${rijen.map((r, i) => {
+    const kop = r.kop ? `<div class="fl-blok" aria-hidden="true">${r.kop}</div>` : '';
+    const rij = flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}${r.uit ? ' overgeslagen' : ''}`,
+      r.v === hier && ava ? ava : i + 1, r.naam, r.vb, r.v,
+      (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn('tot', 'onder') : ''));
+    return kop + (vinkjes ? `<div class="fl-plek">${rij}${vink(r)}</div>` : rij);
+  }).join('')}${staart || ''}</div>`;
 
 
 
@@ -26724,69 +27161,65 @@ function oefenGroups(s, pfx, p) {
 
 
 
-  const balk = (id, items, sel) => `<div class="oe-seg" id="${pfx}${id}">${items.map(([v, t]) => chip(v, t, v === sel)).join('')}</div>`;
+  const balk = (id, instelling, items, sel) => `<div class="oe-seg" id="${pfx}${id}" data-instelling="${instelling}">${items.map(([v, t]) => chip(v, t, v === sel)).join('')}</div>`;
 
 
-  const schakel = (v, ico, woord, aan, naam) => `<button class="chip oe-rij${aan ? ' on' : ''}" data-v="${v}" role="switch" aria-checked="${aan}"${naam ? ` aria-label="${naam}"` : ''}>`
-    + `<span class="oe-i" aria-hidden="true">${ico}</span><span class="oe-w">${woord}</span><span class="oe-stand">${aan ? 'Aan' : 'Uit'}</span></button>`;
-  const aanUit = (id, ico, woord, aan) => `<div id="${pfx}${id}">${schakel(aan ? 'off' : 'on', ico, woord, aan)}</div>`;
-
-  const klein = (id, ico, woord, waarden, sel) => `<div class="oe-rij vast"><span class="oe-i" aria-hidden="true">${ico}</span>`
-    + `<span class="oe-w">${woord}</span><span class="oe-mini" id="${pfx}${id}">${waarden.map(v => chip(v, v, sel === v)).join('')}</span></div>`;
-  const perShow = klein('set-perlevel', '🎤', 'Vragen per show', [5, 8, 10], s.perLevel);
+  const aanUit = (id, instelling, ico, woord, aan) => `<div id="${pfx}${id}"><button class="chip oe-rij${aan ? ' on' : ''}" data-v="${aan ? 'off' : 'on'}" data-instelling="${instelling}" role="switch" aria-checked="${aan}">`
+    + `<span class="oe-i" aria-hidden="true">${ico}</span><span class="oe-w">${woord}</span><span class="oe-stand" aria-hidden="true"></span></button></div>`;
+  const perShow = `${lbl('Vragen per show')}${balk('set-perlevel', 'perLevel', [[5, '5'], [8, '8'], [10, '10']], s.perLevel)}`;
   if (s.track === 'count') return [{
-    html: `${lbl('Fases')}${ladder('set-fase',
+    kaart: 'wat', html: `${lbl('Hoeveelheden tot')}${balk('set-qmax', 'qmax', [[6, '6'], [8, '8'], [10, '10']], s.qmax || 10)}`
+  }, {
+    kaart: 'pad', html: `${lbl('Leerpad')}${ladder('set-fase', 'stage',
       stageNums.map(v => ({ v, naam: COUNT_STAGE_LABELS[v], vb: COUNT_STAGE_VB[v] })), lo, hi, p && countLiveStage(p))}`
   }, {
-    secundair: true, html: `
-      ${aanUit('set-numerals', '🔢', 'Cijfers', s.numerals !== false)}
-      ${aanUit('set-memory', '🃏', 'Memory', s.memory !== false)}
-      ${klein('set-qmax', '🍎', 'Hoeveelheden tot', [6, 8, 10], s.qmax || 10)}
+    kaart: 'show', html: `${lbl('Tonen als')}${balk('set-repr', 'repr',
+      [['objects', 'Voorwerpen'], ['dots', 'Stippen'], ['mix', 'Mix']], s.repr || 'objects')}
       ${perShow}
-      <div class="oe-rij vast oe-rij-blok"><span class="oe-w">Tonen als</span>
-        <div class="chip-row drie-op-een-rij" id="${pfx}set-repr">${
-          reprChip('objects', '🧸', 'Voorwerpen', (s.repr || 'objects') === 'objects')}${
-          reprChip('dots', '⚫', 'Stippen', s.repr === 'dots')}${
-          reprChip('mix', '🎲', 'Mix', s.repr === 'mix')}</div></div>`
+      ${aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false)}`
   }];
 
 
 
 
 
-  const stappen = leerpadStappen(s).filter(st => st.wereld < LEERSTAPPEN.length);
-  const start = Math.min(s.startStap || 1, stappen[stappen.length - 1].wereld);
-  const startRij = stappen.find(st => st.wereld >= start).wereld;
-  const wNu = p ? Math.max(continueWorld(p) + 1, start) : 0;
-  const nuStap = Math.min(wNu, stappen[stappen.length - 1].wereld);
 
 
 
 
-  const voorbij = !!p && wNu >= LEERSTAPPEN.length;
-  const eind = flRij(` eind${voorbij ? ' hier' : ''}`, voorbij ? ava : stappen.length + 1, 'Alles door elkaar');
+
+  const { rijen: padR, later: padL } = padRijen(s);
+  const padAlle = padR.concat(padL);
+  const blok = r => r.soort === 'bereik' && r.bereik > 20 ? r.bereik : 20;
+  const blokken = plusMin && new Set(padAlle.map(blok)).size > 1;
+  const speel = padR.filter(r => !r.uit);
+  const startPos = speel.length ? padR.indexOf(padVanafRij(s, speel)) + 1 : 1;
+  const nuId = p && padNu(p);
+  const voorbij = nuId === 'alles';
+  const hierPos = p && !voorbij ? padR.findIndex(r => r.id === nuId) + 1 : 0;
+  const eind = `<div class="fl-plek">${flRij(` eind${voorbij ? ' hier' : ''}`, voorbij && ava ? ava : '∞',
+    'Alles door elkaar<small>alles tot de lijn, gemengd</small>')}`
+    + '<span class="fl-vink vast" aria-hidden="true"></span></div>';
+
+  const padRijenLadder = padAlle.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb), keuze: r.keuze, uit: r.uit,
+    kop: blokken && (i === 0 || blok(padAlle[i - 1]) !== blok(r)) ? `Tot ${blok(r)}` : '' }));
+
+
 
 
 
 
   return [{
-    html: `${lbl('Sommen')}
-      <div class="oe-ops" id="${pfx}set-ops">${opDefs.map(([v, teken, woord]) =>
+    kaart: 'wat', html: `${lbl('Sommen')}
+      <div class="oe-ops" id="${pfx}set-ops" data-instelling="ops">${opDefs.map(([v, teken, woord]) =>
         `<button class="chip${s.ops.includes(v) ? ' on' : ''}" data-v="${v}" aria-label="${woord}" aria-pressed="${s.ops.includes(v)}">${teken}</button>`).join('')}</div>
-      ${plusMin ? `${lbl('tot', '+ −')}${balk('set-max', [[10, '10'], [20, '20'], [50, '50'], [100, '100']], s.max)}` : ''}
-      ${tablesRelevant ? `${lbl('tafels van', '× ÷')}
-      <div class="oe-tafels" id="${pfx}set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>` : ''}
-      ${lbl('Antwoord')}${balk('set-mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
-      ${lbl('Leerpad')}${ladder('set-startstap', stappen.map(st => ({ v: st.wereld, naam: st.naam, vb: flVb(st.vb) })),
-        startRij, Infinity, p && !voorbij && stappen.filter(st => st.wereld <= nuStap).pop().wereld, eind)}`
+      ${tablesRelevant ? `${lbl('Tafels van', '× ÷')}
+      <div class="oe-tafels" id="${pfx}set-tables" data-instelling="tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>` : ''}`
   }, {
-    secundair: true, html: `
-      ${aanUit('set-voorlezen', '🔊', 'Voorlezen', s.voorlezen === true)}
-      ${aanUit('set-memory', '🃏', 'Memory', s.memory !== false)}
-      <div id="${pfx}set-extra">
-        ${schakel('missNum', '🔍', '<span class="oe-som">4 + <i></i> = 9</span>', s.missNum !== false, 'Zoek het getal')}
-        ${schakel('chain3', '➕', '<span class="oe-som">2 + 3 + 4</span>', s.chain3 !== false, 'Drie getallen')}
-      </div>
+    kaart: 'pad', html: `${lbl('Leerpad')}${ladder('set-startstap', 'padVanaf', padRijenLadder,
+      startPos, plusMin ? padR.length : Infinity, hierPos, eind, true)}`
+  }, {
+    kaart: 'show', html: `${lbl('Antwoord')}${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
       ${perShow}`
   }];
 }
@@ -26804,7 +27237,8 @@ function oefenSamenvatting(s) {
   const tot = (s.ops.includes('+') || s.ops.includes('-')) ? ` · tot ${s.max}` : '';
   const tafels = (s.ops.includes('x') || s.ops.includes(':'))
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
-  const start = (s.startStap || 1) > 1 && leerpadStappen(s).find(st => st.wereld >= s.startStap);
+  const rijen = padRijen(s).rijen.filter(r => !r.uit);
+  const start = s.padVanaf && rijen.length && padVanafRij(s, rijen) !== rijen[0] && padVanafRij(s, rijen);
   return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}`
        + ` · ${modes[s.mode] || s.mode}${start ? ` · vanaf ${start.naam.toLowerCase()}` : ''}`
        + ` · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
@@ -26816,19 +27250,10 @@ function oefenSamenvatting(s) {
 
 
 
-
-
-
-
-
 function oefenenPanelHtml(p, s) {
-  const isCount = s.track === 'count';
   const cards = oefenGroups(s, '', p).map(g => `
-    <div class="set-card oefen-kaart${g.secundair ? ' secundair' : ' primary'}">${g.html}</div>`).join('');
-  const half = (v, ico, woord) => `<button class="chip${(v === 'count') === isCount ? ' on' : ''}" data-v="${v}">`
-    + `<span aria-hidden="true">${ico}</span> ${woord}</button>`;
+    <div class="set-card oefen-kaart primary" data-kaart="${g.kaart}">${g.html}</div>`).join('');
   return `<div class="settings-panel">${cards}
-    <div class="oe-modus" id="set-track" role="group" aria-label="Modus">${half('count', '🧸', 'Tellen')}${half('math', '🧮', 'Rekenen')}</div>
   </div>`;
 }
 
@@ -27034,6 +27459,48 @@ function beheerEmptyHtml() {
 
 
 
+function gevaarVraag({ titel, weg, blijft, ja, nee, doe }) {
+  showConfirm(titel, '', ja, () => {
+    const { melding, terug } = doe();
+    if (melding) meldMetTerug(melding, terug);
+  });
+  $('confirm-body').innerHTML = `<div class="gv-lijst"><div><b>Weg:</b> ${weg}</div>`
+    + (blijft ? `<div><b>Blijft:</b> ${blijft}</div>` : '') + '</div>'
+    + (profileKeys().length && backupOud() ? `<button class="gv-backup" id="gv-backup" type="button">`
+      + `<span aria-hidden="true">🗄️</span><span class="gv-wanneer">${backupDagen() === null ? 'Geen back-up' : `Back-up ${backupWanneer().replace(' geleden', '')} oud`}</span>`
+      + '<b>Eerst maken ›</b></button>' : '');
+  const bk = $('gv-backup');
+  if (bk) bk.onclick = () => {
+    sndClick();
+    exportData();
+    bk.outerHTML = '<div class="gv-backup klaar"><span aria-hidden="true">✓</span><span class="gv-wanneer">Back-up gemaakt</span></div>';
+  };
+  if (nee) $('confirm-no').onclick = nee;
+}
+
+
+
+
+
+const TERUG_DUUR = 6000;
+function meldMetTerug(melding, terug) {
+  showToast(`${melding}<button class="toast-terug" type="button">↶ Terug</button>`);
+  const t = $('toast');
+  t.classList.add('onder', 'met-knop');
+  t.querySelector('.toast-terug').onclick = () => {
+    sndClick();
+    hideToast();
+    terug();
+    save();
+    if ($('screen-settings').classList.contains('active')) { renderSettings(); settingsToTop(); }
+    renderProfiles();
+  };
+  toastWeg(TERUG_DUUR);
+}
+
+function opsomming(woorden) {
+  return woorden.length < 2 ? woorden.join('') : woorden.slice(0, -1).join(', ') + ' en ' + woorden[woorden.length - 1];
+}
 
 
 
@@ -27055,30 +27522,21 @@ function wieBladHtml(p) {
       `<button class="chip gestapeld${baseOf(p) === b.id ? ' on' : ''}" data-v="${b.id}">`
       + `<span class="mc-ico" aria-hidden="true">${b.emoji}</span><span class="mc-label">${b.name}</span></button>`).join('')}</div>
     <div class="name-edit-wrap"><input type="text" id="set-name" aria-label="Naam" value="${esc(p.name)}" maxlength="12" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div>
+    <div class="set-field wb-modus"><div class="lbl">Hoe speelt <span class="set-naam">${esc(p.name)}</span>?</div>
+      <div class="chip-row mode-row" id="set-track" role="group" aria-label="Tellen of rekenen">${[['count', '🧸', 'Leren tellen'], ['math', '🧮', 'Rekenen']].map(([v, ico, woord]) =>
+        `<button class="chip gestapeld${(p.settings.track === 'count') === (v === 'count') ? ' on' : ''}" data-v="${v}">`
+        + `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${woord}</span></button>`).join('')}</div></div>
+    <!-- twee rijen in rode letters: ze zeggen wat er gebeurt en openen elk één
+         vraag (gevaarVraag). Geen openklapper meer ervoor -- die herhaalde
+         dezelfde uitleg als de vraag erachter, en klapte het blad open tot de knop
+         op een smalle telefoon onder de rand viel. -->
     <div class="wb-gevaar">
-      <!-- rode vlak bestaat pas als een ouder er zelf om vraagt; een permanent
-           zichtbare wisknop hoort niet tussen gewone instellingen te staan -->
-      <details class="danger-reveal" id="set-danger">
-        <summary>Voortgang wissen…</summary>
-        <div class="danger-zone">
-          <div><div class="t">⚠️ Voortgang van <span class="set-naam">${esc(p.name)}</span> wissen</div>
-            <div class="d"><b>Weg:</b> alle diamanten, sterren, trofeeën en gekochte spulletjes.<br>
-              <b>Blijft:</b> de naam, de startoutfit en alle oefeninstellingen.</div></div>
-          <button class="danger-btn" id="set-reset">Wissen</button>
-        </div>
-      </details>
-      <!-- verwijderen hoort bij "wie deze ster is", niet bij "opnieuw beginnen":
-           het ene haalt haar wég, het andere laat haar juist blijven -->
-      <details class="danger-reveal" id="set-danger-del">
-        <!-- één tekstvak: de summary is flex met een gat, en anders valt dat gat
-             tussen de naam en "verwijderen" -->
-        <summary><span><span class="set-naam">${esc(p.name)}</span> verwijderen…</span></summary>
-        <div class="danger-zone">
-          <div><div class="t">⚠️ <span class="set-naam">${esc(p.name)}</span> verwijderen</div>
-            <div class="d">Helemaal weg van dit toestel, met alle diamanten, sterren en spulletjes. De andere sterren blijven. Kan niet ongedaan gemaakt worden.</div></div>
-          <button class="danger-btn" id="set-delete">Verwijderen</button>
-        </div>
-      </details>
+      <button class="gear-item" id="set-reset" type="button"><span class="gi-ico" aria-hidden="true">🔄</span>`
+        + `<span class="gi-label">Voortgang wissen<span class="gi-sub">Alles op nul, <span class="set-naam">${esc(p.name)}</span> blijft</span></span>`
+        + `<span class="gi-pijl" aria-hidden="true">›</span></button>
+      <button class="gear-item" id="set-delete" type="button"><span class="gi-ico" aria-hidden="true">🗑️</span>`
+        + `<span class="gi-label"><span class="set-naam">${esc(p.name)}</span> verwijderen<span class="gi-sub">Weg van dit toestel</span></span>`
+        + `<span class="gi-pijl" aria-hidden="true">›</span></button>
     </div>
   </div>`;
 }
@@ -27102,12 +27560,11 @@ function openWieBlad() {
 
 function overzichtHtml() {
   const rij = key => {
-    const p = db.profiles[key], u = uitdagingStand(p);
-    const { ico, kop } = u ? STAND_TEKST[u.stand] : { ico: '🌱', kop: 'Net begonnen' };
+    const p = db.profiles[key];
     const shows = playedCount(p);
     return `<button class="ster-rij" type="button" data-key="${key}">`
       + `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
-      + `<span class="sr-tekst"><b>${esc(p.name)}</b><small><span aria-hidden="true">${ico}</span> ${kop}`
+      + `<span class="sr-tekst"><b>${esc(p.name)}</b><small>${vgLabel(vgStand(p))}`
       + `${shows ? ` · ${shows} ${mv(shows, 'show', 'shows')}` : ''}</small></span>`
       + `<span class="sr-pijl" aria-hidden="true">›</span></button>`;
   };
@@ -27294,19 +27751,19 @@ function bindOefenChips(s, p, pfx, done) {
     } else s.tables.push(v);
   });
 
-  bind('set-max', c => {
-    grensOmhoog(s, parseInt(c.dataset.v, 10));
-    if (p) s.grensTipBasis = grensDrieSterren(p);
-  });
   bind('set-mode', c => {
     s.mode = c.dataset.v;
     if (p) s.grensTipBasis = grensDrieSterren(p);
   });
   bind('set-perlevel', c => { s.perLevel = parseInt(c.dataset.v, 10); });
 
-  bind('set-extra', c => {
-    const k = c.dataset.v;
+
+
+  const pad = $((pfx || '') + 'set-startstap');
+  if (pad) pad.querySelectorAll('.fl-vink[data-instelling]').forEach(b => b.onclick = () => {
+    const k = b.dataset.instelling;
     s[k] = (s[k] === false);
+    done('set-startstap');
   });
 
 
@@ -27316,7 +27773,7 @@ function bindOefenChips(s, p, pfx, done) {
 
   bind('set-fase', c => {
     const v = parseInt(c.dataset.v, 10);
-    const top = s.numerals ? COUNT_STAGE_MAX : 5;
+    const top = COUNT_STAGE_MAX;
     const lo = Math.min(Math.max(1, s.stage || 1), top);
     const hi = Math.min(Math.max(lo, s.stageMax || top), top);
     const vanaf = v < lo || (v <= hi && v - lo < hi - v);
@@ -27335,17 +27792,32 @@ function bindOefenChips(s, p, pfx, done) {
     }
   });
 
-  bind('set-startstap', c => { s.startStap = parseInt(c.dataset.v, 10); });
-  bind('set-numerals', c => {
 
 
 
-    s.numerals = (c.dataset.v === 'on');
-    telPlafondOpnieuw(p);
+
+
+
+
+
+
+
+  bind('set-startstap', c => {
+    const v = parseInt(c.dataset.v, 10);
+    const { rijen, later } = padRijen(s);
+    const r = rijen.concat(later)[v - 1];
+    if (!r) return false;
+    const grens = naar => { grensOmhoog(s, naar); if (p) s.grensTipBasis = grensDrieSterren(p); };
+    if (v > rijen.length) return grens(r.bereik);
+    const speel = rijen.filter(x => !x.uit);
+    const lo = speel.length ? rijen.indexOf(padVanafRij(s, speel)) + 1 : 1, hi = rijen.length;
+    const blok = r.soort === 'bereik' ? r.bereik : 20;
+    const plusMin = s.ops.includes('+') || s.ops.includes('-');
+    if (plusMin && !(v < lo || v - lo < hi - v) && blok < s.max) return grens(blok);
+    s.padVanaf = v === 1 ? null : r.id;
   });
   bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); telPlafondOpnieuw(p); });
   bind('set-memory', c => { s.memory = (c.dataset.v === 'on'); });
-  bind('set-voorlezen', c => { s.voorlezen = (c.dataset.v === 'on'); });
   bind('set-repr', c => { s.repr = c.dataset.v; });
 }
 
@@ -27375,19 +27847,15 @@ function bindWie(p) {
     e.preventDefault();
     e.target.blur();
   });
-
-
-  document.querySelectorAll('#confirm-body .danger-reveal').forEach(dg => {
-    dg.ontoggle = () => { if (dg.open) sndClick(); };
-  });
   on('set-reset', 'onclick', () => {
-    showConfirm(
-      '⚠️ Weet je het zeker?',
-      `Alle voortgang, diamanten, sterren en spulletjes van ${p.name} wissen?`
-      + ` De naam, de startoutfit en alle oefeninstellingen blijven staan.`
-      + ` Dit kan niet ongedaan gemaakt worden.`,
-      'Ja, wissen',
-      () => {
+    sndClick();
+    gevaarVraag({
+      titel: `Voortgang van ${p.name} wissen?`,
+      weg: 'alle diamanten, sterren, trofeeën en spulletjes.',
+      blijft: `${esc(p.name)} zelf: naam, figuur, startoutfit en oefeninstellingen.`,
+      ja: 'Ja, wissen',
+      nee: openWieBlad,
+      doe: () => {
 
 
 
@@ -27397,20 +27865,34 @@ function bindWie(p) {
 
 
         const opts = { ...p.settings, hair: p.startHair || 'hair_blond', base: p.base };
-        const order = p.order;
-        db.profiles[setKey] = defaultProfile(p.name, dress, opts);
-        db.profiles[setKey].order = order;
+        const key = setKey;
+        db.profiles[key] = defaultProfile(p.name, dress, opts);
+        db.profiles[key].order = p.order;
         save(); renderSettings();
-        showToast('✓ Voortgang gewist');
-        toastWeg(1800);
-      }
-    );
-    $('confirm-no').onclick = openWieBlad;
+
+        return { melding: '✓ Voortgang gewist', terug: () => { db.profiles[key] = p; } };
+      },
+    });
   });
 
 
 
 
+
+
+
+  const modus = $('set-track');
+  if (modus) modus.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    const s = p.settings;
+    if (s.track === c.dataset.v) return;
+    sndClick();
+    s.track = c.dataset.v;
+    telPlafondOpnieuw(p);
+    if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 };
+    save();
+    renderSettings();
+    openWieBlad();
+  });
   const basis = $('set-base');
   if (basis) basis.querySelectorAll('.chip').forEach(c => c.onclick = () => {
     if (p.base === c.dataset.v) return;
@@ -27421,23 +27903,35 @@ function bindWie(p) {
     openWieBlad();
   });
   on('set-delete', 'onclick', () => {
-    showConfirm(
-      '⚠️ Ster verwijderen?',
-      `${p.name} helemaal verwijderen, met alle voortgang, diamanten en spulletjes? Dit kan niet ongedaan gemaakt worden.`,
-      'Ja, verwijderen',
-      () => {
-        const naam = p.name;
-        delete db.profiles[setKey];
-        if (cur === setKey) cur = null;
+    sndClick();
+    const andere = profileKeys().filter(k => k !== setKey).map(k => esc(db.profiles[k].name));
+    gevaarVraag({
+      titel: `${p.name} verwijderen?`,
+      weg: `${esc(p.name)}, met alle diamanten, sterren, trofeeën en spulletjes.`,
+
+      blijft: andere.length ? opsomming(andere) + '.' : '',
+      ja: 'Ja, verwijderen',
+      nee: openWieBlad,
+      doe: () => {
+        const key = setKey;
+        delete db.profiles[key];
+        if (cur === key) cur = null;
         setKey = null;
         save();
         if (profileKeys().length) { renderSettings(); settingsToTop(); }
         else closeSettings();
-        showToast(`✓ ${esc(naam)} is verwijderd`);
-        toastWeg(1800);
-      }
-    );
-    $('confirm-no').onclick = openWieBlad;
+        return {
+          melding: `✓ ${esc(p.name)} is verwijderd`,
+          terug: () => {
+
+            const k = db.profiles[key] ? nextProfileKey() : key;
+            db.profiles[k] = p;
+
+            if ($('screen-settings').classList.contains('active')) setKey = k;
+          },
+        };
+      },
+    });
   });
 }
 function bindSettings(p, s) {
@@ -27471,10 +27965,6 @@ function bindSettings(p, s) {
     const lad = $('set-startstap') || $('set-fase');
     if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
   });
-
-
-
-  bind('set-track', c => { s.track = c.dataset.v; telPlafondOpnieuw(p); if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 }; save(); renderSettings(); });
 
 
 
@@ -27578,18 +28068,21 @@ function importData(file) {
       showNotice('Oeps!', 'Kon dit bestand niet lezen. Kies een geldig back-upbestand.');
       return;
     }
-    showConfirm(
-      '📂 Back-up terugzetten?',
-      'Dit vervangt de huidige diamanten, sterren en spulletjes van alle profielen door de inhoud van dit back-upbestand. Dit kan niet ongedaan gemaakt worden.',
-      'Ja, terugzetten',
-      () => {
-        if (!backupToepassen(data)) { showNotice('Oeps!', 'Dit back-upbestand is beschadigd; er is niets veranderd.'); return; }
+    const hier = profileKeys().map(k => esc(db.profiles[k].name));
+    gevaarVraag({
+      titel: 'Back-up terugzetten?',
+      weg: hier.length ? `wat er nu op dit toestel staat: ${opsomming(hier)}.` : 'niets, er staan hier nog geen sterren.',
+      ja: 'Ja, terugzetten',
+      doe: () => {
+        const oud = db;
+        if (!backupToepassen(data)) {
+          showNotice('Oeps!', 'Dit back-upbestand is beschadigd; er is niets veranderd.');
+          return { melding: '', terug: null };
+        }
         renderSettings();
-
-        showToast('✓ Back-up geladen');
-        toastWeg(2200);
-      }
-    );
+        return { melding: '✓ Back-up geladen', terug: () => { db = oud; cur = null; setKey = null; } };
+      },
+    });
   };
   reader.onerror = () => showNotice('Oeps!', 'Kon dit bestand niet lezen.');
   reader.readAsText(file);
@@ -27860,11 +28353,15 @@ function ozGevonden(data, vanStart) {
   $('oz-dicht').onclick = closeConfirmModal;
   $('oz-ja').onclick = () => {
     closeConfirmModal();
+    const oud = db;
     if (!backupToepassen(data)) { showNotice('Oeps!', 'Deze sterren zijn beschadigd; er is niets veranderd.'); return; }
     if ($('screen-settings').classList.contains('active')) renderSettings();
     renderProfiles();
-    showToast('✓ Sterren overgezet');
-    toastWeg(2400);
+
+
+
+    if (hier.length) meldMetTerug('✓ Sterren overgezet', () => { db = oud; cur = null; setKey = null; });
+    else { showToast('✓ Sterren overgezet'); toastWeg(2400); }
     if (vanStart) confetti(50);
   };
 }

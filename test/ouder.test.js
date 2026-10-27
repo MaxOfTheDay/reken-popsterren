@@ -15,8 +15,8 @@
  *   B  oefeninstellingen zijn per kind, en lekken niet naar de buur
  *   C  de kiezer wisselt de context; het onderdeel blijft staan
  *   D  de faseladder en de startfase houden elkaar in het gareel (en tonen het bereik)
- *   E  voortgang wissen: eerst vragen, dan wissen -- en de instellingen blijven
- *   F  een ster verwijderen noemt haar bij naam en vraagt eerst
+ *   E  voortgang wissen: eerst vragen, dan wissen -- de instellingen blijven, en Terug draait het terug
+ *   F  een ster verwijderen noemt haar bij naam, vraagt eerst, en Terug brengt haar terug
  *   G  back-up eruit en er weer in: byte voor byte dezelfde voortgang
  *   H  een kapotte back-up verandert niets
  *   I  de plakkende kop krimpt bij scrollen, maar wie en wat blijven in beeld --
@@ -27,7 +27,7 @@
  *   M  de inschatting toont geen percentage, en p.perf draait er ongewijzigd door
  *   N  de drie weergavekeuzes staan op één regel, en wikkelen alleen als het moet
  *   O  op het beginscherm: de uitlegkaart na de back-up, per browser, en weg in de app
- *   P  Voortgang: status uit de laatste shows, één stap "nu", de oogst dicht
+ *   P  Voortgang: één label op het leerpad, één stap "nu", de oogst dicht
  *   Q  opstarten en instellingen: wie net speelde, geluid aan, meisje/jongen, het maakformulier
  *   T  de back-up is één rij met een blad erachter; overzetten met een code, langs
  *      een nagebootste ontvanger: neerleggen, ophalen, één keer, vervangen, annuleren
@@ -167,8 +167,8 @@ function check(ok, label, detail) {
     const { ctx, page } = await fresh();
     await open(page, 'p1', 'oefenen');
     await page.waitForTimeout(150);
-    // Anna: getallen tot 100, zelf typen, 10 vragen
-    await page.click('#set-max .chip[data-v="100"]');
+    // Anna: getallen tot 100 (een grijze rij onder "tot" op het leerpad), zelf typen, 10 vragen
+    await page.click('#set-startstap .chip.uit');
     await page.waitForTimeout(100);
     await page.click('#set-mode .chip[data-v="typ"]');
     await page.waitForTimeout(100);
@@ -186,16 +186,24 @@ function check(ok, label, detail) {
     await page.evaluate(() => { setKey = 'p2'; renderSettings(); });
     await page.waitForTimeout(150);
     r = await page.evaluate(() => ({
-      gekozenMax: document.querySelector('#set-max .chip.on').dataset.v,
+      gekozenMax: document.querySelector('#set-startstap .fl-lijn.onder').closest('.fl-rij').querySelector('.fl-naam').textContent,
       gekozenMode: document.querySelector('#set-mode .chip.on').dataset.v,
       kop: document.querySelector('#settings-wie .wie-naam').textContent,
     }));
-    check(r.gekozenMax === '20' && r.gekozenMode === 'kies',
+    check(r.gekozenMax === 'Drie getallen' && r.gekozenMode === 'kies',
       'de velden tonen de waarden van het gekozen kind', JSON.stringify(r));
     check(/Bas/.test(r.kop), 'en de kop zegt over wie het gaat', r.kop);
-    // Bas naar de telmodus: dat mag Anna niet raken
-    await page.click('#set-track .chip[data-v="count"]');
+    // Bas naar de telmodus: dat mag Anna niet raken. De modus staat niet op
+    // Oefeningen maar in zijn blad (een tik op zijn naam, zie wieBladHtml)
+    check(await page.evaluate(() => !document.querySelector('#settings-body #set-track, .settings-panel #set-track')),
+      'tellen of rekenen staat niet meer op Oefeningen', 'er staat nog een modusknop');
+    await page.evaluate(() => openWieBlad());
+    await page.click('#confirm-body #set-track .chip[data-v="count"]');
     await page.waitForTimeout(150);
+    check(await page.evaluate(() => $('confirm-modal').classList.contains('open')
+      && document.querySelector('#confirm-body #set-track .chip.on').dataset.v === 'count'),
+      'het blad blijft open en toont de nieuwe modus', 'blad dicht of oude modus');
+    await page.evaluate(() => closeConfirmModal());
     r = await page.evaluate(() => ({
       anna: db.profiles.p1.settings.track, bas: db.profiles.p2.settings.track,
       basFase: !!document.getElementById('set-fase'),
@@ -341,63 +349,86 @@ function check(ok, label, detail) {
     check(r.stage === 1 && r.max === 4 && r.vanaf === 1 && r.hier === 2,
       'een fase boven "vanaf" zet "vanaf" daar, en het kind zakt niet mee', JSON.stringify(r));
     check(r.plek === plek, 'na vijf tikken staat elke fase nog precies waar hij stond', `${plek} -> ${r.plek}`);
-    // cijfers uit: dan bestaan de fases boven 5 niet meer als keuze, maar de
-    // instelling blijft staan (niet-destructief, zie countMaxStage)
-    await page.evaluate(() => { setKey = 'p1'; db.profiles.p1.settings.stageMax = 11; save(); renderSettings(); });
-    await page.waitForTimeout(150);
-    await page.click('#set-numerals .chip[data-v="off"]');
-    await page.waitForTimeout(200);
-    r = await page.evaluate(() => ({
-      chips: document.querySelectorAll('#set-fase .chip').length,
-      bewaard: db.profiles.p1.settings.stageMax,
-    }));
-    check(r.chips === 5, 'zonder cijfers worden er maar vijf fases aangeboden', 'chips=' + r.chips);
-    check(r.bewaard === 11, 'en de gekozen bovengrens blijft bewaard', 'stageMax=' + r.bewaard);
+    check(!(await page.$('#set-numerals')), 'er is geen losse schakelaar "Cijfers" meer: "tot" doet het', '');
     await ctx.close();
   }
 
-  /* ================= D2 · De start in rekenen ================= */
-  /* Het leerpad van rekenen heeft één lijn, "vanaf". Een tik op een stap zet hem
-     daar, en het spel speelt vanaf dan minstens die stap (leerStap). */
+  /* ================= D2 · Het leerpad van rekenen ================= */
+  /* Eén ladder met twee lijnen, zoals bij tellen: "vanaf" en "tot". "tot" is de
+     grens van plus en min, en staat aan het eind van een blok; daaronder staat
+     grijs het volgende blok. Een tik verhuist de dichtste lijn (zie
+     bindOefenChips). */
   {
     const { ctx, page } = await fresh();
     await open(page, 'p1', 'oefenen');
     await page.waitForTimeout(200);
     const pad = () => page.evaluate(() => {
-      const lijn = document.querySelector('#set-startstap .fl-lijn');
+      const rij = kant => { const l = document.querySelector(`#set-startstap .fl-lijn.${kant}`); return l ? +l.closest('.fl-rij').dataset.v : null; };
       const hier = document.querySelector('#set-startstap .chip.hier');
+      const s = db.profiles.p1.settings;
       return {
-        start: db.profiles.p1.settings.startStap,
+        vanafId: s.padVanaf, max: s.max,
         rijen: [...document.querySelectorAll('#set-startstap .chip')].map(c => +c.dataset.v),
+        namen: [...document.querySelectorAll('#set-startstap .chip .fl-naam')].map(n => n.textContent).join(','),
         voor: [...document.querySelectorAll('#set-startstap .chip.voor')].map(c => +c.dataset.v),
-        vanaf: lijn ? +lijn.closest('.fl-rij').dataset.v : null,
-        plek: [...document.querySelectorAll('#set-startstap .chip')].map(c => c.offsetTop).join(','),
-        lijnen: document.querySelectorAll('#set-startstap .fl-lijn').length,
+        grijs: [...document.querySelectorAll('#set-startstap .chip.uit')].map(c => +c.dataset.v),
+        vanaf: rij('boven'), tot: rij('onder'),
+        plek: [...document.querySelectorAll('#set-startstap .chip')].slice(0, 5).map(c => c.offsetTop).join(','),
         hier: hier ? +hier.dataset.v : null, pop: !!(hier && hier.querySelector('.fl-n svg')),
-        stap: leerStap(1, db.profiles.p1.settings),
+        nu: padNu(db.profiles.p1),
+        balk: !!document.getElementById('set-max'),
       };
     });
     let r = await pad();
-    check(r.rijen.join(',') === '1,2,3,4,5' && r.lijnen === 1 && r.vanaf === 1 && r.hier === 1 && r.pop,
-      'het leerpad toont vijf stappen, "vanaf" boven de eerste, en haar pop op stap 1', JSON.stringify(r));
+    check(r.namen === 'Tot 10,Tot 20,Over het tiental,Zoek het getal,Drie getallen,Getallen bouwen,Tientallen,Tot 100,Over het tiental'
+      && r.vanaf === 1 && r.tot === 5 && r.grijs.join() === '6,7,8,9' && r.hier === 1 && r.pop && !r.balk,
+      'tot 20: vijf rijen tussen "vanaf" en "tot", het blok tot 100 grijs eronder, haar pop op de eerste, geen balk "Getallen tot"', JSON.stringify(r));
     const plek = r.plek;
     await page.click('#set-startstap .chip[data-v="3"]');
     await page.waitForTimeout(200);
     r = await pad();
-    check(r.start === 3 && r.vanaf === 3 && r.voor.join(',') === '1,2' && r.lijnen === 1,
-      'een tik zet "vanaf" op die stap en dempt wat ervoor ligt', JSON.stringify(r));
-    check(r.plek === plek, 'en de stappen blijven staan waar ze stonden', `${plek} -> ${r.plek}`);
-    check(r.hier === 3 && r.stap === 3, 'en in wereld 1 speelt ze nu stap 3', JSON.stringify(r));
-    // tot 10: over het tiental valt weg, "vanaf" schuift naar de volgende stap
-    await page.click('#set-max .chip[data-v="10"]');
+    check(r.vanafId === 'brug20' && r.vanaf === 3 && r.voor.join() === '1,2' && r.tot === 5,
+      'een tik dicht bij "vanaf" zet "vanaf" daar en dempt wat ervoor ligt', JSON.stringify(r));
+    check(r.plek === plek && r.hier === 3 && r.nu === 'brug20', 'de rijen blijven staan, en ze speelt nu vanaf daar', JSON.stringify(r));
+    await page.click('#set-startstap .chip[data-v="7"]');
     await page.waitForTimeout(200);
     r = await pad();
-    check(r.rijen.join(',') === '1,2,4,5' && r.vanaf === 4 && r.start === 3,
-      'valt de gekozen stap weg, dan staat "vanaf" bij de volgende', JSON.stringify(r));
+    check(r.max === 100 && r.tot === 9 && !r.grijs.length && r.plek === plek,
+      'een tik op een grijze rij laat "tot" zakken tot onder zijn blok: tot 100', JSON.stringify(r));
+    check(await page.evaluate(() => db.profiles.p1.settings.wennen > 0), 'en ze went aan de grotere getallen (wennen)', '');
     await page.click('#set-startstap .chip[data-v="1"]');
     await page.waitForTimeout(200);
     r = await pad();
-    check(r.start === 1 && r.vanaf === 1 && r.lijnen === 1 && r.stap === 1, 'terug naar stap 1 zet de lijn weer bovenaan', JSON.stringify(r));
+    check(r.vanafId === null && r.vanaf === 1 && r.nu === 'tot10', 'terug naar de eerste rij zet "vanaf" weer bovenaan', JSON.stringify(r));
+    await page.click('#set-startstap .chip[data-v="5"]');
+    await page.waitForTimeout(200);
+    r = await pad();
+    check(r.max === 20 && r.tot === 5 && r.vanafId === null, 'een tik dicht bij "tot" zet hem terug aan het eind van dat blok', JSON.stringify(r));
+    /* De vinkjes: overslaan haalt de rij niet weg. Hij blijft staan,
+       doorgestreept, met zijn nummer, en niets schuift op. */
+    const vinkjes = () => page.evaluate(() => ({
+      vinkjes: [...document.querySelectorAll('#set-startstap .fl-vink')].map(v => v.matches('button') ? (v.classList.contains('aan') ? 'aan' : 'uit') : 'vast'),
+      over: [...document.querySelectorAll('#set-startstap .chip.overgeslagen')].map(c => +c.dataset.v),
+      nummers: [...document.querySelectorAll('#set-startstap .chip .fl-n')].map(n => n.textContent).join(','),
+      plek: [...document.querySelectorAll('#set-startstap .chip')].map(c => c.offsetTop).join(','),
+      chain3: db.profiles.p1.settings.chain3, start: db.profiles.p1.settings.padVanaf,
+      extra: !!document.getElementById('set-extra'),
+    }));
+    let v = await vinkjes();
+    check(v.vinkjes.join(',') === 'vast,vast,vast,aan,aan,vast,vast,vast,vast,vast' && !v.extra,
+      'elke rij een vinkje: stil bij de vaste, vol bij zoek en drie getallen; geen losse schakelaars meer', JSON.stringify(v));
+    const voor = v;
+    await page.click('#set-startstap .fl-vink[data-instelling="chain3"]');
+    await page.waitForTimeout(200);
+    v = await vinkjes();
+    check(v.chain3 === false && v.over.join(',') === '5' && v.vinkjes[4] === 'uit',
+      'een tik op het vinkje slaat drie getallen over: doorgestreept, niet weg', JSON.stringify(v));
+    check(v.plek === voor.plek && v.nummers === voor.nummers && v.start === voor.start,
+      'en er schuift niets op, en "vanaf" blijft waar hij stond', JSON.stringify({ voor, v }));
+    await page.click('#set-startstap .fl-vink[data-instelling="chain3"]');
+    await page.waitForTimeout(200);
+    v = await vinkjes();
+    check(v.chain3 === true && !v.over.length, 'nog een tik neemt hem weer mee', JSON.stringify(v));
     await ctx.close();
   }
 
@@ -414,19 +445,8 @@ function check(ok, label, detail) {
     });
     await open(page, 'p1', 'beheer');
     await page.waitForTimeout(150);
-    // drie tikken, en niet één: openklappen, de knop, en dan pas ja
-    // Niet op offsetParent of getClientRects kijken: in een dichte <details>
-    // houdt Chromium de opmaak van de inhoud gewoon staan (verborgen met
-    // content-visibility, niet met display:none) -- de knop heeft daar dus nog
-    // een maat en een rechthoek. checkVisibility() kijkt wél naar die
-    // verborgen-door-een-voorouder-vraag, en dat is precies wat hier telt.
-    const zichtbaar = (page, id) => page.evaluate(i =>
-      document.getElementById(i).checkVisibility({ contentVisibilityAuto: true, opacityProperty: true, visibilityProperty: true }), id);
-    let r = await page.evaluate(() => ({ open: document.getElementById('set-danger').open }));
-    r.knopZichtbaar = await zichtbaar(page, 'set-reset');
-    check(!r.open && !r.knopZichtbaar, 'de wisknop bestaat pas als een ouder erom vraagt', JSON.stringify(r));
-    await page.click('#set-danger summary');
-    await page.waitForTimeout(150);
+    // twee tikken: de rij, en dan pas ja
+    let r;
     await page.click('#set-reset');
     await page.waitForTimeout(150);
     r = await page.evaluate(() => ({
@@ -437,7 +457,8 @@ function check(ok, label, detail) {
     check(r.gevraagd, 'wissen vraagt eerst om bevestiging', 'geen venster');
     check(r.nogSterren === 2, 'en wist nog niets zolang er niet bevestigd is', 'sterren=' + r.nogSterren);
     check(/Anna/.test(r.tekst), 'de vraag noemt het kind bij naam', r.tekst);
-    check(/blijven staan/.test(r.tekst), 'en zegt ook wat er blíjft', r.tekst);
+    check(/Weg:/.test(r.tekst) && /Blijft:/.test(r.tekst), 'en zegt wat er weggaat én wat er blíjft', r.tekst);
+    check(/Geen back-up/.test(r.tekst), 'zonder back-up staat dat er ook bij', r.tekst);
     // eerst nee
     await page.click('#confirm-no');
     await page.waitForTimeout(150);
@@ -446,8 +467,6 @@ function check(ok, label, detail) {
     r = await page.evaluate(() => !!document.querySelector('#confirm-body .wie-blad'));
     check(r, 'en brengt je terug in haar blad', String(r));
     // en nu ja
-    await page.click('#set-danger summary');
-    await page.waitForTimeout(150);
     await page.click('#set-reset');
     await page.waitForTimeout(120);
     await page.click('#confirm-yes');
@@ -467,6 +486,19 @@ function check(ok, label, detail) {
     check(r.max === 100 && r.mode === 'typ',
       'en haar oefeninstellingen blijven staan -- precies wat de vraag belooft', JSON.stringify(r));
     check(r.buur.sterren === 0 && r.buur.naam === 'Bas', 'de andere ster is niet aangeraakt', JSON.stringify(r.buur));
+    // en een vergissing is nog even terug te draaien, vanuit de melding onderaan
+    r = await page.evaluate(() => {
+      const t = document.getElementById('toast'), k = t.querySelector('.toast-terug');
+      return { knop: !!k, onder: t.getBoundingClientRect().top > innerHeight / 2, tik: getComputedStyle(t).pointerEvents };
+    });
+    check(r.knop && r.onder && r.tik === 'auto', 'de melding staat onderaan, met een knop Terug', JSON.stringify(r));
+    await page.click('#toast .toast-terug');
+    await page.waitForTimeout(200);
+    r = await page.evaluate(() => ({
+      sterren: Object.keys(db.profiles.p1.stars).length, dia: db.profiles.p1.diamonds,
+      opgeslagen: Object.keys(JSON.parse(localStorage.getItem(LS_KEY)).profiles.p1.stars).length,
+    }));
+    check(r.sterren === 2 && r.dia === 99 && r.opgeslagen === 2, 'Terug zet de voortgang precies terug, ook in de opslag', JSON.stringify(r));
     await ctx.close();
   }
 
@@ -475,21 +507,13 @@ function check(ok, label, detail) {
     const { ctx, page } = await fresh();
     await open(page, 'p2', 'beheer');
     await page.waitForTimeout(150);
-    let r = await page.evaluate(() => ({ open: document.getElementById('set-danger-del').open }));
-    r.zichtbaar = await page.evaluate(() =>
-      document.getElementById('set-delete').checkVisibility({ contentVisibilityAuto: true, opacityProperty: true, visibilityProperty: true }));
-    check(!r.open && !r.zichtbaar, 'de verwijderknop zit achter een openklapper', JSON.stringify(r));
-    // de openklapper zelf noemt haar ook, en loopt mee als de naam verandert
-    r = await page.evaluate(() => document.querySelector('#set-danger-del summary').textContent);
-    check(/^Bas verwijderen/.test(r.trim()), 'de openklapper noemt de ster bij naam', r);
+    // de rij zelf noemt haar, en loopt mee als de naam verandert
+    let r = await page.evaluate(() => document.querySelector('#set-delete .gi-label').textContent);
+    check(/^Bas verwijderen/.test(r.trim()), 'de rij noemt de ster bij naam', r);
     await page.fill('#set-name', 'Bastiaan');
-    r = await page.evaluate(() => document.querySelector('#set-danger-del summary').textContent);
+    r = await page.evaluate(() => document.querySelector('#set-delete .gi-label').textContent);
     check(/^Bastiaan verwijderen/.test(r.trim()), 'en past zich aan als de naam verandert', r);
     await page.fill('#set-name', 'Bas');
-    await page.click('#set-danger-del summary');
-    await page.waitForTimeout(150);
-    r = await page.evaluate(() => document.querySelector('#set-danger-del .danger-zone .t').textContent);
-    check(/Bas/.test(r), 'het rode vlak noemt de ster die verdwijnt', r);
     await page.click('#set-delete');
     await page.waitForTimeout(150);
     r = await page.evaluate(() => ({
@@ -499,6 +523,16 @@ function check(ok, label, detail) {
     }));
     check(r.gevraagd && /Bas/.test(r.tekst) && r.n === 2,
       'verwijderen vraagt eerst, met de naam erin', JSON.stringify(r));
+    check(/Blijft: Anna/.test(r.tekst), 'en zegt wie er blijft', r.tekst);
+    await page.click('#confirm-yes');
+    await page.waitForTimeout(250);
+    r = await page.evaluate(() => ({ n: Object.keys(db.profiles).length, setKey }));
+    check(r.n === 1 && r.setKey === null, 'ja: Bas is weg en je staat op het overzicht', JSON.stringify(r));
+    await page.click('#toast .toast-terug');
+    await page.waitForTimeout(250);
+    r = await page.evaluate(() => ({ naam: db.profiles.p2 && db.profiles.p2.name, setKey,
+      kop: document.querySelector('#settings-wie .wie-naam').textContent }));
+    check(r.naam === 'Bas' && r.setKey === 'p2' && r.kop === 'Bas', 'Terug brengt Bas terug, op zijn eigen pagina', JSON.stringify(r));
     await ctx.close();
   }
 
@@ -510,7 +544,7 @@ function check(ok, label, detail) {
     const { ctx, page } = await fresh();
     await page.evaluate(() => {
       const a = db.profiles.p1, b = db.profiles.p2;
-      a.stars[1] = 3; a.stars[2] = 1; a.diamonds = 42; a.settings.max = 50;
+      a.stars[1] = 3; a.stars[2] = 1; a.diamonds = 42; a.settings.max = 100;
       b.stars[1] = 2; b.diamonds = 7; b.settings.track = 'count'; b.settings.stage = 3;
       db.sound = false;
       save();
@@ -539,7 +573,7 @@ function check(ok, label, detail) {
       nu: Object.keys(db.profiles).length,
     }));
     check(r.gevraagd, 'terugzetten vraagt eerst om bevestiging', 'geen venster');
-    check(/vervangt/i.test(r.tekst), 'en zegt dat het vervángt', r.tekst);
+    check(/Weg:.*Anna/.test(r.tekst), 'en zegt wat er verdwijnt', r.tekst);
     check(r.nu === 1, 'en verandert nog niets zolang er niet bevestigd is', 'n=' + r.nu);
     await page.click('#confirm-yes');
     await page.waitForTimeout(400);
@@ -553,7 +587,7 @@ function check(ok, label, detail) {
       geluid: db.sound, cur: cur,
     }));
     check(r.n === 2, 'terugzetten brengt de verdwenen ster terug', 'n=' + r.n);
-    check(r.anna.sterren[1] === 3 && r.anna.sterren[2] === 1 && r.anna.dia === 42 && r.anna.max === 50,
+    check(r.anna.sterren[1] === 3 && r.anna.sterren[2] === 1 && r.anna.dia === 42 && r.anna.max === 100,
       'met precies de sterren, diamanten en instellingen uit het bestand', JSON.stringify(r.anna));
     check(r.bas.track === 'count' && r.bas.stage === 3 && r.bas.dia === 7,
       'en dat geldt voor élke ster in het bestand', JSON.stringify(r.bas));
@@ -813,7 +847,7 @@ function check(ok, label, detail) {
     check(!/%/.test(r.tekst), 'het niveau-blok noemt geen percentage', r.tekst.slice(0, 80));
     check(r.balken === 0, 'en heeft geen voortgangsbalk', 'balken=' + r.balken);
     check(r.tekst.split(/\s+/).filter(Boolean).length < 40, 'en het leerpad blijft kort (geen vaste voetnoot)', r.tekst.slice(0, 120));
-    check(/Leerpad/.test(r.tekst) && /tot 20/.test(r.tekst) && /Kleine sommen/.test(r.bezig) && r.stap === 'step' && r.pop,
+    check(/Leerpad/.test(r.tekst) && /tot 20/.test(r.tekst) && /Tot 10/.test(r.bezig) && r.stap === 'step' && r.pop,
       'en zet op het leerpad waar het kind nu aan werkt, met haar pop', JSON.stringify(r));
     check(r.perf === 0.5, 'p.perf staat nog gewoon in de opslag', String(r.perf));
     // telmodus: dan is de fase de bezig-regel
@@ -847,25 +881,25 @@ function check(ok, label, detail) {
   }
 
   /* ================= N · Drie weergavekeuzes op één regel ================= */
-  /* "Voorwerpen / Stippen / Mix" beantwoorden samen één vraag, dus horen ze op
-     één regel. Met het icoon naast het woord paste dat niet (127px nodig, 105
-     beschikbaar) en viel Mix als enige op een tweede regel. Wat hier vastligt:
-     op de telefoonmaten drie gelijke kolommen met elk label op één regel, en op
-     iets onmogelijk smals wikkelt het netjes in plaats van de woorden te
-     knijpen. */
+  /* "Voorwerpen / Stippen / Mix" beantwoorden samen één vraag: één uit drie.
+     Dat is een balk, net als "Antwoord" en "Vragen per show" (zie oefenGroups),
+     met drie gelijke vakken op één regel. Wat hier vastligt: op de
+     telefoonmaten past elk woord in zijn vak, zonder af te breken of uit te
+     steken. */
   {
     const { ctx, page } = await fresh();
     await page.evaluate(() => { db.profiles.p1.settings.track = 'count'; save(); });
     const meet = () => page.evaluate(() => {
       const chips = [...document.querySelectorAll('#set-repr .chip')];
-      const tops = new Set(chips.map(c => Math.round(c.getBoundingClientRect().top)));
-      const regelhoogte = chips[0].querySelector('.mc-label').getBoundingClientRect().height;
       return {
-        n: chips.length, regels: tops.size,
+        n: chips.length, balk: !!document.querySelector('.oe-seg#set-repr'),
+        regels: new Set(chips.map(c => Math.round(c.getBoundingClientRect().top))).size,
         breedtes: chips.map(c => Math.round(c.getBoundingClientRect().width)),
-        hoogte: Math.round(chips[0].getBoundingClientRect().height),
-        labelsEenRegel: chips.every(c => c.querySelector('.mc-label').getBoundingClientRect().height <= regelhoogte + 1),
-        iconen: chips.every(c => !!c.querySelector('.mc-ico')),
+        // het woord zelf meten: in een gecentreerd vak steekt een te lang woord
+        // aan twee kanten uit, en dan ziet scrollWidth dat niet
+        past: chips.every(c => { const r = document.createRange(); r.selectNodeContents(c);
+          const t = r.getBoundingClientRect(), b = c.getBoundingClientRect();
+          return t.left >= b.left + 4 && t.right <= b.right - 4; }),
         gekozen: document.querySelectorAll('#set-repr .chip.on').length,
       };
     });
@@ -874,19 +908,11 @@ function check(ok, label, detail) {
       await open(page, 'p1', 'oefenen');
       await page.waitForTimeout(350);
       const r = await meet();
-      check(r.n === 3 && r.regels === 1, `op ${w}px staan de drie keuzes op één regel`, JSON.stringify(r));
+      check(r.n === 3 && r.balk && r.regels === 1, `op ${w}px staan de drie keuzes als balk op één regel`, JSON.stringify(r));
       check(new Set(r.breedtes).size === 1, `en ze zijn even breed op ${w}px`, JSON.stringify(r.breedtes));
-      check(r.labelsEenRegel, `zonder dat een woord afbreekt op ${w}px`, JSON.stringify(r));
-      check(r.hoogte >= 44, `en het raakvlak blijft comfortabel op ${w}px`, 'hoogte=' + r.hoogte);
-      check(r.iconen && r.gekozen === 1, `icoon en gekozen stand blijven op ${w}px`, JSON.stringify(r));
+      check(r.past, `en elk woord past in zijn vak op ${w}px`, JSON.stringify(r));
+      check(r.gekozen === 1, `met één gekozen op ${w}px`, JSON.stringify(r));
     }
-    // onmogelijk smal: liever wikkelen dan knijpen
-    await page.setViewportSize({ width: 280, height: 653 });
-    await open(page, 'p1', 'oefenen');
-    await page.waitForTimeout(350);
-    const smal = await meet();
-    check(smal.regels === 2 && smal.labelsEenRegel,
-      'op een onmogelijk smal venster wikkelt de rij i.p.v. de woorden', JSON.stringify(smal));
     await ctx.close();
   }
 
@@ -1015,25 +1041,28 @@ function check(ok, label, detail) {
     }
   }
 
-  /* ================= P · Voortgang: drie vragen ================= */
-  /* Voortgang beantwoordt eerst "gaat het goed?" en dan "wat komt er nu?". De
-     stand komt uit de laatste shows (p.recent), niet uit een totaal sinds het
-     begin: een kind dat het nu lastig heeft hoort oranje te krijgen, ook als
-     het vorige maand alles in één keer deed. De oogst staat dicht. */
+  /* ================= P · Voortgang: past het niveau? ================= */
+  /* Voortgang beantwoordt "waar staat ze, past het, moet ik iets doen?" in één
+     kaart, het leerpad: één label rechtsboven (uit de shows op haar stap van nu,
+     zie kern zaak ZH), één regel onder haar stap als er iets gebeurt, en de
+     tellers sinds het begin dicht onder Meer cijfers. */
   {
     const { ctx, page } = await fresh();
     const lees = async () => page.evaluate(() => ({
       kaarten: [...document.querySelectorAll('#settings-body .vg-kop')].map(e => e.textContent.trim()),
-      stand: document.querySelector('.vg-status').className,
-      kop: document.querySelector('.vg-status b').textContent,
+      labels: [...document.querySelectorAll('#settings-body .vg-tag')].map(e => e.dataset.stand),
+      onder: (document.querySelector('.vg-onder') || {}).textContent || '',
       meerOpen: document.querySelector('.vg-meer').open,
       nu: document.querySelectorAll('.vg-ladder .hier').length,
       tip: !!document.getElementById('grens-tip'),
+      oud: document.querySelectorAll('.vg-status, .vg-reeks').length,
     }));
     const met = async (recent, extra) => {
       await page.evaluate(([rc, ex]) => {
         const p = db.profiles.p1;
         p.recent = rc;
+        p.stap = rc.length ? { id: stapSleutel(p), n: rc.length } : undefined;
+        if (!rc.length) delete p.stap;
         if (ex) Object.assign(p.settings, ex);
         save();
       }, [recent, extra || null]);
@@ -1042,24 +1071,28 @@ function check(ok, label, detail) {
       return lees();
     };
     let r = await met([]);
-    check(/Hoe gaat het met/.test(r.kaarten[0]) && /Leerpad/.test(r.kaarten[1]) && /extra/.test(r.kaarten[2]),
-      'P · rekenen: status, leerpad, extra oefenen', JSON.stringify(r.kaarten));
-    check(/nieuw/.test(r.stand) && /Net begonnen/.test(r.kop), 'P · zonder shows: net begonnen', r.kop);
+    check(/Leerpad/.test(r.kaarten[0]) && r.kaarten.length === 1,
+      'P · rekenen, zonder lastige sommen: alleen het leerpad (en Meer cijfers)', JSON.stringify(r.kaarten));
+    check(r.oud === 0, 'P · geen aparte statuskaart meer', String(r.oud));
+    check(r.labels.join() === 'nieuw', 'P · zonder shows: één label, net begonnen', JSON.stringify(r.labels));
     check(r.meerOpen === false, 'P · "meer cijfers" staat dicht', String(r.meerOpen));
     check(r.nu === 1, 'P · er is precies één stap "nu" op het pad', String(r.nu));
     r = await met([3, 2, 3, 2, 3, 3, 2, 3]);
-    const bolletjes = await page.evaluate(() => [...document.querySelectorAll('.vg-reeks i')].map(i => i.className).join(','));
-    check(bolletjes === 'r3,r2,r3,r2,r3,r3,r2,r3', 'P · één bolletje per show, in volgorde', bolletjes);
-    check(/goed/.test(r.stand), 'P · drie en twee sterren door elkaar: de uitdaging zit goed', r.kop);
-    r = await met([3, 3, 3, 3, 3, 3, 3, 3, 3, 2]);
-    check(/vlot/.test(r.stand), 'P · bijna alles drie sterren: vlot', r.kop);
+    check(r.labels.join() === 'goed' && !r.onder, 'P · drie en twee sterren door elkaar: past goed, en dan geen regel eronder', JSON.stringify(r));
+    r = await met([3, 3, 3, 3, 3]);
+    check(r.labels.join() === 'vlot' && /zelf door/.test(r.onder) && !r.tip,
+      'P · alles drie sterren: gaat vlot, het pad schuift zelf door', JSON.stringify(r));
     r = await met([3, 3, 3, 3, 3, 3, 3, 0, 0, 0]);
-    check(/pittig/.test(r.stand), 'P · drie mislukte shows: pittig, ook na een goede reeks', r.kop);
+    check(r.labels.join() === 'pittig' && /makkelijker/.test(r.onder), 'P · mislukte shows: even pittig, en wat het spel doet', JSON.stringify(r));
+    // lastige sommen: dan is er een kaart
+    await page.evaluate(() => { db.profiles.p1.weak = { '8 + @ = 13': { w: 3, ans: 5 } }; save(); });
+    r = await met([3, 2, 3]);
+    check(r.kaarten.length === 2 && /extra/.test(r.kaarten[1]), 'P · met lastige sommen staat "Oefent extra op" er', JSON.stringify(r.kaarten));
     // de telmodus heeft geen sommenkaart
     r = await met([3, 3, 3, 3], { track: 'count', stage: 1, stageMax: 12, numerals: true });
-    check(r.kaarten.length === 2 && !/extra/.test(r.kaarten.join(' ')),
+    check(r.kaarten.length === 1 && !/extra/.test(r.kaarten.join(' ')),
       'P · in de telmodus geen sommenkaart', JSON.stringify(r.kaarten));
-    check(r.nu === 1, 'P · ook daar één stap "nu"', String(r.nu));
+    check(r.nu === 1 && r.labels.length === 1, 'P · ook daar één stap "nu" en één label', JSON.stringify(r));
     await ctx.close();
   }
 
@@ -1214,8 +1247,9 @@ function check(ok, label, detail) {
     const { ctx, page } = await fresh();
     await page.evaluate(() => {
       const p = db.profiles.p1;
-      for (let l = 1; l < WORLD_START[LEERSTAPPEN.length - 1] + 2; l++) p.stars[l] = 3;
-      p.level = WORLD_START[LEERSTAPPEN.length - 1] + 2;
+      for (let l = 1; l < WORLD_START[5] + 2; l++) p.stars[l] = 3;
+      p.level = WORLD_START[5] + 2;
+      p.pad = { rij: 'alles', shows: 0, goed: 0, klaar: LEERPAD.map(r => r.id) };   // voorbij de laatste rij
       delete db.backupAt; save();
     });
     await open(page, 'p1', 'voortgang');
@@ -1240,7 +1274,7 @@ function check(ok, label, detail) {
     r = await page.evaluate(() => ({ tab: setTab,
       eind: !!document.querySelector('#set-startstap .fl-rij.eind.hier'),
       knoppen: document.querySelectorAll('#set-startstap .chip').length }));
-    check(r.tab === 'oefenen' && oe === vg && r.eind && r.knoppen === 5,
+    check(r.tab === 'oefenen' && oe === vg && r.eind && r.knoppen === 9,
       'S · "Aanpassen ›" opent Oefeningen, en die zegt hetzelfde', JSON.stringify({ ...r, oe }));
     // de back-up: amber op het overzicht zolang er geen is, groen na een verse
     await open(page, null, null);

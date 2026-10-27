@@ -223,8 +223,13 @@ const BRUG = `globalThis.__api = {
   // het ouderrapport: de laatste shows
   RECENT_N, onthoudUitkomst, uitdagingStand, groeiMoment, wenPlafond, grensOmhoog, WEN_SHOWS, moeilijkheid,
   wereldAccent, planSpecials,
+  // het leerpad: de rijen, waar ze staat, en hoe ze verder gaat
+  LEERPAD, PAD_IDX, PAD_MIN_SHOWS, PAD_MAX_SHOWS, padRijen, padNu, padNa, padStand, padVanafRij, vraagInst, padUitOudeStap,
+  genTriple, genMissing, genChain, genBouwen,
   // de antwoordknoppen
   genQuestion, keuzeGrens, makeChoices,
+  // herhalen wat bewaard staat: alleen wat nog bij de instellingen past
+  pastNog, pickWeak, pickRefresh, buildQuestion, memSomDeck,
 };`;
 
 function laadApp(opties) {
@@ -282,6 +287,11 @@ function laadApp(opties) {
   ctx.scrollTo = stil; ctx.scrollY = 0; ctx.open = () => null;
   ctx.visualViewport = { width: 390, height: 844, addEventListener: stil };
   ctx.CSS = { supports: () => false };
+  /* Infinity en NaN zijn eigenschappen van het globale object, en dat is hier
+     de Proxy hieronder: zonder deze twee regels was Infinity in de app
+     undefined, en gaf Math.min(Infinity, 50) stil NaN in plaats van een fout. */
+  ctx.Infinity = Infinity;
+  ctx.NaN = NaN;
   ctx.window = ctx;
   ctx.globalThis = ctx;
   ctx.self = ctx;

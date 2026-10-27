@@ -43,7 +43,7 @@ function buzz(pattern) {
       en elke terugkeer of hij weer wil lopen.
 
    Wát een klankje betekent staat in SFX, op naam van de gebeurtenis en niet van
-   het scherm: 'answer.miss' hoort bij een hartje kwijt, waar dat ook gebeurt. De
+   het scherm: 'answer.miss' hoort bij een gemiste vraag, waar dat ook gebeurt. De
    sndX-functies onderaan zijn niets anders dan de oude namen voor die namen. */
 let actx = null, bus = null, audioStuk = false;
 const AANZET = 0.006;   // de helling aan het begin van elke noot, in seconden
@@ -205,10 +205,10 @@ const SFX = {
      GEEN tril, en dat is de buzzer van hierboven, maar dan voor de hand. Hier
      stond 35ms, en een goed antwoord trilt 30ms: wie de tablet vasthoudt voelde
      goed en "probeer nog eens" als dezelfde zoem. Nu voel je drie dingen: een
-     tik bij goed, niets bij de vriendelijke misser, een dubbele tik bij het
-     hartje dat weg is. */
+     tik bij goed, niets bij de vriendelijke misser, een dubbele tik bij de
+     gemiste vraag. */
   'answer.retry':   { noten: [[494, 0.15, 0, 'triangle', 0.09], [392, 0.22, 0.12, 'triangle', 0.08]] },
-  /* En dít is de twééde misser: het hartje is weg en het antwoord komt in beeld.
+  /* En dít is de twééde misser: de vraag is gemist en het antwoord komt in beeld.
      Tot nu toe klonk dat precies hetzelfde als "probeer nog eens", en daarmee had
      het enige echte gevolg in het spel geen enkel gewicht. Drie dalende noten in
      plaats van twee en een staart die blijft hangen: niet harder, wel zwaarder.
@@ -374,11 +374,12 @@ function nlVoice() {
   return null;
 }
 function hasSpeech() { return 'speechSynthesis' in window; }
-/* Mag deze ster een stem horen? In de telmodus altijd. In de rekenmodus alleen
-   met Voorlezen aan: zo verliest een kind dat net van tellen naar rekenen ging
-   niet in één klap de stem die alles voorlas (de telmodus-tip zet hem aan, zie
-   naarRekenen). De ouder zet hem uit op Oefeningen. */
-function stemAan(p) { return p.settings.track === 'count' || p.settings.voorlezen === true; }
+/* Mag deze ster een stem horen? Alleen in de telmodus: die is lees-vrij en
+   leunt op de stem. Een rekenkind leest de som zelf, ook net na de overstap
+   van tellen. Er stond een schakelaar Voorlezen op Oefeningen, en daarna een
+   wereld voorlezen na de overstap; allebei zijn bewust weggehaald -- zet de
+   stem niet terug in de rekenmodus zonder dat te vragen. */
+function stemAan(p) { return p.settings.track === 'count'; }
 /* Een rekensom als zin: "7 + 3 = @" -> "zeven plus drie is hoeveel?". Het
    sjabloon is dezelfde bron als wat er in beeld staat, dus ze kunnen niet
    uit elkaar lopen. Boven de tien leest de stem gewoon het cijfer voor.
@@ -409,7 +410,6 @@ function speak(text, opts) {
   opts = opts || {};
   // Voice hoort bij de lees-vrije telmodus; in de rekenmodus geen enkele gesproken
   // uitvoer (ook niet op gedeelde plekken als het trofee-feestje of de ster-status)
-  // -- behalve als de ouder Voorlezen aanzette, zie stemAan.
   const cp = cur ? P() : null;
   if (cp && cp.settings && !stemAan(cp)) { if (opts.onEnd) opts.onEnd(); return; }
   if (!db.sound || !hasSpeech() || !text) { if (opts.onEnd) opts.onEnd(); return; }
@@ -510,6 +510,11 @@ async function keepAwake() {
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
 document.addEventListener('pointerdown', keepAwake, { passive: true });   // fallback: browsers die een gebruikersgebaar eisen
+/* Het indrukken zien. Elke knop zakt bij :active een paar pixels in (de lip,
+   zie .btn en .num-btn), maar Safari op iPhone en iPad zet :active alleen op een
+   aanraking als er ergens een touchstart-luisteraar hangt -- zonder deze lege
+   veert er op een iPhone niets in, ook niet op het cijferblok. */
+document.addEventListener('touchstart', () => {}, { passive: true });
 keepAwake();
 
 /* ---- De geluidsschakelaar ----

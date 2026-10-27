@@ -298,19 +298,16 @@
      verdiende diamanten naartoe vliegen. Een maat kleiner dan op de rustpunten,
      zodat hij niet met de som concurreert. */
   .venue-aan .screen-header .diamond-badge { font-size: var(--tx-body); padding: 6px 13px; }
-  /* Hartjes en showvoortgang: samen één pilletje van dezelfde stof, zodat ze als
-     één ding lezen ("hoe sta ik ervoor") in plaats van als twee meters. */
+  /* De showvoortgang in een pilletje van dezelfde stof als ✕ en 💎 ernaast. */
   .venue-aan .game-progress-row {
     padding: 5px 14px 6px; border-radius: var(--r-pill);
     background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
   }
-  /* de showvoortgang is hier de hoofdzaak, de hartjes de bijzin */
-  .venue-aan .notes-left { font-size: var(--tx-label); opacity: .92; }
   .venue-aan .segbar > span { height: 8px; }
 
   /* ---- Eén rij ----
-     De kop van een show is één rij: ✕ | hartjes + voortgang | 💎. Hier stond
+     De kop van een show is één rij: ✕ | voortgang | 💎. Hier stond
      in het midden de wereld met "Show 7 / 8" eronder, en daaronder nog een rij
      voor het pilletje -- drie regels voor een kind dat niet leest tijdens het
      rekenen. Welke wereld zegt de zaal zelf al (de tekening erachter is die van
@@ -331,8 +328,15 @@
     justify-self: center; width: 100%; max-width: 380px; min-width: 0;
     height: 44px; box-sizing: border-box; padding: 0 16px; gap: 10px;
   }
-  #screen-game .screen-header .segbar { flex: 1; width: auto; max-width: 260px; }
-  #screen-game .screen-header .segbar > span { height: 9px; }
+  #screen-game .screen-header .game-progress-row { padding: 0 18px; }
+  #screen-game .screen-header .segbar { flex: 1; width: auto; max-width: 320px; gap: 5px; }
+  #screen-game .screen-header .segbar > span { height: 11px; }
+  /* Op een smal scherm worden acht vakjes van 11 hoog rondjes; even lager en
+     dichter blijven het korte streepjes, dezelfde vorm als op elk ander scherm. */
+  @media (max-width: 359px) {
+    #screen-game .screen-header .segbar { gap: 4px; }
+    #screen-game .screen-header .segbar > span { height: 8px; }
+  }
   /* een verborgen titel neemt geen vak meer in: zet de rest zelf op zijn plek */
   #screen-game .screen-header .game-progress-row { grid-column: 2; }
   #screen-game .screen-header .header-right, #screen-end .screen-header .header-right { grid-column: 3; }
@@ -801,6 +805,15 @@
     .sum-num { font-size: clamp(26px, 7vw, 38px); }
     .sum-eq .cgroup.big .cg-obj { font-size: clamp(19px, 5vw, 26px); }
   }
+  /* Een telefoon liggend: vier rijen cijfers pasten er niet, de rij ⌫ 0 ✔ viel
+     onder het scherm en moest je eerst naar boven schuiven. Hier dus twee rijen
+     van zes, 1-5 ⌫ en 6-0 ✔ -- de cijfers op volgorde, als een getallenlijn. De
+     knoppen staan in de opmaak in telefoonvolgorde; order zet ze hier om. */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .numpad { grid-template-columns: repeat(6, 1fr); width: min(56vw, 470px); gap: 8px; }
+    .num-btn { padding: 10px 0; font-size: 24px; }
+    .num-btn:is([data-n="6"], [data-n="7"], [data-n="8"], [data-n="9"], [data-n="0"], .ok) { order: 1; }
+  }
   /* Ruimte over? Dan groeit de sóm, niet de paspop. De paspop is decor; de
      vraagkaart is waar het kind naar moet kijken -- en die was op een telefoon
      (99px hoog) juist kleiner dan het decor ernaast (147px). */
@@ -838,6 +851,12 @@
   @media (min-width: 900px) and (min-height: 760px) {
     .show-stage { width: 240px; height: 202px; }
     .question-card { font-size: clamp(50px, 6vw, 68px); }
+  }
+  /* een tablet liggend: het cijferblok had telefoonmaat midden op een groot
+     scherm; nu is het even breed als de antwoordknoppen in de kiesmodus */
+  @media (min-aspect-ratio: 1/1) and (min-width: 900px) and (min-height: 700px) {
+    .numpad { width: min(40vw, 390px); gap: 12px; }
+    .num-btn { font-size: 32px; padding: 15px 0; }
   }
   /* Een tablet staand (768x1024, 834x1194). Daar paste de ster nét naast de som,
      dus zette de arena ze naast elkaar: links de pop, rechts in het midden de
@@ -933,6 +952,18 @@
   .toast.blauw, .praise.blauw { border-color: rgba(41,182,246,.8); box-shadow: var(--e-2), 0 0 20px rgba(41,182,246,.3); }
   .praise.blauw .praise-headline { color: var(--c-white); text-shadow: none; }
   .toast.docked { top: 98px; }
+  /* Met "↶ Terug" erin (meldMetTerug, na iets onomkeerbaars): onderaan, zodat
+     hij niet over de rij of de tabs valt waar je net naar kijkt, en aantikbaar --
+     alleen dan, de gewone melding laat elke tik door. Eén regel: de melding en
+     de knop naast elkaar, gescheiden door een streepje. */
+  .toast.onder { top: auto; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
+  .toast.met-knop { pointer-events: auto; padding-right: 8px; }
+  .toast.met-knop .toast-main { display: flex; align-items: center; white-space: nowrap; }
+  .toast-terug {
+    font-family: inherit; font-size: inherit; font-weight: 700; color: var(--gold-light);
+    background: none; border: none; border-left: 1px solid rgba(255,255,255,.3); cursor: pointer;
+    margin-left: 12px; padding: 6px 10px 6px 12px; min-height: 36px;
+  }
   .toast.show { display: flex; animation: toastIn .3s ease forwards; }
   @keyframes toastIn {
     from { opacity: 0; transform: translateY(-8px); }

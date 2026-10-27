@@ -34,13 +34,16 @@ function startLevel(lvl, eigenOvergang) {
   // Extra-uitdaging-vragen (zoek-het-getal / drie getallen) vooraf inroosteren op
   // vaste plekken; de gewone vragen worden per stuk gebouwd (incl. zwakke herhaling).
   // In de telmodus komen die niet voor -- daar bouwt genCount elke vraag.
-  const plan = count ? [] : planSpecials(p, s, s.perLevel, leerStap(lvl, s), goldIdx);
+  /* inst: de instellingen voor de vraagmaker, met haar rij op het leerpad erover
+     (zie vraagInst). Eén keer per show: de rij verandert pas in endLevel. */
+  const inst = count ? null : vraagInst(p);
+  const plan = count ? [] : planSpecials(p, inst, s.perLevel, wereldAccent(lvl, padNu(p)), goldIdx);
   // FASE 1: de publieksmeter is uit het spel gehaald. De teller zelf loopt stil door
   // (zie submitAnswer/endLevel): hij bepaalt nog altijd het applaus en de restbonus,
   // maar er staat geen balk meer op het scherm. G.fan/G.fanStep zijn daarmee interne
   // staat geworden -- bewust blijven staan i.p.v. de beloningen eruit te slopen.
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
-  G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
+  G = { lvl, inst, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
         klaarBijStart: (p.readyTrophies || []).slice(),
         missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0,
         uitslag: [] };   // per vraag: 'goed' | 'hint' | 'mis' -- zie showBalk
@@ -139,8 +142,8 @@ function renderQuestion() {
     if (G.count) { built = genCount(p); }             // telmodus: elke vraag lees-vrij
     else {
       const plan = G.plan[G.idx];
-      if (plan && plan.type === 'miss') { built = genMissing(s, G.lvl, p.perf, plan.op); G.missShown++; }
-      else if (plan && plan.type === 'chain') { built = genChain(s, G.lvl, p.perf); G.chainShown++; }
+      if (plan && plan.type === 'miss') { built = genMissing(G.inst, G.lvl, p.perf, plan.op); G.missShown++; }
+      else if (plan && plan.type === 'chain') { built = genChain(G.inst, G.lvl, p.perf); G.chainShown++; }
       else built = buildQuestion(p, G.lvl, G);
     }
     if (G.idx === G.goldIdx) built.gold = true;
@@ -156,7 +159,6 @@ function renderQuestion() {
   G.retried = false;
   // voortgang
   showBalk(G.idx);
-  $('notes-left').textContent = livesText();
   drawQuestion();
   vraagKomtIn($('question-card'), G.idx === 0);
   // antwoorden
@@ -167,7 +169,7 @@ function renderQuestion() {
     return;
   }
   if (G.mode === 'kies') {
-    const choices = makeChoices(q, keuzeGrens(q, s, G.lvl));
+    const choices = makeChoices(q, keuzeGrens(q, G.inst, G.lvl));
     area.innerHTML = '<div class="choices">' +
       choices.map(c => `<button class="choice-btn" data-v="${c}">${c}</button>`).join('') + '</div>';
     area.querySelectorAll('.choice-btn').forEach(b => {
@@ -176,9 +178,9 @@ function renderQuestion() {
   } else {
     area.innerHTML = `<div class="numpad">
       ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="num-btn" data-n="${n}">${n}</button>`).join('')}
-      <button class="num-btn del" data-n="del">⌫</button>
+      <button class="num-btn del" data-n="del" aria-label="Wissen">⌫</button>
       <button class="num-btn" data-n="0">0</button>
-      <button class="num-btn ok" data-n="ok">✔</button>
+      <button class="num-btn ok" data-n="ok" aria-label="Klaar">✔</button>
     </div>`;
     area.querySelectorAll('.num-btn').forEach(b => {
       b.onclick = () => numpadPress(b.dataset.n);
@@ -242,17 +244,18 @@ function kaartWiebelt(kaart) {
 }
 /* De balk van de show zegt ook HOE een vraag ging, want dat is waar de sterren
    op staan: drie sterren is geen enkele misser, ook geen eerste die je daarna
-   goed maakte. Hier werd elk beantwoord vakje gewoon goud, ook na een hint of
-   een gemiste vraag -- en dan eindigde een kind met drie volle hartjes op twee
-   sterren zonder te zien waarom (de hartjes tellen alleen de tweede misser).
-   Nu, met dezelfde vakjes:
+   goed maakte. Elk vakje zegt dus hoe die vraag ging:
      goud           in één keer goed
      half goud      goed na een hint
      leeg (rand)    gemist
    Een rijtje helemaal goud is meteen ook "3 op een rij", zonder meter erbij.
    En de gouden vraag heeft van bij de start een gouden rand om zijn vakje,
    zodat er iets is om naar uit te kijken; zodra hij aan de beurt is, is de
-   kaart zelf goud en gaat de rand eraf. */
+   kaart zelf goud en gaat de rand eraf.
+   Dit is de enige meter van de show. Er stonden drie hartjes naast, maar die
+   telden alleen de lege vakjes nog eens -- en spraken de balk tegen: drie
+   volle hartjes en toch twee sterren, omdat een hint wél een ster kost en geen
+   hartje. Een hart betekent elders in het spel ook iets anders (je wens). */
 function showBalk(done, hasNow) {
   const el = $('qprogress');
   renderSegBar(el, G.total, done, hasNow);
@@ -285,24 +288,32 @@ function drawQuestion() {
   // Overal hetzelfde, lees-vrije gouden-vraag-signaal (emoji voorop, ook in de rekenmodus).
   $('gold-banner').textContent = q.gold ? '🌟 3× 💎 🌟' : '';
   // "nog eens voorlezen" hoort alleen bij de lees-vrije telmodus (in de rekenmodus
-  // staat de som gewoon te lezen en wordt er niets uitgesproken)
-  // -- en bij een rekensom die voorgelezen wordt (Voorlezen, zie stemAan)
-  const lezen = !G.count && stemAan(P());
-  $('btn-replay').style.display = G.count || lezen ? 'flex' : 'none';
+  // staat de som gewoon te lezen en wordt er niets uitgesproken, zie stemAan)
+  $('btn-replay').style.display = G.count ? 'flex' : 'none';
   somVluchtWeg();   // een getal dat nog naar de vorige som vloog, hoort daar niet meer bij
   if (G.count) { drawCountQuestion(q); return; }
-  const shown = G.mode === 'typ' ? G.input : '?';
-  $('question-text').innerHTML = q.tmpl.replace('@', `<span class="q-blank">${shown}</span>`);
-  // drawQuestion tekent opnieuw bij elke cijfertik (typmodus): alleen de eerste
-  // keer per som voorlezen, anders begint de stem bij elk cijfer opnieuw
-  if (lezen && !q.voorgelezen) { q.voorgelezen = true; speak(somZin(q)); }
+  /* Typen begint met hetzelfde ?-vakje als kiezen, en de cijfers komen erin.
+     Leeg was het hier een dun streepje (een leeg vakje klapt dicht), en dan zag
+     de som er in de typmodus anders uit dan in de kiesmodus -- terwijl het
+     dezelfde vraag is. */
+  const shown = G.mode === 'typ' ? (G.input || '?') : '?';
+  // q.html: een vraag met meer dan tekst (getallen bouwen); anders de som zelf
+  $('question-text').innerHTML = (q.html || q.tmpl).replace('@', `<span class="q-blank">${shown}</span>`);
+  // ⌫ en ✔ slapen tot er iets getypt is: een ✔ die er klaar uitziet maar niets
+  // doet, is een knop die liegt (zie .numpad.heeft in het stijlblad)
+  const pad = document.querySelector('#answer-area .numpad');
+  if (pad) pad.classList.toggle('heeft', G.mode === 'typ' && G.input !== '');
 }
 function numpadPress(n) {
   if (!G || G.lock) return;
-  if (n === 'del') { G.input = G.input.slice(0, -1); }
+  if (n === 'del') { if (G.input === '') return; G.input = G.input.slice(0, -1); sndClick(); }
   else if (n === 'ok') { if (G.input !== '') submitAnswer(parseInt(G.input, 10), null); return; }
   else if (G.input.length < 3) { G.input += n; sndClick(); }
+  else return;
   drawQuestion();
+  // het getikte cijfer landt in het vakje: een kleine plop, zodat de tik
+  // ergens aankomt en niet alleen een getal verandert
+  if (n !== 'del') { const vak = document.querySelector('#question-text .q-blank'); if (vak) vak.classList.add('tikt'); }
 }
 document.addEventListener('keydown', e => {
   if (!G || G.lock) return;
@@ -672,7 +683,7 @@ function antwoordGoed(q, p, btnEl) {
      waar het kind een gelijke groep aantikt (1, 2, 4) is dit het enige moment
      dat het telwoord bij de hoeveelheid klinkt -- en precies die koppeling
      ("het laatste getal is hoeveel het er zijn") is waar tellen om draait.
-     speak() zwijgt zelf in de rekenmodus zonder Voorlezen (zie stemAan).
+     speak() zwijgt zelf in de rekenmodus (zie stemAan).
      Hij klinkt onderaan, via zegEnDan: de volgende vraag wacht erop. */
   /* Kort: alleen het getal. Met "Knap gedaan!" erachter duurde de lof zo'n twee
      seconden, en de volgende vraag wacht erop -- in de telmodus, waar daarna ook
@@ -715,16 +726,15 @@ function antwoordGoed(q, p, btnEl) {
 }
 /* Een fout antwoord (zachte, vriendelijke animatie). Wat élke misser doet staat
    hier; daarna splitst het in de eerste (een hint, nog een kans) en de tweede
-   (het hartje, en het antwoord). */
+   (de vraag is gemist, en het antwoord komt). */
 function antwoordFout(q, p, val, btnEl) {
   updatePerf(p, false, false);
   p.stats.wrong++;
   incWeak(p, q);                                  // deze som vaker laten terugkomen
   demoteLearned(p, q);                            // stond hij in onderhoud? dan is hij weer zwak
   G.streak = 0;
-  /* Twee missers, twee klankjes. De eerste kost nog geen hartje en levert een
-     hint op: dat is "niet die, probeer nog eens". De tweede kost het hartje en
-     onthult het antwoord. Tot nu toe klonken ze precies hetzelfde, en daarmee had
+  /* Twee missers, twee klankjes. De eerste levert een hint op: dat is "niet die,
+     probeer nog eens". De tweede maakt de vraag gemist en onthult het antwoord. Tot nu toe klonken ze precies hetzelfde, en daarmee had
      het enige echte gevolg in het spel geen gewicht.
      G.retried staat hier nog op de stand van vóór deze beurt -- hij gaat pas om in
      de eerste-misser-tak hieronder, dus dit leest de vorige poging en niet deze. */
@@ -740,7 +750,7 @@ function antwoordFout(q, p, val, btnEl) {
   if (!G.retried) eersteMisser(q, val, btnEl);   // G.lock blijft false → kind mag opnieuw antwoorden
   else tweedeMisser(q, p, btnEl);
 }
-// eerste misser: nog géén hartje kwijt, wél een tweede kans met een hint
+// eerste misser: nog niet gemist, wél een tweede kans met een hint
 function eersteMisser(q, val, btnEl) {
   G.retried = true;
   G.misses++;
@@ -751,7 +761,7 @@ function eersteMisser(q, val, btnEl) {
   if (G.count) { countMissSpeak(q, val); showToast('🤔', null, null, 'teken'); }   // lees-vrij: gesproken hint, geen tekst
   else toonHint(q, val, btnEl);
 }
-// tweede misser: hartje kwijt, antwoord tonen en door
+// tweede misser: de vraag is gemist, antwoord tonen en door
 function tweedeMisser(q, p, btnEl) {
   G.lock = true;
   stopSpot();
@@ -763,9 +773,13 @@ function tweedeMisser(q, p, btnEl) {
   else if (q.count) updateCountAcc(p, false, false);
   save();
   if (btnEl) btnEl.classList.add('bad');
+  /* Het vakje van deze vraag wordt nú een lege ring, en niet pas als de volgende
+     vraag komt. Hier brak vroeger een hartje; zonder hartjes is de balk de enige
+     plek die zegt dat deze vraag gemist is, dus hoort hij het op hetzelfde
+     moment te zeggen als de rode knop en het klankje. */
+  showBalk(G.idx + 1, false);
   // laat het juiste antwoord oplichten zodat het kind ziet wat het moest zijn
   if (G.count) {
-    loseHeart();
     // juiste hoeveelheid hardop meetellen, geen tekst -- en het 👉 pas als de stem
     // klaar is: een snelle tik brak het tellen anders halverwege af
     const show = G;
@@ -773,14 +787,13 @@ function tweedeMisser(q, p, btnEl) {
     return;
   }
   /* DE VOLGORDE na een tweede misser: eerst wat er fout ging (de rode knop, het
-     hartje, het klankje -- meteen), dan pas wat het had moeten zijn (ONTHUL), en
+     lege vakje, het klankje -- meteen), dan pas wat het had moeten zijn (ONTHUL), en
      pas daarna mag een tik verder (VERDER_NA). Dat stond allemaal op 0: zes
      dingen tegelijk, en een snelle tweede tik sloeg het antwoord over voordat
      het er stond.
 
      De goede knop wordt groen zonder te veren (.rustig): de veerpop en de ring
      zijn van een gewonnen antwoord, en een misser mag er niet uitzien als winst. */
-  loseHeart();
   hideToast();   // de hint van de eerste misser is nu niet meer waar; het 👉 komt straks
   const g = G;
   setTimeout(() => {
@@ -788,6 +801,9 @@ function tweedeMisser(q, p, btnEl) {
     if (G.mode === 'kies') {
       const cb = [...document.querySelectorAll('.choice-btn')].find(b => parseInt(b.dataset.v, 10) === q.ans);
       if (cb) cb.classList.add('good', 'rustig');
+      // de pijl van de eerste poging gold voor toen; nu staat het antwoord er
+      // zelf, en dan is rood (wat je koos) en groen (wat het was) genoeg
+      document.querySelectorAll('#answer-area .tegel-pijl').forEach(el => el.remove());
     }
     // Ook nu gaat de som dicht, maar rustig: geen vlucht, geen groen, geen feest.
     // Juist hier moet de goede som te zien zijn -- in de som zelf, en niet in een
@@ -824,7 +840,6 @@ function oepsGezicht() {
     oepsTimer = setTimeout(() => pop.classList.remove('oeps'), OEPS_DUUR);
   });
 }
-// het verloren hartje breekt even zichtbaar (💔 + schudden) voor het wit wordt
 /* De zaal reageert op een goed antwoord: het voetlicht trekt aan en de wereld
    erachter wordt een tel helderder. Eén klasse, twee opacity-overgangen in de CSS
    -- geen tweede confetti, geen extra geluid, niets dat over de antwoordknop en de
@@ -842,20 +857,6 @@ function zaalJuicht() {
   clearTimeout(zaalTimer);                        // snel achter elkaar goed: één gloed, geen stapel
   zaalTimer = setTimeout(() => z.classList.remove('juist'), 380);
 }
-function loseHeart() {
-  const el = $('notes-left');
-  const left = Math.max(0, 3 - G.errors);
-  el.textContent = '❤️'.repeat(left) + '💔' + '🤍'.repeat(Math.max(0, 2 - left));
-  el.classList.remove('shake');
-  void el.offsetWidth;
-  el.classList.add('shake');
-  setTimeout(() => { el.classList.remove('shake'); if (G) el.textContent = livesText(); }, 900);
-}
-// levens: 3 hartjes, verloren kansen worden een gebroken hartje
-function livesText() {
-  const left = Math.max(0, 3 - G.errors);
-  return '❤️'.repeat(left) + '🤍'.repeat(3 - left);
-}
 /* De show wacht op je. Een telefoon die op slot gaat of een kind dat even naar
    een andere app gaat, laat de show op Android en op een tablet nog een tijd
    doorlopen: de volgende som kwam dan zonder kijker, zijn spotlicht liep leeg
@@ -865,6 +866,12 @@ function livesText() {
    beeld is, en gaat dan gewoon verder.
    Eén wachter tegelijk: wie twee keer vraagt, krijgt alleen de laatste. */
 let zichtbaarWacht = null;
+/* Hoeveel gemiste vragen (twee keer fout) een show mag hebben. De show speelt
+   altijd uit, en pas aan het eind telt dit: MIS_GRENS of meer is "Bijna!", geen
+   ster. Hij stopte vroeger midden in de show bij de derde, met de hartjes als
+   aftelling; zonder die aftelling zou de show uit het niets ophouden, en een
+   kind dat het lastig heeft, ziet zo toch elk antwoord nog eens. */
+const MIS_GRENS = 3;
 function alsZichtbaar(fn) {
   if (zichtbaarWacht) document.removeEventListener('visibilitychange', zichtbaarWacht);
   zichtbaarWacht = null;
@@ -881,9 +888,8 @@ function nextStep() {
   hideToast();
   if (!G) return;
   if (document.hidden) { const g = G; alsZichtbaar(() => { if (G === g) nextStep(); }); return; }
-  if (G.errors >= 3) { endLevel(false); return; }
   G.idx++;
-  if (G.idx >= G.total) endLevel(true);
+  if (G.idx >= G.total) endLevel(G.errors < MIS_GRENS);
   else renderQuestion();
 }
 
@@ -960,19 +966,50 @@ function groeiMoment(p, g, voor) {
   else if (max > z.max) { z.max = max; nieuw = { pil: `⬆️ Nieuw: getallen tot ${max}!` }; }
   return nieuw;
 }
-function onthoudUitkomst(p, sterren) { p.recent = (p.recent || []).concat(sterren).slice(-RECENT_N); }
-/* Zit de uitdaging goed? Uit de laatste shows, in drie standen -- en met opzet
-   een uitspraak over de uitdaging, niet over het kind:
-     pittig  drie of meer mislukte shows -- het spel maakt het nu zelf lichter
-     vlot    (bijna) alles drie sterren -- tijd voor iets nieuws
+/* Welke stap van het leerpad speelt ze nu? Rekenen: de rij (padNu), tellen: de
+   fase. Een andere modus is ook een andere stap. Alleen voor het ouderrapport:
+   het zegt waar de shows in p.stap bij horen. */
+function stapSleutel(p) {
+  return p.settings.track === 'count' ? 'fase' + countLiveStage(p) : 'pad:' + padNu(p);
+}
+/* De uitkomst onthouden, met de stap waar hij bij hoort (stap = stapSleutel van
+   vóór de show: de show die haar een stap verder brengt telde nog op de oude).
+   p.stap = { id, n }: hoeveel van de laatste shows op deze stap gespeeld zijn. */
+function onthoudUitkomst(p, sterren, stap) {
+  p.recent = (p.recent || []).concat(sterren).slice(-RECENT_N);
+  if (stap == null) return;
+  if (!p.stap || p.stap.id !== stap) p.stap = { id: stap, n: 0 };
+  p.stap.n++;
+}
+/* Past het niveau? Uit de laatste shows OP DE STAP WAAR ZE NU STAAT, in drie
+   standen -- en met opzet een uitspraak over de uitdaging, niet over het kind:
+     pittig  mislukte shows (twee, of drie op tien) -- het spel maakt het nu zelf lichter
+     vlot    (bijna) alles drie sterren -- het pad schuift zelf door, of er is een tip
      goed    de rest: een mengeling van twee en drie sterren
-   Onder de vier shows zegt het nog niets (null). */
+
+   Alleen deze stap, en niet gewoon de laatste tien: het leerpad schuift door
+   zodra ze een rij kan (padNa), en dan waren de laatste tien shows nog bijna
+   allemaal van de makkelijkere rij. Dan stond er "gaat vlot" boven de stap die
+   ze net moeilijker vindt. Onder de STAND_MIN shows op deze stap zegt het nog
+   niets (null); Voortgang zegt dan "nieuwe stap".
+
+   Een save van vóór p.stap weet niet bij welke stap zijn shows horen; die kijkt
+   zoals eerst naar de laatste tien, vanaf vier shows. */
+const STAND_MIN = 2;
 function uitdagingStand(p) {
   const r = p.recent || [];
-  if (r.length < 4) return null;
-  const drie = r.filter(v => v >= 3).length, mis = r.filter(v => v === 0).length;
-  const stand = mis >= 3 ? 'pittig' : (drie / r.length >= 0.8 ? 'vlot' : 'goed');
-  return { stand, n: r.length, drie, mis };
+  let w;
+  if (!p.stap) {
+    if (r.length < 4) return null;
+    w = r;
+  } else {
+    const n = p.stap.id === stapSleutel(p) ? Math.min(p.stap.n, r.length) : 0;
+    if (n < STAND_MIN) return null;
+    w = r.slice(-n);
+  }
+  const drie = w.filter(v => v >= 3).length, mis = w.filter(v => v === 0).length;
+  const stand = mis >= Math.max(2, Math.ceil(w.length * 0.3)) ? 'pittig' : (drie / w.length >= 0.8 ? 'vlot' : 'goed');
+  return { stand, n: w.length, drie, mis };
 }
 function showStars(g) {
   if (g.misses === 0) return 3;
@@ -1045,13 +1082,15 @@ function endLevel(success) {
   const lvl = G.lvl;
   applyRampUpdates(p, G);   // frequentie-trap van de extra uitdagingen bijstellen
   const faseVoor = G.count ? countLiveStage(p) : 0;   // voor groeiMoment
+  const stapVoor = stapSleutel(p);                     // de stap waar deze show bij hoort (zie onthoudUitkomst)
   if (G.count) {
     advanceCountStage(p, success, success && showStars(G) === 3);   // telmodus: fase mee laten klimmen/zakken
     telPlafondTel(p, success ? showStars(G) : 0);
   }
-  onthoudUitkomst(p, success ? showStars(G) : 0);   // voor de stand in Voortgang (beide takken hieronder bewaren)
+  onthoudUitkomst(p, success ? showStars(G) : 0, stapVoor);   // voor de stand in Voortgang (beide takken hieronder bewaren)
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;   // een show verder gewend aan de grens
-  if (!G.count && success) telGrensDrie(p, lvl, showStars(G));   // voor de grenstip (zie grensDrieSterren)
+  if (!G.count && success) telGrensDrie(p, showStars(G));   // voor de grenstip (zie grensDrieSterren)
+  if (!G.count) padNa(p, success ? showStars(G) : 0);   // een show verder op haar rij van het leerpad
   /* Wat er pas ná het eindscherm gevierd wordt (zie de staart van deze
      functie): een wereld die net uit of perfect werd. Bij een mislukte show
      blijft het leeg. */
@@ -1242,8 +1281,8 @@ function endLevel(success) {
      trofee, het wereldfeest -- maar het eindscherm was alleen tekst, en dan zegt
      het een kind dat nog niet leest alleen iets via de sterren. Eén korte zin,
      ná de laatste toon (EINDE.beloning, of de stille klok) zodat hij er niet
-     doorheen praat. speak() zwijgt zelf in de rekenmodus (tenzij Voorlezen aan
-     staat, zie stemAan) en met geluid uit.
+     doorheen praat. speak() zwijgt zelf in de rekenmodus (zie stemAan) en met
+     geluid uit.
 
      Niet als er een wereldfeest volgt: dat leest zijn eigen zin voor, en een
      nieuwe zin breekt de vorige af. Dan is de wereld het nieuws. */
