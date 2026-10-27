@@ -164,7 +164,7 @@
      van de acht, en alleen zolang de wereldschat nog te halen is. Geen animatie
      (de kaart heeft er al genoeg die iets betekenen), geen kleurvlak, geen tweede
      staat op de halte: een cadeautje naast het eindpunt van de route, meer niet.
-     Zodra ze hem heeft is hij weg -- zie renderMap. */
+     Zodra ze hem heeft is hij weg -- zie renderTourMap. */
   .tour-stop .stop-schat {
     position: absolute; z-index: 2; left: 50%; top: -2.4cqw; margin-left: 2.6cqw;
     width: 6.4cqw; height: 6.4cqw;
@@ -190,7 +190,7 @@
             drop-shadow(0 0.3cqw 0 var(--halte-sticker)) drop-shadow(0 -0.3cqw 0 var(--halte-sticker))
             drop-shadow(0 0.35cqw 0 var(--ster-lip));
   }
-  /* De prijs van de wereld als silhouet in plaats van het 🎁 (zie renderMap): een
+  /* De prijs van de wereld als silhouet in plaats van het 🎁 (zie renderTourMap): een
      podium met een donkere hoed erop, met dezelfde stickerrand. Iets breder dan
      het cadeautje en wat hoger, zodat hij naast de halte staat en niet erop. */
   .tour-stop .stop-schat.met-prijs {
@@ -200,7 +200,7 @@
             drop-shadow(0 0.5cqw 0 var(--ster-lip));
   }
   .tour-stop .stop-schat.met-prijs .wereldprijs.geheim .wp-schat { filter: brightness(0) opacity(.85); }
-  /* Hij staat er alleen vóór de laatste show (zie renderMap), en komt dan op met
+  /* Hij staat er alleen vóór de laatste show (zie renderTourMap), en komt dan op met
      de ene overshoot van de app, ná de haltes: "deze wint hem". Met scale en niet
      met transform, zodat niets anders aan zijn stand hoeft te rekenen. */
   .tour-stop .stop-schat { animation: prijsOp .45s var(--ease-plop) .55s backwards; }

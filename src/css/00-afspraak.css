@@ -214,7 +214,7 @@
     /* ---- Purple: answer-input controls (choice-btn / num-btn), kept distinct ---- */
     --purple-input-top: #8e5fd6; --purple-input-bottom: #5e35b1; --purple-input-shadow: #311b92;
     /* ---- Purple: misc singles, kept distinct ---- */
-    --purple-deep: #7b1fa2; --purple-golden-accent: #6a1b9a; --purple-ink: #32115f;
+    --purple-deep: #7b1fa2; --purple-golden-accent: #6a1b9a;
 
     /* ---- De speellaag op de wereldkaart -------------------------------------
        Eén set waarden voor álle werelden. De tekening eronder is per wereld
@@ -364,22 +364,14 @@
     /* ---- Gray: neutral / locked / unavailable ---- */
     --gray-top: #90a4ae; --gray-bottom: #607d8b; --gray-shadow: #37474f;
 
-    /* ---- Blue: active / selected / info ---- */
-    --blue-fill-top: #38bdf8; --blue-fill-bottom: #6ad3ff; --blue-text: #8fd6ff;
-    --blue-ring: rgba(143,214,255,.2);
-
     /* ---- Pink accents (kast bar / stat bar / trophy pop) ---- */
-    --pink-accent: #ff80ab; --pink-hot: #ff4081; --pink-deep: #f50057; --pink-light: #ffd6f4;
+    --pink-hot: #ff4081; --pink-light: #ffd6f4;
 
     /* ---- "Paper" theme: parent-facing screens (settings / modal) ---- */
     --paper-ink: #3a0f56; --paper-ink-muted: #6b5b7a; --paper-border: #ecdcf6; --paper-tint: #faf6ff;
     --paper-muted-bg: #eceaef; --paper-muted-text: #9a90a6;
-    /* Het vel zelf, zwevend boven de schil: bijna wit, maar met een zweem van de
-       paarse achtergrond erdoorheen, plus de fijne ring die er altijd omheen
-       hoort. Gebruikt door het instellingen-paneel onder het tandwiel; de vaste
-       kaarten (.set-card) blijven vol wit -- die liggen op het scherm en zweven
-       er niet boven. */
-    --paper-surface: rgba(255,255,255,.96); --paper-ring: rgba(142,36,170,.14);
+    /* De fijne ring die om een papieren vel hoort. */
+    --paper-ring: rgba(142,36,170,.14);
     /* Hetzelfde papier, maar dan mét de warme kant van de app erin. Voor het ene
        vel dat NIET in het ouderdeel staat: het maakformulier, dat een kind ziet
        en dat op de sterrenpoort ligt. Vol wit (#fff) is daar een gat in de
@@ -392,7 +384,7 @@
        niet op een tekening, en daar is koel papier juist goed. */
     --paper-warm: #fffaf3;
     --lavender-wash: #f3e9ff; --lavender-wash-2: #f4e9fb; --lavender-wash-3: #efe4f7;
-    --muted-lavender-text: #cfc6df; --muted-text-2: #d8d0e4; --muted-text-3: #e1e5ea; --lavender-text: #e6d6ff;
+    --lavender-text: #e6d6ff;
 
     /* ---- Danger zone / practice chips (parent settings) ---- */
     --danger-bg: #fff0f0; --danger-border: #f2b2b2; --danger-title: #b71c1c; --danger-desc: #9a4a4a;
@@ -400,9 +392,9 @@
     /* Voortgang-tab: twee betekenissen, twee kleuren. Er stonden zes tegels in
        zes kleuren zonder dat de kleur iets zei -- decoratie op juist het scherm
        dat verder het strakst is. Nu: paars = hoeveel er gedaan is, groen = hoe
-       goed het ging. --stat-green is de enige die overblijft naast --purple-*. */
-    --stat-green: #2e9e4f;
-    /* en als vlak: de regel "laatste back-up" in de back-upkaart (zie .backup-stand) */
+       goed het ging. --stat-green-* is de enige die overblijft naast --purple-*:
+       als vlak voor een goede status (.vg-status.goed) en voor de regel "laatste
+       back-up" in de back-upkaart (zie .backup-stand). */
     --stat-green-bg: #eaf7ee; --stat-green-rand: #b9e2c6; --stat-green-tekst: #22663a;
 
     /* (Hier stond de --glass-*-familie: eenentwintig tokens van de vorm
@@ -924,7 +916,7 @@
     --podium-rand: 10px;
     --podium-groei: 1.08;
     /* De verhouding van een wereldtekening. Stond op .tour-map; zie de noot daar.
-       Dit is de terugval voor het eerste beeldje -- renderMap zet dezelfde twee
+       Dit is de terugval voor het eerste beeldje -- renderTourMap zet dezelfde twee
        op <html> zodra hij tekent. */
     --art-w: 1215;
     --art-h: 2160;

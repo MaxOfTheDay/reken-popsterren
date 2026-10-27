@@ -755,7 +755,6 @@
     50%      { transform: scale(1.25) rotate(-8deg); }
   }
   @media (prefers-reduced-motion: reduce) { .diamond-badge.wens-klaar .wens-mini { animation: none; } }
-  @keyframes pulseBtn { 0%,100% { transform: scale(1); } 50% { transform: scale(1.09); } }
 
 
   /* ---- Het podium -----------------------------------------------------------

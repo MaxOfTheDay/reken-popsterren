@@ -14019,7 +14019,7 @@ function renderNewStar() {
   const keep = scr ? scr.scrollTop : 0;
   /* De twee zwaarste keuzes ("wie ben je?" en "hoe speel je?") als twee volle
      helften met het icoon boven het woord: exact het onderdeel dat het ouderdeel
-     voor dezelfde vragen gebruikt (zie modeChip in oefenenPanelHtml). Ze stonden
+     voor dezelfde vragen gebruikt (zie half in oefenenPanelHtml). Ze stonden
      hier als gewone pillen -- dezelfde vraag, twee verschillende bedieningen. */
   const halfChip = (v, ico, label, on) => `<button class="chip gestapeld${on ? ' on' : ''}" data-v="${v}">`
     + `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${label}</span></button>`;
@@ -14255,7 +14255,7 @@ function closeSettings() {
   save();
   goProfiles();
 }
-/* ← linksboven, en de terugknop van Android (zie backAction): van één ster
+/* ← linksboven, en de terugknop van Android (zie backTarget): van één ster
    terug naar het overzicht, en van het overzicht het ouderdeel uit. */
 function ouderTerug() {
   if (!setKey || !db.profiles[setKey]) return closeSettings();
@@ -14674,7 +14674,7 @@ function oefenGroups(s, pfx, p) {       // -> [{ ico, title, sub, secundair?, ht
 
      Er is geen schakelaar en geen keuzevenster: je tikt op de stap zelf. Rekenen
      heeft alleen "vanaf", dus daar verhuist die lijn. Tellen heeft er twee, en
-     dan verhuist de dichtstbijzijnde (zie zetFase in bindOefenChips). Hiervoor
+     dan verhuist de dichtstbijzijnde (zie de faseladder in bindOefenChips). Hiervoor
      stond de telstart in een openklapper "Begint je kind hoger?" met twaalf
      losse nummers: een tweede lijst van dezelfde fases.
 

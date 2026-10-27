@@ -250,7 +250,7 @@
 
     --purple-input-top: #8e5fd6; --purple-input-bottom: #5e35b1; --purple-input-shadow: #311b92;
 
-    --purple-deep: #7b1fa2; --purple-golden-accent: #6a1b9a; --purple-ink: #32115f;
+    --purple-deep: #7b1fa2; --purple-golden-accent: #6a1b9a;
 
 
 
@@ -401,21 +401,13 @@
     --gray-top: #90a4ae; --gray-bottom: #607d8b; --gray-shadow: #37474f;
 
 
-    --blue-fill-top: #38bdf8; --blue-fill-bottom: #6ad3ff; --blue-text: #8fd6ff;
-    --blue-ring: rgba(143,214,255,.2);
-
-
-    --pink-accent: #ff80ab; --pink-hot: #ff4081; --pink-deep: #f50057; --pink-light: #ffd6f4;
+    --pink-hot: #ff4081; --pink-light: #ffd6f4;
 
 
     --paper-ink: #3a0f56; --paper-ink-muted: #6b5b7a; --paper-border: #ecdcf6; --paper-tint: #faf6ff;
     --paper-muted-bg: #eceaef; --paper-muted-text: #9a90a6;
 
-
-
-
-
-    --paper-surface: rgba(255,255,255,.96); --paper-ring: rgba(142,36,170,.14);
+    --paper-ring: rgba(142,36,170,.14);
 
 
 
@@ -428,7 +420,7 @@
 
     --paper-warm: #fffaf3;
     --lavender-wash: #f3e9ff; --lavender-wash-2: #f4e9fb; --lavender-wash-3: #efe4f7;
-    --muted-lavender-text: #cfc6df; --muted-text-2: #d8d0e4; --muted-text-3: #e1e5ea; --lavender-text: #e6d6ff;
+    --lavender-text: #e6d6ff;
 
 
     --danger-bg: #fff0f0; --danger-border: #f2b2b2; --danger-title: #b71c1c; --danger-desc: #9a4a4a;
@@ -437,7 +429,7 @@
 
 
 
-    --stat-green: #2e9e4f;
+
 
     --stat-green-bg: #eaf7ee; --stat-green-rand: #b9e2c6; --stat-green-tekst: #22663a;
 
@@ -1300,7 +1292,6 @@
     margin: 10px 0 4px;
     text-align: center;
   }
-  .subtitle { opacity: .92; margin-bottom: 18px; text-align: center; font-size: var(--tx-body); font-weight: 500; }
 
   .btn {
     font-family: inherit; font-size: var(--tx-sub); font-weight: 600; color: var(--purple-shadow);
@@ -2780,7 +2771,6 @@
     50%      { transform: scale(1.25) rotate(-8deg); }
   }
   @media (prefers-reduced-motion: reduce) { .diamond-badge.wens-klaar .wens-mini { animation: none; } }
-  @keyframes pulseBtn { 0%,100% { transform: scale(1); } 50% { transform: scale(1.09); } }
 
 
 
@@ -4902,22 +4892,6 @@
 
 
 
-
-
-
-
-
-  .hscroll-fade { --fade: 34px; }
-  .hscroll-fade.can-right { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - var(--fade)), transparent 100%);
-    mask-image: linear-gradient(90deg, #000 calc(100% - var(--fade)), transparent 100%); }
-  .hscroll-fade.can-left { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade));
-    mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade)); }
-  .hscroll-fade.can-left.can-right { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade), #000 calc(100% - var(--fade)), transparent 100%);
-    mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade), #000 calc(100% - var(--fade)), transparent 100%); }
-
-
-
-
   .fly-badge { position: fixed; z-index: 90; font-size: 40px; pointer-events: none;
     filter: drop-shadow(0 3px 10px rgba(0,0,0,.55)); }
   .tour-road-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
@@ -5021,16 +4995,8 @@
 
   .world-pick:active, .world-pick.bezig { transform: scale(.96); filter: brightness(1.15); }
   @media (prefers-reduced-motion: reduce) { .world-pick:active, .world-pick.bezig { transform: none; } }
-  .wp-here, .wp-cta { display: flex; align-items: center; justify-content: center; white-space: nowrap; }
+  .wp-cta { display: flex; align-items: center; justify-content: center; white-space: nowrap; }
 
-
-
-
-
-
-
-  .wp-here { flex: 1 1 auto; min-width: 0; gap: 6px; padding: 0 8px 0 14px; }
-  .wp-here-naam { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .wp-cta { flex: none; }
 
 
@@ -8382,7 +8348,6 @@
     min-height: 44px; min-width: 46px; flex: none;
   }
   .tab-btn .tab-ico { font-size: 21px; line-height: 1; filter: var(--emoji-schaduw); }
-  .tab-label { white-space: nowrap; }
   .tab-btn:active { transform: scale(.95); }
 
 
@@ -9178,17 +9143,6 @@
   .set-field + .set-field { margin-top: 15px; }
   .set-field .lbl { font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink); }
   .set-card .note, .set-field .note { font-size: var(--tx-klein); color: var(--paper-ink-muted); font-weight: 500; }
-
-
-
-
-
-
-
-  .set-field .hulp {
-    font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted);
-    line-height: 1.3; margin-top: -4px;
-  }
   .chip-row { display: flex; flex-wrap: wrap; gap: 7px; }
 
 
@@ -11012,61 +10966,11 @@ function confettiBurst(cx, cy, n, hero) {
 
 
 
-function updateFades(el) {
-
-
-
-  if (!el.clientWidth) return;
-  const max = el.scrollWidth - el.clientWidth;
-  el.classList.toggle('can-left', el.scrollLeft > 2);
-  el.classList.toggle('can-right', el.scrollLeft < max - 2);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 const RAF_WACHT = new Set();
 function rafKlem(fn) {
   if (RAF_WACHT.has(fn)) return;
   RAF_WACHT.add(fn);
   requestAnimationFrame(() => { RAF_WACHT.delete(fn); fn(); });
-}
-
-
-
-
-
-
-
-function fadesVolgen(el) {
-  let wacht = false;
-  const later = () => {
-    if (wacht) return;
-    wacht = true;
-    requestAnimationFrame(() => { wacht = false; updateFades(el); });
-  };
-  el.onscroll = later;
-  if (!el._fadeMaat && typeof ResizeObserver === 'function') {
-    el._fadeMaat = new ResizeObserver(later);
-    el._fadeMaat.observe(el);
-  }
 }
 
 
