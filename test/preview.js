@@ -31,6 +31,7 @@ const scene = require('./scene.js');
 const merk = require('./merk.js');
 const versie = require('./versie.js');
 const bouwer = require('./bouw.js');
+const { allesDraaien } = require('./suites.js');
 // Alleen om bij het starten al om te vallen als de studiopagina stuk is; de
 // pagina zelf wordt per verzoek opnieuw ingelezen (zie de route /studio).
 require('./hub.js');
@@ -567,28 +568,13 @@ function git(args) {
    (process.execPath) krijgt elk testbestand rechtstreeks. Geen .cmd, geen
    PATH, geen shell, geen aanhalingstekens, en op elk platform hetzelfde pad.
 
-   De lijst komt uit test/*.test.js en niet uit package.json: dat scheelt het
-   uit elkaar parseren van een `a && b && c`-regel, het levert precies dezelfde
-   drie bestanden op, en een nieuw testbestand doet vanzelf mee. `npm test`
-   blijft daarnaast gewoon werken -- dit is alleen hoe de studio ze aanroept. */
+   Het draaien zelf staat in test/suites.js, dat `npm test` ook gebruikt: de
+   lijst komt uit test/*.test.js, dus een nieuw testbestand doet vanzelf mee,
+   overal. Hier staat alleen nog de vraag of er überhaupt testbestanden zijn. */
 function testBestanden() {
   return fs.readdirSync(path.join(ROOT, 'test'))
     .filter(n => n.endsWith('.test.js')).sort()
     .map(n => path.join(ROOT, 'test', n));
-}
-function eenTest(bestand) {
-  return new Promise((ok, fout) => {
-    execFile(process.execPath, [bestand], { cwd: ROOT, maxBuffer: 2e7, timeout: 6e5 },
-      (e, uit, err) => {
-        if (!e) return ok(String(uit));
-        /* e.message als terugval, net als in git() hierboven. Zonder die terugval
-           gaf precies de storing die híer zat (geen uitvoer, alleen een foutcode)
-           een melding van één regel zonder enige reden erbij -- en dan zoek je de
-           fout in je eigen werelden in plaats van in deze poort. */
-        const uitleg = String(uit || err).trim() || String(e.message).trim();
-        fout(new Error(path.basename(bestand) + '\n\n' + uitleg));
-      });
-  });
 }
 function browserTestsKunnen() {
   for (const m of ['playwright', 'playwright-core']) {
@@ -596,20 +582,19 @@ function browserTestsKunnen() {
   }
   return false;
 }
-/* Eén voor één en stoppen bij de eerste die valt -- net wat `&&` in package.json
-   doet, zodat je de eerste echte fout ziet en niet de ruis erna. */
+/* Alle suites, op dezelfde manier als `npm test` (zie test/suites.js): eerst de
+   keuring, dan de browsersuites een paar tegelijk, en wat omvalt nog één keer
+   alleen. Eén voor één duurde dit een kwartier, en één wiebelende controle
+   hield dan een hele wereld tegen. Een suite die pas de tweede keer slaagt,
+   telt als geslaagd maar wordt wel gemeld. */
 async function runTests() {
-  const bestanden = testBestanden();
-  if (!bestanden.length) throw new Error('geen testbestanden gevonden in test/');
-  let alles = '';
-  for (const b of bestanden) {
-    try { alles += await eenTest(b); }
-    catch (e) {
-      throw new Error('de testen falen — er is niets vastgelegd\n\n'
-        + String(e.message).split('\n').slice(-25).join('\n'));
-    }
+  if (!testBestanden().length) throw new Error('geen testbestanden gevonden in test/');
+  const r = await allesDraaien({ wortel: ROOT, log: regel => console.log('  ' + regel) });
+  if (!r.ok) {
+    throw new Error('de testen falen — er is niets vastgelegd\n\n'
+      + r.tekst.split('\n').slice(-25).join('\n'));
   }
-  return alles;
+  return r.wiebel.length ? 'pas bij de tweede keer geslaagd: ' + r.wiebel.join(', ') : '';
 }
 async function commitAll(bericht, res) {
   const zeg = (code, tekst) => {
@@ -908,8 +893,8 @@ function keuring() {
    merkbeeld vervangen": de meester is dan al weggeschreven, en hieruit rollen de
    bestanden die de app werkelijk laadt.
 
-   Draait als een los proces, met dezelfde node als deze server -- zie eenTest()
-   voor waarom er geen npm aan te pas komt. Het kost een browser (playwright), en
+   Draait als een los proces, met dezelfde node als deze server -- zie
+   testBestanden() voor waarom er geen npm aan te pas komt. Het kost een browser (playwright), en
    dat is precies de reden dat de studio de uitkomst moet kúnnen melden in plaats
    van te doen alsof het altijd lukt: in een verse kloon zonder `npm install` is
    er geen browser en blijft de meester staan zonder afgeleiden. */

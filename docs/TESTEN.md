@@ -16,14 +16,19 @@ werkelijk draait. Er staan twee soorten naast elkaar.
 
 ```sh
 npm run check      # alleen de snelle keuring -- geen browser, geen npm install nodig
-npm test           # alles: eerst de keuring, daarna de browsertests, één voor één
-npm run test:snel  # hetzelfde, drie suites tegelijk: ± 5 minuten in plaats van ± 12
+npm test           # alles: eerst de keuring, daarna de browsertests, drie tegelijk (± 5 minuten)
+TEGELIJK=1 npm test  # één voor één, zoals vroeger (± een kwartier)
 ```
 
-`test:snel` (`test/alles.js`) is de snelle ronde tussendoor. De suites meten op
+`npm test`, `npm run test:snel` (hetzelfde) en de knop Publiceren in de studio
+draaien alle drie via `test/suites.js`. Daar staat geen lijst: elk
+`test/*.test.js` doet vanzelf mee. De keuring gaat eerst en stopt bij de eerste
+fout; de browsersuites draaien daarna een paar tegelijk. De suites meten op
 enkele beeldjes, en op een drukke machine kan een overgang een beeldje te laat
-zijn; valt daar iets om, draai die ene suite dan los voordat je gaat zoeken.
-`npm test` blijft de maatstaf.
+zijn. Daarom draait een suite die omvalt nog één keer, alléén. Slaagt hij dan,
+dan telt hij als geslaagd maar meldt het verslag "pas bij de tweede keer" --
+gebeurt dat vaker bij dezelfde suite, dan wiebelt er een controle: laat die
+wachten op een stand in plaats van op een aantal milliseconden.
 
 Losse suites:
 
