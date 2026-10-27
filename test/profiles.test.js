@@ -459,7 +459,7 @@ function check(ok, label, detail) {
     check(duw === 0, 'na de eerste wachtpost komt er geen pushState meer bij (Chrome zou de app dan overslaan)', 'pushState ' + duw + 'x');
     /* De bodem: op de sterrenkeuze vraagt terug eerst of je wil stoppen. Het
        kaartje zet géén wachtpost terug, zodat de volgende druk de app verlaat;
-       "Blijven spelen" zet hem wél terug (hergebruikt, weer zonder pushState). */
+       "Doorspelen" zet hem wél terug (hergebruikt, weer zonder pushState). */
     await page.click('.ster-tegel'); await page.waitForTimeout(600);
     await page.goBack(); await page.waitForTimeout(500);
     await page.goBack(); await page.waitForTimeout(500);
@@ -471,7 +471,7 @@ function check(ok, label, detail) {
     await page.click('#stop-blijf'); await page.waitForTimeout(500);
     k = await page.evaluate(() => ({ kaart: document.getElementById('confirm-modal').classList.contains('open'),
       wacht: !!(history.state && history.state.rpGuard), duw: window.__duw }));
-    check(!k.kaart && k.wacht && k.duw === 0, 'Blijven spelen sluit het kaartje en zet de wachtpost terug, zonder pushState', JSON.stringify(k));
+    check(!k.kaart && k.wacht && k.duw === 0, 'Doorspelen sluit het kaartje en zet de wachtpost terug, zonder pushState', JSON.stringify(k));
     await page.keyboard.press('Escape'); await page.waitForTimeout(300);
     check(!(await page.evaluate(() => document.getElementById('confirm-modal').classList.contains('open'))),
       'Escape op de sterrenkeuze toont geen stopkaartje (dat praat over de terugknop)', '');
@@ -510,7 +510,7 @@ function check(ok, label, detail) {
     await page.tap('#stop-blijf'); await page.waitForTimeout(400);
     k = await page.evaluate(() => ({ kaart: document.getElementById('confirm-modal').classList.contains('open'),
       wacht: !!(history.state && history.state.rpGuard) }));
-    check(!k.kaart && k.wacht, 'na Blijven spelen neemt de gewone wachtpost het over', JSON.stringify(k));
+    check(!k.kaart && k.wacht, 'na Doorspelen neemt de gewone wachtpost het over', JSON.stringify(k));
     /* Op een aanraakscherm vangt de terugwachter élke terug, niet alleen de
        eerste: dan beweegt de history niet, en speelt Chrome geen veeg-animatie
        met een oude schermafdruk (het flitsen na een paar keer terug). Escape is
