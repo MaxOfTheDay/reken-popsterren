@@ -364,6 +364,12 @@
     /* ---- Gray: neutral / locked / unavailable ---- */
     --gray-top: #90a4ae; --gray-bottom: #607d8b; --gray-shadow: #37474f;
 
+    /* ---- De plaats van een cijfer (getallen bouwen): honderdtal, tiental,
+       eenheid. Elk een tekstkleur (donker genoeg op wit) en een vulling voor de
+       blokken; op de ladder en in de show dezelfde. Zie .pl-* in 40-kaart. ---- */
+    --plaats-h: #8e3fc8; --plaats-t: #1f7fd6; --plaats-e: #b86f00;
+    --plaats-t-blok: #3fa4ff; --plaats-e-blok: #ffb627;
+
     /* ---- Pink accents (kast bar / stat bar / trophy pop) ---- */
     --pink-hot: #ff4081; --pink-light: #ffd6f4;
 

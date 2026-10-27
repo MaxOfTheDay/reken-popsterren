@@ -167,9 +167,7 @@ function check(ok, label, detail) {
     const { ctx, page } = await fresh();
     await open(page, 'p1', 'oefenen');
     await page.waitForTimeout(150);
-    // Anna: getallen tot 100 (twee keer een grijze rij onder "tot" op het leerpad), zelf typen, 10 vragen
-    await page.click('#set-startstap .chip.uit');
-    await page.waitForTimeout(100);
+    // Anna: getallen tot 100 (een grijze rij onder "tot" op het leerpad), zelf typen, 10 vragen
     await page.click('#set-startstap .chip.uit');
     await page.waitForTimeout(100);
     await page.click('#set-mode .chip[data-v="typ"]');
@@ -382,9 +380,9 @@ function check(ok, label, detail) {
       };
     });
     let r = await pad();
-    check(r.namen === 'Tot 10,Tot 20,Over het tiental,Zoek het getal,Drie getallen,Tot 50' && r.vanaf === 1 && r.tot === 5
-      && r.grijs.join() === '6' && r.hier === 1 && r.pop && !r.balk,
-      'tot 20: vijf rijen tussen "vanaf" en "tot", Tot 50 grijs eronder, haar pop op de eerste, geen balk "Getallen tot"', JSON.stringify(r));
+    check(r.namen === 'Tot 10,Tot 20,Over het tiental,Zoek het getal,Drie getallen,Getallen bouwen,Tientallen,Tot 100,Over het tiental'
+      && r.vanaf === 1 && r.tot === 5 && r.grijs.join() === '6,7,8,9' && r.hier === 1 && r.pop && !r.balk,
+      'tot 20: vijf rijen tussen "vanaf" en "tot", het blok tot 100 grijs eronder, haar pop op de eerste, geen balk "Getallen tot"', JSON.stringify(r));
     const plek = r.plek;
     await page.click('#set-startstap .chip[data-v="3"]');
     await page.waitForTimeout(200);
@@ -392,20 +390,20 @@ function check(ok, label, detail) {
     check(r.vanafId === 'brug20' && r.vanaf === 3 && r.voor.join() === '1,2' && r.tot === 5,
       'een tik dicht bij "vanaf" zet "vanaf" daar en dempt wat ervoor ligt', JSON.stringify(r));
     check(r.plek === plek && r.hier === 3 && r.nu === 'brug20', 'de rijen blijven staan, en ze speelt nu vanaf daar', JSON.stringify(r));
-    await page.click('#set-startstap .chip[data-v="6"]');
+    await page.click('#set-startstap .chip[data-v="7"]');
     await page.waitForTimeout(200);
     r = await pad();
-    check(r.max === 50 && r.tot === 6 && r.grijs.join() === '7,8,9' && r.plek === plek,
-      'een tik op de grijze rij laat "tot" zakken: tot 50, en het volgende blok staat grijs', JSON.stringify(r));
+    check(r.max === 100 && r.tot === 9 && !r.grijs.length && r.plek === plek,
+      'een tik op een grijze rij laat "tot" zakken tot onder zijn blok: tot 100', JSON.stringify(r));
     check(await page.evaluate(() => db.profiles.p1.settings.wennen > 0), 'en ze went aan de grotere getallen (wennen)', '');
-    await page.click('#set-startstap .chip[data-v="5"]');
-    await page.waitForTimeout(200);
-    r = await pad();
-    check(r.max === 20 && r.tot === 5 && r.vanafId === 'brug20', 'een tik dicht bij "tot" zet hem terug aan het eind van dat blok', JSON.stringify(r));
     await page.click('#set-startstap .chip[data-v="1"]');
     await page.waitForTimeout(200);
     r = await pad();
     check(r.vanafId === null && r.vanaf === 1 && r.nu === 'tot10', 'terug naar de eerste rij zet "vanaf" weer bovenaan', JSON.stringify(r));
+    await page.click('#set-startstap .chip[data-v="5"]');
+    await page.waitForTimeout(200);
+    r = await pad();
+    check(r.max === 20 && r.tot === 5 && r.vanafId === null, 'een tik dicht bij "tot" zet hem terug aan het eind van dat blok', JSON.stringify(r));
     /* De vinkjes: overslaan haalt de rij niet weg. Hij blijft staan,
        doorgestreept, met zijn nummer, en niets schuift op. */
     const vinkjes = () => page.evaluate(() => ({
@@ -417,7 +415,7 @@ function check(ok, label, detail) {
       extra: !!document.getElementById('set-extra'),
     }));
     let v = await vinkjes();
-    check(v.vinkjes.join(',') === 'vast,vast,vast,aan,aan,vast,vast' && !v.extra,
+    check(v.vinkjes.join(',') === 'vast,vast,vast,aan,aan,vast,vast,vast,vast,vast' && !v.extra,
       'elke rij een vinkje: stil bij de vaste, vol bij zoek en drie getallen; geen losse schakelaars meer', JSON.stringify(v));
     const voor = v;
     await page.click('#set-startstap .fl-vink[data-instelling="chain3"]');
@@ -546,7 +544,7 @@ function check(ok, label, detail) {
     const { ctx, page } = await fresh();
     await page.evaluate(() => {
       const a = db.profiles.p1, b = db.profiles.p2;
-      a.stars[1] = 3; a.stars[2] = 1; a.diamonds = 42; a.settings.max = 50;
+      a.stars[1] = 3; a.stars[2] = 1; a.diamonds = 42; a.settings.max = 100;
       b.stars[1] = 2; b.diamonds = 7; b.settings.track = 'count'; b.settings.stage = 3;
       db.sound = false;
       save();
@@ -589,7 +587,7 @@ function check(ok, label, detail) {
       geluid: db.sound, cur: cur,
     }));
     check(r.n === 2, 'terugzetten brengt de verdwenen ster terug', 'n=' + r.n);
-    check(r.anna.sterren[1] === 3 && r.anna.sterren[2] === 1 && r.anna.dia === 42 && r.anna.max === 50,
+    check(r.anna.sterren[1] === 3 && r.anna.sterren[2] === 1 && r.anna.dia === 42 && r.anna.max === 100,
       'met precies de sterren, diamanten en instellingen uit het bestand', JSON.stringify(r.anna));
     check(r.bas.track === 'count' && r.bas.stage === 3 && r.bas.dia === 7,
       'en dat geldt voor élke ster in het bestand', JSON.stringify(r.bas));
@@ -1269,7 +1267,7 @@ function check(ok, label, detail) {
     r = await page.evaluate(() => ({ tab: setTab,
       eind: !!document.querySelector('#set-startstap .fl-rij.eind.hier'),
       knoppen: document.querySelectorAll('#set-startstap .chip').length }));
-    check(r.tab === 'oefenen' && oe === vg && r.eind && r.knoppen === 6,
+    check(r.tab === 'oefenen' && oe === vg && r.eind && r.knoppen === 9,
       'S · "Aanpassen ›" opent Oefeningen, en die zegt hetzelfde', JSON.stringify({ ...r, oe }));
     // de back-up: amber op het overzicht zolang er geen is, groen na een verse
     await open(page, null, null);

@@ -949,6 +949,14 @@ function migrate(p) {
      was. Wat ervoor ligt telt als gehaald. "vanaf" gaat op dezelfde manier
      mee. Eén keer: daarna staat p.pad er (ook als null). Een telster heeft nog
      geen pad; dat begint als ze gaat rekenen (zie naarRekenen). */
+  /* Tot 50 is geen blok meer (zie LEERPAD: tot 20, dan tot 100, zoals op
+     school). Wie op 50 stond gaat naar 100, en went eraan zoals na de tip
+     (grensOmhoog): de getallen groeien in een paar shows. Op het pad begint
+     ze aan het blok tot honderd, met Getallen bouwen. De rij tot50 bestaat
+     niet meer; wat ernaar wees, wijst nu naar die eerste rij. */
+  if (p.settings.max === 50) grensOmhoog(p.settings, 100);
+  if (p.settings.padVanaf === 'tot50') p.settings.padVanaf = 'bouwen100';
+  if (p.pad && Array.isArray(p.pad.klaar)) p.pad.klaar = p.pad.klaar.filter(id => id in PAD_IDX);
   if (!('pad' in p)) {
     const s = p.settings;
     p.pad = null;

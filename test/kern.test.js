@@ -989,7 +989,7 @@ zaak('Q', () => {
   check(nu() === 'tot10' && p.pad === null, 'Q · een verse ster begint vooraan', nu());
   check(padNamen(app, p.settings) === 'Tot 10,Tot 20,Over het tiental,Zoek het getal,Drie getallen',
     'Q · + − tot 20: de rijen in de volgorde van school', padNamen(app, p.settings));
-  check(app.padRijen(p.settings).later.map(r => r.naam).join() === 'Tot 50',
+  check(app.padRijen(p.settings).later.map(r => r.naam).join() === 'Getallen bouwen,Tientallen,Tot 100,Over het tiental',
     'Q · onder de lijn staat alleen het volgende blok', app.padRijen(p.settings).later.map(r => r.naam).join());
 
   // beheersing: minstens drie shows, de laatste twee met drie sterren
@@ -1015,8 +1015,8 @@ zaak('Q', () => {
   p.settings.missNum = false;
   check(nu() === 'alles', 'Q · een uitgevinkte rij speelt ze niet', nu());
   p.settings.missNum = true;
-  app.grensOmhoog(p.settings, 50);
-  check(nu() === 'tot50', 'Q · de lijn zakt: de nieuwe getallen zijn haar volgende rij', nu());
+  app.grensOmhoog(p.settings, 100);
+  check(nu() === 'bouwen100', 'Q · de lijn zakt: de nieuwe getallen zijn haar volgende rij, en eerst bouwt ze ze', nu());
 
   const tien = verseSter('Tien');
   tien.p.settings.max = 10;
@@ -1069,7 +1069,7 @@ zaak('Q2', () => {
   const app = laadApp();
   const opsSets = [];
   for (let m = 1; m < 16; m++) opsSets.push(['+', '-', 'x', ':'].filter((_, i) => m & (1 << i)));
-  for (const ops of opsSets) for (const max of [10, 20, 50, 100]) for (let stap = 1; stap <= 6; stap++) {
+  for (const ops of opsSets) for (const max of [10, 20, 100]) for (let stap = 1; stap <= 6; stap++) {
     n++;
     const s = instVan(app, { ops, max });
     const rij = app.padUitOudeStap(s, stap);
@@ -1115,6 +1115,55 @@ zaak('Q2', () => {
   check(heropen(nulApp).db.profiles.p1.pad === null, 'Q2 · een telster begint zonder pad', '');
 });
 
+/* Q3 · Getallen bouwen (zie genBouwen): tientallen en eenheden, vóór er tot
+   honderd gerekend wordt. Elke vraag klopt, de knoppen zijn goed, en de rij
+   speelt de sommen nog op het oude bereik. En wie op "tot 50" stond (dat blok
+   is er niet meer) gaat naar 100, met wennen, en begint hier. */
+zaak('Q3', () => {
+  const { app, p } = verseSter('Bouw');
+  const fouten = [], soorten = {};
+  for (let i = 0; i < 600; i++) {
+    const q = app.genBouwen();
+    soorten[q.soort] = (soorten[q.soort] || 0) + 1;
+    const g = (q.tmpl.match(/\d+/g) || []).map(Number);
+    const waar = `${q.soort}: ${q.tmpl} -> ${q.ans}`;
+    const klopt = q.soort === 'blokken' ? q.ans === 10 * g[0] + g[1]
+      : q.soort === 'tiental' ? 10 * q.ans + g[1] === g[0]
+      : g[0] === g[1] + q.ans;
+    if (!klopt) fouten.push('klopt niet: ' + waar);
+    if (Math.max(q.ans, ...g) > 99) fouten.push('boven de honderd: ' + waar);
+    if ((q.html.match(/@/g) || []).length !== 1 || (q.tmpl.match(/@/g) || []).length !== 1) fouten.push('niet één vakje: ' + waar);
+    const grens = app.keuzeGrens(q, p.settings);
+    const c = app.makeChoices(q, grens);
+    if (c.length !== 4 || new Set(c).size !== 4 || c.filter(v => v === q.ans).length !== 1 || c.some(v => v < 0 || v > Math.max(grens, q.ans)))
+      fouten.push(`knoppen ${c}: ` + waar);
+  }
+  check(!fouten.length, 'Q3 · 600 vragen: ze kloppen, blijven onder de honderd, en hebben vier goede knoppen', fouten.slice(0, 5).join(' | '));
+  check(Object.keys(soorten).sort().join() === 'blokken,splits,tiental', 'Q3 · alle drie de soorten komen voor', JSON.stringify(soorten));
+
+  p.settings.max = 100;
+  const op = id => app.padStand(p.settings, id);
+  check(op('bouwen100').max === 20 && op('bouwen100').bouwen === 'vaak' && op('bouwen100').brug === 'vrij',
+    'Q3 · op Getallen bouwen: de sommen blijven tot 20, het bouwen is het nieuwe', JSON.stringify(op('bouwen100')));
+  check(op('tientallen').bouwen === 'soms' && op('tientallen').max === 100 && op('brug20').bouwen === null,
+    'Q3 · daarna komt het af en toe terug, en ervoor nooit', JSON.stringify([op('tientallen'), op('brug20').bouwen]));
+  p.pad = { rij: 'bouwen100', shows: 0, goed: 0, klaar: ['tot10', 'tot20', 'brug20', 'zoek', 'drie'] };
+  let bouw = 0;
+  for (let i = 0; i < 200; i++) if (app.buildQuestion(p, 1, null).kind === 'bouw') bouw++;
+  check(bouw > 60 && bouw < 140, 'Q3 · op zijn rij is ongeveer de helft getallen bouwen', `${bouw}/200`);
+
+  // een save op "tot 50", van na het leerpad
+  const { app: oudApp, p: oud } = verseSter('Vijftig');
+  oud.settings.max = 50; oud.settings.padVanaf = 'tot50';
+  oud.pad = { rij: 'tot50', shows: 2, goed: 1, klaar: ['tot10', 'tot20', 'brug20', 'zoek', 'drie', 'tot50'] };
+  oudApp.save();
+  const na = heropen(oudApp);
+  const q = na.db.profiles.p1;
+  check(q.settings.max === 100 && q.settings.wennen > 0, 'Q3 · tot 50 wordt tot 100, en ze went eraan', JSON.stringify(q.settings));
+  check(q.settings.padVanaf === 'bouwen100' && !q.pad.klaar.includes('tot50') && na.padNu(q) === 'bouwen100',
+    'Q3 · ze begint het blok tot honderd met Getallen bouwen', JSON.stringify(q.pad));
+});
+
 /* ================= R · De tip om de getallengrens hoger te zetten =================
    Na de laatste leerstap worden de sommen niet vanzelf moeilijker. Het spel zet de
    grens niet zelf hoger (dat is van de ouder), maar zegt in Voortgang wanneer het
@@ -1142,15 +1191,13 @@ zaak('R', () => {
   p.settings.grensTipBasis -= n;
   check(JSON.stringify(tip()) === JSON.stringify({ soort: 'mode', naar: 'typ' }), 'R · bij afwisselen: dan zelf typen', JSON.stringify(tip()));
   p.settings.mode = 'typ';
-  check(JSON.stringify(tip()) === JSON.stringify({ soort: 'grens', naar: 50 }), 'R · zelf typen bij "tot 20": de tip zegt 50', JSON.stringify(tip()));
+  check(JSON.stringify(tip()) === JSON.stringify({ soort: 'grens', naar: 100 }), 'R · zelf typen bij "tot 20": de tip zegt 100 (geen tussenstop 50, zoals op school)', JSON.stringify(tip()));
   // de ouder zet hem om: de tip telt opnieuw, op de nieuwe grens
-  p.settings.max = 50;
-  p.settings.grensTipBasis = app.run('grensDrieSterren(P())');
-  check(tip() === null, 'R · net omgezet naar 50: niet meteen de vraag of het 100 moet', JSON.stringify(tip()));
-  for (let l = eerste + n; l < eerste + 2 * n; l++) p.stars[l] = 3;
-  check(JSON.stringify(tip()) === JSON.stringify({ soort: 'grens', naar: 100 }), 'R · na nieuwe drie-sterrenshows bij "tot 50": 100', JSON.stringify(tip()));
   p.settings.max = 100;
-  check(tip() === null, 'R · bij "tot 100" is er niets hogers', JSON.stringify(tip()));
+  p.settings.grensTipBasis = app.run('grensDrieSterren(P())');
+  check(tip() === null, 'R · net omgezet naar 100: geen tip meer', JSON.stringify(tip()));
+  for (let l = eerste + n; l < eerste + 2 * n; l++) p.stars[l] = 3;
+  check(tip() === null, 'R · ook na nieuwe drie-sterrenshows: bij "tot 100" is er niets hogers', JSON.stringify(tip()));
   p.settings.max = 20;
   p.settings.track = 'count';
   check(tip() === null, 'R · in de telmodus geen getallengrens, dus geen tip', JSON.stringify(tip()));
@@ -1341,10 +1388,10 @@ zaak('W', () => {
   const zoek = app.groeiMoment(m, { missShown: 1 }, 0);
   check(zoek && /zoek het getal/.test(zoek.pil), 'W · de eerste zoek-het-getal is nieuw', JSON.stringify(zoek));
   check(app.groeiMoment(m, { missShown: 1 }, 0) === null, 'W · de tweede keer niet meer', '');
-  m.settings.max = 50;
+  m.settings.max = 100;
   const groter = app.groeiMoment(m, {}, 0);
-  check(groter && /tot 50/.test(groter.pil), 'W · een hogere grens: grotere getallen', JSON.stringify(groter));
-  m.settings.max = 20; app.groeiMoment(m, {}, 0); m.settings.max = 50;
+  check(groter && /tot 100/.test(groter.pil), 'W · een hogere grens: grotere getallen', JSON.stringify(groter));
+  m.settings.max = 20; app.groeiMoment(m, {}, 0); m.settings.max = 100;
   check(app.groeiMoment(m, {}, 0) === null, 'W · omlaag en weer omhoog is geen nieuws', JSON.stringify(m.gezien));
   // een oude save die zoek-het-getal al kent, krijgt geen "Nieuw!" meer
   const oud = app.defaultProfile('Oud', 'dress_roze', {});
@@ -1621,7 +1668,7 @@ zaak('ZF', () => {
   for (let m = 1; m < 16; m++) opsSets.push(['+', '-', 'x', ':'].filter((_, i) => m & (1 << i)));
   let n = 0, beloofd = 0;
   const fouten = [], beloftes = [];
-  for (const ops of opsSets) for (const max of [10, 20, 50, 100]) for (const tables of [[2, 5, 10], [7], [3, 8]]) {
+  for (const ops of opsSets) for (const max of [10, 20, 100]) for (const tables of [[2, 5, 10], [7], [3, 8]]) {
     const s = instVan(app, { ops, max, tables });
     const { rijen, later } = app.padRijen(s);
     const plusMin = ops.includes('+') || ops.includes('-');
@@ -1682,7 +1729,7 @@ zaak('ZF', () => {
   check(maal.map(st => `${st.naam}=${st.vb}`).join() === 'Tafels=7 × 8,Zoek het getal=3 × ▢ = 24',
     'ZF · alleen ×: tafels, en zoek het getal met een tafel die aan staat', maal.map(st => `${st.naam}=${st.vb}`).join());
   const alles = padNamen(app, instVan(app, { ops: ['+', '-', 'x', ':'], max: 100 }));
-  check(alles === 'Tot 10,Tot 20,Over het tiental,Tafels,Delen,Zoek het getal,Drie getallen,Tot 50,Tientallen,Tot 100,Over het tiental',
+  check(alles === 'Tot 10,Tot 20,Over het tiental,Tafels,Delen,Zoek het getal,Drie getallen,Getallen bouwen,Tientallen,Tot 100,Over het tiental',
     'ZF · alles aan tot 100: de hele ladder in de volgorde van school', alles);
   // de tafels zijn heel vanaf de eerste show, ook voor een kind dat worstelt
   const s = instVan(app, { ops: ['x', ':'], tables: [7] });

@@ -297,7 +297,8 @@ function drawQuestion() {
      de som er in de typmodus anders uit dan in de kiesmodus -- terwijl het
      dezelfde vraag is. */
   const shown = G.mode === 'typ' ? (G.input || '?') : '?';
-  $('question-text').innerHTML = q.tmpl.replace('@', `<span class="q-blank">${shown}</span>`);
+  // q.html: een vraag met meer dan tekst (getallen bouwen); anders de som zelf
+  $('question-text').innerHTML = (q.html || q.tmpl).replace('@', `<span class="q-blank">${shown}</span>`);
   // ⌫ en ✔ slapen tot er iets getypt is: een ✔ die er klaar uitziet maar niets
   // doet, is een knop die liegt (zie .numpad.heeft in het stijlblad)
   const pad = document.querySelector('#answer-area .numpad');
