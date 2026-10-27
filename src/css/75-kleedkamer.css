@@ -2,12 +2,17 @@
      Opbouw: vaste kop (titel + 💎 + paspop + tabbladen) blijft plakken bovenaan,
      het rek met spulletjes scrollt eronder door, en de actiebalk (passen/kopen)
      zit vast boven de navigatie. Zo is elke tik meteen zichtbaar op de paspop. */
-  /* Ruimte onder het rek voor de twee zwevende balken plus de veilige zone van
-     het toestel: de navigatiebalk (--balk-ruimte, veilige zone incl.), daarboven
-     de lade (14 lucht + 53 hoog, zie .dress-bar) en daarboven nog lucht, zodat het
-     laatste kaartje er echt onderuit te scrollen is en niet net eronder blijft
-     plakken. */
-  #screen-dress { padding-bottom: calc(var(--balk-ruimte) + 80px); }
+  /* Ruimte onder het rek voor wat er onderaan zweeft, plus de veilige zone van
+     het toestel. Zonder lade is dat alleen de navigatiebalk (--balk-ruimte,
+     veilige zone incl.) en 14 lucht -- dezelfde maat als elk ander scherm met de
+     balk (.screen.hub). Hier stond altijd ook de ruimte voor de lade, ook als die
+     dicht was: dan schoof elke categorie zo'n 80px te ver, en kon een lade waar
+     alles in paste (Podia, Schoenen) toch de lege ruimte in geduwd worden.
+     Staat de lade open (.met-lade, zie ladeRuimte), dan komt die erbij: 14 lucht
+     + 53 hoog (zie .dress-bar) en daarboven nog lucht, zodat het laatste kaartje
+     er echt onderuit te scrollen is en niet net eronder blijft plakken. */
+  #screen-dress { padding-bottom: calc(var(--balk-ruimte) + 14px); }
+  #screen-dress.met-lade { padding-bottom: calc(var(--balk-ruimte) + 80px); }
   /* De podiumbalk (drie stukjes plus een knop, zie .podium-bar) is ruim honderd
      pixels hoger, en het podium dat je aantikte moet er nog boven te krijgen zijn
      (zie zichtbaarBovenBalk). */
@@ -347,8 +352,12 @@
       padding-left: max(var(--rand, 12px), calc((100% - var(--kolom)) / 2));
       /* rechts 16 meer dan de rand: zoveel steekt de lade buiten het rek uit */
       padding-right: max(28px, calc((100% - var(--kolom)) / 2));
-      /* 60 is de hoogte van de koprij: zo begint de lade waar de spiegel begint */
-      grid-template-rows: calc(60px + var(--lade-kop)) auto;
+      /* 60 is de hoogte van de koprij: zo begint de lade waar de spiegel begint.
+         max-content en niet auto: een auto-rij in een scrollend raster wordt hier
+         op de hoogte van het scherm afgekapt, het rek liep eroverheen en telde
+         dan niet mee voor het scrollen -- de onderste rij bleef onder de
+         navigatie staan en was er niet onderuit te krijgen. */
+      grid-template-rows: calc(60px + var(--lade-kop)) max-content;
     }
     #screen-dress { --lade-kop: 88px; }
     #screen-dress > .hub-sticky {
@@ -613,7 +622,8 @@
      want die zou een korte lade scrollbaar maken.
      Liggend en breed staat de balk niet in de kop maar bovenop het rek, in de
      rechterkolom (ladenPlaatsen); daar is de lade één paneel naast haar. */
-  #screen-dress { --lade: rgb(40,12,68); --lade-onder: calc(var(--balk-ruimte) + 80px); }
+  #screen-dress { --lade: rgb(40,12,68); --lade-onder: calc(var(--balk-ruimte) + 14px); }
+  #screen-dress.met-lade { --lade-onder: calc(var(--balk-ruimte) + 80px); }
   #screen-dress.met-podiumbalk { --lade-onder: calc(var(--balk-ruimte) + 190px); }
   #screen-dress .shop-tabs-wrap {
     width: min(100% + 24px, var(--kolom) + 24px); max-width: none; margin-top: 6px;

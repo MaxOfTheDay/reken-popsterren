@@ -132,6 +132,7 @@ let dressReturnTo = null;      // 'trophies' als je hier via een trofeeënkast-k
 function openKleedkamer() {
   shopCat = 'dress'; shopSelectedId = null; dressReturnTo = null;
   toonHub('screen-dress');
+  ladeRuimteOpnieuw();
   renderShop();   // ná show(): renderDressBar mag de balk zelf verbergen zolang niets gekozen is
   $('screen-dress').scrollTop = 0;   // altijd bovenaan beginnen bij (her)openen
 }
@@ -152,6 +153,7 @@ function resumeKleedkamer() {
 function openKleedkamerCat(cat) {
   shopCat = cat; shopSelectedId = null; dressReturnTo = 'trophies';
   toonHub('screen-dress');
+  ladeRuimteOpnieuw();
   renderShop();
   $('screen-dress').scrollTop = 0;
 }
@@ -174,6 +176,7 @@ function openKleedkamerItem(id) {
   const podium = (isBeloning(it.id) && !p.owned.includes(it.id)) ? podiumVan(it.id) : null;
   shopCat = podium ? PODIA_CAT : it.cat; shopSelectedId = null; podiumStuk = null; dressReturnTo = null;
   toonHub('screen-dress');
+  ladeRuimteOpnieuw();
   renderShop();
   if (podium) id = podium.id;
   /* Van haar? Dan doet ze het aan, en niet "even passen": dit pad wordt gelopen
@@ -273,7 +276,8 @@ function renderShop() {
     b.onclick = () => {
       sndClick();
       if (aan) return;
-      shopCat = c.id; shopSelectedId = null; podiumStuk = null; renderShop();
+      shopCat = c.id; shopSelectedId = null; podiumStuk = null;
+      ladeRuimteOpnieuw(); renderShop();
       $('screen-dress').scrollTop = 0;   // een nieuwe lade begint bovenaan
     };
     tabs.appendChild(b);
@@ -558,13 +562,26 @@ function paintShop() {
   }
   popKleren($('shop-avatar'), avatarSVG(preview, 165, true));   // zonder haar pasje te breken
   renderDressBar(selected, p);
-  // de podiumbalk is drie keer zo hoog als de gewone lade: het rek krijgt eronder meer ruimte
-  const lade = $('dress-bar');
-  $('screen-dress').classList.toggle('met-podiumbalk', lade.classList.contains('podium-bar') && lade.style.display !== 'none');
+  ladeRuimte();
   $('item-grid').querySelectorAll('.item-card').forEach(card => {
     const it = item(card.dataset.item);
     if (it) dressCardState(card, it, p);
   });
+}
+/* De ruimte onder het rek (zie 75-kleedkamer): alleen voor de lade als die er
+   ook is, en voor de podiumbalk -- drie keer zo hoog -- nog meer. Hij groeit
+   meteen mee als de lade opengaat, maar krimpt pas weer bij een nieuwe lade of
+   een nieuw bezoek (ladeRuimteOpnieuw). Anders sprong het rek, wie helemaal
+   onderaan stond, 66px omlaag op het moment dat je iets kocht of terugtikte: de
+   lade gaat dicht, het scherm wordt korter en de browser trekt de stand terug. */
+function ladeRuimte() {
+  const scherm = $('screen-dress'), lade = $('dress-bar');
+  if (lade.style.display === 'none') return;
+  scherm.classList.add('met-lade');
+  if (lade.classList.contains('podium-bar')) scherm.classList.add('met-podiumbalk');
+}
+function ladeRuimteOpnieuw() {
+  $('screen-dress').classList.remove('met-lade', 'met-podiumbalk');
 }
 function previewProfile(p, it) {
   const preview = { ...p, equipped: { ...p.equipped } };
@@ -911,7 +928,7 @@ function openPodia(ev) {
   if (ev) ev.stopPropagation();
   sndClick();
   shopCat = PODIA_CAT; shopSelectedId = null; podiumStuk = null;
-  renderShop();
+  ladeRuimteOpnieuw(); renderShop();
   $('screen-dress').scrollTop = 0;
 }
 
