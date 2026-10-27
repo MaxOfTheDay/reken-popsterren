@@ -648,18 +648,28 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     const balk = await p2.evaluate(async () => {
       P().settings.mode = 'kies';
       startLevel(P().level);
-      await new Promise(r => setTimeout(r, 150));
+      // wachten tot de klok loopt, niet een vast aantal ms (zie op() hieronder)
+      for (let i = 0; i < 100 && !spotAnim; i++) await new Promise(r => setTimeout(r, 20));
       /* wat er te zien ís: de balk loopt als animatie (spotAnim), dus de
          berekende stand, niet de stijl op het element */
       const staat = () => { const b = document.getElementById('spotlight-bar');
         const m = new DOMMatrix(getComputedStyle(b).transform);
         return `translateX(${Math.round(m.m41 / b.offsetWidth * 100)}%)`; };
-      const nu = { golden: document.getElementById('question-card').classList.contains('golden'), begin: staat() };
+      /* De balk op een vast tijdstip van zijn eigen animatie bekijken, en niet
+         op de klok van de test: op een drukke machine (test:snel, of de studio
+         die alles draait) was na 150ms soms nog geen beeldje getekend, en dan
+         stond hij nog op -100% -- een rode keuring zonder fout in het spel. */
+      const op = ms => {
+        if (!spotAnim) return staat();
+        const t = spotAnim.currentTime; spotAnim.currentTime = ms;
+        const s = staat(); spotAnim.currentTime = t; return s;
+      };
+      const nu = { golden: document.getElementById('question-card').classList.contains('golden'), begin: op(150) };
       await new Promise(r => setTimeout(r, 2650));
-      nu.naTweeEnHalf = staat(); nu.spotNaTweeEnHalf = Math.round(spotNu());
+      nu.naTweeEnHalf = op(2650); nu.spotNaTweeEnHalf = Math.round(spotNu());
       // na de rust staat hij al te dimmen: de animatie verder zetten en kijken
       nu.loopt = !!spotAnim;
-      if (spotAnim) { const t = spotAnim.currentTime; spotAnim.currentTime = 8000; nu.naAcht = staat(); spotAnim.currentTime = t; }
+      if (spotAnim) nu.naAcht = op(8000);
       stopSpot(); nu.spotGestopt = Math.round(G.spot); nu.gestopt = !spotAnim;
       // zetSpot zelf: de stijl die hij neerzet, op dezelfde curve als de animatie
       const stijl = () => document.getElementById('spotlight-bar').style.transform;

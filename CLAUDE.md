@@ -17,16 +17,18 @@ zonder iets stuk te maken.
 npm run studio     # de gewone manier van werken — http://localhost:8099/studio
 npm run bouw       # src/ -> het stijl- en scriptblok van index.html. Na élke wijziging
 npm run check      # de keuring: ± 2 seconden, kaal Node, géén npm install nodig
-npm test           # alles, inclusief echte Chromium — minuten, vereist npm install
+npm test           # alles, inclusief echte Chromium — ± 5 minuten, vereist npm install
 open index.html    # het spel zelf, zonder meer
 ```
 
 **`npm run check` is de poort waar élke wijziging doorheen moet** (vier
 Node-suites: `inhoud`, `kern`, `saves`, `kleedkamer`, op kaal Node; hoeveel
-controles het zijn zegt hij zelf). `npm test` doet die vier en daarna de rest
-uit `package.json`, waarvan de meeste een echte Chromium starten — `hub` is de uitzondering en draait ook op kaal Node.
+controles het zijn zegt hij zelf). `npm test` doet die vier en daarna elk ander
+`test/*.test.js`, een paar tegelijk en wat omvalt nog één keer alleen (zie
+`test/suites.js`); de meeste starten een echte Chromium — `hub` en `overzetten`
+draaien ook op kaal Node. De studio (Publiceren) draait precies dezelfde ronde.
 Eén suite draaien gaat met `npm run test:<naam>`, bijvoorbeeld
-`npm run test:reis`; de hele lijst staat in `docs/TESTEN.md` en `package.json`.
+`npm run test:reis`; de hele lijst staat in `docs/TESTEN.md`.
 
 Op GitHub draait bij elke PR en elke push naar main dezelfde keuring, plus `hub`
 en `test:sterren` (`.github/workflows/keuring.yml`). Dat is het vangnet voor
