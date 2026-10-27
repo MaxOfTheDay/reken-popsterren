@@ -24,6 +24,7 @@ opent, ook vanaf `file://`.
 | `src/*.js`, `src/css/*.css` | **wat je schrijft**, in stukken die op volgnummer aan elkaar komen. Wordt met `npm run bouw` het script- en stijlblok van `index.html` |
 | `index.html` | het hele spel: stijlblad, schermen, spellogica, wereldstudio. Het stijl- en scriptblok erin komen uit `src/` — bewerk ze daar |
 | `sw.js` | service worker — offline spelen na het eerste bezoek |
+| `versie.txt` | de afdruk van deze uitgave, door `npm run bouw` geschreven. Een app die lang openstond kijkt ermee of er een nieuwere is (zie "Een nieuwe versie" in `src/99-servicewerker.js`) |
 | `manifest.json` | PWA-gegevens (naam, iconen, kleuren) |
 | `assets/world/*.webp` | de wereldtekeningen |
 | `assets/font/` | het lettertype (Fredoka) en zijn licentie. De app haalt niets van buiten |

@@ -363,6 +363,11 @@ function achterstand() {
   }
   const html = fs.readFileSync(INDEX, 'utf8');
   const wil = verwacht(html);
+  const versie = fs.existsSync(VERSIE) ? fs.readFileSync(VERSIE, 'utf8') : null;
+  if (wil === html && versie !== versieUit(html)) {
+    return 'versie.txt loopt niet gelijk met index.html'
+      + (versie == null ? ' (het bestand ontbreekt)' : '') + '. Draai `npm run bouw`.';
+  }
   if (wil === html) return null;
   for (const b of BLOKKEN) {
     const nu = html.slice(grenzen(html, b).van, grenzen(html, b).tot);
@@ -378,6 +383,32 @@ function achterstand() {
   return 'index.html wijkt af van src/ buiten de twee blokken om';
 }
 
+/* versie.txt: de vingerafdruk van deze uitgave, naast index.html.
+
+   Een app op het beginscherm kan dagen openstaan zonder één keer opnieuw te
+   laden, en draait dan de versie van toen. Komt hij na een lange pauze terug,
+   dan vraagt het spel dit bestandje op (een paar bytes) en vergelijkt het met
+   zijn eigen afdruk -- verschillen ze, dan herlaadt hij stil op een rustpunt.
+   Zie "Een nieuwe versie" in src/99-servicewerker.js.
+
+   De afdruk is van de twee gebouwde blokken, precies zoals ze in index.html
+   staan. Het spel rekent hem in de browser op dezelfde tekst na (de inhoud van
+   zijn eigen stijlblad en scriptblok), met dezelfde rekensom -- versieVan staat
+   daarom twee keer, hier en in het spel, en zaak H in inhoud.test.js kijkt of
+   ze hetzelfde zeggen. Geen tijdstempel en geen commit: een bouw zonder
+   wijziging hoort dezelfde afdruk te geven, anders herlaadt elk toestel voor
+   niets. De markup buiten de blokken telt niet mee -- die kan het spel niet meer
+   teruglezen, want hij is tegen die tijd al omgebouwd. */
+const VERSIE = path.join(WORTEL, 'versie.txt');
+function versieVan(tekst) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < tekst.length; i++) { h ^= tekst.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  return (h >>> 0).toString(16).padStart(8, '0');
+}
+function versieUit(html) {
+  return versieVan(BLOKKEN.map(b => { const g = grenzen(html, b); return html.slice(g.van, g.tot); }).join('')) + '\n';
+}
+
 // Bijwerken. Schrijft alleen als er werkelijk iets verandert, zodat een bouw
 // zonder wijziging de tijdstempel van het bestand niet aanraakt.
 function bouw() {
@@ -385,6 +416,11 @@ function bouw() {
   const wil = verwacht(html);
   let gewijzigd = wil !== html;
   if (gewijzigd) fs.writeFileSync(INDEX, wil);
+  const versie = versieUit(wil);
+  if (!fs.existsSync(VERSIE) || fs.readFileSync(VERSIE, 'utf8') !== versie) {
+    fs.writeFileSync(VERSIE, versie);
+    gewijzigd = true;
+  }
   for (const l of LOS) {
     const tekst = losTekst(l);
     keurScript(tekst);
@@ -416,7 +452,7 @@ function bronMetMarkering(mark) {
   return path.join(blok.map, raak[0]);
 }
 
-module.exports = { bouw, achterstand, zonderCommentaar, LOS, bronnen, bronMetMarkering, BLOKKEN, SRC, SRC_CSS, INDEX };
+module.exports = { bouw, achterstand, versieVan, versieUit, zonderCommentaar, LOS, bronnen, bronMetMarkering, BLOKKEN, SRC, SRC_CSS, INDEX };
 
 if (require.main === module) {
   const alleenKijken = process.argv.includes('--controleer');
