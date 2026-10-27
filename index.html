@@ -10,7 +10,7 @@
      regel maakt Safari daar een schermafdruk van de pagina van. Zelfde bestand,
      want het is hetzelfde icoon -- iOS schaalt het zelf naar 180. -->
 <link rel="apple-touch-icon" href="icon-192.png">
-<meta name="theme-color" content="#7b2ff7">
+<meta name="theme-color" content="#33084c">
 <meta name="mobile-web-app-capable" content="yes">
 <!-- Wat een deelkaartje laat zien als iemand de link doorstuurt (WhatsApp, mail,
      sociale media). Het beeld staat bij de over-pagina; de adressen zijn volledig,
@@ -1038,6 +1038,10 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+
+
+  html { touch-action: manipulation; }
 
 
 
@@ -10308,18 +10312,59 @@
 
 
 
-(function () {
-  let w = innerWidth, slot = innerHeight;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const STATUSBALK = 80;
+let vhSlot = innerHeight, vhBreedte = innerWidth;
+function venstermaat() { return vhBreedte + 'x' + vhSlot; }
+function vhZet() {
   const el = document.documentElement;
-  const drift = () => el.style.setProperty('--vh-drift', Math.max(0, innerHeight - slot) + 'px');
-  const zet = () => {
-    slot = innerHeight;
-    el.style.setProperty('--vh-lock', slot + 'px');
-    drift();
-  };
-  zet();
-  addEventListener('resize', () => { if (innerWidth !== w) { w = innerWidth; zet(); } else drift(); });
-})();
+  vhSlot = innerHeight;
+  el.style.setProperty('--vh-lock', vhSlot + 'px');
+  vhDrift();
+}
+function vhDrift() {
+  document.documentElement.style.setProperty('--vh-drift', Math.max(0, innerHeight - vhSlot) + 'px');
+}
+function vhTyptIemand() {
+  const a = document.activeElement;
+  if (!a) return false;
+  if (a.isContentEditable || a.tagName === 'TEXTAREA') return true;
+  return a.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|reset|file|range|color|image)$/i.test(a.type || '');
+}
+
+
+function vhVolg() {
+  if (innerWidth !== vhBreedte || innerHeight <= vhSlot || vhTyptIemand()) return false;
+  vhZet();
+  try { dispatchEvent(new Event('resize')); } catch (e) { }
+  return true;
+}
+vhZet();
+addEventListener('resize', () => {
+  if (innerWidth !== vhBreedte) { vhBreedte = innerWidth; vhZet(); return; }
+  const verschil = innerHeight - vhSlot;
+  if (verschil === 0 || vhTyptIemand() || (verschil > 0 && verschil <= STATUSBALK)) vhDrift();
+  else vhZet();
+});
 
 
 
@@ -14525,6 +14570,14 @@ if (typeof window !== 'undefined' && window.speechSynthesis) {
 
 
 
+
+document.addEventListener('gesturestart', e => e.preventDefault());
+
+
+
+
+
+
 let wakeLock = null;
 async function keepAwake() {
   if (!('wakeLock' in navigator) || document.visibilityState !== 'visible' || wakeLock) return;
@@ -15042,6 +15095,10 @@ function show(id) {
   if (id !== 'screen-map' && id !== 'screen-journey') vluchtKlaar();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'komt-op'));
   $(id).classList.add('active');
+
+
+
+  vhVolg();
   const onProfile = (id === 'screen-profile');
   $('corner-btns').style.display = onProfile ? 'flex' : 'none';
   appKnopZet();
@@ -17606,7 +17663,7 @@ function toonHub(id) {
 function kopKrimpMeten(scherm, stand) {
   const kop = scherm && scherm.querySelector('.hub-sticky');
   if (!kop) return;
-  const sleutel = stand == null ? null : `${innerWidth}x${innerHeight}|${stand}`;
+  const sleutel = stand == null ? null : `${venstermaat()}|${stand}`;
   if (sleutel && scherm.dataset.krimpBij === sleutel) return;
   if (!kop.offsetHeight) return;
   const hoogte = () => parseFloat(getComputedStyle(kop).height);
@@ -23937,7 +23994,7 @@ const KAART_GAT = 10;
 let rekBreedteBij = '';
 function rekBreedte() {
   const rek = $('item-grid');
-  if (!rek || rekBreedteBij === `${innerWidth}x${innerHeight}`) return;
+  if (!rek || rekBreedteBij === venstermaat()) return;
   if (!rek.clientWidth || typeof getComputedStyle !== 'function') return;
   const min = parseFloat(getComputedStyle(rek).getPropertyValue('--kaart-min')) || 104;
 
@@ -23950,7 +24007,7 @@ function rekBreedte() {
   const b = Math.min((w - (n - 1) * KAART_GAT) / n, min * 1.7);
   rek.style.setProperty('--kaart-b', Math.floor(b) + 'px');
   rek.style.setProperty('--kaart-groei', '0');
-  rekBreedteBij = `${innerWidth}x${innerHeight}`;
+  rekBreedteBij = venstermaat();
 }
 addEventListener('resize', () => rafKlem(rekBreedte));
 

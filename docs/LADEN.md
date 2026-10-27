@@ -162,6 +162,12 @@ nodig en er gaat geen voortgang verloren: de opslag van een speler staat in
   of dichtklapt raakt de breedte nooit. `100svh` loste dit niet op: die eenheid
   gaat over de inklapbare werkbalk van de brówser, niet over een systeembalk die
   over een fullscreen-PWA heen ligt.
+  Alleen de hoogte kan ook écht veranderen (de deler van split-screen, een
+  pc-venster): dan legt het slot zich ook opnieuw vast. Uitzonderingen zijn een
+  open tekstveld (het toetsenbord) en een kleine groei tot 80 px (de
+  statusbalk); die laatste wordt bij de volgende `show()` alsnog overgenomen
+  (`vhVolg`), dus de drift is na de eerste schermwissel weer nul. Wie een meting
+  per venstermaat onthoudt, sleutelt op `venstermaat()` en niet op `innerHeight`.
 * `--vh-drift` hoort daarbij: hoeveel het venster inmiddels ónder dat slot is
   uitgegroeid, nooit minder dan nul. **Dit is het getal dat je nodig hebt zodra
   je iets nieuws aan de ónderrand hangt.** `position: fixed` kijkt namelijk niet
