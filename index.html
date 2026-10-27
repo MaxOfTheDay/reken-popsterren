@@ -4194,7 +4194,8 @@
 
 
   .mem-arena { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; }
-  .mem-grid { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); align-items: start; gap: 12px; width: min(96vw, var(--kolom)); }
+  .mem-grid { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); align-items: start; gap: 12px; width: min(100vw - 32px, var(--kolom)); }
+
   .mem-card {
     position: relative; aspect-ratio: 1 / 1; border: none; background: none; cursor: pointer; padding: 0;
     perspective: 600px;
@@ -4240,13 +4241,17 @@
   .mem-face .dframe { column-gap: 2.5px; row-gap: 3px; }
   .mem-face .dframe .df-cell { width: 10px; height: 10px; width: 10cqw; height: 10cqw; border-width: 1px; border-radius: 3px; }
   .mem-done { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(24,6,44,.55); z-index: 40; }
-  .mem-done-card { background: var(--c-white); border-radius: var(--r-lg); padding: 22px 26px; text-align: center; box-shadow: var(--e-3); }
+
+
+
+  .mem-done-card {
+    border-radius: var(--r-lg); padding: 22px 26px; text-align: center;
+    border: 1.5px solid var(--paneel-rand); background: var(--paneel);
+    backdrop-filter: var(--paneel-waas); -webkit-backdrop-filter: var(--paneel-waas);
+    box-shadow: var(--e-3), inset 0 1px 0 rgba(255,255,255,.12);
+  }
   .mem-done-title { font-size: 54px; line-height: 1; }
   .mem-done-earn { margin: 12px auto 4px; }
-
-
-
-  .mem-done-card .earn-chip.dia { color: #0b4f7a; background: rgba(41,182,246,.2); }
   .mem-done-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
 
 
@@ -10096,7 +10101,7 @@
         <div class="mem-done-earn earn-chip dia" id="mem-done-earn"></div>
         <div class="mem-done-btns">
           <button class="btn" onclick="naTik(startMemory)">🎤 Nog een keer</button>
-          <button class="btn paper" onclick="naTik(exitMemory)">🗺️ Kaart</button>
+          <button class="btn soft" onclick="naTik(exitMemory)">🗺️ Kaart</button>
         </div>
       </div>
     </div>
@@ -22104,9 +22109,12 @@ function memFitCols(grid, n) {
 
 
   grid.style.width = '';
-  const w = grid.getBoundingClientRect().width;
 
-  const h = screen.clientHeight - (sticky ? sticky.getBoundingClientRect().height : 0) - 56;
+
+
+  const w = grid.clientWidth;
+
+  const h = screen.clientHeight - (sticky ? sticky.offsetHeight : 0) - 56;
   if (!w || h <= 0) return;
   const fits = [];
   for (let c = 2; c <= n; c++) {

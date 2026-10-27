@@ -10708,9 +10708,12 @@ function memFitCols(grid, n) {
   // eerst de vorige inzet loslaten: anders meten we de breedte die we zelf de
   // vorige keer hebben opgelegd, en krimpt het raster elke ronde verder
   grid.style.width = '';
-  const w = grid.getBoundingClientRect().width;
+  /* Layoutmaten (clientWidth/offsetHeight), geen getBoundingClientRect: dit draait
+     terwijl het scherm nog inzoomt (komt-op), en de omtrek telt die schaal mee.
+     Het raster kwam daardoor ~3% te breed uit, tot 3px van de rand. */
+  const w = grid.clientWidth;
   // 56px marge: de arena en het scherm hebben zelf ook nog padding
-  const h = screen.clientHeight - (sticky ? sticky.getBoundingClientRect().height : 0) - 56;
+  const h = screen.clientHeight - (sticky ? sticky.offsetHeight : 0) - 56;
   if (!w || h <= 0) return;
   const fits = [];
   for (let c = 2; c <= n; c++) {
