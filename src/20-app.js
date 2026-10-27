@@ -15671,7 +15671,8 @@ function importData(file) {
 function backupBladStandHtml() {
   const oud = backupOud();
   const w = backupWanneer();
-  const tekst = backupDagen() === null ? 'Nog nooit een back-up gemaakt' : 'Laatste back-up: ' + w.toLowerCase();
+  const tekst = (backupDagen() === null ? 'Nog nooit een back-up gemaakt' : 'Laatste back-up: ' + w.toLowerCase())
+    + ' · alles staat alleen op dit toestel';
   return `<div class="bb-stand${oud ? ' oud' : ''}" id="bb-stand">${oud ? '<span class="gi-dot" aria-hidden="true"></span>' : ''}${tekst}</div>`;
 }
 function openBackupBlad() {
@@ -15679,7 +15680,7 @@ function openBackupBlad() {
   const tegel = (id, ico, t) => `<button class="bb-tegel" id="${id}" type="button">${ico}${t}</button>`;
   $('confirm-title').innerHTML = '🗄️ Back-up';
   $('confirm-body').innerHTML = `<div class="bb-blad">${backupBladStandHtml()}
-      <div class="bb-kop">Bestand · alles staat alleen op dit toestel</div>
+      <div class="bb-kop">Bestand</div>
       <div class="bb-tegels">${tegel('bb-maak', ozIco('maak'), 'Maken')}${tegel('bb-terug', ozIco('terug'), 'Terugzetten')}</div>`
     + (overzetMag() ? `<div class="bb-kop">Ander toestel</div>
       <div class="bb-tegels">${tegel('bb-zet', ozIco('zet'), 'Overzetten')}${tegel('bb-code', ozIco('code'), 'Code invullen')}</div>` : '')
@@ -15820,7 +15821,7 @@ function ozToonCode(nr, { code, tot, sleutel }) {
   const rest = Math.max(0, Math.min(duur, tot - Date.now()));
   const mee = $('oz-blad').querySelector('.oz-mee');
   $('oz-blad').innerHTML = (mee ? mee.outerHTML : '')
-    + ozCodeHtml(code) + `<span class="sr-tekst">Code ${code.split('').join(' ')}</span>`
+    + `<div role="img" aria-label="Code ${code.split('').join(' ')}">${ozCodeHtml(code)}</div>`
     // de balk loopt leeg in de tijd die nog rest: een animatie van een kwartier die
     // al (duur - rest) gevorderd is
     + `<div class="oz-tijd"><i style="animation-duration:${duur}ms;animation-delay:-${duur - rest}ms"></i></div>`

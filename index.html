@@ -9825,7 +9825,7 @@
   }
   #confirm-title .oz-i { vertical-align: -4px; }
   .bb-stand {
-    display: flex; align-items: center; justify-content: center; gap: 2px;
+    display: block; padding: 0 8px;
     font-size: var(--tx-klein); color: var(--paper-ink-muted); text-align: center;
   }
   .bb-stand.oud { color: var(--practice-text); }
@@ -9848,6 +9848,9 @@
   .bb-tegel:active { background: var(--lavender-wash-3); }
 
   .oz-blad { text-align: center; }
+
+  .over-hint.code-hint { margin-top: 0; }
+  .over-hint.code-hint .oz-i { width: 18px; height: 18px; }
   .oz-mee { display: flex; justify-content: center; padding-left: 10px; margin: 0 0 8px; }
   .oz-mini {
     position: relative; display: inline-block; width: 40px; height: 40px; margin-left: -10px;
@@ -27412,7 +27415,8 @@ function importData(file) {
 function backupBladStandHtml() {
   const oud = backupOud();
   const w = backupWanneer();
-  const tekst = backupDagen() === null ? 'Nog nooit een back-up gemaakt' : 'Laatste back-up: ' + w.toLowerCase();
+  const tekst = (backupDagen() === null ? 'Nog nooit een back-up gemaakt' : 'Laatste back-up: ' + w.toLowerCase())
+    + ' · alles staat alleen op dit toestel';
   return `<div class="bb-stand${oud ? ' oud' : ''}" id="bb-stand">${oud ? '<span class="gi-dot" aria-hidden="true"></span>' : ''}${tekst}</div>`;
 }
 function openBackupBlad() {
@@ -27420,7 +27424,7 @@ function openBackupBlad() {
   const tegel = (id, ico, t) => `<button class="bb-tegel" id="${id}" type="button">${ico}${t}</button>`;
   $('confirm-title').innerHTML = '🗄️ Back-up';
   $('confirm-body').innerHTML = `<div class="bb-blad">${backupBladStandHtml()}
-      <div class="bb-kop">Bestand · alles staat alleen op dit toestel</div>
+      <div class="bb-kop">Bestand</div>
       <div class="bb-tegels">${tegel('bb-maak', ozIco('maak'), 'Maken')}${tegel('bb-terug', ozIco('terug'), 'Terugzetten')}</div>`
     + (overzetMag() ? `<div class="bb-kop">Ander toestel</div>
       <div class="bb-tegels">${tegel('bb-zet', ozIco('zet'), 'Overzetten')}${tegel('bb-code', ozIco('code'), 'Code invullen')}</div>` : '')
@@ -27561,7 +27565,7 @@ function ozToonCode(nr, { code, tot, sleutel }) {
   const rest = Math.max(0, Math.min(duur, tot - Date.now()));
   const mee = $('oz-blad').querySelector('.oz-mee');
   $('oz-blad').innerHTML = (mee ? mee.outerHTML : '')
-    + ozCodeHtml(code) + `<span class="sr-tekst">Code ${code.split('').join(' ')}</span>`
+    + `<div role="img" aria-label="Code ${code.split('').join(' ')}">${ozCodeHtml(code)}</div>`
 
 
     + `<div class="oz-tijd"><i style="animation-duration:${duur}ms;animation-delay:-${duur - rest}ms"></i></div>`

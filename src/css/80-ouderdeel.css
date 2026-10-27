@@ -906,7 +906,7 @@
   }
   #confirm-title .oz-i { vertical-align: -4px; }
   .bb-stand {
-    display: flex; align-items: center; justify-content: center; gap: 2px;
+    display: block; padding: 0 8px;
     font-size: var(--tx-klein); color: var(--paper-ink-muted); text-align: center;
   }
   .bb-stand.oud { color: var(--practice-text); }
@@ -929,6 +929,9 @@
   .bb-tegel:active { background: var(--lavender-wash-3); }
 
   .oz-blad { text-align: center; }
+  /* op het lege beginscherm vlak onder "Wat is Rekensterren?": één paar regels */
+  .over-hint.code-hint { margin-top: 0; }
+  .over-hint.code-hint .oz-i { width: 18px; height: 18px; }
   .oz-mee { display: flex; justify-content: center; padding-left: 10px; margin: 0 0 8px; }
   .oz-mini {
     position: relative; display: inline-block; width: 40px; height: 40px; margin-left: -10px;
