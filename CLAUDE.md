@@ -30,8 +30,8 @@ draaien ook op kaal Node. De studio (Publiceren) draait precies dezelfde ronde.
 Eén suite draaien gaat met `npm run test:<naam>`, bijvoorbeeld
 `npm run test:reis`; de hele lijst staat in `docs/TESTEN.md`.
 
-Op GitHub draait bij elke PR en elke push naar main dezelfde keuring, plus `hub`
-en `test:sterren` (`.github/workflows/keuring.yml`). Dat is het vangnet voor
+Op GitHub draait bij elke PR en elke push naar main dezelfde keuring, plus `hub`,
+`test:sterren` en `test:schuiven` (`.github/workflows/keuring.yml`). Dat is het vangnet voor
 wat níét via de studio gaat; het vervangt `npm test` op je eigen machine niet.
 
 Main mergen in je tak, en dan `npm run bouw`: dat is altijd de volgorde.

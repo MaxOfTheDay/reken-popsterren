@@ -1155,7 +1155,17 @@
 
 
 
-  .screen { display: none; flex: 1; flex-direction: column; align-items: center; padding: 12px; overflow-y: auto; overflow-x: hidden;
+
+
+
+
+
+
+
+
+
+
+  .screen { display: none; flex: 1; flex-direction: column; align-items: center; padding: 12px; overflow: hidden;
 
 
 
@@ -1271,6 +1281,7 @@
 
 
 
+  .screen.lijst { overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; }
   .screen.active { display: flex; animation: screenIn .18s ease both; }
   @keyframes screenIn { from { opacity: 0; } to { opacity: 1; } }
 
@@ -3419,7 +3430,8 @@
 
 
 
-  .screen.hub { padding-bottom: calc(var(--balk-ruimte) + 14px); }
+
+  .screen.hub { padding-bottom: var(--onder-vrij, calc(var(--balk-ruimte) + 14px)); }
 
 
 
@@ -4892,13 +4904,6 @@
 
 
 
-    #screen-map { overflow: hidden; }
-
-
-
-
-
-
 
 
 
@@ -4916,7 +4921,11 @@
       background-image: var(--art, none), linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 100%);
       background-size: cover; background-position: 50% 50%;
       filter: blur(4.5px) brightness(.46) saturate(.8); }
-    #screen-map::after { z-index: -2; }
+
+
+
+
+    #screen-map::after { z-index: -2; position: fixed; }
 
 
 
@@ -7067,7 +7076,7 @@
 
 
   #screen-trophies:not(.kunst).app-sfeer::before { filter: brightness(.6) saturate(.85); }
-  #screen-trophies { --lade: rgb(40,12,68); --lade-onder: calc(var(--balk-ruimte) + 14px); }
+  #screen-trophies { --lade: rgb(40,12,68); --lade-onder: var(--onder-vrij, calc(var(--balk-ruimte) + 14px)); }
   #trophy-shelves {
     width: min(100% + var(--rand, 12px) * 2, var(--kolom) + 24px); max-width: none; flex-shrink: 0;
     contain: layout style;
@@ -7120,7 +7129,6 @@
 
 
 
-  #screen-trophies.balk-aan #trophy-shelves { padding-bottom: calc(var(--lade-onder) + 16px + 62px); }
 
 
 
@@ -7940,18 +7948,6 @@
 
 
 
-  #screen-dress { padding-bottom: calc(var(--balk-ruimte) + 14px); }
-  #screen-dress.met-lade { padding-bottom: calc(var(--balk-ruimte) + 80px); }
-
-
-
-  #screen-dress.met-podiumbalk { padding-bottom: calc(var(--balk-ruimte) + 190px); }
-
-
-
-
-
-
 
 
 
@@ -8551,9 +8547,7 @@
 
 
 
-  #screen-dress { --lade: rgb(40,12,68); --lade-onder: calc(var(--balk-ruimte) + 14px); }
-  #screen-dress.met-lade { --lade-onder: calc(var(--balk-ruimte) + 80px); }
-  #screen-dress.met-podiumbalk { --lade-onder: calc(var(--balk-ruimte) + 190px); }
+  #screen-dress { --lade: rgb(40,12,68); --lade-onder: var(--onder-vrij, calc(var(--balk-ruimte) + 14px)); }
   #screen-dress .shop-tabs-wrap {
     width: min(100% + 24px, var(--kolom) + 24px); max-width: none; margin-top: 6px;
     padding: 12px 12px 6px;
@@ -9412,7 +9406,7 @@
 
 
 
-  .oefen-kaart.primary { padding: 16px 16px 14px; }
+  .oefen-kaart.primary { padding: 16px 18px 14px; }
   .oe-lbl { display: flex; align-items: center; gap: 6px; margin: 14px 2px 7px; font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
   .oe-lbl:first-child { margin-top: 0; }
   .oe-teken { padding: 1px 8px; border-radius: var(--r-sm); background: var(--lavender-wash); color: var(--purple-mid); font-size: var(--tx-label); letter-spacing: .5px; }
@@ -9747,9 +9741,11 @@
 
 
 
+  .kaart-kop { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; margin: 0 2px 10px; }
+  .kaart-kop h2 { margin: 0; white-space: nowrap; font-size: var(--tx-body); font-weight: 700; color: var(--purple-mid); }
+  .kaart-kop h2 span { color: var(--paper-ink-muted); font-weight: 600; }
 
-  .vg-kop { font-size: var(--tx-body); font-weight: 700; color: var(--purple-mid); margin: 0 2px 10px; }
-  .vg-kop span { color: var(--paper-ink-muted); font-weight: 600; }
+
 
 
 
@@ -9770,9 +9766,6 @@
   .vg-tag.pittig { background: var(--practice-bg); color: var(--practice-text); }
   .vg-tag.pittig b { background: var(--practice-text); }
 
-  .vg-kop-rij { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; margin: 0 2px 10px; }
-  .vg-kop-rij .vg-kop { margin: 0; white-space: nowrap; }
-
   .vg-ladder .fl-naam small.vg-hoever { display: flex; align-items: center; gap: 6px; font-weight: 600; }
   .vg-bol { display: inline-flex; gap: 3px; }
   .vg-bol i { width: 8px; height: 8px; border-radius: 50%; background: var(--lavender-wash-3); box-shadow: inset 0 0 0 1.5px var(--purple-light); }
@@ -9792,8 +9785,32 @@
   @media (max-width: 360px) {
     .vg-ladder .fl-rij.hier .fl-vb { display: none; }
   }
-  .vg-gat .fl-n { background: none !important; color: var(--paper-ink-muted); }
   .vg-gat .fl-naam { font-size: var(--tx-klein); }
+
+
+
+
+
+
+
+
+  .vg-ladder { gap: 0; }
+  .vg-ladder > .fl-rij { position: relative; min-height: 42px; }
+  .vg-ladder > .fl-rij::before, .vg-ladder > .fl-rij::after, .vg-ladder > .vg-onder::before {
+    content: ""; position: absolute; left: 19.5px; width: 3px; pointer-events: none;
+    background: radial-gradient(circle, var(--purple-light) 1.5px, transparent 2px) center top / 3px 6px repeat-y;
+  }
+  .vg-ladder > .fl-rij::before { top: 0; height: calc(50% - 16px); }
+  .vg-ladder > .fl-rij::after { bottom: 0; height: calc(50% - 16px); }
+  .vg-ladder > .fl-rij.klaar::after, .vg-ladder > .fl-rij.hier::before { background: var(--purple-mid); border-radius: 2px; }
+  .vg-ladder > .vg-onder { position: relative; margin-bottom: 0; }
+  .vg-ladder > .vg-onder::before { top: 0; bottom: 0; }
+  .vg-ladder > .fl-rij.vg-gat::before { height: 50%; }
+  .vg-ladder > .fl-rij.vg-gat::after { height: 50%; }
+  .vg-ladder > .fl-rij:first-child::before, .vg-ladder > .fl-rij:last-child::after,
+  .vg-ladder > .fl-rij:has(+ .fl-lijn)::after { display: none; }
+
+  .vg-gat .fl-n { background: none !important; color: transparent; }
   .vg-voet { display: flex; justify-content: flex-end; margin-top: 4px; }
   .vg-vlot { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
   .vg-vlot span {
@@ -9817,22 +9834,22 @@
   .practice-chip { background: var(--practice-bg); border: 1px solid var(--gold-light); color: var(--practice-text); border-radius: var(--r-pill); padding: 6px 13px; font-weight: 700; font-size: var(--tx-label); }
 
   .vg-meer { padding-top: 12px; padding-bottom: 12px; }
-  .vg-meer > summary {
-    list-style: none; cursor: pointer; display: flex; align-items: center; min-height: 32px;
-    font-size: var(--tx-label); font-weight: 700; color: var(--purple-mid);
-  }
+  .vg-meer > summary { list-style: none; cursor: pointer; display: flex; align-items: center; min-height: 32px; color: var(--purple-mid); }
+  .vg-meer > summary .kaart-kop { flex: 1; margin: 0 2px; }
   .vg-meer > summary::-webkit-details-marker { display: none; }
   .vg-meer > summary::after { content: '▾'; margin-left: auto; opacity: .7; }
   .vg-meer[open] > summary::after { content: '▴'; }
 
 
 
+
+
   .vg-cijfers {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 8px; margin: 8px 2px 2px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 8px; margin: 10px 2px 2px;
     font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted);
   }
-  .vg-cijfers b { display: block; font-size: var(--tx-body); }
-  .vg-getal b, .oogst-item b { font-weight: 700; color: var(--paper-ink); }
+  .vg-cijfers b { display: block; font-size: var(--tx-sub); font-weight: 700; line-height: 1.1; color: var(--paper-ink); }
+  .vg-cijfers-lijn { grid-column: 1 / -1; height: 1px; margin: -4px 0; background: var(--paper-border); }
 
   .stem-notitie { margin-top: 10px; }
   .vg-kaart > .stem-notitie:first-child { margin-top: 0; }
@@ -10190,7 +10207,7 @@
 <div id="app">
 
   <!-- ===== Profielkeuze ===== -->
-  <div class="screen active app-sfeer" id="screen-profile">
+  <div class="screen lijst active app-sfeer" id="screen-profile">
     <div class="map-sky" aria-hidden="true">
       <div class="map-sky-inner">
         <span style="top:14%;font-size:28px;animation-duration:85s;animation-delay:-20s;opacity:.24">☁️</span>
@@ -10345,7 +10362,7 @@
        zelf wordt door renderReis() opgebouwd uit WORLDS en de voortgang van fase
        4A -- er staat hier met opzet geen enkele wereld met naam, zodat een wereld
        erbij niets aan dit blokje verandert. -->
-  <div class="screen hub" id="screen-journey">
+  <div class="screen lijst hub" id="screen-journey">
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="naTik(reisSluit)" aria-label="Terug naar de kaart" title="Terug naar de kaart"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
@@ -10494,7 +10511,7 @@
        schermen die niet op elkaar leken. .kast is de variant erop: hetzelfde licht
        van boven als de kaptafel in de kleedkamer, maar koeler en smaller, zoals een
        vitrine wordt uitgelicht. Zie .app-sfeer.kast in het stijlblad. -->
-  <div class="screen hub gebruik app-sfeer kast" id="screen-trophies">
+  <div class="screen lijst hub gebruik app-sfeer kast" id="screen-trophies">
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="naTik(goMap)" aria-label="Terug naar de kaart" title="Terug naar de kaart"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
@@ -10564,7 +10581,7 @@
        plaatje, geen nieuwe laag: precies dezelfde regel als daar.
        .kleedkamer is de variant erop: dezelfde schil, met het licht van een
        kaptafel erbij. Zie .app-sfeer.kleedkamer in het stijlblad. -->
-  <div class="screen hub gebruik app-sfeer kleedkamer" id="screen-dress">
+  <div class="screen lijst hub gebruik app-sfeer kleedkamer" id="screen-dress">
     <div class="hub-sticky">
       <!-- de kamer achter de kop, zodat het rek er niet doorheen schemert (zie .kop-kamer) -->
       <div class="kop-kamer" aria-hidden="true"></div>
@@ -10602,7 +10619,7 @@
   </div>
 
   <!-- ===== Instellingen (ouders) ===== -->
-  <div class="screen gebruik app-sfeer" id="screen-settings">
+  <div class="screen lijst gebruik app-sfeer" id="screen-settings">
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="naTik(ouderTerug)" aria-label="Terug" title="Terug"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
@@ -10635,7 +10652,7 @@
        quit-modal is naar closeConfirmModal, dus als modal zou Android-terug dit
        formulier nooit sluiten. Bovendien vecht een invoerveld in een vast
        gecentreerde overlay met het toetsenbord; een scherm scrolt gewoon mee. -->
-  <div class="screen gebruik app-sfeer" id="screen-newstar">
+  <div class="screen lijst gebruik app-sfeer" id="screen-newstar">
     <div class="hub-sticky sub">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="closeNewStar()" aria-label="Terug" title="Terug"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
@@ -15850,6 +15867,94 @@ function show(id) {
   if (navId) updateTroDot();
   knipperWek();
   syncBackGuard();
+  onderVrijOpnieuw();
+  schuifWacht();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const ONDER_BALKEN = ['main-nav', 'dress-bar', 'kast-bar'];
+const ONDER_LUCHT = 14;
+let onderVrijScherm = null, onderVrijNu = 0;
+function onderVrijMeet() {
+  const scherm = document.querySelector('.screen.active');
+  if (!scherm || !scherm.classList.contains('lijst')) return;
+  let onder = scherm.offsetHeight;
+  for (let e = scherm; e; e = e.offsetParent) onder += e.offsetTop;
+  let top = onder;
+  for (const id of ONDER_BALKEN) {
+    const balk = $(id);
+    if (!balk || !balk.offsetHeight || getComputedStyle(balk).display === 'none') continue;
+    top = Math.min(top, balk.offsetTop);
+  }
+  const vrij = Math.max(0, Math.ceil(onder - top)) + ONDER_LUCHT;
+  if (scherm === onderVrijScherm && vrij <= onderVrijNu) return;
+  onderVrijScherm = scherm; onderVrijNu = vrij;
+  scherm.style.setProperty('--onder-vrij', vrij + 'px');
+}
+
+
+
+
+
+function onderVrijOpnieuw() {
+  onderVrijScherm = null;
+  queueMicrotask(onderVrijMeet);
+}
+
+
+
+
+function onderVrijWaarnemen() {
+  const kijk = typeof MutationObserver === 'function'
+    ? new MutationObserver(onderVrijMeet) : null;
+  const maat = typeof ResizeObserver === 'function'
+    ? new ResizeObserver(onderVrijMeet) : null;
+  for (const id of ONDER_BALKEN) {
+    const balk = $(id);
+    if (!balk) continue;
+    if (kijk) kijk.observe(balk, { attributes: true, attributeFilter: ['style', 'class'], childList: true, subtree: true });
+    if (maat) maat.observe(balk);
+  }
+  window.addEventListener('resize', onderVrijOpnieuw);
+}
+
+
+
+
+
+let schuifWachtAan = false;
+function schuifWacht() {
+  if (!schuifWachtAan) return;
+  clearTimeout(schuifWacht.t);
+
+  schuifWacht.t = setTimeout(() => {
+    const scherm = document.querySelector('.screen.active');
+    if (!scherm || scherm.classList.contains('lijst')) return;
+    const weg = scherm.scrollHeight - scherm.clientHeight;
+    if (weg > 1) console.warn(`[schuiven] #${scherm.id} past niet op ${innerWidth}x${innerHeight}: `
+      + `${weg}px valt onderaan weg. Laat het passen, of maak er een lijst van (.lijst).`);
+  }, 900);
 }
 
 
@@ -21586,9 +21691,8 @@ function kastBalk(t, card, tekst, getal) {
   const bar = $('kast-bar');
   document.querySelectorAll('#trophy-shelves .trophy-card.kies').forEach(k => k.classList.remove('kies'));
   const kast = $('screen-trophies');
-  if (!t) { bar.innerHTML = ''; bar.style.display = 'none'; kast.classList.remove('balk-aan'); return; }
+  if (!t) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
   card.classList.add('kies');
-  kast.classList.add('balk-aan');
   const sub = getal != null ? esc(tekst).replace(String(getal), `<span class="db-highlight">${getal}</span>`) : esc(tekst);
 
 
@@ -21602,6 +21706,7 @@ function kastBalk(t, card, tekst, getal) {
     if (naarKaart) naarWereldKaart(t.wereldIdx); else openKleedkamerCat(t.naar);
   };
   bar.style.display = 'flex';
+  onderVrijMeet();
   speak(tekst);
 
 
@@ -25174,7 +25279,7 @@ let dressReturnTo = null;
 function openKleedkamer() {
   shopCat = 'dress'; shopSelectedId = null; dressReturnTo = null;
   toonHub('screen-dress');
-  ladeRuimteOpnieuw();
+  onderVrijOpnieuw();
   renderShop();
   $('screen-dress').scrollTop = 0;
 }
@@ -25195,7 +25300,7 @@ function resumeKleedkamer() {
 function openKleedkamerCat(cat) {
   shopCat = cat; shopSelectedId = null; dressReturnTo = 'trophies';
   toonHub('screen-dress');
-  ladeRuimteOpnieuw();
+  onderVrijOpnieuw();
   renderShop();
   $('screen-dress').scrollTop = 0;
 }
@@ -25218,7 +25323,7 @@ function openKleedkamerItem(id) {
   const podium = (isBeloning(it.id) && !p.owned.includes(it.id)) ? podiumVan(it.id) : null;
   shopCat = podium ? PODIA_CAT : it.cat; shopSelectedId = null; podiumStuk = null; dressReturnTo = null;
   toonHub('screen-dress');
-  ladeRuimteOpnieuw();
+  onderVrijOpnieuw();
   renderShop();
   if (podium) id = podium.id;
 
@@ -25319,7 +25424,7 @@ function renderShop() {
       sndClick();
       if (aan) return;
       shopCat = c.id; shopSelectedId = null; podiumStuk = null;
-      ladeRuimteOpnieuw(); renderShop();
+      onderVrijOpnieuw(); renderShop();
       $('screen-dress').scrollTop = 0;
     };
     tabs.appendChild(b);
@@ -25604,26 +25709,11 @@ function paintShop() {
   }
   popKleren($('shop-avatar'), avatarSVG(preview, 165, true));
   renderDressBar(selected, p);
-  ladeRuimte();
+  onderVrijMeet();
   $('item-grid').querySelectorAll('.item-card').forEach(card => {
     const it = item(card.dataset.item);
     if (it) dressCardState(card, it, p);
   });
-}
-
-
-
-
-
-
-function ladeRuimte() {
-  const scherm = $('screen-dress'), lade = $('dress-bar');
-  if (lade.style.display === 'none') return;
-  scherm.classList.add('met-lade');
-  if (lade.classList.contains('podium-bar')) scherm.classList.add('met-podiumbalk');
-}
-function ladeRuimteOpnieuw() {
-  $('screen-dress').classList.remove('met-lade', 'met-podiumbalk');
 }
 function previewProfile(p, it) {
   const preview = { ...p, equipped: { ...p.equipped } };
@@ -25970,7 +26060,7 @@ function openPodia(ev) {
   if (ev) ev.stopPropagation();
   sndClick();
   shopCat = PODIA_CAT; shopSelectedId = null; podiumStuk = null;
-  ladeRuimteOpnieuw(); renderShop();
+  onderVrijOpnieuw(); renderShop();
   $('screen-dress').scrollTop = 0;
 }
 
@@ -26447,7 +26537,7 @@ function renderNewStar() {
               <span class="sr-val">${oefenSamenvatting(s)}</span></span>
           </summary>
           <div class="set-reveal-body">
-            ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${g.html}</div>`).join('')}
+            ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${oeLbl(g.kop)}${g.html}</div>`).join('')}
             <div class="note" style="margin-top:14px">Later te wijzigen bij 👨‍👩‍👧 Voor ouders.</div>
           </div>
         </details>` : ''}
@@ -26753,6 +26843,16 @@ const flVb = vb => (vb || '').replace('▢', '<i class="fl-vak"></i>');
 
 
 
+
+
+
+
+
+
+
+const kaartKop = (titel, rechts) => `<div class="kaart-kop"><h2>${titel}</h2>${rechts || ''}</div>`;
+
+const oeLbl = (tekst, teken) => `<div class="oe-lbl">${teken ? `<span class="oe-teken">${teken}</span>` : ''}${tekst}</div>`;
 const klaarNamen = namen => namen.length > 2 ? `${namen[0]} … ${namen[namen.length - 1]}` : namen.join(', ');
 function leerpadHtml(p) {
   const s = p.settings;
@@ -26820,7 +26920,7 @@ function leerpadHtml(p) {
     rijen[i] = rijen[i].replace('fl-rij hier niveau-bezig', 'fl-rij hier niveau-bezig met-onder') + onder;
   }
   return `<div class="set-card vg-kaart niveau-blok">
-    <div class="vg-kop-rij"><h2 class="vg-kop">Leerpad <span>· ${kop}</span></h2>${vgLabel(stand)}</div>
+    ${kaartKop(`Leerpad <span>· ${kop}</span>`, vgLabel(stand))}
     <div class="fase-ladder vg-ladder">${rijen.join('')}</div>
     <div class="vg-voet"><button class="vg-aanpas" id="leerpad-aanpas" type="button">Aanpassen ›</button></div>
   </div>`;
@@ -26843,7 +26943,7 @@ function oefentExtraHtml(p) {
 
   const nLearned = Object.keys(p.learned || {}).length;
   return `<div class="set-card vg-kaart">
-    <h2 class="vg-kop">Oefent extra op</h2>
+    ${kaartKop('Oefent extra op')}
     ${vlotHtml(p)}
     <div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>
     ${nLearned ? `<div class="note vg-noot">🧠 ${nLearned} geleerde ${mv(nLearned, 'som komt', 'sommen komen')} later terug.</div>` : ''}
@@ -26882,13 +26982,14 @@ function meerCijfersHtml(p) {
   const stars = totalStarCount(p);
   const perfect = perfectCount(p);
   const oogst = [
-    ['⭐', stars, mv(stars, 'ster', 'sterren')],
-    ['🌟', perfect, mv(perfect, 'perfecte show', 'perfecte shows')],
-    ['🏆', `${earnedActiveCount(p)}/${activeTrophies().length}`, 'trofeeën'],
+    [stars, mv(stars, 'ster', 'sterren')],
+    [perfect, mv(perfect, 'perfecte show', 'perfecte shows')],
+    [`${earnedActiveCount(p)}/${activeTrophies().length}`, 'trofeeën'],
   ];
-  return `<details class="set-card vg-kaart vg-meer"><summary>Meer cijfers</summary>
-    <div class="vg-cijfers">${getallen.map(([n, w]) => `<span class="vg-getal"><b>${n}</b> ${w}</span>`).join('')}${
-      oogst.map(([ico, n, w]) => `<span class="oogst-item"><b>${ico} ${n}</b> ${w}</span>`).join('')}</div>
+  return `<details class="set-card vg-kaart vg-meer"><summary>${kaartKop('Meer cijfers')}</summary>
+    <div class="vg-cijfers">${getallen.map(([n, w]) => `<span class="vg-getal"><b>${n}</b> ${w}</span>`).join('')}
+      <span class="vg-cijfers-lijn" aria-hidden="true"></span>${
+      oogst.map(([n, w]) => `<span class="oogst-item"><b>${n}</b> ${w}</span>`).join('')}</div>
   </details>`;
 }
 function statsPanelHtml(p) {
@@ -27133,7 +27234,8 @@ function oefenGroups(s, pfx, p) {
 
 
 
-  const lbl = (tekst, teken) => `<div class="oe-lbl">${teken ? `<span class="oe-teken">${teken}</span>` : ''}${tekst}</div>`;
+
+  const lbl = oeLbl;
 
 
 
@@ -27146,12 +27248,12 @@ function oefenGroups(s, pfx, p) {
     + `<span class="oe-i" aria-hidden="true">${ico}</span><span class="oe-w">${woord}</span><span class="oe-stand" aria-hidden="true"></span></button></div>`;
   const perShow = `${lbl('Vragen per show')}${balk('set-perlevel', 'perLevel', [[5, '5'], [8, '8'], [10, '10']], s.perLevel)}`;
   if (s.track === 'count') return [{
-    kaart: 'wat', html: `${lbl('Hoeveelheden tot')}${balk('set-qmax', 'qmax', [[6, '6'], [8, '8'], [10, '10']], s.qmax || 10)}`
+    kaart: 'wat', kop: 'Hoeveelheden tot', html: `${balk('set-qmax', 'qmax', [[6, '6'], [8, '8'], [10, '10']], s.qmax || 10)}`
   }, {
-    kaart: 'pad', html: `${lbl('Leerpad')}${ladder('set-fase', 'stage',
+    kaart: 'pad', kop: 'Leerpad', html: `${ladder('set-fase', 'stage',
       stageNums.map(v => ({ v, naam: COUNT_STAGE_LABELS[v], vb: COUNT_STAGE_VB[v] })), lo, hi, p && countLiveStage(p))}`
   }, {
-    kaart: 'show', html: `${lbl('Tonen als')}${balk('set-repr', 'repr',
+    kaart: 'show', kop: 'Tonen als', html: `${balk('set-repr', 'repr',
       [['objects', 'Voorwerpen'], ['mix', 'Mix'], ['dots', 'Stippen']], s.repr || 'objects')}
       ${perShow}
       ${aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false)}`
@@ -27188,16 +27290,16 @@ function oefenGroups(s, pfx, p) {
 
 
   return [{
-    kaart: 'wat', html: `${lbl('Sommen')}
+    kaart: 'wat', kop: 'Sommen', html: `
       <div class="oe-ops" id="${pfx}set-ops" data-instelling="ops">${opDefs.map(([v, teken, woord]) =>
         `<button class="chip${s.ops.includes(v) ? ' on' : ''}" data-v="${v}" aria-label="${woord}" aria-pressed="${s.ops.includes(v)}">${teken}</button>`).join('')}</div>
       ${tablesRelevant ? `${lbl('Tafels van', '× ÷')}
       <div class="oe-tafels" id="${pfx}set-tables" data-instelling="tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>` : ''}`
   }, {
-    kaart: 'pad', html: `${lbl('Leerpad')}${ladder('set-startstap', 'padVanaf', padRijenLadder,
+    kaart: 'pad', kop: 'Leerpad', html: `${ladder('set-startstap', 'padVanaf', padRijenLadder,
       startPos, plusMin ? padR.length : Infinity, hierPos, eind, true)}`
   }, {
-    kaart: 'show', html: `${lbl('Antwoord')}${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
+    kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
       ${perShow}`
   }];
 }
@@ -27231,7 +27333,7 @@ function oefenSamenvatting(s) {
 
 function oefenenPanelHtml(p, s) {
   const cards = oefenGroups(s, '', p).map(g => `
-    <div class="set-card oefen-kaart primary" data-kaart="${g.kaart}">${g.html}</div>`).join('');
+    <div class="set-card oefen-kaart primary" data-kaart="${g.kaart}">${kaartKop(g.kop)}${g.html}</div>`).join('');
   return `<div class="settings-panel">${cards}
   </div>`;
 }
@@ -28842,6 +28944,9 @@ landingLeeft();
 logoIntro();
 syncBackGuard();
 
+onderVrijWaarnemen();
+onderVrijOpnieuw();
+
 
 
 
@@ -28893,6 +28998,9 @@ if (location.search.indexOf('debug') !== -1) {
   }
   if (loadWorldDraft()) console.log('wereldconcept uit localStorage geladen (' + WORLDS.length + ' werelden)');
   window.__game = () => G;
+
+  schuifWachtAan = true;
+  addEventListener('resize', schuifWacht);
   window.__db = () => db;
   if (dbg.has('demo')) {
 

@@ -277,7 +277,8 @@ const SPEL_URL = APP_URL.replace('?debug', '');
 
   /* De kaart mag nooit een browser-schuifbalk opleveren: de vertrekkende laag staat
      een schermhoogte naar beneden, en zonder de dichte overflow zou dat de hele app
-     scrollbaar maken. */
+     scrollbaar maken. Die overflow staat sinds "schuiven is een keuze" (zie .screen
+     in 10-basis) altijd dicht: de kaart is geen lijst, ook ná de wissel niet. */
   r = await page.evaluate(async () => {
     const wacht = ms => new Promise(res => setTimeout(res, ms));
     const sch = document.getElementById('screen-map');
@@ -290,7 +291,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     uit.overflowNa = getComputedStyle(sch).overflowY;
     return uit;
   });
-  check(r.overflow === 'hidden' && r.top === 0 && r.body && r.kopieen === 1 && r.overflowNa === 'auto',
+  check(r.overflow === 'hidden' && r.top === 0 && r.body && r.kopieen === 1 && r.overflowNa === 'hidden',
     'een wereldwissel zet geen browser-scroll in de app', JSON.stringify(r));
 
   /* Snel tikken: een kind ratelt op de bestemmingen. Dat hoort in één wereld te eindigen,

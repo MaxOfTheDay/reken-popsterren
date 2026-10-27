@@ -148,7 +148,7 @@
      horen de kaartjes in de lade te zijn, niet de gloed eromheen. Een echte
      schermtekening (.kunst) heeft zijn eigen sluier en blijft zoals hij is. */
   #screen-trophies:not(.kunst).app-sfeer::before { filter: brightness(.6) saturate(.85); }
-  #screen-trophies { --lade: rgb(40,12,68); --lade-onder: calc(var(--balk-ruimte) + 14px); }
+  #screen-trophies { --lade: rgb(40,12,68); --lade-onder: var(--onder-vrij, calc(var(--balk-ruimte) + 14px)); }
   #trophy-shelves {
     width: min(100% + var(--rand, 12px) * 2, var(--kolom) + 24px); max-width: none; flex-shrink: 0;
     contain: layout style;
@@ -199,9 +199,8 @@
   .groep-tekst { flex: 1 1 auto; min-width: 0; }
   .groep-naam { font-size: var(--tx-body); font-weight: 700; letter-spacing: .01em; text-shadow: var(--op-vlak-ink); }
   /* (Hier stond .groep-note, het regeltje onder de plaknaam. Weg: zie renderShelves.) */
-  /* Met de balk onderin open (een getikte trofee, zie kastBalk) krijgt de lade de
-     hoogte van die balk erbij, zodat ook het onderste vak erboven kan staan. */
-  #screen-trophies.balk-aan #trophy-shelves { padding-bottom: calc(var(--lade-onder) + 16px + 62px); }
+  /* (De balk onderin, bij een getikte trofee: zijn ruimte zit al in --onder-vrij,
+     dus in --lade-onder. Zie kastBalk.) */
   /* ===== De medaillewand =====
      Oktober 2026. De kast was een raster van kaartjes -- twee naast elkaar, elk
      met een rand, een vlak en een pil eronder -- en daarmee een lijst met dozen

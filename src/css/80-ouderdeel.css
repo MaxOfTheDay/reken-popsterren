@@ -403,7 +403,7 @@
      Gekozen is overal dezelfde volle paarse vulling, zonder vinkje erbij. Deze
      regels staan ná .chip, dus ze winnen op volgorde waar de specificiteit
      gelijk is. */
-  .oefen-kaart.primary { padding: 16px 16px 14px; }
+  .oefen-kaart.primary { padding: 16px 18px 14px; }
   .oe-lbl { display: flex; align-items: center; gap: 6px; margin: 14px 2px 7px; font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
   .oe-lbl:first-child { margin-top: 0; }
   .oe-teken { padding: 1px 8px; border-radius: var(--r-sm); background: var(--lavender-wash); color: var(--purple-mid); font-size: var(--tx-label); letter-spacing: .5px; }
@@ -736,11 +736,13 @@
   .danger-btn { background: linear-gradient(180deg, var(--red-danger-500), var(--red-danger-shadow)); color: var(--c-white); border: none; border-radius: var(--r-sm); padding: 10px 16px; font-family: inherit; font-weight: 700; font-size: var(--tx-label); cursor: pointer; box-shadow: 0 var(--btn-lip-sm) 0 var(--red-danger-shadow); white-space: nowrap; }
   .danger-btn:active { transform: translateY(3px); box-shadow: none; }
 
-  /* ---- Voortgang: het leerpad met het label, extra oefenen, meer cijfers (zie statsPanelHtml) ----
-     Geen kaartkop met een icoontegel zoals op Oefenen: daar is de kop een
-     onderwerp ("Modus"), hier gaat het om wat eronder staat. */
-  .vg-kop { font-size: var(--tx-body); font-weight: 700; color: var(--purple-mid); margin: 0 2px 10px; }
-  .vg-kop span { color: var(--paper-ink-muted); font-weight: 600; }
+  /* De kaartkop (zie kaartKop): dezelfde op Voortgang en Oefeningen. Past het
+     ding rechts er niet naast (320 breed, een lange kop), dan zakt het eronder. */
+  .kaart-kop { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; margin: 0 2px 10px; }
+  .kaart-kop h2 { margin: 0; white-space: nowrap; font-size: var(--tx-body); font-weight: 700; color: var(--purple-mid); }
+  .kaart-kop h2 span { color: var(--paper-ink-muted); font-weight: 600; }
+
+  /* ---- Voortgang: het leerpad met het label, extra oefenen, meer cijfers (zie statsPanelHtml) ---- */
   /* Het label (zie vgLabel): één woord met een teken ervoor. De kleur zegt wie
      er aan zet is, het teken en het woord zeggen het ook zonder kleurenzicht.
      Ook op het overzicht, in de rij van elke ster. */
@@ -760,9 +762,6 @@
   .vg-tag.vlot b, .vg-tag.meer b { background: var(--ink-on-gold-card); }
   .vg-tag.pittig { background: var(--practice-bg); color: var(--practice-text); }
   .vg-tag.pittig b { background: var(--practice-text); }
-  /* past het label er niet naast (320 breed, een lange kop), dan zakt het eronder */
-  .vg-kop-rij { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; margin: 0 2px 10px; }
-  .vg-kop-rij .vg-kop { margin: 0; white-space: nowrap; }
   /* hoe ver op haar stap: bolletjes (rekenen) of streepjes (tellen), en een paar woorden */
   .vg-ladder .fl-naam small.vg-hoever { display: flex; align-items: center; gap: 6px; font-weight: 600; }
   .vg-bol { display: inline-flex; gap: 3px; }
@@ -783,8 +782,32 @@
   @media (max-width: 360px) {
     .vg-ladder .fl-rij.hier .fl-vb { display: none; }
   }
-  .vg-gat .fl-n { background: none !important; color: var(--paper-ink-muted); }
   .vg-gat .fl-naam { font-size: var(--tx-klein); }
+  /* HET PAD. Een weg tussen de bolletjes, zoals tussen de haltes op de
+     wereldkaart: vol paars tot haar, gestippeld wat nog komt. Elke rij tekent
+     zijn eigen stukje boven en onder het bolletje (::before en ::after), en de
+     rijen sluiten zonder tussenruimte op elkaar aan, dus de stukjes vormen één
+     lijn. De regel onder haar stap en de rij "nog N fases" tekenen er dwars
+     doorheen. Het eerste stukje boven en het laatste onder vallen weg.
+     Alleen op Voortgang: op Oefeningen lopen de lijnen vanaf/tot dwars over de
+     ladder, en daar botste een derde soort lijn mee. */
+  .vg-ladder { gap: 0; }
+  .vg-ladder > .fl-rij { position: relative; min-height: 42px; }
+  .vg-ladder > .fl-rij::before, .vg-ladder > .fl-rij::after, .vg-ladder > .vg-onder::before {
+    content: ""; position: absolute; left: 19.5px; width: 3px; pointer-events: none;   /* 8px rand + het midden van een bolletje van 26 */
+    background: radial-gradient(circle, var(--purple-light) 1.5px, transparent 2px) center top / 3px 6px repeat-y;
+  }
+  .vg-ladder > .fl-rij::before { top: 0; height: calc(50% - 16px); }
+  .vg-ladder > .fl-rij::after { bottom: 0; height: calc(50% - 16px); }
+  .vg-ladder > .fl-rij.klaar::after, .vg-ladder > .fl-rij.hier::before { background: var(--purple-mid); border-radius: 2px; }
+  .vg-ladder > .vg-onder { position: relative; margin-bottom: 0; }
+  .vg-ladder > .vg-onder::before { top: 0; bottom: 0; }
+  .vg-ladder > .fl-rij.vg-gat::before { height: 50%; }
+  .vg-ladder > .fl-rij.vg-gat::after { height: 50%; }
+  .vg-ladder > .fl-rij:first-child::before, .vg-ladder > .fl-rij:last-child::after,
+  .vg-ladder > .fl-rij:has(+ .fl-lijn)::after { display: none; }
+  /* in "nog N fases" is de stippellijn het teken; het ⋮ blijft voor een schermlezer */
+  .vg-gat .fl-n { background: none !important; color: transparent; }
   .vg-voet { display: flex; justify-content: flex-end; margin-top: 4px; }
   .vg-vlot { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
   .vg-vlot span {
@@ -808,22 +831,22 @@
   .practice-chip { background: var(--practice-bg); border: 1px solid var(--gold-light); color: var(--practice-text); border-radius: var(--r-pill); padding: 6px 13px; font-weight: 700; font-size: var(--tx-label); }
   /* "Meer cijfers": een kaart die dicht begint. Zelfde pijltje als .set-reveal. */
   .vg-meer { padding-top: 12px; padding-bottom: 12px; }
-  .vg-meer > summary {
-    list-style: none; cursor: pointer; display: flex; align-items: center; min-height: 32px;
-    font-size: var(--tx-label); font-weight: 700; color: var(--purple-mid);
-  }
+  .vg-meer > summary { list-style: none; cursor: pointer; display: flex; align-items: center; min-height: 32px; color: var(--purple-mid); }
+  .vg-meer > summary .kaart-kop { flex: 1; margin: 0 2px; }
   .vg-meer > summary::-webkit-details-marker { display: none; }
   .vg-meer > summary::after { content: '▾'; margin-left: auto; opacity: .7; }
   .vg-meer[open] > summary::after { content: '▴'; }
-  /* Meer cijfers: de tellers en de oogst, drie op een rij. Bewust géén tegels --
-     sterren en trofeeën zijn van het kind en staan groot in de kast en op de
-     kaart; hier hoeven ze alleen te bestaan. */
+  /* Meer cijfers: wat ze deed en wat ze verdiende, drie op een rij met een streepje
+     ertussen. Alleen getallen: emoji bij de ene helft en niet bij de andere las
+     als een slordigheid. Bewust géén tegels -- sterren en trofeeën zijn van
+     het kind en staan groot in de kast en op de kaart; hier hoeven ze alleen te
+     bestaan. */
   .vg-cijfers {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 8px; margin: 8px 2px 2px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 8px; margin: 10px 2px 2px;
     font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted);
   }
-  .vg-cijfers b { display: block; font-size: var(--tx-body); }
-  .vg-getal b, .oogst-item b { font-weight: 700; color: var(--paper-ink); }
+  .vg-cijfers b { display: block; font-size: var(--tx-sub); font-weight: 700; line-height: 1.1; color: var(--paper-ink); }
+  .vg-cijfers-lijn { grid-column: 1 / -1; height: 1px; margin: -4px 0; background: var(--paper-border); }
   /* geen stem op dit toestel (zie stemNotitie): een gewone notitie, met wat lucht erboven */
   .stem-notitie { margin-top: 10px; }
   .vg-kaart > .stem-notitie:first-child { margin-top: 0; }

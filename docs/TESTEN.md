@@ -439,19 +439,28 @@ Zie `docs/LADEN.md`, "Venster, veilige zone en toetsenbord", voor de maten zelf.
 
 ### `test/schuiven.test.js` — schuiven alleen waar er iets te zien is
 
-Elk scherm is een scrollvak, en dat schuift ook als het maar een paar pixels te
-hoog is. Dan voelt de app los onder je vinger: een kleedkamerlade waar alles in
+Alleen een lijst schuift (`.lijst`: kleedkamer, kast, reis, ouderdeel,
+maakformulier, sterrenkeuze); de rest is één beeld en staat stil (zie `.screen` in
+`10-basis.css`). En een lijst schuift precies tot de hoogste balk die er nú
+onderaan staat (`--onder-vrij`, "= De ruimte onder de balken" in
+`35-schermen.js`). Een scrollvak schuift al bij een paar pixels te veel, en dan
+voelt de app los onder je vinger: een kleedkamerlade waar alles in
 past kon toch de lege ruimte in, en een kaart op een liggende tablet schoof 46px
 op. Niets breekt, dus geen andere suite zag het. Deze suite opent de schermen op
-vijf maten (staand, liggend, tablet) en meet per scrollvak hoe ver het schuift
-tegen hoe ver het moet om het onderste echte ding 8px boven de navigatie te
-krijgen. De beloftes:
+zeven maten (van 320 tot een liggende tablet) en meet per scrollvak hoe ver het
+schuift tegen hoe ver het moet om het onderste echte ding 8px boven de navigatie
+(of een plakkende voet) te krijgen. Hij draait ook op GitHub, bij elke PR. De
+beloftes:
 
 - **niemand schuift veel verder dan nodig** (zaak A), elke kleedkamerlade apart;
 - **de kleedkamer en de kast zijn tot onderaan te schuiven** (zaak B) — liggend
   breed bleef de onderste rij van het rek eerst onder de navigatie;
-- **de lade krijgt ruimte zodra hij opengaat, en houdt die tot een andere lade**
-  (zaak C) — bij het dichtgaan teruggeven liet het rek springen.
+- **een balk krijgt ruimte zodra hij opengaat, en houdt die tot een andere lade
+  of een ander scherm** (zaak C, de kleedkamer en de kast) — bij het dichtgaan
+  teruggeven liet het rek springen;
+- **wat geen lijst is, past** (zaak D) — op elke maat en in elke stand: een
+  beeldscherm schuift niet, dus wat er niet past valt weg. Met `?debug` zegt de
+  console het ook (`[schuiven] … past niet`), zodat je het in de studio al ziet.
 
 ### `test/kop.test.js` — de kop van de wereldkaart
 

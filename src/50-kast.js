@@ -585,9 +585,8 @@ function kastBalk(t, card, tekst, getal) {
   const bar = $('kast-bar');
   document.querySelectorAll('#trophy-shelves .trophy-card.kies').forEach(k => k.classList.remove('kies'));
   const kast = $('screen-trophies');
-  if (!t) { bar.innerHTML = ''; bar.style.display = 'none'; kast.classList.remove('balk-aan'); return; }
+  if (!t) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
   card.classList.add('kies');
-  kast.classList.add('balk-aan');   // ruimte onderin, zodat ook de onderste plank boven de balk kan
   const sub = getal != null ? esc(tekst).replace(String(getal), `<span class="db-highlight">${getal}</span>`) : esc(tekst);
   /* t.naar: deze trofee verdien je in de kleedkamer, dus staat er rechts één
      knop die die lade opent -- dezelfde kleine knop als Speel in de balk van de
@@ -601,6 +600,7 @@ function kastBalk(t, card, tekst, getal) {
     if (naarKaart) naarWereldKaart(t.wereldIdx); else openKleedkamerCat(t.naar);
   };
   bar.style.display = 'flex';
+  onderVrijMeet();   // ruimte onderin, zodat ook de onderste plank boven de balk kan -- vóór de scroll hieronder
   speak(tekst);
   /* Viel de getikte trofee achter de balk (een tik vlak boven de navigatie), dan
      schuift de kast hem erboven -- hetzelfde als zichtbaarBovenBalk in de
