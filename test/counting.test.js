@@ -483,6 +483,76 @@ function check(ok, label, detail) {
   check(!rij.log.some(e => e.afgebroken === 'zeven') && rij.log.some(e => e.wacht),
     'stem: een zin met wacht sluit achteraan aan (memory: "Goed zo!" na het getal)', JSON.stringify(rij.log));
 
+  /* ---- de app valt weg: stem stil, en bij terugkomst de vraag opnieuw ----
+     Een vergrendeld scherm of een ander scherm: de stem zwijgt meteen, er wordt
+     niets meer gezegd zolang de app weg is, en wie terugkomt bij een open vraag
+     hoort hem nog eens. Een vraag die al beantwoord was (G.lock) leest niet. */
+  const weg2 = await page.evaluate(async () => {
+    const echt = { speak: speechSynthesis.speak, cancel: speechSynthesis.cancel };
+    const log = [];
+    speechSynthesis.speak = u => log.push(u.text);
+    speechSynthesis.cancel = () => log.push('CANCEL');
+    const zet = verborgen => {
+      Object.defineProperty(document, 'hidden', { get: () => verborgen, configurable: true });
+      Object.defineProperty(document, 'visibilityState', { get: () => verborgen ? 'hidden' : 'visible', configurable: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    };
+    const r = {};
+    show('screen-game');
+    G.lock = false;
+    const q = G.qs[G.idx];
+    r.lead = q.prompt || somZin(q);
+    zet(true);
+    r.cancel = log.includes('CANCEL');
+    speak('dit hoort niemand');
+    r.stilWeg = !log.includes('dit hoort niemand');
+    zet(false);
+    await new Promise(t => setTimeout(t, 50));
+    r.terug = log.slice();
+    // een beantwoorde vraag: bij terugkomst niets opnieuw
+    log.length = 0;
+    zet(true); G.lock = true; zet(false);
+    await new Promise(t => setTimeout(t, 50));
+    r.dicht = log.filter(x => x !== 'CANCEL');
+    G.lock = false;
+    delete document.hidden; delete document.visibilityState;
+    Object.assign(speechSynthesis, echt);
+    return r;
+  });
+  check(weg2.cancel && weg2.stilWeg, 'stem: weg uit de app = de stem zwijgt en zegt niets meer', JSON.stringify(weg2));
+  check(weg2.terug.includes(weg2.lead), 'stem: terug bij een open vraag leest hem opnieuw voor', JSON.stringify(weg2));
+  check(weg2.dicht.length === 0, 'stem: terug bij een beantwoorde vraag leest niets', JSON.stringify(weg2));
+
+  /* ---- zonder Nederlandse stem geen luistervraag ----
+     Een toestel met alleen een Engelse stem leest "zes" onherkenbaar voor; een
+     luistervraag wordt dan een gok. Een lege stemmenlijst is "weet niet" en telt
+     als aanwezig. */
+  const stemmen = await page.evaluate(() => {
+    const echt = speechSynthesis.getVoices;
+    const met = lijst => { speechSynthesis.getVoices = () => lijst; _voices = []; return countStageTypes(5).includes('listen'); };
+    const r = { engels: met([{ lang: 'en-US' }]), leeg: met([]), vlaams: met([{ lang: 'en-US' }, { lang: 'nl-BE' }]) };
+    speechSynthesis.getVoices = echt; _voices = []; refreshVoices();
+    return r;
+  });
+  check(!stemmen.engels && stemmen.leeg && stemmen.vlaams,
+    'stem: luistervraag alleen met een Nederlandse stem (of een lijst die nog leeg is)', JSON.stringify(stemmen));
+
+  /* ---- de stem ontgrendelen (iPhone, iPad) ----
+     Eén lege zin zonder volume op de eerste tik met het geluid aan; met het
+     geluid uit blijft hij wachten. */
+  const open = await page.evaluate(() => {
+    const echt = speechSynthesis.speak;
+    const log = [];
+    speechSynthesis.speak = u => log.push({ t: u.text, v: u.volume });
+    db.sound = false; stemOpen = false; stemOntgrendel();
+    const uit = { open: stemOpen, n: log.length };
+    db.sound = true; stemOntgrendel(); stemOntgrendel();
+    speechSynthesis.speak = echt;
+    return { uit, log, open: stemOpen };
+  });
+  check(!open.uit.open && open.uit.n === 0 && open.open && open.log.length === 1 && open.log[0].t === '' && open.log[0].v === 0,
+    'stem: de eerste tik met geluid aan ontgrendelt de stem met één stille zin', JSON.stringify(open));
+
   check(pageErrors.length === 0, 'geen javascript-fouten', pageErrors.join(' | '));
 
   await browser.close();
