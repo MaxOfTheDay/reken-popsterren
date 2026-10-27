@@ -423,6 +423,10 @@
     font-size: var(--tx-klein); font-weight: 700; margin-top: 9px; line-height: 1.2;
     overflow-wrap: break-word; max-width: 100%;
   }
+  /* Op 320 breed is een derde van de plank smaller dan "Wereldreiziger" in 13:
+     dan brak de naam midden in het woord ("Wereldreizige / r"). Daar een trede
+     lager op de ladder, en alleen daar. */
+  @media (max-width: 340px) { .trophy-card .tname { font-size: var(--tx-mini); } }
   .trophy-card.ready .tname { color: var(--gold-light); }
   .trophy-card.fresh .tname, .trophy-card.busy .tname { color: rgba(255,255,255,.72); }
   .trophy-card.locked .tname { color: rgba(255,255,255,.56); }
