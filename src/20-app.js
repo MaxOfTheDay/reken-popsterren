@@ -2734,14 +2734,31 @@ function load() {
   let raw = null;
   try {
     raw = localStorage.getItem(LS_KEY);
+    opslagStand = raw;   // wat er stond toen wij keken -- zie save()
     if (raw) {
       db = JSON.parse(raw);
       if (typeof db.sound !== 'boolean') db.sound = true;
       if (typeof db.haptics !== 'boolean') db.haptics = true;
       // een half-kapotte db houdt wat ze nog heeft, i.p.v. hieronder te gooien
       if (!db.profiles || typeof db.profiles !== 'object') db.profiles = {};
-      Object.values(db.profiles).forEach(migrate);
+      /* Elke ster apart. Vroeger ging dit in één forEach, en één ster waar migrate
+         op stukliep gooide de hele db weg: het beginscherm leeg, alsof er nooit
+         gespeeld was, en de eerste ster die een ouder daarna (geschrokken) maakte
+         schreef over het hele bestand heen. Nu gaat alleen die ene ster opzij; de
+         rest speelt gewoon door. */
+      const opzij = [];
+      for (const k of Object.keys(db.profiles)) {
+        try { migrate(db.profiles[k]); }
+        catch (e) { opzij.push(k); delete db.profiles[k]; }
+      }
       normalizeProfiles();   // eenmalige legacy-ophaalslag + volgorde
+      if (opzij.length) {
+        /* Het hele bestand zoals het was naar .broken, net als hieronder, en nu
+           níét bewaren: het origineel blijft ook onder LS_KEY staan tot er echt
+           gespeeld wordt. Zo is er altijd een ongeschonden kopie om te herstellen. */
+        try { localStorage.setItem(LS_KEY + '.broken', raw); } catch (e2) { /* vol of dicht */ }
+        return;
+      }
       save();
       return;
     }
@@ -2775,10 +2792,54 @@ let saveFailed = false;
    precies hetzelfde blijven, anders test de kijkopstelling iets anders dan er
    draait. */
 let demoStand = false;
-function save() {
-  if (demoStand) return;
+/* ---- Twee keer open ----------------------------------------------------------
+   Elk geopend exemplaar van het spel houdt de hele db in zijn geheugen en schrijft
+   hem bij elke save() in zijn geheel terug. Staat het spel twee keer open, dan
+   schreef het oudste exemplaar bij zijn eerstvolgende antwoord zijn oude stand
+   over alles heen wat het andere intussen verdiend had. Dat gebeurt gewoon: op
+   Android delen de app op het beginscherm en een Chrome-tabblad dezelfde opslag,
+   en een iPad haalt een Safari-tabblad van vorige week terug met de stand van
+   vorige week erin.
+
+   Dus onthouden we wat er stond toen wij het laatst lazen of schreven
+   (opslagStand), en kijken vóór elke save() of dat nog zo is. Staat er iets
+   anders, dan heeft een ander exemplaar geschreven: dan schrijven wij niet, maar
+   laden we opnieuw -- en dus met de nieuwere stand. Wat dan verloren gaat is
+   hooguit de show die in dít exemplaar bezig was; de nieuwere voortgang blijft
+   altijd staan.
+
+   Een lege opslag telt níét als "een ander schreef": dan heeft de browser hem
+   gewist terwijl wij open stonden, en is wat er in het geheugen staat de enige
+   kopie die nog bestaat. Die schrijven we dus gewoon terug.
+
+   Bij terugkomen (tabblad weer in beeld, of uit de terug-cache van de browser)
+   kijken we het ook al na, zodat het oude exemplaar meestal al bijgewerkt is
+   vóór er één keer getikt wordt. Niet bij elke wijziging van de ander terwijl dit
+   exemplaar in beeld is (het storage-event): dan zouden twee kinderen naast
+   elkaar op één tablet elkaars scherm bij elk antwoord opnieuw laten laden. */
+let opslagStand = null;
+let opnieuwLaden = false;
+function anderSchreef() {
   try {
-    localStorage.setItem(LS_KEY, JSON.stringify(db));
+    const nu = localStorage.getItem(LS_KEY);
+    return nu !== null && nu !== opslagStand;
+  } catch (e) { return false; }   // opslag dicht: dan schrijft er ook niemand anders
+}
+function laadNieuwere() {
+  if (opnieuwLaden) return;
+  opnieuwLaden = true;
+  location.reload();
+}
+function opslagNagaan() {
+  if (!demoStand && anderSchreef()) laadNieuwere();
+}
+function save() {
+  if (demoStand || opnieuwLaden) return;
+  try {
+    if (anderSchreef()) { laadNieuwere(); return; }
+    const tekst = JSON.stringify(db);
+    localStorage.setItem(LS_KEY, tekst);
+    opslagStand = tekst;
     saveFailed = false;
   } catch (e) {
     if (!saveFailed) {
@@ -2806,6 +2867,9 @@ function save() {
    Eén keer per sessie, en stil: een nee of een browser die het niet kent is geen
    fout, dan blijft alles zoals het was. De back-up (exportData) blijft het echte
    vangnet. */
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') opslagNagaan(); });
+window.addEventListener('pageshow', e => { if (e.persisted) opslagNagaan(); });
+
 let opslagGevraagd = false;
 function opslagVasthouden(ouder) {
   if (opslagGevraagd || demoStand) return;
