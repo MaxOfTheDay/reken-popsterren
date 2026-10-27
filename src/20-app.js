@@ -406,8 +406,8 @@ const ITEMS = [
   { id: 'mic_zilver', cat: 'mic', name: 'Zilver', full: 'Zilveren microfoon', price: 30, color: '#cfd8dc' },
   { id: 'mic_blauw',  cat: 'mic', name: 'Blauw',   full: 'Blauwe microfoon', price: 35, color: '#42a5f5' },
   { id: 'mic_groen',  cat: 'mic', name: 'Groen',   full: 'Groene microfoon', price: 40, color: '#66bb6a' },
-  { id: 'mic_pintje', cat: 'mic', name: 'Pintje',  full: 'Pintjemicrofoon',       price: 45, emoji: '🍺' },
-  { id: 'mic_bubbels', cat: 'mic', name: 'Bubbels', full: 'Bubbelsmicrofoon',      price: 50, emoji: '🥂' },
+  { id: 'mic_pintje', cat: 'mic', name: 'Pintje',  full: 'Pintjesmicrofoon',      price: 45, emoji: '🍺' },
+  { id: 'mic_bubbels', cat: 'mic', name: 'Bubbels', full: 'Bubbelmicrofoon',       price: 50, emoji: '🥂' },
   { id: 'mic_zwart',  cat: 'mic', name: 'Rock', full: 'Rockmicrofoon', price: 55, color: '#37474f' },
   { id: 'mic_toverstaf', cat: 'mic', name: 'Toverstaf', full: 'Toverstafmicrofoon', price: 70, emoji: '🪄' },
   { id: 'mic_goud',   cat: 'mic', name: 'Goud',   full: 'Gouden microfoon', price: 60, color: '#ffd54f' },
@@ -416,7 +416,7 @@ const ITEMS = [
   { id: 'mic_ijsje',  cat: 'mic', name: 'IJsje',  full: 'IJsjesmicrofoon', price: 45, emoji: '🍦' },
   { id: 'mic_vuur',   cat: 'mic', name: 'Vuur',   full: 'Vuurmicrofoon',   price: 75, emoji: '🔥' },
   // de gekke microfoons: ook gewoon een emoji op de steel
-  { id: 'mic_banaan', cat: 'mic', name: 'Banaan', full: 'Banaanmicrofoon', price: 20, emoji: '🍌' },
+  { id: 'mic_banaan', cat: 'mic', name: 'Banaan', full: 'Bananenmicrofoon', price: 20, emoji: '🍌' },
   { id: 'mic_friet',  cat: 'mic', name: 'Frietje', full: 'Frietjesmicrofoon', price: 30, emoji: '🍟' },
   { id: 'mic_wcrol',  cat: 'mic', name: 'Wc-rol', full: 'Wc-rolmicrofoon', price: 35, emoji: '🧻' },
   { id: 'mic_regenboog', cat: 'mic', name: 'Regenboog', full: 'Regenboogmicrofoon', price: 100, color: 'RAINBOW' },
@@ -522,7 +522,7 @@ const ITEMS = [
   { id: 'pet_eend',   cat: 'pet', name: 'Eendje Kwak',   price: 15,  emoji: '🦆' },
   { id: 'pet_slak',   cat: 'pet', name: 'Slak Turbo',    price: 25,  emoji: '🐌' },
   { id: 'pet_kogelvis',cat:'pet', name: 'Kogelvis',      price: 45,  emoji: '🐡' },
-  { id: 'pet_ufo',    cat: 'pet', name: 'Ufo-tje',       price: 90,  emoji: '🛸' },
+  { id: 'pet_ufo',    cat: 'pet', name: 'Ufootje',       price: 90,  emoji: '🛸' },
   { id: 'pet_pauw',   cat: 'pet', name: 'Pauw',          price: 250, emoji: '🦚' },
   // Podium
   /* Een podium is waar ze op staat: de schijf onder haar voeten in de spiegel (en
@@ -961,7 +961,7 @@ const WORLDS = [
     art: 'assets/world/ruimte-map.webp',
     feest: ['🪐', '🚀', '🌙', '👽', '☄️'],
     schat: {
-      naam: 'UFO-hoedje', emoji: '🛸', view: '72.2 -1 55.7 46',
+      naam: 'Ufohoedje', emoji: '🛸', view: '72.2 -1 55.7 46',
       svg: '<g transform="translate(0 -2) scale(1)"><g transform="translate(19.23 -1.85) scale(0.8077)"><g stroke-linejoin="round" stroke-linecap="round"><line x1="100" y1="13" x2="100" y2="19" stroke="#221c36" stroke-width="2"/><circle cx="100" cy="10" r="4" fill="#ffd54f" stroke="#221c36" stroke-width="2"/><ellipse cx="100" cy="37" rx="30" ry="9" fill="#cfd9ff" stroke="#221c36" stroke-width="2.4"/><path d="M82 37 Q100 30 118 37" fill="none" stroke="#ffffff" stroke-width="1.6"/><path d="M86 37 Q86 25 100 20 Q114 25 114 37 L114 42 Q100 46 86 42 Z" fill="#7fe7ff" stroke="#221c36" stroke-width="2.4"/><ellipse cx="100" cy="31" rx="8" ry="5.5" fill="#21558c" stroke="#221c36" stroke-width="1.8"/><circle cx="100" cy="31" r="2.2" fill="#8adfff"/><path d="M68 42 Q100 58 132 42 L125 52 Q100 59 75 52 Z" fill="#6d5bd0" stroke="#221c36" stroke-width="2.5"/><path d="M78 45 Q100 54 122 45" fill="none" stroke="#9f90f0" stroke-width="2"/><circle cx="82" cy="51" r="4" fill="#ffd54f" stroke="#221c36" stroke-width="1.8"/><circle cx="94" cy="54" r="4" fill="#ffd54f" stroke="#221c36" stroke-width="1.8"/><circle cx="106" cy="54" r="4" fill="#ffd54f" stroke="#221c36" stroke-width="1.8"/><circle cx="118" cy="51" r="4" fill="#ffd54f" stroke="#221c36" stroke-width="1.8"/><circle cx="77" cy="24" r="3.2" fill="#fff1a8" stroke="#21558c" stroke-width="1.4"/><circle cx="123" cy="20" r="2.6" fill="#fff1a8" stroke="#21558c" stroke-width="1.2"/></g></g></g>',
     },
     theme: { road: '#ecf0f3', sky: '#333177', deep: '#0d0c31', glow: '#21558c' },
@@ -2207,7 +2207,7 @@ const TROPHIES = [
   { id: 'leer-brug',   emoji: '🌉', name: 'Over de brug',   desc: '10 sommen over de tien goed',
     voor: p => !telModus(p) && p.settings.max > 10 && p.settings.ops.some(o => o === '+' || o === '-'),
     has: p => leerTel(p, 'brug') >= 10, progress: p => trophyProgress(leerTel(p, 'brug'), 10, 'sommen over de tien') },
-  { id: 'leer-zoek',   emoji: '🔍', name: 'Speurneus',      desc: '10 keer zoek het getal goed',
+  { id: 'leer-zoek',   emoji: '🔍', name: 'Speurneus',      desc: '10 keer het getal gevonden',
     voor: p => !telModus(p) && p.settings.missNum !== false && p.settings.ops.some(o => o === '+' || o === '-' || o === 'x'),
     has: p => leerTel(p, 'zoek') >= 10, progress: p => trophyProgress(leerTel(p, 'zoek'), 10, 'zoeksommen') },
   { id: 'leer-drie',   emoji: '🧩', name: 'Drie op een rij', desc: '10 sommen met drie getallen goed',
@@ -3282,6 +3282,21 @@ function somZin(q) {
   if (!q || !q.tmpl) return '';
   return q.tmpl.split(' ').map(t => SOM_WOORD[t] || numWord(parseInt(t, 10))).join(' ') + '?';
 }
+/* Wat de stem hardop zegt, zonder tekens. Sommige zinnen komen rechtstreeks uit
+   een balk of een kaartje ("nog 2 shows met ⭐⭐⭐", "🔒 Nog niet", "Sterrenhit ·
+   Brons"), en een stem leest een emoji voor als zijn naam: "ster ster ster",
+   "slot". Dus op één plek, voor élke zin: een rij sterren wordt "drie sterren",
+   het middenpuntje een kleine adempauze, en de rest van de emoji valt weg.
+   De tekst in beeld blijft zoals hij is. */
+function spreekbaar(text) {
+  return String(text)
+    .replace(/(?:⭐️?)+/g, m => { const n = m.replace(/️/g, '').length; return n === 1 ? ' ster ' : ` ${numWord(n)} sterren `; })
+    .replace(/\s*·\s*/g, ', ')
+    .replace(/[\p{Extended_Pictographic}️‍]/gu, '')
+    .replace(/\s+([,.!?])/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 function cancelSpeech() { try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {} }
 // Leest een zin voor. Volgt bewust de geluid-aan/uit-knop (stil = ook geen stem).
 function speak(text, opts) {
@@ -3295,6 +3310,8 @@ function speak(text, opts) {
   // Niet tegen een vergrendeld scherm praten: de stem van Android loopt gewoon
   // door met het scherm uit. Wat er nog te zeggen viel, zie stemTerug.
   if (document.hidden) { if (opts.onEnd) opts.onEnd(); return; }
+  text = spreekbaar(text);
+  if (!text) { if (opts.onEnd) opts.onEnd(); return; }
   try {
     /* Alleen afbreken als er ook iets klinkt. Safari (iPad, iPhone) slikt soms het
        begin van een nieuwe zin in als cancel() en speak() vlak na elkaar komen,
@@ -4135,7 +4152,7 @@ function vonkje(bijLogo) {
   el.style.left = Math.round(plek.x) + 'px';
   el.style.top = Math.round(plek.y) + 'px';
   el.style.fontSize = Math.round(bijLogo ? vonkTussen(15, 19) : vonkTussen(8, 13)) + 'px';
-  el.style.opacity = (bijLogo ? .95 : vonkTussen(.55, .8)).toFixed(2);
+  el.style.setProperty('--piek', (bijLogo ? .95 : vonkTussen(.55, .8)).toFixed(2));   // niet style.opacity: zie .vonk-laag
   el.style.animationDuration = Math.round(vonkTussen(VONKJES.duurMin, VONKJES.duurMax)) + 'ms';
   el.classList.add('aan');
   // Geen timer voor het uitzetten: de animatie meldt zelf wanneer ze klaar is.
@@ -7286,7 +7303,7 @@ function reisLabel(b, doel) {
   if (b.i === doel) return b.world.name + ' — hier ben je nu' + sterren;
   if (!b.open) return b.world.name + ' — nog op slot';
   return b.world.name + (b.vol ? ' — helemaal vol' : b.uit ? ' — uitgespeeld' : '')
-    + sterren + ', ga er heen';
+    + sterren + ', ga erheen';
 }
 /* Eén stip per show van een wereld, in showvolgorde -- dezelfde volgorde als de
    haltes op zijn wereldkaart. Drie standen, en alleen de eerste is goud:
@@ -7354,7 +7371,7 @@ function slotWereld(knop, doel) {
 function slotToast(doel) {
   const w = WORLDS[doel];
   // één teken: het slotje. Het wereldicoon erachter was een tweede emoji in één regel.
-  showToast(w ? `🔒 Speel eerst ${esc(w.name)}` : '🔒 Nog niet');
+  showToast(w ? `🔒 Speel eerst de ${esc(w.name)} uit` : '🔒 Nog niet');
   toastWeg(2200);
 }
 /* De baan opbouwen. Alles hier komt uit reisPlaatsen() en uit de staphoogte in het
@@ -10944,7 +10961,7 @@ function vraagMemoryStop() {
   sndClick();
   renderGeluid();
   $('quit-titel').textContent = '🎤 Memory stoppen?';
-  $('quit-zin').textContent = 'Je 💎 houd je.';
+  $('quit-zin').textContent = 'Je 💎 mag je houden.';
   $('quit-modal').classList.add('open');
   syncBackGuard();
 }
@@ -11528,7 +11545,7 @@ function renderQuestion() {
     if (G.idx === G.goldIdx) built.gold = true;
     // telmodus: kondig de gouden vraag hoorbaar aan (lees-vrij) -- de prompt wordt
     // toch alleen uitgesproken, niet getoond, dus dit dubbelt niets in beeld
-    if (built.gold && G.count && built.prompt) built.prompt = 'Gouden vraag! Deze telt drie keer. ' + built.prompt;
+    if (built.gold && G.count && built.prompt) built.prompt = 'Gouden vraag! Die geeft drie keer zoveel diamanten. ' + built.prompt;
     G.qs[G.idx] = built;
   }
   const q = G.qs[G.idx];
@@ -12551,7 +12568,7 @@ function endLevel(success) {
     // publieksteller hierboven zijn al bijgeschreven, en die horen bewaard.
     save();
     $('end-title').textContent = '🎭 Bijna!';
-    zin = 'Bijna! Probeer het nog eens.';
+    zin = 'Bijna! Probeer nog eens.';
     $('end-stars').textContent = '💪';
     // Geen regel eronder: hier stond "Oefening baart kunst — probeer het nog
     // eens!", een spreekwoord voor grote mensen over twee regels, vlak boven
@@ -13576,7 +13593,7 @@ function slotBel(bij, w, wereldIdx) {
   const bel = document.createElement('button');
   bel.type = 'button';
   bel.className = 'slot-bel';
-  bel.setAttribute('aria-label', `Speel de ${w.name} uit`);
+  bel.setAttribute('aria-label', `Speel eerst de ${w.name} uit`);
   bel.innerHTML = `<span aria-hidden="true">🗺️ ${w.icon || '🌍'} → 🔓</span>`;
   const r = bij.getBoundingClientRect();
   bel.style.left = Math.round(r.left + r.width / 2) + 'px';
@@ -13585,7 +13602,7 @@ function slotBel(bij, w, wereldIdx) {
   document.body.appendChild(bel);
   slotBelTimer = setTimeout(() => bel.remove(), SLOT_BEL_DUUR);
   // in de lees-vrije telmodus zegt de stem het (speak zwijgt daarbuiten zelf)
-  speak(`Speel de ${w.name} uit.`);
+  speak(`Speel eerst de ${w.name} uit.`);
 }
 // Naar de kaart van één wereld, zoals de Werelden-lijst dat doet: reisDoel is één
 // opdracht aan de eerstvolgende kaart (zie src/17-kaartstand.js).
@@ -14349,7 +14366,7 @@ function statusKaartHtml(p) {
     ({ ico, kop } = STAND_TEKST[u.stand]);
     klas = u.stand;
     zin = `<span class="vg-reeks">${(p.recent || []).map(v => `<i class="r${v}"></i>`).join('')}</span>`
-      + (u.stand === 'pittig' ? ' Het spel maakt het lichter.' : '');
+      + (u.stand === 'pittig' ? ' Het spel maakt het nu wat makkelijker.' : '');
   }
   const shows = playedCount(p);
   const answered = p.stats.correct + p.stats.wrong;
@@ -15959,7 +15976,7 @@ function backTarget() {
 function toonStopKaart() {
   $('confirm-title').textContent = '👋 Stoppen?';
   $('confirm-body').textContent = 'Druk nog eens op terug om te stoppen.';
-  $('confirm-actions').innerHTML = `<button class="btn" id="stop-blijf">Blijven spelen</button>`;
+  $('confirm-actions').innerHTML = `<button class="btn" id="stop-blijf">Doorspelen</button>`;
   $('stop-blijf').onclick = () => { sndClick(); closeConfirmModal(); };
   $('confirm-modal').classList.add('open');
   syncBackGuard();

@@ -40,6 +40,7 @@
  *   Y  het accent per wereld            -> na de laatste leerstap om de beurt zoek / drie / gewoon
  *   Z  de antwoordknoppen               -> binnen de grens, één echte fout, en het middelste kiezen loont niet
  *   ZB de foutmelder                    -> een kort briefje zonder iets persoonlijks, en stil vanaf file://
+ *   ZC de stem                          -> zegt woorden, geen emoji of tekens
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -1388,6 +1389,17 @@ zaak('ZB', () => {
   const lang = app.run("foutBriefje('x'.repeat(500), '', 0, 0)");
   check(lang.wat.length === 120 && lang.waar === '', 'ZB · lange melding ingekort, geen plek zonder regel', lang.wat.length + ' ' + lang.waar);
   check(app.run('foutMeldenMag()') === false, 'ZB · vanaf file:// meldt hij niets', '');
+});
+
+zaak('ZC', () => {
+  const { app } = verseSter();
+  const z = app.spreekbaar;
+  check(z('nog 2 shows met ⭐⭐⭐') === 'nog 2 shows met drie sterren', 'ZC · een rij sterren wordt "drie sterren"', z('nog 2 shows met ⭐⭐⭐'));
+  check(z('🔒 Nog niet') === 'Nog niet', 'ZC · een emoji valt weg', z('🔒 Nog niet'));
+  check(z('Joepie! Je hebt de trofee Sterrenhit · Brons!') === 'Joepie! Je hebt de trofee Sterrenhit, Brons!', 'ZC · het middenpuntje wordt een adempauze', z('Joepie! Je hebt de trofee Sterrenhit · Brons!'));
+  check(z('Zilver · nog 4 sommen') === 'Zilver, nog 4 sommen', 'ZC · metaal en voortgang', z('Zilver · nog 4 sommen'));
+  check(z('Ja, één! Knap gedaan!') === 'Ja, één! Knap gedaan!', 'ZC · gewone zinnen blijven zoals ze zijn', z('Ja, één! Knap gedaan!'));
+  check(z('🗺️ ❤️‍🔥') === '', 'ZC · alleen emoji is niets om te zeggen', JSON.stringify(z('🗺️ ❤️‍🔥')));
 });
 
 klaar();
