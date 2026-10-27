@@ -39,7 +39,8 @@
  *   X  wennen aan een hogere grens      -> het plafond klimt in acht shows van 0.6 naar 1
  *   Y  het accent per wereld            -> na de laatste leerstap om de beurt zoek / drie / gewoon
  *   Z  de antwoordknoppen               -> binnen de grens, één echte fout, en het middelste kiezen loont niet
- *   ZB de stem                          -> zegt woorden, geen emoji of tekens
+ *   ZB de foutmelder                    -> een kort briefje zonder iets persoonlijks, en stil vanaf file://
+ *   ZC de stem                          -> zegt woorden, geen emoji of tekens
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -1376,15 +1377,29 @@ zaak('ZA', () => {
   }
 });
 
+
+/* ZB · De foutmelder (src/05-foutmelder.js). Het briefje heeft precies vijf velden
+   en niets dat naar een kind wijst; onder de tests (file://) staat hij uit. */
 zaak('ZB', () => {
+  const { app } = verseSter('Lotte');
+  const b = app.run("foutBriefje('TypeError: x is undefined\\nen meer', 'https://www.rekensterren.be/index.html?debug#a', 812, 9)");
+  check(JSON.stringify(Object.keys(b)) === '["wat","waar","versie","scherm","toestel"]', 'ZB · vijf velden, niet meer', JSON.stringify(Object.keys(b)));
+  check(b.wat === 'TypeError: x is undefined' && b.waar === 'index.html:812:9', 'ZB · eerste regel van de melding, bestand zonder zoekdeel', JSON.stringify(b));
+  check(JSON.stringify(b).indexOf('Lotte') === -1, 'ZB · de naam van de ster gaat niet mee', JSON.stringify(b));
+  const lang = app.run("foutBriefje('x'.repeat(500), '', 0, 0)");
+  check(lang.wat.length === 120 && lang.waar === '', 'ZB · lange melding ingekort, geen plek zonder regel', lang.wat.length + ' ' + lang.waar);
+  check(app.run('foutMeldenMag()') === false, 'ZB · vanaf file:// meldt hij niets', '');
+});
+
+zaak('ZC', () => {
   const { app } = verseSter();
   const z = app.spreekbaar;
-  check(z('nog 2 shows met ⭐⭐⭐') === 'nog 2 shows met drie sterren', 'ZB · een rij sterren wordt "drie sterren"', z('nog 2 shows met ⭐⭐⭐'));
-  check(z('🔒 Nog niet') === 'Nog niet', 'ZB · een emoji valt weg', z('🔒 Nog niet'));
-  check(z('Joepie! Je hebt de trofee Sterrenhit · Brons!') === 'Joepie! Je hebt de trofee Sterrenhit, Brons!', 'ZB · het middenpuntje wordt een adempauze', z('Joepie! Je hebt de trofee Sterrenhit · Brons!'));
-  check(z('Zilver · nog 4 sommen') === 'Zilver, nog 4 sommen', 'ZB · metaal en voortgang', z('Zilver · nog 4 sommen'));
-  check(z('Ja, één! Knap gedaan!') === 'Ja, één! Knap gedaan!', 'ZB · gewone zinnen blijven zoals ze zijn', z('Ja, één! Knap gedaan!'));
-  check(z('🗺️ ❤️‍🔥') === '', 'ZB · alleen emoji is niets om te zeggen', JSON.stringify(z('🗺️ ❤️‍🔥')));
+  check(z('nog 2 shows met ⭐⭐⭐') === 'nog 2 shows met drie sterren', 'ZC · een rij sterren wordt "drie sterren"', z('nog 2 shows met ⭐⭐⭐'));
+  check(z('🔒 Nog niet') === 'Nog niet', 'ZC · een emoji valt weg', z('🔒 Nog niet'));
+  check(z('Joepie! Je hebt de trofee Sterrenhit · Brons!') === 'Joepie! Je hebt de trofee Sterrenhit, Brons!', 'ZC · het middenpuntje wordt een adempauze', z('Joepie! Je hebt de trofee Sterrenhit · Brons!'));
+  check(z('Zilver · nog 4 sommen') === 'Zilver, nog 4 sommen', 'ZC · metaal en voortgang', z('Zilver · nog 4 sommen'));
+  check(z('Ja, één! Knap gedaan!') === 'Ja, één! Knap gedaan!', 'ZC · gewone zinnen blijven zoals ze zijn', z('Ja, één! Knap gedaan!'));
+  check(z('🗺️ ❤️‍🔥') === '', 'ZC · alleen emoji is niets om te zeggen', JSON.stringify(z('🗺️ ❤️‍🔥')));
 });
 
 klaar();
