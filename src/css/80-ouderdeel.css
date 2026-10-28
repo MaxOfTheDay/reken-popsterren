@@ -427,8 +427,7 @@
   .thema-naad { height: 1px; margin: 14px 2px 12px; background: var(--lavender-wash); }
   /* het icoontje van een thema voor de kop van zijn kaart */
   .oefen-kaart .kaart-kop h2 .thema-ico { vertical-align: -4px; margin-right: 7px; }
-  /* "altijd kiezen" onder de antwoordbalk, en een show als rij icoontjes (zie oefenGroups) */
-  .oe-noot { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 8px 0 0; font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
+  /* een show als rij icoontjes (zie oefenGroups) */
   .oe-mix { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
   /* De balk: één keuze, gelijke vakken, het gekozen vak vol paars. Het gekozen
      vak is een vlak ín de balk, niet een knop erop: geen 3D-rand eronder, en
