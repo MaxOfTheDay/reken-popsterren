@@ -685,32 +685,33 @@
      (vandaag, morgen, erna), of een echt kalenderblad. Elk seizoen heeft een
      kleur én een teken; roze is waar je vertrekt of wat je zoekt. Alles in
      em, zodat het met de vraag meegroeit (tablet). */
-  .kal-rij { display: flex; align-items: flex-end; justify-content: center; gap: .1em; font-size: clamp(26px, 1em, 56px); max-width: calc(100vw - 84px); margin: 0 auto; }
-  .kal-kaart { display: inline-flex; flex-direction: column; align-items: center; min-width: 0; }
-  .kal-kaart em { font-style: normal; font-size: .36em; font-weight: 900; color: var(--purple-shadow); margin-bottom: .2em; white-space: nowrap; }
-  .kal-kaart b {
-    display: inline-flex; align-items: center; justify-content: center; gap: .2em; min-width: 2.2em; height: 1.5em; padding: 0 .4em;
-    border-radius: .3em; background: #f3e5f5; color: #3a2a55; font-size: .52em; font-weight: 900; white-space: nowrap;
+  .kal-rij {
+    display: flex; align-items: flex-end; justify-content: center; gap: .3em; margin: 0 auto;
+    font-size: clamp(14px, .37em, 24px); line-height: 1.1;
   }
-  .kal-kaart b i { font-style: normal; }
-  .kal-kaart.nu b { background: #e5397a; color: #fff; }
-  .kal-kaart.nu em { color: #e5397a; }
-  .kal-kaart.leeg b { min-width: 1.1em; background: #f3eef8; box-shadow: inset 0 0 0 .08em #e0d3ec; }
-  .kal-kaart.vraag .pl-som { display: inline-flex; }
-  .kal-kaart.vraag .q-blank { font-size: .78em; min-width: 1.6em; height: 1.2em; }
-  .kal-kaart.winter b { background: #bfe0fb; } .kal-kaart.lente b { background: #c8ecc8; }
-  .kal-kaart.zomer b { background: #ffe79a; } .kal-kaart.herfst b { background: #ffd2a8; }
-  .kal-kaart.ding b { background: #fff; height: auto; padding: .05em .2em; }
-  .kal-dingen { font-size: 2.2em; letter-spacing: .05em; line-height: 1.1; }
-  .kal-pijl { font-size: .42em; color: var(--purple-shadow); padding-bottom: .5em; }
-  .kal-sprong { display: inline-flex; flex-direction: column; align-items: center; padding-bottom: .12em; }
-  .kal-sprong b { font-size: .4em; font-weight: 900; color: #e5397a; white-space: nowrap; }
-  .kal-sprong svg { height: .62em; width: auto; }
-  /* de som onder een kalenderblad: 3 weken = ? dagen */
-  .kal-som { display: flex; align-items: center; justify-content: center; gap: .18em; font-size: clamp(24px, .7em, 40px); margin-top: .12em; }
-  .kal-som small { font-size: .7em; font-weight: 800; color: var(--purple-shadow); }
-  .kal-som .pl-som { display: inline-flex; }
-  .kal-datum { display: inline-block; padding: .06em .32em; border-radius: .4em; color: #e5397a; box-shadow: inset 0 0 0 .1em #e5397a; font-size: .85em; white-space: nowrap; }
+  /* twee kaartjes even groot, wat er ook op staat (zie kalKaart) */
+  .kal-kaart {
+    position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .25em;
+    width: 5.7em; height: 2.5em; box-sizing: border-box; border-radius: .6em; padding: 0 .2em;
+    background: #f3e5f5; color: #3a2a55; font-weight: 900; white-space: nowrap;
+  }
+  .kal-kaart i { font-style: normal; }
+  .kal-kaart.nu { background: #e5397a; color: #fff; }
+  .kal-teken { position: absolute; top: -.8em; left: 50%; transform: translateX(-50%); font-size: 1.1em; line-height: 1; }
+  .kal-kaart.winter { background: #bfe0fb; } .kal-kaart.lente { background: #c8ecc8; }
+  .kal-kaart.zomer { background: #ffe79a; } .kal-kaart.herfst { background: #ffd2a8; }
+  .kal-kaart.ding { font-size: 1.5em; width: 4em; height: 1.733em; letter-spacing: .1em; background: #f3e5f5; }
+  .kal-kaart.vraag { background: none; }
+  /* een datum van het blad: wit met de roze ring, zoals op het blad zelf */
+  .kal-kaart.datum { background: #fff; color: #e5397a; box-shadow: inset 0 0 0 .16em #e5397a; font-size: 1.1em; width: 5.18em; height: 2.27em; }
+  .kal-kaart.vraag .pl-som, .kal-kaart.vraag .q-blank { display: flex; width: 100%; height: 100%; }
+  .kal-kaart.vraag .q-blank { box-sizing: border-box; align-items: center; justify-content: center; margin: 0; border-radius: .6em; font-size: 1.7em; min-width: 0; }
+  .kal-kaart.vraag .q-blank.done { font-size: 1em; }
+  /* de brug: één woord erboven, eronder de boogjes (een per dag) of een pijl */
+  .kal-brug { display: inline-flex; flex-direction: column; align-items: center; width: 3.8em; padding-bottom: .5em; }
+  .kal-brug b { font-size: .9em; font-weight: 900; color: #e5397a; white-space: nowrap; margin-bottom: .15em; }
+  .kal-brug svg { width: 100%; height: auto; stroke: #e5397a; stroke-width: 2.6; stroke-linecap: round; }
+  .kal-brug .punt { fill: #e5397a; stroke: none; }
   .kal-vraag { display: flex; justify-content: center; margin: 2px 0 .08em; }
   /* het kalenderblad: op de volle breedte van de kaart, de kop in de kleur van zijn seizoen */
   .kal-blad {
@@ -721,7 +722,7 @@
   .kal-blad.winter b { background: #bfe0fb; } .kal-blad.lente b { background: #c8ecc8; }
   .kal-blad.zomer b { background: #ffe79a; } .kal-blad.herfst b { background: #ffd2a8; }
   .kal-kop, .kal-raster { display: grid; grid-template-columns: repeat(7, 1fr); }
-  .kal-kop i, .kal-raster i { font-style: normal; font-size: .34em; padding: .22em 0; color: #2b2238; font-weight: 800; }
+  .kal-kop i, .kal-raster i { font-style: normal; font-size: .34em; padding: .17em 0; color: #2b2238; font-weight: 800; }
   .kal-kop i { color: #8e3fc8; font-weight: 900; border-bottom: .06em solid #eadff3; }
   .kal-raster i.wk { color: #9b8aa9; background: #faf7fc; }
   .kal-raster i.rond { background: radial-gradient(circle, #fff 50%, #e5397a 53%, #e5397a 66%, transparent 69%); color: #e5397a; font-weight: 900; }

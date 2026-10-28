@@ -3574,32 +3574,33 @@
 
 
 
-  .kal-rij { display: flex; align-items: flex-end; justify-content: center; gap: .1em; font-size: clamp(26px, 1em, 56px); max-width: calc(100vw - 84px); margin: 0 auto; }
-  .kal-kaart { display: inline-flex; flex-direction: column; align-items: center; min-width: 0; }
-  .kal-kaart em { font-style: normal; font-size: .36em; font-weight: 900; color: var(--purple-shadow); margin-bottom: .2em; white-space: nowrap; }
-  .kal-kaart b {
-    display: inline-flex; align-items: center; justify-content: center; gap: .2em; min-width: 2.2em; height: 1.5em; padding: 0 .4em;
-    border-radius: .3em; background: #f3e5f5; color: #3a2a55; font-size: .52em; font-weight: 900; white-space: nowrap;
+  .kal-rij {
+    display: flex; align-items: flex-end; justify-content: center; gap: .3em; margin: 0 auto;
+    font-size: clamp(14px, .37em, 24px); line-height: 1.1;
   }
-  .kal-kaart b i { font-style: normal; }
-  .kal-kaart.nu b { background: #e5397a; color: #fff; }
-  .kal-kaart.nu em { color: #e5397a; }
-  .kal-kaart.leeg b { min-width: 1.1em; background: #f3eef8; box-shadow: inset 0 0 0 .08em #e0d3ec; }
-  .kal-kaart.vraag .pl-som { display: inline-flex; }
-  .kal-kaart.vraag .q-blank { font-size: .78em; min-width: 1.6em; height: 1.2em; }
-  .kal-kaart.winter b { background: #bfe0fb; } .kal-kaart.lente b { background: #c8ecc8; }
-  .kal-kaart.zomer b { background: #ffe79a; } .kal-kaart.herfst b { background: #ffd2a8; }
-  .kal-kaart.ding b { background: #fff; height: auto; padding: .05em .2em; }
-  .kal-dingen { font-size: 2.2em; letter-spacing: .05em; line-height: 1.1; }
-  .kal-pijl { font-size: .42em; color: var(--purple-shadow); padding-bottom: .5em; }
-  .kal-sprong { display: inline-flex; flex-direction: column; align-items: center; padding-bottom: .12em; }
-  .kal-sprong b { font-size: .4em; font-weight: 900; color: #e5397a; white-space: nowrap; }
-  .kal-sprong svg { height: .62em; width: auto; }
 
-  .kal-som { display: flex; align-items: center; justify-content: center; gap: .18em; font-size: clamp(24px, .7em, 40px); margin-top: .12em; }
-  .kal-som small { font-size: .7em; font-weight: 800; color: var(--purple-shadow); }
-  .kal-som .pl-som { display: inline-flex; }
-  .kal-datum { display: inline-block; padding: .06em .32em; border-radius: .4em; color: #e5397a; box-shadow: inset 0 0 0 .1em #e5397a; font-size: .85em; white-space: nowrap; }
+  .kal-kaart {
+    position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .25em;
+    width: 5.7em; height: 2.5em; box-sizing: border-box; border-radius: .6em; padding: 0 .2em;
+    background: #f3e5f5; color: #3a2a55; font-weight: 900; white-space: nowrap;
+  }
+  .kal-kaart i { font-style: normal; }
+  .kal-kaart.nu { background: #e5397a; color: #fff; }
+  .kal-teken { position: absolute; top: -.8em; left: 50%; transform: translateX(-50%); font-size: 1.1em; line-height: 1; }
+  .kal-kaart.winter { background: #bfe0fb; } .kal-kaart.lente { background: #c8ecc8; }
+  .kal-kaart.zomer { background: #ffe79a; } .kal-kaart.herfst { background: #ffd2a8; }
+  .kal-kaart.ding { font-size: 1.5em; width: 4em; height: 1.733em; letter-spacing: .1em; background: #f3e5f5; }
+  .kal-kaart.vraag { background: none; }
+
+  .kal-kaart.datum { background: #fff; color: #e5397a; box-shadow: inset 0 0 0 .16em #e5397a; font-size: 1.1em; width: 5.18em; height: 2.27em; }
+  .kal-kaart.vraag .pl-som, .kal-kaart.vraag .q-blank { display: flex; width: 100%; height: 100%; }
+  .kal-kaart.vraag .q-blank { box-sizing: border-box; align-items: center; justify-content: center; margin: 0; border-radius: .6em; font-size: 1.7em; min-width: 0; }
+  .kal-kaart.vraag .q-blank.done { font-size: 1em; }
+
+  .kal-brug { display: inline-flex; flex-direction: column; align-items: center; width: 3.8em; padding-bottom: .5em; }
+  .kal-brug b { font-size: .9em; font-weight: 900; color: #e5397a; white-space: nowrap; margin-bottom: .15em; }
+  .kal-brug svg { width: 100%; height: auto; stroke: #e5397a; stroke-width: 2.6; stroke-linecap: round; }
+  .kal-brug .punt { fill: #e5397a; stroke: none; }
   .kal-vraag { display: flex; justify-content: center; margin: 2px 0 .08em; }
 
   .kal-blad {
@@ -3610,7 +3611,7 @@
   .kal-blad.winter b { background: #bfe0fb; } .kal-blad.lente b { background: #c8ecc8; }
   .kal-blad.zomer b { background: #ffe79a; } .kal-blad.herfst b { background: #ffd2a8; }
   .kal-kop, .kal-raster { display: grid; grid-template-columns: repeat(7, 1fr); }
-  .kal-kop i, .kal-raster i { font-style: normal; font-size: .34em; padding: .22em 0; color: #2b2238; font-weight: 800; }
+  .kal-kop i, .kal-raster i { font-style: normal; font-size: .34em; padding: .17em 0; color: #2b2238; font-weight: 800; }
   .kal-kop i { color: #8e3fc8; font-weight: 900; border-bottom: .06em solid #eadff3; }
   .kal-raster i.wk { color: #9b8aa9; background: #faf7fc; }
   .kal-raster i.rond { background: radial-gradient(circle, #fff 50%, #e5397a 53%, #e5397a 66%, transparent 69%); color: #e5397a; font-weight: 900; }
@@ -22847,28 +22848,37 @@ const mod = (v, n) => ((v % n) + n) % n;
 
 
 
-function kalKaart(soort, inhoud, woord, kleur) {
-  const boven = `<em>${woord || '&nbsp;'}</em>`;
-  if (soort === 'vraag') return `<span class="kal-kaart vraag">${boven}<span class="pl-som">@</span></span>`;
-  if (soort === 'nu') return `<span class="kal-kaart nu">${boven}<b>⭐ ${inhoud}</b></span>`;
-  if (soort === 'leeg') return `<span class="kal-kaart leeg">${boven}<b></b></span>`;
-  return `<span class="kal-kaart ${kleur || ''}">${boven}<b>${inhoud}</b></span>`;
+
+
+
+
+
+
+
+function kalKaart(soort, inhoud, teken) {
+  if (soort === 'vraag') return '<span class="kal-kaart vraag"><span class="pl-som">@</span></span>';
+
+  return `<span class="kal-kaart ${soort}">${teken ? `<i class="kal-teken" aria-hidden="true">${teken}</i>` : ''}${inhoud}</span>`;
 }
-const kalPijl = '<span class="kal-pijl" aria-hidden="true">➜</span>';
-
-
-const kalRij = kaarten => `<span class="kal-rij een-regel">${kaarten.join(kalPijl)}</span>`;
-const seizoenKaart = (z, woord) => kalKaart('', `<i aria-hidden="true">${SEIZOENEN[z].teken}</i> ${SEIZOENEN[z].naam}`, woord, SEIZOENEN[z].id);
-const maandKaart = (m, woord) => kalKaart('', `<i aria-hidden="true">${SEIZOENEN[seizoenVan(m)].teken}</i> ${MAANDEN[m]}`, woord, SEIZOENEN[seizoenVan(m)].id);
 
 
 
-function kalSprongen(d, terug) {
-  const b = 14, w = d * b + 8;
-  const bogen = Array.from({ length: d }, (_, i) => `<path d="M${4 + i * b} 22 q${b / 2} -16 ${b} 0" fill="none" stroke="#e5397a" stroke-width="2.6" stroke-linecap="round"/>`).join('');
-  const punt = terug ? `<path d="M4 22 l1 -8 l6 5z" fill="#e5397a"/>` : `<path d="M${w - 4} 22 l-1 -8 l-6 5z" fill="#e5397a"/>`;
-  return `<span class="kal-sprong"><b>${terug ? '−' : '+'} ${d} ${d > 1 ? 'dagen' : 'dag'}</b><svg viewBox="0 0 ${w} 26" width="${w}" aria-hidden="true">${bogen}${punt}</svg></span>`;
+
+function kalBrug(woord, dagen, terug) {
+  const w = 60, n = dagen || 0, b = n ? (w - 12) / n : 0;
+  const lijn = n ? Array.from({ length: n }, (_, i) => `<path d="M${6 + i * b} 20 q${b / 2} ${-Math.min(14, b * .7)} ${b} 0" fill="none"/>`).join('')
+    : '<path d="M6 16 H54" fill="none"/>';
+  const punt = terug ? `<path d="M4 ${n ? 20 : 16} l9 -6 v12z" class="punt"/>` : `<path d="M56 ${n ? 20 : 16} l-9 -6 v12z" class="punt"/>`;
+  return `<span class="kal-brug"><b>${woord}</b><svg viewBox="0 0 ${w} 26" aria-hidden="true">${lijn}${punt}</svg></span>`;
 }
+
+const kalPaar = (links, brug, rechts) => `<span class="kal-rij">${links}${brug}${rechts}</span>`;
+const vakje = () => kalKaart('vraag');
+const dagKaart = d => kalKaart('nu', DAGEN[d], '⭐');
+const seizoenKaart = z => kalKaart(SEIZOENEN[z].id, SEIZOENEN[z].naam, SEIZOENEN[z].teken);
+const maandKaart = m => kalKaart(SEIZOENEN[seizoenVan(m)].id, MAANDEN[m], SEIZOENEN[seizoenVan(m)].teken);
+
+const kalVan = (weet, woord, dagen, terug) => terug ? kalPaar(vakje(), kalBrug(woord, dagen, true), weet) : kalPaar(weet, kalBrug(woord, dagen), vakje());
 
 
 
@@ -22907,73 +22917,66 @@ function genKalender(r, vorm) {
   const tweede = vorm === 'zoek';
   if (r.id === 'morgen') {
 
-
     const stap = pick(tweede ? [-2, 2] : [-1, 1, 1]), nu = rnd(0, 6), ans = mod(nu + stap, 7);
-    const kaarten = [];
-    for (let i = Math.min(0, stap); i <= Math.max(0, stap); i++)
-      kaarten.push(i === 0 ? kalKaart('nu', DAGEN[nu], 'vandaag') : i === stap ? kalKaart('vraag', '', DAGWOORD[i]) : kalKaart('leeg', '', DAGWOORD[i]));
     return kalVraag('morgen', ans, { soort: 'dag', keuzes: kalKeuzes(ans, 7, [nu - stap, nu]),
-      tmpl: `kal morgen ${nu} ${stap}`, html: kalRij(kaarten) });
+      tmpl: `kal morgen ${nu} ${stap}`, html: kalVan(dagKaart(nu), DAGWOORD[stap], Math.abs(stap), stap < 0) });
   }
   if (r.id === 'seizoen') {
     if (tweede) {
       const z = rnd(0, 3), twee = shuffle(SEIZOENEN[z].dingen.slice()).slice(0, 2);
       return kalVraag('seizoen', z, { soort: 'seizoen', keuzes: [0, 1, 2, 3], tmpl: `kal ding ${twee.join('')}`,
-        html: kalRij([kalKaart('', `<span class="kal-dingen">${twee.join(' ')}</span>`, '', 'ding'), kalKaart('vraag', '', '')]) });
+        html: kalVan(kalKaart('kaal ding', twee.join('')), 'seizoen') });
     }
-
     const z = rnd(0, 3), na = Math.random() < 0.65, ans = mod(z + (na ? 1 : -1), 4);
     return kalVraag('seizoen', ans, { soort: 'seizoen', keuzes: [0, 1, 2, 3], tmpl: `kal seizoen ${z} ${na}`,
-      html: kalRij(na ? [seizoenKaart(z), kalKaart('vraag', '', 'erna')] : [kalKaart('vraag', '', 'ervoor'), seizoenKaart(z)]) });
+      html: kalVan(seizoenKaart(z), na ? 'erna' : 'ervoor', 0, !na) });
   }
   if (r.id === 'verder') {
     const d = rnd(3, 5), terug = tweede, nu = rnd(0, 6), ans = mod(nu + (terug ? -d : d), 7);
-    const sprong = kalSprongen(d, terug), vak = kalKaart('vraag', '', ''), ik = kalKaart('nu', DAGEN[nu], 'vandaag');
     return kalVraag('verder', ans, { soort: 'dag', keuzes: kalKeuzes(ans, 7, [ans + (terug ? 1 : -1), ans + (terug ? -1 : 1)]),
-      tmpl: `kal verder ${nu} ${terug ? -d : d}`,
-      html: `<span class="kal-rij een-regel">${terug ? vak + sprong + ik : ik + sprong + vak}</span>` });
+      tmpl: `kal verder ${nu} ${terug ? -d : d}`, html: kalVan(dagKaart(nu), `${terug ? '−' : '+'} ${d} dagen`, d, terug) });
   }
   if (r.id === 'maanden') {
     const m = rnd(0, 11);
     if (tweede)
       return kalVraag('maanden', seizoenVan(m), { soort: 'seizoen', keuzes: [0, 1, 2, 3], tmpl: `kal maandseizoen ${m}`,
-        html: kalRij([kalKaart('', MAANDEN[m], '', 'kaal'), kalKaart('vraag', '', 'seizoen')]) });
+        html: kalVan(kalKaart('kaal', MAANDEN[m]), 'seizoen') });
     const na = Math.random() < 0.65, ans = mod(m + (na ? 1 : -1), 12);
     return kalVraag('maanden', ans, { soort: 'maand', keuzes: kalKeuzes(ans, 12, [m + (na ? -1 : 1), m]), tmpl: `kal maand ${m} ${na}`,
-      html: kalRij(na ? [maandKaart(m), kalKaart('vraag', '', 'erna')] : [kalKaart('vraag', '', 'ervoor'), maandKaart(m)]) });
+      html: kalVan(maandKaart(m), na ? 'erna' : 'ervoor', 0, !na) });
   }
   if (r.id === 'weken') {
-    const w = rnd(1, 4), omgekeerd = tweede, week = n => n > 1 ? 'weken' : 'week';
+
+    const omgekeerd = tweede, w = rnd(omgekeerd ? 2 : 1, 4), week = n => n > 1 ? 'weken' : 'week';
     return kalGetal('weken', omgekeerd ? w : 7 * w, { grens: omgekeerd ? 10 : 35,
-      keuzes: omgekeerd ? [...new Set([w, w + 1, w - 1, 7 * w].filter(v => v > 0))].slice(0, 4) : [...new Set([7 * w, 7 * w + 1, 7 * w - 1, 5 * w, 7 * (w + 1)])].slice(0, 4),
+      keuzes: omgekeerd ? [w, w + 1, w - 1, w + 2] : [...new Set([7 * w, 7 * w + 1, 7 * w - 1, 5 * w, 7 * (w + 1)])].slice(0, 4),
       tmpl: `kal weken ${w} ${omgekeerd}`,
-      html: `<span class="kal-vraag">${kalWeken(w)}</span><span class="kal-som">${omgekeerd
-        ? `${7 * w} <small>dagen</small> = <span class="pl-som">@</span> <small>${week(w)}</small>`
-        : `${w} <small>${week(w)}</small> = <span class="pl-som">@</span> <small>dagen</small>`}</span>` });
+      html: `<span class="kal-vraag">${kalWeken(w)}</span>${omgekeerd
+        ? kalVan(kalKaart('kaal', `${7 * w} dagen`), 'weken') : kalVan(kalKaart('kaal', `${w} ${week(w)}`), 'dagen')}` });
   }
   const m = rnd(0, 11), n = dagenIn(m);
   if (r.id === 'blad') {
     if (tweede) {
       const dag = rnd(1, n - 7);
       return kalGetal('blad', dag + 7, { grens: n, keuzes: [...new Set([dag + 7, dag + 6, dag + 8, dag + 1])], tmpl: `kal week ${m} ${dag}`,
-        html: `<span class="kal-vraag">${kalBlad(m, { [dag]: 'rond', [dag + 7]: 'vraag' })}</span><span class="kal-som"><span class="kal-datum">${dag}</span> <small>+ 1 week</small> = <span class="pl-som">@</span></span>` });
+        html: `<span class="kal-vraag">${kalBlad(m, { [dag]: 'rond', [dag + 7]: 'vraag' })}</span>${kalVan(kalKaart('datum', dag), '+ 1 week')}` });
     }
     const dag = rnd(1, n), ans = dagVan(m, dag);
     return kalVraag('blad', ans, { soort: 'dag', keuzes: kalKeuzes(ans, 7, [ans - 1, ans + 1]), tmpl: `kal blad ${m} ${dag}`,
-      html: `<span class="kal-vraag">${kalBlad(m, { [dag]: 'rond' })}</span><span class="kal-som"><span class="kal-datum">${dag} ${MAANDEN[m]}</span> = <span class="pl-som">@</span></span>` });
+      html: `<span class="kal-vraag">${kalBlad(m, { [dag]: 'rond' })}</span>${kalVan(kalKaart('datum', dag), 'dag')}` });
   }
 
   if (tweede) {
     const a = rnd(1, n - 10), d = rnd(3, 10), b = a + d;
     return kalGetal('datum', d, { grens: 14, keuzes: [...new Set([d, d + 1, d - 1, d + 2])], tmpl: `kal tussen ${m} ${a} ${b}`,
-      html: `<span class="kal-vraag">${kalBlad(m, { [a]: 'rond', [b]: 'rond' })}</span><span class="kal-som"><span class="kal-datum">${a}</span> ➜ <span class="kal-datum">${b}</span> = <span class="pl-som">@</span> <small>dagen</small></span>` });
+      html: `<span class="kal-vraag">${kalBlad(m, { [a]: 'rond', [b]: 'rond' })}</span>${kalVan(kalKaart('datum', `${a} ➜ ${b}`), 'dagen')}` });
   }
   const dag = rnd(1, Math.min(n, 28)), code = (d, mm) => d * 100 + mm + 1;
   return kalVraag('datum', code(dag, m), { soort: 'notatie',
 
-    keuzes: [...new Set([code(dag, m), (m + 1) * 100 + dag, code(dag, mod(m - 1, 12)), code(dag, mod(m + 1, 12))])].slice(0, 4),
+    keuzes: [...new Set([code(dag, m), (m + 1) * 100 + dag, code(dag, mod(m - 1, 12)), code(dag, mod(m + 1, 12)), code(dag + 1, m)])].slice(0, 4),
     tmpl: `kal datum ${m} ${dag}`,
-    html: `<span class="kal-vraag">${kalBlad(m, { [dag]: 'rond' })}</span><span class="kal-som"><span class="kal-datum">${dag} ${MAANDEN[m]}</span> = <span class="pl-som">@</span></span>` });
+    html: `<span class="kal-vraag">${kalBlad(m, { [dag]: 'rond' })}</span>${kalVan(kalKaart('datum', dag), 'datum')}` });
 }
 
 
@@ -23184,7 +23187,11 @@ function themaPlan(s, total) {
     return uit;
   };
   if (!sommen.length) return verdeel(erbij, total);
-  const extra = verdeel(erbij, Math.min(erbij.length * (total >= 8 ? 2 : 1), Math.floor(total / 2)));
+
+
+
+  const plaats = Math.floor(total / 2), wil = erbij.length * (total >= 8 ? 2 : 1);
+  const extra = verdeel(wil > plaats ? shuffle(erbij.slice()) : erbij, Math.min(wil, plaats));
   const plan = verdeel(sommen, total - extra.length);
   extra.forEach((k, j) => plan.splice(Math.round((j + 1) * total / (extra.length + 1)), 0, k));
   return plan;
