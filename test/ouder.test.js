@@ -1295,6 +1295,16 @@ function check(ok, label, detail) {
       knoppen: document.querySelectorAll('#set-startstap .chip').length }));
     check(r.tab === 'oefenen' && oe === vg && r.eind && r.knoppen === 9,
       'S · "Aanpassen ›" opent Oefeningen, en die zegt hetzelfde', JSON.stringify({ ...r, oe }));
+    /* Élke "Aanpassen ›" op Voortgang doet iets: met alle thema's aan, één voor één. De
+       knoppen van Kalender en Getallenlijn stonden er, maar hingen nergens aan -- de
+       lijst wordt hier uit de pagina gelezen, dus een nieuw thema telt vanzelf mee. */
+    const dood = await page.evaluate(() => {
+      const s = db.profiles[setKey].settings; s.ops = ['+', '-', 'x', ':']; s.themas = THEMAS.filter(t => !t.ops).map(t => t.id); s.modus = 'pad';
+      setTab = 'voortgang'; renderSettings();
+      const ids = [...document.querySelectorAll('#settings-body .vg-aanpas')].map(b => b.id);
+      return { ids, verwacht: THEMAS.length, dood: ids.filter(id => { setTab = 'voortgang'; renderSettings(); document.getElementById(id).click(); return setTab !== 'oefenen'; }) };
+    });
+    check(dood.ids.length === dood.verwacht && !dood.dood.length, 'S · elke "Aanpassen ›" op Voortgang opent Oefeningen', JSON.stringify(dood));
     // de back-up: amber op het overzicht zolang er geen is, groen na een verse
     await open(page, null, null);
     await page.waitForTimeout(100);

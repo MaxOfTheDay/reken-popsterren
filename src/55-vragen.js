@@ -870,7 +870,7 @@ function lijnTekening(van, tot, stap, label, o) {
     const groot = v % label === 0, half = !groot && label % 2 === 0 && v % (label / 2) === 0;
     const h = groot ? 11 : half ? 8 : 5.5;
     streep.push(`<line x1="${x(v)}" x2="${x(v)}" y1="${Y - h}" y2="${Y + h}" stroke-width="${groot ? 3.2 : 2}"/>`);
-    if (groot && !(o.verberg || []).some(w => Math.abs(w - v) <= stap)) lbl.push(`<text x="${x(v)}" y="${Y + 30}">${v}</text>`);
+    if (groot && ((o.houd || []).includes(v) || !(o.verberg || []).some(w => Math.abs(w - v) <= stap))) lbl.push(`<text x="${x(v)}" y="${Y + 30}">${v}</text>`);
   }
   else [van, tot].forEach(v => { streep.push(`<line x1="${x(v)}" x2="${x(v)}" y1="${Y - 11}" y2="${Y + 11}" stroke-width="3.2"/>`); lbl.push(`<text x="${x(v)}" y="${Y + 30}">${v}</text>`); });
   const bogen = (o.sprongen || []).map(([a, b, woord]) => {
@@ -891,7 +891,7 @@ function getallenlijn(van, tot, stap, label, merk, o) {
     const inhoud = m.soort.startsWith('vraag') ? '<span class="pl-som">@</span>' : m.tekst;
     return `<span class="gl-merk ${m.soort}" style="left:${l}%">${inhoud}</span>`;
   }).join('');
-  return `<span class="gl${o && o.sprongen ? ' hoog' : ''}"><span class="gl-doos">${lijnTekening(van, tot, stap, label, o)}${boven}</span></span>`;
+  return `<span class="gl${o && o.sprongen ? ' hoog' : ''}${o && o.laag ? ' laag' : ''}"><span class="gl-doos">${lijnTekening(van, tot, stap, label, o)}${boven}</span></span>`;
 }
 // het stuk van de lijn rond een getal: tot 20 heel, de grotere lijnen een stuk van 20 (200) op een tiental (honderdtal)
 function lijnStuk(r, n) {
@@ -911,10 +911,14 @@ function genLijn(r, vorm) {
     const bogen = brug ? [[a, 10, `+${10 - a}`], [10, b, `+${b - 10}`]] : [[a, b, `+${d}`]];
     // een stuk van 12 rond de sprong: dan staan de streepjes ver genoeg uit elkaar voor twee kaartjes
     const van = Math.max(0, Math.min(a - 2, 8)), tot = van + 12;
+    /* het tiental houdt zijn getal: over het tiental springen is waar het om gaat. Staat
+       een kaartje ernaast (vanaf 9, of tot 11), dan zakken de kaartjes onder dat getal
+       (laag) -- eerst verdween de 10 hier om plaats te maken. */
+    const tien = { houd: [10], laag: [a, b].some(v => Math.abs(v - 10) === 1) };
     if (tweede) return lijnVraag('sprong', d, { kiezen: false, grens: 10, tmpl: `lijn sprong ${a} ${b}`, plus: true,
-      html: getallenlijn(van, tot, 1, 5, [{ v: a, soort: 'nu onder', tekst: a }, { v: b, soort: 'nu onder', tekst: b }], { sprongen: [[a, b, '']], verberg: [a, b] }) + `<span class="gl-zin">+ <span class="pl-som">@</span></span>` });
+      html: getallenlijn(van, tot, 1, 5, [{ v: a, soort: 'nu onder', tekst: a }, { v: b, soort: 'nu onder', tekst: b }], { sprongen: [[a, b, '']], verberg: [a, b], ...tien }) + `<span class="gl-zin">+ <span class="pl-som">@</span></span>` });
     return lijnVraag('sprong', b, { kiezen: false, grens: 20, tmpl: `lijn sprong ${a} ${d}`,
-      html: getallenlijn(van, tot, 1, 5, [{ v: a, soort: 'nu onder', tekst: a }, { v: b, soort: 'vraag onder' }], { sprongen: bogen, verberg: [a, b] }) });
+      html: getallenlijn(van, tot, 1, 5, [{ v: a, soort: 'nu onder', tekst: a }, { v: b, soort: 'vraag onder' }], { sprongen: bogen, verberg: [a, b], ...tien }) });
   }
   if (r.schat) {
     const ans = pick([10, 20, 30, 40, 60, 70, 80, 90]), n = ans + rnd(-2, 2);
@@ -934,8 +938,17 @@ function genLijn(r, vorm) {
   // de echte fouten: een streepje ernaast, en van het verkeerde grote streepje geteld (63 gelezen als 67)
   const groot = Math.round(n / r.label) * r.label, spiegel = 2 * groot - n;
   const keuzes = [...new Set([n, spiegel, n + stap, n - stap, n + 2 * stap].filter(v => v >= van && v <= tot))].slice(0, 4);
+  // naast het eind van de lijn bleven er soms drie over: dan nog een streepje verder aan de andere kant
+  for (let d = 2; keuzes.length < 4; d++) [n - d * stap, n + d * stap].forEach(v => { if (keuzes.length < 4 && v >= van && v <= tot && !keuzes.includes(v)) keuzes.push(v); });
   return lijnVraag(r.id, n, { kiezen: false, keuzes, min: van, grens: tot, tmpl: `lijn lees ${van} ${n}`,
     html: getallenlijn(van, tot, stap, r.label, [{ v: n, soort: 'vraag' }]) });
+}
+/* De hoogste sprong, voor kaartProeven: een kaartje naast het tiental (laag) en
+   de zin "+ ?" eronder. Met toeval alleen zat hij er niet altijd bij, en dan
+   groeide de kaart midden in een show. */
+function lijnHoogste() {
+  const o = { sprongen: [[9, 10, '+1'], [10, 13, '+3']], verberg: [9, 13], houd: [10], laag: true };
+  return [getallenlijn(7, 19, 1, 5, [{ v: 9, soort: 'nu onder', tekst: 9 }, { v: 13, soort: 'nu onder', tekst: 13 }], o) + `<span class="gl-zin">+ <span class="pl-som">@</span></span>`];
 }
 /* Zoeken: de lijn zelf is het antwoordvak. Eén vlak over de hele lijn, en
    een tik telt voor het dichtstbijzijnde streepje (lijnRaak): op de lijn tot
@@ -947,6 +960,15 @@ function lijnTikvlak(q) {
   for (let v = van; v <= tot; v += stap) merk.push(`<i class="gl-tik" data-v="${v}" style="left:${(lijnX(v, van, tot) / GL.w * 100).toFixed(2)}%"></i>`);
   return `<div class="gl-vlak"><span class="gl"><span class="gl-doos">${lijnTekening(van, tot, stap, label)}${merk.join('')}`
     + '<button class="gl-raak" aria-label="Tik op de lijn waar het getal hoort"></button></span></span><span class="gl-hand" aria-hidden="true">👆</span></div>';
+}
+/* Goed (of na de tweede misser): het getal van de kaart landt op zijn streepje,
+   in het groen zoals het vakje van een som dat dichtvalt. Zo staat het getal
+   waar het hoort -- ook als ze ernaast tikte. rustig: zonder val. */
+function lijnLand(q, rustig) {
+  const doos = document.querySelector('#answer-area .gl-doos');
+  if (!doos) return;
+  const l = (lijnX(q.ans, q.bereik[0], q.bereik[1]) / GL.w * 100).toFixed(2);
+  doos.insertAdjacentHTML('beforeend', `<span class="gl-merk land${rustig ? ' rustig' : ''}" style="left:${l}%">${q.ans}</span>`);
 }
 // het streepje het dichtst bij een tik op x (in pixels van links in een vlak van breedte b)
 function lijnRaak(q, x, b) {
@@ -2706,6 +2728,8 @@ function hintVoor(q, val) {
   if (q.kind === 'klok') return klokHint(q, val);
   if (q.kind === 'kalender' && q.soort !== 'getal') return kalHint(q, val);
   const meer = q.ans > val;
+  // op de getallenlijn is meer naar rechts: de pijl wijst over de lijn, niet omhoog
+  if (q.tik) return { pijl: meer ? 'rechts' : 'links', woorden: `${meer ? 'Meer' : 'Minder'} dan ${val}: verder naar ${meer ? 'rechts' : 'links'}` };
   const net = Math.abs(q.ans - val) <= HINT_DICHTBIJ;
   const woord = meer ? 'meer' : 'minder';
   return { pijl: meer ? 'op' : 'neer',
@@ -2751,7 +2775,7 @@ function pijlSVG(richting) {
     return `<svg class="pijl-teken" viewBox="0 0 24 24" aria-hidden="true"><g transform="${spiegel}"><path d="M3.5 17 A9 9 0 0 1 17 6.2" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>`
       + '<path d="M13.2 3.6 L21.6 4.4 L18.4 12.2 Z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></g></svg>';
   }
-  const draai = richting === 'neer' ? ' transform="rotate(180 12 12)"' : '';
+  const draai = { neer: 180, rechts: 90, links: -90 }[richting] ? ` transform="rotate(${{ neer: 180, rechts: 90, links: -90 }[richting]} 12 12)"` : '';
   return `<svg class="pijl-teken" viewBox="0 0 24 24" aria-hidden="true"><path${draai} d="M12 3 L21 13 H15.5 V21 H8.5 V13 H3 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
 }
 function toonHint(q, val, btnEl) {

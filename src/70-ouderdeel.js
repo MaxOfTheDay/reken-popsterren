@@ -1876,9 +1876,8 @@ function bindSettings(p, s) {
     if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
   };
   on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables', 'set-kiesgeld', 'set-kiesklok', 'set-kieskalender', 'set-kieslijn'));
-  on('tafel-aanpas', 'onclick', naarLadder('set-tafelpad'));
-  on('geld-aanpas', 'onclick', naarLadder('set-geldpad'));
-  on('klok-aanpas', 'onclick', naarLadder('set-klokpad'));
+  // elke themakaart op Voortgang (themaLadderHtml): per ladder, zodat een nieuw thema er vanzelf bij is
+  Object.keys(LADDERS).forEach(k => on(`${k === 'tafels' ? 'tafel' : k}-aanpas`, 'onclick', naarLadder(LADDERS[k].id)));
   // De velden zelf staan óók op het maakformulier; de bediening is gedeeld.
   // Het maakformulier heeft niets op te slaan, dus wat er ná een wijziging
   // gebeurt komt van de aanroeper (hier: opslaan + hertekenen).
