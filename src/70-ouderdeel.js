@@ -999,7 +999,7 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
      een show eruitziet: één icoontje per vraag, in de volgorde van themaPlan
      -- dan hoeft niemand uit te leggen wat "de helft sommen" betekent. Alleen
      als er meer dan één thema aan staat; anders is elke vraag hetzelfde. */
-  const kiest = ['klok', 'kalender'].filter(k => themaAan(s, k));
+  const kiest = ['klok'].filter(k => themaAan(s, k));   // de kalender kiest alleen bij woorden: een aantal dagen mag getypt
   const klokNoot = kiest.length ? `<p class="oe-noot">${kiest.map(k => themaIcoon(k, 16)).join(' ')} altijd kiezen</p>` : '';
   const showMix = themasAan(s).length > 1
     ? `<div class="oe-mix" role="img" aria-label="Een show: ${themaPlan(s, s.perLevel).map(k => THEMA[k].naam.toLowerCase()).join(', ')}">${themaPlan(s, s.perLevel).map(k => themaIcoon(k, 20)).join('')}</div>` : '';

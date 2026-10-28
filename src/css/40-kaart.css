@@ -680,37 +680,66 @@
   .choice-btn .klok { position: absolute; left: 50%; top: 3px; height: calc(100% - 6px); width: auto; aspect-ratio: 1; transform: translateX(-50%); }
   .choice-btn .klok-digi { font-size: .9em; }
   .choice-btn .klok-tekst { font-size: .7em; white-space: nowrap; }
-  /* De kalender (zie genKalender). Een dag of maand is een pilletje, de maand
-     met de kleur én het teken van zijn seizoen. Het kalenderblad is een
-     raster van zeven, het weekend iets lichter, de datum omcirkeld in roze. */
-  .kal-rij { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: .2em; }
-  .kal-rij.klein { font-size: .8em; margin-top: .1em; }
+  /* De kalender (zie genKalender). Eén beeldtaal: de week is zeven vakjes
+     (het weekend lichter), het jaar een wiel, elk seizoen een kleur én een
+     teken, en wat je zoekt is roze -- ⭐ vandaag, de omcirkelde datum, het ?.
+     De seizoenskleuren staan hier één keer, en het wiel (WIELKLEUR) gebruikt
+     dezelfde. Alles in em, zodat het met de vraag meegroeit (tablet). */
+  .kal-rij { display: flex; align-items: center; justify-content: center; gap: .2em; }
+  .kal-dagwoord { font-size: .52em; font-weight: 900; color: #e5397a; margin-left: .15em; }
+  .kal-rij.klein { font-size: .85em; margin-top: .12em; }
   .kal-rij .pl-som { display: inline-flex; }
-  .kal-dag, .kal-maand {
-    display: inline-flex; align-items: center; gap: .2em; padding: .14em .4em; border-radius: .4em;
-    background: #f3e5f5; color: #4a2a7a; font-size: .62em; font-weight: 900;
+  .kal-rij .q-blank { min-width: 1.4em; }
+  .kal-nu, .kal-maand, .kal-datum {
+    display: inline-flex; align-items: center; gap: .2em; padding: .14em .42em; border-radius: .4em;
+    font-size: .58em; font-weight: 900; white-space: nowrap;
   }
-  .kal-dag.nu { background: #e5397a; color: #fff; }
+  .kal-nu { background: #e5397a; color: #fff; }
+  .kal-datum { background: #fff; color: #e5397a; box-shadow: inset 0 0 0 .12em #e5397a; }
+  .kal-maand { color: #3a2a55; }
   .kal-maand i { font-style: normal; font-size: .85em; }
-  .kal-maand.winter { background: #dceefe; } .kal-maand.lente { background: #dcf2dc; }
-  .kal-maand.zomer { background: #fff1b8; } .kal-maand.herfst { background: #ffe0c2; }
+  .kal-maand.winter, .kal-blad.winter b { background: #bfe0fb; } .kal-maand.lente, .kal-blad.lente b { background: #c8ecc8; }
+  .kal-maand.zomer, .kal-blad.zomer b { background: #ffe79a; } .kal-maand.herfst, .kal-blad.herfst b { background: #ffd2a8; }
+  .kal-maand.kaal { background: #f3e5f5; }
   .kal-pijl { font-size: .5em; color: var(--purple-shadow); }
-  .kal-pijl.onder { display: block; transform: rotate(90deg); margin: .05em auto; width: 1em; }
-  .kal-plus { display: inline-flex; flex-direction: column; align-items: center; font-size: .55em; font-weight: 900; color: #e5397a; line-height: 1; }
-  .kal-hops { font-size: .45em; letter-spacing: .15em; margin-top: .25em; }
-  .kal-vraag { display: flex; justify-content: center; margin: 2px 0 .1em; }
-  .kal-som { font-size: .62em; }
-  .kal-blad {
-    display: inline-block; width: 5.4em; font-size: .78em; border-radius: .35em; overflow: hidden;
-    background: #fff; box-shadow: 0 0 0 .06em #c9b6dc, 0 .08em .2em rgba(74,42,122,.18); line-height: 1;
+  .kal-plus { font-size: .6em; font-weight: 900; color: #e5397a; }
+  .kal-getal { font-size: .8em; font-weight: 900; }
+  .kal-woord { font-size: .5em; font-weight: 800; color: var(--purple-shadow); }
+  .kal-is { font-size: .6em; font-weight: 900; color: var(--purple-shadow); margin: 0 .05em; }
+  .kal-vraag { display: flex; justify-content: center; margin: 2px 0 .12em; }
+  .kal-dingen { display: block; font-size: 1.15em; letter-spacing: .1em; line-height: 1.2; }
+  /* de week: zeven vakjes, met een woordje eronder (vandaag, morgen) */
+  .kal-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: .1em; width: 6.2em; margin: 0 auto .22em; }
+  .kal-week.twee { row-gap: .14em; }
+  .kal-week i {
+    position: relative; display: flex; align-items: center; justify-content: center; height: .78em; border-radius: .16em;
+    background: #e6dcf0; font-style: normal; font-size: .62em; line-height: 1; color: #e5397a; font-weight: 900;
   }
-  .kal-rij.klein + .kal-blad, .kal-vraag.klein .kal-blad { font-size: .6em; }
-  .kal-blad b { display: block; padding: .18em 0; background: #e5397a; color: #fff; font-size: .5em; }
+  .kal-week i.wk { background: #f3eef8; }
+  .kal-week i.nu { background: #e5397a; color: #fff; font-size: .5em; height: .98em; }
+  .kal-week i.vraag { background: #fff; box-shadow: inset 0 0 0 .1em #e5397a; }
+  .kal-week.stip { width: 4.6em; gap: .1em; margin-bottom: .1em; }
+  .kal-week.stip i { height: .5em; width: .5em; border-radius: 50%; justify-self: center; background: #8e3fc8; }
+  .kal-week.stip i.wk { background: #d6bfea; }
+  /* het wiel en de knokkels */
+  .kal-wiel { width: 2.5em; height: 2.5em; }
+  .kal-wiel text { text-anchor: middle; dominant-baseline: central; font-weight: 900; }
+  .kal-wiel .w-vraag { font-size: 16px; fill: #e5397a; } .kal-wiel .w-teken { font-size: 22px; } .kal-wiel .w-klein { font-size: 8.5px; fill: #3a2a55; }
+  .kal-knokkels { width: 6.6em; height: auto; }
+  .kal-knokkels text { font-size: 7.5px; font-weight: 900; fill: #7a4a2a; text-anchor: middle; dominant-baseline: central; }
+  .kal-knokkels text.k-nu { fill: #e5397a; }
+  /* het kalenderblad: de kop in de kleur van zijn seizoen */
+  .kal-blad {
+    display: inline-block; width: 5.4em; font-size: .66em; border-radius: .3em; overflow: hidden;
+    background: #fff; box-shadow: 0 0 0 .05em #c9b6dc, 0 .08em .2em rgba(74,42,122,.18); line-height: 1;
+  }
+  .kal-blad b { display: block; padding: .2em 0; color: #3a2a55; font-size: .48em; }
   .kal-kop, .kal-raster { display: grid; grid-template-columns: repeat(7, 1fr); }
-  .kal-kop i, .kal-raster i { font-style: normal; font-size: .36em; padding: .32em 0; color: #2b2238; }
+  .kal-kop i, .kal-raster i { font-style: normal; font-size: .34em; padding: .3em 0; color: #2b2238; }
   .kal-kop i { color: #8e3fc8; font-weight: 900; }
-  .kal-raster i.wk { color: #9b8aa9; }
-  .kal-raster i.rond { background: radial-gradient(circle, transparent 54%, #e5397a 56%, #e5397a 66%, transparent 68%); color: #e5397a; font-weight: 900; }
+  .kal-raster i.wk { color: #9b8aa9; background: #faf7fc; }
+  .kal-raster i.rond, .kal-raster i.vraag { background: radial-gradient(circle, #fff 52%, #e5397a 55%, #e5397a 67%, transparent 70%); color: #e5397a; font-weight: 900; }
+  .kal-raster i.vraag { background: radial-gradient(circle, #fff 55%, transparent 58%); outline: .12em dashed #e5397a; outline-offset: -.18em; border-radius: 50%; }
   /* De getallenlijn (zie genLijn): de lijn op de volle breedte van de kaart,
      de pijl roze zoals de omcirkelde datum -- wat je moet lezen is roze. */
   .lijn-vraag { display: flex; justify-content: center; margin: 2px 0 0; }
