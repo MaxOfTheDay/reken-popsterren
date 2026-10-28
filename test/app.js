@@ -226,6 +226,8 @@ const BRUG = `globalThis.__api = {
   // het leerpad: de rijen, waar ze staat, en hoe ze verder gaat
   LEERPAD, PAD_IDX, PAD_MIN_SHOWS, PAD_MAX_SHOWS, PAD_TELT, vraagIsNieuw, padRijen, padTotOp, padBlok, padNu, padNa, padStand, padVanafRij, vraagInst, padUitOudeStap,
   genTriple, genMissing, genChain, genBouwen,
+  // Zelf kiezen: precies wat de ouder aanvinkt
+  zelfGekozen, kiesRijen, kiesInst, kiesStart, kiesFasen, telFase,
   // de antwoordknoppen
   genQuestion, keuzeGrens, makeChoices,
   // herhalen wat bewaard staat: alleen wat nog bij de instellingen past
