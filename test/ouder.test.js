@@ -396,7 +396,7 @@ function check(ok, label, detail) {
     await page.click('#set-startstap .chip[data-v="7"]');
     await page.waitForTimeout(200);
     r = await pad();
-    check(r.max === 100 && r.tot === 7 && r.totId === 'tientallen' && r.grijs.join() === '8,9' && r.plek === plek,
+    check(r.max === 100 && r.tot === 7 && r.totId === 'tientallen' && r.grijs.join() === '8,9,10,11,12,13' && r.plek === plek,
       'een tik op een grijze rij laat "tot" precies daar zakken: tot Tientallen, en dus tot 100', JSON.stringify(r));
     check(await page.evaluate(() => db.profiles.p1.settings.wennen > 0), 'en ze went aan de grotere getallen (wennen)', '');
     await page.click('#set-startstap .chip[data-v="1"]');
@@ -432,7 +432,7 @@ function check(ok, label, detail) {
     await page.click('#set-modus .chip[data-v="vrij"]');
     await page.waitForTimeout(200);
     let k = await kies();
-    check(k.modus === 'vrij' && k.kies === k.aan && k.aan.split(',').length === 1 && !k.ladder && k.sommen && k.rijen === 9,
+    check(k.modus === 'vrij' && k.kies === k.aan && k.aan.split(',').length === 1 && !k.ladder && k.sommen && k.rijen === 13,
       'Zelf kiezen: de ladder wordt een lijst met vinkjes, Sommen blijft staan, en één rij staat al aan', JSON.stringify(k));
     check(/daar was/.test(k.toast) && k.lijn === 'Alleen wat je aanvinkt.', 'een toast zegt welke rij al aan staat', JSON.stringify(k));
     const eerste = k.aan;

@@ -651,7 +651,7 @@ function stemNotitie(naam) {
    die laatste is een gemiddelde over de laatste paar antwoorden en springt heen
    en weer; drie sterren in een hele reeks shows is een stand die blijft staan.
    Alleen voor rekenen, alleen als er nog een blok op de ladder is (10, 20,
-   100 -- dezelfde plekken als de lijn "tot" op het tabblad Oefeningen).
+   100, 1000 -- dezelfde blokken als op het leerpad van het tabblad Oefeningen).
 
    Zet de ouder de grens om (met de tip of op Oefeningen), dan begint het tellen
    opnieuw: s.grensTipBasis onthoudt hoeveel drie-sterrenshows er toen al waren,
@@ -664,7 +664,7 @@ function stemNotitie(naam) {
    vriendelijker stap dan ineens tot vijftig. Dus stelt de tip eerst Afwisselen
    voor, dan Zelf typen, en pas daarna een hogere grens. Elke stap telt opnieuw
    (grensTipBasis), net als bij de grens. Geeft { soort: 'mode' | 'grens', naar }. */
-const GRENS_LADDER = [10, 20, 100];
+const GRENS_LADDER = [10, 20, 100, 1000];
 const GRENS_TIP_SHOWS = 6;
 /* GESPEELDE SHOWS, NIET HALTES. Hier stond: hoeveel haltes vanaf wereld 6 drie
    sterren hebben. Dat zijn er hoogstens 48 (zes werelden van acht), en een halte

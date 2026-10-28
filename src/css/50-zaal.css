@@ -343,6 +343,9 @@
 
   /* De somkaart draagt in een zaal zijn eigen licht: een zachte gloed eromheen,
      zodat hij op de vloer staat en er niet op geplakt is. */
+  /* een lange som (tot 1000) een maat kleiner: zie drawQuestion */
+  #question-text.lang { font-size: .78em; }
+  #question-text.lang.langer { font-size: .62em; }
   .venue-aan .question-card { box-shadow: var(--e-2), 0 0 34px rgba(var(--warm-licht-rgb),.18); }
   /* Elke nieuwe vraag komt binnen in plaats van te verspringen: dat staat nu in
      JavaScript (vraagKomtIn), zodat hij kan herstarten zonder de opmaak af te
