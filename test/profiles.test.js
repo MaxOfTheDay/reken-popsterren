@@ -1597,6 +1597,13 @@ function check(ok, label, detail) {
         pas: [...(document.querySelector('.tour-hero .pas-laag')?.getAnimations() || [])]
           .map(a => a.animationName + '@' + Math.round(a.currentTime)),
       }));
+      // wat de huppel zelf zegt: uitgespeeld (animationend) of afgebroken (animationcancel)
+      await page.evaluate(() => {
+        window.__huppel = [];
+        const op = soort => e => { if (e.animationName === 'mvHuppel' && e.target.closest('.tour-hero')) window.__huppel.push(soort); };
+        document.addEventListener('animationend', op('uit'), true);
+        document.addEventListener('animationcancel', op('af'), true);
+      });
       await page.touchscreen.tap(punt.x, punt.y);
       await page.waitForTimeout(150);
       const een = await staat();
@@ -1619,17 +1626,20 @@ function check(ok, label, detail) {
       /* En hij mag uitstuiteren. De stuiter ging er eerst af op de klok van de
          groet (de huppel, korter dan mvBounce): dan stond ze nog ingedeukt op
          haar halte en klikte ze in één beeldje recht -- het schokje na de sprong. */
+      /* Uitgespeeld is: de animatie meldt zelf dat hij eindigde (animationend)
+         en niet dat hij afgebroken werd (animationcancel, als de klasse eraf
+         gaat terwijl hij nog loopt). Eerst werd de laatst geziene tijd gemeten,
+         maar op een drukke CI-machine komt er maar om de ~60ms een beeldje: dan
+         was het laatste wat we zagen 600 van 660, ook als hij gewoon uitspeelde. */
       const uit = await page.evaluate(() => new Promise(res => {
         const holder = document.querySelector('.tour-hero .avatar-holder');
-        let laatst = 0;
         (function kijk() {
-          const a = holder.querySelector('.pas-laag').getAnimations()[0];
-          if (a) laatst = a.currentTime;
-          if (holder.classList.contains('dancing')) requestAnimationFrame(kijk); else res({ op: Math.round(laatst), duur: HUPPEL.duur });
+          if (holder.classList.contains('dancing')) requestAnimationFrame(kijk);
+          else setTimeout(() => res(window.__huppel.slice()), 50);
         })();
       }));
-      check(uit.op >= uit.duur - 40, 'de huppel speelt helemaal uit voor ze weer stilstaat',
-        `afgebroken op ${uit.op}ms van ${uit.duur}ms`);
+      check(uit.includes('uit') && !uit.includes('af'), 'de huppel speelt helemaal uit voor ze weer stilstaat',
+        `huppel: ${uit.join(', ') || 'geen melding'}`);
       /* Hetzelfde in de kleedkamer: twee stukken snel na elkaar aandoen. De pop
          werd daar elke keer opnieuw getekend mét haar pas-laag, en een nieuwe
          laag begint zijn pasje van voren af aan -- midden in een sprong terug
