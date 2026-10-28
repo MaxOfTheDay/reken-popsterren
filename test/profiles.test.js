@@ -11,7 +11,7 @@
  * Draaien:
  *   npm run test:sterren        (of: npm test voor alle suites)
  */
-const { launch, cacheFonts, APP_URL } = require('./browser');
+const { launch, cacheFonts, rust, APP_URL } = require('./browser');
 
 const fails = [];
 const counts = {};
@@ -24,6 +24,23 @@ function check(ok, label, detail) {
 (async () => {
   const browser = await launch();
   const pageErrors = [];
+
+  /* Elke zaak hieronder staat op zichzelf: een eigen context met een eigen,
+     schone opslag. Dus hoeven ze niet na elkaar -- ze worden hier verzameld en
+     onderaan TEGELIJK tegelijk gedraaid. Meer dan de vier kernen van een
+     CI-machine mag: de suite wacht vooral op schermen en animaties, het
+     rekenwerk is maar een halve minuut, en dat wachten kan naast elkaar. Een zaak mag dus niets van een
+     vorige verwachten; wat hij nodig heeft maakt hij zelf (fresh, makeStar). */
+  const TEGELIJK = 8;
+  const zaken = [];
+  const zaak = fn => zaken.push(fn);
+  // een zaak die zelf al een minuut kijkt (de danspasjes) gaat vooraan, anders
+  // staat hij aan het eind nog alleen te draaien
+  zaak.eerst = fn => zaken.unshift(fn);
+  // een zaak die op de milliseconde meet, draait pas als de rest klaar is: naast
+  // zeven andere vensters krijgt de pagina haar beeldjes niet op tijd
+  const alleen = [];
+  zaak.alleen = fn => alleen.push(fn);
 
   // Elke zaak begint met een schone opslag; anders lekt de vorige erin.
   async function fresh() {
@@ -75,7 +92,7 @@ function check(ok, label, detail) {
   }
 
   /* ================= 1 · Verse installatie is leeg ================= */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     const r = await page.evaluate(() => ({
       n: Object.keys(db.profiles).length,
@@ -103,10 +120,10 @@ function check(ok, label, detail) {
       'zonder sterren brengt Voor ouders je meteen bij terugzetten', JSON.stringify(naHint));
     check(r.stored === null, 'een verse start schrijft nog niets weg', `stored=${r.stored && r.stored.slice(0, 40)}`);
     await ctx.close();
-  }
+  });
 
   /* ================= 2 · Ster maken, met een lastige naam ================= */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await makeStar(page, { name: 'A"<b>x', hair: 'hair_bruin', dress: 'dress_blauw', track: 'count' });
     /* Een ster maken ÍS beginnen. Wie net haar pop gekozen heeft hoort niet terug
@@ -151,7 +168,7 @@ function check(ok, label, detail) {
     // ondertitel; het welkom hoort alleen bij een leeg scherm.
     check(r.plus === 'add-tegel', 'met een ster erbij is de "+" weer een gewone knop', r.plus);
     await ctx.close();
-  }
+  });
 
   /* ================= 2b · Enter in het naamveld =================
    * Op een telefoon is Enter de enige knop die het toetsenbord zélf aanbiedt, en
@@ -163,7 +180,7 @@ function check(ok, label, detail) {
    * Wat hier óók vastligt: Enter verzint geen ster als er nog iets ontbreekt.
    * "Wie ben je?" en "Hoe speel je?" hebben geen voorkeuze, en dat blijven echte
    * vragen.                                                                       */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
     await page.waitForTimeout(150);
@@ -197,10 +214,10 @@ function check(ok, label, detail) {
     // een regeleinde hoort nergens in een naam terecht te komen
     check(!/\n|\r/.test(r.naam || ''), 'en zet geen regeleinde in de naam', JSON.stringify(r.naam));
     await ctx.close();
-  }
+  });
 
   /* ================= 3 · Volgorde, sleutels en het maximum ================= */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     for (let i = 1; i <= 6; i++) await makeStar(page, { name: 'Ster' + i });
     // de zesde staat na het maken op haar eigen kaart; het raster staat hiernaast
@@ -220,14 +237,14 @@ function check(ok, label, detail) {
     r = await page.evaluate(() => { goProfiles(); openNewStar('profile'); return document.querySelector('.screen.active').id; });
     check(r === 'screen-profile', 'het maakscherm opent niet meer boven het maximum', r);
     await ctx.close();
-  }
+  });
 
   /* ================= 3b · Driemaal tikken is één keer spelen =================
    * Een kind van vijf tikt niet één keer. Zonder grendel is dat twee keer
    * navigeren over elkaar heen, en in het slechtste geval de kaart van de ene
    * ster met de voortgang van de andere -- precies het soort fout dat pas opvalt
    * als een kind zegt "dit is mijn wereld niet".                               */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await makeStar(page, { name: 'Roos' });
     await makeStar(page, { name: 'Tijn' });
@@ -255,14 +272,14 @@ function check(ok, label, detail) {
     check(r2.ster === 'p2' && r2.scherm === 'screen-map',
       'en daarna kan de andere ster gewoon gekozen worden', JSON.stringify(r2));
     await ctx.close();
-  }
+  });
 
   /* ================= 3c · De tegel belooft wat de tik doet =================
    * De landing verzint geen voortgang: ze laat continueWorld() zien, dezelfde
    * grens waar goMap() zonder argument heen gaat. Positie (p.level) en
    * voltooiing zijn sinds fase 4A twee dingen, en de tegel hoort de tweede te
    * tonen.                                                                     */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await makeStar(page, { name: 'Fenna' });
     let r = await page.evaluate(() => {
@@ -310,10 +327,10 @@ function check(ok, label, detail) {
     check(r.alles && r.ico === r.laatste && r.breed === '100%',
       'is alles uit, dan staat de tegel op de toegiftwereld met een volle streep', JSON.stringify(r));
     await ctx.close();
-  }
+  });
 
   /* ================= 4 · Dubbele naam wordt geweigerd ================= */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await makeStar(page, { name: 'Emma' });
     // Emma staat nu op haar eigen kaart; de "+" hangt aan de sterrenkeuze.
@@ -333,12 +350,12 @@ function check(ok, label, detail) {
     check(r.n === 1, 'dezelfde naam levert geen tweede ster op', `n=${r.n}`);
     check(r.screen === 'screen-newstar', 'het formulier blijft open na een dubbele naam', r.screen);
     await ctx.close();
-  }
+  });
 
   /* ================= 5 · Ouderdeel zonder sterren ================= */
   /* Dit is de zaak die telt: een familie met een nieuw toestel heeft nul sterren
      en moet juist dan bij "Back-up terugzetten" kunnen. */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     const r = await page.evaluate(() => {
       openSettings();
@@ -362,10 +379,10 @@ function check(ok, label, detail) {
     check(r.whoHidden && r.tabsHidden, 'de twee keuzerijen verdwijnen als er niets te kiezen is', JSON.stringify(r));
     check(!r.hasName && !r.hasReset, 'zonder ster geen naamveld en geen wisknop', JSON.stringify(r));
     await ctx.close();
-  }
+  });
 
   /* ================= 6 · Verwijderen ================= */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     for (const n of ['Een', 'Twee', 'Drie']) await makeStar(page, { name: n });
     // de middelste weg
@@ -409,10 +426,10 @@ function check(ok, label, detail) {
     r = await page.evaluate(() => { openSettings(); return !!document.getElementById('set-import'); });
     check(r, 'het ouderdeel werkt nog na het verwijderen van alles', 'geen back-up-knop');
     await ctx.close();
-  }
+  });
 
   /* ================= 7 · Terug-navigatie ================= */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
     await page.waitForTimeout(200);
@@ -428,7 +445,7 @@ function check(ok, label, detail) {
     r = await page.evaluate(() => document.querySelector('.screen.active').id);
     check(r === 'screen-profile', 'Escape sluit het maakscherm', r);
     await ctx.close();
-  }
+  });
 
   /* ---- 7a · Terug duwt geen nieuwe history-entry ----
      Chrome slaat bij de systeem-terugknop elke entry van de pagina over zodra
@@ -437,7 +454,7 @@ function check(ok, label, detail) {
      dat kan deze suite niet zelf zien gebeuren. Wat hij wél kan zien: dat er na
      de eerste wachtpost nooit meer een pushState komt, hoe vaak er ook terug
      gedrukt wordt -- en dat terug intussen nog steeds elke stap doet. */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await makeStar(page, { name: 'Terug' });
     await page.waitForTimeout(400);
@@ -479,7 +496,7 @@ function check(ok, label, detail) {
     check(!(await page.evaluate(() => document.getElementById('confirm-modal').classList.contains('open'))),
       'Escape op de sterrenkeuze toont geen stopkaartje (dat praat over de terugknop)', '');
     await ctx.close();
-  }
+  });
 
   /* ---- 7a2 · Het stopkaartje bij een vers geopende app ----
      Vóór de eerste tik mag er geen wachtpost (Chrome zou hem overslaan), dus
@@ -487,7 +504,7 @@ function check(ok, label, detail) {
      terugknop is in een test de Escape-toets; de eigen Escape-luisteraar van de
      app opent het kaartje níét, dus als het hier opengaat, deed de watcher het.
      Op een aanraakscherm (hasTouch), want alleen daar wordt hij gezet. */
-  {
+  zaak(async () => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
     await cacheFonts(ctx);
     const page = await ctx.newPage();
@@ -533,7 +550,7 @@ function check(ok, label, detail) {
       wacht: !!(history.state && history.state.rpGuard) }));
     check(k.kaart && !k.wacht, 'daarna het stopkaartje, en de wachtpost gaat eraf zodat de volgende terug de app sluit', JSON.stringify(k));
     await ctx.close();
-  }
+  });
 
   /* ================= 7b · Werelden: indeling, staart en de leerstap =================
    * Een wereld is een hergroepering van p.level, en sinds de review van september
@@ -542,7 +559,7 @@ function check(ok, label, detail) {
    * en dat zoek-het-getal niet vroeger komt dan het altijd kwam. Dat hing aan een
    * klok van rondes van twaalf shows (ronde 3 = show 25); nu is het wereld 4, en
    * die begint ook op show 25. */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     const r = await page.evaluate(() => {
       const naam = l => { const w = worldFor(l); return w.world.name + ' ' + w.nr + '/' + w.levels; };
@@ -597,7 +614,7 @@ function check(ok, label, detail) {
     check(r.eersteLevels.slice(0, 6).join(',') === '1,9,17,25,33,41',
       'de eerste zes werelden beginnen nog op dezelfde levels', r.eersteLevels.join(','));
     await ctx.close();
-  }
+  });
 
   /* ================= 7c · De weg ligt op de haltes =================
    * De haltes staan in procenten van het káder; de weg staat in viewBox-eenheden
@@ -610,7 +627,7 @@ function check(ok, label, detail) {
    *
    * Deze test meet de geéchte afbeelding (getScreenCTM), niet de padgegevens: die
    * gingen ook in de kapotte versie keurig door de haltes heen.                  */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await page.evaluate(() => {
       const p = defaultProfile('Roos', 'dress_roze');
@@ -671,7 +688,7 @@ function check(ok, label, detail) {
       'de studio levert de tekening op de maat die de kaart verwacht',
       scene.SLOTS.world.lever.join('x') + ' vs ' + r.artW + 'x' + r.artH);
     await ctx.close();
-  }
+  });
 
   /* ================= 7d · De ster loopt ÓVER de weg =================
    * 7c legt vast dat de weg dóór de haltes loopt. Dit legt vast dat zíj over die weg
@@ -692,7 +709,7 @@ function check(ok, label, detail) {
    *
    * Alles in schermpixels (getScreenCTM), net als 7c: wat een kind ziet, en niet wat
    * er in de padgegevens staat.                                                  */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await page.evaluate(() => {
       const p = defaultProfile('Roos', 'dress_roze');
@@ -871,7 +888,7 @@ function check(ok, label, detail) {
         JSON.stringify([e2e.meet[0], e2e.meet[10]]));
     }
     await ctx.close();
-  }
+  });
 
   /* ================= 7d-ter · Ze loopt, en ze tikt bij aankomst =================
    * Haar plek klopte tot op de pixel, maar er gebeurde verder niets met haar: een
@@ -897,7 +914,7 @@ function check(ok, label, detail) {
    *   4  het zijn een paar huppels, geen trilling en geen één lange boog
    *   5  ze blijft rechtop: geen draaiing, geen zijwaartse verschuiving
    *   6  bij aankomst trilt het toestel één keer kort, en niet bij elke pas    */
-  {
+  zaak(async () => {
     const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
     await cacheFonts(c);
     const page = await c.newPage();
@@ -1033,7 +1050,7 @@ function check(ok, label, detail) {
     check(tikken.length === 1 && tikken[0] >= 8 && tikken[0] <= 15,
       'aankomst geeft precies één korte tik, niet één per pas', JSON.stringify(na.buzz));
     await c.close();
-  }
+  });
 
   /* ========== 7d-quater · Geen trilmotor, of trillen uit ==========
    * buzz() is de enige plek waar de app aan navigator.vibrate komt, en hij kijkt
@@ -1041,7 +1058,7 @@ function check(ok, label, detail) {
    * wat een aankomsttik nodig heeft, en de reden om er geen tweede naast te zetten:
    * een eigen aanroep zou allebei die vangnetten missen én de tik van sndCoin
    * afbreken (navigator.vibrate begint opnieuw in plaats van erbij).             */
-  {
+  zaak(async () => {
     /* Een oude save met haptics:false: er is geen schakelaar meer (trillen volgt
        het toestel, zie "= Trilfeedback"), dus die tikt nu gewoon één keer. */
     for (const [naam, haptics, motor, tikt] of [['oude save met trillen uit', false, true, 1], ['geen trilmotor', true, false, 0]]) {
@@ -1082,7 +1099,7 @@ function check(ok, label, detail) {
         `${naam}: de reis loopt gewoon af, ${tikt ? 'met één tik (het toestel beslist)' : 'er trilt niets'}`, JSON.stringify(r));
       await c.close();
     }
-  }
+  });
 
   /* =========== 7d-quinquies · De kaart viert de sterren niet nog een keer ===========
    * Het eindscherm onthult de sterren, viert ze, en wacht tot het kind zelf op
@@ -1101,7 +1118,7 @@ function check(ok, label, detail) {
    * de voortgang opschuift moet hem houden (de kaart is dan de eerste plek waar de
    * nieuwe score staat), een wereldgrens heeft zijn eigen opbouw, en gewoon de
    * kaart openen heeft er sowieso niets mee te maken.                          */
-  {
+  zaak.alleen(async () => {
     const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
     await cacheFonts(c);
     const page = await c.newPage();
@@ -1241,7 +1258,7 @@ function check(ok, label, detail) {
     check(rand.gewoonOpenen === false,
       'gewoon de kaart openen laat nog steeds niets landen', JSON.stringify(rand));
     await c.close();
-  }
+  });
 
   /* ========== 7d-bis · Beperkte beweging landt meteen goed ==========
    * De reis is een beloning en geen bericht: met 'prefers-reduced-motion: reduce'
@@ -1249,7 +1266,7 @@ function check(ok, label, detail) {
    * te staan als ná de reis -- de nieuwe halte open, de ster erop, het goud
    * doorgetrokken. Dat is de tak die runTravel via `still` neemt, en die is bij het
    * verleggen van de baan (7d) precies de tak die je per ongeluk kwijtraakt. */
-  {
+  zaak(async () => {
     const c = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
     await cacheFonts(c);
     const page = await c.newPage();
@@ -1300,7 +1317,7 @@ function check(ok, label, detail) {
     check(r.nieuweHalteOpen && r.sterOpNieuweHalte && r.goudTot <= 1,
       'maar de kaart staat wel in precies de eindstand', JSON.stringify(r));
     await c.close();
-  }
+  });
 
   /* ========== 7c-bis · De bovenrand van de veilige zone klopt per toestel ==========
    * ZONE.y0 ging van 23 naar 14 omdat de bovenbalk opzij stapt zodra de ster ertegen
@@ -1317,7 +1334,7 @@ function check(ok, label, detail) {
    *   - de wereldpil blijft aanraakbaar terwijl de kop gedimd is (dat is de hele
    *     reden dat er gedimd wordt en niet weggeschoven -- de ladder moet bereikbaar
    *     blijven vanaf de bovenste halte)                                         */
-  {
+  zaak(async () => {
     const toestellen = [
       ['kleine telefoon', 320, 568],   // zet de grens: vaste kop op het kortste scherm
       ['iPhone SE', 375, 667],
@@ -1378,7 +1395,7 @@ function check(ok, label, detail) {
         JSON.stringify(r.kopvrij));
       await c.close();
     }
-  }
+  });
 
   /* ========== 7e · Raakvlakken: groot genoeg, en van elkaar gescheiden ==========
    * Het raakvlak rond een halte is groter dan het medaillon zelf, en dat is met
@@ -1411,7 +1428,7 @@ function check(ok, label, detail) {
    * meet de zaak een kaart van "een andere wereld", met de terugknop over halte 1.
    * Dat is een stand die in het spel niet bestaat. Voor zes uitgebrachte werelden
    * verandert de vlag niets.                                                   */
-  {
+  zaak(async () => {
     for (const [naam, w, h] of [['kleine telefoon', 320, 568], ['iPhone 14', 390, 844],
                                 ['21:9', 412, 961]]) {
       const c = await browser.newContext({ viewport: { width: w, height: h } });
@@ -1504,7 +1521,7 @@ function check(ok, label, detail) {
         r.tabMis.join(', '));
       await c.close();
     }
-  }
+  });
 
   /* ========== 7e-kwart · De ster antwoordt, de halte blijft de knop ==========
    * Tik je op de ster, dan huppelt ze en gebeurt er verder niets (zie kaartTik).
@@ -1516,7 +1533,7 @@ function check(ok, label, detail) {
    *     tweede tik meteen erna begint hem niet opnieuw
    *   - tijdens een overgang doet ze niets, en de halte start daarna gewoon
    * Op de maat van een Pixel 10 staand, met aanraking. */
-  {
+  zaak(async () => {
     const c = await browser.newContext({ viewport: { width: 412, height: 923 }, hasTouch: true, isMobile: true });
     await cacheFonts(c);
     const page = await c.newPage();
@@ -1580,6 +1597,13 @@ function check(ok, label, detail) {
         pas: [...(document.querySelector('.tour-hero .pas-laag')?.getAnimations() || [])]
           .map(a => a.animationName + '@' + Math.round(a.currentTime)),
       }));
+      // wat de huppel zelf zegt: uitgespeeld (animationend) of afgebroken (animationcancel)
+      await page.evaluate(() => {
+        window.__huppel = [];
+        const op = soort => e => { if (e.animationName === 'mvHuppel' && e.target.closest('.tour-hero')) window.__huppel.push(soort); };
+        document.addEventListener('animationend', op('uit'), true);
+        document.addEventListener('animationcancel', op('af'), true);
+      });
       await page.touchscreen.tap(punt.x, punt.y);
       await page.waitForTimeout(150);
       const een = await staat();
@@ -1602,17 +1626,20 @@ function check(ok, label, detail) {
       /* En hij mag uitstuiteren. De stuiter ging er eerst af op de klok van de
          groet (de huppel, korter dan mvBounce): dan stond ze nog ingedeukt op
          haar halte en klikte ze in één beeldje recht -- het schokje na de sprong. */
+      /* Uitgespeeld is: de animatie meldt zelf dat hij eindigde (animationend)
+         en niet dat hij afgebroken werd (animationcancel, als de klasse eraf
+         gaat terwijl hij nog loopt). Eerst werd de laatst geziene tijd gemeten,
+         maar op een drukke CI-machine komt er maar om de ~60ms een beeldje: dan
+         was het laatste wat we zagen 600 van 660, ook als hij gewoon uitspeelde. */
       const uit = await page.evaluate(() => new Promise(res => {
         const holder = document.querySelector('.tour-hero .avatar-holder');
-        let laatst = 0;
         (function kijk() {
-          const a = holder.querySelector('.pas-laag').getAnimations()[0];
-          if (a) laatst = a.currentTime;
-          if (holder.classList.contains('dancing')) requestAnimationFrame(kijk); else res({ op: Math.round(laatst), duur: HUPPEL.duur });
+          if (holder.classList.contains('dancing')) requestAnimationFrame(kijk);
+          else setTimeout(() => res(window.__huppel.slice()), 50);
         })();
       }));
-      check(uit.op >= uit.duur - 40, 'de huppel speelt helemaal uit voor ze weer stilstaat',
-        `afgebroken op ${uit.op}ms van ${uit.duur}ms`);
+      check(uit.includes('uit') && !uit.includes('af'), 'de huppel speelt helemaal uit voor ze weer stilstaat',
+        `huppel: ${uit.join(', ') || 'geen melding'}`);
       /* Hetzelfde in de kleedkamer: twee stukken snel na elkaar aandoen. De pop
          werd daar elke keer opnieuw getekend mét haar pas-laag, en een nieuwe
          laag begint zijn pasje van voren af aan -- midden in een sprong terug
@@ -1653,7 +1680,7 @@ function check(ok, label, detail) {
       check((await staat()).scherm === 'screen-game', 'de halte onder de ster start de show nog altijd');
     }
     await c.close();
-  }
+  });
 
   /* ========== 7e-bis · Drie sterplekken, altijd ==========
    * 1/3 was één los sterretje onder een halte en 2/3 waren er twee: het verschil
@@ -1663,7 +1690,7 @@ function check(ok, label, detail) {
    * Wat hier vastligt: een gespeelde halte toont altijd drie plekken, precies zoveel
    * daarvan vol als er sterren verdiend zijn -- óók 0 van 3 -- en een halte waar nog
    * niets te scoren viel (op slot, of de show die nu aan de beurt is) toont er geen. */
-  {
+  zaak(async () => {
     const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
     await cacheFonts(c);
     const page = await c.newPage();
@@ -1703,7 +1730,7 @@ function check(ok, label, detail) {
       && r[6].staat === 'locked',
       'de vier voortgangsstaten staan waar ze horen', JSON.stringify(r.map(x => x.staat)));
     await c.close();
-  }
+  });
 
   /* ========== 7e-ter · Een halte op slot is dicht ==========
    * Een halte op slot was jarenlang half doorzichtig, en dat kostte precies de twee
@@ -1728,13 +1755,14 @@ function check(ok, label, detail) {
    * Ter ijking: met de half doorzichtige vulling van hiervóór was de spreiding
    * binnen één halte 34-65 en liepen de gemiddelden van rgb(52,45,98) tot
    * rgb(131,101,105) uiteen. */
-  {
+  zaak(async () => {
     const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
     await cacheFonts(c);
     const page = await c.newPage();
     page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
     await page.goto(APP_URL + '&demo&star=p1&screen=map');
-    await page.waitForTimeout(400);
+    // de kaart komt binnen: wie in wereld 1 meet terwijl dat nog loopt, meet de opkomst mee
+    await rust(page, { minstens: 400 });
     const gemeten = [];
     const aantal = await page.evaluate(() => WORLDS.length);
     for (let wi = 0; wi < aantal; wi++) {
@@ -1799,7 +1827,7 @@ function check(ok, label, detail) {
     check(Math.max(...spreid) <= 12, 'een halte op slot heeft in élke wereld dezelfde kleur',
       'spreiding per kanaal ' + JSON.stringify(spreid) + ' — ' + JSON.stringify(gemeten));
     await c.close();
-  }
+  });
 
   /* ========== 7e-quinquies · Op slot antwoordt, memory vraagt, 💎 is overal de knop ==========
    * Drie kleine dingen uit de navigatierondgang van oktober 2026:
@@ -1810,7 +1838,7 @@ function check(ok, label, detail) {
    *   - de 💎-pil was alleen op de kaart een knop; op Werelden en in de kast
    *     zag hij er hetzelfde uit en deed hij niets
    * Met aanraking, op een gewone telefoon. */
-  {
+  zaak(async () => {
     const c = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
     await cacheFonts(c);
     const page = await c.newPage();
@@ -1961,7 +1989,7 @@ function check(ok, label, detail) {
       return document.querySelector('#quit-modal.open h3').textContent; });
     check(/Show stoppen/.test(show), 'na memory vraagt de show nog steeds "Show stoppen?"', show);
     await c.close();
-  }
+  });
 
   /* ========== 7f · De zijsporen dekken geen halte af ==========
    * Over de kaart zweven twee knoppen die niet bij de route horen: het memory-spel
@@ -2013,7 +2041,7 @@ function check(ok, label, detail) {
    * ook -- dat is niet op te lossen zonder de haltes te verplaatsen of de navigatie
    * te verbouwen, en het is bovendien een noodlayout die in de app alleen voorkomt
    * bij een wereld zonder eigen haltelijst.  */
-  {
+  zaak(async () => {
     const GRENS = 30;   // procent van het zichtbare blokje; zie hierboven
     for (const [naam, w, h] of [['kleine telefoon', 320, 568], ['iPhone SE', 375, 667],
                                 ['iPhone 14', 390, 844], ['21:9', 412, 961]]) {
@@ -2096,7 +2124,7 @@ function check(ok, label, detail) {
         r.ergste + '% bij ' + r.ergsteWie + ' (marge ' + GRENS + '%)');
       await c.close();
     }
-  }
+  });
 
   /* ========== 7g · De wereldtekening dekt het scherm, hoe je ook schuift ==========
    * FASE 7A. Op een kort scherm (max-height 620) stond onder het kader 48px lege
@@ -2114,7 +2142,7 @@ function check(ok, label, detail) {
    * die waar iets ánders gebeurt -- 320x568 is het kortste scherm (daar viel het
    * gat), 390x844 de gewone telefoon, 768x1024 de tablet (daar schuift het kader
    * écht) en 844x390 de telefoon op zijn kant.                                    */
-  {
+  zaak(async () => {
     for (const [naam, w, h] of [['kleine telefoon', 320, 568], ['iPhone SE', 375, 553],
                                 ['iPhone 14', 390, 844], ['21:9', 412, 915],
                                 ['tablet staand', 768, 1024], ['telefoon liggend', 844, 390]]) {
@@ -2151,7 +2179,7 @@ function check(ok, label, detail) {
         r.join(' | '));
       await c.close();
     }
-  }
+  });
 
   /* ========== 7h · De wereldpil is één knop, met een kindermaat ==========
    * De wereldnaam in de kop is de ingang naar de hele tournee (PS-11: sinds die
@@ -2164,7 +2192,7 @@ function check(ok, label, detail) {
    *      een onzichtbaar vlakje omheen (FASE 7A -- .world-pick::before)
    *   3. de twee pillen ernaast blijven aanraakbaar: dat vlakje mag niets afpakken
    * Over alle werelden, want de naam bepaalt de breedte.                         */
-  {
+  zaak(async () => {
     for (const [naam, w, h] of [['kleine telefoon', 320, 568], ['iPhone 14', 390, 844],
                                 ['21:9', 412, 915], ['tablet staand', 768, 1024]]) {
       const c = await browser.newContext({ viewport: { width: w, height: h } });
@@ -2221,7 +2249,7 @@ function check(ok, label, detail) {
       check(reis, 'een tik op de wereldpil opent de tournee — ' + naam, '');
       await c.close();
     }
-  }
+  });
 
   /* ================= 7d · Perfecte werelden =================
    * Eén trofee per wereld, en het is gewoon een trofee -- geen tweede badgesysteem.
@@ -2233,7 +2261,7 @@ function check(ok, label, detail) {
    * een uitgespeelde wereld al een spulletje oplevert. Dat is hier meteen de vraag
    * die eronder staat: een wereld met twee sterren per show levert géén trofee op
    * en legt er ook niets voor klaar.                                            */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await page.evaluate(() => {
       const q = defaultProfile('Roos', 'dress_roze');
@@ -2281,7 +2309,7 @@ function check(ok, label, detail) {
     check(r.kentZijnWereld, 'de trofee weet bij welke wereld hij hoort', r.ids);
     check(r.tweedeNogNiet === false, 'de trofee van de volgende wereld blijft dicht', String(r.tweedeNogNiet));
     await ctx.close();
-  }
+  });
 
   /* ================= 7g · Fase 2: de fundering =================
    * Drie dingen die fase 2 heeft neergezet en die fase 3 (thema-schermen,
@@ -2299,7 +2327,7 @@ function check(ok, label, detail) {
    *
    * En als vierde: een gepensioneerde trofee (Looks/Podiumbouwer) die nog in een
    * bestaande save staat mag niets breken -- de definities zijn weg, de id's niet. */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await page.evaluate(() => {
       const q = defaultProfile('Fien', 'dress_roze');
@@ -2373,10 +2401,10 @@ function check(ok, label, detail) {
       'showWorld zet kop én kaart op dezelfde wereld', JSON.stringify(r));
     check(r.terug, 'de weg terug brengt kop en kaart samen terug', JSON.stringify(r));
     await ctx.close();
-  }
+  });
 
   /* ========== 7h · Terug sluit de bóvenste zwevende laag ========== */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await page.goto(APP_URL + '&demo&star=p1&screen=tro');
     await page.waitForTimeout(400);
@@ -2410,10 +2438,10 @@ function check(ok, label, detail) {
     check(r.danDeLadder && r.allesWeg, 'daarna pas de laag eronder', JSON.stringify(r));
     check(r.daarnaScherm, 'en pas als alles dicht is telt het scherm zelf mee', JSON.stringify(r));
     await ctx.close();
-  }
+  });
 
   /* ================= 8 · Oude opslag: precies één keer ophalen ================= */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     // een save van vóór Clara: alleen Marie en Anna, geen schemaV
     await page.evaluate(() => {
@@ -2444,10 +2472,10 @@ function check(ok, label, detail) {
     r = await page.evaluate(() => profileKeys().map(k => db.profiles[k].name));
     check(!r.includes('Clara'), 'een verwijderde ster blijft weg na herladen', r.join(','));
     await ctx.close();
-  }
+  });
 
   /* ================= 9 · Import ================= */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await makeStar(page, { name: 'Blijft' });
     // een beschadigd bestand mag de db niet aanraken
@@ -2475,10 +2503,10 @@ function check(ok, label, detail) {
     check(r.asked, 'een lege back-up wordt geaccepteerd', 'geweigerd');
     check(r.n === 0 && r.setKey === null, 'na een lege back-up is er niets geselecteerd', JSON.stringify(r));
     await ctx.close();
-  }
+  });
 
   /* ================= 10 · Opnieuw beginnen houdt de identiteit ================= */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await makeStar(page, { name: 'Bruin', base: 'jongen', hair: 'hair_bruin', dress: 'dress_groen' });
     const r = await page.evaluate(async () => {
@@ -2498,7 +2526,7 @@ function check(ok, label, detail) {
     check(r.base === 'jongen', 'opnieuw beginnen houdt de basisfiguur vast', String(r.base));
     check(r.diamonds === 30 && r.name === 'Bruin', 'de voortgang gaat wél weg, de naam blijft', JSON.stringify(r));
     await ctx.close();
-  }
+  });
 
   /* ===== 10 · De oefening-openklapper op het maakformulier =====
      Het formulier vroeg alleen naam/haar/kleren/modus; al het andere viel
@@ -2507,7 +2535,7 @@ function check(ok, label, detail) {
      (openklapper niet aanraken) op geen enkele manier veranderen. */
 
   // 10a · zonder modus geen openklapper; met modus dicht, en de samenvatting zegt iets
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
     await page.waitForTimeout(150);
@@ -2526,10 +2554,10 @@ function check(ok, label, detail) {
     check(r.open === false, 'de openklapper begint dicht', `open=${r.open}`);
     check(r.val === '+ − · tot 20 · kiezen · 8 vragen', 'de dichte openklapper vertelt de standaard', r.val);
     await ctx.close();
-  }
+  });
 
   // 10b · de snelle weg levert exact hetzelfde profiel als hiervoor
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await makeStar(page, { name: 'Reken' });
     await makeStar(page, { name: 'Tel', track: 'count' });
@@ -2546,20 +2574,20 @@ function check(ok, label, detail) {
     check(JSON.stringify(r.count) === JSON.stringify(countWant),
       'zonder de openklapper aan te raken blijft de telster ongewijzigd', JSON.stringify(r.count));
     await ctx.close();
-  }
+  });
 
   // 10c · wat een ouder vooraf instelt, komt ook echt in het profiel
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await makeStar(page, { name: 'Maal', settings: { 'set-ops': 'x', 'set-startstap': 'grijs' } });
     const s = await page.evaluate(() => Object.values(db.profiles)[0].settings);
     check(s.ops.includes('x'), 'een vooraf gekozen bewerking landt in het profiel', JSON.stringify(s.ops));
     check(s.max === 100, 'een vooraf gekozen bereik landt in het profiel', `max=${s.max}`);
     await ctx.close();
-  }
+  });
 
   // 10d · het paneel overleeft zijn eigen hertekening (elke tik bouwt het opnieuw op)
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
     await page.waitForTimeout(150);
@@ -2576,10 +2604,10 @@ function check(ok, label, detail) {
     check(r.open === true, 'de openklapper blijft open na een tik erin', `open=${r.open}`);
     check(/tot getallen bouwen/.test(r.val), 'de samenvatting loopt mee met de keuze: "tot" staat nu op die rij, en zo heet hij', r.val);
     await ctx.close();
-  }
+  });
 
   // 10e · van modus wisselen wisselt ook de velden eronder
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
     await page.waitForTimeout(150);
@@ -2607,10 +2635,10 @@ function check(ok, label, detail) {
     check(p.settings.stage === 3, 'een vooraf gekozen startfase landt in de instellingen', `stage=${p.settings.stage}`);
     check(p.countTrack.stage === 3, 'de live-stand begint op diezelfde fase', `countTrack=${p.countTrack.stage}`);
     await ctx.close();
-  }
+  });
 
   // 10f · de twee schermen staan tegelijk in de DOM: hun velden mogen elkaar niet raken
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await makeStar(page, { name: 'Zus' });
     const r = await page.evaluate(async () => {
@@ -2630,10 +2658,10 @@ function check(ok, label, detail) {
     check(r.zus === 20, 'een tik op het maakformulier laat de bestaande ster met rust', `max=${r.zus}`);
     check(r.concept === 100, 'diezelfde tik komt wél in het concept terecht', `max=${r.concept}`);
     await ctx.close();
-  }
+  });
 
   // 10g · "kies er minstens 1" geldt ook hier
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
     await page.waitForTimeout(150);
@@ -2652,7 +2680,7 @@ function check(ok, label, detail) {
     check(r.ops.length === 1 && r.ops[0] === '-', 'de laatste bewerking kan niet uit', JSON.stringify(r.ops));
     check(r.shake, 'de geweigerde tik schudt', `shake=${r.shake}`);
     await ctx.close();
-  }
+  });
 
   /* ================= 11 · Meisje of jongen =====================================
      Eén veld op het formulier en één veld in het profiel; de rest van de app
@@ -2671,7 +2699,7 @@ function check(ok, label, detail) {
    * De tik gaat hier met dispatchEvent en niet met page.click(): playwright
    * weigert een element met aria-disabled="true" aan te klikken, en dát is precies
    * de markering die dit gedrag draagt. */
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
     await page.waitForTimeout(150);
@@ -2734,10 +2762,10 @@ function check(ok, label, detail) {
     check(modus.n === 0 && modus.aria === 'true' && modus.modusWijst === 2 && !modus.naamWijst,
       'zonder modus wijst hij "Hoe speel je?" aan', JSON.stringify(modus));
     await ctx.close();
-  }
+  });
 
   // 11b · een jongen wordt anders getekend, met exact dezelfde spullen
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     // het formulier biedt alleen de START_DRESS-kleuren aan; het patroonstuk komt
     // er hier achteraf bij, want juist een patroon moet op beide basissen kloppen
@@ -2770,10 +2798,10 @@ function check(ok, label, detail) {
     check(r.dress === 'dress_disco', 'een jongen draagt gewoon hetzelfde item', String(r.dress));
     check(r.thumbAnders, 'het miniatuur in de winkel volgt de basis', 'zelfde miniatuur');
     await ctx.close();
-  }
+  });
 
   // 11c · een save van vóór deze versie blijft een meisje en ziet er hetzelfde uit
-  {
+  zaak(async () => {
     const { ctx, page } = await fresh();
     await page.evaluate(() => {
       const p = defaultProfile('Oud', 'dress_roze', { hair: 'hair_bruin' });
@@ -2792,7 +2820,7 @@ function check(ok, label, detail) {
     check(r.base === 'meisje', 'een save zonder basis wordt een meisje', String(r.base));
     check(r.zelfde, 'en wordt precies zo getekend als voorheen', 'de tekening veranderde');
     await ctx.close();
-  }
+  });
 
   /* ================= De sterrenkeuze leeft =================
      Eén begroeting bij binnenkomst, en daarna af en toe één pop -- niet een rij
@@ -2810,7 +2838,7 @@ function check(ok, label, detail) {
 
      De rust staat in het echte spel op elf tot negentien seconden. Die worden
      hieronder kortgezet -- het gaat hier om de regels, niet om de klok. */
-  {
+  zaak.eerst(async () => {
     const { ctx, page } = await fresh();
     await page.evaluate(() => {
       const mk = (n, j) => { const q = defaultProfile(n, j); q.level = 3; q.stars = { 1: 3, 2: 2 }; return q; };
@@ -3041,10 +3069,10 @@ function check(ok, label, detail) {
     check(snel.zesmaal === snel.eenmaal && snel.poppen.every(x => x === '-'),
       'zes keer snel in en uit laat net zoveel lopen als één keer', JSON.stringify(snel));
     await ctx.close();
-  }
+  });
 
   /* ---- en dit alles zonder beweging ---- */
-  {
+  zaak(async () => {
     const stilCtx = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
     await cacheFonts(stilCtx);
     const st = await stilCtx.newPage();
@@ -3078,13 +3106,13 @@ function check(ok, label, detail) {
     check(stil.vonkjes === 0 && stil.laag === 'none',
       'en er sprankelt niets op de achtergrond', JSON.stringify(stil));
     await stilCtx.close();
-  }
+  });
 
   /* ================= Het spelogo komt binnen =================
      De intro bij het opstarten (zie "= Het spelogo komt binnen" in de app). Wat
      hier nagekeken wordt is niet hoe hij eruitziet maar wat hij níet mag: iets
      tegenhouden, de kop wegnemen, of blijven hangen. */
-  {
+  zaak(async () => {
     const staat = page => page.evaluate(() => {
       const kop = document.querySelector('#screen-profile .spellogo');
       const img = kop.querySelector('img'), cs = getComputedStyle(img);
@@ -3154,7 +3182,13 @@ function check(ok, label, detail) {
     const stil = await staat(p2);
     check(heel(stil), 'zonder beweging geen logo-intro', JSON.stringify(stil));
     await c2.close();
-  }
+  });
+
+  const wachtrij = [...zaken];
+  await Promise.all(Array.from({ length: TEGELIJK }, async () => {
+    for (let z; (z = wachtrij.shift());) await z();
+  }));
+  for (const z of alleen) await z();
 
   await browser.close();
 

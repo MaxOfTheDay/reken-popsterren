@@ -71,8 +71,10 @@
        de baan hangt nog de strook waar de kop in staat -- die hoort dezelfde lucht
        te zijn en geen app-paars. (Een achtergrond op een scrollvak schuift niet mee,
        dus die strook is alleen te zien zolang je bovenaan staat, en daar is de baan
-       ook nacht.) */
-    background-color: #180b2c;
+       ook nacht.) Dezelfde #120826 als de bovenkant van de baan en de sluier
+       onder de kop: drie bijna-gelijke nachten naast elkaar zijn op een
+       bureaublad drie vlakken met een rand. */
+    background-color: #120826;
     overscroll-behavior-y: contain;
     scrollbar-width: none;
   }
@@ -116,11 +118,16 @@
 
      Geen extra lucht bovenaan elke wereld dus: de kop ligt over de kaart heen,
      precies zoals bedoeld, en de kaart verdwijnt eronder voor hij te lezen valt. */
+  /* Over de hele vensterbreedte en in de kleur van de nacht bovenaan de baan
+     (#120826, zie .reis-track), en niet alleen zo breed als de kop: op een
+     bureaublad is de kop een kolom, en dan stond er een donker blok met twee
+     rechte zijkanten in de sterrenhemel (zie de regel bij DE DERDE LAAG in
+     20-schil). */
   #screen-journey .hub-sticky::before {
-    content: ''; position: absolute; left: 0; right: 0; top: -22px; height: calc(100% + 62px);
+    content: ''; position: absolute; left: 50%; width: 100vw; margin-left: -50vw; top: -22px; height: calc(100% + 62px);
     z-index: -1; pointer-events: none;
-    background: linear-gradient(180deg, #180b2c 0%, #180b2c 54%,
-                rgba(24,11,44,.72) 74%, rgba(24,11,44,0) 100%);
+    background: linear-gradient(180deg, #120826 0%, #120826 54%,
+                rgba(18,8,38,.72) 74%, rgba(18,8,38,0) 100%);
   }
   /* De globe is hier dezelfde knop als op de kaart: een rondje van --hud-h in het
      glas van de kop, met de globe erin. Tik je hem, dan vlieg je terug naar je
@@ -214,7 +221,10 @@
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='900'%3E%3Cg fill='%23fff'%3E%3Ccircle cx='233' cy='560' r='0.9' fill-opacity='0.58'/%3E%3Ccircle cx='80' cy='23' r='1.8' fill-opacity='0.67'/%3E%3Ccircle cx='451' cy='881' r='1.0' fill-opacity='0.44'/%3E%3Ccircle cx='223' cy='658' r='1.0' fill-opacity='0.65'/%3E%3Ccircle cx='160' cy='642' r='1.8' fill-opacity='0.60'/%3E%3Ccircle cx='429' cy='390' r='1.4' fill-opacity='0.38'/%3E%3Ccircle cx='21' cy='22' r='1.8' fill-opacity='0.89'/%3E%3Ccircle cx='163' cy='429' r='1.6' fill-opacity='0.81'/%3E%3Ccircle cx='272' cy='465' r='2.1' fill-opacity='0.55'/%3E%3Ccircle cx='493' cy='153' r='1.1' fill-opacity='0.56'/%3E%3Ccircle cx='437' cy='882' r='0.9' fill-opacity='0.57'/%3E%3Ccircle cx='326' cy='807' r='0.9' fill-opacity='0.75'/%3E%3C/g%3E%3C/svg%3E"),
       radial-gradient(60% 18% at 15% 30%, rgba(120,90,255,.2), transparent 70%),
       radial-gradient(55% 16% at 90% 62%, rgba(255,90,190,.16), transparent 70%),
-      radial-gradient(70% 20% at 30% 88%, rgba(70,170,255,.14), transparent 70%),
+      /* binnen zijn tegel: 82 plus 70% van 18 blijft onder de 100. Op 88 met 20
+         liep de blauwe wolk over de rand van zijn tegel van 1300 en werd hij daar
+         recht afgesneden -- om de 1300px een streep door de sterrenhemel. */
+      radial-gradient(70% 18% at 30% 82%, rgba(70,170,255,.14), transparent 70%),
       /* De nacht zelf. Bovenaan een slag dieper dan de oude #180b2c, zodat de
          sterren er iets uit springen; onderaan blijft hij warm paars, waar het
          voetlicht staat. */

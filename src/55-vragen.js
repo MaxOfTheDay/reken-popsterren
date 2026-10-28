@@ -244,15 +244,23 @@ function vraagInst(p) { return { ...p.settings, ...padStand(p.settings, padNu(p)
    minstens PAD_MIN_SHOWS shows erop en de laatste twee met drie sterren -- of
    na PAD_MAX_SHOWS shows toch: zo is ze nooit trager dan toen elke stap één
    wereld (acht shows) duurde. Wat ze nog lastig vindt komt daarna terug via de
-   zwakke sommen, niet doordat ze op de rij blijft hangen. */
-const PAD_MIN_SHOWS = 3, PAD_MAX_SHOWS = 8, PAD_GOED = 2;
+   zwakke sommen, niet doordat ze op de rij blijft hangen.
+
+   Alleen een show met minstens PAD_TELT sterren telt als "een show op de rij".
+   Telde elke show mee, ook een mislukte, dan schoof een kind dat acht keer
+   strandde toch door naar zwaardere sommen -- terwijl de telmodus in dat geval
+   juist wacht, en na twee mislukte shows een fase terugzet (advanceCountStage).
+   Wie het redt, gaat even snel als altijd; wie strandt, blijft op zijn rij en
+   het spel maakt de sommen daar lichter (moeilijkheid). Terug naar een vorige
+   rij gaat rekenen niet: wat al klaar is blijft klaar. */
+const PAD_MIN_SHOWS = 3, PAD_MAX_SHOWS = 8, PAD_GOED = 2, PAD_TELT = 2;
 function padNa(p, sterren) {
   const nu = padNu(p);
   if (nu === 'alles') return false;
   const pad = p.pad = p.pad || { klaar: [] };
   if (!Array.isArray(pad.klaar)) pad.klaar = [];
   if (pad.rij !== nu) Object.assign(pad, { rij: nu, shows: 0, goed: 0 });
-  pad.shows++;
+  if (sterren >= PAD_TELT) pad.shows++;
   pad.goed = sterren >= 3 ? pad.goed + 1 : 0;
   if (!((pad.shows >= PAD_MIN_SHOWS && pad.goed >= PAD_GOED) || pad.shows >= PAD_MAX_SHOWS)) return false;
   /* Klaar: deze rij, en alles ervoor op haar pad -- ook wat "vanaf" oversloeg.
@@ -262,6 +270,29 @@ function padNa(p, sterren) {
   });
   Object.assign(pad, { rij: padNu(p), shows: 0, goed: 0 });
   return true;
+}
+/* Is deze vraag het nieuwe van rij id? Na een stap verder op het leerpad krijgt
+   de eerste vraag die laat zien wat er nieuw is één keer het gouden "Nieuw"
+   (zie nieuwTeTonen in 60-spel). Niet gewoon de eerste vraag van de show: op
+   "Over het tiental" kan die nog 4 + 3 zijn, en dan hangt "Nieuw" boven iets
+   wat ze al lang kon. 'fase' is de telmodus: daar is elke vraag van de nieuwe
+   fase het nieuwe. */
+function vraagIsNieuw(q, id) {
+  if (id === 'fase') return true;
+  const r = LEERPAD[PAD_IDX[id]];
+  if (!r) return false;
+  if (r.bouwen) return q.kind === 'bouw' && (q.grens || 99) >= r.bereik - 1;   // tot 1000: met honderdtallen
+  if (id === 'zoek') return q.kind === 'missing';
+  if (id === 'drie') return q.kind === 'chain';
+  if (r.op) return q.op === r.op;
+  if (q.kind !== 'classic' || (q.op !== '+' && q.op !== '-')) return false;
+  const [a, b] = (q.tmpl.match(/\d+/g) || []).map(Number);
+  if (r.tientallen) return a % 10 === 0 && b % 10 === 0;
+  if (r.honderdtallen) return a % 100 === 0 && b % 100 === 0;
+  if (r.brug === 'vaak') return !!q.brug && Math.max(a, b, q.ans) > r.bereik / 10;   // over het honderdtal: een som boven de honderd
+  // een nieuw bereik: een getal boven het vorige bereik (tot 20: boven de tien)
+  const vorig = LEERPAD.filter(x => x.soort === 'bereik' && x.bereik < r.bereik).reduce((m, x) => Math.max(m, x.bereik), 0);
+  return Math.max(a, b, q.ans) > vorig;
 }
 // Moeilijkheid 0..1, bijgestuurd op vaardigheid (perf 0..1 → ±0.25): een kind
 // dat worstelt krijgt op elke rij lichtere sommen, nooit zwaardere dan de rij.
@@ -365,8 +396,10 @@ function genQuestion(s, lvl, perf) {
   const ops = s.ops.length ? s.ops : ['+'];
   const op = pick(ops);
   const { a, b, c, sym } = genTriple(s, lvl, perf, op);
-  // brug: gaat hij over het tiental? Telt mee voor "Over de brug" (zie telLeer)
-  const brug = (op === '+' || op === '-') && overTiental(a, b, c, op);
+  // brug: gaat hij over het tiental? Telt mee voor "Over de brug" (zie telLeer).
+  // Tot 1000 in hele tientallen: over het honderdtal (380 + 50), een maat groter.
+  const m = s.max > 100 && [a, b, c].every(v => v % 10 === 0) ? 10 : 1;
+  const brug = (op === '+' || op === '-') && overTiental(a / m, b / m, c / m, op);
   return { tmpl: `${a} ${sym} ${b} = @`, ans: c, op, kind: 'classic', brug };
 }
 // Zoek-het-getal: het tweede getal ontbreekt ("3 + ? = 7"). Alleen + − × (delen
@@ -1613,8 +1646,11 @@ function buildQuestion(p, lvl, g) {
   }
   // getallen bouwen: vaak op zijn eigen rij, daarna af en toe (zie padStand)
   if (s.bouwen && Math.random() < (s.bouwen === 'vaak' ? BOUWEN_VAAK : BOUWEN_SOMS)) {
+    /* De allereerste keer (het gouden "Nieuw", zie vraagIsNieuw) is het de
+       tekening: staafjes en blokjes (en platen), vóór de H, T en E als letters komen. */
+    const eerst = g && g.nieuwRij && PAD_IDX[g.nieuwRij] != null && LEERPAD[PAD_IDX[g.nieuwRij]].bouwen;
     let b, poging = 0;
-    do { b = genBouwen(s.bouwTot); } while (net.includes(b.tmpl) && ++poging < 8);
+    do { b = genBouwen(s.bouwTot); } while ((net.includes(b.tmpl) || (eerst && b.soort !== 'blokken')) && ++poging < 40);
     return b;
   }
   // een verse som, maar niet precies die van net (een paar pogingen, en dan

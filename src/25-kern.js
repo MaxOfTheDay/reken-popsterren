@@ -817,11 +817,12 @@ function migrate(p) {
   if (p.encores == null) p.encores = 0;
   if (!p.leer) p.leer = { brug: 0, zoek: 0, drie: 0 };
   /* Een ster van vóór groeiMoment: wat ze al kende telt als gevierd, anders
-     kreeg een kind dat al maanden zoek-het-getal speelt morgen "Nieuw!". */
+     kreeg een kind dat al maanden zoek-het-getal speelt morgen "Nieuw!". De
+     sleutels zijn de rij-ids van LEERPAD (zie groeiMoment). Een ouder veld
+     "max" (de hoogste grens) mag blijven staan: niets leest het nog. */
   if (!p.gezien) p.gezien = {
     zoek: Object.values(p.opTrack || {}).some(t => t && t.unlockStap != null) ? 1 : 0,
     drie: (p.chainTrack && p.chainTrack.seen) ? 1 : 0,
-    max: p.settings && p.settings.max,
   };
   /* ---- FASE 4A: de oneindige staart opruimen -------------------------------
      Tot en met fase 3 liep de tournee voorbij de laatste geschreven wereld gewoon

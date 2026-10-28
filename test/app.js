@@ -224,7 +224,7 @@ const BRUG = `globalThis.__api = {
   RECENT_N, onthoudUitkomst, uitdagingStand, groeiMoment, wenPlafond, grensOmhoog, WEN_SHOWS, moeilijkheid,
   wereldAccent, planSpecials,
   // het leerpad: de rijen, waar ze staat, en hoe ze verder gaat
-  LEERPAD, PAD_IDX, PAD_MIN_SHOWS, PAD_MAX_SHOWS, padRijen, padTotOp, padBlok, padNu, padNa, padStand, padVanafRij, vraagInst, padUitOudeStap,
+  LEERPAD, PAD_IDX, PAD_MIN_SHOWS, PAD_MAX_SHOWS, PAD_TELT, vraagIsNieuw, padRijen, padTotOp, padBlok, padNu, padNa, padStand, padVanafRij, vraagInst, padUitOudeStap,
   genTriple, genMissing, genChain, genBouwen,
   // de antwoordknoppen
   genQuestion, keuzeGrens, makeChoices,

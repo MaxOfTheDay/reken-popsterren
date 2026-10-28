@@ -397,7 +397,16 @@
      doet de doorzichtigheid, wie aankomt beweegt en is dekkend.
 
      Eén id per scherm i.p.v. !important: #screen-map/#screen-profile zetten zelf
-     al een position, en een klasse verliest daar altijd van. */
+     al een position, en een klasse verliest daar altijd van.
+
+     HOE EEN SCHERM ERUITZIET HANGT NOOIT AAN .active. show() haalt .active weg
+     op het moment van de tik, en het scherm dat dan nog 140ms wegvalt is precies
+     het scherm dat je net zag. Hing de opmaak aan .active, dan viel het tijdens
+     dat wegvallen terug op iets anders: de kleedkamer klapte op een bureaublad
+     terug naar de telefoonopmaak (het rek als één lange rij onder de spiegel)
+     terwijl ze wegdoofde. Wie per scherm iets aan .active hangt omdat het id
+     anders van .screen {display:none} wint, schrijft dus
+     `#screen-x:is(.active, .wegvallend)`. inhoud.test.js zaak O kijkt het na. */
   #screen-map.wegvallend, #screen-game.wegvallend, #screen-end.wegvallend,
   #screen-journey.wegvallend, #screen-dress.wegvallend, #screen-trophies.wegvallend,
   #screen-settings.wegvallend, #screen-memory.wegvallend, #screen-newstar.wegvallend,
@@ -1085,6 +1094,15 @@
      ademt alleen niet meer. De gloed staat in de regel hierboven, dus zonder de
      animatie is de kaart nog steeds herkenbaar de gouden. */
   @media (prefers-reduced-motion: reduce) { .question-card.golden { animation: none; } }
+  /* ---- Nieuw: de eerste vraag van een nieuwe stap (zie vraagIsNieuw) ----
+     Eén klein goud labeltje linksboven, één keer: het gouden "Nieuw:" van het
+     eindscherm, terug op het moment dat het nieuwe er echt staat. Geen kaart in
+     goud -- dat is de gouden vraag, en die betekent iets anders. */
+  .question-card.nieuw::before {
+    content: "✨ Nieuw"; position: absolute; top: 8px; left: 10px; z-index: 1;
+    padding: 2px 10px; border-radius: var(--r-pill); background: rgba(var(--goud-rgb), .88);
+    color: var(--ink-on-gold); font-size: var(--tx-klein); font-weight: 700; line-height: 1.5;
+  }
   .gold-banner { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); text-shadow: var(--goud-ink); margin-top: 6px; height: 22px; }
 
   /* ---- Wereldtournee: één wereld per scherm, volledig in beeld ----

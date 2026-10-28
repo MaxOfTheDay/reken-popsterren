@@ -46,6 +46,7 @@ function startLevel(lvl, eigenOvergang) {
   G = { lvl, inst, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
         klaarBijStart: (p.readyTrophies || []).slice(),
         missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0,
+        nieuwRij: nieuwTeTonen[cur] || null,   // wat er nieuw is sinds de vorige show (zie vraagIsNieuw)
         uitslag: [] };   // per vraag: 'goed' | 'hint' | 'mis' -- zie showBalk
   // De kop zegt hetzelfde als de kaart: welke wereld, en de hoeveelste show erin.
   // Hiervoor stond hier de stad uit CITIES -- dan wees de kaart je IJswereld binnen
@@ -147,6 +148,7 @@ function renderQuestion() {
       else built = buildQuestion(p, G.lvl, G);
     }
     if (G.idx === G.goldIdx) built.gold = true;
+    if (G.nieuwRij && vraagIsNieuw(built, G.nieuwRij)) { built.nieuw = true; G.nieuwRij = null; delete nieuwTeTonen[cur]; }
     // telmodus: kondig de gouden vraag hoorbaar aan (lees-vrij) -- de prompt wordt
     // toch alleen uitgesproken, niet getoond, dus dit dubbelt niets in beeld
     if (built.gold && G.count && built.prompt) built.prompt = 'Gouden vraag! Die geeft drie keer zoveel diamanten. ' + built.prompt;
@@ -282,6 +284,7 @@ function renderSegBar(el, total, done, hasNow) {
 function drawQuestion() {
   const q = G.qs[G.idx];
   $('question-card').classList.toggle('golden', !!q.gold);
+  $('question-card').classList.toggle('nieuw', !!q.nieuw);
   $('question-card').classList.toggle('zonder-tijd', !!G.count);   // telmodus: geen spotlight-balk
   // telmodus is lees-vrij: geen tekstbanner maar een emoji-signaal (de gesproken
   // "Gouden vraag!"-aankondiging zit in de vraag-prompt, zie renderQuestion)
@@ -953,31 +956,41 @@ const STER_MARGE = 0.45;
    maar niet hoe het de laatste tijd gaat. Dit is geen voortgang: geen wereld,
    halte of beloning leest het. Alleen het ouderrapport (zie uitdagingStand). */
 const RECENT_N = 10;
-/* Groeien mag gezien worden. Een fase hoger, een nieuwe soort vraag of grotere
-   getallen kwam er stil bij: het kind merkte alleen dat het ineens moeilijker
-   was. Nu staat er op het eindscherm één gouden "Nieuw!", en in de telmodus
-   zegt de stem het. Alleen na een gelukte show, en alleen de eerste keer.
+/* Groeien mag gezien worden. Een stap verder op het leerpad kwam er stil bij:
+   het kind merkte alleen dat het ineens moeilijker was. Nu staat er op het
+   eindscherm één gouden "Nieuw:", met de naam en het voorbeeld van die stap --
+   dezelfde als op de ladder bij Voortgang -- en in de telmodus zegt de stem het.
+   Alleen na een gelukte show, en de eerste vraag die het nieuwe laat zien krijgt
+   in de volgende show nog één keer "Nieuw" (nieuwTeTonen, zie vraagIsNieuw).
 
-   Telmodus: de fase ging omhoog (voor = de fase vóór advanceCountStage). Een
-   fase terug zegt niets; dat merkt het kind niet en hoeft het ook niet te
-   horen.
-   Rekenen: de eerste zoek-het-getal of drie-getallen-vraag (g.missShown,
-   g.chainShown), of een hogere getallengrens dan ooit. p.gezien onthoudt wat
-   al gevierd is; zakt de grens en gaat hij weer omhoog, dan is dat geen nieuws.
-   De grootste van de drie wint: het eindscherm toont er hoogstens één. */
-function groeiMoment(p, g, voor) {
+   Beide modi lezen hun eigen ladder en niets anders:
+     telmodus  de fase ging omhoog (voor = de fase vóór advanceCountStage). Een
+               fase terug zegt niets; dat merkt het kind niet en hoeft het ook
+               niet te horen.
+     rekenen   rij = de rij van LEERPAD waar padNa haar net naartoe schoof (of
+               null). p.gezien onthoudt per rij-id wat al gevierd is: zet de ouder
+               een rij uit en weer aan, dan is dat geen nieuws.
+   Hier keek rekenen eerst naar de instellingen: een hogere grens dan ooit, of de
+   eerste zoek-het-getal. Dan stond er "Nieuw: getallen tot 100!" zodra een ouder
+   de lijn "tot" liet zakken -- ook bij een kind dat nog op Tot 10 zat -- en
+   kregen Over het tiental, Tafels, Delen, Getallen bouwen en Tientallen nooit
+   iets. Een nieuwe rij in LEERPAD krijgt zijn moment zo vanzelf (kern.test.js
+   zaak W loopt ze allemaal na). */
+const nieuwTeTonen = {};   // per ster: de rij-id (of 'fase') die in de volgende show "Nieuw" krijgt
+function groeiPil(naam, vb) {
+  return `⬆️ Nieuw: ${naam}${vb ? ` <span class="groei-vb">${vb}</span>` : ''}`;
+}
+function groeiMoment(p, g, voor, rij) {
   if (g.count) {
-    return p.countTrack.stage > voor
-      ? { pil: '⬆️ Nieuw spel erbij!', zin: 'Je bent gegroeid! Er is een nieuw spel.' } : null;
+    const st = p.countTrack.stage;
+    return st > voor ? { id: 'fase', pil: groeiPil(COUNT_STAGE_LABELS[st], COUNT_STAGE_VB[st]),
+      zin: 'Je bent gegroeid! Er is een nieuw spel.' } : null;
   }
   const z = p.gezien || (p.gezien = {});
-  const max = p.settings.max;
-  let nieuw = null;
-  if (g.missShown && !z.zoek) { z.zoek = 1; nieuw = { pil: '🔍 Nieuw: zoek het getal!' }; }
-  if (g.chainShown && !z.drie) { z.drie = 1; nieuw = { pil: '➕ Nieuw: drie getallen!' }; }
-  if (z.max == null) z.max = max;
-  else if (max > z.max) { z.max = max; nieuw = { pil: `⬆️ Nieuw: getallen tot ${max}!` }; }
-  return nieuw;
+  const r = rij && padRijen(p.settings).rijen.find(x => x.id === rij);
+  if (!r || z[rij]) return null;
+  z[rij] = 1;
+  return { id: rij, pil: groeiPil(r.naam, r.vb) };
 }
 /* Welke stap van het leerpad speelt ze nu? Rekenen: de rij (padNu), tellen: de
    fase. Een andere modus is ook een andere stap. Alleen voor het ouderrapport:
@@ -1103,7 +1116,8 @@ function endLevel(success) {
   onthoudUitkomst(p, success ? showStars(G) : 0, stapVoor);   // voor de stand in Voortgang (beide takken hieronder bewaren)
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;   // een show verder gewend aan de grens
   if (!G.count && success) telGrensDrie(p, showStars(G));   // voor de grenstip (zie grensDrieSterren)
-  if (!G.count) padNa(p, success ? showStars(G) : 0);   // een show verder op haar rij van het leerpad
+  // een show verder op haar rij van het leerpad; schoof ze door, dan is dit haar nieuwe rij
+  const nieuweRij = !G.count && padNa(p, success ? showStars(G) : 0) ? padNu(p) : null;
   /* Wat er pas ná het eindscherm gevierd wordt (zie de staart van deze
      functie): een wereld die net uit of perfect werd. Bij een mislukte show
      blijft het leeg. */
@@ -1182,8 +1196,9 @@ function endLevel(success) {
     mile.innerHTML = '';
     /* Gegroeid gaat vóór een trofee: de trofee blijft klaarliggen in de kast
        (met zijn stipje op het tabblad), dit moment is er maar één keer. */
-    const groei = groeiMoment(p, G, faseVoor);
+    const groei = groeiMoment(p, G, faseVoor, nieuweRij);
     if (groei) {
+      nieuwTeTonen[cur] = groei.id;
       mile.innerHTML = `<span class="groei-pil">${groei.pil}</span>`;
       if (groei.zin) zin += ' ' + groei.zin;
     } else if (nieuwKlaar) {

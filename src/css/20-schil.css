@@ -85,8 +85,22 @@
      die verdween zodra de animatie klaar was. wisselSchuif zet --schuif op de
      schuifstand zolang de wissel loopt; de vier lagen hieronder trekken die er
      weer af, en buiten een wissel is hij 0. */
+  /* En elke vaste laag een eigen vel (will-change: transform). Een scherm dat
+     aankomt zoomt 1.03 -> 1 op een eigen laag, en als die zoom klaar is gooit de
+     browser die laag weg en schildert hij het hele scherm opnieuw. Op een
+     bureaublad is dat een venster vol, en met de kamertekening van de
+     kleedkamer erin lukte dat niet in één beeldje: wat nog niet klaar was, liet
+     een of twee beeldjes het paars van <body> zien, in blokken over het rek
+     (gemeten op 1440x900, drie van de vier keer). Op een eigen vel wordt de
+     lucht één keer geschilderd en daarna alleen nog verschoven; wat er na de
+     zoom over blijft om te schilderen is de inhoud, en dat is snel.
+     Op het pseudo-element zelf en niet op het scherm: een transform (ook een
+     beloofde) op het scherm maakt elke vaste laag erin vast aan het scherm in
+     plaats van aan het venster -- zie --schuif hieronder. Een ::before heeft geen
+     kinderen, dus hier verandert er voor niemand iets aan. inhoud.test.js zaak O. */
   .app-sfeer::before {
     content: ''; position: fixed; inset: var(--schuif, 0px) 0 calc(0px - var(--schuif, 0px)) 0; z-index: -1; pointer-events: none;
+    will-change: transform;
     background-size: cover; background-position: 50% 50%;
     background-image:
       var(--fonkeling),
@@ -143,60 +157,25 @@
       radial-gradient(46% 34% at 50% 20%, rgba(190,170,255,.06), transparent 76%),
       radial-gradient(90% 46% at 50% 108%, rgba(96,52,168,.2), transparent 70%);
   }
-  /* ---- DE DERDE LAAG: het vak waar een gebruiksscherm in staat ------------
-     Die twee sfeerlagen hierboven stonden elk in hun eigen ::after met dezelfde
-     vier regels eromheen (fixed, inset 0, z-index -1, pointer-events none) --
-     twee keer hetzelfde laagje, en een derde scherm dat er ook een wilde had er
-     een derde kopie bij gekregen. Nu is er één laag, en zetten de schermen alleen
-     nog hun eigen licht erin (--sfeer-vloer).
+  /* ---- DE DERDE LAAG: het licht van een gebruiksscherm ------------------
+     De kleedkamer en de kast zetten elk hun eigen licht over de schil
+     (--sfeer-vloer, hierboven). Dat staat in één gedeelde ::after en niet per
+     scherm in een eigen kopie met dezelfde vier regels eromheen.
 
-     Waarom die ene laag er toch al moest komen: op een bureaublad stond de
-     kleedkamer met haar kop, haar rek en haar balk midden in een venster van
-     1440 bij 900 zonder dat er iets zei waar het scherm ophoudt. De kaart hééft
-     dat wel -- daar staat de wereld als staand toestel in het midden met zijn
-     eigen omgeving eromheen, en dát is de gelaagdheid die alle rustpunten horen
-     te hebben:
+     Hier stond op een bureaublad ook een VAK in (--stage-vlak): een lichtere baan
+     ter breedte van de kolom, met aan weerskanten een haarlijn, om te zeggen waar
+     het scherm ophoudt. Dat doen de panelen nu zelf (de lade van de kleedkamer,
+     de kast), en het vak werd een naad: een streep licht van boven tot onder door
+     de kamer, en achter de kop van de kast een bleke baan met een harde rand.
 
-       1  de omgeving   de schil, de kamer, de vitrine -- aflopend, vult het venster
-       2  het VAK       waar de inhoud in staat: --kolom breed, begrensd
-       3  de bediening  de kop erboven en de balk eronder
-
-     --stage-vlak is die tweede laag: een heel zachte, staande baan van precies de
-     breedte van de kop erboven (dezelfde som: --kolom + 2x--rand), met aan beide
-     kanten een haarlijntje licht en onderin uitlopend naar niets. Geen paneel en
-     geen doos -- de kamer en de vitrine moeten er gewoon doorheen te zien blijven;
-     het is genoeg dat het óóg weet waar het scherm begint en eindigt.
-
-     Op een telefoon is hij 'none' en verandert er niets -- daar ís de schermrand
-     de vakrand en zou zo'n baan het hele scherm beslaan. Hij komt pas op als er
-     werkelijk iets te begrenzen valt: 1000px is --stage-breed (820) plus de rand
-     eromheen plus een slag lucht aan weerskanten. Eén breekpunt, en dat is
-     meteen het enige dat dit vak nodig heeft. */
+     DE REGEL DIE DAARUIT VOLGT, voor elke laag in de schil: een laag die smaller
+     is dan het venster (of dan zijn tegel) houdt nergens met een rechte rand op.
+     Hij loopt uit naar niets, of hij is een echt paneel met hoeken en een eigen
+     vlak. Een halve laag met een harde kant leest als een fout in het scherm. */
   .screen.gebruik.app-sfeer::after {
     content: ''; position: fixed; inset: var(--schuif, 0px) 0 calc(0px - var(--schuif, 0px)) 0; z-index: -1; pointer-events: none;
-    background: var(--stage-vlak), var(--sfeer-vloer, none);
-  }
-  @media (min-width: 1000px) {
-    .screen.gebruik {
-      /* De breedte van de kop erboven, letterlijk dezelfde som als in de regel
-         bij .screen.gebruik .hub-sticky -- dus er valt niets uit de pas te lopen.
-         Dezelfde sóm, maar niet vanzelf hetzelfde midden: dit vak staat vast en
-         mikt op het midden van het venster, de kop staat midden in het scherm-
-         element en dat is een schuifbalk smaller. Wat die twee weer op één lijn
-         houdt is de scrollbar-gutter bij die kopregel; zie de noot daar. */
-      --vak-w: min(100%, calc(var(--kolom) + var(--rand) * 2));
-      --stage-vlak:
-        /* de twee haarlijnen: waar het vak begint en waar het ophoudt */
-        linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05) 46%, rgba(255,255,255,0))
-          left calc(50% - var(--vak-w) / 2) top 0 / 1px 88% no-repeat,
-        linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05) 46%, rgba(255,255,255,0))
-          left calc(50% + var(--vak-w) / 2 - 1px) top 0 / 1px 88% no-repeat,
-        /* en de vulling ertussen: net genoeg om het vak van de omgeving te
-           scheiden, en naar onderen toe weg, zodat de balk op de kamer staat en
-           niet op een plank */
-        linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.028) 54%, rgba(255,255,255,0))
-          center top / var(--vak-w) 100% no-repeat;
-    }
+    will-change: transform;   /* zie .app-sfeer::before */
+    background: var(--sfeer-vloer, none);
   }
   /* ---- En de vitrine krijgt haar eigen, rustiger lucht --------------------
      De gedeelde schil hierboven zet in elke hoek een LICHTBOOG neer: een

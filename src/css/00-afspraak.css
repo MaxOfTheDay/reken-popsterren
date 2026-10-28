@@ -877,15 +877,9 @@
 
        Waarom vaste pixels en geen vw: dit zijn bovengrenzen op een venster dat
        breder is dan de app ooit nodig heeft. Onder die grens doet --kolom al het
-       werk via max-width, en dan is 100% de maat -- precies zoals op een telefoon.
-
-         --stage-vlak   het VAK waar een gebruiksscherm in staat, als
-                        achtergrondlaag. Zie de noot bij .screen.gebruik.app-sfeer
-                        hieronder: op een telefoon is dit 'none' en verandert er
-                        niets. */
+       werk via max-width, en dan is 100% de maat -- precies zoals op een telefoon. */
     --stage-spel: 560px;
     --stage-breed: 820px;
-    --stage-vlak: none;
     /* ---- En hoe groot het podium in liggende stand werkelijk wordt ---------
        --stage-spel hierboven is de bovengrens, maar op een gewoon bureaublad
        bindt hij niet: daar is de hóógte de grens. Opgemeten op een venster van

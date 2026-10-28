@@ -1002,10 +1002,12 @@ zaak('Q', () => {
   check(nu() === 'tot20', 'Q · twee sterren ertussen: de reeks begint opnieuw', JSON.stringify(p.pad));
   app.padNa(p, 3);
   check(nu() === 'brug20', 'Q · en twee op rij daarna is genoeg', JSON.stringify(p.pad));
-  for (let i = 0; i < app.PAD_MAX_SHOWS - 1; i++) app.padNa(p, 1);
+  for (let i = 0; i < 3 * app.PAD_MAX_SHOWS; i++) app.padNa(p, i % 2);
+  check(nu() === 'brug20' && p.pad.shows === 0, 'Q · mislukt of één ster telt niet: wie strandt, schuift niet door naar zwaardere sommen', JSON.stringify(p.pad));
+  for (let i = 0; i < app.PAD_MAX_SHOWS - 1; i++) app.padNa(p, app.PAD_TELT);
   check(nu() === 'brug20', 'Q · wie het moeilijk heeft blijft op de rij', JSON.stringify(p.pad));
-  app.padNa(p, 1);
-  check(nu() === 'zoek', `Q · maar na ${app.PAD_MAX_SHOWS} shows toch verder: nooit trager dan een wereld`, nu());
+  app.padNa(p, app.PAD_TELT);
+  check(nu() === 'zoek', `Q · maar na ${app.PAD_MAX_SHOWS} shows met ${app.PAD_TELT} sterren toch verder: nooit trager dan een wereld`, nu());
   for (let i = 0; i < 6; i++) app.padNa(p, 3);
   check(nu() === 'alles' && app.padNa(p, 3) === false, 'Q · voorbij de laatste rij: alles door elkaar', nu());
 
@@ -1210,6 +1212,18 @@ zaak('Q5', () => {
   check(honderd > 120, 'Q5 · op Honderdtallen is het meer dan de helft hele honderdtallen', `${honderd}/300`);
   const ketting = app.genChain({ ...p.settings, ...op('tot1000') }, 1, 0.5);
   check(/^\d*0 \+ \d*0 \+ \d*0 = @$/.test(ketting.tmpl) && ketting.ans <= 1000, 'Q5 · drie getallen tot 1000: ook in tientallen', ketting.tmpl);
+  // het gouden "Nieuw" (vraagIsNieuw) hangt boven de vraag die het nieuwe laat zien
+  const nieuw = app.run('vraagIsNieuw');
+  const som = (tmpl, ans, brug) => ({ tmpl, ans, op: '+', kind: 'classic', brug });
+  check(nieuw(app.genBouwen(1000), 'bouwen1000') && !nieuw(app.genBouwen(100), 'bouwen1000')
+    && nieuw(som('300 + 400 = @', 700), 'honderdtallen') && !nieuw(som('340 + 400 = @', 740), 'honderdtallen')
+    && nieuw(som('460 + 320 = @', 780), 'tot1000') && !nieuw(som('46 + 32 = @', 78), 'tot1000')
+    && nieuw(som('380 + 50 = @', 430, true), 'brug1000')
+    && !nieuw(som('38 + 5 = @', 43, true), 'brug1000'),
+    'Q5 · "Nieuw" staat boven de vraag van de nieuwe rij: platen, honderdtallen, getallen boven de honderd, over het honderdtal', '');
+  let over = 0;
+  for (let k = 0; k < 200; k++) if (app.genQuestion({ ...p.settings, ...op('brug1000'), ops: ['+'] }, 1, 0.5).brug) over++;
+  check(over > 40, 'Q5 · op Over het honderdtal gaat een flink deel erover (en telt als brug)', `${over}/200`);
 });
 
 /* ================= Q4 · De lijn "tot" is een rij =================
@@ -1467,18 +1481,38 @@ zaak('W', () => {
   check(app.groeiMoment(p, { count: true }, 3) !== null, 'W · een fase hoger: nieuw spel', '');
   check(app.groeiMoment(p, { count: true }, 4) === null, 'W · dezelfde fase: niets', '');
   check(app.groeiMoment(p, { count: true }, 5) === null, 'W · een fase terug: niets (dat hoeft het kind niet te horen)', '');
-  // rekenen
+  // rekenen: de rij waar padNa haar naartoe schoof, met naam en voorbeeld
   const m = app.db.profiles.p2 = app.defaultProfile('Reken', 'dress_roze', {});
   app.normalizeProfiles();
-  check(app.groeiMoment(m, {}, 0) === null, 'W · de eerste show: de grens wordt stil onthouden', JSON.stringify(m.gezien));
-  const zoek = app.groeiMoment(m, { missShown: 1 }, 0);
-  check(zoek && /zoek het getal/.test(zoek.pil), 'W · de eerste zoek-het-getal is nieuw', JSON.stringify(zoek));
-  check(app.groeiMoment(m, { missShown: 1 }, 0) === null, 'W · de tweede keer niet meer', '');
+  check(app.groeiMoment(m, {}, 0, null) === null, 'W · niet doorgeschoven: niets', JSON.stringify(m.gezien));
+  const zoek = app.groeiMoment(m, {}, 0, 'zoek');
+  check(zoek && /Zoek het getal/.test(zoek.pil) && zoek.pil.includes('▢') && zoek.id === 'zoek', 'W · een nieuwe rij: zijn naam en voorbeeld', JSON.stringify(zoek));
+  check(app.groeiMoment(m, {}, 0, 'zoek') === null, 'W · de tweede keer niet meer', '');
+  check(app.groeiMoment(m, {}, 0, 'alles') === null, 'W · voorbij de laatste rij is geen nieuwe stap', '');
+  // de grens alleen is geen nieuws: zo stond er "tot 100" bij een kind op Tot 10
   m.settings.max = 100;
-  const groter = app.groeiMoment(m, {}, 0);
-  check(groter && /tot 100/.test(groter.pil), 'W · een hogere grens: grotere getallen', JSON.stringify(groter));
-  m.settings.max = 20; app.groeiMoment(m, {}, 0); m.settings.max = 100;
-  check(app.groeiMoment(m, {}, 0) === null, 'W · omlaag en weer omhoog is geen nieuws', JSON.stringify(m.gezien));
+  check(app.groeiMoment(m, {}, 0, null) === null, 'W · een hogere grens alleen: niets (pas als de rij er is)', JSON.stringify(m.gezien));
+  // elke rij van het leerpad kan zijn moment krijgen, en elke fase van de telmodus
+  const alle = app.defaultProfile('Alle', 'dress_roze', {});
+  alle.settings.ops = ['+', '-', 'x', ':']; alle.settings.max = 1000;
+  const ids = app.padRijen(alle.settings).rijen.map(r => r.id);
+  const zonder = ids.filter(id => { const g = app.groeiMoment(alle, {}, 0, id); return !g || !g.pil.includes(app.LEERPAD[app.PAD_IDX[id]].naam); });
+  check(ids.length === app.LEERPAD.length && !zonder.length, 'W · elke rij van LEERPAD heeft een "Nieuw"', zonder.join() || ids.join());
+  const tel = app.defaultProfile('Tel', 'dress_roze', app.COUNT_OPTS);
+  const fases = [];
+  for (let st = 2; st <= app.COUNT_STAGE_MAX; st++) { tel.countTrack.stage = st; const g = app.groeiMoment(tel, { count: true }, st - 1); if (!g || /undefined/.test(g.pil)) fases.push(st); }
+  check(!fases.length, 'W · elke fase van de telmodus heeft een "Nieuw"', fases.join());
+  // de eerste vraag die het nieuwe laat zien (vraagIsNieuw)
+  const V = (tmpl, ans, op, kind, brug) => ({ tmpl, ans, op, kind, brug });
+  check(app.vraagIsNieuw(V('8 + 5 = @', 13, '+', 'classic', true), 'brug20') && !app.vraagIsNieuw(V('4 + 3 = @', 7, '+', 'classic', false), 'brug20'),
+    'W · over het tiental: alleen een som die erover gaat', '');
+  check(app.vraagIsNieuw(V('12 + 5 = @', 17, '+', 'classic', false), 'tot20') && !app.vraagIsNieuw(V('3 + 4 = @', 7, '+', 'classic', false), 'tot20'),
+    'W · tot 20: alleen een som boven de tien', '');
+  check(app.vraagIsNieuw(V('40 + 30 = @', 70, '+', 'classic', false), 'tientallen') && !app.vraagIsNieuw(V('41 + 30 = @', 71, '+', 'classic', false), 'tientallen'),
+    'W · tientallen: hele tientallen', '');
+  check(app.vraagIsNieuw(V('3 + @ = 7', 4, '+', 'missing'), 'zoek') && app.vraagIsNieuw({ kind: 'bouw', op: 'bouw', tmpl: '4T 5E = @', ans: 45 }, 'bouwen100')
+    && app.vraagIsNieuw(V('7 × 5 = @', 35, 'x', 'classic'), 'tafels') && !app.vraagIsNieuw(V('7 + 5 = @', 12, '+', 'classic'), 'tafels'),
+    'W · zoek, bouwen, tafels: hun eigen soort vraag', '');
   // een oude save die zoek-het-getal al kent, krijgt geen "Nieuw!" meer
   const oud = app.defaultProfile('Oud', 'dress_roze', {});
   delete oud.gezien; oud.opTrack = { '+': { n: 40, acc: 0.9, paused: false, unlockStap: 4, fast: 0.5 } };

@@ -420,13 +420,19 @@
      van de balk in één keer donker. Bóven die rand verandert er niets (de eerste
      34% zijn dezelfde stops als hierboven): daar hangt in de kleedkamer de
      actiebalk, en die moet niet mee verdonkeren. Zonder :has (oude browsers)
-     blijft het gewoon de veeg van de kaart. */
+     blijft het gewoon de veeg van de kaart.
+     "In één keer" is wel over een paar stappen: van .05 naar .7 binnen 6% van
+     de hoogte was een rechte, harde rand dwars door het hele venster, en op een
+     bureaublad -- waar hij links en rechts van de balk vrij in de kamer staat --
+     een naad. Over 30% naar 62% is het nog steeds donker waar de balk begint,
+     maar dan als een schaduw. */
   body:has(#screen-dress.active, #screen-trophies.active) .main-nav::before {
     background:
       linear-gradient(180deg,
         rgba(14,7,30,0) 0%,
-        rgba(14,7,30,.05) 34%,
-        rgba(14,7,30,.7) 40%,
+        rgba(14,7,30,.08) 30%,
+        rgba(14,7,30,.6) 44%,
+        rgba(14,7,30,.86) 62%,
         rgba(14,7,30,.92) 100%) top / 100% calc(var(--balk-ruimte) + 44px) no-repeat,
       linear-gradient(rgba(14,7,30,.92), rgba(14,7,30,.92))
         bottom / 100% var(--vh-drift, 0px) no-repeat;

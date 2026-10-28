@@ -97,6 +97,14 @@
   .sr-tekst { flex: 1; min-width: 0; }
   .sr-tekst b { display: block; font-size: var(--tx-body); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sr-tekst small { display: block; font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); margin-top: 2px; }
+  /* waar ze staat (stapNu): de naam van haar stap met de meter erachter, zoals
+     onder haar stap op Voortgang; het label staat rechts, vóór de pijl */
+  .sr-tekst .sr-stap { display: flex; align-items: center; gap: 7px; color: var(--paper-ink); font-weight: 700; }
+  .sr-stap > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sr-stap .vg-bol, .sr-stap .vg-rungs { flex: none; }
+  .sr-wie { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .sr-wie b { min-width: 0; }
+  .sr-wie .vg-tag { flex: none; }
   .sr-pijl { font-size: 24px; font-weight: 700; color: var(--purple-mid); line-height: 1; padding-right: 2px; }
   .sr-plus {
     width: 46px; height: 46px; flex: none; border-radius: 50%; display: grid; place-items: center;
@@ -305,6 +313,8 @@
     margin: 8px 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase;
     color: var(--paper-ink-muted);
   }
+  /* een lijn staat in dezelfde naad: de kop zwijgt, maar houdt zijn plek */
+  .fl-blok.stil { visibility: hidden; }
   /* De vinkjes op het leerpad van rekenen (zie oefenGroups): elke stap heeft er
      één, in één kolom rechts. Het vinkje is een eigen knop naast de rij, dus
      de rij en het vinkje staan samen in een .fl-plek. Het raakvlak is 40px

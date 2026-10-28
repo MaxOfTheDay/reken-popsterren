@@ -429,6 +429,30 @@ const kaartKop = (titel, rechts) => `<div class="kaart-kop"><h2>${titel}</h2>${r
 // het kleine grijze label boven een veld in een kaart (zie kaartKop)
 const oeLbl = (tekst, teken) => `<div class="oe-lbl">${teken ? `<span class="oe-teken">${teken}</span>` : ''}${tekst}</div>`;
 const klaarNamen = namen => namen.length > 2 ? `${namen[0]} … ${namen[namen.length - 1]}` : namen.join(', ');
+/* Waar ze nu staat, en hoe ver ze op die stap is: { naam, meter, tekst }. De
+   meter is in de maat waarmee het spel zelf doorschuift -- bij rekenen de shows
+   met drie sterren op rij (padNa, bolletjes), bij tellen de stapjes binnen een
+   fase (countTrack.rung, streepjes). Voortgang zet hem onder haar stap op het
+   leerpad, het overzicht naast haar naam: één bron, zodat die twee nooit iets
+   anders zeggen. */
+function stapNu(p) {
+  const s = p.settings;
+  if (s.track === 'count') {
+    const st = countLiveStage(p), top = countTopRung(st);
+    const rung = Math.min(top, Math.max(0, (p.countTrack && p.countTrack.rung) || 0));
+    return { naam: COUNT_STAGE_LABELS[st], vb: COUNT_STAGE_VB[st],
+      meter: `<span class="vg-rungs" aria-hidden="true">${Array.from({ length: top + 1 }, (_, i) => `<i class="${i <= rung ? 'aan' : ''}"></i>`).join('')}</span>`,
+      tekst: `stapje ${rung + 1} van ${top + 1}` };
+  }
+  const nuId = padNu(p);
+  if (nuId === 'alles') return { naam: 'Alles door elkaar', vb: '', meter: '', tekst: '' };
+  const nu = padRijen(s).rijen.find(r => r.id === nuId);
+  const pad = p.pad && p.pad.rij === nuId ? p.pad : { shows: 0, goed: 0 };
+  const goed = Math.min(PAD_GOED, pad.goed || 0), nog = PAD_GOED - goed;
+  return { naam: nu.naam, vb: nu.vb,
+    meter: `<span class="vg-bol" aria-hidden="true">${Array.from({ length: PAD_GOED }, (_, i) => `<i class="${i < goed ? 'aan' : ''}"></i>`).join('')}</span>`,
+    tekst: nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show' };
+}
 function leerpadHtml(p) {
   const s = p.settings;
   const stand = vgStand(p);
@@ -439,11 +463,8 @@ function leerpadHtml(p) {
     kop = 'tellen';
     verder = st < hi;
     if (st > 1) rijen.push(flRij(' klaar', '✓', klaarNamen(COUNT_STAGE_LABELS.slice(1, st))));
-    const top = countTopRung(st);
-    const rung = Math.min(top, Math.max(0, (p.countTrack && p.countTrack.rung) || 0));
-    const hoever = `<small class="vg-hoever"><span class="vg-rungs" aria-hidden="true">${
-      Array.from({ length: top + 1 }, (_, i) => `<i class="${i <= rung ? 'aan' : ''}"></i>`).join('')}</span>stapje ${rung + 1} van ${top + 1}</small>`;
-    rijen.push(flRij(' hier niveau-bezig', flAva(p), `${COUNT_STAGE_LABELS[st]}${hoever}`, COUNT_STAGE_VB[st]));
+    const nu = stapNu(p);
+    rijen.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}<small class="vg-hoever">${nu.meter}${nu.tekst}</small>`, nu.vb));
     // de twee volgende fases, en de laatste die de ouder toelaat; wat ertussen zit is één rij "⋮"
     for (let v = st + 1; v <= Math.min(hi, st + 2); v++) rijen.push(flRij(' later', v, COUNT_STAGE_LABELS[v], COUNT_STAGE_VB[v]));
     const tussen = hi - st - 3;
@@ -467,15 +488,8 @@ function leerpadHtml(p) {
     if (nuId === 'alles') {
       rijen.push(flRij(' hier niveau-bezig', flAva(p), 'Alles door elkaar', ''));
     } else {
-      const nu = alle[nr];
-      // hoe ver op deze rij: shows met drie sterren op rij, zoals padNa doorschuift
-      const pad = p.pad && p.pad.rij === nuId ? p.pad : { shows: 0, goed: 0 };
-      const goed = Math.min(PAD_GOED, pad.goed || 0);
-      const nog = PAD_GOED - goed;
-      const hoever = `<small class="vg-hoever"><span class="vg-bol" aria-hidden="true">${
-        Array.from({ length: PAD_GOED }, (_, i) => `<i class="${i < goed ? 'aan' : ''}"></i>`).join('')}</span>${
-        nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show'}</small>`;
-      rijen.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}${hoever}`, flVb(nu.vb)));
+      const nu = stapNu(p);
+      rijen.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}<small class="vg-hoever">${nu.meter}${nu.tekst}</small>`, flVb(nu.vb)));
       alle.slice(nr + 1).forEach((r, i) => rijen.push(flRij(` later${r.uit ? ' overgeslagen' : ''}`, nr + 2 + i, r.naam, flVb(r.vb))));
       rijen.push(flRij(' later', '∞', 'Alles door elkaar'));
     }
@@ -794,11 +808,19 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, html }], in de volg
   const vink = r => !r.keuze ? '<span class="fl-vink vast" aria-hidden="true"></span>'
     : `<button class="fl-vink${r.uit ? '' : ' aan'}" type="button" data-instelling="${r.keuze}" role="checkbox"`
       + ` aria-checked="${!r.uit}" aria-label="${r.naam}"></button>`;
+  /* EÉN WOORD PER NAAD. Een blokkop ("Tot 100") en een lijn in dezelfde naad
+     lazen samen als één zin: "TOT 20 vanaf" bovenaan, "tot TOT 100" eronder. De
+     lijn wint, want die zeg je met een tik; staat "tot" aan het eind van een
+     blok, dan zegt de lijn zelf welk ("tot 20") en zwijgt de kop eronder.
+     Zwijgen, niet weggaan: de kop houdt zijn plek (.stil, onzichtbaar), anders
+     schoof elke rij een kop op zodra een lijn verhuist -- en op deze ladder
+     verschuift er nooit iets (zie hierboven). */
   const ladder = (id, instelling, rijen, lo, hi, hier, staart, vinkjes) => `<div class="fase-ladder naad${vinkjes ? ' met-vinkjes' : ''}" id="${pfx}${id}" data-instelling="${instelling}">${rijen.map((r, i) => {
-    const kop = r.kop ? `<div class="fl-blok" aria-hidden="true">${r.kop}</div>` : '';
+    const kop = r.kop ? `<div class="fl-blok${r.v === lo || r.v - 1 === hi ? ' stil' : ''}" aria-hidden="true">${r.kop}</div>` : '';
+    const totWoord = rijen[i + 1] && rijen[i + 1].kop ? `tot ${r.blok}` : 'tot';
     const rij = flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}${r.uit ? ' overgeslagen' : ''}`,
       r.v === hier && ava ? ava : i + 1, r.naam, r.vb, r.v,
-      (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn('tot', 'onder') : ''));
+      (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn(totWoord, 'onder') : ''));
     return kop + (vinkjes ? `<div class="fl-plek">${rij}${vink(r)}</div>` : rij);
   }).join('')}${staart || ''}</div>`;
   /* Elke kaart heeft een kop (kop, zie kaartKop); de velden daarbinnen krijgen
@@ -856,7 +878,7 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, html }], in de volg
     'Alles door elkaar<small>alles tot de lijn, gemengd</small>')}`
     + '<span class="fl-vink vast" aria-hidden="true"></span></div>';
   // een stille kop boven elk blok, alleen als er meer dan één blok staat
-  const padRijenLadder = padAlle.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb), keuze: r.keuze, uit: r.uit,
+  const padRijenLadder = padAlle.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb), keuze: r.keuze, uit: r.uit, blok: blok(r),
     kop: blokken && (i === 0 || blok(padAlle[i - 1]) !== blok(r)) ? `Tot ${blok(r)}` : '' }));
   /* + − en × ÷ hebben elk hun eigen maat, en die staat er alleen als ze geldt.
      "Getallen tot" gold vroeger ongezegd ook voor de tafels: met tot 20 en de
@@ -1217,11 +1239,17 @@ function openWieBlad() {
 function overzichtHtml() {
   const rij = key => {
     const p = db.profiles[key];
-    const shows = playedCount(p);
+    /* Onder haar naam: waar ze staat en hoe ver (stapNu, dezelfde regel als op
+       Voortgang); het label staat naast haar naam. Hier stond "Net begonnen · 5
+       shows": het label was vaak voor elk kind hetzelfde, en het aantal shows
+       zegt een ouder weinig. Zo zie je zonder door te tikken hoe het met elk
+       kind gaat. Het label op de eerste regel en niet rechts: op 320 punten
+       hield de stap er dan geen letter meer over. */
+    const nu = stapNu(p);
     return `<button class="ster-rij" type="button" data-key="${key}">`
       + `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
-      + `<span class="sr-tekst"><b>${esc(p.name)}</b><small>${vgLabel(vgStand(p))}`
-      + `${shows ? ` · ${shows} ${mv(shows, 'show', 'shows')}` : ''}</small></span>`
+      + `<span class="sr-tekst"><span class="sr-wie"><b>${esc(p.name)}</b>${vgLabel(vgStand(p))}</span>`
+      + `<small class="sr-stap"><span>${nu.naam}</span>${nu.meter}</small></span>`
       + `<span class="sr-pijl" aria-hidden="true">›</span></button>`;
   };
   const nieuw = profileKeys().length < MAX_PROFILES
@@ -1365,9 +1393,11 @@ function renderSettings() {
    stappen zelf bewegen niet -- zie oefenGroups), en na de opbouw laten we de
    nieuwe lijn van daar naar zijn plek schuiven. */
 let lijnGlij = null;
+const lijnKant = l => l.classList.contains('boven') ? 'vanaf' : 'tot';
 function lijnPlekken(ladder) {
   const top = ladder.getBoundingClientRect().top, plek = {};
-  ladder.querySelectorAll('.fl-lijn').forEach(l => { plek[l.textContent] = l.getBoundingClientRect().top - top; });
+  // op kant en niet op woord: "tot" kan "tot 20" heten, en dan glijdt hij nog steeds
+  ladder.querySelectorAll('.fl-lijn').forEach(l => { plek[lijnKant(l)] = l.getBoundingClientRect().top - top; });
   return plek;
 }
 /* Welke lijn verhuist een tik op rij v, met "vanaf" op lo en "tot" op hi?
@@ -1390,7 +1420,7 @@ function bindOefenChips(s, p, pfx, done) {
   if (glij && !motionOff()) {
     const nu = lijnPlekken(glij);
     glij.querySelectorAll('.fl-lijn').forEach(l => {
-      const d = lijnGlij.plek[l.textContent] - nu[l.textContent];
+      const d = lijnGlij.plek[lijnKant(l)] - nu[lijnKant(l)];
       if (!d) return;
       l.animate([{ transform: `translateY(${d}px)` }, { transform: 'none' }],
         { duration: 160, easing: 'cubic-bezier(.2, .8, .2, 1)' });

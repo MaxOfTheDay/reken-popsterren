@@ -296,9 +296,11 @@
      bovenop de lade rechts (ladenPlaatsen verhuist hem; zie "Het podium en de
      lade" voor hoe hij er daar uitziet). */
   @media (orientation: landscape) and (max-height: 500px) {
-    /* .active en niet alleen het id: anders won dit van .screen {display:none},
-       en stond de kleedkamer liggend ook onder elk ander scherm in de stroom */
-    #screen-dress.active {
+    /* Niet alleen het id: anders won dit van .screen {display:none}, en stond
+       de kleedkamer liggend ook onder elk ander scherm in de stroom. En niet
+       alleen .active: zie "Hoe een scherm eruitziet" bij .wegvallend in
+       50-zaal -- een scherm dat vertrekt houdt zijn opmaak. */
+    #screen-dress:is(.active, .wegvallend) {
       display: grid; grid-template-columns: minmax(300px, 36%) minmax(0, 1fr);
       column-gap: 12px; align-items: start;
     }
@@ -307,7 +309,7 @@
       margin: calc(var(--rand, 12px) * -1) 0 0 calc(var(--rand, 12px) * -1);
     }
     #screen-dress { --lade-kop: 66px; }
-    #screen-dress.active { grid-template-rows: var(--lade-kop) auto; }
+    #screen-dress:is(.active, .wegvallend) { grid-template-rows: var(--lade-kop) auto; }
     #screen-dress > .item-grid { grid-column: 2; grid-row: 2; max-width: none; }
   }
   /* ---- Breed: de spiegel groot links, het rek rechts ----------------------
@@ -334,7 +336,7 @@
       --kolom: 1400px;
       --pop-h: clamp(240px, min(calc(100vh - 340px), 32vw), 560px);
     }
-    #screen-dress.active {
+    #screen-dress:is(.active, .wegvallend) {
       display: grid; grid-template-columns: calc(var(--pop-h) * 1.19 + 56px) minmax(0, 1fr);
       column-gap: 22px; align-items: start; align-content: start;
       padding-left: max(var(--rand, 12px), calc((100% - var(--kolom)) / 2));

@@ -914,14 +914,8 @@
 
 
 
-
-
-
-
-
     --stage-spel: 560px;
     --stage-breed: 820px;
-    --stage-vlak: none;
 
 
 
@@ -1664,8 +1658,22 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
   .app-sfeer::before {
     content: ''; position: fixed; inset: var(--schuif, 0px) 0 calc(0px - var(--schuif, 0px)) 0; z-index: -1; pointer-events: none;
+    will-change: transform;
     background-size: cover; background-position: 50% 50%;
     background-image:
       var(--fonkeling),
@@ -1737,45 +1745,10 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   .screen.gebruik.app-sfeer::after {
     content: ''; position: fixed; inset: var(--schuif, 0px) 0 calc(0px - var(--schuif, 0px)) 0; z-index: -1; pointer-events: none;
-    background: var(--stage-vlak), var(--sfeer-vloer, none);
-  }
-  @media (min-width: 1000px) {
-    .screen.gebruik {
-
-
-
-
-
-
-      --vak-w: min(100%, calc(var(--kolom) + var(--rand) * 2));
-      --stage-vlak:
-
-        linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05) 46%, rgba(255,255,255,0))
-          left calc(50% - var(--vak-w) / 2) top 0 / 1px 88% no-repeat,
-        linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05) 46%, rgba(255,255,255,0))
-          left calc(50% + var(--vak-w) / 2 - 1px) top 0 / 1px 88% no-repeat,
-
-
-
-        linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.028) 54%, rgba(255,255,255,0))
-          center top / var(--vak-w) 100% no-repeat;
-    }
+    will-change: transform;
+    background: var(--sfeer-vloer, none);
   }
 
 
@@ -3337,12 +3310,18 @@
 
 
 
+
+
+
+
+
   body:has(#screen-dress.active, #screen-trophies.active) .main-nav::before {
     background:
       linear-gradient(180deg,
         rgba(14,7,30,0) 0%,
-        rgba(14,7,30,.05) 34%,
-        rgba(14,7,30,.7) 40%,
+        rgba(14,7,30,.08) 30%,
+        rgba(14,7,30,.6) 44%,
+        rgba(14,7,30,.86) 62%,
         rgba(14,7,30,.92) 100%) top / 100% calc(var(--balk-ruimte) + 44px) no-repeat,
       linear-gradient(rgba(14,7,30,.92), rgba(14,7,30,.92))
         bottom / 100% var(--vh-drift, 0px) no-repeat;
@@ -3948,6 +3927,15 @@
   #question-text.lang { font-size: .78em; }
   #question-text.lang.langer { font-size: .62em; }
   .venue-aan .question-card { box-shadow: var(--e-2), 0 0 34px rgba(var(--warm-licht-rgb),.18); }
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4686,6 +4674,15 @@
 
 
   @media (prefers-reduced-motion: reduce) { .question-card.golden { animation: none; } }
+
+
+
+
+  .question-card.nieuw::before {
+    content: "✨ Nieuw"; position: absolute; top: 8px; left: 10px; z-index: 1;
+    padding: 2px 10px; border-radius: var(--r-pill); background: rgba(var(--goud-rgb), .88);
+    color: var(--ink-on-gold); font-size: var(--tx-klein); font-weight: 700; line-height: 1.5;
+  }
   .gold-banner { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); text-shadow: var(--goud-ink); margin-top: 6px; height: 22px; }
 
 
@@ -6264,7 +6261,9 @@
 
 
 
-    background-color: #180b2c;
+
+
+    background-color: #120826;
     overscroll-behavior-y: contain;
     scrollbar-width: none;
   }
@@ -6308,11 +6307,16 @@
 
 
 
+
+
+
+
+
   #screen-journey .hub-sticky::before {
-    content: ''; position: absolute; left: 0; right: 0; top: -22px; height: calc(100% + 62px);
+    content: ''; position: absolute; left: 50%; width: 100vw; margin-left: -50vw; top: -22px; height: calc(100% + 62px);
     z-index: -1; pointer-events: none;
-    background: linear-gradient(180deg, #180b2c 0%, #180b2c 54%,
-                rgba(24,11,44,.72) 74%, rgba(24,11,44,0) 100%);
+    background: linear-gradient(180deg, #120826 0%, #120826 54%,
+                rgba(18,8,38,.72) 74%, rgba(18,8,38,0) 100%);
   }
 
 
@@ -6406,7 +6410,10 @@
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='900'%3E%3Cg fill='%23fff'%3E%3Ccircle cx='233' cy='560' r='0.9' fill-opacity='0.58'/%3E%3Ccircle cx='80' cy='23' r='1.8' fill-opacity='0.67'/%3E%3Ccircle cx='451' cy='881' r='1.0' fill-opacity='0.44'/%3E%3Ccircle cx='223' cy='658' r='1.0' fill-opacity='0.65'/%3E%3Ccircle cx='160' cy='642' r='1.8' fill-opacity='0.60'/%3E%3Ccircle cx='429' cy='390' r='1.4' fill-opacity='0.38'/%3E%3Ccircle cx='21' cy='22' r='1.8' fill-opacity='0.89'/%3E%3Ccircle cx='163' cy='429' r='1.6' fill-opacity='0.81'/%3E%3Ccircle cx='272' cy='465' r='2.1' fill-opacity='0.55'/%3E%3Ccircle cx='493' cy='153' r='1.1' fill-opacity='0.56'/%3E%3Ccircle cx='437' cy='882' r='0.9' fill-opacity='0.57'/%3E%3Ccircle cx='326' cy='807' r='0.9' fill-opacity='0.75'/%3E%3C/g%3E%3C/svg%3E"),
       radial-gradient(60% 18% at 15% 30%, rgba(120,90,255,.2), transparent 70%),
       radial-gradient(55% 16% at 90% 62%, rgba(255,90,190,.16), transparent 70%),
-      radial-gradient(70% 20% at 30% 88%, rgba(70,170,255,.14), transparent 70%),
+
+
+
+      radial-gradient(70% 18% at 30% 82%, rgba(70,170,255,.14), transparent 70%),
 
 
 
@@ -7097,6 +7104,21 @@
     background: var(--lade); border-radius: 26px 26px 0 0;
     box-shadow: inset 0 1.5px 0 rgba(255,255,255,.14),
       0 25vh 0 var(--lade), 0 50vh 0 var(--lade), 0 75vh 0 var(--lade), 0 100vh 0 var(--lade);
+  }
+
+
+
+
+
+
+
+
+
+  @media (min-width: 1000px) and (orientation: landscape) and (min-height: 501px) {
+    #trophy-shelves {
+      border-radius: 26px; padding-bottom: 14px; margin-bottom: 0;
+      box-shadow: inset 0 1.5px 0 rgba(255,255,255,.14), 0 18px 40px rgba(8,1,20,.35);
+    }
   }
 
 
@@ -7905,6 +7927,8 @@
     color: var(--ink-on-gold); font-weight: 700; font-size: var(--tx-label);
   }
   @media (max-height: 740px) { .groei-pil { padding: 6px 13px; min-height: 30px; } }
+
+  .groei-vb { padding: 1px 9px; border-radius: var(--r-pill); background: rgba(255,255,255,.7); white-space: nowrap; }
   .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; }
 
   .end-actions.wacht { pointer-events: none; }
@@ -8247,7 +8271,9 @@
   @media (orientation: landscape) and (max-height: 500px) {
 
 
-    #screen-dress.active {
+
+
+    #screen-dress:is(.active, .wegvallend) {
       display: grid; grid-template-columns: minmax(300px, 36%) minmax(0, 1fr);
       column-gap: 12px; align-items: start;
     }
@@ -8256,7 +8282,7 @@
       margin: calc(var(--rand, 12px) * -1) 0 0 calc(var(--rand, 12px) * -1);
     }
     #screen-dress { --lade-kop: 66px; }
-    #screen-dress.active { grid-template-rows: var(--lade-kop) auto; }
+    #screen-dress:is(.active, .wegvallend) { grid-template-rows: var(--lade-kop) auto; }
     #screen-dress > .item-grid { grid-column: 2; grid-row: 2; max-width: none; }
   }
 
@@ -8283,7 +8309,7 @@
       --kolom: 1400px;
       --pop-h: clamp(240px, min(calc(100vh - 340px), 32vw), 560px);
     }
-    #screen-dress.active {
+    #screen-dress:is(.active, .wegvallend) {
       display: grid; grid-template-columns: calc(var(--pop-h) * 1.19 + 56px) minmax(0, 1fr);
       column-gap: 22px; align-items: start; align-content: start;
       padding-left: max(var(--rand, 12px), calc((100% - var(--kolom)) / 2));
@@ -9112,6 +9138,14 @@
   .sr-tekst { flex: 1; min-width: 0; }
   .sr-tekst b { display: block; font-size: var(--tx-body); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sr-tekst small { display: block; font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); margin-top: 2px; }
+
+
+  .sr-tekst .sr-stap { display: flex; align-items: center; gap: 7px; color: var(--paper-ink); font-weight: 700; }
+  .sr-stap > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sr-stap .vg-bol, .sr-stap .vg-rungs { flex: none; }
+  .sr-wie { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .sr-wie b { min-width: 0; }
+  .sr-wie .vg-tag { flex: none; }
   .sr-pijl { font-size: 24px; font-weight: 700; color: var(--purple-mid); line-height: 1; padding-right: 2px; }
   .sr-plus {
     width: 46px; height: 46px; flex: none; border-radius: 50%; display: grid; place-items: center;
@@ -9320,6 +9354,8 @@
     margin: 8px 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase;
     color: var(--paper-ink-muted);
   }
+
+  .fl-blok.stil { visibility: hidden; }
 
 
 
@@ -14391,10 +14427,11 @@ function migrate(p) {
   if (!p.leer) p.leer = { brug: 0, zoek: 0, drie: 0 };
 
 
+
+
   if (!p.gezien) p.gezien = {
     zoek: Object.values(p.opTrack || {}).some(t => t && t.unlockStap != null) ? 1 : 0,
     drie: (p.chainTrack && p.chainTrack.seen) ? 1 : 0,
-    max: p.settings && p.settings.max,
   };
 
 
@@ -22200,14 +22237,22 @@ function vraagInst(p) { return { ...p.settings, ...padStand(p.settings, padNu(p)
 
 
 
-const PAD_MIN_SHOWS = 3, PAD_MAX_SHOWS = 8, PAD_GOED = 2;
+
+
+
+
+
+
+
+
+const PAD_MIN_SHOWS = 3, PAD_MAX_SHOWS = 8, PAD_GOED = 2, PAD_TELT = 2;
 function padNa(p, sterren) {
   const nu = padNu(p);
   if (nu === 'alles') return false;
   const pad = p.pad = p.pad || { klaar: [] };
   if (!Array.isArray(pad.klaar)) pad.klaar = [];
   if (pad.rij !== nu) Object.assign(pad, { rij: nu, shows: 0, goed: 0 });
-  pad.shows++;
+  if (sterren >= PAD_TELT) pad.shows++;
   pad.goed = sterren >= 3 ? pad.goed + 1 : 0;
   if (!((pad.shows >= PAD_MIN_SHOWS && pad.goed >= PAD_GOED) || pad.shows >= PAD_MAX_SHOWS)) return false;
 
@@ -22217,6 +22262,29 @@ function padNa(p, sterren) {
   });
   Object.assign(pad, { rij: padNu(p), shows: 0, goed: 0 });
   return true;
+}
+
+
+
+
+
+
+function vraagIsNieuw(q, id) {
+  if (id === 'fase') return true;
+  const r = LEERPAD[PAD_IDX[id]];
+  if (!r) return false;
+  if (r.bouwen) return q.kind === 'bouw' && (q.grens || 99) >= r.bereik - 1;
+  if (id === 'zoek') return q.kind === 'missing';
+  if (id === 'drie') return q.kind === 'chain';
+  if (r.op) return q.op === r.op;
+  if (q.kind !== 'classic' || (q.op !== '+' && q.op !== '-')) return false;
+  const [a, b] = (q.tmpl.match(/\d+/g) || []).map(Number);
+  if (r.tientallen) return a % 10 === 0 && b % 10 === 0;
+  if (r.honderdtallen) return a % 100 === 0 && b % 100 === 0;
+  if (r.brug === 'vaak') return !!q.brug && Math.max(a, b, q.ans) > r.bereik / 10;
+
+  const vorig = LEERPAD.filter(x => x.soort === 'bereik' && x.bereik < r.bereik).reduce((m, x) => Math.max(m, x.bereik), 0);
+  return Math.max(a, b, q.ans) > vorig;
 }
 
 
@@ -22321,7 +22389,9 @@ function genQuestion(s, lvl, perf) {
   const op = pick(ops);
   const { a, b, c, sym } = genTriple(s, lvl, perf, op);
 
-  const brug = (op === '+' || op === '-') && overTiental(a, b, c, op);
+
+  const m = s.max > 100 && [a, b, c].every(v => v % 10 === 0) ? 10 : 1;
+  const brug = (op === '+' || op === '-') && overTiental(a / m, b / m, c / m, op);
   return { tmpl: `${a} ${sym} ${b} = @`, ans: c, op, kind: 'classic', brug };
 }
 
@@ -23568,8 +23638,11 @@ function buildQuestion(p, lvl, g) {
   }
 
   if (s.bouwen && Math.random() < (s.bouwen === 'vaak' ? BOUWEN_VAAK : BOUWEN_SOMS)) {
+
+
+    const eerst = g && g.nieuwRij && PAD_IDX[g.nieuwRij] != null && LEERPAD[PAD_IDX[g.nieuwRij]].bouwen;
     let b, poging = 0;
-    do { b = genBouwen(s.bouwTot); } while (net.includes(b.tmpl) && ++poging < 8);
+    do { b = genBouwen(s.bouwTot); } while ((net.includes(b.tmpl) || (eerst && b.soort !== 'blokken')) && ++poging < 40);
     return b;
   }
 
@@ -23825,6 +23898,7 @@ function startLevel(lvl, eigenOvergang) {
   G = { lvl, inst, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
         klaarBijStart: (p.readyTrophies || []).slice(),
         missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0,
+        nieuwRij: nieuwTeTonen[cur] || null,
         uitslag: [] };
 
 
@@ -23926,6 +24000,7 @@ function renderQuestion() {
       else built = buildQuestion(p, G.lvl, G);
     }
     if (G.idx === G.goldIdx) built.gold = true;
+    if (G.nieuwRij && vraagIsNieuw(built, G.nieuwRij)) { built.nieuw = true; G.nieuwRij = null; delete nieuwTeTonen[cur]; }
 
 
     if (built.gold && G.count && built.prompt) built.prompt = 'Gouden vraag! Die geeft drie keer zoveel diamanten. ' + built.prompt;
@@ -24061,6 +24136,7 @@ function renderSegBar(el, total, done, hasNow) {
 function drawQuestion() {
   const q = G.qs[G.idx];
   $('question-card').classList.toggle('golden', !!q.gold);
+  $('question-card').classList.toggle('nieuw', !!q.nieuw);
   $('question-card').classList.toggle('zonder-tijd', !!G.count);
 
 
@@ -24744,19 +24820,29 @@ const RECENT_N = 10;
 
 
 
-function groeiMoment(p, g, voor) {
+
+
+
+
+
+
+
+
+const nieuwTeTonen = {};
+function groeiPil(naam, vb) {
+  return `⬆️ Nieuw: ${naam}${vb ? ` <span class="groei-vb">${vb}</span>` : ''}`;
+}
+function groeiMoment(p, g, voor, rij) {
   if (g.count) {
-    return p.countTrack.stage > voor
-      ? { pil: '⬆️ Nieuw spel erbij!', zin: 'Je bent gegroeid! Er is een nieuw spel.' } : null;
+    const st = p.countTrack.stage;
+    return st > voor ? { id: 'fase', pil: groeiPil(COUNT_STAGE_LABELS[st], COUNT_STAGE_VB[st]),
+      zin: 'Je bent gegroeid! Er is een nieuw spel.' } : null;
   }
   const z = p.gezien || (p.gezien = {});
-  const max = p.settings.max;
-  let nieuw = null;
-  if (g.missShown && !z.zoek) { z.zoek = 1; nieuw = { pil: '🔍 Nieuw: zoek het getal!' }; }
-  if (g.chainShown && !z.drie) { z.drie = 1; nieuw = { pil: '➕ Nieuw: drie getallen!' }; }
-  if (z.max == null) z.max = max;
-  else if (max > z.max) { z.max = max; nieuw = { pil: `⬆️ Nieuw: getallen tot ${max}!` }; }
-  return nieuw;
+  const r = rij && padRijen(p.settings).rijen.find(x => x.id === rij);
+  if (!r || z[rij]) return null;
+  z[rij] = 1;
+  return { id: rij, pil: groeiPil(r.naam, r.vb) };
 }
 
 
@@ -24882,7 +24968,8 @@ function endLevel(success) {
   onthoudUitkomst(p, success ? showStars(G) : 0, stapVoor);
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;
   if (!G.count && success) telGrensDrie(p, showStars(G));
-  if (!G.count) padNa(p, success ? showStars(G) : 0);
+
+  const nieuweRij = !G.count && padNa(p, success ? showStars(G) : 0) ? padNu(p) : null;
 
 
 
@@ -24961,8 +25048,9 @@ function endLevel(success) {
     mile.innerHTML = '';
 
 
-    const groei = groeiMoment(p, G, faseVoor);
+    const groei = groeiMoment(p, G, faseVoor, nieuweRij);
     if (groei) {
+      nieuwTeTonen[cur] = groei.id;
       mile.innerHTML = `<span class="groei-pil">${groei.pil}</span>`;
       if (groei.zin) zin += ' ' + groei.zin;
     } else if (nieuwKlaar) {
@@ -26945,6 +27033,30 @@ const kaartKop = (titel, rechts) => `<div class="kaart-kop"><h2>${titel}</h2>${r
 
 const oeLbl = (tekst, teken) => `<div class="oe-lbl">${teken ? `<span class="oe-teken">${teken}</span>` : ''}${tekst}</div>`;
 const klaarNamen = namen => namen.length > 2 ? `${namen[0]} … ${namen[namen.length - 1]}` : namen.join(', ');
+
+
+
+
+
+
+function stapNu(p) {
+  const s = p.settings;
+  if (s.track === 'count') {
+    const st = countLiveStage(p), top = countTopRung(st);
+    const rung = Math.min(top, Math.max(0, (p.countTrack && p.countTrack.rung) || 0));
+    return { naam: COUNT_STAGE_LABELS[st], vb: COUNT_STAGE_VB[st],
+      meter: `<span class="vg-rungs" aria-hidden="true">${Array.from({ length: top + 1 }, (_, i) => `<i class="${i <= rung ? 'aan' : ''}"></i>`).join('')}</span>`,
+      tekst: `stapje ${rung + 1} van ${top + 1}` };
+  }
+  const nuId = padNu(p);
+  if (nuId === 'alles') return { naam: 'Alles door elkaar', vb: '', meter: '', tekst: '' };
+  const nu = padRijen(s).rijen.find(r => r.id === nuId);
+  const pad = p.pad && p.pad.rij === nuId ? p.pad : { shows: 0, goed: 0 };
+  const goed = Math.min(PAD_GOED, pad.goed || 0), nog = PAD_GOED - goed;
+  return { naam: nu.naam, vb: nu.vb,
+    meter: `<span class="vg-bol" aria-hidden="true">${Array.from({ length: PAD_GOED }, (_, i) => `<i class="${i < goed ? 'aan' : ''}"></i>`).join('')}</span>`,
+    tekst: nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show' };
+}
 function leerpadHtml(p) {
   const s = p.settings;
   const stand = vgStand(p);
@@ -26955,11 +27067,8 @@ function leerpadHtml(p) {
     kop = 'tellen';
     verder = st < hi;
     if (st > 1) rijen.push(flRij(' klaar', '✓', klaarNamen(COUNT_STAGE_LABELS.slice(1, st))));
-    const top = countTopRung(st);
-    const rung = Math.min(top, Math.max(0, (p.countTrack && p.countTrack.rung) || 0));
-    const hoever = `<small class="vg-hoever"><span class="vg-rungs" aria-hidden="true">${
-      Array.from({ length: top + 1 }, (_, i) => `<i class="${i <= rung ? 'aan' : ''}"></i>`).join('')}</span>stapje ${rung + 1} van ${top + 1}</small>`;
-    rijen.push(flRij(' hier niveau-bezig', flAva(p), `${COUNT_STAGE_LABELS[st]}${hoever}`, COUNT_STAGE_VB[st]));
+    const nu = stapNu(p);
+    rijen.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}<small class="vg-hoever">${nu.meter}${nu.tekst}</small>`, nu.vb));
 
     for (let v = st + 1; v <= Math.min(hi, st + 2); v++) rijen.push(flRij(' later', v, COUNT_STAGE_LABELS[v], COUNT_STAGE_VB[v]));
     const tussen = hi - st - 3;
@@ -26983,15 +27092,8 @@ function leerpadHtml(p) {
     if (nuId === 'alles') {
       rijen.push(flRij(' hier niveau-bezig', flAva(p), 'Alles door elkaar', ''));
     } else {
-      const nu = alle[nr];
-
-      const pad = p.pad && p.pad.rij === nuId ? p.pad : { shows: 0, goed: 0 };
-      const goed = Math.min(PAD_GOED, pad.goed || 0);
-      const nog = PAD_GOED - goed;
-      const hoever = `<small class="vg-hoever"><span class="vg-bol" aria-hidden="true">${
-        Array.from({ length: PAD_GOED }, (_, i) => `<i class="${i < goed ? 'aan' : ''}"></i>`).join('')}</span>${
-        nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show'}</small>`;
-      rijen.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}${hoever}`, flVb(nu.vb)));
+      const nu = stapNu(p);
+      rijen.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}<small class="vg-hoever">${nu.meter}${nu.tekst}</small>`, flVb(nu.vb)));
       alle.slice(nr + 1).forEach((r, i) => rijen.push(flRij(` later${r.uit ? ' overgeslagen' : ''}`, nr + 2 + i, r.naam, flVb(r.vb))));
       rijen.push(flRij(' later', '∞', 'Alles door elkaar'));
     }
@@ -27310,11 +27412,19 @@ function oefenGroups(s, pfx, p) {
   const vink = r => !r.keuze ? '<span class="fl-vink vast" aria-hidden="true"></span>'
     : `<button class="fl-vink${r.uit ? '' : ' aan'}" type="button" data-instelling="${r.keuze}" role="checkbox"`
       + ` aria-checked="${!r.uit}" aria-label="${r.naam}"></button>`;
+
+
+
+
+
+
+
   const ladder = (id, instelling, rijen, lo, hi, hier, staart, vinkjes) => `<div class="fase-ladder naad${vinkjes ? ' met-vinkjes' : ''}" id="${pfx}${id}" data-instelling="${instelling}">${rijen.map((r, i) => {
-    const kop = r.kop ? `<div class="fl-blok" aria-hidden="true">${r.kop}</div>` : '';
+    const kop = r.kop ? `<div class="fl-blok${r.v === lo || r.v - 1 === hi ? ' stil' : ''}" aria-hidden="true">${r.kop}</div>` : '';
+    const totWoord = rijen[i + 1] && rijen[i + 1].kop ? `tot ${r.blok}` : 'tot';
     const rij = flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}${r.uit ? ' overgeslagen' : ''}`,
       r.v === hier && ava ? ava : i + 1, r.naam, r.vb, r.v,
-      (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn('tot', 'onder') : ''));
+      (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn(totWoord, 'onder') : ''));
     return kop + (vinkjes ? `<div class="fl-plek">${rij}${vink(r)}</div>` : rij);
   }).join('')}${staart || ''}</div>`;
 
@@ -27372,7 +27482,7 @@ function oefenGroups(s, pfx, p) {
     'Alles door elkaar<small>alles tot de lijn, gemengd</small>')}`
     + '<span class="fl-vink vast" aria-hidden="true"></span></div>';
 
-  const padRijenLadder = padAlle.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb), keuze: r.keuze, uit: r.uit,
+  const padRijenLadder = padAlle.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb), keuze: r.keuze, uit: r.uit, blok: blok(r),
     kop: blokken && (i === 0 || blok(padAlle[i - 1]) !== blok(r)) ? `Tot ${blok(r)}` : '' }));
 
 
@@ -27733,11 +27843,17 @@ function openWieBlad() {
 function overzichtHtml() {
   const rij = key => {
     const p = db.profiles[key];
-    const shows = playedCount(p);
+
+
+
+
+
+
+    const nu = stapNu(p);
     return `<button class="ster-rij" type="button" data-key="${key}">`
       + `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
-      + `<span class="sr-tekst"><b>${esc(p.name)}</b><small>${vgLabel(vgStand(p))}`
-      + `${shows ? ` · ${shows} ${mv(shows, 'show', 'shows')}` : ''}</small></span>`
+      + `<span class="sr-tekst"><span class="sr-wie"><b>${esc(p.name)}</b>${vgLabel(vgStand(p))}</span>`
+      + `<small class="sr-stap"><span>${nu.naam}</span>${nu.meter}</small></span>`
       + `<span class="sr-pijl" aria-hidden="true">›</span></button>`;
   };
   const nieuw = profileKeys().length < MAX_PROFILES
@@ -27881,9 +27997,11 @@ function renderSettings() {
 
 
 let lijnGlij = null;
+const lijnKant = l => l.classList.contains('boven') ? 'vanaf' : 'tot';
 function lijnPlekken(ladder) {
   const top = ladder.getBoundingClientRect().top, plek = {};
-  ladder.querySelectorAll('.fl-lijn').forEach(l => { plek[l.textContent] = l.getBoundingClientRect().top - top; });
+
+  ladder.querySelectorAll('.fl-lijn').forEach(l => { plek[lijnKant(l)] = l.getBoundingClientRect().top - top; });
   return plek;
 }
 
@@ -27906,7 +28024,7 @@ function bindOefenChips(s, p, pfx, done) {
   if (glij && !motionOff()) {
     const nu = lijnPlekken(glij);
     glij.querySelectorAll('.fl-lijn').forEach(l => {
-      const d = lijnGlij.plek[l.textContent] - nu[l.textContent];
+      const d = lijnGlij.plek[lijnKant(l)] - nu[lijnKant(l)];
       if (!d) return;
       l.animate([{ transform: `translateY(${d}px)` }, { transform: 'none' }],
         { duration: 160, easing: 'cubic-bezier(.2, .8, .2, 1)' });

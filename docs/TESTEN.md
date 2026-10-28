@@ -30,6 +30,13 @@ dan telt hij als geslaagd maar meldt het verslag "pas bij de tweede keer" --
 gebeurt dat vaker bij dezelfde suite, dan wiebelt er een controle: laat die
 wachten op een stand in plaats van op een aantal milliseconden.
 
+Wachten tot een scherm binnen is doe je met `rust(page)` uit `test/browser.js`:
+die wacht tot er geen korte animatie meer loopt, in plaats van een vaste tel die
+op de ene machine te lang en op de andere te kort is. Binnen een suite mogen
+zaken naast elkaar draaien als ze elk een eigen context hebben: `schuiven` doet
+alle maten tegelijk, `sterren` acht zaken tegelijk (met `zaak.eerst` voor de
+lange en `zaak.alleen` voor wie op de milliseconde meet).
+
 Losse suites:
 
 ```sh

@@ -177,8 +177,8 @@
        en dat element scrollt zelf (overflow-y: auto op .screen). Een klassieke
        schuifbalk -- elk bureaublad heeft er een, een telefoon niet -- neemt zijn
        vijftien pixels áf van de binnenkant, dus ligt die middenlijn een halve
-       schuifbalk naar links. Het vak eronder (.screen.gebruik.app-sfeer::after),
-       de navigatiebalk en de actiebalk van de kleedkamer staan vast
+       schuifbalk naar links. De navigatiebalk en de actiebalk van de kleedkamer
+       staan vast
        (position: fixed) en kénnen die schuifbalk niet: die blijven op het midden
        van het vénster mikken. Kop en inhoud stonden daardoor zeven en een halve
        pixel links van hun eigen kader -- op een bureaublad goed te zien als een
