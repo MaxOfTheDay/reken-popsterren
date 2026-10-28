@@ -396,7 +396,7 @@
      op twee rijen van vijf: naast de balken van Antwoord en Vragen per show
      waren dat drie soorten knop op één scherm. */
   .oe-ops, .oe-tafels { display: grid; gap: 2px; padding: 4px; border-radius: 14px; background: var(--lavender-wash); }
-  .oe-ops { grid-template-columns: repeat(4, 1fr); }
+  .oe-ops { grid-auto-flow: column; grid-auto-columns: 1fr; }
   .oe-tafels { grid-template-columns: repeat(10, 1fr); }
   .oe-ops .chip, .oe-ops .chip:hover, .oe-tafels .chip, .oe-tafels .chip:hover {
     min-width: 0; padding: 0; border: none; border-radius: 10px; background: none; box-shadow: none;
@@ -405,8 +405,22 @@
   .oe-ops .chip { height: 46px; font-size: 26px; }
   .oe-tafels .chip { height: 40px; font-size: var(--tx-label); }
   .oe-ops .chip.on, .oe-tafels .chip.on { background: var(--purple-mid); color: var(--c-white); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
-  /* Hoe oefent ze (zie modusKaartHtml): de balk, en één korte regel eronder. */
+  /* Wat oefent ze, en hoe (zie themaKaartHtml): de thema's als tegels, een dun
+     streepje, de balk, en één korte regel eronder. Een tegel is minstens 64
+     hoog: icoontje en woord, en een duim op een oude tablet raakt hem. Uit is
+     het icoontje grijs en de tegel licht -- twee tekens, niet alleen kleur. */
   .modus-kaart .modus-uitleg { margin: 8px 0 0; text-align: center; font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); }
+  .thema-bar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+  .thema-bar .chip.thema, .thema-bar .chip.thema:hover {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    min-width: 0; min-height: 64px; padding: 9px 4px 8px; border: none; border-radius: 14px; box-shadow: none;
+    background: var(--lavender-wash); color: var(--purple-mid); font-size: var(--tx-label); font-weight: 700; line-height: 1;
+  }
+  .thema-bar .chip.thema.on { background: var(--purple-mid); color: var(--c-white); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
+  .thema-bar .chip.thema:not(.on) .thema-ico { filter: grayscale(1); opacity: .55; }
+  .thema-naad { height: 1px; margin: 14px 2px 12px; background: var(--lavender-wash); }
+  /* het icoontje van een thema voor de kop van zijn kaart */
+  .oefen-kaart .kaart-kop h2 .thema-ico { vertical-align: -4px; margin-right: 7px; }
   /* De balk: één keuze, gelijke vakken, het gekozen vak vol paars. Het gekozen
      vak is een vlak ín de balk, niet een knop erop: geen 3D-rand eronder, en
      de ronding is die van de balk min zijn binnenrand (14 - 4 = 10), zodat de

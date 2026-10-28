@@ -34,17 +34,23 @@ function startLevel(lvl, eigenOvergang) {
   // Extra-uitdaging-vragen (zoek-het-getal / drie getallen) vooraf inroosteren op
   // vaste plekken; de gewone vragen worden per stuk gebouwd (incl. zwakke herhaling).
   // In de telmodus komen die niet voor -- daar bouwt genCount elke vraag.
-  /* inst: de instellingen voor de vraagmaker, met haar rij op het leerpad erover
-     (zie vraagInst). Eén keer per show: de rij verandert pas in endLevel. */
-  const inst = count ? null : vraagInst(p);
+  /* De thema's van deze show (zie themaPlan): welk thema elke vraag krijgt, en
+     per thema de instellingen voor de vraagmaker, met haar rij op zijn ladder
+     erover (zie themaInst). Eén keer per show: een rij verandert pas in
+     endLevel. inst is die van rekenen (of van het enige thema): daar lezen
+     het cijferblok en de speciale vragen uit. */
+  const vragenPlan = count ? null : themaPlan(s, s.perLevel);
+  const insts = count ? null : Object.fromEntries(themasAan(s).map(k => [k, themaInst(p, k)]));
+  const inst = count ? null : insts.rekenen || insts[vragenPlan[0]];
+  const bezet = count ? [] : vragenPlan.map((k, i) => k === 'rekenen' ? -1 : i).filter(i => i >= 0);
   // Zelf kiezen (inst.vrij) kent geen accent per wereld: daar is het de keuze van de ouder
-  const plan = count ? [] : planSpecials(p, inst, s.perLevel, inst.vrij ? null : wereldAccent(lvl, padNu(p)), goldIdx);
+  const plan = count ? [] : planSpecials(p, inst, s.perLevel, inst.vrij ? null : wereldAccent(lvl, padNu(p)), goldIdx, bezet);
   // FASE 1: de publieksmeter is uit het spel gehaald. De teller zelf loopt stil door
   // (zie submitAnswer/endLevel): hij bepaalt nog altijd het applaus en de restbonus,
   // maar er staat geen balk meer op het scherm. G.fan/G.fanStep zijn daarmee interne
   // staat geworden -- bewust blijven staan i.p.v. de beloningen eruit te slopen.
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
-  G = { lvl, inst, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
+  G = { lvl, inst, insts, themaPlan: vragenPlan, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
         klaarBijStart: (p.readyTrophies || []).slice(),
         missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0,
         nieuwRij: nieuwTeTonen[cur] || null,   // wat er nieuw is sinds de vorige show (zie vraagIsNieuw)
@@ -968,8 +974,8 @@ const RECENT_N = 10;
      telmodus  de fase ging omhoog (voor = de fase vóór advanceCountStage). Een
                fase terug zegt niets; dat merkt het kind niet en hoeft het ook
                niet te horen.
-     rekenen   rij = de rij van LEERPAD waar padNa haar net naartoe schoof (of
-               null). p.gezien onthoudt per rij-id wat al gevierd is: zet de ouder
+     rekenen   rij = de rij van LEERPAD waar padNa haar net naartoe schoof, of
+               anders die van TAFELPAD (tafelNa), of null. p.gezien onthoudt per rij-id wat al gevierd is: zet de ouder
                een rij uit en weer aan, dan is dat geen nieuws.
    Hier keek rekenen eerst naar de instellingen: een hogere grens dan ooit, of de
    eerste zoek-het-getal. Dan stond er "Nieuw: getallen tot 100!" zodra een ouder
@@ -988,7 +994,7 @@ function groeiMoment(p, g, voor, rij) {
       zin: 'Je bent gegroeid! Er is een nieuw spel.' } : null;
   }
   const z = p.gezien || (p.gezien = {});
-  const r = rij && padRijen(p.settings).rijen.find(x => x.id === rij);
+  const r = rij && (padRijen(p.settings).rijen.concat(tafelRijen(p.settings).rijen)).find(x => x.id === rij);
   if (!r || z[rij]) return null;
   z[rij] = 1;
   return { id: rij, pil: groeiPil(r.naam, r.vb) };
@@ -1122,8 +1128,13 @@ function endLevel(success) {
   onthoudUitkomst(p, success ? showStars(G) : 0, stapVoor);   // voor de stand in Voortgang (beide takken hieronder bewaren)
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;   // een show verder gewend aan de grens
   if (!G.count && success && !vrij) telGrensDrie(p, showStars(G));   // voor de grenstip (zie grensDrieSterren)
-  // een show verder op haar rij van het leerpad; schoof ze door, dan is dit haar nieuwe rij
-  const nieuweRij = !G.count && !vrij && padNa(p, success ? showStars(G) : 0) ? padNu(p) : null;
+  /* Een show verder op haar rij, op elke ladder die in deze show speelde, elk
+     op zijn eigen vragen (themaSterren). Schoof ze door, dan is dit haar nieuwe
+     rij -- rekenen eerst, want daar staat er maar één op het eindscherm. */
+  const thema = k => !G.count && !vrij && G.themaPlan.includes(k);
+  const plusMinRij = thema('rekenen') && padNa(p, success ? themaSterren(G, 'rekenen') : 0) ? padNu(p) : null;
+  const tafelRij = thema('tafels') && tafelNa(p, success ? themaSterren(G, 'tafels') : 0) ? tafelNu(p) : null;
+  const nieuweRij = plusMinRij || tafelRij;
   /* Wat er pas ná het eindscherm gevierd wordt (zie de staart van deze
      functie): een wereld die net uit of perfect werd. Bij een mislukte show
      blijft het leeg. */

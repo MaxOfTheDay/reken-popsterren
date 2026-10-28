@@ -369,8 +369,9 @@ hun opslag staan; hij telt alleen niet meer mee en is niet meer te zien. Zie
 ## Een rekenonderwerp erbij
 
 Het leerpad van rekenen is één tabel, `LEERPAD` in `src/55-vragen.js`, in de
-volgorde waarin school het brengt. Een nieuw onderwerp (getallen bouwen, geld,
-tot 1000) is één rij daarin — geen nieuw scherm en geen nieuwe instelling:
+volgorde waarin school het brengt. Een nieuw onderwerp met plus en min
+(getallen bouwen, tot 1000) is één rij daarin — geen nieuw scherm en geen
+nieuwe instelling:
 
 1. **Zijn plek.** Zet hem waar school hem brengt. Een rij die de getallen laat
    groeien is `soort: 'bereik'` (met `bereik`), een andere soort vraag met
@@ -387,6 +388,15 @@ Oefeningen en Voortgang tekenen hem dan vanzelf, met naam, voorbeeld en vinkje;
 ze gaat verder als ze hem kan (`padNa`). `npm run test:kern` zaak ZF meet bij
 elke rij na of het voorbeeld en de vragen kloppen met wat de rij belooft, en
 zaak Q2 of een oude save nergens makkelijker wordt.
+
+Iets wat geen plus of min is, is geen rij maar een **thema**: een eigen tegel
+bovenaan Oefeningen, een eigen kaart met een eigen ladder, en een eigen plek
+op die ladder. De tafels zijn er zo een (`THEMAS` en `TAFELPAD` in
+`src/55-vragen.js`, onder `= Thema's`). Een thema heeft nodig: zijn ladder,
+waar ze staat (`tafelNu`), zijn vraagmaker (`tafelInst`), hoe hij doorschuift
+(`tafelNa`), en zijn kaart in `oefenGroups`. Een show mengt de thema's die aan
+staan om de beurt (`themaPlan`), en elk schuift door op zijn eigen vragen
+(`themaSterren`). `npm run test:kern` zaak TH houdt dat vast.
 
 ---
 
