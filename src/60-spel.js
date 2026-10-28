@@ -394,7 +394,7 @@ function kaartProeven(insts) {
     : `<span class="geld-rij">${Array(r.stuks).fill(r.briefje ? 1000 : 200).map(geldStuk).join('')}</span><span class="pl-som">€ @</span>`));
   if (insts.klok) insts.klok.rijen.forEach(r => uit.push(genKlok(r, 'lees').html, genKlok(r, 'zoek').html));
   // de kalender: elke vorm een paar keer, want een maand met zes weken is een rij hoger
-  if (insts.kalender) insts.kalender.rijen.forEach(r => { for (let i = 0; i < 6; i++) uit.push(genKalender(r, i % 2 ? 'zoek' : 'lees').html); });
+  if (insts.kalender) insts.kalender.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genKalender(r, i % 2 ? 'zoek' : 'lees').html); });
   return uit;
 }
 addEventListener('resize', () => { if (G) G.kaartMin = null; });
