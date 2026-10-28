@@ -3597,9 +3597,17 @@
   .kal-kaart.vraag .q-blank { box-sizing: border-box; align-items: center; justify-content: center; margin: 0; border-radius: .6em; font-size: 1.7em; min-width: 0; }
   .kal-kaart.vraag .q-blank.done { font-size: 1em; }
 
-  .kal-brug { display: inline-flex; flex-direction: column; align-items: center; width: 3.8em; padding-bottom: .5em; }
+
+  .kal-brug { display: inline-flex; flex-direction: column; align-items: center; min-width: 3.8em; padding-bottom: .5em; }
   .kal-brug b { font-size: .9em; font-weight: 900; color: #e5397a; white-space: nowrap; margin-bottom: .15em; }
-  .kal-brug svg { width: 100%; height: auto; stroke: #e5397a; stroke-width: 2.6; stroke-linecap: round; }
+  .kal-brug svg { width: 3.8em; height: auto; margin-top: -.2em; stroke: #e5397a; stroke-width: 2.6; stroke-linecap: round; }
+
+  .kal-tel-rij { display: flex; gap: .16em; }
+  .kal-tel-rij i, .kal-tel {
+    display: inline-flex; align-items: center; justify-content: center; width: 1.15em; height: 1.15em; border-radius: 50%;
+    font-style: normal; font-size: .8em; font-weight: 900; line-height: 1; color: #fff; background: #e5397a;
+  }
+  .kal-tel { top: -.6em; z-index: 1; box-shadow: 0 0 0 .15em #fff; }
   .kal-brug .punt { fill: #e5397a; stroke: none; }
   .kal-vraag { display: flex; justify-content: center; margin: 2px 0 .08em; }
 
@@ -3689,6 +3697,8 @@
   .choice-btn.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--red-answer-shadow), var(--btn-diep); }
 
   .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(78vw, 300px); margin-top: 4px; }
+
+  #answer-area.vast { display: flex; flex-direction: column; justify-content: center; align-items: center; }
   .num-btn {
     font-family: inherit; font-size: 28px; font-weight: 700; color: var(--c-white); border: none; cursor: pointer;
     padding: 13px 0; border-radius: var(--r-md);
@@ -4808,10 +4818,18 @@
 
 
 
-  .question-card.nieuw::before {
-    content: "✨ Nieuw"; position: absolute; top: 8px; left: 10px; z-index: 1;
-    padding: 2px 10px; border-radius: var(--r-pill); background: rgba(var(--goud-rgb), .88);
-    color: var(--ink-on-gold); font-size: var(--tx-klein); font-weight: 700; line-height: 1.5;
+
+
+
+  .nieuw-lint {
+    display: none; position: absolute; top: 0; left: 0; z-index: 1; width: 78px; height: 78px;
+    overflow: hidden; border-top-left-radius: inherit; pointer-events: none;
+  }
+  .question-card.nieuw .nieuw-lint { display: block; }
+  .nieuw-lint span {
+    position: absolute; top: 14px; left: -26px; width: 110px; padding: 3px 0; transform: rotate(-45deg);
+    text-align: center; background: linear-gradient(180deg, var(--gold-accent), var(--gold-cta-top)); color: var(--ink-on-gold);
+    font-size: 12px; font-weight: 900; letter-spacing: .08em; line-height: 1.2; box-shadow: 0 1px 2px rgba(0,0,0,.18);
   }
   .gold-banner { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); text-shadow: var(--goud-ink); margin-top: 6px; height: 22px; }
 
@@ -8051,14 +8069,18 @@
   .end-milestone:empty { display: none; }
 
 
-  .groei-pil {
-    display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 7px 16px;
-    border-radius: var(--r-pill); background: rgba(var(--goud-rgb), .88); box-shadow: var(--goud-gloed-zacht);
-    color: var(--ink-on-gold); font-weight: 700; font-size: var(--tx-label);
-  }
-  @media (max-height: 740px) { .groei-pil { padding: 6px 13px; min-height: 30px; } }
 
-  .groei-vb { padding: 1px 9px; border-radius: var(--r-pill); background: rgba(255,255,255,.7); white-space: nowrap; }
+
+
+  .groei-pil {
+    display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 8px;
+    color: var(--gold-light); text-shadow: var(--goud-ink); font-weight: 800; font-size: var(--tx-body);
+  }
+
+
+  .groei-vb { display: inline-flex; align-items: center; gap: 6px; color: var(--c-white); white-space: nowrap; }
+  .groei-vb .klok { width: 1.6em; height: 1.6em; }
+  .groei-vb .klok-vb { display: none; }
   .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; }
 
   .end-actions.wacht { pointer-events: none; }
@@ -10649,6 +10671,7 @@
       </div>
       <div class="math-panel">
         <div class="question-card" id="question-card">
+          <span class="nieuw-lint" aria-hidden="true"><span>NIEUW</span></span>
           <div id="question-text"></div>
           <div class="spot-rail" aria-hidden="true"><div class="spotlight-bar" id="spotlight-bar"></div></div>
         </div>
@@ -22717,23 +22740,39 @@ function klokDigitaal(t) { return `${Math.floor(t / 60) % 24}:${String(t % 60).p
 
 
 
+
+
+
+
+
+
+
+
+
+
 function klokSvg(t, maat, kaal) {
   const P = (graden, r) => [50 + r * Math.sin(graden * Math.PI / 180), 50 - r * Math.cos(graden * Math.PI / 180)].map(v => v.toFixed(1));
-  const m = t % 60, [mx, my] = P(m * 6, 36), [ux, uy] = P(((Math.floor(t / 60) % 12) + m / 60) * 30, 22);
-  const streepjes = Array.from({ length: 12 }, (_, i) => { const [x1, y1] = P(i * 30, 45), [x2, y2] = P(i * 30, i % 3 ? 42 : 40);
-    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="${i % 3 ? 1.6 : 2.6}"/>`; }).join('');
+  const klein = maat <= 90;
+  const rc = klein ? 33 : 35.5, lang = klein ? 26 : 26.5, kort = klein ? 16 : 17;
+  const m = t % 60, [mx, my] = P(m * 6, lang), [ux, uy] = P(((Math.floor(t / 60) % 12) + m / 60) * 30, kort);
+  const uren = Array.from({ length: 12 }, (_, j) => {
+    const i = j + 1, [x, y] = P(i * 30, rc);
+    return !kaal && (!klein || i % 3 === 0) ? `<text x="${x}" y="${y}">${i}</text>` : `<circle cx="${x}" cy="${y}" r="${klein ? 3 : 2}" fill="#b79ad8"/>`;
+  }).join('');
 
-
-  const klein = maat > 30 && maat <= 64, letter = klein ? 16 : 12;
-  const cijfers = kaal ? '' : Array.from({ length: 12 }, (_, i) => { const [x, y] = P((i + 1) * 30, klein ? 31 : 33);
-    return `<text x="${x}" y="${y}">${i + 1}</text>`; }).join('');
+  const minuten = klein ? '' : Array.from({ length: 60 }, (_, i) => {
+    if (i % 5 === 0) return '';
+    const [x, y] = P(i * 6, 43);
+    return `<circle cx="${x}" cy="${y}" r=".8"/>`;
+  }).join('');
   return `<svg class="klok" viewBox="0 0 100 100" width="${maat}" height="${maat}" aria-hidden="true">`
-    + '<circle cx="50" cy="50" r="47" fill="#fff" stroke="#8e3fc8" stroke-width="5"/>'
-    + `<g stroke="#4a2a7a" stroke-linecap="round">${streepjes}</g>`
-    + (kaal ? '' : `<g fill="#2b2238" font-size="${letter}" font-weight="800" text-anchor="middle" dominant-baseline="central">${cijfers}</g>`)
-    + `<line x1="50" y1="50" x2="${mx}" y2="${my}" stroke="#8e3fc8" stroke-width="3.5" stroke-linecap="round"/>`
-    + `<line x1="50" y1="50" x2="${ux}" y2="${uy}" stroke="#2b2238" stroke-width="8" stroke-linecap="round"/>`
-    + '<circle cx="50" cy="50" r="4.5" fill="#2b2238"/></svg>';
+    + '<circle cx="50" cy="50" r="49" fill="#8e3fc8"/><path d="M4 46 A46 46 0 0 1 96 46" fill="none" stroke="#b678ec" stroke-width="4" stroke-linecap="round"/>'
+    + '<circle cx="50" cy="51.8" r="45" fill="#3d1a6e" opacity=".4"/><circle cx="50" cy="50" r="45" fill="#fffaf3"/>'
+    + `<g fill="#cdb6e6">${minuten}</g>`
+    + `<g fill="#2b2238" font-size="${klein ? 22 : 15}" font-weight="900" text-anchor="middle" dominant-baseline="central">${uren}</g>`
+    + `<line x1="50" y1="50" x2="${ux}" y2="${uy}" stroke="#3d2466" stroke-width="${klein ? 11 : 9}" stroke-linecap="round"/>`
+    + `<line x1="50" y1="50" x2="${mx}" y2="${my}" stroke="#e5397a" stroke-width="${klein ? 6.5 : 5}" stroke-linecap="round"/>`
+    + `<circle cx="50" cy="50" r="${klein ? 6.5 : 5.5}" fill="#ffc83d" stroke="#3d2466" stroke-width="2"/></svg>`;
 }
 function klokVoorbeeld(r) {
   const t = { uren: 180, halfuur: 210, kwartier: 165, vijfmin: 310, uur24: 155 }[r.id];
@@ -22804,13 +22843,17 @@ function klokTekst(q, v) { return q.uur24 && q.vorm === 'lees' ? klokDigitaal(v)
 
 
 
+
 const DAGEN = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'];
 const MAANDEN = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+
+
+
 const SEIZOENEN = [
   { id: 'winter', naam: 'winter', teken: '❄️', dingen: ['⛄', '🧤', '🛷', '🎄'] },
-  { id: 'lente',  naam: 'lente',  teken: '🌷', dingen: ['🐣', '🌷', '🐝', '🌱'] },
+  { id: 'lente',  naam: 'lente',  teken: '🌷', dingen: ['🐣', '🐝', '🌱', '🐑'] },
   { id: 'zomer',  naam: 'zomer',  teken: '☀️', dingen: ['🏖️', '🍦', '🩴', '🍉'] },
-  { id: 'herfst', naam: 'herfst', teken: '🍂', dingen: ['🍂', '🍄', '🌰', '☔'] },
+  { id: 'herfst', naam: 'herfst', teken: '🍂', dingen: ['🍄', '🌰', '☔', '🎃'] },
 ];
 
 const seizoenVan = m => Math.floor(((m + 1) % 12) / 3);
@@ -22852,27 +22895,22 @@ function kalKaart(soort, inhoud, teken) {
 
 
 
-function kalBrug(woord, dagen, terug) {
-  const n = dagen || 0, Y = 25, x0 = 5, x1 = 55;
-  let tekening;
-  if (n) {
-    const h = 15, stap = (x1 - x0) / n;
 
-    const hoek = Math.atan2(2 * h, (x1 - x0) / 2) * 180 / Math.PI;
-    tekening = `<path d="M${x0} ${Y} Q${(x0 + x1) / 2} ${Y - 2 * h} ${x1} ${Y}" fill="none"/>`
-      + Array.from({ length: n }, (_, i) => `<circle cx="${(x0 + i * stap).toFixed(1)}" cy="${Y + 1}" r="2.3" class="punt"/>`).join('')
-      + `<path d="M0 0 l-9 -5 v10z" class="punt" transform="translate(${x1} ${Y}) rotate(${hoek.toFixed(1)})"/>`;
-  } else tekening = `<path d="M${x0} ${Y - 6} H${x1 - 4}" fill="none"/><path d="M${x1} ${Y - 6} l-9 -5 v10z" class="punt"/>`;
-  return `<span class="kal-brug"><b>${woord}</b><svg viewBox="0 0 60 30" aria-hidden="true">${terug ? `<g transform="translate(60 0) scale(-1 1)">${tekening}</g>` : tekening}</svg></span>`;
+function kalBrug(woord, dagen, terug) {
+  const tel = Array.from({ length: Math.max(0, (dagen || 0) - 1) }, (_, i) => `<i>${i + 1}</i>`);
+  const rondjes = tel.length ? `<span class="kal-tel-rij">${(terug ? tel.reverse() : tel).join('')}</span>` : '';
+  const pijl = '<path d="M5 15 H51" fill="none"/><path d="M56 15 l-10 -6 v12z" class="punt"/>';
+  return `<span class="kal-brug"><b>${woord}</b>${rondjes}<svg viewBox="0 0 60 30" aria-hidden="true">${terug ? `<g transform="translate(60 0) scale(-1 1)">${pijl}</g>` : pijl}</svg></span>`;
 }
 
 const kalPaar = (links, brug, rechts) => `<span class="kal-rij">${links}${brug}${rechts}</span>`;
-const vakje = () => kalKaart('vraag');
-const dagKaart = d => kalKaart('nu', DAGEN[d], '⭐');
+
+const vakje = tel => tel > 1 ? `<span class="kal-kaart vraag"><i class="kal-teken kal-tel" aria-hidden="true">${tel}</i><span class="pl-som">@</span></span>` : kalKaart('vraag');
+const dagKaart = d => kalKaart('nu', DAGEN[d]);
 const seizoenKaart = z => kalKaart(SEIZOENEN[z].id, SEIZOENEN[z].naam, SEIZOENEN[z].teken);
 const maandKaart = m => kalKaart(SEIZOENEN[seizoenVan(m)].id, MAANDEN[m], SEIZOENEN[seizoenVan(m)].teken);
 
-const kalVan = (weet, woord, dagen, terug) => terug ? kalPaar(vakje(), kalBrug(woord, dagen, true), weet) : kalPaar(weet, kalBrug(woord, dagen), vakje());
+const kalVan = (weet, woord, dagen, terug) => terug ? kalPaar(vakje(dagen), kalBrug(woord, dagen, true), weet) : kalPaar(weet, kalBrug(woord, dagen), vakje(dagen));
 
 
 
@@ -22898,7 +22936,7 @@ function kalWeken(w) {
 }
 
 function kalenderVoorbeeld(r) {
-  return { morgen: '⭐ di ➜ morgen', seizoen: '❄️ ➜ 🌷', verder: '⭐ vr + 3', maanden: '🌷 maart ➜ april', weken: '2 weken = 14', blad: '📅 12 ➜ di', datum: '28/10' }[r.id];
+  return { morgen: 'di ➜ morgen', seizoen: '❄️ ➜ 🌷', verder: 'vr + 3', maanden: '🌷 maart ➜ april', weken: '2 weken = 14', blad: '📅 12 ➜ di', datum: '28/10' }[r.id];
 }
 
 function kalKeuzes(ans, n, fout) { return [...new Set([ans, ...fout.map(v => mod(v, n)), ...shuffle([1, -1, 2, -2, 3]).map(d => mod(ans + d, n))])].slice(0, 4); }
@@ -24972,6 +25010,7 @@ function renderQuestion() {
 
   const area = $('answer-area');
   if (G.count) {
+    antwoordOpMaat(area, true);
     renderCountAnswers(q, area);
     spotZonderTijd();
     return;
@@ -24994,7 +25033,38 @@ function renderQuestion() {
       b.onclick = () => numpadPress(b.dataset.n);
     });
   }
+  antwoordOpMaat(area);
   startSpot();
+}
+
+
+
+
+
+
+
+
+
+
+function antwoordOpMaat(area, los) {
+  area.style.minHeight = '';
+  area.classList.remove('vast');
+  if (los || P().settings.mode === 'kies') return;
+  if (G.antwoordMin == null) G.antwoordMin = antwoordMeten(area);
+  if (!G.antwoordMin) return;
+  area.style.minHeight = G.antwoordMin + 'px';
+  area.classList.add('vast');
+}
+function antwoordMeten(area) {
+  const kopie = area.cloneNode(false);
+  kopie.removeAttribute('id');
+  Object.assign(kopie.style, { position: 'absolute', visibility: 'hidden', left: '0', top: '0', minHeight: '', width: area.clientWidth + 'px' });
+  area.parentNode.appendChild(kopie);
+  const hoog = html => { kopie.innerHTML = html; return kopie.offsetHeight; };
+  const knop = (k, n) => Array(n).fill(`<button class="${k}">8</button>`).join('');
+  const hoogste = Math.max(hoog(`<div class="numpad">${knop('num-btn', 12)}</div>`), hoog(`<div class="choices">${knop('choice-btn', 4)}</div>`));
+  kopie.remove();
+  return hoogste;
 }
 
 
@@ -25181,7 +25251,7 @@ function kaartProeven(insts) {
   if (insts.kalender) insts.kalender.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genKalender(r, i % 2 ? 'zoek' : 'lees').html); });
   return uit;
 }
-addEventListener('resize', () => { if (G) G.kaartMin = null; });
+addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = null; });
 function numpadPress(n) {
   if (!G || G.lock) return;
   if (n === 'del') { if (G.input === '') return; G.input = G.input.slice(0, -1); sndClick(); }
@@ -25840,7 +25910,7 @@ const RECENT_N = 10;
 
 const nieuwTeTonen = {};
 function groeiPil(naam, vb) {
-  return `⬆️ Nieuw: ${naam}${vb ? ` <span class="groei-vb">${vb}</span>` : ''}`;
+  return `✨ Nieuw: ${naam}${vb ? ` <span class="groei-vb">${vb}</span>` : ''}`;
 }
 function groeiMoment(p, g, voor, rij) {
   if (g.count) {

@@ -556,27 +556,43 @@ function klokWoorden(t) {
 }
 // 14:35: de 24 uur, voor een tijd in de namiddag (t + 720)
 function klokDigitaal(t) { return `${Math.floor(t / 60) % 24}:${String(t % 60).padStart(2, '0')}`; }
-/* De klok zelf: alle cijfers van 1 tot 12, de uurwijzer kort en dik, de
-   minuutwijzer lang en dun -- het verschil zit in de vorm, niet alleen in de
-   kleur. De uurwijzer schuift mee met de minuten, zoals op een echte klok: bij
-   half 4 staat hij tussen de 3 en de 4, en dat is precies waar je het leest. */
+/* De klok zelf, in de stijl van de knoppen: een paarse rand met een lip
+   eronder, een roomwitte wijzerplaat en een gouden knopje in het midden.
+   De uurwijzer kort en dik (donker), de minuutwijzer lang en roze -- het
+   verschil zit in de vorm, niet alleen in de kleur. De uurwijzer schuift mee
+   met de minuten, zoals op een echte klok: bij half 4 staat hij tussen de 3
+   en de 4, en dat is precies waar je het leest.
+   DE WIJZERS BEDEKKEN NOOIT EEN CIJFER. De cijfers staan tegen de rand en de
+   wijzers houden ervoor op: ze wijzen ernaar. Liep de minuutwijzer tot aan
+   de rand, dan lag hij bij elke heel uur dwars door de 12, en op een klokje
+   in een knop was dat cijfer dan weg.
+   Een klein klokje (een knop, de hint, de ladder) toont alleen 12, 3, 6 en 9,
+   groot; de andere uren zijn een stip. Twaalf cijfers op 70 pixels stonden
+   tegen elkaar aan en lazen als een vlek -- dat was wat een kind in de
+   speeltest niet kon lezen. kaal: geen cijfers (het themaplaatje). */
 function klokSvg(t, maat, kaal) {
   const P = (graden, r) => [50 + r * Math.sin(graden * Math.PI / 180), 50 - r * Math.cos(graden * Math.PI / 180)].map(v => v.toFixed(1));
-  const m = t % 60, [mx, my] = P(m * 6, 36), [ux, uy] = P(((Math.floor(t / 60) % 12) + m / 60) * 30, 22);
-  const streepjes = Array.from({ length: 12 }, (_, i) => { const [x1, y1] = P(i * 30, 45), [x2, y2] = P(i * 30, i % 3 ? 42 : 40);
-    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="${i % 3 ? 1.6 : 2.6}"/>`; }).join('');
-  // een klein klokje (een knop, de hint) krijgt grotere cijfers, iets meer naar binnen: op 12 waren ze daar niet te lezen.
-  // Het piepkleine van de ladder (26) niet: daar zijn de cijfers toch geen cijfers meer, en groter worden ze een vlek.
-  const klein = maat > 30 && maat <= 64, letter = klein ? 16 : 12;
-  const cijfers = kaal ? '' : Array.from({ length: 12 }, (_, i) => { const [x, y] = P((i + 1) * 30, klein ? 31 : 33);
-    return `<text x="${x}" y="${y}">${i + 1}</text>`; }).join('');
+  const klein = maat <= 90;
+  const rc = klein ? 33 : 35.5, lang = klein ? 26 : 26.5, kort = klein ? 16 : 17;
+  const m = t % 60, [mx, my] = P(m * 6, lang), [ux, uy] = P(((Math.floor(t / 60) % 12) + m / 60) * 30, kort);
+  const uren = Array.from({ length: 12 }, (_, j) => {
+    const i = j + 1, [x, y] = P(i * 30, rc);
+    return !kaal && (!klein || i % 3 === 0) ? `<text x="${x}" y="${y}">${i}</text>` : `<circle cx="${x}" cy="${y}" r="${klein ? 3 : 2}" fill="#b79ad8"/>`;
+  }).join('');
+  // de minuten als fijne stipjes langs de rand, alleen waar er plaats voor is
+  const minuten = klein ? '' : Array.from({ length: 60 }, (_, i) => {
+    if (i % 5 === 0) return '';
+    const [x, y] = P(i * 6, 43);
+    return `<circle cx="${x}" cy="${y}" r=".8"/>`;
+  }).join('');
   return `<svg class="klok" viewBox="0 0 100 100" width="${maat}" height="${maat}" aria-hidden="true">`
-    + '<circle cx="50" cy="50" r="47" fill="#fff" stroke="#8e3fc8" stroke-width="5"/>'
-    + `<g stroke="#4a2a7a" stroke-linecap="round">${streepjes}</g>`
-    + (kaal ? '' : `<g fill="#2b2238" font-size="${letter}" font-weight="800" text-anchor="middle" dominant-baseline="central">${cijfers}</g>`)
-    + `<line x1="50" y1="50" x2="${mx}" y2="${my}" stroke="#8e3fc8" stroke-width="3.5" stroke-linecap="round"/>`
-    + `<line x1="50" y1="50" x2="${ux}" y2="${uy}" stroke="#2b2238" stroke-width="8" stroke-linecap="round"/>`
-    + '<circle cx="50" cy="50" r="4.5" fill="#2b2238"/></svg>';
+    + '<circle cx="50" cy="50" r="49" fill="#8e3fc8"/><path d="M4 46 A46 46 0 0 1 96 46" fill="none" stroke="#b678ec" stroke-width="4" stroke-linecap="round"/>'
+    + '<circle cx="50" cy="51.8" r="45" fill="#3d1a6e" opacity=".4"/><circle cx="50" cy="50" r="45" fill="#fffaf3"/>'
+    + `<g fill="#cdb6e6">${minuten}</g>`
+    + `<g fill="#2b2238" font-size="${klein ? 22 : 15}" font-weight="900" text-anchor="middle" dominant-baseline="central">${uren}</g>`
+    + `<line x1="50" y1="50" x2="${ux}" y2="${uy}" stroke="#3d2466" stroke-width="${klein ? 11 : 9}" stroke-linecap="round"/>`
+    + `<line x1="50" y1="50" x2="${mx}" y2="${my}" stroke="#e5397a" stroke-width="${klein ? 6.5 : 5}" stroke-linecap="round"/>`
+    + `<circle cx="50" cy="50" r="${klein ? 6.5 : 5.5}" fill="#ffc83d" stroke="#3d2466" stroke-width="2"/></svg>`;
 }
 function klokVoorbeeld(r) {
   const t = { uren: 180, halfuur: 210, kwartier: 165, vijfmin: 310, uur24: 155 }[r.id];
@@ -641,7 +657,8 @@ function klokTekst(q, v) { return q.uur24 && q.vorm === 'lees' ? klokDigitaal(v)
    kalenderblad, groot genoeg om de cijfers te lezen.
      seizoenen   elk een kleur én een teken (❄️ 🌷 ☀️ 🍂), op een seizoen, op
                  een maand en op de kop van het kalenderblad
-     roze        wat je zoekt of waar je vertrekt: ⭐ vandaag, de omcirkelde datum
+     roze        waar je vertrekt of wat je zoekt: de dag van vandaag, de omcirkelde datum.
+                 Zonder ⭐ erop: het roze zegt het al, en een ster was nog iets om te lezen
 
    Een waarde is altijd een geheel getal voor de knoppen: een dag 0-6 (maandag
    eerst, zoals op een Vlaamse kalender), een seizoen 0-3, een maand 0-11, een
@@ -649,11 +666,14 @@ function klokTekst(q, v) { return q.uur24 && q.vorm === 'lees' ? klokDigitaal(v)
    (dagen, weken, een datum) mag getypt. */
 const DAGEN = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'];
 const MAANDEN = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+/* De dingen van een seizoen zijn nooit zijn eigen teken: dat teken staat op
+   de antwoordknop, en dan zocht ze plaatje bij plaatje in plaats van het
+   seizoen (kern.test.js kijkt het na). */
 const SEIZOENEN = [
   { id: 'winter', naam: 'winter', teken: '❄️', dingen: ['⛄', '🧤', '🛷', '🎄'] },
-  { id: 'lente',  naam: 'lente',  teken: '🌷', dingen: ['🐣', '🌷', '🐝', '🌱'] },
+  { id: 'lente',  naam: 'lente',  teken: '🌷', dingen: ['🐣', '🐝', '🌱', '🐑'] },
   { id: 'zomer',  naam: 'zomer',  teken: '☀️', dingen: ['🏖️', '🍦', '🩴', '🍉'] },
-  { id: 'herfst', naam: 'herfst', teken: '🍂', dingen: ['🍂', '🍄', '🌰', '☔'] },
+  { id: 'herfst', naam: 'herfst', teken: '🍂', dingen: ['🍄', '🌰', '☔', '🎃'] },
 ];
 // het seizoen van een maand: december, januari en februari zijn winter
 const seizoenVan = m => Math.floor(((m + 1) % 12) / 3);
@@ -681,41 +701,36 @@ const mod = (v, n) => ((v % n) + n) % n;
    links staat (gisteren, ervoor): dan wijst hij terug. Eén vaste vorm leest
    na drie vragen vanzelf; verschillende maten en woordjes op verschillende
    hoogtes leest ze elke vraag opnieuw.
-   soort: 'nu' (roze, met ⭐: vandaag), 'vraag' (het vakje, '@'), of een
+   soort: 'nu' (roze: waar je vertrekt), 'vraag' (het vakje, '@'), of een
    kaartje in de kleur van zijn seizoen ('winter', ...) of zonder ('kaal'). */
 function kalKaart(soort, inhoud, teken) {
   if (soort === 'vraag') return '<span class="kal-kaart vraag"><span class="pl-som">@</span></span>';
-  // het teken (⭐ vandaag, ❄️ het seizoen) zit bovenop de rand, nooit naast het woord: zo blijft elk woord op dezelfde plek
+  // het teken (❄️ het seizoen) zit bovenop de rand, nooit naast het woord: zo blijft elk woord op dezelfde plek
   return `<span class="kal-kaart ${soort}">${teken ? `<i class="kal-teken" aria-hidden="true">${teken}</i>` : ''}${inhoud}</span>`;
 }
-/* DE BRUG: het woord erboven, en eronder een pijl. Gaat het om dagen, dan
-   is het één grote boog met onderaan een stip per dag, zodat ze de dagen
-   kan tellen; anders een gewone rechte pijl. Altijd even breed, zodat de
-   kaartjes niet verspringen.
-   Eén boogje per dag paste niet: vijf sprongen op deze breedte worden een
-   kronkel, en dat las als een slinger in plaats van als een sprong. Terug is
-   dezelfde tekening gespiegeld. */
+/* DE BRUG: het woord erboven, en eronder een rechte pijl -- dezelfde pijl
+   als bij elke andere kalendervraag. Gaat het om meer dan één dag, dan tel
+   je langs de pijl: rondjes 1, 2, 3 erboven, en de laatste tel staat óp het
+   vakje (zie kalVan). Zo ís de vierde dag het antwoord.
+   Hier stond een boog met een stip per dag, en daarna een hokje per dag: dat
+   las als "na vier hokjes komt de dag" -- één dag te ver. Een tel die op het
+   vakje zelf landt kan dat niet. Terug is dezelfde tekening gespiegeld, en
+   de rondjes tellen dan van rechts naar links. */
 function kalBrug(woord, dagen, terug) {
-  const n = dagen || 0, Y = 25, x0 = 5, x1 = 55;
-  let tekening;
-  if (n) {
-    const h = 15, stap = (x1 - x0) / n;
-    // de punt volgt de boog waar hij landt: een kwadratische boog komt daar binnen onder (x1 - midden, 2h)
-    const hoek = Math.atan2(2 * h, (x1 - x0) / 2) * 180 / Math.PI;
-    tekening = `<path d="M${x0} ${Y} Q${(x0 + x1) / 2} ${Y - 2 * h} ${x1} ${Y}" fill="none"/>`
-      + Array.from({ length: n }, (_, i) => `<circle cx="${(x0 + i * stap).toFixed(1)}" cy="${Y + 1}" r="2.3" class="punt"/>`).join('')
-      + `<path d="M0 0 l-9 -5 v10z" class="punt" transform="translate(${x1} ${Y}) rotate(${hoek.toFixed(1)})"/>`;
-  } else tekening = `<path d="M${x0} ${Y - 6} H${x1 - 4}" fill="none"/><path d="M${x1} ${Y - 6} l-9 -5 v10z" class="punt"/>`;
-  return `<span class="kal-brug"><b>${woord}</b><svg viewBox="0 0 60 30" aria-hidden="true">${terug ? `<g transform="translate(60 0) scale(-1 1)">${tekening}</g>` : tekening}</svg></span>`;
+  const tel = Array.from({ length: Math.max(0, (dagen || 0) - 1) }, (_, i) => `<i>${i + 1}</i>`);
+  const rondjes = tel.length ? `<span class="kal-tel-rij">${(terug ? tel.reverse() : tel).join('')}</span>` : '';
+  const pijl = '<path d="M5 15 H51" fill="none"/><path d="M56 15 l-10 -6 v12z" class="punt"/>';
+  return `<span class="kal-brug"><b>${woord}</b>${rondjes}<svg viewBox="0 0 60 30" aria-hidden="true">${terug ? `<g transform="translate(60 0) scale(-1 1)">${pijl}</g>` : pijl}</svg></span>`;
 }
 // links ➜ rechts, met de brug ertussen
 const kalPaar = (links, brug, rechts) => `<span class="kal-rij">${links}${brug}${rechts}</span>`;
-const vakje = () => kalKaart('vraag');
-const dagKaart = d => kalKaart('nu', DAGEN[d], '⭐');
+// het vakje; tel = de laatste tel langs de brug, bovenop de rand (zie kalBrug)
+const vakje = tel => tel > 1 ? `<span class="kal-kaart vraag"><i class="kal-teken kal-tel" aria-hidden="true">${tel}</i><span class="pl-som">@</span></span>` : kalKaart('vraag');
+const dagKaart = d => kalKaart('nu', DAGEN[d]);
 const seizoenKaart = z => kalKaart(SEIZOENEN[z].id, SEIZOENEN[z].naam, SEIZOENEN[z].teken);
 const maandKaart = m => kalKaart(SEIZOENEN[seizoenVan(m)].id, MAANDEN[m], SEIZOENEN[seizoenVan(m)].teken);
 // wat ze weet, de brug, en het vakje: naar rechts als het erna komt, naar links als het ervoor komt
-const kalVan = (weet, woord, dagen, terug) => terug ? kalPaar(vakje(), kalBrug(woord, dagen, true), weet) : kalPaar(weet, kalBrug(woord, dagen), vakje());
+const kalVan = (weet, woord, dagen, terug) => terug ? kalPaar(vakje(dagen), kalBrug(woord, dagen, true), weet) : kalPaar(weet, kalBrug(woord, dagen), vakje(dagen));
 
 /* HET KALENDERBLAD van maand m: de kop in de kleur van zijn seizoen, ma tot
    zo, het weekend lichter. Het jaar is dit jaar, zodat de dagen kloppen met
@@ -741,7 +756,7 @@ function kalWeken(w) {
 }
 
 function kalenderVoorbeeld(r) {
-  return { morgen: '⭐ di ➜ morgen', seizoen: '❄️ ➜ 🌷', verder: '⭐ vr + 3', maanden: '🌷 maart ➜ april', weken: '2 weken = 14', blad: '📅 12 ➜ di', datum: '28/10' }[r.id];
+  return { morgen: 'di ➜ morgen', seizoen: '❄️ ➜ 🌷', verder: 'vr + 3', maanden: '🌷 maart ➜ april', weken: '2 weken = 14', blad: '📅 12 ➜ di', datum: '28/10' }[r.id];
 }
 // Vier keuzes rond het goede antwoord, op een ring van n (een dag te ver, de verkeerde kant op).
 function kalKeuzes(ans, n, fout) { return [...new Set([ans, ...fout.map(v => mod(v, n)), ...shuffle([1, -1, 2, -2, 3]).map(d => mod(ans + d, n))])].slice(0, 4); }
@@ -753,7 +768,7 @@ const kalGetal = (rij, ans, extra) => ({ kind: 'kalender', op: 'kalender', rij, 
 function genKalender(r, vorm) {
   const tweede = vorm === 'zoek';
   if (r.id === 'morgen') {
-    // ⭐ donderdag ─morgen➜ ?, of ? ⬅overmorgen─ ⭐ donderdag: één boogje per dag
+    // donderdag ─morgen➜ ?, of ? ⬅overmorgen─ donderdag: de dagen tel je langs de pijl (zie kalBrug)
     const stap = pick(tweede ? [-2, 2] : [-1, 1, 1]), nu = rnd(0, 6), ans = mod(nu + stap, 7);
     return kalVraag('morgen', ans, { soort: 'dag', keuzes: kalKeuzes(ans, 7, [nu - stap, nu]),
       tmpl: `kal morgen ${nu} ${stap}`, html: kalVan(dagKaart(nu), DAGWOORD[stap], Math.abs(stap), stap < 0) });

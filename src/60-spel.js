@@ -188,6 +188,7 @@ function renderQuestion() {
   // antwoorden
   const area = $('answer-area');
   if (G.count) {
+    antwoordOpMaat(area, true);
     renderCountAnswers(q, area);
     spotZonderTijd();
     return;
@@ -210,7 +211,38 @@ function renderQuestion() {
       b.onclick = () => numpadPress(b.dataset.n);
     });
   }
+  antwoordOpMaat(area);
   startSpot();
+}
+/* ---- Het antwoordvak springt ook niet ---------------------------------------
+   Typen geeft het cijferblok, kiezen vier knoppen, en een show kan die
+   afwisselen: een som typ je, maar een klok of een dag kies je altijd (en
+   "allebei" kiest per vraag). Het cijferblok is vier rijen, de knoppen twee:
+   op een telefoon schoof de kaart bij elke wissel 86px op, en zij kromp en
+   groeide mee. Dat was de "sprong" uit de speeltest.
+   Nu houdt het vak de hele show de hoogte van het hoogste van de twee, en
+   staat wat kleiner is in het midden -- net als de kaart (zie kaartOpMaat).
+   Alleen kiezen meet niets: dan zijn het altijd dezelfde knoppen. Gemeten op
+   een onzichtbare kopie, één keer per show en opnieuw na een resize. */
+function antwoordOpMaat(area, los) {
+  area.style.minHeight = '';
+  area.classList.remove('vast');
+  if (los || P().settings.mode === 'kies') return;   // los: de telmodus heeft zijn eigen tegels
+  if (G.antwoordMin == null) G.antwoordMin = antwoordMeten(area);
+  if (!G.antwoordMin) return;
+  area.style.minHeight = G.antwoordMin + 'px';
+  area.classList.add('vast');
+}
+function antwoordMeten(area) {
+  const kopie = area.cloneNode(false);
+  kopie.removeAttribute('id');
+  Object.assign(kopie.style, { position: 'absolute', visibility: 'hidden', left: '0', top: '0', minHeight: '', width: area.clientWidth + 'px' });
+  area.parentNode.appendChild(kopie);
+  const hoog = html => { kopie.innerHTML = html; return kopie.offsetHeight; };
+  const knop = (k, n) => Array(n).fill(`<button class="${k}">8</button>`).join('');
+  const hoogste = Math.max(hoog(`<div class="numpad">${knop('num-btn', 12)}</div>`), hoog(`<div class="choices">${knop('choice-btn', 4)}</div>`));
+  kopie.remove();
+  return hoogste;
 }
 /* Een nieuwe vraag komt binnen in plaats van te verspringen: 140ms, alleen
    opacity + een duwtje omhoog. Dat is het "en nu de volgende" van het goede
@@ -397,7 +429,7 @@ function kaartProeven(insts) {
   if (insts.kalender) insts.kalender.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genKalender(r, i % 2 ? 'zoek' : 'lees').html); });
   return uit;
 }
-addEventListener('resize', () => { if (G) G.kaartMin = null; });
+addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = null; });
 function numpadPress(n) {
   if (!G || G.lock) return;
   if (n === 'del') { if (G.input === '') return; G.input = G.input.slice(0, -1); sndClick(); }
@@ -1056,7 +1088,7 @@ const RECENT_N = 10;
    zaak W loopt ze allemaal na). */
 const nieuwTeTonen = {};   // per ster: de rij-id (of 'fase') die in de volgende show "Nieuw" krijgt
 function groeiPil(naam, vb) {
-  return `⬆️ Nieuw: ${naam}${vb ? ` <span class="groei-vb">${vb}</span>` : ''}`;
+  return `✨ Nieuw: ${naam}${vb ? ` <span class="groei-vb">${vb}</span>` : ''}`;
 }
 function groeiMoment(p, g, voor, rij) {
   if (g.count) {

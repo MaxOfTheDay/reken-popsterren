@@ -26,6 +26,11 @@
  *      stond een stuk omlaag. Ook voor de balk van de kast.
  *   D  een scherm dat geen lijst is (.lijst, zie .screen in 10-basis) past op
  *      elke maat: zo'n scherm schuift niet, dus wat niet past valt weg
+ *   E  een show springt niet: de kaart, het antwoordvak en zij staan bij elke
+ *      vraag op dezelfde plek, ook als typen (cijferblok) en kiezen (vier
+ *      knoppen) elkaar afwisselen -- een som typ je, een klok of een dag kies
+ *      je altijd. Vóór de speeltest van oktober 2026 schoof de kaart op een
+ *      telefoon bij elke wissel 86px op, en kromp zij mee (zie antwoordOpMaat).
  *
  * Draaien:  npm run test:schuiven
  */
@@ -200,8 +205,49 @@ async function zaakC(browser) {
   await ctx.close();
 }
 
+// ---- E · een show springt niet ----
+const SPRONG = 4;
+async function zaakE(browser, [w, h]) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true });
+  await cacheFonts(ctx);
+  const page = await ctx.newPage();
+  const fouten = [];
+  page.on('pageerror', e => fouten.push(e.message));
+  await page.goto(APP_URL + '&demo&star=p1&screen=map');
+  await rust(page);
+  for (const mode of ['typ', 'mix']) {
+    const r = await page.evaluate(async mode => {
+      await document.fonts.ready;
+      const s = P().settings;
+      s.themas = ['rekenen', 'geld', 'klok', 'kalender']; s.mode = mode; s.modus = 'vrij';
+      s.kiesGeld = GELDPAD.map(r => r.id); s.kiesKlok = KLOKPAD.map(r => r.id); s.kiesKalender = KALENDERPAD.map(r => r.id);
+      startLevel(P().level);
+      // offsetTop en offsetHeight: de vraag komt binnen met een transform, en die telt hier niet
+      const plek = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
+      const uit = [];
+      for (let i = 0; i < G.total; i++) {
+        G.idx = i; renderQuestion();
+        const q = G.qs[i];
+        uit.push({ vraag: q.kind + (q.vorm || q.soort ? '/' + (q.vorm || q.soort) : '') + (G.mode === 'typ' ? ' typ' : ' kies'),
+          kaart: plek($('question-card')), vak: plek($('answer-area')), zij: plek($('game-avatar-inner')), zijHoog: $('game-avatar-inner').offsetHeight });
+      }
+      return uit;
+    }, mode);
+    for (const k of ['kaart', 'vak', 'zij', 'zijHoog']) {
+      const v = r.map(x => x[k]), span = Math.max(...v) - Math.min(...v);
+      /* SPRONG: een paar pixels afronding op een drukke machine is geen sprong (liggend
+         schoof zij er 2 à 3 onder npm test); de sprong uit de speeltest was 35 tot 86 */
+      check(span <= SPRONG, 'E · een show springt niet',
+        `${w}x${h}, ${mode}: ${k} verspringt ${span}px over ${r.map(x => `${x.vraag} ${x[k]}`).join(', ')}`);
+    }
+  }
+  check(!fouten.length, 'E · een show springt niet', `${w}x${h}: ${fouten.join(' | ')}`);
+  await ctx.close();
+}
+
 (async () => {
   const browser = await launch();
+  await Promise.all([[390, 844], [320, 568], [844, 390], [1024, 768]].map(m => zaakE(browser, m)));
   const rij = [...MATEN];
   await Promise.all([zaakC(browser), ...Array.from({ length: TEGELIJK }, async () => {
     for (let m; (m = rij.shift());) await perMaat(browser, m);
