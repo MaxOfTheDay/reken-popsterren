@@ -812,6 +812,33 @@ function defaultProfile(name, dress, opts) {
   };
 }
 // Zorgt dat oudere opgeslagen profielen de nieuwe velden krijgen.
+/* DE VORM VAN DE INSTELLINGEN, en van wat het spel eruit oefent. De app zelf
+   schrijft dit nooit fout: het ouderdeel laat het laatste thema niet uit en
+   kent alleen zijn eigen knoppen. Maar een back-upbestand of een overgezette
+   save is tekst die onderweg met de hand bewerkt of half beschadigd kan zijn,
+   en backupVormOk kijkt alleen of de grote stukken er zijn. Wat hier misliep
+   was geen foutmelding maar een bevroren app: zonder één thema dat aan staat
+   (s.ops leeg of onbekend, en geen s.themas) draaide themaPlan eindeloos rond
+   bij de eerste tik op een halte, met s.max als tekst kwamen er "NaN + NaN"-
+   sommen, en één lege zwakke som liet startLevel omvallen. Alleen wat kapot
+   is gaat terug naar het begin; een geldige waarde blijft precies staan. De
+   voortgang (sterren, diamanten) blijft buiten schot. kern.test.js zaak VS. */
+const BEWERKINGEN = ['+', '-', 'x', ':'];
+function instellingenHerstel(p) {
+  const s = p.settings;
+  s.ops = Array.isArray(s.ops) ? s.ops.filter(o => BEWERKINGEN.includes(o)) : [];
+  if (s.themas != null && !Array.isArray(s.themas)) delete s.themas;
+  if (!THEMAS.some(t => themaAan(s, t.id))) s.ops = ['+', '-'];
+  if (!(Number(s.max) > 0)) s.max = 20;
+  else s.max = Number(s.max);
+  if (!Array.isArray(s.tables) || !s.tables.length) s.tables = [2, 5, 10];
+  if (!['kies', 'mix', 'typ'].includes(s.mode)) s.mode = 'kies';
+  if (!(Number(s.perLevel) > 0)) s.perLevel = DEFAULT_PERLEVEL;
+  for (const lijst of ['weak', 'learned']) {
+    if (!p[lijst] || typeof p[lijst] !== 'object') continue;
+    for (const [k, e] of Object.entries(p[lijst])) if (!e || typeof e !== 'object') delete p[lijst][k];
+  }
+}
 function migrate(p) {
   if (!p.trophies) p.trophies = [];
   // Bestaande spelers: alles wat al behaald is blijft 'behaald' (staat in trophies).
@@ -909,6 +936,7 @@ function migrate(p) {
   }
   // extra uitdagingen: standaard aan (verschijnen toch pas na voldoende beheersing)
   if (!p.settings) p.settings = { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8 };
+  instellingenHerstel(p);
   if (p.settings.missNum == null) p.settings.missNum = true;
   if (p.settings.chain3 == null) p.settings.chain3 = true;
   if (!p.opTrack) p.opTrack = {};
