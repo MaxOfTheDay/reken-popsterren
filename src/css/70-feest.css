@@ -353,16 +353,20 @@
      dan gewoon naar elkaar toe, in plaats van om een leeg vakje heen te staan. */
   .end-milestone { margin: 0 0 14px; min-height: 40px; display: flex; align-items: center; justify-content: center; }
   .end-milestone:empty { display: none; }
-  /* Gegroeid (zie groeiMoment): het goud van "verdiend", maar geen knop -- er
-     valt niets te openen, dus geen ademhaling en geen raakvlak zoals .gold-pill. */
+  /* Gegroeid (zie groeiMoment): gouden letters, en verder niets -- geen vlak,
+     geen rand. Er valt niets te openen. Een gouden pil vlak boven de gouden
+     "Verder"-knop las in de speeltest als nog een knop; goud op een vlak is in
+     deze app een knop (.gold-pill, de hoofdknop), gouden letters zijn een
+     melding, zoals de regel van de gouden vraag in de show (.gold-banner). */
   .groei-pil {
-    display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 7px 16px;
-    border-radius: var(--r-pill); background: rgba(var(--goud-rgb), .88); box-shadow: var(--goud-gloed-zacht);
-    color: var(--ink-on-gold); font-weight: 700; font-size: var(--tx-label);
+    display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 8px;
+    color: var(--gold-light); text-shadow: var(--goud-ink); font-weight: 800; font-size: var(--tx-body);
   }
-  @media (max-height: 740px) { .groei-pil { padding: 6px 13px; min-height: 30px; } }
-  /* het voorbeeld van de nieuwe stap, zoals op de ladder bij Voortgang ("8 + 5") */
-  .groei-vb { padding: 1px 9px; border-radius: var(--r-pill); background: rgba(255,255,255,.7); white-space: nowrap; }
+  /* het voorbeeld van de nieuwe stap, zoals op de ladder bij Voortgang ("8 + 5"): gewone letters erachter.
+     Bij de klok het klokje zelf; de woorden ernaast zeggen hier niets meer dan het klokje. */
+  .groei-vb { display: inline-flex; align-items: center; gap: 6px; color: var(--c-white); white-space: nowrap; }
+  .groei-vb .klok { width: 1.6em; height: 1.6em; }
+  .groei-vb .klok-vb { display: none; }
   .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; }
   /* tot ze opkomen tellen tikken niet mee (zie eindWacht) */
   .end-actions.wacht { pointer-events: none; }

@@ -1099,13 +1099,21 @@
      animatie is de kaart nog steeds herkenbaar de gouden. */
   @media (prefers-reduced-motion: reduce) { .question-card.golden { animation: none; } }
   /* ---- Nieuw: de eerste vraag van een nieuwe stap (zie vraagIsNieuw) ----
-     Eén klein goud labeltje linksboven, één keer: het gouden "Nieuw:" van het
-     eindscherm, terug op het moment dat het nieuwe er echt staat. Geen kaart in
-     goud -- dat is de gouden vraag, en die betekent iets anders. */
-  .question-card.nieuw::before {
-    content: "✨ Nieuw"; position: absolute; top: 8px; left: 10px; z-index: 1;
-    padding: 2px 10px; border-radius: var(--r-pill); background: rgba(var(--goud-rgb), .88);
-    color: var(--ink-on-gold); font-size: var(--tx-klein); font-weight: 700; line-height: 1.5;
+     Een gouden lint over de hoek linksboven, één keer: het gouden "Nieuw" van
+     het eindscherm, terug op het moment dat het nieuwe er echt staat. Een lint
+     en geen pil: een gouden pil is in deze app een knop, en een lint over een
+     hoek is een etiket. Geen kaart in goud -- dat is de gouden vraag, en die
+     betekent iets anders. Het lint staat in de markup (.nieuw-lint), want het
+     moet in de hoek geknipt worden zonder de kaart zelf te knippen. */
+  .nieuw-lint {
+    display: none; position: absolute; top: 0; left: 0; z-index: 1; width: 78px; height: 78px;
+    overflow: hidden; border-top-left-radius: inherit; pointer-events: none;
+  }
+  .question-card.nieuw .nieuw-lint { display: block; }
+  .nieuw-lint span {
+    position: absolute; top: 14px; left: -26px; width: 110px; padding: 3px 0; transform: rotate(-45deg);
+    text-align: center; background: linear-gradient(180deg, var(--gold-accent), var(--gold-cta-top)); color: var(--ink-on-gold);
+    font-size: 12px; font-weight: 900; letter-spacing: .08em; line-height: 1.2; box-shadow: 0 1px 2px rgba(0,0,0,.18);
   }
   .gold-banner { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); text-shadow: var(--goud-ink); margin-top: 6px; height: 22px; }
 

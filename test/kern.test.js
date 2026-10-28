@@ -2294,6 +2294,26 @@ zaak('KA', () => {
     if (q.keuzes.some(k => !app.toonAntwoord(q, k))) mis.push(`${r.id}/${v} lege knop`);
   }
   check(!mis.length, 'KA · elke rij, elke vorm: het antwoord tussen vier verschillende keuzes, woorden altijd kiezen', [...new Set(mis)].slice(0, 3).join(' | '));
+  /* het antwoord staat nooit al in de vraag: niet zijn woord, en bij een seizoen niet zijn teken -- dat
+     staat op de antwoordknop, en dan zocht ze plaatje bij plaatje (🌷 bij de lente-dingen, uit de speeltest) */
+  const verklapt = [];
+  const woordVan = q => ({ dag: app.DAGEN, maand: app.MAANDEN }[q.soort] || [])[q.ans];
+  for (const r of app.KALENDERPAD) for (const v of ['lees', 'zoek']) for (let i = 0; i < 200; i++) {
+    const q = app.genKalender(r, v), w = woordVan(q);
+    if (q.soort === 'seizoen' && (q.html.includes(app.SEIZOENEN[q.ans].teken) || q.html.includes(app.SEIZOENEN[q.ans].naam))) verklapt.push(`${q.tmpl}: ${app.SEIZOENEN[q.ans].teken}`);
+    if (w && new RegExp(`(^|[^a-z])${w}([^a-z]|$)`).test(q.html)) verklapt.push(`${q.tmpl}: ${w}`);
+  }
+  check(!verklapt.length && app.SEIZOENEN.every(z => app.SEIZOENEN.every(y => !y.dingen.includes(z.teken))),
+    'KA · het antwoord staat nooit al in de vraag: geen woord, geen seizoensteken, en geen ding is een teken', [...new Set(verklapt)].slice(0, 3).join(' | '));
+  // dagen tellen: de tel loopt langs de pijl, en de laatste tel staat op het vakje (zie kalBrug)
+  const tel = [];
+  for (const [r, v] of [[0, 'lees'], [0, 'zoek'], [2, 'lees'], [2, 'zoek']]) for (let i = 0; i < 60; i++) {
+    const q = app.genKalender(app.KALENDERPAD[r], v), n = Math.abs(+q.tmpl.split(' ').pop());
+    const rondjes = (q.html.match(/<span class="kal-tel-rij">(.*?)<\/span>/) || [, ''])[1].match(/<i>/g) || [];
+    const opVak = (q.html.match(/kal-tel" aria-hidden="true">(\d+)</) || [])[1];
+    if (q.html.includes('⭐') || rondjes.length !== Math.max(0, n - 1) || (n > 1 ? +opVak !== n : opVak)) tel.push(`${q.tmpl}: ${rondjes.length} + ${opVak}`);
+  }
+  check(!tel.length, 'KA · dagen tellen: 1 tot n−1 langs de pijl, n op het vakje, en geen ⭐', tel.slice(0, 3).join(' | '));
   let fout = 0;
   for (let i = 0; i < 200; i++) {
     let q = app.genKalender(app.KALENDERPAD[5], 'lees'), [, , m, d] = q.tmpl.split(' ').map(Number);

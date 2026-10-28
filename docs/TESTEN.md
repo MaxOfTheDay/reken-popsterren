@@ -468,6 +468,10 @@ beloftes:
 - **wat geen lijst is, past** (zaak D) — op elke maat en in elke stand: een
   beeldscherm schuift niet, dus wat er niet past valt weg. Met `?debug` zegt de
   console het ook (`[schuiven] … past niet`), zodat je het in de studio al ziet.
+- **een show springt niet** (zaak E) — op vier maten, typen en "allebei", met
+  rekenen, geld, de klok en de kalender door elkaar: de kaart, het antwoordvak en
+  zij staan bij elke vraag op dezelfde plek. Het cijferblok en vier knoppen
+  wisselden elkaar af, en dan schoof alles tot 86px op (`antwoordOpMaat`).
 
 ### `test/kop.test.js` — de kop van de wereldkaart
 
