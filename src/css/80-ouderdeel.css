@@ -291,6 +291,9 @@
   /* munten en briefjes (zie .geld-stuk): hier op een vaste kleine maat, net groot genoeg om de waarde te lezen */
   .fl-vb .geld-stuk { font-size: 10px; }
   .fl-vb .geld-stuk + .geld-stuk { margin-left: 3px; }
+  /* het klokje (zie klokVoorbeeld): klein, met de tijd in woorden ernaast */
+  .fl-vb .klok { vertical-align: middle; margin-right: 6px; }
+  .fl-vb .klok-digi { font-size: 13px; }
   .fl-vak {
     display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 4px; opacity: .55;
     vertical-align: -2px; box-sizing: border-box;
@@ -424,6 +427,9 @@
   .thema-naad { height: 1px; margin: 14px 2px 12px; background: var(--lavender-wash); }
   /* het icoontje van een thema voor de kop van zijn kaart */
   .oefen-kaart .kaart-kop h2 .thema-ico { vertical-align: -4px; margin-right: 7px; }
+  /* "altijd kiezen" onder de antwoordbalk, en een show als rij icoontjes (zie oefenGroups) */
+  .oe-noot { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 8px 0 0; font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
+  .oe-mix { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
   /* De balk: één keuze, gelijke vakken, het gekozen vak vol paars. Het gekozen
      vak is een vlak ín de balk, niet een knop erop: geen 3D-rand eronder, en
      de ronding is die van de balk min zijn binnenrand (14 - 4 = 10), zodat de

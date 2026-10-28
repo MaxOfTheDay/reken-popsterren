@@ -1758,7 +1758,7 @@ zaak('ZE', () => {
   const app = laadApp();
   const kaarten = app.run('OEFEN_INSTELLINGEN');
   const gevallen = [
-    ['math', { ops: ['+', '-', 'x', ':'], max: 20, themas: ['geld'] }, '["rekenen","tafels","geld","show"]'],   // alles wat kan staat er
+    ['math', { ops: ['+', '-', 'x', ':'], max: 20, themas: ['geld', 'klok'] }, '["rekenen","tafels","geld","klok","show"]'],   // alles wat kan staat er
     ['math', { ops: ['+', '-', 'x', ':'], max: 20 }, '["rekenen","tafels","show"]'],   // geld staat standaard uit
     ['math', { ops: ['+', '-'], max: 10, missNum: false }, '["rekenen","show"]'],      // en met minder
     ['math', { ops: [':'] }, '["tafels","show"]'],
@@ -1793,10 +1793,12 @@ zaak('ZE', () => {
         check(/data-instelling="tafelLijn"/.test(t) && !/data-instelling="tables"/.test(t)
           && /data-instelling="tables"/.test(tv) && !/data-instelling="tafelLijn"/.test(tv),
           'ZE · tafels: op het leerpad de tafelladder, bij Zelf kiezen "Tafels van", nooit allebei', '');
-        const gl = groepen.find(g => g.kaart === 'geld').html, gv = vrij.find(g => g.kaart === 'geld').html;
-        check(/data-instelling="geldLijn"/.test(gl) && !/data-instelling="kiesGeld"/.test(gl)
-          && /data-instelling="kiesGeld"/.test(gv) && !/data-instelling="geldLijn"/.test(gv),
-          'ZE · geld: op het leerpad de geldladder, bij Zelf kiezen de vinkjes, nooit allebei', '');
+        for (const [k, lijn, kies] of [['geld', 'geldLijn', 'kiesGeld'], ['klok', 'klokLijn', 'kiesKlok']]) {
+          const l = groepen.find(g => g.kaart === k).html, v = vrij.find(g => g.kaart === k).html;
+          check(l.includes(`data-instelling="${lijn}"`) && !l.includes(`data-instelling="${kies}"`)
+            && v.includes(`data-instelling="${kies}"`) && !v.includes(`data-instelling="${lijn}"`),
+            `ZE · ${k}: op het leerpad de ladder, bij Zelf kiezen de vinkjes, nooit allebei`, '');
+        }
       }
     }
   }
@@ -2175,24 +2177,67 @@ zaak('GE', () => {
   check(app.ladderNu(p, 'geld') === 'munten10', 'GE · geld begint bij munten tot €10', app.ladderNu(p, 'geld'));
   for (let i = 0; i < 3; i++) app.ladderNa(p, 'geld', 3);
   check(app.ladderNu(p, 'geld') === 'briefjes20' && p.geld.klaar.join() === 'munten10', 'GE · drie shows met drie sterren: briefjes', JSON.stringify(p.geld));
-  const gi = app.geldInst(p);
-  const rijen = Array.from({ length: 400 }, () => app.geldVraag(gi, []).rij);
+  const gi = app.rijenInst(p, 'geld');
+  const rijen = Array.from({ length: 400 }, () => app.rijenVraag(gi, []).rij);
   const nieuw = rijen.filter(r => r === 'briefjes20').length / rijen.length;
   check(rijen.every(r => r === 'munten10' || r === 'briefjes20') && nieuw > 0.65, 'GE · op briefjes: de nieuwe het meest, munten komen nog terug', `${Math.round(nieuw * 100)}% nieuw`);
   check(app.ladderNu(p, 'tafels') === 'tafels2510' && !p.tafels, 'GE · de geldladder raakt de tafels niet', JSON.stringify(p.tafels));
 
   // Zelf kiezen: de rij waar ze was staat al aan, en de rijen gaan om de beurt
   s.modus = 'vrij';
-  app.geldKiesStart(s, p);
+  app.rijenKiesStart(s, p);
   check(s.kiesGeld.join() === 'briefjes20', 'GE · naar Zelf kiezen: haar rij staat al aangevinkt', JSON.stringify(s.kiesGeld));
   s.kiesGeld = ['centen', 'terug'];
-  const vi = app.geldInst(p), twee = Array.from({ length: 4 }, () => app.geldVraag(vi, []).rij);
+  const vi = app.rijenInst(p, 'geld'), twee = Array.from({ length: 4 }, () => app.rijenVraag(vi, []).rij);
   check(twee.filter(r => r === 'centen').length === 2, 'GE · Zelf kiezen: om de beurt', twee.join());
   delete s.modus;
 
   // wissen houdt geld aan
   const opnieuw = app.defaultProfile('Geld', 'dress_roze', { ...s });
   check(app.themaAan(opnieuw.settings, 'geld') && opnieuw.settings.kiesGeld.join() === 'centen,terug', 'GE · opnieuw beginnen houdt geld en de vinkjes', JSON.stringify(opnieuw.settings.themas));
+});
+
+/* ================= KL · De klok als thema =================
+   De tijd in woorden zoals een Vlaams kind hem zegt, vier keuzes op de maat
+   van de rij, lezen en zoeken om de beurt, altijd kiezen. */
+zaak('KL', () => {
+  const { app, p } = verseSter('Klok');
+  const s = p.settings;
+  const woorden = { 0: '12 uur', 180: '3 uur', 210: 'half 4', 195: 'kwart over 3', 225: 'kwart voor 4', 190: '10 over 3',
+    200: '10 voor half 4', 205: '5 voor half 4', 215: '5 over half 4', 220: '10 over half 4', 230: '10 voor 4', 250: '10 over 4', 690: 'half 12', 715: '5 voor 12', 30: 'half 1' };
+  const mis = Object.entries(woorden).filter(([t, w]) => app.klokWoorden(Number(t)) !== w).map(([t, w]) => `${t}: ${app.klokWoorden(Number(t))} (niet ${w})`);
+  check(!mis.length, 'KL · de tijd in woorden: 3 uur, half 4, kwart voor 4, 10 voor half 4', mis.join('; '));
+  check(app.klokDigitaal(155 + 720) === '14:35' && app.klokDigitaal(65 + 720) === '13:05', 'KL · 24 uur: 14:35', app.klokDigitaal(875));
+
+  const fout = {};
+  for (let i = 0; i < 300; i++) for (const r of app.KLOKPAD) for (const vorm of ['lees', 'zoek']) {
+    const q = app.genKlok(r, vorm), w = (fout[r.id] = fout[r.id] || []);
+    if (q.ans % r.stap || q.ans < 0 || q.ans >= 720 || (r.uur24 && q.ans < 60)) w.push('tijd ' + q.ans);
+    if (q.keuzes.length !== 4 || new Set(q.keuzes).size !== 4 || !q.keuzes.includes(q.ans)) w.push('keuzes ' + q.keuzes);
+    if (q.keuzes.some(v => v % r.stap || v < 0 || v >= 720 || (r.uur24 && v < 60))) w.push('maat ' + q.keuzes);
+    if (!q.kiezen) w.push('typen');
+    if (vorm === 'lees' && (!q.html.includes('@') || !(r.uur24 ? q.html.includes('klok-digi') : q.html.includes('<svg')))) w.push('lees ' + q.html.slice(0, 40));
+    if (vorm === 'zoek' && q.html.includes('@')) w.push('zoek met vakje');
+  }
+  const kapot = Object.entries(fout).filter(([, w]) => w.length);
+  check(!kapot.length, 'KL · elke rij: een tijd op zijn maat, vier verschillende keuzes op dezelfde maat, altijd kiezen', JSON.stringify(kapot.map(([k, w]) => [k, w.slice(0, 2)])));
+  // de echte fout bij halve uren: half 4 gelezen als half 3 komt geregeld voor
+  const half = Array.from({ length: 200 }, () => app.genKlok(app.KLOKPAD[1], 'lees')).filter(q => q.keuzes.includes((q.ans + 660) % 720)).length;
+  check(half > 60, 'KL · halve uren: het uur ervoor zit er vaak bij (half 4 als half 3)', `${half}/200`);
+  const q = app.genKlok(app.KLOKPAD[2], 'zoek');
+  check(app.makeChoices(q, 0).slice().sort().join() === q.keuzes.slice().sort().join(), 'KL · de knoppen zijn de keuzes van de vraag', '');
+  check(app.toonKeuze(q, q.ans).includes('<svg') && app.toonKeuze({ ...q, vorm: 'lees' }, 210).includes('half 4') && app.toonAntwoord(q, 210) === 'half 4',
+    'KL · zoeken: klokjes op de knoppen; lezen: woorden', '');
+
+  // in de show
+  app.themaZet(s, 'geld', true); app.themaZet(s, 'klok', true);
+  const plan = app.themaPlan(s, 8);
+  check(plan.filter(k => k === 'klok').length === 2 && plan.filter(k => k === 'geld').length === 2 && plan.filter(k => k === 'rekenen').length === 4 && plan[0] === 'rekenen',
+    'KL · rekenen, geld en klok: 4 sommen, 2 geld, 2 klok, en de eerste is een som', plan.join());
+  check(app.ladderNu(p, 'klok') === 'uren', 'KL · de klok begint bij hele uren', app.ladderNu(p, 'klok'));
+  const ki = app.rijenInst(p, 'klok'), vormen = Array.from({ length: 6 }, () => app.rijenVraag(ki, []).vorm);
+  check(vormen.every((v, i) => !i || v !== vormen[i - 1]), 'KL · lezen en zoeken om de beurt', vormen.join());
+  check(Array.from({ length: 50 }, () => app.rijenVraag(ki, []).rij).every(r => r === 'uren'), 'KL · op hele uren: alleen hele uren', '');
 });
 
 klaar();

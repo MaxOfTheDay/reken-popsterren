@@ -342,7 +342,7 @@ function padNa(p, sterren) {
 function vraagIsNieuw(q, id) {
   if (id === 'fase') return true;
   if (id in LADDERS.tafels.idx) return (q.op === 'x' || q.op === ':') && TAFELPAD[LADDERS.tafels.idx[id]].tafels.includes(Number((q.tmpl.match(/\d+/g) || [])[1]));
-  if (id in LADDERS.geld.idx) return q.rij === id;
+  if (id in LADDERS.geld.idx || id in LADDERS.klok.idx) return q.rij === id;
   const r = LEERPAD[PAD_IDX[id]];
   if (!r) return false;
   if (r.bouwen) return q.kind === 'bouw' && (q.grens || 99) >= r.bereik - 1;   // tot 1000: met honderdtallen
@@ -380,6 +380,7 @@ const THEMAS = [
   { id: 'rekenen', naam: 'Rekenen', ops: ['+', '-'] },
   { id: 'tafels',  naam: 'Tafels',  ops: ['x', ':'] },
   { id: 'geld',    naam: 'Geld' },
+  { id: 'klok',    naam: 'Klok' },
 ];
 const THEMA = Object.fromEntries(THEMAS.map(t => [t.id, t]));
 function themaAan(s, k) { return THEMA[k].ops ? THEMA[k].ops.some(o => s.ops.includes(o)) : (s.themas || []).includes(k); }
@@ -408,6 +409,7 @@ function themaIcoon(k, maat) {
   if (k === 'geld') return svg('<circle cx="20" cy="20" r="18" fill="#c9ccd1" stroke="#9aa0a8" stroke-width="1.5"/>'
     + '<circle cx="20" cy="20" r="12.5" fill="#e8c45a"/>'
     + '<text x="20" y="21" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="900" fill="#5d3f00">€</text>');
+  if (k === 'klok') return klokSvg(130, maat, true).replace('class="klok"', 'class="klok thema-ico"');
   const teken = { rekenen: ['+', '−'], tafels: ['×', '÷'] }[k];
   return svg('<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>'
     + '<g fill="#8e24aa" font-weight="900" font-size="21" text-anchor="middle" dominant-baseline="central">'
@@ -486,12 +488,101 @@ function genGeld(r) {
     tmpl: `geld ${stukken.map(c => centen ? c : c / 100).join(' + ')} = @`,
     html: `<span class="geld-rij">${stukken.map(geldStuk).join('')}</span><span class="pl-som">€ @</span>` };
 }
-// Het antwoord van een vraag zoals het op een knop en in het vakje staat.
+/* ---- De klok ---------------------------------------------------------------
+   Vijf rijen, zoals school ze brengt: in het eerste leerjaar hele en halve
+   uren, in het tweede het kwartier en per vijf minuten, in het derde de 24
+   uur. Een tijd is altijd in minuten na twaalf uur (0 tot 719), zodat hij een
+   geheel getal blijft voor de knoppen; de 24 uur rekent er 720 bij.
+   Twee soorten vragen, om de beurt (zie klokVraag):
+     lees  de klok staat er, en ze kiest de tijd in woorden ("half 4")
+     zoek  de tijd staat er, en ze kiest de klok -- vier klokjes, maar twee
+           woorden om te lezen; dat is wat de jongsten kunnen
+   Altijd kiezen: "half 4" typen kan het cijferblok niet. De foute keuzes zijn
+   de fouten die kinderen echt maken: half 4 lezen als half 3 (het uur waar de
+   wijzer voorbij is), de wijzers omdraaien, kwart over en kwart voor
+   verwarren. */
+const KLOKPAD = [
+  { id: 'uren',     naam: 'Hele uren',    stap: 60 },
+  { id: 'halfuur',  naam: 'Halve uren',   stap: 30 },
+  { id: 'kwartier', naam: 'Kwartier',     stap: 15 },
+  { id: 'vijfmin',  naam: 'Vijf minuten', stap: 5 },
+  { id: 'uur24',    naam: '24 uur',       stap: 5, uur24: true },
+];
+// De tijd in woorden, zoals een Vlaams kind hem zegt: 3 uur, half 4, kwart voor 4, 10 voor half 4.
+function klokWoorden(t) {
+  const u = Math.floor(t / 60) % 12 || 12, m = t % 60, nu = u, straks = u % 12 + 1;
+  if (m === 0) return `${nu} uur`;
+  if (m === 15) return `kwart over ${nu}`;
+  if (m === 30) return `half ${straks}`;
+  if (m === 45) return `kwart voor ${straks}`;
+  if (m < 15) return `${m} over ${nu}`;
+  if (m < 30) return `${30 - m} voor half ${straks}`;
+  if (m < 45) return `${m - 30} over half ${straks}`;
+  return `${60 - m} voor ${straks}`;
+}
+// 14:35: de 24 uur, voor een tijd in de namiddag (t + 720)
+function klokDigitaal(t) { return `${Math.floor(t / 60) % 24}:${String(t % 60).padStart(2, '0')}`; }
+/* De klok zelf: alle cijfers van 1 tot 12, de uurwijzer kort en dik, de
+   minuutwijzer lang en dun -- het verschil zit in de vorm, niet alleen in de
+   kleur. De uurwijzer schuift mee met de minuten, zoals op een echte klok: bij
+   half 4 staat hij tussen de 3 en de 4, en dat is precies waar je het leest. */
+function klokSvg(t, maat, kaal) {
+  const P = (graden, r) => [50 + r * Math.sin(graden * Math.PI / 180), 50 - r * Math.cos(graden * Math.PI / 180)].map(v => v.toFixed(1));
+  const m = t % 60, [mx, my] = P(m * 6, 36), [ux, uy] = P(((Math.floor(t / 60) % 12) + m / 60) * 30, 22);
+  const streepjes = Array.from({ length: 12 }, (_, i) => { const [x1, y1] = P(i * 30, 45), [x2, y2] = P(i * 30, i % 3 ? 42 : 40);
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="${i % 3 ? 1.6 : 2.6}"/>`; }).join('');
+  const cijfers = kaal ? '' : Array.from({ length: 12 }, (_, i) => { const [x, y] = P((i + 1) * 30, 33);
+    return `<text x="${x}" y="${y}">${i + 1}</text>`; }).join('');
+  return `<svg class="klok" viewBox="0 0 100 100" width="${maat}" height="${maat}" aria-hidden="true">`
+    + '<circle cx="50" cy="50" r="47" fill="#fff" stroke="#8e3fc8" stroke-width="5"/>'
+    + `<g stroke="#4a2a7a" stroke-linecap="round">${streepjes}</g>`
+    + (kaal ? '' : `<g fill="#2b2238" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">${cijfers}</g>`)
+    + `<line x1="50" y1="50" x2="${mx}" y2="${my}" stroke="#8e3fc8" stroke-width="3.5" stroke-linecap="round"/>`
+    + `<line x1="50" y1="50" x2="${ux}" y2="${uy}" stroke="#2b2238" stroke-width="8" stroke-linecap="round"/>`
+    + '<circle cx="50" cy="50" r="4.5" fill="#2b2238"/></svg>';
+}
+function klokVoorbeeld(r) {
+  const t = { uren: 180, halfuur: 210, kwartier: 165, vijfmin: 310, uur24: 155 }[r.id];
+  return r.uur24 ? `<span class="klok-digi">${klokDigitaal(t + 720)}</span>` : `${klokSvg(t, 26)}<span class="klok-vb">${klokWoorden(t)}</span>`;
+}
+/* Een vraag van rij r. vorm: 'lees' of 'zoek' (zie klokVraag, die wisselt af).
+   Hele uren zijn nooit 12 uur bij de 24 uur: 12:00 is geen namiddag. */
+function genKlok(r, vorm) {
+  const stappen = 720 / r.stap;
+  let t;
+  do t = rnd(0, stappen - 1) * r.stap; while (r.uur24 && t < 60);
+  /* De foute keuzes: eerst twee echte fouten, dan wat ernaast ligt op de maat
+     van de rij.
+       een uur ernaast   half 4 gelezen als half 3: het uur waar de wijzer al voorbij is
+       gespiegeld        10 over 3 en 10 voor 4, kwart over en kwart voor
+       omgedraaid        de korte wijzer gelezen als de lange
+       de 2 vergeten     14:35 als 4:35 (alleen bij de 24 uur) */
+  const op12 = v => ((v % 720) + 720) % 720;
+  const m = t % 60, u = Math.floor(t / 60) % 12;
+  const echt = [t - 60, t + 60, m && m !== 30 ? t - m + 60 - m : null, m / 5 * 60 + u * 5, r.uur24 ? ((u + 12) % 10) * 60 + m : null];
+  const mag = v => v != null && op12(v) !== t && op12(v) % r.stap === 0 && (!r.uur24 || op12(v) >= 60);
+  const fout = shuffle([...new Set(echt.filter(mag).map(op12))]).slice(0, 2);
+  const ernaast = shuffle([1, 2, 3].flatMap(d => [t - d * r.stap, t + d * r.stap]).filter(mag).map(op12));
+  const keuzes = [...new Set([t, ...fout, ...ernaast])].slice(0, 4);
+  const tijd = r.uur24 ? `<span class="klok-digi">${klokDigitaal(t + 720)}</span>` : null;
+  const lees = vorm === 'lees';
+  return { kind: 'klok', op: 'klok', rij: r.id, ans: t, kiezen: true, keuzes, vorm, uur24: !!r.uur24, knop: lees ? 'klok-lees' : 'klok-zoek',
+    tmpl: `klok ${lees ? 'lees' : 'zoek'} ${t}`,
+    html: lees
+      ? `<span class="klok-vraag">${tijd || klokSvg(t, 132)}</span><span class="pl-som klok-som">@</span>`
+      : `<span class="klok-vraag klok-woord">${r.uur24 ? tijd : klokWoorden(t)}</span>` };
+}
+
+// Het antwoord van een vraag zoals het in het vakje staat (toonAntwoord) en op een knop (toonKeuze).
 function toonAntwoord(q, v) {
+  if (q.kind === 'klok') return klokWoorden(v);
   if (q.kind !== 'geld') return String(v);
   return q.centen ? euro(v).slice(1) : String(v);
 }
-function toonKeuze(q, v) { return q.kind === 'geld' ? (q.centen ? euro(v) : `€${v}`) : String(v); }
+function toonKeuze(q, v) {
+  if (q.kind === 'klok') return q.vorm === 'zoek' ? klokSvg(v, 64) : `<span class="klok-tekst">${klokWoorden(v)}</span>`;
+  return q.kind === 'geld' ? (q.centen ? euro(v) : `€${v}`) : String(v);
+}
 
 /* ---- Een ladder per thema ---------------------------------------------------
    Tafels en geld hebben elk een ladder, en die werkt voor allebei hetzelfde --
@@ -501,10 +592,11 @@ function toonKeuze(q, v) { return q.kind === 'geld' ? (q.centen ? euro(v) : `€
    Ze staat op de eerste rij tussen de lijnen die nog niet klaar is (ladderNu),
    en schuift door met dezelfde regel als padNa (ladderNa). Voorbij de laatste
    rij is het alles door elkaar, tot de lijn "tot". Bij Zelf kiezen telt de
-   ladder niet: dan is het s[kies] (geld) of s.tables (tafels). */
+   ladder niet: dan is het s[kies] (geld, klok) of s.tables (tafels). */
 const LADDERS = {
   tafels: { pad: TAFELPAD, lijn: 'tafelLijn', stand: 'tafels', id: 'set-tafelpad', eind: 'Alle tafels door elkaar', vb: tafelVoorbeeld },
   geld:   { pad: GELDPAD,  lijn: 'geldLijn',  stand: 'geld',   id: 'set-geldpad',  eind: 'Alles met geld door elkaar', vb: geldVoorbeeld, kies: 'kiesGeld' },
+  klok:   { pad: KLOKPAD,  lijn: 'klokLijn',  stand: 'klok',   id: 'set-klokpad',  eind: 'Alle tijden door elkaar', vb: klokVoorbeeld, kies: 'kiesKlok' },
 };
 Object.values(LADDERS).forEach(L => { L.idx = Object.fromEntries(L.pad.map((r, i) => [r.id, i])); });
 // De rijen met voorbeeld, en waar de twee lijnen staan (indexen, 0 = de eerste rij).
@@ -552,25 +644,28 @@ function tafelInst(p) {
   const { rijen, nu } = ladderSpeelt(p, 'tafels');
   return { ...basis, tables: rijen.flatMap(r => r.tafels), tafelNu: nu && nu.tafels };
 }
-/* geldInst: de rijen waar een geldvraag uit komt. Op het leerpad vaak haar rij
-   (GELD_NU_VAAK), anders een die ze al had; bij Zelf kiezen de aangevinkte,
-   om de beurt. */
-const GELD_NU_VAAK = 0.6;
-function geldInst(p) {
-  const s = p.settings;
+/* rijenInst: de rijen waar een vraag van geld of de klok uit komt. Op het
+   leerpad vaak haar rij (RIJ_NU_VAAK), anders een die ze al had; bij Zelf
+   kiezen de aangevinkte, om de beurt. De klok wisselt lezen en zoeken af
+   (s.lees): begint de show met lezen, dan is de volgende zoeken. */
+const RIJ_NU_VAAK = 0.6;
+function rijenInst(p, k) {
+  const s = p.settings, L = LADDERS[k];
+  const basis = { thema: k, lees: Math.random() < 0.5 };
   if (zelfGekozen(s)) {
-    const aan = GELDPAD.filter(r => (s.kiesGeld || []).includes(r.id));
-    return { thema: 'geld', rijen: aan.length ? aan : GELDPAD.slice(0, 1), stapel: [] };
+    const aan = L.pad.filter(r => (s[L.kies] || []).includes(r.id));
+    return { ...basis, rijen: aan.length ? aan : L.pad.slice(0, 1), stapel: [] };
   }
-  const { rijen, nu } = ladderSpeelt(p, 'geld');
-  return { thema: 'geld', rijen, nu };
+  const { rijen, nu } = ladderSpeelt(p, k);
+  return { ...basis, rijen, nu };
 }
-function geldVraag(s, net) {
+function rijenVraag(s, net) {
   let q, poging = 0;
   do {
-    const r = s.nu && Math.random() < GELD_NU_VAAK ? s.nu : s.stapel ? beurt(s, 'stapel', s.rijen) : pick(s.rijen);
-    q = genGeld(r);
+    const r = s.nu && Math.random() < RIJ_NU_VAAK ? s.nu : s.stapel ? beurt(s, 'stapel', s.rijen) : pick(s.rijen);
+    q = s.thema === 'klok' ? genKlok(r, s.lees ? 'lees' : 'zoek') : genGeld(r);
   } while (net.includes(q.tmpl) && ++poging < 8);
+  s.lees = !s.lees;
   return q;
 }
 /* Welke tafel deze som? Op het leerpad vaak die van haar rij; bij Zelf kiezen
@@ -588,20 +683,20 @@ function beurt(s, sleutel, lijst) {
   if (!stapel.length) stapel.push(...shuffle(lijst.slice()));
   return stapel.pop();
 }
-// De vraagmaker van een thema (zie vraagInst, tafelInst, geldInst).
-function themaInst(p, k) { return k === 'tafels' ? tafelInst(p) : k === 'geld' ? geldInst(p) : vraagInst(p); }
+// De vraagmaker van een thema (zie vraagInst, tafelInst, rijenInst).
+function themaInst(p, k) { return k === 'tafels' ? tafelInst(p) : k === 'rekenen' ? vraagInst(p) : rijenInst(p, k); }
 
 /* ---- De show mengen ---------------------------------------------------------
    Welk thema elke vraag van de show krijgt, vooraf: [k, k, ...].
      sommen   rekenen en tafels krijgen evenveel vragen (de rest naar wie eerst
               staat), en wisselen elkaar af
-     erbij    geld krijgt er twee in een show van acht of meer, één in een
+     erbij    geld en de klok krijgen elk twee in een show van acht of meer, één in een
               kortere, op gelijke afstanden tussen de sommen -- nooit de eerste
               vraag, die is wat ze kent
    Afwisselen en niet per toeval: twee tafelvragen na elkaar en dan vijf sommen
    leest als een ander spel, niet als één show. Staat er geen som aan, dan
    delen de andere de show gelijk. */
-const THEMA_ERBIJ = ['geld'];
+const THEMA_ERBIJ = ['geld', 'klok'];
 function themaPlan(s, total) {
   const aan = themasAan(s);
   const sommen = aan.filter(k => !THEMA_ERBIJ.includes(k)), erbij = aan.filter(k => THEMA_ERBIJ.includes(k));
@@ -874,6 +969,7 @@ function keuzeGrens(q, s, lvl) {
   return Math.max(10, Math.ceil(hoogste / 10) * 10);
 }
 function makeChoices(q, grens) {
+  if (q.keuzes) return shuffle(q.keuzes.slice());   // de vraag weet ze zelf (zie genKlok)
   const ans = q.ans;
   const getallen = (q.tmpl.match(/\d+/g) || []).map(Number);
   /* Tot 1000 rekent in hele tientallen of honderdtallen (zie genTriple): dan
@@ -1986,7 +2082,7 @@ function buildQuestion(p, lvl, g) {
   const k = g && g.themaPlan ? g.themaPlan[g.idx] : themasAan(p.settings)[0];
   const s = (g && g.insts && g.insts[k]) || themaInst(p, k);
   // geld komt niet uit de zwakke sommen: dat zijn sommen, en een bedrag is elke keer andere munten
-  if (s.thema === 'geld') return geldVraag(s, net);
+  if (s.thema === 'geld' || s.thema === 'klok') return rijenVraag(s, net);
   if (Math.random() < 0.35) {
     const wq = pickWeak(p, s, mag);
     if (wq) { if (al) al.add(wq.tmpl); return wq; }
@@ -2205,7 +2301,8 @@ function planSpecials(p, s, total, accent, goldIdx, bezet) {
    slechtste moment -- en wordt een teken dat het misging. Zie docs/GAME-REVIEW.md. */
 const HINT_DICHTBIJ = 2;
 function hintVoor(q, val) {
-  if (typeof val !== 'number' || isNaN(val) || val === q.ans) return null;
+  // meer of minder zegt niets over een klok: dan alleen het 🤔
+  if (typeof val !== 'number' || isNaN(val) || val === q.ans || q.kind === 'klok') return null;
   const meer = q.ans > val;
   const net = Math.abs(q.ans - val) <= HINT_DICHTBIJ;
   const woord = meer ? 'meer' : 'minder';
