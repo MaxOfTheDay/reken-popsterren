@@ -164,10 +164,12 @@
      onderrand stond hij daar als een rechte zuil in de kamer, ook als de planken
      halverwege al ophielden -- precies het soort halve laag met een harde kant
      dat de regel bij DE DERDE LAAG (20-schil) niet wil. De lucht voor de balken
-     komt hier als marge onder het paneel, niet als padding erin. */
+     houdt het scherm zelf al vrij; de lade hierboven tekende zich daar alleen
+     doorheen, en gaf die padding met de negatieve marge weer terug. Een paneel
+     doet geen van beide -- anders schuift een kast die past toch nog een stuk. */
   @media (min-width: 1000px) and (orientation: landscape) and (min-height: 501px) {
     #trophy-shelves {
-      border-radius: 26px; padding-bottom: 14px; margin-bottom: var(--lade-onder);
+      border-radius: 26px; padding-bottom: 14px; margin-bottom: 0;
       box-shadow: inset 0 1.5px 0 rgba(255,255,255,.14), 0 18px 40px rgba(8,1,20,.35);
     }
   }

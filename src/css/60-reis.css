@@ -71,8 +71,10 @@
        de baan hangt nog de strook waar de kop in staat -- die hoort dezelfde lucht
        te zijn en geen app-paars. (Een achtergrond op een scrollvak schuift niet mee,
        dus die strook is alleen te zien zolang je bovenaan staat, en daar is de baan
-       ook nacht.) */
-    background-color: #180b2c;
+       ook nacht.) Dezelfde #120826 als de bovenkant van de baan en de sluier
+       onder de kop: drie bijna-gelijke nachten naast elkaar zijn op een
+       bureaublad drie vlakken met een rand. */
+    background-color: #120826;
     overscroll-behavior-y: contain;
     scrollbar-width: none;
   }
