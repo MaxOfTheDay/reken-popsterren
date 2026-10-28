@@ -639,7 +639,7 @@
   }
   .geld-vraag { display: block; font-size: .5em; margin-bottom: .1em; }
   /* De klok (zie genKlok). Lezen: de klok groot, en het vakje eronder in een
-     kleinere letter -- "10 voor half 4" is langer dan een getal. Zoeken: de
+     kleinere letter -- "kwart voor 4" is langer dan een getal. Zoeken: de
      tijd in woorden of op een digitale klok, en vier klokjes als knoppen. Alles
      in em, zodat het met de vraag en de knop meegroeit (tablet). */
   .klok-vraag { display: flex; justify-content: center; margin: 2px 0 .15em; }

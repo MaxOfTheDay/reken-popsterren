@@ -508,16 +508,19 @@ const KLOKPAD = [
   { id: 'vijfmin',  naam: 'Vijf minuten', stap: 5 },
   { id: 'uur24',    naam: '24 uur',       stap: 5, uur24: true },
 ];
-// De tijd in woorden, zoals een Vlaams kind hem zegt: 3 uur, half 4, kwart voor 4, 10 voor half 4.
+/* De tijd in woorden: 3 uur, kwart over 3, half 4, kwart voor 4, en verder
+   altijd vanaf het hele uur -- 20 over 3, 25 voor 4. Bewust níét "10 voor half
+   4" of "5 over half 4": dat is twee stappen rekenen (eerst half, dan ervoor of
+   erna), en dat struikelt een kind dat net de klok leert. Alles wat een kind
+   over de klok leest of hoort komt hier vandaan: de vraag, de keuzes, het
+   vakje, het label voor een schermlezer en de ladder bij Voor ouders. */
 function klokWoorden(t) {
   const u = Math.floor(t / 60) % 12 || 12, m = t % 60, nu = u, straks = u % 12 + 1;
   if (m === 0) return `${nu} uur`;
   if (m === 15) return `kwart over ${nu}`;
   if (m === 30) return `half ${straks}`;
   if (m === 45) return `kwart voor ${straks}`;
-  if (m < 15) return `${m} over ${nu}`;
-  if (m < 30) return `${30 - m} voor half ${straks}`;
-  if (m < 45) return `${m - 30} over half ${straks}`;
+  if (m < 30) return `${m} over ${nu}`;
   return `${60 - m} voor ${straks}`;
 }
 // 14:35: de 24 uur, voor een tijd in de namiddag (t + 720)
