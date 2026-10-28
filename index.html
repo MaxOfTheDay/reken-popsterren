@@ -23213,6 +23213,13 @@ function genLijn(r, vorm) {
 
 
 
+function lijnHoogste() {
+  const o = { sprongen: [[9, 10, '+1'], [10, 13, '+3']], verberg: [9, 13], houd: [10], laag: true };
+  return [getallenlijn(7, 19, 1, 5, [{ v: 9, soort: 'nu onder', tekst: 9 }, { v: 13, soort: 'nu onder', tekst: 13 }], o) + `<span class="gl-zin">+ <span class="pl-som">@</span></span>`];
+}
+
+
+
 
 
 function lijnTikvlak(q) {
@@ -25235,13 +25242,14 @@ function renderQuestion() {
   G.lock = false;
   G.retried = false;
 
+
+  $('answer-area').parentNode.classList.toggle('lijn-tik', !!q.tik);
+
   showBalk(G.idx);
   drawQuestion();
   vraagKomtIn($('question-card'), G.idx === 0);
 
   const area = $('answer-area');
-
-  area.parentNode.classList.toggle('lijn-tik', !!q.tik);
   if (G.count) {
     antwoordOpMaat(area, true);
     renderCountAnswers(q, area);
@@ -25290,7 +25298,7 @@ function renderQuestion() {
 
 
 
-const ZAAL_MIN = 56;
+const ZAAL_MIN = 44;
 function zaalPast() {
   const zaal = $('show-stage'), area = $('answer-area');
   const onder = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y + el.offsetHeight; };
@@ -25336,8 +25344,15 @@ function antwoordMeten(area) {
 
   const vormen = [`<div class="choices">${knop('choice-btn', 4)}</div>`];
   if (P().settings.mode !== 'kies') vormen.push(`<div class="numpad">${knop('num-btn', 12)}</div>`);
-  if (G.insts && G.insts.lijn) vormen.push(lijnTikvlak({ bereik: [0, 20, 1, 5] }));
-  const hoogste = Math.max(...vormen.map(hoog));
+  let hoogste = Math.max(...vormen.map(hoog));
+  if (G.insts && G.insts.lijn) {
+
+    const paneel = area.parentNode, was = paneel.classList.contains('lijn-tik');
+    paneel.classList.add('lijn-tik');
+    kopie.style.width = area.clientWidth + 'px';
+    hoogste = Math.max(hoogste, hoog(lijnTikvlak({ bereik: [0, 20, 1, 5] })));
+    paneel.classList.toggle('lijn-tik', was);
+  }
   kopie.remove();
   return hoogste;
 }
@@ -25533,7 +25548,7 @@ function kaartProeven(insts) {
   if (insts.klok) insts.klok.rijen.forEach(r => uit.push(genKlok(r, 'lees').html, genKlok(r, 'zoek').html));
 
   if (insts.kalender) insts.kalender.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genKalender(r, i % 2 ? 'zoek' : 'lees').html); });
-  if (insts.lijn) insts.lijn.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genLijn(r, i % 2 ? 'zoek' : 'lees').html); });
+  if (insts.lijn) insts.lijn.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genLijn(r, i % 2 ? 'zoek' : 'lees').html); if (r.sprong) uit.push(...lijnHoogste()); });
   return uit;
 }
 addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = null; $('show-stage').style.height = $('show-stage').style.width = ''; });

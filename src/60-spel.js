@@ -183,14 +183,15 @@ function renderQuestion() {
   G.input = '';
   G.lock = false;
   G.retried = false;
+  // tikken op de lijn: liggend krijgt de lijn de brede plek (zie "NAAST ELKAAR" in 50-zaal).
+  // Vóór drawQuestion: de kaart meet zijn maat op de breedte die hij nu krijgt.
+  $('answer-area').parentNode.classList.toggle('lijn-tik', !!q.tik);
   // voortgang
   showBalk(G.idx);
   drawQuestion();
   vraagKomtIn($('question-card'), G.idx === 0);
   // antwoorden
   const area = $('answer-area');
-  // tikken op de lijn: liggend krijgt de lijn de brede plek (zie "NAAST ELKAAR" in 50-zaal)
-  area.parentNode.classList.toggle('lijn-tik', !!q.tik);
   if (G.count) {
     antwoordOpMaat(area, true);
     renderCountAnswers(q, area);
@@ -239,7 +240,7 @@ function renderQuestion() {
    verspringt er daarna niets meer. Liggend staat zij naast de som (zie
    "NAAST ELKAAR" in 50-zaal); daar helpt krimpen niet, en dan doet het niets.
    Schuiven zaak F kijkt na dat elk antwoord van elk thema in beeld staat. */
-const ZAAL_MIN = 56;   // kleiner wordt ze een stipje; dan liever iets onder de rand (zaak F ziet dat)
+const ZAAL_MIN = 44;   // kleiner wordt ze een stipje; dan liever iets onder de rand (zaak F ziet dat)
 function zaalPast() {
   const zaal = $('show-stage'), area = $('answer-area');
   const onder = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y + el.offsetHeight; };
@@ -285,8 +286,15 @@ function antwoordMeten(area) {
      eerst buiten, en schoof de kaart 38 à 45px. */
   const vormen = [`<div class="choices">${knop('choice-btn', 4)}</div>`];
   if (P().settings.mode !== 'kies') vormen.push(`<div class="numpad">${knop('num-btn', 12)}</div>`);
-  if (G.insts && G.insts.lijn) vormen.push(lijnTikvlak({ bereik: [0, 20, 1, 5] }));
-  const hoogste = Math.max(...vormen.map(hoog));
+  let hoogste = Math.max(...vormen.map(hoog));
+  if (G.insts && G.insts.lijn) {
+    // de lijn om op te tikken krijgt liggend een breder vak (lijn-tik, zie "NAAST ELKAAR"): op die breedte meten
+    const paneel = area.parentNode, was = paneel.classList.contains('lijn-tik');
+    paneel.classList.add('lijn-tik');
+    kopie.style.width = area.clientWidth + 'px';
+    hoogste = Math.max(hoogste, hoog(lijnTikvlak({ bereik: [0, 20, 1, 5] })));
+    paneel.classList.toggle('lijn-tik', was);
+  }
   kopie.remove();
   return hoogste;
 }
@@ -482,7 +490,7 @@ function kaartProeven(insts) {
   if (insts.klok) insts.klok.rijen.forEach(r => uit.push(genKlok(r, 'lees').html, genKlok(r, 'zoek').html));
   // de kalender: elke vorm een paar keer, want een maand met zes weken is een rij hoger
   if (insts.kalender) insts.kalender.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genKalender(r, i % 2 ? 'zoek' : 'lees').html); });
-  if (insts.lijn) insts.lijn.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genLijn(r, i % 2 ? 'zoek' : 'lees').html); });
+  if (insts.lijn) insts.lijn.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genLijn(r, i % 2 ? 'zoek' : 'lees').html); if (r.sprong) uit.push(...lijnHoogste()); });
   return uit;
 }
 addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = null; $('show-stage').style.height = $('show-stage').style.width = ''; });

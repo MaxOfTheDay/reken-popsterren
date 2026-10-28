@@ -943,6 +943,13 @@ function genLijn(r, vorm) {
   return lijnVraag(r.id, n, { kiezen: false, keuzes, min: van, grens: tot, tmpl: `lijn lees ${van} ${n}`,
     html: getallenlijn(van, tot, stap, r.label, [{ v: n, soort: 'vraag' }]) });
 }
+/* De hoogste sprong, voor kaartProeven: een kaartje naast het tiental (laag) en
+   de zin "+ ?" eronder. Met toeval alleen zat hij er niet altijd bij, en dan
+   groeide de kaart midden in een show. */
+function lijnHoogste() {
+  const o = { sprongen: [[9, 10, '+1'], [10, 13, '+3']], verberg: [9, 13], houd: [10], laag: true };
+  return [getallenlijn(7, 19, 1, 5, [{ v: 9, soort: 'nu onder', tekst: 9 }, { v: 13, soort: 'nu onder', tekst: 13 }], o) + `<span class="gl-zin">+ <span class="pl-som">@</span></span>`];
+}
 /* Zoeken: de lijn zelf is het antwoordvak. Eén vlak over de hele lijn, en
    een tik telt voor het dichtstbijzijnde streepje (lijnRaak): op de lijn tot
    1000 liggen de streepjes op een kleine telefoon 13 pixels uit elkaar, te
