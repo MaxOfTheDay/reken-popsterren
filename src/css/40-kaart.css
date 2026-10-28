@@ -729,6 +729,9 @@
   .kal-blad b { display: block; padding: .22em 0; color: #3a2a55; font-size: .4em; font-weight: 900; }
   .kal-blad.winter b { background: #bfe0fb; } .kal-blad.lente b { background: #c8ecc8; }
   .kal-blad.zomer b { background: #ffe79a; } .kal-blad.herfst b { background: #ffd2a8; }
+  /* een kleine telefoon (568 hoog) met het cijferblok eronder: een kleiner blad, anders
+     valt de onderste rij cijfers weg, ook als zij al zo klein is als ze kan (zie zaalPast) */
+  @media (orientation: portrait) and (max-height: 600px) { .kal-blad { font-size: clamp(24px, .74em, 40px); } }
   .kal-kop, .kal-raster { display: grid; grid-template-columns: repeat(7, 1fr); }
   .kal-kop i, .kal-raster i { font-style: normal; font-size: .34em; padding: .17em 0; color: #2b2238; font-weight: 800; }
   .kal-kop i { color: #8e3fc8; font-weight: 900; border-bottom: .06em solid #eadff3; }
@@ -748,6 +751,9 @@
   /* met sprongen staan de kaartjes onder de lijn, op de plek van het getal: de bogen erboven blijven vrij */
   .gl.hoog { padding-top: 1.6em; padding-bottom: 1.1em; }
   .gl-merk.onder { transform: translate(-50%, .7em); }
+  /* laag: een kaartje naast het tiental zakt onder zijn getal (zie genLijn) */
+  .gl.hoog.laag { padding-bottom: 2.1em; }
+  .gl.laag .gl-merk.onder { transform: translate(-50%, 1.75em); }
   .gl-merk.onder::after { bottom: auto; top: -.6em; border-top: .3em solid transparent; border-bottom: .32em solid #e5397a; }
   .gl-merk.vraag.onder::after { border-bottom-color: #b79ad8; border-top-color: transparent; }
   .gl-doos { position: relative; display: block; }
@@ -770,8 +776,9 @@
   .gl-pijl { position: absolute; top: 56%; transform: translate(-50%, calc(-100% - .3em)); border: .45em solid transparent; border-top: .7em solid #e5397a; }
   .gl-zin { display: flex; align-items: center; justify-content: center; gap: .2em; font-size: .62em; margin-top: .1em; }
   /* zoeken: de lijn is het antwoordvak, elk streepje een knop zo breed als de ruimte ernaast */
-  .gl-vlak { position: relative; display: flex; flex-direction: column; align-items: center; width: min(92vw, 420px); padding: 14px 10px 6px; border-radius: 22px; background: #fffaf3; box-shadow: 0 5px 0 #c9b6dc; }
-  .gl-vlak .gl { font-size: 20px; width: 100%; padding-top: 0; }
+  .gl-vlak { position: relative; display: flex; flex-direction: column; align-items: center; width: min(92vw, 420px); padding: 2px 10px 6px; border-radius: 22px; background: #fffaf3; box-shadow: 0 5px 0 #c9b6dc; }
+  /* boven de lijn plaats voor het getal dat landt (lijnLand): vooraf, anders groeit het vak */
+  .gl-vlak .gl { font-size: 20px; width: 100%; padding-top: 1.9em; }
   /* het getal om te zoeken: groot, roze, alleen */
   .gl-zoek { font-size: 1.9em; width: 3em; height: 1.7em; }
   .gl-raak { position: absolute; inset: -14px 0; width: 100%; border: 0; padding: 0; background: none; cursor: pointer; }
@@ -782,6 +789,10 @@
     border: .42em solid transparent; border-top: .66em solid var(--green-deep); border-bottom: 0;
   }
   .gl-tik.bad::before { border-top-color: var(--red-500); }
+  .gl-merk.land { background: #e8f5e9; color: var(--green-deep); box-shadow: inset 0 0 0 3px var(--green-deep); animation: gl-land .26s cubic-bezier(.3, 1.4, .5, 1) both; }
+  .gl-merk.land::after { border-top-color: var(--green-deep); }
+  .gl-merk.land.rustig { animation: none; }
+  @keyframes gl-land { from { opacity: 0; transform: translate(-50%, calc(-100% - 1.5em)); } }
   .gl-hand { font-size: 26px; line-height: 1; margin-top: 2px; }
   .q-blank.done { border-style: solid; border-color: var(--green-deep); background: rgba(102,187,106,.18); color: var(--green-deep); }
   /* De som valt dicht (zie die kop in de JS). klikt: het goede antwoord is net

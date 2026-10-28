@@ -3618,6 +3618,9 @@
   .kal-blad b { display: block; padding: .22em 0; color: #3a2a55; font-size: .4em; font-weight: 900; }
   .kal-blad.winter b { background: #bfe0fb; } .kal-blad.lente b { background: #c8ecc8; }
   .kal-blad.zomer b { background: #ffe79a; } .kal-blad.herfst b { background: #ffd2a8; }
+
+
+  @media (orientation: portrait) and (max-height: 600px) { .kal-blad { font-size: clamp(24px, .74em, 40px); } }
   .kal-kop, .kal-raster { display: grid; grid-template-columns: repeat(7, 1fr); }
   .kal-kop i, .kal-raster i { font-style: normal; font-size: .34em; padding: .17em 0; color: #2b2238; font-weight: 800; }
   .kal-kop i { color: #8e3fc8; font-weight: 900; border-bottom: .06em solid #eadff3; }
@@ -3637,6 +3640,9 @@
 
   .gl.hoog { padding-top: 1.6em; padding-bottom: 1.1em; }
   .gl-merk.onder { transform: translate(-50%, .7em); }
+
+  .gl.hoog.laag { padding-bottom: 2.1em; }
+  .gl.laag .gl-merk.onder { transform: translate(-50%, 1.75em); }
   .gl-merk.onder::after { bottom: auto; top: -.6em; border-top: .3em solid transparent; border-bottom: .32em solid #e5397a; }
   .gl-merk.vraag.onder::after { border-bottom-color: #b79ad8; border-top-color: transparent; }
   .gl-doos { position: relative; display: block; }
@@ -3659,8 +3665,9 @@
   .gl-pijl { position: absolute; top: 56%; transform: translate(-50%, calc(-100% - .3em)); border: .45em solid transparent; border-top: .7em solid #e5397a; }
   .gl-zin { display: flex; align-items: center; justify-content: center; gap: .2em; font-size: .62em; margin-top: .1em; }
 
-  .gl-vlak { position: relative; display: flex; flex-direction: column; align-items: center; width: min(92vw, 420px); padding: 14px 10px 6px; border-radius: 22px; background: #fffaf3; box-shadow: 0 5px 0 #c9b6dc; }
-  .gl-vlak .gl { font-size: 20px; width: 100%; padding-top: 0; }
+  .gl-vlak { position: relative; display: flex; flex-direction: column; align-items: center; width: min(92vw, 420px); padding: 2px 10px 6px; border-radius: 22px; background: #fffaf3; box-shadow: 0 5px 0 #c9b6dc; }
+
+  .gl-vlak .gl { font-size: 20px; width: 100%; padding-top: 1.9em; }
 
   .gl-zoek { font-size: 1.9em; width: 3em; height: 1.7em; }
   .gl-raak { position: absolute; inset: -14px 0; width: 100%; border: 0; padding: 0; background: none; cursor: pointer; }
@@ -3671,6 +3678,10 @@
     border: .42em solid transparent; border-top: .66em solid var(--green-deep); border-bottom: 0;
   }
   .gl-tik.bad::before { border-top-color: var(--red-500); }
+  .gl-merk.land { background: #e8f5e9; color: var(--green-deep); box-shadow: inset 0 0 0 3px var(--green-deep); animation: gl-land .26s cubic-bezier(.3, 1.4, .5, 1) both; }
+  .gl-merk.land::after { border-top-color: var(--green-deep); }
+  .gl-merk.land.rustig { animation: none; }
+  @keyframes gl-land { from { opacity: 0; transform: translate(-50%, calc(-100% - 1.5em)); } }
   .gl-hand { font-size: 26px; line-height: 1; margin-top: 2px; }
   .q-blank.done { border-style: solid; border-color: var(--green-deep); background: rgba(102,187,106,.18); color: var(--green-deep); }
 
@@ -4580,13 +4591,36 @@
     .sum-eq .cgroup.big .cg-obj { font-size: clamp(19px, 5vw, 26px); }
   }
 
-
-
-
   @media (orientation: landscape) and (max-height: 500px) {
-    .numpad { grid-template-columns: repeat(6, 1fr); width: min(56vw, 470px); gap: 8px; }
-    .num-btn { padding: 10px 0; font-size: 24px; }
-    .num-btn:is([data-n="6"], [data-n="7"], [data-n="8"], [data-n="9"], [data-n="0"], .ok) { order: 1; }
+
+
+
+
+
+
+
+
+
+
+    .game-arena { max-width: none; flex-wrap: nowrap; gap: 1.6vw; }
+    .show-stage { width: min(20vw, 150px); height: min(16.8vw, 126px); }
+    .math-panel { flex-direction: row; align-items: center; gap: 1.6vw; }
+    .question-card { width: min(40vw, 340px); min-width: 0; box-sizing: border-box; margin-bottom: 0; padding: 9px 14px 16px; }
+    #answer-area { width: min(30vw, 260px); flex: 0 0 auto; }
+    .choices, .gl-vlak, .count-tiles { width: 100%; box-sizing: border-box; }
+    .choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .choice-btn .klok-tekst { font-size: .56em; }
+
+    .count-tiles.two, .count-tiles.three { grid-template-columns: minmax(0, 1fr); }
+    .count-tile { min-height: 0; }
+    #screen-game.telt .question-card { width: min(33vw, 300px); }
+
+    .math-panel.lijn-tik .question-card { width: min(24vw, 200px); }
+    .math-panel.lijn-tik #answer-area { width: min(46vw, 420px); }
+    @media (max-height: 340px) { .question-card { padding: 5px 12px 11px; } }
+    .question-card .gl { width: 100%; }
+    .numpad { grid-template-columns: repeat(3, 1fr); width: 100%; gap: 7px; }
+    .num-btn { padding: 7px 0; font-size: 22px; order: 0; }
   }
 
 
@@ -4818,6 +4852,10 @@
     color: var(--c-white); opacity: .92; pointer-events: none;
     filter: drop-shadow(0 1px 1px rgba(0,0,0,.25));
   }
+
+  .gl-tik .tegel-pijl { top: auto; right: auto; bottom: .3em; left: 0; width: 22px; height: 22px; color: var(--red-500); opacity: 1; filter: none; }
+  .gl-tik .tegel-pijl.rechts { transform: translateX(.55em); }
+  .gl-tik .tegel-pijl.links { transform: translateX(calc(-100% - .55em)); }
   @media (max-height: 700px) {
     .toast.hint.docked .toast-main { font-size: 28px; }
     .toast.hint.docked .hint-pijl { width: 26px; height: 26px; }
@@ -23147,7 +23185,7 @@ function lijnTekening(van, tot, stap, label, o) {
     const groot = v % label === 0, half = !groot && label % 2 === 0 && v % (label / 2) === 0;
     const h = groot ? 11 : half ? 8 : 5.5;
     streep.push(`<line x1="${x(v)}" x2="${x(v)}" y1="${Y - h}" y2="${Y + h}" stroke-width="${groot ? 3.2 : 2}"/>`);
-    if (groot && !(o.verberg || []).some(w => Math.abs(w - v) <= stap)) lbl.push(`<text x="${x(v)}" y="${Y + 30}">${v}</text>`);
+    if (groot && ((o.houd || []).includes(v) || !(o.verberg || []).some(w => Math.abs(w - v) <= stap))) lbl.push(`<text x="${x(v)}" y="${Y + 30}">${v}</text>`);
   }
   else [van, tot].forEach(v => { streep.push(`<line x1="${x(v)}" x2="${x(v)}" y1="${Y - 11}" y2="${Y + 11}" stroke-width="3.2"/>`); lbl.push(`<text x="${x(v)}" y="${Y + 30}">${v}</text>`); });
   const bogen = (o.sprongen || []).map(([a, b, woord]) => {
@@ -23168,7 +23206,7 @@ function getallenlijn(van, tot, stap, label, merk, o) {
     const inhoud = m.soort.startsWith('vraag') ? '<span class="pl-som">@</span>' : m.tekst;
     return `<span class="gl-merk ${m.soort}" style="left:${l}%">${inhoud}</span>`;
   }).join('');
-  return `<span class="gl${o && o.sprongen ? ' hoog' : ''}"><span class="gl-doos">${lijnTekening(van, tot, stap, label, o)}${boven}</span></span>`;
+  return `<span class="gl${o && o.sprongen ? ' hoog' : ''}${o && o.laag ? ' laag' : ''}"><span class="gl-doos">${lijnTekening(van, tot, stap, label, o)}${boven}</span></span>`;
 }
 
 function lijnStuk(r, n) {
@@ -23188,10 +23226,14 @@ function genLijn(r, vorm) {
     const bogen = brug ? [[a, 10, `+${10 - a}`], [10, b, `+${b - 10}`]] : [[a, b, `+${d}`]];
 
     const van = Math.max(0, Math.min(a - 2, 8)), tot = van + 12;
+
+
+
+    const tien = { houd: [10], laag: [a, b].some(v => Math.abs(v - 10) === 1) };
     if (tweede) return lijnVraag('sprong', d, { kiezen: false, grens: 10, tmpl: `lijn sprong ${a} ${b}`, plus: true,
-      html: getallenlijn(van, tot, 1, 5, [{ v: a, soort: 'nu onder', tekst: a }, { v: b, soort: 'nu onder', tekst: b }], { sprongen: [[a, b, '']], verberg: [a, b] }) + `<span class="gl-zin">+ <span class="pl-som">@</span></span>` });
+      html: getallenlijn(van, tot, 1, 5, [{ v: a, soort: 'nu onder', tekst: a }, { v: b, soort: 'nu onder', tekst: b }], { sprongen: [[a, b, '']], verberg: [a, b], ...tien }) + `<span class="gl-zin">+ <span class="pl-som">@</span></span>` });
     return lijnVraag('sprong', b, { kiezen: false, grens: 20, tmpl: `lijn sprong ${a} ${d}`,
-      html: getallenlijn(van, tot, 1, 5, [{ v: a, soort: 'nu onder', tekst: a }, { v: b, soort: 'vraag onder' }], { sprongen: bogen, verberg: [a, b] }) });
+      html: getallenlijn(van, tot, 1, 5, [{ v: a, soort: 'nu onder', tekst: a }, { v: b, soort: 'vraag onder' }], { sprongen: bogen, verberg: [a, b], ...tien }) });
   }
   if (r.schat) {
     const ans = pick([10, 20, 30, 40, 60, 70, 80, 90]), n = ans + rnd(-2, 2);
@@ -23227,6 +23269,13 @@ function genLijn(r, vorm) {
 
 
 
+function lijnHoogste() {
+  const o = { sprongen: [[9, 10, '+1'], [10, 13, '+3']], verberg: [9, 13], houd: [10], laag: true };
+  return [getallenlijn(7, 19, 1, 5, [{ v: 9, soort: 'nu onder', tekst: 9 }, { v: 13, soort: 'nu onder', tekst: 13 }], o) + `<span class="gl-zin">+ <span class="pl-som">@</span></span>`];
+}
+
+
+
 
 
 function lijnTikvlak(q) {
@@ -23234,6 +23283,15 @@ function lijnTikvlak(q) {
   for (let v = van; v <= tot; v += stap) merk.push(`<i class="gl-tik" data-v="${v}" style="left:${(lijnX(v, van, tot) / GL.w * 100).toFixed(2)}%"></i>`);
   return `<div class="gl-vlak"><span class="gl"><span class="gl-doos">${lijnTekening(van, tot, stap, label)}${merk.join('')}`
     + '<button class="gl-raak" aria-label="Tik op de lijn waar het getal hoort"></button></span></span><span class="gl-hand" aria-hidden="true">👆</span></div>';
+}
+
+
+
+function lijnLand(q, rustig) {
+  const doos = document.querySelector('#answer-area .gl-doos');
+  if (!doos) return;
+  const l = (lijnX(q.ans, q.bereik[0], q.bereik[1]) / GL.w * 100).toFixed(2);
+  doos.insertAdjacentHTML('beforeend', `<span class="gl-merk land${rustig ? ' rustig' : ''}" style="left:${l}%">${q.ans}</span>`);
 }
 
 function lijnRaak(q, x, b) {
@@ -25062,6 +25120,8 @@ function hintVoor(q, val) {
   if (q.kind === 'klok') return klokHint(q, val);
   if (q.kind === 'kalender' && q.soort !== 'getal') return kalHint(q, val);
   const meer = q.ans > val;
+
+  if (q.tik) return { pijl: meer ? 'rechts' : 'links', woorden: `${meer ? 'Meer' : 'Minder'} dan ${val}: verder naar ${meer ? 'rechts' : 'links'}` };
   const net = Math.abs(q.ans - val) <= HINT_DICHTBIJ;
   const woord = meer ? 'meer' : 'minder';
   return { pijl: meer ? 'op' : 'neer',
@@ -25107,7 +25167,7 @@ function pijlSVG(richting) {
     return `<svg class="pijl-teken" viewBox="0 0 24 24" aria-hidden="true"><g transform="${spiegel}"><path d="M3.5 17 A9 9 0 0 1 17 6.2" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>`
       + '<path d="M13.2 3.6 L21.6 4.4 L18.4 12.2 Z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></g></svg>';
   }
-  const draai = richting === 'neer' ? ' transform="rotate(180 12 12)"' : '';
+  const draai = { neer: 180, rechts: 90, links: -90 }[richting] ? ` transform="rotate(${{ neer: 180, rechts: 90, links: -90 }[richting]} 12 12)"` : '';
   return `<svg class="pijl-teken" viewBox="0 0 24 24" aria-hidden="true"><path${draai} d="M12 3 L21 13 H15.5 V21 H8.5 V13 H3 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
 }
 function toonHint(q, val, btnEl) {
@@ -25205,12 +25265,14 @@ function startLevel(lvl, eigenOvergang) {
 
 
   applyStage($('show-stage'), p);
+  $('show-stage').style.height = $('show-stage').style.width = '';
   applyVenue($('screen-game'), wl.world, lvl);
   $('screen-game').classList.toggle('finale', finale);
   bundelAan();
 
 
   $('screen-game').classList.toggle('met-cijfers', !count && s.mode !== 'kies');
+  $('screen-game').classList.toggle('telt', !!count);
   if (eigenOvergang) show('screen-game');
   else toonHub('screen-game');
   renderQuestion();
@@ -25307,6 +25369,9 @@ function renderQuestion() {
   G.lock = false;
   G.retried = false;
 
+
+  $('answer-area').parentNode.classList.toggle('lijn-tik', !!q.tik);
+
   showBalk(G.idx);
   drawQuestion();
   vraagKomtIn($('question-card'), G.idx === 0);
@@ -25315,6 +25380,7 @@ function renderQuestion() {
   if (G.count) {
     antwoordOpMaat(area, true);
     renderCountAnswers(q, area);
+    zaalPast();
     spotZonderTijd();
     return;
   }
@@ -25345,8 +25411,34 @@ function renderQuestion() {
     });
   }
   antwoordOpMaat(area);
+  zaalPast();
   startSpot();
 }
+
+
+
+
+
+
+
+
+
+
+
+const ZAAL_MIN = 44;
+function zaalPast() {
+  const zaal = $('show-stage'), area = $('answer-area');
+  const onder = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y + el.offsetHeight; };
+  if (!zaal.offsetHeight || onder(zaal) > onder($('question-card')) - $('question-card').offsetHeight) return;
+  const laatste = [...area.querySelectorAll('button, .gl-vlak')].reduce((m, el) => Math.max(m, onder(el)), onder(area));
+  const over = Math.ceil(laatste + 6 - window.innerHeight);
+  if (over <= 0) return;
+  const h = Math.max(ZAAL_MIN, zaal.offsetHeight - over);
+  if (h >= zaal.offsetHeight) return;
+  zaal.style.height = h + 'px';
+  zaal.style.width = Math.round(h * 1.19) + 'px';
+}
+
 
 
 
@@ -25360,7 +25452,7 @@ function renderQuestion() {
 function antwoordOpMaat(area, los) {
   area.style.minHeight = '';
   area.classList.remove('vast');
-  if (los || P().settings.mode === 'kies') return;
+  if (los) return;
   if (G.antwoordMin == null) G.antwoordMin = antwoordMeten(area);
   if (!G.antwoordMin) return;
   area.style.minHeight = G.antwoordMin + 'px';
@@ -25373,7 +25465,21 @@ function antwoordMeten(area) {
   area.parentNode.appendChild(kopie);
   const hoog = html => { kopie.innerHTML = html; return kopie.offsetHeight; };
   const knop = (k, n) => Array(n).fill(`<button class="${k}">8</button>`).join('');
-  const hoogste = Math.max(hoog(`<div class="numpad">${knop('num-btn', 12)}</div>`), hoog(`<div class="choices">${knop('choice-btn', 4)}</div>`));
+
+
+
+
+  const vormen = [`<div class="choices">${knop('choice-btn', 4)}</div>`];
+  if (P().settings.mode !== 'kies') vormen.push(`<div class="numpad">${knop('num-btn', 12)}</div>`);
+  let hoogste = Math.max(...vormen.map(hoog));
+  if (G.insts && G.insts.lijn) {
+
+    const paneel = area.parentNode, was = paneel.classList.contains('lijn-tik');
+    paneel.classList.add('lijn-tik');
+    kopie.style.width = area.clientWidth + 'px';
+    hoogste = Math.max(hoogste, hoog(lijnTikvlak({ bereik: [0, 20, 1, 5] })));
+    paneel.classList.toggle('lijn-tik', was);
+  }
   kopie.remove();
   return hoogste;
 }
@@ -25481,7 +25587,12 @@ function drawQuestion() {
 
   $('btn-replay').style.display = G.count ? 'flex' : 'none';
   somVluchtWeg();
-  if (G.count) { drawCountQuestion(q); return; }
+  if (G.count) {
+
+    $('question-text').style.paddingTop = $('question-text').style.paddingBottom = '';
+    drawCountQuestion(q);
+    return;
+  }
 
 
 
@@ -25543,7 +25654,9 @@ function kaartMeten(tekst) {
   const rand = ['paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth'].reduce((n, k) => n + parseFloat(cs[k]), 0);
   const kopie = tekst.cloneNode(false);
   kopie.removeAttribute('id');
-  Object.assign(kopie.style, { position: 'absolute', display: 'flow-root', visibility: 'hidden', left: '0', top: '0', width: kaart.parentNode.clientWidth - rand + 'px' });
+
+  const naast = getComputedStyle(kaart.parentNode).flexDirection === 'row';
+  Object.assign(kopie.style, { position: 'absolute', display: 'flow-root', visibility: 'hidden', left: '0', top: '0', width: (naast ? kaart.offsetWidth : kaart.parentNode.clientWidth) - rand + 'px' });
   tekst.parentNode.appendChild(kopie);
   const hoogste = Math.max(...proeven.map(html => {
     kopie.innerHTML = html.replace('@', '<span class="q-blank">?</span>');
@@ -25557,13 +25670,15 @@ function kaartProeven(insts) {
   const uit = [];
   if (insts.geld) insts.geld.rijen.forEach(r => uit.push(r.terug ? genGeld(r).html
     : `<span class="geld-rij">${Array(r.stuks).fill(r.briefje ? 1000 : 200).map(geldStuk).join('')}</span><span class="pl-som">€ @</span>`));
+
+  if (insts.geld) insts.geld.rijen.forEach(r => { if (!r.terug) for (let i = 0; i < 20; i++) uit.push(genGeld(r).html); });
   if (insts.klok) insts.klok.rijen.forEach(r => uit.push(genKlok(r, 'lees').html, genKlok(r, 'zoek').html));
 
   if (insts.kalender) insts.kalender.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genKalender(r, i % 2 ? 'zoek' : 'lees').html); });
-  if (insts.lijn) insts.lijn.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genLijn(r, i % 2 ? 'zoek' : 'lees').html); });
+  if (insts.lijn) insts.lijn.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genLijn(r, i % 2 ? 'zoek' : 'lees').html); if (r.sprong) uit.push(...lijnHoogste()); });
   return uit;
 }
-addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = null; });
+addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = null; $('show-stage').style.height = $('show-stage').style.width = ''; });
 function numpadPress(n) {
   if (!G || G.lock) return;
   if (n === 'del') { if (G.input === '') return; G.input = G.input.slice(0, -1); sndClick(); }
@@ -25910,6 +26025,7 @@ function antwoordGoed(q, p, btnEl) {
   }
   save();
   if (btnEl) btnEl.classList.add('good');
+  if (q.tik) lijnLand(q);
 
 
 
@@ -26066,8 +26182,7 @@ function tweedeMisser(q, p, btnEl) {
       document.querySelectorAll('#answer-area .tegel-pijl').forEach(el => el.remove());
     } else if (G.mode === 'tik') {
 
-      const merk = document.querySelector(`#answer-area .gl-tik[data-v="${q.ans}"]`);
-      if (merk) merk.classList.add('good', 'rustig');
+      lijnLand(q, true);
     }
 
 
@@ -29884,9 +29999,8 @@ function bindSettings(p, s) {
     if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
   };
   on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables', 'set-kiesgeld', 'set-kiesklok', 'set-kieskalender', 'set-kieslijn'));
-  on('tafel-aanpas', 'onclick', naarLadder('set-tafelpad'));
-  on('geld-aanpas', 'onclick', naarLadder('set-geldpad'));
-  on('klok-aanpas', 'onclick', naarLadder('set-klokpad'));
+
+  Object.keys(LADDERS).forEach(k => on(`${k === 'tafels' ? 'tafel' : k}-aanpas`, 'onclick', naarLadder(LADDERS[k].id)));
 
 
 

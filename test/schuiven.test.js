@@ -27,10 +27,15 @@
  *   D  een scherm dat geen lijst is (.lijst, zie .screen in 10-basis) past op
  *      elke maat: zo'n scherm schuift niet, dus wat niet past valt weg
  *   E  een show springt niet: de kaart, het antwoordvak en zij staan bij elke
- *      vraag op dezelfde plek, ook als typen (cijferblok) en kiezen (vier
- *      knoppen) elkaar afwisselen -- een som typ je, een klok of een dag kies
+ *      vraag op dezelfde plek, ook als typen (cijferblok), kiezen (vier of twee
+ *      knoppen) en tikken (de getallenlijn) elkaar afwisselen -- een som typ je, een klok of een dag kies
  *      je altijd. Vóór de speeltest van oktober 2026 schoof de kaart op een
  *      telefoon bij elke wissel 86px op, en kromp zij mee (zie antwoordOpMaat).
+ *   F  elk antwoord past: voor elk thema (uit THEMAS, dus een nieuw thema doet
+ *      vanzelf mee) en de telmodus, elke stap, kiezen en typen, staan de kaart
+ *      en elke knop van het antwoord helemaal in beeld. Vóór oktober 2026 vielen
+ *      liggend met een getallenlijn, klok of kalender de antwoorden 85 tot 125px
+ *      onder het scherm -- die van de sommen in dezelfde show ook.
  *
  * Draaien:  npm run test:schuiven
  */
@@ -215,12 +220,15 @@ async function zaakE(browser, [w, h]) {
   page.on('pageerror', e => fouten.push(e.message));
   await page.goto(APP_URL + '&demo&star=p1&screen=map');
   await rust(page);
-  for (const mode of ['typ', 'mix']) {
+  // alle drie de manieren van antwoorden, en elk thema met al zijn stappen (uit THEMAS en
+  // LADDERS: een nieuw thema doet vanzelf mee). Kiezen stond er eerst niet bij, "want dat
+  // zijn altijd vier knoppen" -- tot de getallenlijn een lijn en Afronden twee knoppen gaf.
+  for (const mode of ['kies', 'typ', 'mix']) {
     const r = await page.evaluate(async mode => {
       await document.fonts.ready;
       const s = P().settings;
-      s.themas = ['rekenen', 'geld', 'klok', 'kalender']; s.mode = mode; s.modus = 'vrij';
-      s.kiesGeld = GELDPAD.map(r => r.id); s.kiesKlok = KLOKPAD.map(r => r.id); s.kiesKalender = KALENDERPAD.map(r => r.id);
+      s.ops = ['+', '-']; s.themas = THEMAS.filter(t => !t.ops).map(t => t.id); s.mode = mode; s.modus = 'vrij'; s.perLevel = 12;
+      Object.values(LADDERS).forEach(L => { if (L.kies) s[L.kies] = L.pad.map(r => r.id); });
       startLevel(P().level);
       // offsetTop en offsetHeight: de vraag komt binnen met een transform, en die telt hier niet
       const plek = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
@@ -245,8 +253,50 @@ async function zaakE(browser, [w, h]) {
   await ctx.close();
 }
 
+// ---- F · elk antwoord past ----
+const PAS_MATEN = [[320, 568], [390, 844], [568, 320], [667, 375], [844, 390], [1024, 768]];
+async function zaakF(browser, [w, h]) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true });
+  await cacheFonts(ctx);
+  const page = await ctx.newPage();
+  const fouten = [];
+  page.on('pageerror', e => fouten.push(e.message));
+  await page.goto(APP_URL + '&demo&star=p1&screen=map');
+  await rust(page);
+  const r = await page.evaluate(async () => {
+    await document.fonts.ready;
+    const s = P().settings, uit = [];
+    // een thema alleen, met al zijn stappen: dan komt elke vorm in één show langs
+    const zetten = THEMAS.map(t => [t.id, () => {
+      s.track = 'math'; s.modus = 'vrij';
+      s.ops = t.ops ? t.ops.slice() : []; s.themas = t.ops ? [] : [t.id];
+      if (t.id === 'rekenen') s.kies = padRijen(s).rijen.map(r => r.id);
+      if (LADDERS[t.id] && LADDERS[t.id].kies) s[LADDERS[t.id].kies] = LADDERS[t.id].pad.map(r => r.id);
+    }]).concat([['tellen', () => { s.track = 'count'; s.modus = 'pad'; }]]);
+    // offsetTop en niet getBoundingClientRect: de vraag komt binnen met een transform (zie zaak E)
+    const binnen = el => {
+      let x = 0, y = 0; for (let e = el; e; e = e.offsetParent) { x += e.offsetLeft; y += e.offsetTop; }
+      return el.offsetWidth && x >= -1 && y >= -1 && x + el.offsetWidth <= innerWidth + 1 && y + el.offsetHeight <= innerHeight + 1;
+    };
+    for (const [k, zet] of zetten) for (const mode of ['kies', 'typ']) {
+      zet(); s.mode = mode; s.perLevel = 12;
+      startLevel(P().level);
+      for (let i = 0; i < G.total; i++) {
+        G.idx = i; renderQuestion();
+        const q = G.qs[i], weg = [$('question-card'), ...$('answer-area').querySelectorAll('button:not(.gl-raak), .gl-vlak')].filter(el => !binnen(el));
+        if (weg.length) uit.push(`${k}/${mode}/${q.rij || q.soort || q.kind}${q.tik ? '·tik' : ''}${G.count ? '·fase ' + countLiveStage(P()) + ' ' + (q.type || '') : ''}: ${weg.map(el => el.id || el.className.split(' ')[0]).slice(0, 2).join(',')}`);
+      }
+    }
+    return [...new Set(uit)];
+  });
+  check(!r.length, 'F · elk antwoord past', `${w}x${h}: ${r.slice(0, 8).join(' | ')}${r.length > 8 ? ` (+${r.length - 8})` : ''}`);
+  check(!fouten.length, 'F · elk antwoord past', `${w}x${h}: ${fouten.join(' | ')}`);
+  await ctx.close();
+}
+
 (async () => {
   const browser = await launch();
+  await Promise.all(PAS_MATEN.map(m => zaakF(browser, m)));
   await Promise.all([[390, 844], [320, 568], [844, 390], [1024, 768]].map(m => zaakE(browser, m)));
   const rij = [...MATEN];
   await Promise.all([zaakC(browser), ...Array.from({ length: TEGELIJK }, async () => {
