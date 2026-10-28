@@ -22580,15 +22580,18 @@ const KLOKPAD = [
   { id: 'uur24',    naam: '24 uur',       stap: 5, uur24: true },
 ];
 
+
+
+
+
+
 function klokWoorden(t) {
   const u = Math.floor(t / 60) % 12 || 12, m = t % 60, nu = u, straks = u % 12 + 1;
   if (m === 0) return `${nu} uur`;
   if (m === 15) return `kwart over ${nu}`;
   if (m === 30) return `half ${straks}`;
   if (m === 45) return `kwart voor ${straks}`;
-  if (m < 15) return `${m} over ${nu}`;
-  if (m < 30) return `${30 - m} voor half ${straks}`;
-  if (m < 45) return `${m - 30} over half ${straks}`;
+  if (m < 30) return `${m} over ${nu}`;
   return `${60 - m} voor ${straks}`;
 }
 

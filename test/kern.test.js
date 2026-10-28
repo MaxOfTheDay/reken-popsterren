@@ -2204,9 +2204,11 @@ zaak('KL', () => {
   const { app, p } = verseSter('Klok');
   const s = p.settings;
   const woorden = { 0: '12 uur', 180: '3 uur', 210: 'half 4', 195: 'kwart over 3', 225: 'kwart voor 4', 190: '10 over 3',
-    200: '10 voor half 4', 205: '5 voor half 4', 215: '5 over half 4', 220: '10 over half 4', 230: '10 voor 4', 250: '10 over 4', 690: 'half 12', 715: '5 voor 12', 30: 'half 1' };
+    200: '20 over 3', 205: '25 over 3', 215: '25 voor 4', 220: '20 voor 4', 230: '10 voor 4', 250: '10 over 4', 690: 'half 12', 715: '5 voor 12', 30: 'half 1' };
   const mis = Object.entries(woorden).filter(([t, w]) => app.klokWoorden(Number(t)) !== w).map(([t, w]) => `${t}: ${app.klokWoorden(Number(t))} (niet ${w})`);
-  check(!mis.length, 'KL · de tijd in woorden: 3 uur, half 4, kwart voor 4, 10 voor half 4', mis.join('; '));
+  check(!mis.length, 'KL · de tijd in woorden: 3 uur, half 4, kwart voor 4, 20 over 3 (nooit "voor half")', mis.join('; '));
+  const viaHalf = Array.from({ length: 144 }, (_, i) => app.klokWoorden(i * 5)).filter(w => /(voor|over) half/.test(w));
+  check(!viaHalf.length, 'KL · geen enkele tijd via half ("10 voor half 4", "5 over half 4")', viaHalf.join('; '));
   check(app.klokDigitaal(155 + 720) === '14:35' && app.klokDigitaal(65 + 720) === '13:05', 'KL · 24 uur: 14:35', app.klokDigitaal(875));
 
   const fout = {};
