@@ -80,12 +80,14 @@ function startLevel(lvl, eigenOvergang) {
   // terug, blijft .venue-aan eraf en is dit scherm letterlijk wat het was: het
   // podiumkader van applyStage op het app-verloop.
   applyStage($('show-stage'), p);
+  $('show-stage').style.height = $('show-stage').style.width = '';   // zie zaalPast
   applyVenue($('screen-game'), wl.world, lvl);
   $('screen-game').classList.toggle('finale', finale);
   bundelAan();
   // kan er een cijferblok komen? dan houdt zij er vanaf de eerste vraag ruimte
   // voor (zie "ZIJ GROEIT MEE" in 50-zaal)
   $('screen-game').classList.toggle('met-cijfers', !count && s.mode !== 'kies');
+  $('screen-game').classList.toggle('telt', !!count);   // liggend: plaats voor 🔊 naast de kaart (zie "NAAST ELKAAR")
   if (eigenOvergang) show('screen-game');
   else toonHub('screen-game');
   renderQuestion();
@@ -187,9 +189,12 @@ function renderQuestion() {
   vraagKomtIn($('question-card'), G.idx === 0);
   // antwoorden
   const area = $('answer-area');
+  // tikken op de lijn: liggend krijgt de lijn de brede plek (zie "NAAST ELKAAR" in 50-zaal)
+  area.parentNode.classList.toggle('lijn-tik', !!q.tik);
   if (G.count) {
     antwoordOpMaat(area, true);
     renderCountAnswers(q, area);
+    zaalPast();
     spotZonderTijd();
     return;
   }
@@ -220,7 +225,32 @@ function renderQuestion() {
     });
   }
   antwoordOpMaat(area);
+  zaalPast();
   startSpot();
+}
+/* ---- Alles past -------------------------------------------------------------
+   Steekt de vraag of het antwoord onder het scherm uit, dan krimpt zij (de
+   zaal boven de som) tot het past: zij is decor, een knop die je niet kunt
+   raken is een kapotte show. Dat gebeurde met een getallenlijn of een
+   kalenderblad op de kaart en het cijferblok eronder, op een telefoon tot 58px.
+   Alleen krimpen, nooit terug groeien, en per show (startLevel zet het terug):
+   de kaart en het vak houden al de maat van hun grootste vraag (kaartOpMaat,
+   antwoordOpMaat), dus meestal is het bij de eerste vraag meteen goed en
+   verspringt er daarna niets meer. Liggend staat zij naast de som (zie
+   "NAAST ELKAAR" in 50-zaal); daar helpt krimpen niet, en dan doet het niets.
+   Schuiven zaak F kijkt na dat elk antwoord van elk thema in beeld staat. */
+const ZAAL_MIN = 56;   // kleiner wordt ze een stipje; dan liever iets onder de rand (zaak F ziet dat)
+function zaalPast() {
+  const zaal = $('show-stage'), area = $('answer-area');
+  const onder = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y + el.offsetHeight; };
+  if (!zaal.offsetHeight || onder(zaal) > onder($('question-card')) - $('question-card').offsetHeight) return;   // ze staat niet erboven
+  const laatste = [...area.querySelectorAll('button, .gl-vlak')].reduce((m, el) => Math.max(m, onder(el)), onder(area));
+  const over = Math.ceil(laatste + 6 - window.innerHeight);
+  if (over <= 0) return;
+  const h = Math.max(ZAAL_MIN, zaal.offsetHeight - over);
+  if (h >= zaal.offsetHeight) return;
+  zaal.style.height = h + 'px';
+  zaal.style.width = Math.round(h * 1.19) + 'px';
 }
 /* ---- Het antwoordvak springt ook niet ---------------------------------------
    Typen geeft het cijferblok, kiezen vier knoppen, en een show kan die
@@ -230,12 +260,13 @@ function renderQuestion() {
    groeide mee. Dat was de "sprong" uit de speeltest.
    Nu houdt het vak de hele show de hoogte van het hoogste van de twee, en
    staat wat kleiner is in het midden -- net als de kaart (zie kaartOpMaat).
-   Alleen kiezen meet niets: dan zijn het altijd dezelfde knoppen. Gemeten op
-   een onzichtbare kopie, één keer per show en opnieuw na een resize. */
+   Ook bij alleen kiezen: de getallenlijn heeft een lijn om op te tikken en
+   Afronden twee knoppen (zie antwoordMeten). Gemeten op een onzichtbare kopie,
+   één keer per show en opnieuw na een resize. */
 function antwoordOpMaat(area, los) {
   area.style.minHeight = '';
   area.classList.remove('vast');
-  if (los || P().settings.mode === 'kies') return;   // los: de telmodus heeft zijn eigen tegels
+  if (los) return;   // los: de telmodus heeft zijn eigen tegels
   if (G.antwoordMin == null) G.antwoordMin = antwoordMeten(area);
   if (!G.antwoordMin) return;
   area.style.minHeight = G.antwoordMin + 'px';
@@ -248,7 +279,14 @@ function antwoordMeten(area) {
   area.parentNode.appendChild(kopie);
   const hoog = html => { kopie.innerHTML = html; return kopie.offsetHeight; };
   const knop = (k, n) => Array(n).fill(`<button class="${k}">8</button>`).join('');
-  const hoogste = Math.max(hoog(`<div class="numpad">${knop('num-btn', 12)}</div>`), hoog(`<div class="choices">${knop('choice-btn', 4)}</div>`));
+  /* wat er in deze show kan komen: vier knoppen altijd, het cijferblok als er
+     getypt kan worden, de lijn om op te tikken als de getallenlijn meedoet. In
+     een show met alleen knoppen viel Afronden (twee knoppen) of de lijn er
+     eerst buiten, en schoof de kaart 38 à 45px. */
+  const vormen = [`<div class="choices">${knop('choice-btn', 4)}</div>`];
+  if (P().settings.mode !== 'kies') vormen.push(`<div class="numpad">${knop('num-btn', 12)}</div>`);
+  if (G.insts && G.insts.lijn) vormen.push(lijnTikvlak({ bereik: [0, 20, 1, 5] }));
+  const hoogste = Math.max(...vormen.map(hoog));
   kopie.remove();
   return hoogste;
 }
@@ -356,7 +394,12 @@ function drawQuestion() {
   // staat de som gewoon te lezen en wordt er niets uitgesproken, zie stemAan)
   $('btn-replay').style.display = G.count ? 'flex' : 'none';
   somVluchtWeg();   // een getal dat nog naar de vorige som vloog, hoort daar niet meer bij
-  if (G.count) { drawCountQuestion(q); return; }
+  if (G.count) {
+    // de maat van een som uit een vorige show hoort niet bij een telvraag (zie kaartOpMaat)
+    $('question-text').style.paddingTop = $('question-text').style.paddingBottom = '';
+    drawCountQuestion(q);
+    return;
+  }
   /* Typen begint met hetzelfde ?-vakje als kiezen, en de cijfers komen erin.
      Leeg was het hier een dun streepje (een leeg vakje klapt dicht), en dan zag
      de som er in de typmodus anders uit dan in de kiesmodus -- terwijl het
@@ -418,7 +461,9 @@ function kaartMeten(tekst) {
   const rand = ['paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth'].reduce((n, k) => n + parseFloat(cs[k]), 0);
   const kopie = tekst.cloneNode(false);
   kopie.removeAttribute('id');
-  Object.assign(kopie.style, { position: 'absolute', display: 'flow-root', visibility: 'hidden', left: '0', top: '0', width: kaart.parentNode.clientWidth - rand + 'px' });
+  // liggend staat de kaart naast de antwoorden en heeft hij een vaste breedte (zie "NAAST ELKAAR")
+  const naast = getComputedStyle(kaart.parentNode).flexDirection === 'row';
+  Object.assign(kopie.style, { position: 'absolute', display: 'flow-root', visibility: 'hidden', left: '0', top: '0', width: (naast ? kaart.offsetWidth : kaart.parentNode.clientWidth) - rand + 'px' });
   tekst.parentNode.appendChild(kopie);
   const hoogste = Math.max(...proeven.map(html => {
     kopie.innerHTML = html.replace('@', '<span class="q-blank">?</span>');
@@ -432,13 +477,15 @@ function kaartProeven(insts) {
   const uit = [];
   if (insts.geld) insts.geld.rijen.forEach(r => uit.push(r.terug ? genGeld(r).html
     : `<span class="geld-rij">${Array(r.stuks).fill(r.briefje ? 1000 : 200).map(geldStuk).join('')}</span><span class="pl-som">€ @</span>`));
+  // en een paar echte: briefjes en munten door elkaar lopen op een smalle kaart (liggend) anders af
+  if (insts.geld) insts.geld.rijen.forEach(r => { if (!r.terug) for (let i = 0; i < 20; i++) uit.push(genGeld(r).html); });
   if (insts.klok) insts.klok.rijen.forEach(r => uit.push(genKlok(r, 'lees').html, genKlok(r, 'zoek').html));
   // de kalender: elke vorm een paar keer, want een maand met zes weken is een rij hoger
   if (insts.kalender) insts.kalender.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genKalender(r, i % 2 ? 'zoek' : 'lees').html); });
   if (insts.lijn) insts.lijn.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genLijn(r, i % 2 ? 'zoek' : 'lees').html); });
   return uit;
 }
-addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = null; });
+addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = null; $('show-stage').style.height = $('show-stage').style.width = ''; });
 function numpadPress(n) {
   if (!G || G.lock) return;
   if (n === 'del') { if (G.input === '') return; G.input = G.input.slice(0, -1); sndClick(); }

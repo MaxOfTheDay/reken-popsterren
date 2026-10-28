@@ -729,6 +729,9 @@
   .kal-blad b { display: block; padding: .22em 0; color: #3a2a55; font-size: .4em; font-weight: 900; }
   .kal-blad.winter b { background: #bfe0fb; } .kal-blad.lente b { background: #c8ecc8; }
   .kal-blad.zomer b { background: #ffe79a; } .kal-blad.herfst b { background: #ffd2a8; }
+  /* een kleine telefoon (568 hoog) met het cijferblok eronder: een kleiner blad, anders
+     valt de onderste rij cijfers weg, ook als zij al zo klein is als ze kan (zie zaalPast) */
+  @media (orientation: portrait) and (max-height: 600px) { .kal-blad { font-size: clamp(24px, .74em, 40px); } }
   .kal-kop, .kal-raster { display: grid; grid-template-columns: repeat(7, 1fr); }
   .kal-kop i, .kal-raster i { font-style: normal; font-size: .34em; padding: .17em 0; color: #2b2238; font-weight: 800; }
   .kal-kop i { color: #8e3fc8; font-weight: 900; border-bottom: .06em solid #eadff3; }

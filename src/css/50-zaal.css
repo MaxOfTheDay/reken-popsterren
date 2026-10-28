@@ -821,14 +821,37 @@
     .sum-num { font-size: clamp(26px, 7vw, 38px); }
     .sum-eq .cgroup.big .cg-obj { font-size: clamp(19px, 5vw, 26px); }
   }
-  /* Een telefoon liggend: vier rijen cijfers pasten er niet, de rij ⌫ 0 ✔ viel
-     onder het scherm en moest je eerst naar boven schuiven. Hier dus twee rijen
-     van zes, 1-5 ⌫ en 6-0 ✔ -- de cijfers op volgorde, als een getallenlijn. De
-     knoppen staan in de opmaak in telefoonvolgorde; order zet ze hier om. */
+  /* Een telefoon liggend. */
   @media (orientation: landscape) and (max-height: 500px) {
-    .numpad { grid-template-columns: repeat(6, 1fr); width: min(56vw, 470px); gap: 8px; }
-    .num-btn { padding: 10px 0; font-size: 24px; }
-    .num-btn:is([data-n="6"], [data-n="7"], [data-n="8"], [data-n="9"], [data-n="0"], .ok) { order: 1; }
+    /* NAAST ELKAAR. Liggend is er breedte over en hoogte tekort: onder elkaar paste
+       een som nog net, maar een getallenlijn, een klok, een kalenderblad of de
+       teltegels duwden de antwoorden 85 tot 125px onder het scherm -- en omdat de
+       kaart een show lang de maat van zijn grootste vraag houdt (kaartOpMaat), ook
+       die van elke som erna. Dus zij, de vraag en de antwoorden op één rij, en de
+       volle hoogte voor de kaart. De maten in vw: op een kleine telefoon (568
+       breed) moet het alle drie nog naast elkaar passen.
+       Het cijferblok staat dan weer als op een telefoon (drie breed, op volgorde):
+       zes breed paste niet naast de kaart.
+       Schuiven zaak F kijkt na dat elk antwoord van elk thema in beeld staat. */
+    .game-arena { max-width: none; flex-wrap: nowrap; gap: 1.6vw; }
+    .show-stage { width: min(20vw, 150px); height: min(16.8vw, 126px); }
+    .math-panel { flex-direction: row; align-items: center; gap: 1.6vw; }
+    .question-card { width: min(40vw, 340px); min-width: 0; box-sizing: border-box; margin-bottom: 0; padding: 9px 14px 16px; }
+    #answer-area { width: min(30vw, 260px); flex: 0 0 auto; }
+    .choices, .gl-vlak, .count-tiles { width: 100%; box-sizing: border-box; }
+    .choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .choice-btn .klok-tekst { font-size: .56em; }
+    /* tellen: twee of drie tegels onder elkaar, vier in een blok */
+    .count-tiles.two, .count-tiles.three { grid-template-columns: minmax(0, 1fr); }
+    .count-tile { min-height: 0; }
+    #screen-game.telt .question-card { width: min(33vw, 300px); }
+    /* bij tikken op de lijn staat er op de kaart alleen een getal: dan krijgt de lijn de breedte */
+    .math-panel.lijn-tik .question-card { width: min(24vw, 200px); }
+    .math-panel.lijn-tik #answer-area { width: min(46vw, 420px); }
+    @media (max-height: 340px) { .question-card { padding: 5px 12px 11px; } }
+    .question-card .gl { width: 100%; }
+    .numpad { grid-template-columns: repeat(3, 1fr); width: 100%; gap: 7px; }
+    .num-btn { padding: 7px 0; font-size: 22px; order: 0; }
   }
   /* Ruimte over? Dan groeit de sóm, niet de paspop. De paspop is decor; de
      vraagkaart is waar het kind naar moet kijken -- en die was op een telefoon
