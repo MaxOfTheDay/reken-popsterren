@@ -3496,6 +3496,37 @@
   .pl-blokjes { display: grid; grid-template-columns: repeat(3, 10px); gap: 3px; align-content: end; }
   .pl-blok { display: block; width: 10px; height: 10px; border-radius: 2px; background: var(--plaats-e-blok); box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.18); }
   .pl-som { display: block; }
+
+
+
+
+
+  .geld-rij { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: .12em; margin: 2px 0 .2em; }
+  .geld-stuk {
+    display: inline-flex; align-items: center; justify-content: center; flex: none;
+    font-weight: 800; line-height: 1; vertical-align: middle; font-variant-numeric: tabular-nums;
+  }
+  .geld-stuk.munt {
+    font-size: .42em; width: 2.75em; height: 2.75em; border-radius: 50%;
+    color: #4a3300; background: #e2b64c; box-shadow: inset 0 0 0 .08em rgba(0,0,0,.25);
+  }
+  .geld-stuk.m200 { background: radial-gradient(circle, #e8c45a 56%, #c9ccd1 58%); }
+  .geld-stuk.m100 { background: radial-gradient(circle, #c9ccd1 56%, #e8c45a 58%); }
+  .geld-stuk.m50 { width: 2.55em; height: 2.55em; }
+  .geld-stuk.m20 { width: 2.35em; height: 2.35em; }
+  .geld-stuk.m10 { width: 2.15em; height: 2.15em; }
+  .geld-stuk.briefje {
+    font-size: .42em; width: 4.2em; height: 2.4em; border-radius: .35em;
+    color: #fff; box-shadow: inset 0 0 0 .14em rgba(255,255,255,.35);
+  }
+  .geld-stuk.b5 { background: #8d98a5; } .geld-stuk.b10 { background: #d2604f; }
+  .geld-stuk.b20 { background: #4a7fcc; } .geld-stuk.b50 { background: #e48a3a; }
+  .geld-pijl { font-size: .5em; color: var(--purple-shadow); margin: 0 .2em; }
+  .geld-prijs {
+    display: inline-flex; align-items: center; gap: .25em; padding: .2em .5em; border-radius: .5em;
+    background: #fff3c4; color: #7a4f00; font-size: .5em; font-weight: 800;
+  }
+  .geld-vraag { display: block; font-size: .5em; margin-bottom: .1em; }
   .q-blank.done { border-style: solid; border-color: var(--green-deep); background: rgba(102,187,106,.18); color: var(--green-deep); }
 
 
@@ -9329,6 +9360,9 @@
   .fl-rij.overgeslagen .fl-n, .fl-rij.overgeslagen .fl-naam, .fl-rij.overgeslagen .fl-vb { opacity: .4; }
   .fl-rij.overgeslagen .fl-naam { text-decoration: line-through; text-decoration-thickness: 2px; }
   .fl-vb { flex: none; min-width: 92px; text-align: right; font-weight: 700; letter-spacing: .3px; white-space: nowrap; }
+
+  .fl-vb .geld-stuk { font-size: 10px; }
+  .fl-vb .geld-stuk + .geld-stuk { margin-left: 3px; }
   .fl-vak {
     display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 4px; opacity: .55;
     vertical-align: -2px; box-sizing: border-box;
@@ -14389,6 +14423,10 @@ function defaultProfile(name, dress, opts) {
       padVanaf: opts.padVanaf || null,
       padTot: null,
       tafelLijn: { ...opts.tafelLijn },
+      geldLijn: { ...opts.geldLijn },
+
+      ...(opts.themas ? { themas: opts.themas.slice() } : {}),
+      ...(opts.kiesGeld ? { kiesGeld: opts.kiesGeld.slice() } : {}),
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
 
@@ -22351,7 +22389,8 @@ function padNa(p, sterren) {
 
 function vraagIsNieuw(q, id) {
   if (id === 'fase') return true;
-  if (id in TAFEL_IDX) return (q.op === 'x' || q.op === ':') && TAFELPAD[TAFEL_IDX[id]].tafels.includes(Number((q.tmpl.match(/\d+/g) || [])[1]));
+  if (id in LADDERS.tafels.idx) return (q.op === 'x' || q.op === ':') && TAFELPAD[LADDERS.tafels.idx[id]].tafels.includes(Number((q.tmpl.match(/\d+/g) || [])[1]));
+  if (id in LADDERS.geld.idx) return q.rij === id;
   const r = LEERPAD[PAD_IDX[id]];
   if (!r) return false;
   if (r.bouwen) return q.kind === 'bouw' && (q.grens || 99) >= r.bereik - 1;
@@ -22382,19 +22421,24 @@ function vraagIsNieuw(q, id) {
 
 
 
+
+
+
 const THEMAS = [
   { id: 'rekenen', naam: 'Rekenen', ops: ['+', '-'] },
   { id: 'tafels',  naam: 'Tafels',  ops: ['x', ':'] },
+  { id: 'geld',    naam: 'Geld' },
 ];
 const THEMA = Object.fromEntries(THEMAS.map(t => [t.id, t]));
-function themaAan(s, k) { return THEMA[k].ops.some(o => s.ops.includes(o)); }
+function themaAan(s, k) { return THEMA[k].ops ? THEMA[k].ops.some(o => s.ops.includes(o)) : (s.themas || []).includes(k); }
 const themasAan = s => THEMAS.filter(t => themaAan(s, t.id)).map(t => t.id);
 
 function themaZet(s, k, aan) {
   const ops = THEMA[k].ops;
   if (aan === themaAan(s, k)) return true;
-  if (!aan) {
-    if (themasAan(s).length < 2) return false;
+  if (!aan && themasAan(s).length < 2) return false;
+  if (!ops) s.themas = aan ? (s.themas || []).concat(k) : s.themas.filter(t => t !== k);
+  else if (!aan) {
     s.opsRust = { ...s.opsRust, [k]: s.ops.filter(o => ops.includes(o)) };
     s.ops = s.ops.filter(o => !ops.includes(o));
   } else {
@@ -22408,16 +22452,15 @@ function themaZet(s, k, aan) {
 
 
 function themaIcoon(k, maat) {
+  const svg = binnen => `<svg class="thema-ico" viewBox="0 0 40 40" width="${maat}" height="${maat}" aria-hidden="true">${binnen}</svg>`;
+  if (k === 'geld') return svg('<circle cx="20" cy="20" r="18" fill="#c9ccd1" stroke="#9aa0a8" stroke-width="1.5"/>'
+    + '<circle cx="20" cy="20" r="12.5" fill="#e8c45a"/>'
+    + '<text x="20" y="21" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="900" fill="#5d3f00">€</text>');
   const teken = { rekenen: ['+', '−'], tafels: ['×', '÷'] }[k];
-  return `<svg class="thema-ico" viewBox="0 0 40 40" width="${maat}" height="${maat}" aria-hidden="true">`
-    + `<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>`
-    + `<g fill="#8e24aa" font-weight="900" font-size="21" text-anchor="middle" dominant-baseline="central">`
-    + `<text x="13.5" y="14">${teken[0]}</text><text x="26.5" y="26">${teken[1]}</text></g></svg>`;
+  return svg('<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>'
+    + '<g fill="#8e24aa" font-weight="900" font-size="21" text-anchor="middle" dominant-baseline="central">'
+    + `<text x="13.5" y="14">${teken[0]}</text><text x="26.5" y="26">${teken[1]}</text></g>`);
 }
-
-
-
-
 
 
 
@@ -22432,26 +22475,120 @@ const TAFELPAD = [
   { id: 'tafels34',   tafels: [3, 4],       naam: 'Tafels van 3 en 4' },
   { id: 'tafels69',   tafels: [6, 7, 8, 9], naam: 'Tafels van 6 tot 9' },
 ];
-const TAFEL_IDX = Object.fromEntries(TAFELPAD.map((r, i) => [r.id, i]));
 const TAFEL_NU_VAAK = 0.6;
 function tafelVoorbeeld(r, s) {
   const b = r.tafels[r.tafels.length > 2 ? 1 : 0], a = b === 7 ? 8 : 7;
   return s.ops.includes('x') ? `${a} × ${b}` : `${a * b} : ${b}`;
 }
 
-function tafelRijen(s) {
-  const l = s.tafelLijn || {};
-  const hi = l.tot in TAFEL_IDX ? TAFEL_IDX[l.tot] : TAFELPAD.length - 1;
-  const lo = Math.min(l.vanaf in TAFEL_IDX ? TAFEL_IDX[l.vanaf] : 0, hi);
-  return { rijen: TAFELPAD.map(r => ({ ...r, vb: tafelVoorbeeld(r, s) })), lo, hi };
+
+
+
+
+
+
+
+
+
+const GELDPAD = [
+  { id: 'munten10',   naam: 'Munten tot €10',   tot: 1000,  stukken: [200, 100] },
+  { id: 'briefjes20', naam: 'Briefjes tot €20', tot: 2000,  stukken: [1000, 500, 200, 100], briefje: true },
+  { id: 'geld100',    naam: 'Tot €100',         tot: 10000, stukken: [5000, 2000, 1000, 500, 200, 100], briefje: true },
+  { id: 'centen',     naam: 'Met centen',       tot: 1000,  stukken: [200, 100, 50, 20, 10], centen: true },
+  { id: 'terug',      naam: 'Teruggeven',       tot: 2000,  terug: true },
+];
+const GELD_DINGEN = ['🧸', '🍦', '🎈', '📚', '🧃', '🍭', '🪀', '🖍️'];
+
+function geldStuk(c) {
+  const soort = c >= 500 ? `briefje b${c / 100}` : `munt m${c}`;
+  return `<span class="geld-stuk ${soort}">${c >= 100 ? '€' + c / 100 : c + 'c'}</span>`;
 }
 
-function tafelNu(p) {
-  const { lo, hi } = tafelRijen(p.settings);
-  const klaar = new Set((p.tafels && p.tafels.klaar) || []);
-  const r = TAFELPAD.slice(lo, hi + 1).find(x => !klaar.has(x.id));
+function euro(c) { return c % 100 ? `€${Math.floor(c / 100)},${String(c % 100).padStart(2, '0')}` : `€${c / 100}`; }
+function geldVoorbeeld(r) {
+  if (r.terug) return '€10 − €7';
+  return { munten10: [200, 200, 100], briefjes20: [1000, 500, 200], geld100: [5000, 2000, 500], centen: [100, 50, 20] }[r.id].map(geldStuk).join('');
+}
+
+
+
+
+function genGeld(r) {
+  if (r.terug) {
+    const briefje = pick([500, 1000, 1000, 2000]), prijs = 100 * rnd(1, briefje / 100 - 1);
+    const ding = pick(GELD_DINGEN);
+    return { kind: 'geld', op: 'geld', rij: r.id, ans: (briefje - prijs) / 100, grens: briefje / 100, min: 1, kiezen: false,
+      tmpl: `terug ${briefje / 100} - ${prijs / 100} = @`,
+      html: `<span class="geld-rij">${geldStuk(briefje)}<span class="geld-pijl" aria-hidden="true">➜</span><span class="geld-prijs">${ding} ${euro(prijs)}</span></span>`
+        + `<span class="geld-vraag">Terug?</span><span class="pl-som">€ @</span>` };
+  }
+  let stukken, som, poging = 0;
+  do {
+    const n = rnd(2, r.id === 'geld100' ? 5 : 4);
+    stukken = Array.from({ length: n }, () => pick(r.stukken)).sort((a, b) => b - a);
+    som = stukken.reduce((a, b) => a + b, 0);
+  } while ((som > r.tot || (r.briefje && stukken[0] < 500) || (r.centen && som % 100 === 0)) && ++poging < 60);
+  const centen = !!r.centen;
+  return { kind: 'geld', op: 'geld', rij: r.id, centen, kiezen: centen, min: centen ? 10 : 1,
+    ans: centen ? som : som / 100, grens: centen ? som + 100 : Math.max(10, som / 100 + 5),
+    tmpl: `geld ${stukken.map(c => centen ? c : c / 100).join(' + ')} = @`,
+    html: `<span class="geld-rij">${stukken.map(geldStuk).join('')}</span><span class="pl-som">€ @</span>` };
+}
+
+function toonAntwoord(q, v) {
+  if (q.kind !== 'geld') return String(v);
+  return q.centen ? euro(v).slice(1) : String(v);
+}
+function toonKeuze(q, v) { return q.kind === 'geld' ? (q.centen ? euro(v) : `€${v}`) : String(v); }
+
+
+
+
+
+
+
+
+
+
+const LADDERS = {
+  tafels: { pad: TAFELPAD, lijn: 'tafelLijn', stand: 'tafels', id: 'set-tafelpad', eind: 'Alle tafels door elkaar', vb: tafelVoorbeeld },
+  geld:   { pad: GELDPAD,  lijn: 'geldLijn',  stand: 'geld',   id: 'set-geldpad',  eind: 'Alles met geld door elkaar', vb: geldVoorbeeld, kies: 'kiesGeld' },
+};
+Object.values(LADDERS).forEach(L => { L.idx = Object.fromEntries(L.pad.map((r, i) => [r.id, i])); });
+
+function ladderRijen(s, k) {
+  const L = LADDERS[k], l = s[L.lijn] || {};
+  const hi = l.tot in L.idx ? L.idx[l.tot] : L.pad.length - 1;
+  const lo = Math.min(l.vanaf in L.idx ? L.idx[l.vanaf] : 0, hi);
+  return { rijen: L.pad.map(r => ({ ...r, vb: L.vb(r, s) })), lo, hi };
+}
+function ladderNu(p, k) {
+  const L = LADDERS[k], { lo, hi } = ladderRijen(p.settings, k);
+  const klaar = new Set((p[L.stand] && p[L.stand].klaar) || []);
+  const r = L.pad.slice(lo, hi + 1).find(x => !klaar.has(x.id));
   return r ? r.id : 'alles';
 }
+
+function ladderSpeelt(p, k) {
+  const L = LADDERS[k], nuId = ladderNu(p, k), { hi } = ladderRijen(p.settings, k);
+  const klaar = new Set((p[L.stand] && p[L.stand].klaar) || []);
+  const tot = nuId === 'alles' ? hi : L.idx[nuId];
+  return { rijen: L.pad.filter((r, i) => i <= tot || klaar.has(r.id)), nu: nuId === 'alles' ? null : L.pad[tot] };
+}
+function ladderNa(p, k, sterren) {
+  const L = LADDERS[k], nu = ladderNu(p, k);
+  if (nu === 'alles') return false;
+  const t = p[L.stand] = p[L.stand] || { klaar: [] };
+  if (!Array.isArray(t.klaar)) t.klaar = [];
+  if (t.rij !== nu) Object.assign(t, { rij: nu, shows: 0, goed: 0 });
+  if (sterren >= PAD_TELT) t.shows++;
+  t.goed = sterren >= 3 ? t.goed + 1 : 0;
+  if (!((t.shows >= PAD_MIN_SHOWS && t.goed >= PAD_GOED) || t.shows >= PAD_MAX_SHOWS)) return false;
+  L.pad.slice(0, L.idx[nu] + 1).forEach(r => { if (!t.klaar.includes(r.id)) t.klaar.push(r.id); });
+  Object.assign(t, { rij: ladderNu(p, k), shows: 0, goed: 0 });
+  return true;
+}
+
 
 
 
@@ -22460,11 +22597,29 @@ function tafelInst(p) {
   const ops = s.ops.filter(o => o === 'x' || o === ':');
   const basis = { ...s, ops, missNum: false, chain3: false, tientallen: false, honderdtallen: false, bouwen: null };
   if (zelfGekozen(s)) return { ...basis, tables: s.tables.length ? s.tables.slice() : [2, 5, 10], tafelStapel: [] };
-  const nuId = tafelNu(p), { hi } = tafelRijen(s);
-  const klaar = new Set((p.tafels && p.tafels.klaar) || []);
-  const tot = nuId === 'alles' ? hi : TAFEL_IDX[nuId];
-  const tables = TAFELPAD.filter((r, i) => i <= tot || klaar.has(r.id)).flatMap(r => r.tafels);
-  return { ...basis, tables, tafelNu: nuId === 'alles' ? null : TAFELPAD[tot].tafels };
+  const { rijen, nu } = ladderSpeelt(p, 'tafels');
+  return { ...basis, tables: rijen.flatMap(r => r.tafels), tafelNu: nu && nu.tafels };
+}
+
+
+
+const GELD_NU_VAAK = 0.6;
+function geldInst(p) {
+  const s = p.settings;
+  if (zelfGekozen(s)) {
+    const aan = GELDPAD.filter(r => (s.kiesGeld || []).includes(r.id));
+    return { thema: 'geld', rijen: aan.length ? aan : GELDPAD.slice(0, 1), stapel: [] };
+  }
+  const { rijen, nu } = ladderSpeelt(p, 'geld');
+  return { thema: 'geld', rijen, nu };
+}
+function geldVraag(s, net) {
+  let q, poging = 0;
+  do {
+    const r = s.nu && Math.random() < GELD_NU_VAAK ? s.nu : s.stapel ? beurt(s, 'stapel', s.rijen) : pick(s.rijen);
+    q = genGeld(r);
+  } while (net.includes(q.tmpl) && ++poging < 8);
+  return q;
 }
 
 
@@ -22482,33 +22637,32 @@ function beurt(s, sleutel, lijst) {
   return stapel.pop();
 }
 
-
-function tafelNa(p, sterren) {
-  const nu = tafelNu(p);
-  if (nu === 'alles') return false;
-  const t = p.tafels = p.tafels || { klaar: [] };
-  if (!Array.isArray(t.klaar)) t.klaar = [];
-  if (t.rij !== nu) Object.assign(t, { rij: nu, shows: 0, goed: 0 });
-  if (sterren >= PAD_TELT) t.shows++;
-  t.goed = sterren >= 3 ? t.goed + 1 : 0;
-  if (!((t.shows >= PAD_MIN_SHOWS && t.goed >= PAD_GOED) || t.shows >= PAD_MAX_SHOWS)) return false;
-  TAFELPAD.slice(0, TAFEL_IDX[nu] + 1).forEach(r => { if (!t.klaar.includes(r.id)) t.klaar.push(r.id); });
-  Object.assign(t, { rij: tafelNu(p), shows: 0, goed: 0 });
-  return true;
-}
-
-function themaInst(p, k) { return k === 'tafels' ? tafelInst(p) : vraagInst(p); }
+function themaInst(p, k) { return k === 'tafels' ? tafelInst(p) : k === 'geld' ? geldInst(p) : vraagInst(p); }
 
 
 
 
 
 
+
+
+
+
+
+const THEMA_ERBIJ = ['geld'];
 function themaPlan(s, total) {
   const aan = themasAan(s);
-  const tel = Object.fromEntries(aan.map((k, i) => [k, Math.floor(total / aan.length) + (i < total % aan.length ? 1 : 0)]));
-  const plan = [];
-  while (plan.length < total) aan.forEach(k => { if (tel[k] > 0) { plan.push(k); tel[k]--; } });
+  const sommen = aan.filter(k => !THEMA_ERBIJ.includes(k)), erbij = aan.filter(k => THEMA_ERBIJ.includes(k));
+  const verdeel = (ks, n) => {
+    const tel = Object.fromEntries(ks.map((k, i) => [k, Math.floor(n / ks.length) + (i < n % ks.length ? 1 : 0)]));
+    const uit = [];
+    while (uit.length < n) ks.forEach(k => { if (tel[k] > 0) { uit.push(k); tel[k]--; } });
+    return uit;
+  };
+  if (!sommen.length) return verdeel(erbij, total);
+  const extra = verdeel(erbij, erbij.length * (total >= 8 ? 2 : 1));
+  const plan = verdeel(sommen, total - extra.length);
+  extra.forEach((k, j) => plan.splice(Math.round((j + 1) * total / (extra.length + 1)), 0, k));
   return plan;
 }
 
@@ -22763,6 +22917,8 @@ function keuzeGrens(q, s, lvl) {
 
   if (q.op === 'bouw') return q.ans < 10 ? 10 : q.grens || 99;
 
+  if (q.op === 'geld') return q.grens;
+
   return Math.max(10, Math.ceil(hoogste / 10) * 10);
 }
 function makeChoices(q, grens) {
@@ -22773,7 +22929,8 @@ function makeChoices(q, grens) {
 
 
   const stap = grens > 100 ? [100, 10].find(d => (q.fouten ? [] : getallen).concat(ans).every(v => v % d === 0)) || 1 : 1;
-  const mag = v => Number.isInteger(v) && v >= 0 && v <= grens && v !== ans && v % stap === 0;
+
+  const mag = v => Number.isInteger(v) && v >= (q.min || 0) && v <= grens && v !== ans && v % stap === 0;
 
   const fouten = new Set(q.fouten || getallen);
   if (!q.fouten) for (let i = 0; i < getallen.length; i++)
@@ -23876,6 +24033,8 @@ function buildQuestion(p, lvl, g) {
 
   const k = g && g.themaPlan ? g.themaPlan[g.idx] : themasAan(p.settings)[0];
   const s = (g && g.insts && g.insts[k]) || themaInst(p, k);
+
+  if (s.thema === 'geld') return geldVraag(s, net);
   if (Math.random() < 0.35) {
     const wq = pickWeak(p, s, mag);
     if (wq) { if (al) al.add(wq.tmpl); return wq; }
@@ -24114,7 +24273,7 @@ function toonHint(q, val, btnEl) {
 
 
 
-  showToast(`<span class="hint-getal">${val}</span><span class="hint-pijl ${h.pijl}" role="img" aria-label="${esc(h.woorden)}">${pijlSVG(h.pijl)}</span>`,
+  showToast(`<span class="hint-getal">${toonKeuze(q, val)}</span><span class="hint-pijl ${h.pijl}" role="img" aria-label="${esc(h.woorden)}">${pijlSVG(h.pijl)}</span>`,
             null, null, 'hint');
 }
 
@@ -24282,7 +24441,8 @@ function renderQuestion() {
     G.qs[G.idx] = built;
   }
   const q = G.qs[G.idx];
-  G.mode = G.count ? 'count' : (s.mode === 'mix' ? pick(['kies', 'typ']) : s.mode);
+
+  G.mode = G.count ? 'count' : q.kiezen ? 'kies' : (s.mode === 'mix' ? pick(['kies', 'typ']) : s.mode);
   G.input = '';
   G.lock = false;
   G.retried = false;
@@ -24300,7 +24460,7 @@ function renderQuestion() {
   if (G.mode === 'kies') {
     const choices = makeChoices(q, keuzeGrens(q, G.inst, G.lvl));
     area.innerHTML = '<div class="choices">' +
-      choices.map(c => `<button class="choice-btn" data-v="${c}">${c}</button>`).join('') + '</div>';
+      choices.map(c => `<button class="choice-btn" data-v="${c}">${toonKeuze(q, c)}</button>`).join('') + '</div>';
     area.querySelectorAll('.choice-btn').forEach(b => {
       b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
     });
@@ -24696,7 +24856,7 @@ function somVult(q, vanEl, rustig) {
     vak.classList.add('done', rustig ? 'rustig' : 'klikt');
   };
   if (rustig || G.mode === 'typ' || !vanEl || !vanEl.getBoundingClientRect || motionOff()) {
-    vakNaar(vak, q.ans, rustig ? 240 : 0);
+    vakNaar(vak, toonAntwoord(q, q.ans), rustig ? 240 : 0);
     zet();
     return vak;
   }
@@ -24706,13 +24866,13 @@ function somVult(q, vanEl, rustig) {
 
 
   vak.style.visibility = 'hidden';
-  const v = vanEl.getBoundingClientRect(), n = vakNaar(vak, q.ans, SOM_VLUCHT), cs = getComputedStyle(vak);
+  const v = vanEl.getBoundingClientRect(), n = vakNaar(vak, toonAntwoord(q, q.ans), SOM_VLUCHT), cs = getComputedStyle(vak);
 
 
   const kopie = document.createElement('span');
   kopie.className = 'q-blank done som-vlucht';
   kopie.setAttribute('aria-hidden', 'true');
-  kopie.textContent = q.ans;
+  kopie.textContent = toonAntwoord(q, q.ans);
   Object.assign(kopie.style, {
     left: n.left + 'px', top: n.top + 'px', width: n.width + 'px', height: n.height + 'px',
     fontSize: cs.fontSize, fontWeight: cs.fontWeight, fontFamily: cs.fontFamily,
@@ -25114,7 +25274,7 @@ function groeiMoment(p, g, voor, rij) {
       zin: 'Je bent gegroeid! Er is een nieuw spel.' } : null;
   }
   const z = p.gezien || (p.gezien = {});
-  const r = rij && (padRijen(p.settings).rijen.concat(tafelRijen(p.settings).rijen)).find(x => x.id === rij);
+  const r = rij && padRijen(p.settings).rijen.concat(...Object.keys(LADDERS).map(k => ladderRijen(p.settings, k).rijen)).find(x => x.id === rij);
   if (!r || z[rij]) return null;
   z[rij] = 1;
   return { id: rij, pil: groeiPil(r.naam, r.vb) };
@@ -25253,8 +25413,8 @@ function endLevel(success) {
 
   const thema = k => !G.count && !vrij && G.themaPlan.includes(k);
   const plusMinRij = thema('rekenen') && padNa(p, success ? themaSterren(G, 'rekenen') : 0) ? padNu(p) : null;
-  const tafelRij = thema('tafels') && tafelNa(p, success ? themaSterren(G, 'tafels') : 0) ? tafelNu(p) : null;
-  const nieuweRij = plusMinRij || tafelRij;
+  const ladderRij = Object.keys(LADDERS).map(k => thema(k) && ladderNa(p, k, success ? themaSterren(G, k) : 0) ? ladderNu(p, k) : null);
+  const nieuweRij = [plusMinRij, ...ladderRij].find(Boolean) || null;
 
 
 
@@ -27339,7 +27499,7 @@ function stapNu(p) {
       meter: `<span class="vg-rungs" aria-hidden="true">${Array.from({ length: top + 1 }, (_, i) => `<i class="${i <= rung ? 'aan' : ''}"></i>`).join('')}</span>`,
       tekst: `stapje ${rung + 1} van ${top + 1}`, waar: `Fase ${st} van ${countMaxStage(s)}` };
   }
-  if (!themaAan(s, 'rekenen')) return tafelStap(p);
+  if (!themaAan(s, 'rekenen')) return ladderStap(p, Object.keys(LADDERS).find(k => themaAan(s, k)));
   const nuId = padNu(p);
   if (nuId === 'alles') return { naam: 'Alles door elkaar', vb: '', meter: '', tekst: '', waar: '' };
   const speel = padRijen(s).rijen.filter(r => !r.uit);
@@ -27351,16 +27511,16 @@ function stapNu(p) {
     tekst: nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show', waar: `Stap ${speel.indexOf(nu) + 1} van ${speel.length}` };
 }
 
-function tafelStap(p) {
-  const nuId = tafelNu(p);
-  if (nuId === 'alles') return { naam: 'Alle tafels door elkaar', vb: '', meter: '', tekst: '', waar: '' };
-  const { rijen, lo, hi } = tafelRijen(p.settings);
-  const nu = rijen[TAFEL_IDX[nuId]];
-  const t = p.tafels && p.tafels.rij === nuId ? p.tafels : { goed: 0 };
+function ladderStap(p, k) {
+  const L = LADDERS[k], nuId = ladderNu(p, k);
+  if (nuId === 'alles') return { naam: L.eind, vb: '', meter: '', tekst: '', waar: '' };
+  const { rijen, lo, hi } = ladderRijen(p.settings, k);
+  const nu = rijen[L.idx[nuId]];
+  const t = p[L.stand] && p[L.stand].rij === nuId ? p[L.stand] : { goed: 0 };
   const goed = Math.min(PAD_GOED, t.goed || 0), nog = PAD_GOED - goed;
   return { naam: nu.naam, vb: nu.vb,
     meter: `<span class="vg-bol" aria-hidden="true">${Array.from({ length: PAD_GOED }, (_, i) => `<i class="${i < goed ? 'aan' : ''}"></i>`).join('')}</span>`,
-    tekst: nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show', waar: `Stap ${TAFEL_IDX[nuId] - lo + 1} van ${hi - lo + 1}` };
+    tekst: nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show', waar: `Stap ${L.idx[nuId] - lo + 1} van ${hi - lo + 1}` };
 }
 
 
@@ -27371,12 +27531,22 @@ function zelfRijen(s) {
   const t = s.tables.slice().sort((a, b) => a - b), b = t[t.length - 1], a = b === 7 ? 8 : 7;
   if (s.ops.includes('x')) rijen.push({ naam: `Tafels van ${t.join(', ')}`, vb: `${a} × ${b}` });
   if (s.ops.includes(':')) rijen.push({ naam: `Delen door ${t.join(', ')}`, vb: `${a * b} : ${b}` });
+  if (themaAan(s, 'geld')) geldInst({ settings: s }).rijen.forEach(r => rijen.push({ naam: r.naam, vb: geldVoorbeeld(r) }));
   return rijen;
+}
+
+
+
+function geldKiesStart(s, p) {
+  if (!zelfGekozen(s) || !themaAan(s, 'geld') || (s.kiesGeld || []).length) return;
+  const nu = p ? ladderNu(p, 'geld') : GELDPAD[0].id;
+  s.kiesGeld = [nu === 'alles' ? GELDPAD[ladderRijen(s, 'geld').hi].id : nu];
 }
 function leerpadHtml(p) {
   const s = p.settings;
   if (zelfGekozen(s)) return zelfGekozenHtml(p);
-  if (s.track !== 'count') return (themaAan(s, 'rekenen') ? rekenLadderHtml(p) : '') + (themaAan(s, 'tafels') ? tafelLadderHtml(p) : '');
+  if (s.track !== 'count') return (themaAan(s, 'rekenen') ? rekenLadderHtml(p) : '')
+    + Object.keys(LADDERS).filter(k => themaAan(s, k)).map(k => themaLadderHtml(p, k)).join('');
   return rekenLadderHtml(p);
 }
 function rekenLadderHtml(p) {
@@ -27443,26 +27613,26 @@ function rekenLadderHtml(p) {
 
 
 
-function tafelLadderHtml(p) {
-  const s = p.settings;
-  const { rijen, lo, hi } = tafelRijen(s);
+function themaLadderHtml(p, k) {
+  const s = p.settings, L = LADDERS[k];
+  const { rijen, lo, hi } = ladderRijen(s, k);
   const speel = rijen.slice(lo, hi + 1);
-  const nuId = tafelNu(p);
+  const nuId = ladderNu(p, k);
   const nr = nuId === 'alles' ? speel.length : speel.findIndex(r => r.id === nuId);
   const uit = [];
   if (nr) uit.push(flRij(' klaar', '✓', klaarNamen(speel.slice(0, nr).map(r => r.naam))));
-  if (nuId === 'alles') uit.push(flRij(' hier niveau-bezig', flAva(p), 'Alle tafels door elkaar', ''));
+  if (nuId === 'alles') uit.push(flRij(' hier niveau-bezig', flAva(p), L.eind, ''));
   else {
-    const nu = tafelStap(p);
+    const nu = ladderStap(p, k);
     uit.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}<small class="vg-hoever">${nu.meter}${nu.tekst}</small>`, flVb(nu.vb)));
     speel.slice(nr + 1).forEach((r, i) => uit.push(flRij(' later', nr + 2 + i, r.naam, flVb(r.vb))));
-    uit.push(flRij(' later', '∞', 'Alle tafels door elkaar'));
+    uit.push(flRij(' later', '∞', L.eind));
   }
-  const kop = ['x', ':'].filter(o => s.ops.includes(o)).map(o => ({ x: '×', ':': '÷' })[o]).join(' ');
+  const kop = k === 'tafels' ? `Tafels <span>· ${['x', ':'].filter(o => s.ops.includes(o)).map(o => ({ x: '×', ':': '÷' })[o]).join(' ')}</span>` : THEMA[k].naam;
   return `<div class="set-card vg-kaart niveau-blok">
-    ${kaartKop(`Tafels <span>· ${kop}</span>`)}
+    ${kaartKop(kop)}
     <div class="fase-ladder vg-ladder">${uit.join('')}</div>
-    <div class="vg-voet"><button class="vg-aanpas" id="tafel-aanpas" type="button">Aanpassen ›</button></div>
+    <div class="vg-voet"><button class="vg-aanpas" id="${k === 'tafels' ? 'tafel' : k}-aanpas" type="button">Aanpassen ›</button></div>
   </div>`;
 }
 
@@ -27724,7 +27894,7 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
 
 
 const OEFEN_INSTELLINGEN = {
-  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], show: ['mode', 'perLevel'] },
+  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], geld: ['geldLijn', 'kiesGeld'], show: ['mode', 'perLevel'] },
   count: { wat: ['qmax'], pad: ['stage', 'kiesFasen'], show: ['repr', 'perLevel', 'memory'] },
 };
 function oefenGroups(s, pfx, p) {
@@ -27863,12 +28033,15 @@ function oefenGroups(s, pfx, p) {
 
 
 
-  const tl = tafelRijen(s);
-  const tafelNuId = p && tafelNu(p);
-  const tafelHier = p && tafelNuId !== 'alles' ? TAFEL_IDX[tafelNuId] + 1 : 0;
-  const tafelEind = flRij(` eind${tafelNuId === 'alles' ? ' hier' : ''}`, tafelNuId === 'alles' && ava ? ava : '∞', 'Alle tafels door elkaar');
-  const tafelLadder = ladder('set-tafelpad', 'tafelLijn', tl.rijen.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb) })),
-    tl.lo + 1, tl.hi + 1, tafelHier, tafelEind);
+
+  const themaLadder = k => {
+    const L = LADDERS[k], lr = ladderRijen(s, k);
+    const nu = p && ladderNu(p, k), voorbij = nu === 'alles';
+    const staart = flRij(` eind${voorbij ? ' hier' : ''}`, voorbij && ava ? ava : '∞', L.eind);
+    return ladder(L.id, L.lijn, lr.rijen.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb) })),
+      lr.lo + 1, lr.hi + 1, p && !voorbij ? L.idx[nu] + 1 : 0, staart);
+  };
+  const geldKies = kiesHtml('set-kiesgeld', 'kiesGeld', GELDPAD.map(r => ({ v: r.id, naam: r.naam, vb: geldVoorbeeld(r) })), s.kiesGeld || []);
   const tafelsVan = `${lbl('Tafels van')}
       <div class="oe-tafels" id="${pfx}set-tables" data-instelling="tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>`;
   return [themaAan(s, 'rekenen') && {
@@ -27876,7 +28049,9 @@ function oefenGroups(s, pfx, p) {
       ? kiesHtml('set-kies', 'kies', kiesLijst, (s.kies || []))
       : ladder('set-startstap', 'padVanaf', padRijenLadder, startPos, padR.length, hierPos, eind)}`
   }, themaAan(s, 'tafels') && {
-    kaart: 'tafels', kop: 'Tafels', ico: 'tafels', html: `${opsBalk('set-tafelops', 'tafelOps', opDefs.slice(2))}${vrij ? tafelsVan : tafelLadder}`
+    kaart: 'tafels', kop: 'Tafels', ico: 'tafels', html: `${opsBalk('set-tafelops', 'tafelOps', opDefs.slice(2))}${vrij ? tafelsVan : themaLadder('tafels')}`
+  }, themaAan(s, 'geld') && {
+    kaart: 'geld', kop: 'Geld', ico: 'geld', html: vrij ? geldKies : themaLadder('geld')
   }, {
     kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
       ${perShow}`
@@ -27900,7 +28075,7 @@ function oefenSamenvatting(s) {
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
   const rijen = padRijen(s).rijen.filter(r => !r.uit);
   const start = s.padVanaf && rijen.length && padVanafRij(s, rijen) !== rijen[0] && padVanafRij(s, rijen);
-  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}`
+  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}${themaAan(s, 'geld') ? ' · €' : ''}`
        + ` · ${modes[s.mode] || s.mode}${start ? ` · vanaf ${start.naam.toLowerCase()}` : ''}`
        + ` · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
 }
@@ -28467,6 +28642,7 @@ function bindOefenChips(s, p, pfx, done) {
 
   bind('set-themas', c => {
     if (!themaZet(s, c.dataset.v, !themaAan(s, c.dataset.v))) return blockedMinOne(c), false;
+    geldKiesStart(s, p);
   });
   bind('set-tables', c => {
     const v = parseInt(c.dataset.v, 10);
@@ -28492,6 +28668,7 @@ function bindOefenChips(s, p, pfx, done) {
     if (!vrij) { delete s.modus; return; }
     s.modus = 'vrij';
     s.missNum = s.chain3 = true;
+    geldKiesStart(s, p);
     const count = s.track === 'count';
     const had = count ? kiesFasen(s).length : kiesGekozen(s).length;
     if (had || !p) return;
@@ -28510,6 +28687,11 @@ function bindOefenChips(s, p, pfx, done) {
     const nu = vink(s.kies || [], c.dataset.v, kiesRijen(s).map(r => r.id));
     if (!nu) return blockedMinOne(c), false;
     s.kies = nu;
+  });
+  bind('set-kiesgeld', c => {
+    const nu = vink(s.kiesGeld || [], c.dataset.v, GELDPAD.map(r => r.id));
+    if (!nu) return blockedMinOne(c), false;
+    s.kiesGeld = nu;
   });
   bind('set-kiesfasen', c => {
     const nu = vink(s.kiesFasen || [], parseInt(c.dataset.v, 10), Array.from({ length: COUNT_STAGE_MAX }, (_, i) => i + 1));
@@ -28567,20 +28749,20 @@ function bindOefenChips(s, p, pfx, done) {
 
 
 
-  bind('set-tafelpad', c => {
-    const v = parseInt(c.dataset.v, 10), r = TAFELPAD[v - 1];
-    if (!r) return false;
-    const { lo, hi } = tafelRijen(s);
-    const l = s.tafelLijn = { ...s.tafelLijn };
-    const id = (i, rand) => i === rand ? null : TAFELPAD[i].id;
+  Object.entries(LADDERS).forEach(([k, L]) => bind(L.id, c => {
+    const v = parseInt(c.dataset.v, 10);
+    if (!L.pad[v - 1]) return false;
+    const { lo, hi } = ladderRijen(s, k);
+    const l = s[L.lijn] = { ...s[L.lijn] };
+    const id = (i, rand) => i === rand ? null : L.pad[i].id;
     if (dichtsteLijn(v, lo + 1, hi + 1) === 'vanaf') {
       l.vanaf = id(v - 1, 0);
-      if (v - 1 > hi) l.tot = id(v - 1, TAFELPAD.length - 1);
+      if (v - 1 > hi) l.tot = id(v - 1, L.pad.length - 1);
     } else {
-      l.tot = id(v - 1, TAFELPAD.length - 1);
+      l.tot = id(v - 1, L.pad.length - 1);
       if (v - 1 < lo) l.vanaf = id(v - 1, 0);
     }
-  });
+  }));
   bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); telPlafondOpnieuw(p); });
   bind('set-memory', c => { s.memory = (c.dataset.v === 'on'); });
   bind('set-repr', c => { s.repr = c.dataset.v; });
@@ -28730,8 +28912,9 @@ function bindSettings(p, s) {
     const lad = ids.map(id => $(id)).find(Boolean);
     if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
   };
-  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables'));
+  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables', 'set-kiesgeld'));
   on('tafel-aanpas', 'onclick', naarLadder('set-tafelpad'));
+  on('geld-aanpas', 'onclick', naarLadder('set-geldpad'));
 
 
 

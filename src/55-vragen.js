@@ -341,7 +341,8 @@ function padNa(p, sterren) {
    fase het nieuwe. */
 function vraagIsNieuw(q, id) {
   if (id === 'fase') return true;
-  if (id in TAFEL_IDX) return (q.op === 'x' || q.op === ':') && TAFELPAD[TAFEL_IDX[id]].tafels.includes(Number((q.tmpl.match(/\d+/g) || [])[1]));
+  if (id in LADDERS.tafels.idx) return (q.op === 'x' || q.op === ':') && TAFELPAD[LADDERS.tafels.idx[id]].tafels.includes(Number((q.tmpl.match(/\d+/g) || [])[1]));
+  if (id in LADDERS.geld.idx) return q.rij === id;
   const r = LEERPAD[PAD_IDX[id]];
   if (!r) return false;
   if (r.bouwen) return q.kind === 'bouw' && (q.grens || 99) >= r.bereik - 1;   // tot 1000: met honderdtallen
@@ -362,29 +363,34 @@ function vraagIsNieuw(q, id) {
    zijn eigen plek erop:
      rekenen   plus en min: LEERPAD, met zijn blokken en zijn grens
      tafels    maal en delen: TAFELPAD, de tafels in de volgorde van school
+     geld      munten en briefjes tellen, en teruggeven: GELDPAD
    Een thema groeit apart. Ze kan op Tot 100 staan en op de tafels van 3 en 4:
-   klok of tafels hoeven niet te wachten tot de sommen klaar zijn, en
+   geld of tafels hoeven niet te wachten tot de sommen klaar zijn, en
    andersom. Een show mengt de thema's die aan staan (themaPlan), en elk thema
-   schuift door op zijn eigen vragen in die show (themaSterren, themaNa).
+   schuift door op zijn eigen vragen in die show (themaSterren, ladderNa).
 
-   AAN OF UIT ZIT IN s.ops. Rekenen staat aan als + of − aan staat, tafels als ×
-   of ÷ aan staat -- er is geen tweede vlag die kan gaan afwijken van de
-   bewerkingen, en een save van vóór de thema's heeft zijn thema's al. Zet een
-   ouder een thema uit, dan gaan zijn bewerkingen opzij in s.opsRust, en komen
-   ze zo terug als hij weer aan gaat. Het laatste thema kan niet uit. */
+   AAN OF UIT. Rekenen staat aan als + of − aan staat, tafels als × of ÷ aan
+   staat -- er is geen tweede vlag die kan gaan afwijken van de bewerkingen, en
+   een save van vóór de thema's heeft zijn thema's al. Zet een ouder er een
+   uit, dan gaan zijn bewerkingen opzij in s.opsRust, en komen ze zo terug als
+   hij weer aan gaat. Een thema zonder bewerkingen (geld) staat in s.themas, en
+   staat standaard uit: een ster van vóór dat thema merkt er niets van. Het
+   laatste thema kan niet uit. */
 const THEMAS = [
   { id: 'rekenen', naam: 'Rekenen', ops: ['+', '-'] },
   { id: 'tafels',  naam: 'Tafels',  ops: ['x', ':'] },
+  { id: 'geld',    naam: 'Geld' },
 ];
 const THEMA = Object.fromEntries(THEMAS.map(t => [t.id, t]));
-function themaAan(s, k) { return THEMA[k].ops.some(o => s.ops.includes(o)); }
+function themaAan(s, k) { return THEMA[k].ops ? THEMA[k].ops.some(o => s.ops.includes(o)) : (s.themas || []).includes(k); }
 const themasAan = s => THEMAS.filter(t => themaAan(s, t.id)).map(t => t.id);
 // Zet een thema aan of uit; false als het het laatste is (dan blijft het aan).
 function themaZet(s, k, aan) {
   const ops = THEMA[k].ops;
   if (aan === themaAan(s, k)) return true;
-  if (!aan) {
-    if (themasAan(s).length < 2) return false;
+  if (!aan && themasAan(s).length < 2) return false;
+  if (!ops) s.themas = aan ? (s.themas || []).concat(k) : s.themas.filter(t => t !== k);
+  else if (!aan) {
     s.opsRust = { ...s.opsRust, [k]: s.ops.filter(o => ops.includes(o)) };
     s.ops = s.ops.filter(o => !ops.includes(o));
   } else {
@@ -393,68 +399,179 @@ function themaZet(s, k, aan) {
   }
   return true;
 }
-/* Het ICOONTJE van een thema: getekend, geen emoji -- 🧮 en ✖️ zien er op elk
+/* Het ICOONTJE van een thema: getekend, geen emoji -- 🧮 en 💶 zien er op elk
    toestel anders uit, en op een oude Android klein en vaag. Twee tekens op een
-   lichtpaars tegeltje, dezelfde vorm voor elk thema. aria-hidden: het woord
-   staat er altijd naast. */
+   lichtpaars tegeltje, of voor geld een munt van twee euro. aria-hidden: het
+   woord staat er altijd naast. */
 function themaIcoon(k, maat) {
+  const svg = binnen => `<svg class="thema-ico" viewBox="0 0 40 40" width="${maat}" height="${maat}" aria-hidden="true">${binnen}</svg>`;
+  if (k === 'geld') return svg('<circle cx="20" cy="20" r="18" fill="#c9ccd1" stroke="#9aa0a8" stroke-width="1.5"/>'
+    + '<circle cx="20" cy="20" r="12.5" fill="#e8c45a"/>'
+    + '<text x="20" y="21" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="900" fill="#5d3f00">€</text>');
   const teken = { rekenen: ['+', '−'], tafels: ['×', '÷'] }[k];
-  return `<svg class="thema-ico" viewBox="0 0 40 40" width="${maat}" height="${maat}" aria-hidden="true">`
-    + `<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>`
-    + `<g fill="#8e24aa" font-weight="900" font-size="21" text-anchor="middle" dominant-baseline="central">`
-    + `<text x="13.5" y="14">${teken[0]}</text><text x="26.5" y="26">${teken[1]}</text></g></svg>`;
+  return svg('<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>'
+    + '<g fill="#8e24aa" font-weight="900" font-size="21" text-anchor="middle" dominant-baseline="central">'
+    + `<text x="13.5" y="14">${teken[0]}</text><text x="26.5" y="26">${teken[1]}</text></g>`);
 }
 
-/* ---- De tafels: een eigen ladder ------------------------------------------
+/* ---- De tafels -----------------------------------------------------------
    Drie rijen, zoals een Vlaamse school ze brengt: eerst de tafels van 2, 5 en
    10 (die met een ritme), dan 3 en 4, dan de rest. ÷ hoort bij elke rij, niet
    als rij erachter: op school is het de maal- en deeltafel samen. Welke van de
    twee er speelt, zeggen × en ÷ bovenaan de kaart.
-   Op een rij zijn is ook hier cumulatief: op de tafels van 3 en 4 komen 2, 5
-   en 10 nog terug, maar de nieuwe zijn er het meest (TAFEL_NU_VAAK). Voorbij
-   de laatste rij is het alles door elkaar, tot de lijn "tot".
-   s.tafelLijn = { vanaf, tot } (rij-ids, null = het begin of het eind), net als
-   padVanaf en padTot bij rekenen. p.tafels = { rij, shows, goed, klaar }, net
-   als p.pad. Bij Zelf kiezen speelt dit allemaal niet: dan zijn het de tafels
-   die de ouder aantikt (s.tables), om de beurt. */
+   Op een rij zijn is cumulatief: op de tafels van 3 en 4 komen 2, 5 en 10 nog
+   terug, maar de nieuwe zijn er het meest (TAFEL_NU_VAAK). Bij Zelf kiezen
+   zijn het de tafels die de ouder aantikt (s.tables), om de beurt. */
 const TAFELPAD = [
   { id: 'tafels2510', tafels: [2, 5, 10],   naam: 'Tafels van 2, 5 en 10' },
   { id: 'tafels34',   tafels: [3, 4],       naam: 'Tafels van 3 en 4' },
   { id: 'tafels69',   tafels: [6, 7, 8, 9], naam: 'Tafels van 6 tot 9' },
 ];
-const TAFEL_IDX = Object.fromEntries(TAFELPAD.map((r, i) => [r.id, i]));
 const TAFEL_NU_VAAK = 0.6;
 function tafelVoorbeeld(r, s) {
   const b = r.tafels[r.tafels.length > 2 ? 1 : 0], a = b === 7 ? 8 : 7;   // 7 × 7 leest als een vergissing
   return s.ops.includes('x') ? `${a} × ${b}` : `${a * b} : ${b}`;
 }
-// De rijen met voorbeeld, en waar de twee lijnen staan (indexen, 0 = de eerste rij).
-function tafelRijen(s) {
-  const l = s.tafelLijn || {};
-  const hi = l.tot in TAFEL_IDX ? TAFEL_IDX[l.tot] : TAFELPAD.length - 1;
-  const lo = Math.min(l.vanaf in TAFEL_IDX ? TAFEL_IDX[l.vanaf] : 0, hi);
-  return { rijen: TAFELPAD.map(r => ({ ...r, vb: tafelVoorbeeld(r, s) })), lo, hi };
+
+/* ---- Geld ------------------------------------------------------------------
+   Vijf rijen, zoals school ze brengt: in het eerste leerjaar munten en dan
+   briefjes, in hele euro's; in het tweede tot honderd, en dan de centen; in
+   het derde teruggeven. Een bedrag is altijd in centen (stukken, ans bij
+   Met centen), zodat €1,70 een geheel getal blijft voor de knoppen.
+   Elke vraag laat de munten en briefjes zien zoals je ze op tafel legt --
+   de grootste eerst -- en vraagt hoeveel het samen is. Teruggeven toont het
+   briefje waarmee je betaalt en de prijs. Met centen is altijd kiezen: een
+   komma typen kan het cijferblok niet, en hoort het ook niet te leren. */
+const GELDPAD = [
+  { id: 'munten10',   naam: 'Munten tot €10',   tot: 1000,  stukken: [200, 100] },
+  { id: 'briefjes20', naam: 'Briefjes tot €20', tot: 2000,  stukken: [1000, 500, 200, 100], briefje: true },
+  { id: 'geld100',    naam: 'Tot €100',         tot: 10000, stukken: [5000, 2000, 1000, 500, 200, 100], briefje: true },
+  { id: 'centen',     naam: 'Met centen',       tot: 1000,  stukken: [200, 100, 50, 20, 10], centen: true },
+  { id: 'terug',      naam: 'Teruggeven',       tot: 2000,  terug: true },
+];
+const GELD_DINGEN = ['🧸', '🍦', '🎈', '📚', '🧃', '🍭', '🪀', '🖍️'];
+// Eén munt of briefje, met zijn waarde erop: kleur is nooit het enige teken.
+function geldStuk(c) {
+  const soort = c >= 500 ? `briefje b${c / 100}` : `munt m${c}`;
+  return `<span class="geld-stuk ${soort}">${c >= 100 ? '€' + c / 100 : c + 'c'}</span>`;
 }
-// Waar staat ze op de tafels? De eerste rij tussen de lijnen die nog niet klaar is.
-function tafelNu(p) {
-  const { lo, hi } = tafelRijen(p.settings);
-  const klaar = new Set((p.tafels && p.tafels.klaar) || []);
-  const r = TAFELPAD.slice(lo, hi + 1).find(x => !klaar.has(x.id));
+// Een bedrag zoals een Belgisch kind het leest: €5, €1,70.
+function euro(c) { return c % 100 ? `€${Math.floor(c / 100)},${String(c % 100).padStart(2, '0')}` : `€${c / 100}`; }
+function geldVoorbeeld(r) {
+  if (r.terug) return '€10 − €7';
+  return { munten10: [200, 200, 100], briefjes20: [1000, 500, 200], geld100: [5000, 2000, 500], centen: [100, 50, 20] }[r.id].map(geldStuk).join('');
+}
+/* Een vraag van rij r. Een handvol stukken (twee tot vier, op de grootste rij
+   tot vijf) die samen binnen het bereik blijven; bij briefjes minstens één
+   briefje, bij centen minstens één cent -- anders oefent de rij zijn eigen
+   nieuwe ding niet. */
+function genGeld(r) {
+  if (r.terug) {
+    const briefje = pick([500, 1000, 1000, 2000]), prijs = 100 * rnd(1, briefje / 100 - 1);
+    const ding = pick(GELD_DINGEN);
+    return { kind: 'geld', op: 'geld', rij: r.id, ans: (briefje - prijs) / 100, grens: briefje / 100, min: 1, kiezen: false,
+      tmpl: `terug ${briefje / 100} - ${prijs / 100} = @`,
+      html: `<span class="geld-rij">${geldStuk(briefje)}<span class="geld-pijl" aria-hidden="true">➜</span><span class="geld-prijs">${ding} ${euro(prijs)}</span></span>`
+        + `<span class="geld-vraag">Terug?</span><span class="pl-som">€ @</span>` };
+  }
+  let stukken, som, poging = 0;
+  do {
+    const n = rnd(2, r.id === 'geld100' ? 5 : 4);
+    stukken = Array.from({ length: n }, () => pick(r.stukken)).sort((a, b) => b - a);
+    som = stukken.reduce((a, b) => a + b, 0);
+  } while ((som > r.tot || (r.briefje && stukken[0] < 500) || (r.centen && som % 100 === 0)) && ++poging < 60);
+  const centen = !!r.centen;
+  return { kind: 'geld', op: 'geld', rij: r.id, centen, kiezen: centen, min: centen ? 10 : 1,
+    ans: centen ? som : som / 100, grens: centen ? som + 100 : Math.max(10, som / 100 + 5),
+    tmpl: `geld ${stukken.map(c => centen ? c : c / 100).join(' + ')} = @`,
+    html: `<span class="geld-rij">${stukken.map(geldStuk).join('')}</span><span class="pl-som">€ @</span>` };
+}
+// Het antwoord van een vraag zoals het op een knop en in het vakje staat.
+function toonAntwoord(q, v) {
+  if (q.kind !== 'geld') return String(v);
+  return q.centen ? euro(v).slice(1) : String(v);
+}
+function toonKeuze(q, v) { return q.kind === 'geld' ? (q.centen ? euro(v) : `€${v}`) : String(v); }
+
+/* ---- Een ladder per thema ---------------------------------------------------
+   Tafels en geld hebben elk een ladder, en die werkt voor allebei hetzelfde --
+   net als het leerpad van rekenen, maar zonder blokken en grens:
+     s[lijn]   = { vanaf, tot }: rij-ids, null = het begin of het eind
+     p[stand]  = { rij, shows, goed, klaar }, net als p.pad
+   Ze staat op de eerste rij tussen de lijnen die nog niet klaar is (ladderNu),
+   en schuift door met dezelfde regel als padNa (ladderNa). Voorbij de laatste
+   rij is het alles door elkaar, tot de lijn "tot". Bij Zelf kiezen telt de
+   ladder niet: dan is het s[kies] (geld) of s.tables (tafels). */
+const LADDERS = {
+  tafels: { pad: TAFELPAD, lijn: 'tafelLijn', stand: 'tafels', id: 'set-tafelpad', eind: 'Alle tafels door elkaar', vb: tafelVoorbeeld },
+  geld:   { pad: GELDPAD,  lijn: 'geldLijn',  stand: 'geld',   id: 'set-geldpad',  eind: 'Alles met geld door elkaar', vb: geldVoorbeeld, kies: 'kiesGeld' },
+};
+Object.values(LADDERS).forEach(L => { L.idx = Object.fromEntries(L.pad.map((r, i) => [r.id, i])); });
+// De rijen met voorbeeld, en waar de twee lijnen staan (indexen, 0 = de eerste rij).
+function ladderRijen(s, k) {
+  const L = LADDERS[k], l = s[L.lijn] || {};
+  const hi = l.tot in L.idx ? L.idx[l.tot] : L.pad.length - 1;
+  const lo = Math.min(l.vanaf in L.idx ? L.idx[l.vanaf] : 0, hi);
+  return { rijen: L.pad.map(r => ({ ...r, vb: L.vb(r, s) })), lo, hi };
+}
+function ladderNu(p, k) {
+  const L = LADDERS[k], { lo, hi } = ladderRijen(p.settings, k);
+  const klaar = new Set((p[L.stand] && p[L.stand].klaar) || []);
+  const r = L.pad.slice(lo, hi + 1).find(x => !klaar.has(x.id));
   return r ? r.id : 'alles';
 }
-/* De vraagmaker voor de tafels: × en ÷ zoals de ouder ze aanzette, en de
-   tafels van haar rij en alles ervoor (ook wat ze al haalde, als "vanaf"
-   later hoger kwam). Zelf kiezen: de aangetikte tafels, om de beurt. */
+// De rijen die ze op die ladder speelt: tot en met haar rij, en wat ze al haalde.
+function ladderSpeelt(p, k) {
+  const L = LADDERS[k], nuId = ladderNu(p, k), { hi } = ladderRijen(p.settings, k);
+  const klaar = new Set((p[L.stand] && p[L.stand].klaar) || []);
+  const tot = nuId === 'alles' ? hi : L.idx[nuId];
+  return { rijen: L.pad.filter((r, i) => i <= tot || klaar.has(r.id)), nu: nuId === 'alles' ? null : L.pad[tot] };
+}
+function ladderNa(p, k, sterren) {
+  const L = LADDERS[k], nu = ladderNu(p, k);
+  if (nu === 'alles') return false;
+  const t = p[L.stand] = p[L.stand] || { klaar: [] };
+  if (!Array.isArray(t.klaar)) t.klaar = [];
+  if (t.rij !== nu) Object.assign(t, { rij: nu, shows: 0, goed: 0 });
+  if (sterren >= PAD_TELT) t.shows++;
+  t.goed = sterren >= 3 ? t.goed + 1 : 0;
+  if (!((t.shows >= PAD_MIN_SHOWS && t.goed >= PAD_GOED) || t.shows >= PAD_MAX_SHOWS)) return false;
+  L.pad.slice(0, L.idx[nu] + 1).forEach(r => { if (!t.klaar.includes(r.id)) t.klaar.push(r.id); });
+  Object.assign(t, { rij: ladderNu(p, k), shows: 0, goed: 0 });
+  return true;
+}
+
+/* ---- De vraagmakers van de thema's -----------------------------------------
+   tafelInst: × en ÷ zoals de ouder ze aanzette, en de tafels van haar rij en
+   alles ervoor. Zelf kiezen: de aangetikte tafels, om de beurt. */
 function tafelInst(p) {
   const s = p.settings;
   const ops = s.ops.filter(o => o === 'x' || o === ':');
   const basis = { ...s, ops, missNum: false, chain3: false, tientallen: false, honderdtallen: false, bouwen: null };
   if (zelfGekozen(s)) return { ...basis, tables: s.tables.length ? s.tables.slice() : [2, 5, 10], tafelStapel: [] };
-  const nuId = tafelNu(p), { hi } = tafelRijen(s);
-  const klaar = new Set((p.tafels && p.tafels.klaar) || []);
-  const tot = nuId === 'alles' ? hi : TAFEL_IDX[nuId];
-  const tables = TAFELPAD.filter((r, i) => i <= tot || klaar.has(r.id)).flatMap(r => r.tafels);
-  return { ...basis, tables, tafelNu: nuId === 'alles' ? null : TAFELPAD[tot].tafels };
+  const { rijen, nu } = ladderSpeelt(p, 'tafels');
+  return { ...basis, tables: rijen.flatMap(r => r.tafels), tafelNu: nu && nu.tafels };
+}
+/* geldInst: de rijen waar een geldvraag uit komt. Op het leerpad vaak haar rij
+   (GELD_NU_VAAK), anders een die ze al had; bij Zelf kiezen de aangevinkte,
+   om de beurt. */
+const GELD_NU_VAAK = 0.6;
+function geldInst(p) {
+  const s = p.settings;
+  if (zelfGekozen(s)) {
+    const aan = GELDPAD.filter(r => (s.kiesGeld || []).includes(r.id));
+    return { thema: 'geld', rijen: aan.length ? aan : GELDPAD.slice(0, 1), stapel: [] };
+  }
+  const { rijen, nu } = ladderSpeelt(p, 'geld');
+  return { thema: 'geld', rijen, nu };
+}
+function geldVraag(s, net) {
+  let q, poging = 0;
+  do {
+    const r = s.nu && Math.random() < GELD_NU_VAAK ? s.nu : s.stapel ? beurt(s, 'stapel', s.rijen) : pick(s.rijen);
+    q = genGeld(r);
+  } while (net.includes(q.tmpl) && ++poging < 8);
+  return q;
 }
 /* Welke tafel deze som? Op het leerpad vaak die van haar rij; bij Zelf kiezen
    om de beurt (s.tafelStapel, een geschud stapeltje dat de show lang meegaat),
@@ -471,34 +588,33 @@ function beurt(s, sleutel, lijst) {
   if (!stapel.length) stapel.push(...shuffle(lijst.slice()));
   return stapel.pop();
 }
-/* Een show verder op de tafels: dezelfde regel als padNa, op haar
-   tafelvragen in die show. */
-function tafelNa(p, sterren) {
-  const nu = tafelNu(p);
-  if (nu === 'alles') return false;
-  const t = p.tafels = p.tafels || { klaar: [] };
-  if (!Array.isArray(t.klaar)) t.klaar = [];
-  if (t.rij !== nu) Object.assign(t, { rij: nu, shows: 0, goed: 0 });
-  if (sterren >= PAD_TELT) t.shows++;
-  t.goed = sterren >= 3 ? t.goed + 1 : 0;
-  if (!((t.shows >= PAD_MIN_SHOWS && t.goed >= PAD_GOED) || t.shows >= PAD_MAX_SHOWS)) return false;
-  TAFELPAD.slice(0, TAFEL_IDX[nu] + 1).forEach(r => { if (!t.klaar.includes(r.id)) t.klaar.push(r.id); });
-  Object.assign(t, { rij: tafelNu(p), shows: 0, goed: 0 });
-  return true;
-}
-// De vraagmaker van een thema (zie vraagInst en tafelInst).
-function themaInst(p, k) { return k === 'tafels' ? tafelInst(p) : vraagInst(p); }
+// De vraagmaker van een thema (zie vraagInst, tafelInst, geldInst).
+function themaInst(p, k) { return k === 'tafels' ? tafelInst(p) : k === 'geld' ? geldInst(p) : vraagInst(p); }
 
 /* ---- De show mengen ---------------------------------------------------------
-   Welk thema elke vraag van de show krijgt, vooraf: [k, k, ...]. Ze krijgen
-   evenveel vragen (de rest naar wie eerst staat), en ze wisselen elkaar af in
-   plaats van per toeval: twee tafelvragen na elkaar en dan vijf sommen leest
-   als een ander spel, niet als één show. */
+   Welk thema elke vraag van de show krijgt, vooraf: [k, k, ...].
+     sommen   rekenen en tafels krijgen evenveel vragen (de rest naar wie eerst
+              staat), en wisselen elkaar af
+     erbij    geld krijgt er twee in een show van acht of meer, één in een
+              kortere, op gelijke afstanden tussen de sommen -- nooit de eerste
+              vraag, die is wat ze kent
+   Afwisselen en niet per toeval: twee tafelvragen na elkaar en dan vijf sommen
+   leest als een ander spel, niet als één show. Staat er geen som aan, dan
+   delen de andere de show gelijk. */
+const THEMA_ERBIJ = ['geld'];
 function themaPlan(s, total) {
   const aan = themasAan(s);
-  const tel = Object.fromEntries(aan.map((k, i) => [k, Math.floor(total / aan.length) + (i < total % aan.length ? 1 : 0)]));
-  const plan = [];
-  while (plan.length < total) aan.forEach(k => { if (tel[k] > 0) { plan.push(k); tel[k]--; } });
+  const sommen = aan.filter(k => !THEMA_ERBIJ.includes(k)), erbij = aan.filter(k => THEMA_ERBIJ.includes(k));
+  const verdeel = (ks, n) => {
+    const tel = Object.fromEntries(ks.map((k, i) => [k, Math.floor(n / ks.length) + (i < n % ks.length ? 1 : 0)]));
+    const uit = [];
+    while (uit.length < n) ks.forEach(k => { if (tel[k] > 0) { uit.push(k); tel[k]--; } });
+    return uit;
+  };
+  if (!sommen.length) return verdeel(erbij, total);
+  const extra = verdeel(erbij, erbij.length * (total >= 8 ? 2 : 1));
+  const plan = verdeel(sommen, total - extra.length);
+  extra.forEach((k, j) => plan.splice(Math.round((j + 1) * total / (extra.length + 1)), 0, k));
   return plan;
 }
 /* De sterren van één thema in een show: dezelfde maat als showStars, op
@@ -752,6 +868,8 @@ function keuzeGrens(q, s, lvl) {
   if (q.op === '+' || q.op === '-') return Math.max(hoogste, 10, s.max);
   // getallen bouwen: een cijfer blijft onder de tien, een getal onder de honderd
   if (q.op === 'bouw') return q.ans < 10 ? 10 : q.grens || 99;
+  // geld zegt het zelf: wat erboven kan liggen (zie genGeld)
+  if (q.op === 'geld') return q.grens;
   // tafels: tot het volgende tiental
   return Math.max(10, Math.ceil(hoogste / 10) * 10);
 }
@@ -763,7 +881,8 @@ function makeChoices(q, grens) {
      rekenen. Bij getallen bouwen telt alleen het antwoord: 368 = ▢ + 60 + 8
      vraagt 300, en dan staan er 200 en 400 naast, niet 299. */
   const stap = grens > 100 ? [100, 10].find(d => (q.fouten ? [] : getallen).concat(ans).every(v => v % d === 0)) || 1 : 1;
-  const mag = v => Number.isInteger(v) && v >= 0 && v <= grens && v !== ans && v % stap === 0;
+  // q.min: geld kent geen €0 als antwoord (zie genGeld)
+  const mag = v => Number.isInteger(v) && v >= (q.min || 0) && v <= grens && v !== ans && v % stap === 0;
   // fouten die een kind echt maakt (een vraag kan ze zelf meegeven, zie genBouwen)
   const fouten = new Set(q.fouten || getallen);
   if (!q.fouten) for (let i = 0; i < getallen.length; i++)
@@ -1866,6 +1985,8 @@ function buildQuestion(p, lvl, g) {
   // het thema van deze vraag (zie themaPlan), en zijn vraagmaker: haar rij op zijn ladder
   const k = g && g.themaPlan ? g.themaPlan[g.idx] : themasAan(p.settings)[0];
   const s = (g && g.insts && g.insts[k]) || themaInst(p, k);
+  // geld komt niet uit de zwakke sommen: dat zijn sommen, en een bedrag is elke keer andere munten
+  if (s.thema === 'geld') return geldVraag(s, net);
   if (Math.random() < 0.35) {
     const wq = pickWeak(p, s, mag);
     if (wq) { if (al) al.add(wq.tmpl); return wq; }
@@ -2104,7 +2225,7 @@ function toonHint(q, val, btnEl) {
   // De woorden ("Net iets meer dan 5") staan niet meer onder de pil: wie ze kan
   // lezen heeft ze niet nodig, en wie ze nodig heeft kan ze niet lezen -- de pijl
   // zegt het al, en op de rode tegel nog eens. Ze blijven voor een schermlezer.
-  showToast(`<span class="hint-getal">${val}</span><span class="hint-pijl ${h.pijl}" role="img" aria-label="${esc(h.woorden)}">${pijlSVG(h.pijl)}</span>`,
+  showToast(`<span class="hint-getal">${toonKeuze(q, val)}</span><span class="hint-pijl ${h.pijl}" role="img" aria-label="${esc(h.woorden)}">${pijlSVG(h.pijl)}</span>`,
             null, null, 'hint');
 }
 

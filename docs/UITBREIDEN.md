@@ -391,12 +391,16 @@ zaak Q2 of een oude save nergens makkelijker wordt.
 
 Iets wat geen plus of min is, is geen rij maar een **thema**: een eigen tegel
 bovenaan Oefeningen, een eigen kaart met een eigen ladder, en een eigen plek
-op die ladder. De tafels zijn er zo een (`THEMAS` en `TAFELPAD` in
-`src/55-vragen.js`, onder `= Thema's`). Een thema heeft nodig: zijn ladder,
-waar ze staat (`tafelNu`), zijn vraagmaker (`tafelInst`), hoe hij doorschuift
-(`tafelNa`), en zijn kaart in `oefenGroups`. Een show mengt de thema's die aan
-staan om de beurt (`themaPlan`), en elk schuift door op zijn eigen vragen
-(`themaSterren`). `npm run test:kern` zaak TH houdt dat vast.
+op die ladder. De tafels en geld zijn er zo een (`THEMAS`, `TAFELPAD` en
+`GELDPAD` in `src/55-vragen.js`, onder `= Thema's`). Een thema met een ladder
+zet die in `LADDERS`: daarmee werken waar ze staat (`ladderNu`), hoe ze
+doorschuift (`ladderNa`), de ladder op Oefeningen en op Voortgang, en het
+verzetten van de lijnen vanzelf. Verder heeft het een vraagmaker nodig
+(`tafelInst`, `geldInst`, via `themaInst`) en zijn kaart in `oefenGroups`.
+Een show mengt de thema's die aan staan: de sommen om de beurt, en een thema
+in `THEMA_ERBIJ` (geld) twee keer per show ertussen (`themaPlan`). Elk thema
+schuift door op zijn eigen vragen
+(`themaSterren`). `npm run test:kern` zaken TH en GE houden dat vast.
 
 ---
 

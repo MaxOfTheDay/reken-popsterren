@@ -162,7 +162,8 @@ function renderQuestion() {
     G.qs[G.idx] = built;
   }
   const q = G.qs[G.idx];
-  G.mode = G.count ? 'count' : (s.mode === 'mix' ? pick(['kies', 'typ']) : s.mode);
+  // een vraag die je niet kunt typen (€1,70: geen komma op het cijferblok) is altijd kiezen
+  G.mode = G.count ? 'count' : q.kiezen ? 'kies' : (s.mode === 'mix' ? pick(['kies', 'typ']) : s.mode);
   G.input = '';
   G.lock = false;
   G.retried = false;
@@ -180,7 +181,7 @@ function renderQuestion() {
   if (G.mode === 'kies') {
     const choices = makeChoices(q, keuzeGrens(q, G.inst, G.lvl));
     area.innerHTML = '<div class="choices">' +
-      choices.map(c => `<button class="choice-btn" data-v="${c}">${c}</button>`).join('') + '</div>';
+      choices.map(c => `<button class="choice-btn" data-v="${c}">${toonKeuze(q, c)}</button>`).join('') + '</div>';
     area.querySelectorAll('.choice-btn').forEach(b => {
       b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
     });
@@ -576,7 +577,7 @@ function somVult(q, vanEl, rustig) {
     vak.classList.add('done', rustig ? 'rustig' : 'klikt');
   };
   if (rustig || G.mode === 'typ' || !vanEl || !vanEl.getBoundingClientRect || motionOff()) {
-    vakNaar(vak, q.ans, rustig ? 240 : 0);   // typmodus: het getal stond er al
+    vakNaar(vak, toonAntwoord(q, q.ans), rustig ? 240 : 0);   // typmodus: het getal stond er al
     zet();
     return vak;
   }
@@ -586,13 +587,13 @@ function somVult(q, vanEl, rustig) {
   // de kopie waar het vakje uitkomt, en groeit het vakje er tijdens de vlucht
   // naartoe (zie vakNaar).
   vak.style.visibility = 'hidden';
-  const v = vanEl.getBoundingClientRect(), n = vakNaar(vak, q.ans, SOM_VLUCHT), cs = getComputedStyle(vak);
+  const v = vanEl.getBoundingClientRect(), n = vakNaar(vak, toonAntwoord(q, q.ans), SOM_VLUCHT), cs = getComputedStyle(vak);
   // Een kopie van het gevulde vakje, los boven alles: de somkaart knipt af
   // (overflow: hidden), dus binnen de kaart zou hij halverwege verdwijnen.
   const kopie = document.createElement('span');
   kopie.className = 'q-blank done som-vlucht';
   kopie.setAttribute('aria-hidden', 'true');
-  kopie.textContent = q.ans;
+  kopie.textContent = toonAntwoord(q, q.ans);
   Object.assign(kopie.style, {
     left: n.left + 'px', top: n.top + 'px', width: n.width + 'px', height: n.height + 'px',
     fontSize: cs.fontSize, fontWeight: cs.fontWeight, fontFamily: cs.fontFamily,
@@ -975,7 +976,7 @@ const RECENT_N = 10;
                fase terug zegt niets; dat merkt het kind niet en hoeft het ook
                niet te horen.
      rekenen   rij = de rij van LEERPAD waar padNa haar net naartoe schoof, of
-               anders die van TAFELPAD (tafelNa), of null. p.gezien onthoudt per rij-id wat al gevierd is: zet de ouder
+               anders die van een andere ladder (ladderNa), of null. p.gezien onthoudt per rij-id wat al gevierd is: zet de ouder
                een rij uit en weer aan, dan is dat geen nieuws.
    Hier keek rekenen eerst naar de instellingen: een hogere grens dan ooit, of de
    eerste zoek-het-getal. Dan stond er "Nieuw: getallen tot 100!" zodra een ouder
@@ -994,7 +995,7 @@ function groeiMoment(p, g, voor, rij) {
       zin: 'Je bent gegroeid! Er is een nieuw spel.' } : null;
   }
   const z = p.gezien || (p.gezien = {});
-  const r = rij && (padRijen(p.settings).rijen.concat(tafelRijen(p.settings).rijen)).find(x => x.id === rij);
+  const r = rij && padRijen(p.settings).rijen.concat(...Object.keys(LADDERS).map(k => ladderRijen(p.settings, k).rijen)).find(x => x.id === rij);
   if (!r || z[rij]) return null;
   z[rij] = 1;
   return { id: rij, pil: groeiPil(r.naam, r.vb) };
@@ -1133,8 +1134,8 @@ function endLevel(success) {
      rij -- rekenen eerst, want daar staat er maar één op het eindscherm. */
   const thema = k => !G.count && !vrij && G.themaPlan.includes(k);
   const plusMinRij = thema('rekenen') && padNa(p, success ? themaSterren(G, 'rekenen') : 0) ? padNu(p) : null;
-  const tafelRij = thema('tafels') && tafelNa(p, success ? themaSterren(G, 'tafels') : 0) ? tafelNu(p) : null;
-  const nieuweRij = plusMinRij || tafelRij;
+  const ladderRij = Object.keys(LADDERS).map(k => thema(k) && ladderNa(p, k, success ? themaSterren(G, k) : 0) ? ladderNu(p, k) : null);
+  const nieuweRij = [plusMinRij, ...ladderRij].find(Boolean) || null;
   /* Wat er pas ná het eindscherm gevierd wordt (zie de staart van deze
      functie): een wereld die net uit of perfect werd. Bij een mislukte show
      blijft het leeg. */

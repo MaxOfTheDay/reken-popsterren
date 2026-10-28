@@ -1013,7 +1013,7 @@ zaak('Q', () => {
 
   // het pad verandert onder haar
   p.settings.ops.push('x');
-  check(nu() === 'alles' && app.tafelNu(p) === 'tafels2510', 'Q · × erbij: de rekenladder blijft waar ze was, de tafels beginnen op hun eigen ladder', `${nu()} ${app.tafelNu(p)}`);
+  check(nu() === 'alles' && app.ladderNu(p, 'tafels') === 'tafels2510', 'Q · × erbij: de rekenladder blijft waar ze was, de tafels beginnen op hun eigen ladder', `${nu()} ${app.ladderNu(p, 'tafels')}`);
   p.settings.missNum = false;
   check(nu() === 'alles', 'Q · een uitgevinkte rij speelt ze niet', nu());
   p.settings.missNum = true;
@@ -1758,7 +1758,8 @@ zaak('ZE', () => {
   const app = laadApp();
   const kaarten = app.run('OEFEN_INSTELLINGEN');
   const gevallen = [
-    ['math', { ops: ['+', '-', 'x', ':'], max: 20 }, '["rekenen","tafels","show"]'],   // alles wat kan staat er
+    ['math', { ops: ['+', '-', 'x', ':'], max: 20, themas: ['geld'] }, '["rekenen","tafels","geld","show"]'],   // alles wat kan staat er
+    ['math', { ops: ['+', '-', 'x', ':'], max: 20 }, '["rekenen","tafels","show"]'],   // geld staat standaard uit
     ['math', { ops: ['+', '-'], max: 10, missNum: false }, '["rekenen","show"]'],      // en met minder
     ['math', { ops: [':'] }, '["tafels","show"]'],
     ['count', { track: 'count' }, '["wat","pad","show"]'],
@@ -1774,7 +1775,7 @@ zaak('ZE', () => {
     check(!dubbel.length, `ZE · ${track}: geen instelling met twee bedieningen`, JSON.stringify(dubbel));
     const fout = Object.entries(gezien).filter(([k, ks]) => !(kaarten[track][ks[0]] || []).includes(k));
     check(!fout.length, `ZE · ${track}: elke bediening staat in de kaart die OEFEN_INSTELLINGEN zegt`, JSON.stringify(fout));
-    if (opts.ops && opts.ops.length === 4 || track === 'count') {
+    if (opts.themas || track === 'count') {
       /* De ladders wisselen met de modus (Leerpad of Zelf kiezen): samen
          hebben ze elke instelling, en elk alleen de zijne. */
       const vrij = app.run('oefenGroups')({ ...s, modus: 'vrij' }, '', null);
@@ -1792,6 +1793,10 @@ zaak('ZE', () => {
         check(/data-instelling="tafelLijn"/.test(t) && !/data-instelling="tables"/.test(t)
           && /data-instelling="tables"/.test(tv) && !/data-instelling="tafelLijn"/.test(tv),
           'ZE · tafels: op het leerpad de tafelladder, bij Zelf kiezen "Tafels van", nooit allebei', '');
+        const gl = groepen.find(g => g.kaart === 'geld').html, gv = vrij.find(g => g.kaart === 'geld').html;
+        check(/data-instelling="geldLijn"/.test(gl) && !/data-instelling="kiesGeld"/.test(gl)
+          && /data-instelling="kiesGeld"/.test(gv) && !/data-instelling="geldLijn"/.test(gv),
+          'ZE · geld: op het leerpad de geldladder, bij Zelf kiezen de vinkjes, nooit allebei', '');
       }
     }
   }
@@ -2066,18 +2071,18 @@ zaak('TH', () => {
     `${app.themaSterren(g, 'rekenen')} ${app.themaSterren(g, 'tafels')}`);
 
   // de tafelladder: haar rij en wat ervoor kwam
-  check(app.tafelNu(p) === 'tafels2510', 'TH · tafels beginnen bij 2, 5 en 10', app.tafelNu(p));
+  check(app.ladderNu(p, 'tafels') === 'tafels2510', 'TH · tafels beginnen bij 2, 5 en 10', app.ladderNu(p, 'tafels'));
   let inst = app.tafelInst(p);
   check(inst.tables.join() === '2,5,10' && inst.ops.join() === 'x', 'TH · op die rij: alleen die tafels, en alleen ×', JSON.stringify(inst.tables));
-  for (let i = 0; i < 3; i++) app.tafelNa(p, 3);
-  check(app.tafelNu(p) === 'tafels34' && p.tafels.klaar.join() === 'tafels2510', 'TH · drie shows met drie sterren: de volgende rij', JSON.stringify(p.tafels));
+  for (let i = 0; i < 3; i++) app.ladderNa(p, 'tafels', 3);
+  check(app.ladderNu(p, 'tafels') === 'tafels34' && p.tafels.klaar.join() === 'tafels2510', 'TH · drie shows met drie sterren: de volgende rij', JSON.stringify(p.tafels));
   inst = app.tafelInst(p);
   const getrokken = Array.from({ length: 400 }, () => app.genTriple(inst, 1, 0.5, 'x').b);
   const nieuw = getrokken.filter(b => b === 3 || b === 4).length / getrokken.length;
   check(getrokken.every(b => [2, 3, 4, 5, 10].includes(b)) && nieuw > 0.55, 'TH · op 3 en 4: de nieuwe het meest, 2, 5 en 10 komen nog terug', `${Math.round(nieuw * 100)}% nieuw`);
   s.tafelLijn = { tot: 'tafels34' };
-  for (let i = 0; i < 3; i++) app.tafelNa(p, 3);
-  check(app.tafelNu(p) === 'alles' && app.tafelInst(p).tables.join() === '2,5,10,3,4', 'TH · voorbij de lijn "tot": alles tot daar door elkaar', app.tafelInst(p).tables.join());
+  for (let i = 0; i < 3; i++) app.ladderNa(p, 'tafels', 3);
+  check(app.ladderNu(p, 'tafels') === 'alles' && app.tafelInst(p).tables.join() === '2,5,10,3,4', 'TH · voorbij de lijn "tot": alles tot daar door elkaar', app.tafelInst(p).tables.join());
   check(app.vraagInst(p).ops.join() === '+,-', 'TH · de rekenladder speelt geen tafels', app.vraagInst(p).ops.join());
 
   // Zelf kiezen: om de beurt
@@ -2098,7 +2103,7 @@ zaak('TH', () => {
   oud.pad = { klaar: ['tot10', 'tot20', 'brug20', 'tafels', 'delen'], rij: 'zoek', shows: 1, goed: 0 };
   oud.settings.padTot = 'tafels';
   app.migrate(oud);
-  check(oud.tafels && oud.tafels.klaar.join() === 'tafels2510,tafels34' && app.tafelNu(oud) === 'tafels69',
+  check(oud.tafels && oud.tafels.klaar.join() === 'tafels2510,tafels34' && app.ladderNu(oud, 'tafels') === 'tafels69',
     'TH · oude save die de tafels haalde: de rijen waarvan ze alle tafels speelde zijn klaar', JSON.stringify(oud.tafels));
   check(oud.pad.klaar.join() === 'tot10,tot20,brug20' && app.padNu(oud) === 'alles' && oud.settings.padTot === 'brug20',
     'TH · "tot" op Tafels wordt de rij ervoor: op de rekenladder speelt ze wat ze speelde, alles tot de lijn', `${oud.pad.klaar} ${app.padNu(oud)} ${oud.settings.padTot}`);
@@ -2107,6 +2112,87 @@ zaak('TH', () => {
   op.settings.padVanaf = 'delen';
   app.migrate(op);
   check(op.pad.rij === null && op.settings.padVanaf === 'zoek' && !op.tafels, 'TH · stond ze óp Tafels: haar volgende rij, en "vanaf" schuift mee', JSON.stringify(op.pad));
+});
+
+/* ================= GE · Geld als thema =================
+   Geld staat standaard uit, krijgt er twee in een show van acht (nooit de
+   eerste vraag), en groeit op zijn eigen ladder. Elke rij oefent zijn eigen
+   nieuwe ding: briefjes heeft een briefje, centen heeft centen en is altijd
+   kiezen. */
+zaak('GE', () => {
+  const { app, p } = verseSter('Geld');
+  const s = p.settings;
+  check(!app.themaAan(s, 'geld') && !('themas' in s), 'GE · een verse ster: geen geld, en geen nieuw veld', JSON.stringify(s.themas));
+  app.themaZet(s, 'geld', true);
+  check(s.themas.join() === 'geld' && app.themasAan(s).join() === 'rekenen,geld', 'GE · geld aan: het staat in s.themas', JSON.stringify(s.themas));
+  let plan = app.themaPlan(s, 8);
+  check(plan.filter(k => k === 'geld').length === 2 && plan[0] === 'rekenen' && plan.length === 8, 'GE · een show van acht: twee geldvragen, nooit de eerste', plan.join());
+  check(app.themaPlan(s, 5).filter(k => k === 'geld').length === 1, 'GE · een show van vijf: één', app.themaPlan(s, 5).join());
+  s.ops.push('x');
+  plan = app.themaPlan(s, 8);
+  check(plan.filter(k => k === 'geld').length === 2 && plan.filter(k => k === 'rekenen').length === 3 && plan.filter(k => k === 'tafels').length === 3,
+    'GE · met tafels erbij: 3 sommen, 3 tafels, 2 geld', plan.join());
+  check(plan.every((k, i) => i === 0 || k !== plan[i - 1]), 'GE · nooit twee keer hetzelfde thema na elkaar', plan.join());
+  s.ops = ['+', '-'];
+  app.themaZet(s, 'rekenen', false);
+  check(app.themasAan(s).join() === 'geld' && app.themaPlan(s, 8).every(k => k === 'geld'), 'GE · alleen geld: elke vraag', JSON.stringify(s.ops));
+  app.themaZet(s, 'rekenen', true);
+
+  // elke rij oefent wat hij belooft
+  const som = q => q.tmpl.replace(/^\w+ /, '').replace(' = @', '').split(' + ').map(Number);
+  const rij = id => app.GELDPAD.find(r => r.id === id);
+  const fout = {};
+  for (let i = 0; i < 300; i++) for (const r of app.GELDPAD) {
+    const q = app.genGeld(r), w = (fout[r.id] = fout[r.id] || []);
+    if (r.terug) {
+      const [briefje, prijs] = q.tmpl.replace('terug ', '').replace(' = @', '').split(' - ').map(Number);
+      if (q.ans !== briefje - prijs || q.ans < 1 || q.kiezen) w.push(q.tmpl);
+      continue;
+    }
+    const st = som(q), totaal = st.reduce((a, b) => a + b, 0), cent = r.centen ? totaal : totaal * 100;
+    if (q.ans !== totaal) w.push('ans ' + q.tmpl);
+    if (cent > r.tot) w.push('te groot ' + q.tmpl);
+    if (r.briefje && Math.max(...st) < 5) w.push('geen briefje ' + q.tmpl);
+    if (r.centen && (cent % 100 === 0 || !q.kiezen)) w.push('geen centen ' + q.tmpl);
+    if (!r.centen && q.kiezen) w.push('kiezen ' + q.tmpl);
+    if (!q.html.includes('geld-stuk')) w.push('geen munten ' + q.tmpl);
+  }
+  const mis = Object.entries(fout).filter(([, w]) => w.length);
+  check(!mis.length, 'GE · elke rij: binnen zijn bedrag, briefjes met een briefje, centen met centen en altijd kiezen, teruggeven klopt', JSON.stringify(mis.map(([k, w]) => [k, w.slice(0, 2)])));
+  check(app.euro(500) === '€5' && app.euro(170) === '€1,70' && app.euro(1005) === '€10,05', 'GE · bedragen in Belgische vorm', `${app.euro(500)} ${app.euro(170)} ${app.euro(1005)}`);
+  const cq = app.genGeld(rij('centen'));
+  check(app.toonAntwoord(cq, 170) === '1,70' && app.toonKeuze(cq, 170) === '€1,70' && app.toonKeuze(app.genGeld(rij('munten10')), 5) === '€5',
+    'GE · op de knop €1,70 en €5, in het vakje 1,70', `${app.toonAntwoord(cq, 170)} ${app.toonKeuze(cq, 170)}`);
+  let keuzeFout = 0;
+  for (let i = 0; i < 200; i++) {
+    const q = app.genGeld(app.GELDPAD[i % app.GELDPAD.length]);
+    const k = app.makeChoices(q, app.keuzeGrens(q, s, 1));
+    if (!k.includes(q.ans) || new Set(k).size !== 4 || k.some(v => v < q.min) || (q.centen && k.some(v => v % 10))) keuzeFout++;
+  }
+  check(!keuzeFout, 'GE · de keuzes: het antwoord ertussen, vier verschillende, nooit €0, centen in stappen van tien', String(keuzeFout));
+
+  // de ladder
+  check(app.ladderNu(p, 'geld') === 'munten10', 'GE · geld begint bij munten tot €10', app.ladderNu(p, 'geld'));
+  for (let i = 0; i < 3; i++) app.ladderNa(p, 'geld', 3);
+  check(app.ladderNu(p, 'geld') === 'briefjes20' && p.geld.klaar.join() === 'munten10', 'GE · drie shows met drie sterren: briefjes', JSON.stringify(p.geld));
+  const gi = app.geldInst(p);
+  const rijen = Array.from({ length: 400 }, () => app.geldVraag(gi, []).rij);
+  const nieuw = rijen.filter(r => r === 'briefjes20').length / rijen.length;
+  check(rijen.every(r => r === 'munten10' || r === 'briefjes20') && nieuw > 0.65, 'GE · op briefjes: de nieuwe het meest, munten komen nog terug', `${Math.round(nieuw * 100)}% nieuw`);
+  check(app.ladderNu(p, 'tafels') === 'tafels2510' && !p.tafels, 'GE · de geldladder raakt de tafels niet', JSON.stringify(p.tafels));
+
+  // Zelf kiezen: de rij waar ze was staat al aan, en de rijen gaan om de beurt
+  s.modus = 'vrij';
+  app.geldKiesStart(s, p);
+  check(s.kiesGeld.join() === 'briefjes20', 'GE · naar Zelf kiezen: haar rij staat al aangevinkt', JSON.stringify(s.kiesGeld));
+  s.kiesGeld = ['centen', 'terug'];
+  const vi = app.geldInst(p), twee = Array.from({ length: 4 }, () => app.geldVraag(vi, []).rij);
+  check(twee.filter(r => r === 'centen').length === 2, 'GE · Zelf kiezen: om de beurt', twee.join());
+  delete s.modus;
+
+  // wissen houdt geld aan
+  const opnieuw = app.defaultProfile('Geld', 'dress_roze', { ...s });
+  check(app.themaAan(opnieuw.settings, 'geld') && opnieuw.settings.kiesGeld.join() === 'centen,terug', 'GE · opnieuw beginnen houdt geld en de vinkjes', JSON.stringify(opnieuw.settings.themas));
 });
 
 klaar();
