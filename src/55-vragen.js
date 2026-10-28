@@ -449,51 +449,73 @@ function tafelVoorbeeld(r, s) {
    het derde teruggeven. Een bedrag is altijd in centen (stukken, ans bij
    Met centen), zodat €1,70 een geheel getal blijft voor de knoppen.
    Elke vraag laat de munten en briefjes zien zoals je ze op tafel legt --
-   de grootste eerst -- en vraagt hoeveel het samen is. Teruggeven toont het
-   briefje waarmee je betaalt en de prijs. Met centen is altijd kiezen: een
-   komma typen kan het cijferblok niet, en hoort het ook niet te leren. */
+   de grootste eerst -- en vraagt hoeveel het samen is. Teruggeven is
+   aanvullen, zoals op school: een prijskaartje, en wat erbij moet tot het
+   briefje waarmee je betaalt. Met centen is altijd kiezen: een komma typen
+   kan het cijferblok niet, en hoort het ook niet te leren.
+   stuks: hoeveel stukken er hoogstens liggen. Op de eerste rij vijf, anders
+   kwam "tot €10" nooit boven €8 (vier munten van twee euro). */
 const GELDPAD = [
-  { id: 'munten10',   naam: 'Munten tot €10',   tot: 1000,  stukken: [200, 100] },
-  { id: 'briefjes20', naam: 'Briefjes tot €20', tot: 2000,  stukken: [1000, 500, 200, 100], briefje: true },
-  { id: 'geld100',    naam: 'Tot €100',         tot: 10000, stukken: [5000, 2000, 1000, 500, 200, 100], briefje: true },
-  { id: 'centen',     naam: 'Met centen',       tot: 1000,  stukken: [200, 100, 50, 20, 10], centen: true },
+  { id: 'munten10',   naam: 'Munten tot €10',   tot: 1000,  stukken: [200, 100], stuks: 5 },
+  { id: 'briefjes20', naam: 'Briefjes tot €20', tot: 2000,  stukken: [1000, 500, 200, 100], briefje: true, stuks: 4 },
+  { id: 'geld100',    naam: 'Tot €100',         tot: 10000, stukken: [5000, 2000, 1000, 500, 200, 100], briefje: true, stuks: 5 },
+  { id: 'centen',     naam: 'Met centen',       tot: 1000,  stukken: [200, 100, 50, 20, 10], centen: true, stuks: 4 },
   { id: 'terug',      naam: 'Teruggeven',       tot: 2000,  terug: true },
 ];
-const GELD_DINGEN = ['🧸', '🍦', '🎈', '📚', '🧃', '🍭', '🪀', '🖍️'];
 // Eén munt of briefje, met zijn waarde erop: kleur is nooit het enige teken.
 function geldStuk(c) {
   const soort = c >= 500 ? `briefje b${c / 100}` : `munt m${c}`;
   return `<span class="geld-stuk ${soort}">${c >= 100 ? '€' + c / 100 : c + 'c'}</span>`;
 }
+// Een prijskaartje (Teruggeven): geel, met het gaatje van het touwtje.
+function geldKaartje(c) { return `<span class="geld-prijs">${euro(c)}</span>`; }
 // Een bedrag zoals een Belgisch kind het leest: €5, €1,70.
 function euro(c) { return c % 100 ? `€${Math.floor(c / 100)},${String(c % 100).padStart(2, '0')}` : `€${c / 100}`; }
 function geldVoorbeeld(r) {
-  if (r.terug) return '€10 − €7';
+  if (r.terug) return `${geldKaartje(700)} + ? = ${geldStuk(1000)}`;
   return { munten10: [200, 200, 100], briefjes20: [1000, 500, 200], geld100: [5000, 2000, 500], centen: [100, 50, 20] }[r.id].map(geldStuk).join('');
 }
-/* Een vraag van rij r. Een handvol stukken (twee tot vier, op de grootste rij
-   tot vijf) die samen binnen het bereik blijven; bij briefjes minstens één
-   briefje, bij centen minstens één cent -- anders oefent de rij zijn eigen
-   nieuwe ding niet. */
+/* Een vraag van rij r. Een handvol stukken (twee tot r.stuks) die samen
+   binnen het bereik blijven; bij briefjes minstens één briefje, bij centen
+   minstens één cent -- anders oefent de rij zijn eigen nieuwe ding niet.
+
+   De foute keuze die erbij komt (q.fouten, zie makeChoices) is een fout die
+   een kind met geld echt maakt:
+     geteld i.p.v. opgeteld   €2 €2 €1 is "3": het aantal stukken
+     één vergeten             de kleinste niet meegeteld
+     één dubbel               de kleinste twee keer
+     €2 als €1                elke munt van twee euro als één geteld
+   Bij Teruggeven is dat de prijs zelf, en prijs plus briefje (zie makeChoices,
+   die haalt ze uit het sjabloon). */
 function genGeld(r) {
   if (r.terug) {
     const briefje = pick([500, 1000, 1000, 2000]), prijs = 100 * rnd(1, briefje / 100 - 1);
-    const ding = pick(GELD_DINGEN);
     return { kind: 'geld', op: 'geld', rij: r.id, ans: (briefje - prijs) / 100, grens: briefje / 100, min: 1, kiezen: false,
       tmpl: `terug ${briefje / 100} - ${prijs / 100} = @`,
-      html: `<span class="geld-rij">${geldStuk(briefje)}<span class="geld-pijl" aria-hidden="true">➜</span><span class="geld-prijs">${ding} ${euro(prijs)}</span></span>`
-        + `<span class="geld-vraag">Terug?</span><span class="pl-som">€ @</span>` };
+      html: `<span class="pl-som geld-aanvul een-regel">${geldKaartje(prijs)}<span class="geld-teken">+</span>€@<span class="geld-teken">=</span>${geldStuk(briefje)}</span>` };
   }
   let stukken, som, poging = 0;
-  do {
-    const n = rnd(2, r.id === 'geld100' ? 5 : 4);
+  /* Munten tot €10: eerst het bedrag, dan de munten -- elk bedrag van €2 tot
+     €10 even vaak. Met losse munten trekken kwam €9 of €10 bijna nooit (vijf
+     munten, en bijna allemaal van twee euro). */
+  if (r.id === 'munten10') {
+    // twee: hoeveel van twee euro -- hoogstens r.stuks munten, en minstens twee
+    const doel = rnd(2, r.tot / 100), twee = rnd(Math.max(0, doel - r.stuks), Math.min(Math.floor(doel / 2), doel - 2));
+    stukken = [...Array(twee).fill(200), ...Array(doel - 2 * twee).fill(100)];
+    som = doel * 100;
+  }
+  else do {
+    const n = rnd(2, r.stuks);
     stukken = Array.from({ length: n }, () => pick(r.stukken)).sort((a, b) => b - a);
     som = stukken.reduce((a, b) => a + b, 0);
   } while ((som > r.tot || (r.briefje && stukken[0] < 500) || (r.centen && som % 100 === 0)) && ++poging < 60);
-  const centen = !!r.centen;
+  const centen = !!r.centen, maat = centen ? 1 : 100, klein = stukken[stukken.length - 1];
+  const fouten = [stukken.length * 100, som - klein, som + klein, som - 100 * stukken.filter(c => c === 200).length]
+    .map(c => c / maat).filter(v => v !== som / maat);
   return { kind: 'geld', op: 'geld', rij: r.id, centen, kiezen: centen, min: centen ? 10 : 1,
-    ans: centen ? som : som / 100, grens: centen ? som + 100 : Math.max(10, som / 100 + 5),
-    tmpl: `geld ${stukken.map(c => centen ? c : c / 100).join(' + ')} = @`,
+    // nooit boven de honderd: dan rekent makeChoices in honderdtallen (zie daar), en €100 krijgt €101 als buur
+    ans: som / maat, grens: centen ? som + 100 : Math.min(100, Math.max(10, som / 100 + 5)), fouten,
+    tmpl: `geld ${stukken.map(c => c / maat).join(' + ')} = @`,
     html: `<span class="geld-rij">${stukken.map(geldStuk).join('')}</span><span class="pl-som">€ @</span>` };
 }
 /* ---- De klok ---------------------------------------------------------------
@@ -501,10 +523,15 @@ function genGeld(r) {
    uren, in het tweede het kwartier en per vijf minuten, in het derde de 24
    uur. Een tijd is altijd in minuten na twaalf uur (0 tot 719), zodat hij een
    geheel getal blijft voor de knoppen; de 24 uur rekent er 720 bij.
-   Twee soorten vragen, om de beurt (zie klokVraag):
+   Twee soorten vragen, om de beurt (zie rijenVraag):
      lees  de klok staat er, en ze kiest de tijd in woorden ("half 4")
      zoek  de tijd staat er, en ze kiest de klok -- vier klokjes, maar twee
            woorden om te lezen; dat is wat de jongsten kunnen
+   De 24 uur leest zonder woorden: de klok met een zon (namiddag) of een maan
+   ('s avonds) erbij, en ze kiest de digitale tijd. Daar zijn ans en de keuzes
+   minuten na middernacht (0 tot 1439), want 2:20 en 14:20 zijn dezelfde klok
+   en juist het verschil is de vraag. Zoeken is de omgekeerde weg: 14:35
+   staat er, en ze kiest de klok.
    Altijd kiezen: "half 4" typen kan het cijferblok niet. De foute keuzes zijn
    de fouten die kinderen echt maken: half 4 lezen als half 3 (het uur waar de
    wijzer voorbij is), de wijzers omdraaien, kwart over en kwart voor
@@ -516,16 +543,19 @@ const KLOKPAD = [
   { id: 'vijfmin',  naam: 'Vijf minuten', stap: 5 },
   { id: 'uur24',    naam: '24 uur',       stap: 5, uur24: true },
 ];
-// De tijd in woorden, zoals een Vlaams kind hem zegt: 3 uur, half 4, kwart voor 4, 10 voor half 4.
+/* De tijd in woorden: 3 uur, kwart over 3, half 4, kwart voor 4, en verder
+   altijd vanaf het hele uur -- 20 over 3, 25 voor 4. Bewust níét "10 voor half
+   4" of "5 over half 4": dat is twee stappen rekenen (eerst half, dan ervoor of
+   erna), en dat struikelt een kind dat net de klok leert. Alles wat een kind
+   over de klok leest of hoort komt hier vandaan: de vraag, de keuzes, het
+   vakje, het label voor een schermlezer en de ladder bij Voor ouders. */
 function klokWoorden(t) {
   const u = Math.floor(t / 60) % 12 || 12, m = t % 60, nu = u, straks = u % 12 + 1;
   if (m === 0) return `${nu} uur`;
   if (m === 15) return `kwart over ${nu}`;
   if (m === 30) return `half ${straks}`;
   if (m === 45) return `kwart voor ${straks}`;
-  if (m < 15) return `${m} over ${nu}`;
-  if (m < 30) return `${30 - m} voor half ${straks}`;
-  if (m < 45) return `${m - 30} over half ${straks}`;
+  if (m < 30) return `${m} over ${nu}`;
   return `${60 - m} voor ${straks}`;
 }
 // 14:35: de 24 uur, voor een tijd in de namiddag (t + 720)
@@ -539,21 +569,24 @@ function klokSvg(t, maat, kaal) {
   const m = t % 60, [mx, my] = P(m * 6, 36), [ux, uy] = P(((Math.floor(t / 60) % 12) + m / 60) * 30, 22);
   const streepjes = Array.from({ length: 12 }, (_, i) => { const [x1, y1] = P(i * 30, 45), [x2, y2] = P(i * 30, i % 3 ? 42 : 40);
     return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="${i % 3 ? 1.6 : 2.6}"/>`; }).join('');
-  const cijfers = kaal ? '' : Array.from({ length: 12 }, (_, i) => { const [x, y] = P((i + 1) * 30, 33);
+  // een klein klokje (een knop, de hint) krijgt grotere cijfers, iets meer naar binnen: op 12 waren ze daar niet te lezen.
+  // Het piepkleine van de ladder (26) niet: daar zijn de cijfers toch geen cijfers meer, en groter worden ze een vlek.
+  const klein = maat > 30 && maat <= 64, letter = klein ? 16 : 12;
+  const cijfers = kaal ? '' : Array.from({ length: 12 }, (_, i) => { const [x, y] = P((i + 1) * 30, klein ? 31 : 33);
     return `<text x="${x}" y="${y}">${i + 1}</text>`; }).join('');
   return `<svg class="klok" viewBox="0 0 100 100" width="${maat}" height="${maat}" aria-hidden="true">`
     + '<circle cx="50" cy="50" r="47" fill="#fff" stroke="#8e3fc8" stroke-width="5"/>'
     + `<g stroke="#4a2a7a" stroke-linecap="round">${streepjes}</g>`
-    + (kaal ? '' : `<g fill="#2b2238" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">${cijfers}</g>`)
+    + (kaal ? '' : `<g fill="#2b2238" font-size="${letter}" font-weight="800" text-anchor="middle" dominant-baseline="central">${cijfers}</g>`)
     + `<line x1="50" y1="50" x2="${mx}" y2="${my}" stroke="#8e3fc8" stroke-width="3.5" stroke-linecap="round"/>`
     + `<line x1="50" y1="50" x2="${ux}" y2="${uy}" stroke="#2b2238" stroke-width="8" stroke-linecap="round"/>`
     + '<circle cx="50" cy="50" r="4.5" fill="#2b2238"/></svg>';
 }
 function klokVoorbeeld(r) {
   const t = { uren: 180, halfuur: 210, kwartier: 165, vijfmin: 310, uur24: 155 }[r.id];
-  return r.uur24 ? `<span class="klok-digi">${klokDigitaal(t + 720)}</span>` : `${klokSvg(t, 26)}<span class="klok-vb">${klokWoorden(t)}</span>`;
+  return `${klokSvg(t, 26)}` + (r.uur24 ? `<span class="klok-digi">${klokDigitaal(t + 720)}</span>` : `<span class="klok-vb">${klokWoorden(t)}</span>`);
 }
-/* Een vraag van rij r. vorm: 'lees' of 'zoek' (zie klokVraag, die wisselt af).
+/* Een vraag van rij r. vorm: 'lees' of 'zoek' (zie rijenVraag, die wisselt af).
    Hele uren zijn nooit 12 uur bij de 24 uur: 12:00 is geen namiddag. */
 function genKlok(r, vorm) {
   const stappen = 720 / r.stap;
@@ -564,22 +597,38 @@ function genKlok(r, vorm) {
        een uur ernaast   half 4 gelezen als half 3: het uur waar de wijzer al voorbij is
        gespiegeld        10 over 3 en 10 voor 4, kwart over en kwart voor
        omgedraaid        de korte wijzer gelezen als de lange
-       de 2 vergeten     14:35 als 4:35 (alleen bij de 24 uur) */
+     en bij de 24 uur lezen: de 12 vergeten (2:20 voor 14:20), en een uur
+     ernaast. */
+  const lees = vorm === 'lees';
+  if (r.uur24 && lees) return klokDag(r, t);
   const op12 = v => ((v % 720) + 720) % 720;
   const m = t % 60, u = Math.floor(t / 60) % 12;
-  const echt = [t - 60, t + 60, m && m !== 30 ? t - m + 60 - m : null, m / 5 * 60 + u * 5, r.uur24 ? ((u + 12) % 10) * 60 + m : null];
+  const echt = [t - 60, t + 60, m && m !== 30 ? t - m + 60 - m : null, m / 5 * 60 + u * 5];
   const mag = v => v != null && op12(v) !== t && op12(v) % r.stap === 0 && (!r.uur24 || op12(v) >= 60);
   const fout = shuffle([...new Set(echt.filter(mag).map(op12))]).slice(0, 2);
   const ernaast = shuffle([1, 2, 3].flatMap(d => [t - d * r.stap, t + d * r.stap]).filter(mag).map(op12));
   const keuzes = [...new Set([t, ...fout, ...ernaast])].slice(0, 4);
   const tijd = r.uur24 ? `<span class="klok-digi">${klokDigitaal(t + 720)}</span>` : null;
-  const lees = vorm === 'lees';
   return { kind: 'klok', op: 'klok', rij: r.id, ans: t, kiezen: true, keuzes, vorm, uur24: !!r.uur24, knop: lees ? 'klok-lees' : 'klok-zoek',
     tmpl: `klok ${lees ? 'lees' : 'zoek'} ${t}`,
     html: lees
-      ? `<span class="klok-vraag">${tijd || klokSvg(t, 132)}</span><span class="pl-som klok-som">@</span>`
+      ? `<span class="klok-vraag">${klokSvg(t, 132)}</span><span class="pl-som klok-som">@</span>`
       : `<span class="klok-vraag klok-woord">${r.uur24 ? tijd : klokWoorden(t)}</span>` };
 }
+/* De 24 uur lezen (zie hierboven): de klok van t (1:00 tot 11:55) met de zon
+   of de maan erbij, en vier digitale tijden. Het antwoord is t + 720 -- de
+   namiddag of de avond, want 's ochtends verschilt de klok niet van de 24 uur. */
+function klokDag(r, t) {
+  const ans = t + 720, avond = ans >= 18 * 60;
+  const mag = v => v >= 60 && v < 1440 && v !== ans && v % r.stap === 0;
+  const ernaast = shuffle([ans - 60, ans + 60, ans - r.stap, ans + r.stap, ans - 120, ans + 120].filter(mag));
+  const keuzes = [...new Set([ans, t, ...ernaast])].slice(0, 4);
+  return { kind: 'klok', op: 'klok', rij: r.id, ans, kiezen: true, keuzes, vorm: 'lees', uur24: true, knop: 'klok-lees',
+    tmpl: `klok dag ${ans}`,
+    html: `<span class="klok-vraag klok-dag">${klokSvg(t, 132)}<span class="klok-dagdeel" role="img" aria-label="${avond ? "'s avonds" : 'in de namiddag'}">${avond ? '🌙' : '☀️'}</span></span><span class="pl-som klok-som">@</span>` };
+}
+// Hoe een klokwaarde als tekst staat: de digitale tijd bij de 24 uur lezen (zie klokDag), anders in woorden.
+function klokTekst(q, v) { return q.uur24 && q.vorm === 'lees' ? klokDigitaal(v) : klokWoorden(v); }
 
 /* ---- De kalender ------------------------------------------------------------
    Vijf rijen, zoals school ze brengt: in het eerste leerjaar de dagen van de
@@ -714,13 +763,15 @@ function genLijn(r, vorm) {
 
 // Het antwoord van een vraag zoals het in het vakje staat (toonAntwoord) en op een knop (toonKeuze).
 function toonAntwoord(q, v) {
-  if (q.kind === 'klok') return klokWoorden(v);
+  if (q.kind === 'klok') return klokTekst(q, v);
   if (q.kind === 'kalender') return q.soort === 'dag' ? DAGEN[v] : q.soort === 'maand' ? MAANDEN[v] : String(v);
   if (q.kind !== 'geld') return String(v);
   return q.centen ? euro(v).slice(1) : String(v);
 }
 function toonKeuze(q, v) {
-  if (q.kind === 'klok') return q.vorm === 'zoek' ? klokSvg(v, 64) : `<span class="klok-tekst">${klokWoorden(v)}</span>`;
+  // zoeken: een lege regel tekst houdt de knop op zijn gewone hoogte, het klokje vult hem (zie .klok-zoek)
+  if (q.kind === 'klok') return q.vorm === 'zoek' ? '&#8203;' + klokSvg(v, 64)
+    : q.uur24 ? `<span class="klok-digi">${klokDigitaal(v)}</span>` : `<span class="klok-tekst">${klokWoorden(v)}</span>`;
   if (q.kind === 'kalender') return q.soort === 'datum' ? String(v) : `<span class="klok-tekst">${toonAntwoord(q, v)}</span>`;
   if (q.kind === 'lijn' && q.vorm === 'zoek') return lijnSvg(...q.bereik, v, { klein: true });   // dezelfde lijn als bij lezen, op knopmaat
   return q.kind === 'geld' ? (q.centen ? euro(v) : `€${v}`) : String(v);
@@ -859,12 +910,18 @@ function themaPlan(s, total) {
 }
 /* De sterren van één thema in een show: dezelfde maat als showStars, op
    alleen zijn eigen vragen. Zo schuift de tafelladder niet door omdat de
-   sommen goed gingen, en blijft hij niet staan omdat er één som misging. */
+   sommen goed gingen, en blijft hij niet staan omdat er één som misging.
+   Met weinig vragen (geld en de klok hebben er twee per show) mag één misser
+   altijd, zolang er nog iets goed is: met de gewone marge was 1 van 2 meteen
+   1 ster, en een show met 1 ster telt niet mee (PAD_TELT) -- een kind dat
+   elke show één van de twee miste, schoof dan nooit door, ook niet na
+   PAD_MAX_SHOWS. Eén vraag mis is nog altijd 1 ster. */
 function themaSterren(g, k) {
   const mijn = g.qs.map((q, i) => i).filter(i => (g.themaPlan ? g.themaPlan[i] : 'rekenen') === k);
   if (!mijn.length) return 0;
   const mis = mijn.filter(i => g.uitslag[i] && g.uitslag[i] !== 'goed').length;
-  return mis === 0 ? 3 : mis <= Math.floor(mijn.length * STER_MARGE) ? 2 : 1;
+  const marge = Math.max(Math.floor(mijn.length * STER_MARGE), mijn.length > 1 ? 1 : 0);
+  return mis === 0 ? 3 : mis <= marge ? 2 : 1;
 }
 // Moeilijkheid 0..1, bijgestuurd op vaardigheid (perf 0..1 → ±0.25): een kind
 // dat worstelt krijgt op elke rij lichtere sommen, nooit zwaardere dan de rij.
@@ -2446,17 +2503,43 @@ function planSpecials(p, s, total, accent, goldIdx, bezet) {
    slechtste moment -- en wordt een teken dat het misging. Zie docs/GAME-REVIEW.md. */
 const HINT_DICHTBIJ = 2;
 function hintVoor(q, val) {
-  // meer of minder zegt niets over een klok: dan alleen het 🤔
-  if (typeof val !== 'number' || isNaN(val) || val === q.ans || q.kind === 'klok') return null;
+  if (typeof val !== 'number' || isNaN(val) || val === q.ans) return null;
+  if (q.kind === 'klok') return klokHint(q, val);
   const meer = q.ans > val;
   const net = Math.abs(q.ans - val) <= HINT_DICHTBIJ;
   const woord = meer ? 'meer' : 'minder';
   return { pijl: meer ? 'op' : 'neer',
            woorden: (net ? 'Net iets ' + woord : woord[0].toUpperCase() + woord.slice(1)) + ' dan ' + val };
 }
+/* Bij de klok is meer of minder: later of vroeger -- de wijzer moet verder
+   draaien, of terug. Langs de kortste weg rond de wijzerplaat (11 uur en 1 uur
+   liggen twee uur uit elkaar, niet tien); bij de 24 uur lezen gewoon op de
+   dag, want daar is 2:20 echt vroeger dan 14:20. En wat ze tikte staat er in de
+   andere vorm bij (zie toonHint): een klokje als ze woorden koos, woorden als
+   ze een klokje koos -- zo ziet ze wát ze gekozen heeft. */
+function klokHint(q, val) {
+  const dag = q.uur24 && q.vorm === 'lees';
+  const d = dag ? q.ans - val : ((q.ans - val) % 720 + 1080) % 720 - 360;
+  const later = d >= 0;
+  return { pijl: later ? 'later' : 'vroeger', woorden: (later ? 'Later dan ' : 'Vroeger dan ') + klokTekst(q, val) };
+}
+// Wat ze tikte, in de andere vorm (zie klokHint); bij getallen gewoon de keuze zelf.
+function hintTeken(q, val) {
+  if (q.kind !== 'klok') return toonKeuze(q, val);
+  if (q.uur24) return `<span class="klok-digi">${klokDigitaal(q.vorm === 'lees' ? val : val + 720)}</span>`;
+  return q.vorm === 'zoek' ? klokWoorden(val) : klokSvg(val, 46);
+}
 // Een dikke pijl als SVG en niet als teken: ⬆️ is op elk toestel een ander
 // blauw vierkantje, en een ↑ in de letter is te dun om van een meter af te zien.
 function pijlSVG(richting) {
+  /* later en vroeger: een boog over de bovenkant, met de punt naar rechts
+     (de wijzers mee) of naar links (terug). Een bijna hele cirkel ↻ ↺ las
+     twee keer hetzelfde: het verschil zat alleen in waar het puntje stond. */
+  if (richting === 'later' || richting === 'vroeger') {
+    const spiegel = richting === 'vroeger' ? 'translate(24 3) scale(-1 1)' : 'translate(0 3)';
+    return `<svg class="pijl-teken" viewBox="0 0 24 24" aria-hidden="true"><g transform="${spiegel}"><path d="M3.5 17 A9 9 0 0 1 17 6.2" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>`
+      + '<path d="M13.2 3.6 L21.6 4.4 L18.4 12.2 Z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></g></svg>';
+  }
   const draai = richting === 'neer' ? ' transform="rotate(180 12 12)"' : '';
   return `<svg class="pijl-teken" viewBox="0 0 24 24" aria-hidden="true"><path${draai} d="M12 3 L21 13 H15.5 V21 H8.5 V13 H3 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
 }
@@ -2467,7 +2550,7 @@ function toonHint(q, val, btnEl) {
   // De woorden ("Net iets meer dan 5") staan niet meer onder de pil: wie ze kan
   // lezen heeft ze niet nodig, en wie ze nodig heeft kan ze niet lezen -- de pijl
   // zegt het al, en op de rode tegel nog eens. Ze blijven voor een schermlezer.
-  showToast(`<span class="hint-getal">${toonKeuze(q, val)}</span><span class="hint-pijl ${h.pijl}" role="img" aria-label="${esc(h.woorden)}">${pijlSVG(h.pijl)}</span>`,
+  showToast(`<span class="hint-getal">${hintTeken(q, val)}</span><span class="hint-pijl ${h.pijl}" role="img" aria-label="${esc(h.woorden)}">${pijlSVG(h.pijl)}</span>`,
             null, null, 'hint');
 }
 

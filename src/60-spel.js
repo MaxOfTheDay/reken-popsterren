@@ -11,6 +11,25 @@ let G = null;
    met screenIn uit het niets opkomen: één beeldje alleen de roze achtergrond
    van de app, en daarna een zaal die er verwassen overheen kwam. Precies de
    tussenstand die de regel bij MOTION uitsluit. */
+/* Wat een show van tevoren weet (zie startLevel), los van het scherm: welk
+   thema elke vraag krijgt, per thema de vraagmaker, en waar de speciale
+   vragen komen (zoek het getal, drie getallen). Die speciale vragen zijn
+   sommen: staat er geen rekenen en geen tafels aan -- alleen geld, alleen de
+   klok, of die twee -- dan zijn er geen. Hier las planSpecials toen s.ops van
+   de geldvraagmaker, en die heeft geen; de show startte dan niet, en een tik
+   op een halte deed niets. kern zaak SO start daarom elke combinatie van
+   thema's, op het leerpad en bij Zelf kiezen. */
+function showOpzet(p, lvl, goldIdx) {
+  const s = p.settings;
+  const vragenPlan = themaPlan(s, s.perLevel);
+  const insts = Object.fromEntries(themasAan(s).map(k => [k, themaInst(p, k)]));
+  const inst = insts.rekenen || insts[vragenPlan[0]];
+  const som = insts.rekenen || insts.tafels;
+  const bezet = vragenPlan.map((k, i) => k === 'rekenen' ? -1 : i).filter(i => i >= 0);
+  // Zelf kiezen (vrij) kent geen accent per wereld: daar is het de keuze van de ouder
+  const plan = som ? planSpecials(p, som, s.perLevel, som.vrij ? null : wereldAccent(lvl, padNu(p)), goldIdx, bezet) : {};
+  return { vragenPlan, insts, inst, plan };
+}
 function startLevel(lvl, eigenOvergang) {
   // De vorige show loslaten vóór G vervangen wordt: daarna is haar spotlight-
   // teller niet meer te vinden (die hangt aan G). Zie startSpot.
@@ -39,12 +58,7 @@ function startLevel(lvl, eigenOvergang) {
      erover (zie themaInst). Eén keer per show: een rij verandert pas in
      endLevel. inst is die van rekenen (of van het enige thema): daar lezen
      het cijferblok en de speciale vragen uit. */
-  const vragenPlan = count ? null : themaPlan(s, s.perLevel);
-  const insts = count ? null : Object.fromEntries(themasAan(s).map(k => [k, themaInst(p, k)]));
-  const inst = count ? null : insts.rekenen || insts[vragenPlan[0]];
-  const bezet = count ? [] : vragenPlan.map((k, i) => k === 'rekenen' ? -1 : i).filter(i => i >= 0);
-  // Zelf kiezen (inst.vrij) kent geen accent per wereld: daar is het de keuze van de ouder
-  const plan = count ? [] : planSpecials(p, inst, s.perLevel, inst.vrij ? null : wereldAccent(lvl, padNu(p)), goldIdx, bezet);
+  const { vragenPlan, insts, inst, plan } = count ? { vragenPlan: null, insts: null, inst: null, plan: [] } : showOpzet(p, lvl, goldIdx);
   // FASE 1: de publieksmeter is uit het spel gehaald. De teller zelf loopt stil door
   // (zie submitAnswer/endLevel): hij bepaalt nog altijd het applaus en de restbonus,
   // maar er staat geen balk meer op het scherm. G.fan/G.fanStep zijn daarmee interne
@@ -181,7 +195,7 @@ function renderQuestion() {
   if (G.mode === 'kies') {
     const choices = makeChoices(q, keuzeGrens(q, G.inst, G.lvl));
     area.innerHTML = '<div class="choices">' +
-      choices.map(c => `<button class="choice-btn${q.knop ? ' ' + q.knop : ''}" data-v="${c}"${q.kind === 'klok' || q.kind === 'kalender' ? ` aria-label="${toonAntwoord(q, c)}"` : ''}>${toonKeuze(q, c)}</button>`).join('') + '</div>';
+      choices.map(c => `<button class="choice-btn${q.knop ? ' ' + q.knop : ''}" data-v="${c}"${q.kind === 'klok' ? ` aria-label="${klokTekst(q, c)}"` : q.kind === 'kalender' ? ` aria-label="${toonAntwoord(q, c)}"` : ''}>${toonKeuze(q, c)}</button>`).join('') + '</div>';
     area.querySelectorAll('.choice-btn').forEach(b => {
       b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
     });
@@ -322,12 +336,66 @@ function drawQuestion() {
     const onder = [...rij.getClientRects()].map(r => r.bottom);
     return Math.max(...onder) - Math.min(...onder) > parseFloat(getComputedStyle(tekst).fontSize) / 2;
   };
-  for (const maat of ['lang', 'langer']) if (breekt()) tekst.classList.add(maat);
+  /* Een regel die per bouw op één regel blijft (.een-regel, zoals het
+     aanvullen bij geld: kaartje + € ? = briefje) breekt niet maar loopt over;
+     zijn stukjes hebben elk een andere onderkant, en dan las breekt() hem als
+     twee regels en kromp hij voor niets. */
+  const eenRegel = tekst.querySelector('.een-regel');
+  const telt = eenRegel ? () => eenRegel.scrollWidth > eenRegel.clientWidth : breekt;
+  for (const maat of ['lang', 'langer']) if (telt()) tekst.classList.add(maat);
+  kaartOpMaat(tekst);
   // ⌫ en ✔ slapen tot er iets getypt is: een ✔ die er klaar uitziet maar niets
   // doet, is een knop die liegt (zie .numpad.heeft in het stijlblad)
   const pad = document.querySelector('#answer-area .numpad');
   if (pad) pad.classList.toggle('heeft', G.mode === 'typ' && G.input !== '');
 }
+/* ---- De kaart springt niet -------------------------------------------------
+   Een som is één regel, maar munten zijn er twee en een klok is hoog: in een
+   show die die mengt, groeide en kromp de kaart bij elke vraag (op een
+   telefoon tussen 119 en 247 px), en zij sprong mee omhoog en omlaag, onder
+   haar lichtbundel uit. Nu is de kaart de hele show zo hoog als de hoogste
+   vraag die in déze show kan komen, en staat wat kleiner is in het midden.
+
+   Gemeten en niet geteld: hoe hoog munten zijn hangt aan het scherm, de letter
+   en of vijf stukken nog op één regel passen. Eén keer per show (en opnieuw na
+   een resize), op een onzichtbare kopie met dezelfde breedte, met per rij van
+   geld en klok de grootste vraag die hij kan maken (kaartProeven). Een show
+   met alleen sommen meet niets en blijft zoals hij was -- ook de getallen
+   bouwen met hun blokken, die daar al bij de sommen horen. */
+function kaartOpMaat(tekst) {
+  tekst.style.paddingTop = tekst.style.paddingBottom = '';
+  if (G.kaartMin == null) G.kaartMin = kaartMeten(tekst);
+  const over = G.kaartMin - tekst.offsetHeight;
+  if (over > 0) tekst.style.paddingTop = tekst.style.paddingBottom = over / 2 + 'px';
+}
+function kaartMeten(tekst) {
+  const proeven = kaartProeven(G.insts || {});
+  if (!proeven.length) return 0;
+  /* Op de breedte die de kaart hoogstens krijgt, niet die van nu: de kaart
+     is zo breed als wat erin staat, en na een smalle som liepen vijf
+     briefjes op de kopie over vijf regels. */
+  const kaart = tekst.parentNode, cs = getComputedStyle(kaart);
+  const rand = ['paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth'].reduce((n, k) => n + parseFloat(cs[k]), 0);
+  const kopie = tekst.cloneNode(false);
+  kopie.removeAttribute('id');
+  Object.assign(kopie.style, { position: 'absolute', display: 'flow-root', visibility: 'hidden', left: '0', top: '0', width: kaart.parentNode.clientWidth - rand + 'px' });
+  tekst.parentNode.appendChild(kopie);
+  const hoogste = Math.max(...proeven.map(html => {
+    kopie.innerHTML = html.replace('@', '<span class="q-blank">?</span>');
+    return kopie.offsetHeight;
+  }));
+  kopie.remove();
+  return hoogste;
+}
+// De grootste vraag per rij: zoveel stukken als er kunnen liggen, van de breedste soort; en de klok lezen én zoeken.
+function kaartProeven(insts) {
+  const uit = [];
+  if (insts.geld) insts.geld.rijen.forEach(r => uit.push(r.terug ? genGeld(r).html
+    : `<span class="geld-rij">${Array(r.stuks).fill(r.briefje ? 1000 : 200).map(geldStuk).join('')}</span><span class="pl-som">€ @</span>`));
+  if (insts.klok) insts.klok.rijen.forEach(r => uit.push(genKlok(r, 'lees').html, genKlok(r, 'zoek').html));
+  return uit;
+}
+addEventListener('resize', () => { if (G) G.kaartMin = null; });
 function numpadPress(n) {
   if (!G || G.lock) return;
   if (n === 'del') { if (G.input === '') return; G.input = G.input.slice(0, -1); sndClick(); }

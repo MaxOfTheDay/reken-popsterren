@@ -3501,46 +3501,73 @@
 
 
 
+
+
+
   .geld-rij { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: .12em; margin: 2px 0 .2em; }
   .geld-stuk {
     display: inline-flex; align-items: center; justify-content: center; flex: none;
     font-weight: 800; line-height: 1; vertical-align: middle; font-variant-numeric: tabular-nums;
   }
   .geld-stuk.munt {
-    font-size: .42em; width: 2.75em; height: 2.75em; border-radius: 50%;
+    font-size: .48em; width: 2.75em; height: 2.75em; border-radius: 50%;
     color: #4a3300; background: #e2b64c; box-shadow: inset 0 0 0 .08em rgba(0,0,0,.25);
   }
   .geld-stuk.m200 { background: radial-gradient(circle, #e8c45a 56%, #c9ccd1 58%); }
   .geld-stuk.m100 { background: radial-gradient(circle, #c9ccd1 56%, #e8c45a 58%); }
-  .geld-stuk.m50 { width: 2.55em; height: 2.55em; }
-  .geld-stuk.m20 { width: 2.35em; height: 2.35em; }
+  .geld-stuk.m100 { width: 2.5em; height: 2.5em; }
+  .geld-stuk.m50 { width: 2.62em; height: 2.62em; }
+  .geld-stuk.m20 { width: 2.38em; height: 2.38em; }
   .geld-stuk.m10 { width: 2.15em; height: 2.15em; }
   .geld-stuk.briefje {
-    font-size: .42em; width: 4.2em; height: 2.4em; border-radius: .35em;
+    font-size: .44em; width: 3.6em; height: 2.2em; border-radius: .35em;
     color: #fff; box-shadow: inset 0 0 0 .14em rgba(255,255,255,.35);
   }
   .geld-stuk.b5 { background: #8d98a5; } .geld-stuk.b10 { background: #d2604f; }
   .geld-stuk.b20 { background: #4a7fcc; } .geld-stuk.b50 { background: #e48a3a; }
-  .geld-pijl { font-size: .5em; color: var(--purple-shadow); margin: 0 .2em; }
+
+
+
+  .geld-aanvul { display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: .18em; }
+  .geld-teken { font-size: .7em; }
+  .geld-aanvul .geld-prijs { font-size: .62em; }
   .geld-prijs {
-    display: inline-flex; align-items: center; gap: .25em; padding: .2em .5em; border-radius: .5em;
-    background: #fff3c4; color: #7a4f00; font-size: .5em; font-weight: 800;
+    position: relative; display: inline-flex; align-items: center; flex: none;
+    padding: .25em .55em .25em .95em; border-radius: .25em .6em .6em .25em;
+    background: #fff3c4; color: #7a4f00; font-size: .56em; font-weight: 800; line-height: 1;
+    box-shadow: inset 0 0 0 .1em #e6c46a;
   }
-  .geld-vraag { display: block; font-size: .5em; margin-bottom: .1em; }
+  .geld-prijs::before {
+    content: ''; position: absolute; left: .35em; top: 50%; width: .32em; height: .32em; margin-top: -.16em;
+    border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 .08em #c9a440;
+  }
 
 
 
 
-  .klok-vraag { display: flex; justify-content: center; margin: 2px 0 .15em; }
-  .klok-vraag .klok { width: 2.4em; height: 2.4em; }
+
+
+
+
+
+
+
+
+
+  .klok-vraag { position: relative; display: flex; justify-content: center; margin: 2px 0 .15em; }
+  .klok-vraag .klok { width: 2.8em; height: 2.8em; }
   .klok-som { font-size: .55em; }
+  .klok-som .q-blank:not(.done) { visibility: hidden; }
+
+  .klok-dagdeel { position: absolute; left: calc(50% + .95em); top: -.12em; font-size: .62em; line-height: 1; }
   .klok-woord { font-size: .8em; padding: .2em 0; }
   .klok-digi {
     display: inline-block; padding: .08em .35em; border-radius: .2em; background: #2b2238; color: #fff;
     font-variant-numeric: tabular-nums; letter-spacing: .04em;
   }
-  .choice-btn.klok-zoek { padding-top: 8px; padding-bottom: 8px; }
-  .choice-btn .klok { display: block; width: 2.3em; height: 2.3em; margin: 0 auto; }
+  .choice-btn.klok-zoek { position: relative; }
+  .choice-btn .klok { position: absolute; left: 50%; top: 3px; height: calc(100% - 6px); width: auto; aspect-ratio: 1; transform: translateX(-50%); }
+  .choice-btn .klok-digi { font-size: .9em; }
   .choice-btn .klok-tekst { font-size: .7em; white-space: nowrap; }
 
 
@@ -4013,6 +4040,10 @@
 
 
 
+
+
+
+  #question-text { display: flow-root; }
   #question-text.lang { font-size: .78em; }
   #question-text.lang.langer { font-size: .62em; }
   .venue-aan .question-card { box-shadow: var(--e-2), 0 0 34px rgba(var(--warm-licht-rgb),.18); }
@@ -9419,7 +9450,7 @@
   .fl-rij.overgeslagen .fl-naam { text-decoration: line-through; text-decoration-thickness: 2px; }
   .fl-vb { flex: none; min-width: 92px; text-align: right; font-weight: 700; letter-spacing: .3px; white-space: nowrap; }
 
-  .fl-vb .geld-stuk { font-size: 10px; }
+  .fl-vb .geld-stuk, .fl-vb .geld-prijs { font-size: 10px; }
   .fl-vb .geld-stuk + .geld-stuk { margin-left: 3px; }
 
   .fl-vb .klok { vertical-align: middle; margin-right: 6px; }
@@ -22567,25 +22598,37 @@ function tafelVoorbeeld(r, s) {
 
 
 
+
+
+
 const GELDPAD = [
-  { id: 'munten10',   naam: 'Munten tot €10',   tot: 1000,  stukken: [200, 100] },
-  { id: 'briefjes20', naam: 'Briefjes tot €20', tot: 2000,  stukken: [1000, 500, 200, 100], briefje: true },
-  { id: 'geld100',    naam: 'Tot €100',         tot: 10000, stukken: [5000, 2000, 1000, 500, 200, 100], briefje: true },
-  { id: 'centen',     naam: 'Met centen',       tot: 1000,  stukken: [200, 100, 50, 20, 10], centen: true },
+  { id: 'munten10',   naam: 'Munten tot €10',   tot: 1000,  stukken: [200, 100], stuks: 5 },
+  { id: 'briefjes20', naam: 'Briefjes tot €20', tot: 2000,  stukken: [1000, 500, 200, 100], briefje: true, stuks: 4 },
+  { id: 'geld100',    naam: 'Tot €100',         tot: 10000, stukken: [5000, 2000, 1000, 500, 200, 100], briefje: true, stuks: 5 },
+  { id: 'centen',     naam: 'Met centen',       tot: 1000,  stukken: [200, 100, 50, 20, 10], centen: true, stuks: 4 },
   { id: 'terug',      naam: 'Teruggeven',       tot: 2000,  terug: true },
 ];
-const GELD_DINGEN = ['🧸', '🍦', '🎈', '📚', '🧃', '🍭', '🪀', '🖍️'];
 
 function geldStuk(c) {
   const soort = c >= 500 ? `briefje b${c / 100}` : `munt m${c}`;
   return `<span class="geld-stuk ${soort}">${c >= 100 ? '€' + c / 100 : c + 'c'}</span>`;
 }
 
+function geldKaartje(c) { return `<span class="geld-prijs">${euro(c)}</span>`; }
+
 function euro(c) { return c % 100 ? `€${Math.floor(c / 100)},${String(c % 100).padStart(2, '0')}` : `€${c / 100}`; }
 function geldVoorbeeld(r) {
-  if (r.terug) return '€10 − €7';
+  if (r.terug) return `${geldKaartje(700)} + ? = ${geldStuk(1000)}`;
   return { munten10: [200, 200, 100], briefjes20: [1000, 500, 200], geld100: [5000, 2000, 500], centen: [100, 50, 20] }[r.id].map(geldStuk).join('');
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -22593,24 +22636,39 @@ function geldVoorbeeld(r) {
 function genGeld(r) {
   if (r.terug) {
     const briefje = pick([500, 1000, 1000, 2000]), prijs = 100 * rnd(1, briefje / 100 - 1);
-    const ding = pick(GELD_DINGEN);
     return { kind: 'geld', op: 'geld', rij: r.id, ans: (briefje - prijs) / 100, grens: briefje / 100, min: 1, kiezen: false,
       tmpl: `terug ${briefje / 100} - ${prijs / 100} = @`,
-      html: `<span class="geld-rij">${geldStuk(briefje)}<span class="geld-pijl" aria-hidden="true">➜</span><span class="geld-prijs">${ding} ${euro(prijs)}</span></span>`
-        + `<span class="geld-vraag">Terug?</span><span class="pl-som">€ @</span>` };
+      html: `<span class="pl-som geld-aanvul een-regel">${geldKaartje(prijs)}<span class="geld-teken">+</span>€@<span class="geld-teken">=</span>${geldStuk(briefje)}</span>` };
   }
   let stukken, som, poging = 0;
-  do {
-    const n = rnd(2, r.id === 'geld100' ? 5 : 4);
+
+
+
+  if (r.id === 'munten10') {
+
+    const doel = rnd(2, r.tot / 100), twee = rnd(Math.max(0, doel - r.stuks), Math.min(Math.floor(doel / 2), doel - 2));
+    stukken = [...Array(twee).fill(200), ...Array(doel - 2 * twee).fill(100)];
+    som = doel * 100;
+  }
+  else do {
+    const n = rnd(2, r.stuks);
     stukken = Array.from({ length: n }, () => pick(r.stukken)).sort((a, b) => b - a);
     som = stukken.reduce((a, b) => a + b, 0);
   } while ((som > r.tot || (r.briefje && stukken[0] < 500) || (r.centen && som % 100 === 0)) && ++poging < 60);
-  const centen = !!r.centen;
+  const centen = !!r.centen, maat = centen ? 1 : 100, klein = stukken[stukken.length - 1];
+  const fouten = [stukken.length * 100, som - klein, som + klein, som - 100 * stukken.filter(c => c === 200).length]
+    .map(c => c / maat).filter(v => v !== som / maat);
   return { kind: 'geld', op: 'geld', rij: r.id, centen, kiezen: centen, min: centen ? 10 : 1,
-    ans: centen ? som : som / 100, grens: centen ? som + 100 : Math.max(10, som / 100 + 5),
-    tmpl: `geld ${stukken.map(c => centen ? c : c / 100).join(' + ')} = @`,
+
+    ans: som / maat, grens: centen ? som + 100 : Math.min(100, Math.max(10, som / 100 + 5)), fouten,
+    tmpl: `geld ${stukken.map(c => c / maat).join(' + ')} = @`,
     html: `<span class="geld-rij">${stukken.map(geldStuk).join('')}</span><span class="pl-som">€ @</span>` };
 }
+
+
+
+
+
 
 
 
@@ -22632,15 +22690,18 @@ const KLOKPAD = [
   { id: 'uur24',    naam: '24 uur',       stap: 5, uur24: true },
 ];
 
+
+
+
+
+
 function klokWoorden(t) {
   const u = Math.floor(t / 60) % 12 || 12, m = t % 60, nu = u, straks = u % 12 + 1;
   if (m === 0) return `${nu} uur`;
   if (m === 15) return `kwart over ${nu}`;
   if (m === 30) return `half ${straks}`;
   if (m === 45) return `kwart voor ${straks}`;
-  if (m < 15) return `${m} over ${nu}`;
-  if (m < 30) return `${30 - m} voor half ${straks}`;
-  if (m < 45) return `${m - 30} over half ${straks}`;
+  if (m < 30) return `${m} over ${nu}`;
   return `${60 - m} voor ${straks}`;
 }
 
@@ -22654,19 +22715,22 @@ function klokSvg(t, maat, kaal) {
   const m = t % 60, [mx, my] = P(m * 6, 36), [ux, uy] = P(((Math.floor(t / 60) % 12) + m / 60) * 30, 22);
   const streepjes = Array.from({ length: 12 }, (_, i) => { const [x1, y1] = P(i * 30, 45), [x2, y2] = P(i * 30, i % 3 ? 42 : 40);
     return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="${i % 3 ? 1.6 : 2.6}"/>`; }).join('');
-  const cijfers = kaal ? '' : Array.from({ length: 12 }, (_, i) => { const [x, y] = P((i + 1) * 30, 33);
+
+
+  const klein = maat > 30 && maat <= 64, letter = klein ? 16 : 12;
+  const cijfers = kaal ? '' : Array.from({ length: 12 }, (_, i) => { const [x, y] = P((i + 1) * 30, klein ? 31 : 33);
     return `<text x="${x}" y="${y}">${i + 1}</text>`; }).join('');
   return `<svg class="klok" viewBox="0 0 100 100" width="${maat}" height="${maat}" aria-hidden="true">`
     + '<circle cx="50" cy="50" r="47" fill="#fff" stroke="#8e3fc8" stroke-width="5"/>'
     + `<g stroke="#4a2a7a" stroke-linecap="round">${streepjes}</g>`
-    + (kaal ? '' : `<g fill="#2b2238" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">${cijfers}</g>`)
+    + (kaal ? '' : `<g fill="#2b2238" font-size="${letter}" font-weight="800" text-anchor="middle" dominant-baseline="central">${cijfers}</g>`)
     + `<line x1="50" y1="50" x2="${mx}" y2="${my}" stroke="#8e3fc8" stroke-width="3.5" stroke-linecap="round"/>`
     + `<line x1="50" y1="50" x2="${ux}" y2="${uy}" stroke="#2b2238" stroke-width="8" stroke-linecap="round"/>`
     + '<circle cx="50" cy="50" r="4.5" fill="#2b2238"/></svg>';
 }
 function klokVoorbeeld(r) {
   const t = { uren: 180, halfuur: 210, kwartier: 165, vijfmin: 310, uur24: 155 }[r.id];
-  return r.uur24 ? `<span class="klok-digi">${klokDigitaal(t + 720)}</span>` : `${klokSvg(t, 26)}<span class="klok-vb">${klokWoorden(t)}</span>`;
+  return `${klokSvg(t, 26)}` + (r.uur24 ? `<span class="klok-digi">${klokDigitaal(t + 720)}</span>` : `<span class="klok-vb">${klokWoorden(t)}</span>`);
 }
 
 
@@ -22680,21 +22744,37 @@ function genKlok(r, vorm) {
 
 
 
+
+  const lees = vorm === 'lees';
+  if (r.uur24 && lees) return klokDag(r, t);
   const op12 = v => ((v % 720) + 720) % 720;
   const m = t % 60, u = Math.floor(t / 60) % 12;
-  const echt = [t - 60, t + 60, m && m !== 30 ? t - m + 60 - m : null, m / 5 * 60 + u * 5, r.uur24 ? ((u + 12) % 10) * 60 + m : null];
+  const echt = [t - 60, t + 60, m && m !== 30 ? t - m + 60 - m : null, m / 5 * 60 + u * 5];
   const mag = v => v != null && op12(v) !== t && op12(v) % r.stap === 0 && (!r.uur24 || op12(v) >= 60);
   const fout = shuffle([...new Set(echt.filter(mag).map(op12))]).slice(0, 2);
   const ernaast = shuffle([1, 2, 3].flatMap(d => [t - d * r.stap, t + d * r.stap]).filter(mag).map(op12));
   const keuzes = [...new Set([t, ...fout, ...ernaast])].slice(0, 4);
   const tijd = r.uur24 ? `<span class="klok-digi">${klokDigitaal(t + 720)}</span>` : null;
-  const lees = vorm === 'lees';
   return { kind: 'klok', op: 'klok', rij: r.id, ans: t, kiezen: true, keuzes, vorm, uur24: !!r.uur24, knop: lees ? 'klok-lees' : 'klok-zoek',
     tmpl: `klok ${lees ? 'lees' : 'zoek'} ${t}`,
     html: lees
-      ? `<span class="klok-vraag">${tijd || klokSvg(t, 132)}</span><span class="pl-som klok-som">@</span>`
+      ? `<span class="klok-vraag">${klokSvg(t, 132)}</span><span class="pl-som klok-som">@</span>`
       : `<span class="klok-vraag klok-woord">${r.uur24 ? tijd : klokWoorden(t)}</span>` };
 }
+
+
+
+function klokDag(r, t) {
+  const ans = t + 720, avond = ans >= 18 * 60;
+  const mag = v => v >= 60 && v < 1440 && v !== ans && v % r.stap === 0;
+  const ernaast = shuffle([ans - 60, ans + 60, ans - r.stap, ans + r.stap, ans - 120, ans + 120].filter(mag));
+  const keuzes = [...new Set([ans, t, ...ernaast])].slice(0, 4);
+  return { kind: 'klok', op: 'klok', rij: r.id, ans, kiezen: true, keuzes, vorm: 'lees', uur24: true, knop: 'klok-lees',
+    tmpl: `klok dag ${ans}`,
+    html: `<span class="klok-vraag klok-dag">${klokSvg(t, 132)}<span class="klok-dagdeel" role="img" aria-label="${avond ? "'s avonds" : 'in de namiddag'}">${avond ? '🌙' : '☀️'}</span></span><span class="pl-som klok-som">@</span>` };
+}
+
+function klokTekst(q, v) { return q.uur24 && q.vorm === 'lees' ? klokDigitaal(v) : klokWoorden(v); }
 
 
 
@@ -22829,13 +22909,15 @@ function genLijn(r, vorm) {
 
 
 function toonAntwoord(q, v) {
-  if (q.kind === 'klok') return klokWoorden(v);
+  if (q.kind === 'klok') return klokTekst(q, v);
   if (q.kind === 'kalender') return q.soort === 'dag' ? DAGEN[v] : q.soort === 'maand' ? MAANDEN[v] : String(v);
   if (q.kind !== 'geld') return String(v);
   return q.centen ? euro(v).slice(1) : String(v);
 }
 function toonKeuze(q, v) {
-  if (q.kind === 'klok') return q.vorm === 'zoek' ? klokSvg(v, 64) : `<span class="klok-tekst">${klokWoorden(v)}</span>`;
+
+  if (q.kind === 'klok') return q.vorm === 'zoek' ? '&#8203;' + klokSvg(v, 64)
+    : q.uur24 ? `<span class="klok-digi">${klokDigitaal(v)}</span>` : `<span class="klok-tekst">${klokWoorden(v)}</span>`;
   if (q.kind === 'kalender') return q.soort === 'datum' ? String(v) : `<span class="klok-tekst">${toonAntwoord(q, v)}</span>`;
   if (q.kind === 'lijn' && q.vorm === 'zoek') return lijnSvg(...q.bereik, v, { klein: true });
   return q.kind === 'geld' ? (q.centen ? euro(v) : `€${v}`) : String(v);
@@ -22975,11 +23057,17 @@ function themaPlan(s, total) {
 
 
 
+
+
+
+
+
 function themaSterren(g, k) {
   const mijn = g.qs.map((q, i) => i).filter(i => (g.themaPlan ? g.themaPlan[i] : 'rekenen') === k);
   if (!mijn.length) return 0;
   const mis = mijn.filter(i => g.uitslag[i] && g.uitslag[i] !== 'goed').length;
-  return mis === 0 ? 3 : mis <= Math.floor(mijn.length * STER_MARGE) ? 2 : 1;
+  const marge = Math.max(Math.floor(mijn.length * STER_MARGE), mijn.length > 1 ? 1 : 0);
+  return mis === 0 ? 3 : mis <= marge ? 2 : 1;
 }
 
 
@@ -24561,8 +24649,8 @@ function planSpecials(p, s, total, accent, goldIdx, bezet) {
 
 const HINT_DICHTBIJ = 2;
 function hintVoor(q, val) {
-
-  if (typeof val !== 'number' || isNaN(val) || val === q.ans || q.kind === 'klok') return null;
+  if (typeof val !== 'number' || isNaN(val) || val === q.ans) return null;
+  if (q.kind === 'klok') return klokHint(q, val);
   const meer = q.ans > val;
   const net = Math.abs(q.ans - val) <= HINT_DICHTBIJ;
   const woord = meer ? 'meer' : 'minder';
@@ -24571,7 +24659,33 @@ function hintVoor(q, val) {
 }
 
 
+
+
+
+
+function klokHint(q, val) {
+  const dag = q.uur24 && q.vorm === 'lees';
+  const d = dag ? q.ans - val : ((q.ans - val) % 720 + 1080) % 720 - 360;
+  const later = d >= 0;
+  return { pijl: later ? 'later' : 'vroeger', woorden: (later ? 'Later dan ' : 'Vroeger dan ') + klokTekst(q, val) };
+}
+
+function hintTeken(q, val) {
+  if (q.kind !== 'klok') return toonKeuze(q, val);
+  if (q.uur24) return `<span class="klok-digi">${klokDigitaal(q.vorm === 'lees' ? val : val + 720)}</span>`;
+  return q.vorm === 'zoek' ? klokWoorden(val) : klokSvg(val, 46);
+}
+
+
 function pijlSVG(richting) {
+
+
+
+  if (richting === 'later' || richting === 'vroeger') {
+    const spiegel = richting === 'vroeger' ? 'translate(24 3) scale(-1 1)' : 'translate(0 3)';
+    return `<svg class="pijl-teken" viewBox="0 0 24 24" aria-hidden="true"><g transform="${spiegel}"><path d="M3.5 17 A9 9 0 0 1 17 6.2" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>`
+      + '<path d="M13.2 3.6 L21.6 4.4 L18.4 12.2 Z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></g></svg>';
+  }
   const draai = richting === 'neer' ? ' transform="rotate(180 12 12)"' : '';
   return `<svg class="pijl-teken" viewBox="0 0 24 24" aria-hidden="true"><path${draai} d="M12 3 L21 13 H15.5 V21 H8.5 V13 H3 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
 }
@@ -24582,7 +24696,7 @@ function toonHint(q, val, btnEl) {
 
 
 
-  showToast(`<span class="hint-getal">${toonKeuze(q, val)}</span><span class="hint-pijl ${h.pijl}" role="img" aria-label="${esc(h.woorden)}">${pijlSVG(h.pijl)}</span>`,
+  showToast(`<span class="hint-getal">${hintTeken(q, val)}</span><span class="hint-pijl ${h.pijl}" role="img" aria-label="${esc(h.woorden)}">${pijlSVG(h.pijl)}</span>`,
             null, null, 'hint');
 }
 
@@ -24599,6 +24713,25 @@ let G = null;
 
 
 
+
+
+
+
+
+
+
+
+function showOpzet(p, lvl, goldIdx) {
+  const s = p.settings;
+  const vragenPlan = themaPlan(s, s.perLevel);
+  const insts = Object.fromEntries(themasAan(s).map(k => [k, themaInst(p, k)]));
+  const inst = insts.rekenen || insts[vragenPlan[0]];
+  const som = insts.rekenen || insts.tafels;
+  const bezet = vragenPlan.map((k, i) => k === 'rekenen' ? -1 : i).filter(i => i >= 0);
+
+  const plan = som ? planSpecials(p, som, s.perLevel, som.vrij ? null : wereldAccent(lvl, padNu(p)), goldIdx, bezet) : {};
+  return { vragenPlan, insts, inst, plan };
+}
 function startLevel(lvl, eigenOvergang) {
 
 
@@ -24627,12 +24760,7 @@ function startLevel(lvl, eigenOvergang) {
 
 
 
-  const vragenPlan = count ? null : themaPlan(s, s.perLevel);
-  const insts = count ? null : Object.fromEntries(themasAan(s).map(k => [k, themaInst(p, k)]));
-  const inst = count ? null : insts.rekenen || insts[vragenPlan[0]];
-  const bezet = count ? [] : vragenPlan.map((k, i) => k === 'rekenen' ? -1 : i).filter(i => i >= 0);
-
-  const plan = count ? [] : planSpecials(p, inst, s.perLevel, inst.vrij ? null : wereldAccent(lvl, padNu(p)), goldIdx, bezet);
+  const { vragenPlan, insts, inst, plan } = count ? { vragenPlan: null, insts: null, inst: null, plan: [] } : showOpzet(p, lvl, goldIdx);
 
 
 
@@ -24769,7 +24897,7 @@ function renderQuestion() {
   if (G.mode === 'kies') {
     const choices = makeChoices(q, keuzeGrens(q, G.inst, G.lvl));
     area.innerHTML = '<div class="choices">' +
-      choices.map(c => `<button class="choice-btn${q.knop ? ' ' + q.knop : ''}" data-v="${c}"${q.kind === 'klok' || q.kind === 'kalender' ? ` aria-label="${toonAntwoord(q, c)}"` : ''}>${toonKeuze(q, c)}</button>`).join('') + '</div>';
+      choices.map(c => `<button class="choice-btn${q.knop ? ' ' + q.knop : ''}" data-v="${c}"${q.kind === 'klok' ? ` aria-label="${klokTekst(q, c)}"` : q.kind === 'kalender' ? ` aria-label="${toonAntwoord(q, c)}"` : ''}>${toonKeuze(q, c)}</button>`).join('') + '</div>';
     area.querySelectorAll('.choice-btn').forEach(b => {
       b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
     });
@@ -24910,12 +25038,66 @@ function drawQuestion() {
     const onder = [...rij.getClientRects()].map(r => r.bottom);
     return Math.max(...onder) - Math.min(...onder) > parseFloat(getComputedStyle(tekst).fontSize) / 2;
   };
-  for (const maat of ['lang', 'langer']) if (breekt()) tekst.classList.add(maat);
+
+
+
+
+  const eenRegel = tekst.querySelector('.een-regel');
+  const telt = eenRegel ? () => eenRegel.scrollWidth > eenRegel.clientWidth : breekt;
+  for (const maat of ['lang', 'langer']) if (telt()) tekst.classList.add(maat);
+  kaartOpMaat(tekst);
 
 
   const pad = document.querySelector('#answer-area .numpad');
   if (pad) pad.classList.toggle('heeft', G.mode === 'typ' && G.input !== '');
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+function kaartOpMaat(tekst) {
+  tekst.style.paddingTop = tekst.style.paddingBottom = '';
+  if (G.kaartMin == null) G.kaartMin = kaartMeten(tekst);
+  const over = G.kaartMin - tekst.offsetHeight;
+  if (over > 0) tekst.style.paddingTop = tekst.style.paddingBottom = over / 2 + 'px';
+}
+function kaartMeten(tekst) {
+  const proeven = kaartProeven(G.insts || {});
+  if (!proeven.length) return 0;
+
+
+
+  const kaart = tekst.parentNode, cs = getComputedStyle(kaart);
+  const rand = ['paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth'].reduce((n, k) => n + parseFloat(cs[k]), 0);
+  const kopie = tekst.cloneNode(false);
+  kopie.removeAttribute('id');
+  Object.assign(kopie.style, { position: 'absolute', display: 'flow-root', visibility: 'hidden', left: '0', top: '0', width: kaart.parentNode.clientWidth - rand + 'px' });
+  tekst.parentNode.appendChild(kopie);
+  const hoogste = Math.max(...proeven.map(html => {
+    kopie.innerHTML = html.replace('@', '<span class="q-blank">?</span>');
+    return kopie.offsetHeight;
+  }));
+  kopie.remove();
+  return hoogste;
+}
+
+function kaartProeven(insts) {
+  const uit = [];
+  if (insts.geld) insts.geld.rijen.forEach(r => uit.push(r.terug ? genGeld(r).html
+    : `<span class="geld-rij">${Array(r.stuks).fill(r.briefje ? 1000 : 200).map(geldStuk).join('')}</span><span class="pl-som">€ @</span>`));
+  if (insts.klok) insts.klok.rijen.forEach(r => uit.push(genKlok(r, 'lees').html, genKlok(r, 'zoek').html));
+  return uit;
+}
+addEventListener('resize', () => { if (G) G.kaartMin = null; });
 function numpadPress(n) {
   if (!G || G.lock) return;
   if (n === 'del') { if (G.input === '') return; G.input = G.input.slice(0, -1); sndClick(); }

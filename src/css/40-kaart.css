@@ -610,48 +610,75 @@
   /* Geld (zie genGeld): munten en briefjes in hun echte kleur, en altijd met
      hun waarde erop -- kleur is nooit het enige teken. Een munt van €1 en €2 is
      tweekleurig zoals de echte (€1 zilver met goud rond, €2 andersom), de centen
-     zijn goud en worden kleiner naarmate ze minder waard zijn. Alles in em: in
-     de show zijn ze groot, op de ladder klein, met dezelfde regels. */
+     zijn goud. Ze staan in de maat van de echte: €2 het grootst, dan 50c, €1,
+     20c en 10c -- dat de €1 kleiner is dan 50c klopt, zo is het in je hand ook.
+     Alles in em: in de show zijn ze groot, op de ladder klein, met dezelfde
+     regels. Vijf stukken lopen op een telefoon over twee regels; dat leest
+     nog als één hoopje, en de kaart springt er niet van (zie kaartMaat). */
   .geld-rij { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: .12em; margin: 2px 0 .2em; }
   .geld-stuk {
     display: inline-flex; align-items: center; justify-content: center; flex: none;
     font-weight: 800; line-height: 1; vertical-align: middle; font-variant-numeric: tabular-nums;
   }
   .geld-stuk.munt {
-    font-size: .42em; width: 2.75em; height: 2.75em; border-radius: 50%;
+    font-size: .48em; width: 2.75em; height: 2.75em; border-radius: 50%;
     color: #4a3300; background: #e2b64c; box-shadow: inset 0 0 0 .08em rgba(0,0,0,.25);
   }
   .geld-stuk.m200 { background: radial-gradient(circle, #e8c45a 56%, #c9ccd1 58%); }
   .geld-stuk.m100 { background: radial-gradient(circle, #c9ccd1 56%, #e8c45a 58%); }
-  .geld-stuk.m50 { width: 2.55em; height: 2.55em; }
-  .geld-stuk.m20 { width: 2.35em; height: 2.35em; }
+  .geld-stuk.m100 { width: 2.5em; height: 2.5em; }
+  .geld-stuk.m50 { width: 2.62em; height: 2.62em; }
+  .geld-stuk.m20 { width: 2.38em; height: 2.38em; }
   .geld-stuk.m10 { width: 2.15em; height: 2.15em; }
   .geld-stuk.briefje {
-    font-size: .42em; width: 4.2em; height: 2.4em; border-radius: .35em;
+    font-size: .44em; width: 3.6em; height: 2.2em; border-radius: .35em;
     color: #fff; box-shadow: inset 0 0 0 .14em rgba(255,255,255,.35);
   }
   .geld-stuk.b5 { background: #8d98a5; } .geld-stuk.b10 { background: #d2604f; }
   .geld-stuk.b20 { background: #4a7fcc; } .geld-stuk.b50 { background: #e48a3a; }
-  .geld-pijl { font-size: .5em; color: var(--purple-shadow); margin: 0 .2em; }
+  /* Teruggeven als aanvullen: [€7] + € ? = [€10]. Het kaartje is een
+     prijskaartje -- de punt links met het gaatje van het touwtje -- zodat
+     het iets anders zegt dan het briefje waarmee je betaalt. */
+  .geld-aanvul { display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: .18em; }
+  .geld-teken { font-size: .7em; }
+  .geld-aanvul .geld-prijs { font-size: .62em; }
   .geld-prijs {
-    display: inline-flex; align-items: center; gap: .25em; padding: .2em .5em; border-radius: .5em;
-    background: #fff3c4; color: #7a4f00; font-size: .5em; font-weight: 800;
+    position: relative; display: inline-flex; align-items: center; flex: none;
+    padding: .25em .55em .25em .95em; border-radius: .25em .6em .6em .25em;
+    background: #fff3c4; color: #7a4f00; font-size: .56em; font-weight: 800; line-height: 1;
+    box-shadow: inset 0 0 0 .1em #e6c46a;
   }
-  .geld-vraag { display: block; font-size: .5em; margin-bottom: .1em; }
+  .geld-prijs::before {
+    content: ''; position: absolute; left: .35em; top: 50%; width: .32em; height: .32em; margin-top: -.16em;
+    border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 .08em #c9a440;
+  }
   /* De klok (zie genKlok). Lezen: de klok groot, en het vakje eronder in een
-     kleinere letter -- "10 voor half 4" is langer dan een getal. Zoeken: de
-     tijd in woorden of op een digitale klok, en vier klokjes als knoppen. Alles
-     in em, zodat het met de vraag en de knop meegroeit (tablet). */
-  .klok-vraag { display: flex; justify-content: center; margin: 2px 0 .15em; }
-  .klok-vraag .klok { width: 2.4em; height: 2.4em; }
+     kleinere letter -- "kwart voor 4" is langer dan een getal. Het vakje is
+     leeg en onzichtbaar tot het antwoord erin landt: de klok ís de vraag, een
+     "?" eronder zei niets extra. De plek blijft wel, zodat de woorden er
+     straks in komen zonder dat de kaart groeit. Zoeken: de tijd in woorden of
+     op een digitale klok, en vier klokjes als knoppen. Een klokje vult zijn
+     knop, en die is precies even hoog als een knop met woorden of een getal
+     -- er staat een onzichtbare regel tekst in (zie toonKeuze), en het klokje
+     hangt er los overheen, op de hoogte van de knop. Was hij
+     hoger, dan schoof alles erboven op, en op een telefoon vielen de onderste
+     twee van het scherm (de kaart is de hele show even hoog, zie kaartOpMaat).
+     Leesbaar maakt klokSvg ze met grotere cijfers. Alles in em, zodat het met
+     de vraag en de knop meegroeit (tablet). */
+  .klok-vraag { position: relative; display: flex; justify-content: center; margin: 2px 0 .15em; }
+  .klok-vraag .klok { width: 2.8em; height: 2.8em; }
   .klok-som { font-size: .55em; }
+  .klok-som .q-blank:not(.done) { visibility: hidden; }
+  /* de zon of de maan bij de 24 uur (zie klokDag), rechtsboven tegen de klok */
+  .klok-dagdeel { position: absolute; left: calc(50% + .95em); top: -.12em; font-size: .62em; line-height: 1; }
   .klok-woord { font-size: .8em; padding: .2em 0; }
   .klok-digi {
     display: inline-block; padding: .08em .35em; border-radius: .2em; background: #2b2238; color: #fff;
     font-variant-numeric: tabular-nums; letter-spacing: .04em;
   }
-  .choice-btn.klok-zoek { padding-top: 8px; padding-bottom: 8px; }
-  .choice-btn .klok { display: block; width: 2.3em; height: 2.3em; margin: 0 auto; }
+  .choice-btn.klok-zoek { position: relative; }
+  .choice-btn .klok { position: absolute; left: 50%; top: 3px; height: calc(100% - 6px); width: auto; aspect-ratio: 1; transform: translateX(-50%); }
+  .choice-btn .klok-digi { font-size: .9em; }
   .choice-btn .klok-tekst { font-size: .7em; white-space: nowrap; }
   /* De kalender (zie genKalender). Een dag of maand is een pilletje, de maand
      met de kleur én het teken van zijn seizoen. Het kalenderblad is een

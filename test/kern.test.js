@@ -2071,6 +2071,13 @@ zaak('TH', () => {
   const g = { themaPlan: plan, qs: plan.map(() => ({})), uitslag: ['goed', 'mis', 'goed', 'hint', 'goed', 'goed', 'goed', 'goed'] };
   check(app.themaSterren(g, 'rekenen') === 3 && app.themaSterren(g, 'tafels') === 1, 'TH · twee missers bij de tafels: de sommen houden hun drie sterren, de tafels krijgen er één',
     `${app.themaSterren(g, 'rekenen')} ${app.themaSterren(g, 'tafels')}`);
+  {
+    const kort = (uitslag) => app.themaSterren({ qs: uitslag.map(() => ({})), themaPlan: uitslag.map((u, i) => i < 6 ? 'rekenen' : 'geld'), uitslag: uitslag.map(u => u || 'goed') }, 'geld');
+    const g2 = [0, 0, 0, 0, 0, 0];
+    check(kort([...g2, 'goed', 'goed']) === 3 && kort([...g2, 'mis', 'goed']) === 2 && kort([...g2, 'hint', 'goed']) === 2 && kort([...g2, 'mis', 'mis']) === 1,
+      'TH · twee geldvragen: 2 goed 3 sterren, 1 mis 2 sterren (telt mee), 2 mis 1 ster', '');
+    check(app.themaSterren({ qs: [{}, {}], themaPlan: ['rekenen', 'klok'], uitslag: ['goed', 'mis'] }, 'klok') === 1, 'TH · één klokvraag gemist: 1 ster', '');
+  }
 
   // de tafelladder: haar rij en wat ervoor kwam
   check(app.ladderNu(p, 'tafels') === 'tafels2510', 'TH · tafels beginnen bij 2, 5 en 10', app.ladderNu(p, 'tafels'));
@@ -2172,6 +2179,19 @@ zaak('GE', () => {
     if (!k.includes(q.ans) || new Set(k).size !== 4 || k.some(v => v < q.min) || (q.centen && k.some(v => v % 10))) keuzeFout++;
   }
   check(!keuzeFout, 'GE · de keuzes: het antwoord ertussen, vier verschillende, nooit €0, centen in stappen van tien', String(keuzeFout));
+  // de foute keuzes: fouten die een kind met geld echt maakt (zie genGeld)
+  let geteld = 0, vergeten = 0, bovenAcht = 0;
+  for (let i = 0; i < 400; i++) {
+    const q = app.genGeld(rij('munten10')), st = som(q), k = app.makeChoices(q, app.keuzeGrens(q, s, 1));
+    if (st.length !== q.ans && k.includes(st.length)) geteld++;
+    if (k.includes(q.ans - st[st.length - 1])) vergeten++;
+    if (q.ans > 8) bovenAcht++;
+  }
+  check(geteld > 40 && vergeten > 40, 'GE · bij de keuzes zit vaak "geteld i.p.v. opgeteld" of "één vergeten"', `${geteld} ${vergeten} /400`);
+  check(bovenAcht > 10, 'GE · munten tot €10 komt ook boven €8', `${bovenAcht}/400`);
+  const tq = app.genGeld(rij('terug'));
+  check(/geld-prijs[^]*q?@?[^]*geld-stuk briefje/.test(tq.html.replace('@', 'q@')) && tq.html.includes('geld-aanvul') && !/[\u{1F300}-\u{1FAFF}]/u.test(tq.html),
+    'GE · teruggeven als aanvullen: kaartje + € ? = briefje, zonder emoji', tq.html.slice(0, 60));
 
   // de ladder
   check(app.ladderNu(p, 'geld') === 'munten10', 'GE · geld begint bij munten tot €10', app.ladderNu(p, 'geld'));
@@ -2204,19 +2224,25 @@ zaak('KL', () => {
   const { app, p } = verseSter('Klok');
   const s = p.settings;
   const woorden = { 0: '12 uur', 180: '3 uur', 210: 'half 4', 195: 'kwart over 3', 225: 'kwart voor 4', 190: '10 over 3',
-    200: '10 voor half 4', 205: '5 voor half 4', 215: '5 over half 4', 220: '10 over half 4', 230: '10 voor 4', 250: '10 over 4', 690: 'half 12', 715: '5 voor 12', 30: 'half 1' };
+    200: '20 over 3', 205: '25 over 3', 215: '25 voor 4', 220: '20 voor 4', 230: '10 voor 4', 250: '10 over 4', 690: 'half 12', 715: '5 voor 12', 30: 'half 1' };
   const mis = Object.entries(woorden).filter(([t, w]) => app.klokWoorden(Number(t)) !== w).map(([t, w]) => `${t}: ${app.klokWoorden(Number(t))} (niet ${w})`);
-  check(!mis.length, 'KL · de tijd in woorden: 3 uur, half 4, kwart voor 4, 10 voor half 4', mis.join('; '));
+  check(!mis.length, 'KL · de tijd in woorden: 3 uur, half 4, kwart voor 4, 20 over 3 (nooit "voor half")', mis.join('; '));
+  const viaHalf = Array.from({ length: 144 }, (_, i) => app.klokWoorden(i * 5)).filter(w => /(voor|over) half/.test(w));
+  check(!viaHalf.length, 'KL · geen enkele tijd via half ("10 voor half 4", "5 over half 4")', viaHalf.join('; '));
   check(app.klokDigitaal(155 + 720) === '14:35' && app.klokDigitaal(65 + 720) === '13:05', 'KL · 24 uur: 14:35', app.klokDigitaal(875));
 
   const fout = {};
   for (let i = 0; i < 300; i++) for (const r of app.KLOKPAD) for (const vorm of ['lees', 'zoek']) {
     const q = app.genKlok(r, vorm), w = (fout[r.id] = fout[r.id] || []);
-    if (q.ans % r.stap || q.ans < 0 || q.ans >= 720 || (r.uur24 && q.ans < 60)) w.push('tijd ' + q.ans);
+    // de 24 uur lezen rekent op de hele dag: het antwoord is de namiddag of de avond (zie klokDag)
+    const dag = r.uur24 && vorm === 'lees', [lo, hi] = dag ? [780, 1440] : [r.uur24 ? 60 : 0, 720];
+    if (q.ans % r.stap || q.ans < lo || q.ans >= hi) w.push('tijd ' + q.ans);
     if (q.keuzes.length !== 4 || new Set(q.keuzes).size !== 4 || !q.keuzes.includes(q.ans)) w.push('keuzes ' + q.keuzes);
-    if (q.keuzes.some(v => v % r.stap || v < 0 || v >= 720 || (r.uur24 && v < 60))) w.push('maat ' + q.keuzes);
+    if (q.keuzes.some(v => v % r.stap || v < 60 * r.uur24 || v >= (dag ? 1440 : 720))) w.push('maat ' + q.keuzes);
+    if (dag && !q.keuzes.includes(q.ans - 720)) w.push('de 12 vergeten ontbreekt ' + q.keuzes);
+    if (dag && new Set(q.keuzes.map(app.klokDigitaal)).size !== 4) w.push('dubbel ' + q.keuzes);
     if (!q.kiezen) w.push('typen');
-    if (vorm === 'lees' && (!q.html.includes('@') || !(r.uur24 ? q.html.includes('klok-digi') : q.html.includes('<svg')))) w.push('lees ' + q.html.slice(0, 40));
+    if (vorm === 'lees' && (!q.html.includes('@') || !q.html.includes('<svg') || (dag && !q.html.includes('klok-dagdeel')))) w.push('lees ' + q.html.slice(0, 40));
     if (vorm === 'zoek' && q.html.includes('@')) w.push('zoek met vakje');
   }
   const kapot = Object.entries(fout).filter(([, w]) => w.length);
@@ -2228,6 +2254,16 @@ zaak('KL', () => {
   check(app.makeChoices(q, 0).slice().sort().join() === q.keuzes.slice().sort().join(), 'KL · de knoppen zijn de keuzes van de vraag', '');
   check(app.toonKeuze(q, q.ans).includes('<svg') && app.toonKeuze({ ...q, vorm: 'lees' }, 210).includes('half 4') && app.toonAntwoord(q, 210) === 'half 4',
     'KL · zoeken: klokjes op de knoppen; lezen: woorden', '');
+  // de hint na een misser: later of vroeger, langs de kortste weg rond de klok (zie klokHint)
+  const lq = app.genKlok(app.KLOKPAD[1], 'lees');
+  const h = (ans, val, q = lq) => app.hintVoor({ ...q, ans }, val);
+  check(h(210, 150).pijl === 'later' && h(150, 210).pijl === 'vroeger' && h(60, 660).pijl === 'later' && h(660, 60).pijl === 'vroeger',
+    'KL · hint: half 4 na half 3 is later, 1 uur na 11 uur ook (rond de klok)', [h(210, 150).pijl, h(60, 660).pijl].join());
+  check(h(210, 150).woorden === 'Later dan half 3' && app.hintTeken(lq, 150).includes('<svg') && app.hintTeken({ ...lq, vorm: 'zoek' }, 150) === 'half 3',
+    'KL · hint: wat ze tikte in de andere vorm (woorden gekozen: een klokje; klokje gekozen: woorden)', h(210, 150).woorden);
+  const dq = app.genKlok(app.KLOKPAD[4], 'lees');
+  check(app.hintVoor(dq, dq.ans - 720).pijl === 'later' && app.toonAntwoord(dq, 860) === '14:20' && app.toonKeuze(dq, 860).includes('14:20'),
+    'KL · 24 uur lezen: 2:20 i.p.v. 14:20 is te vroeg, en de knoppen zijn digitaal', app.toonAntwoord(dq, 860));
 
   // in de show
   app.themaZet(s, 'geld', true); app.themaZet(s, 'klok', true);
@@ -2238,6 +2274,39 @@ zaak('KL', () => {
   const ki = app.rijenInst(p, 'klok'), vormen = Array.from({ length: 6 }, () => app.rijenVraag(ki, []).vorm);
   check(vormen.every((v, i) => !i || v !== vormen[i - 1]), 'KL · lezen en zoeken om de beurt', vormen.join());
   check(Array.from({ length: 50 }, () => app.rijenVraag(ki, []).rij).every(r => r === 'uren'), 'KL · op hele uren: alleen hele uren', '');
+});
+
+/* ================= SO · Elke combinatie van thema's start een show =================
+   Een show met alleen geld of alleen de klok startte niet: de speciale vragen
+   lazen s.ops van de geldvraagmaker (zie showOpzet). Hier wordt elke
+   combinatie van thema's opgezet en uitgespeeld tot de laatste vraag, op het
+   leerpad en bij Zelf kiezen, in een lange en een korte show -- een thema dat
+   er straks bij komt, valt hier meteen mee. */
+zaak('SO', () => {
+  const ids = ['rekenen', 'tafels', 'geld', 'klok'], kapot = [];
+  for (let m = 1; m < 16; m++) for (const modus of ['pad', 'vrij']) for (const perLevel of [8, 5]) {
+    const aan = ids.filter((k, i) => m & (1 << i));
+    const { app, p } = verseSter('Combi');
+    const s = p.settings;
+    s.modus = modus; s.perLevel = perLevel;
+    aan.forEach(k => app.themaZet(s, k, true));
+    ids.filter(k => !aan.includes(k)).forEach(k => app.themaZet(s, k, false));
+    const naam = `${aan.join('+')} ${modus} ${perLevel}`;
+    if (app.themasAan(s).join() !== aan.join()) { kapot.push(naam + ': thema\'s ' + app.themasAan(s).join()); continue; }
+    try {
+      const o = app.showOpzet(p, 1, -1);
+      const g = { themaPlan: o.vragenPlan, insts: o.insts, qs: [], idx: 0, herhaald: new Set() };
+      for (; g.idx < perLevel; g.idx++) {
+        const sp = o.plan[g.idx];
+        const q = sp ? (sp.type === 'miss' ? app.genMissing(o.inst, 1, p.perf, sp.op) : app.genChain(o.inst, 1, p.perf)) : app.buildQuestion(p, 1, g);
+        if (!q || q.ans == null || !q.tmpl) throw new Error('vraag ' + g.idx + ' leeg');
+        const thema = o.vragenPlan[g.idx], soort = q.kind === 'geld' || q.kind === 'klok' ? q.kind : 'som';
+        if ((thema === 'geld' || thema === 'klok' ? thema : 'som') !== soort) throw new Error(`vraag ${g.idx}: ${thema} gaf ${q.tmpl}`);
+        g.qs.push(q);
+      }
+    } catch (e) { kapot.push(naam + ': ' + e.message); }
+  }
+  check(!kapot.length, 'SO · elke combinatie van thema\'s (leerpad en Zelf kiezen, 8 en 5 vragen) zet een show op en speelt hem uit', kapot.slice(0, 4).join('; '));
 });
 
 klaar();
