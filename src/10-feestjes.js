@@ -320,6 +320,15 @@ function showPraise(txt, reward, blauw, duur) {
 // wat ze verdiend heeft (nieuwe trofee, nieuw podium) en 'blauw' voor "hier ben
 // je" (welkom). Zonder soort is het de gewone pil met tekst, zonder kleur; de
 // vorige soort blijft nooit hangen.
+// duur (optioneel): hoe lang hij blijft staan, standaard TOAST_DUUR.
+/* DE REGEL: een toast gaat vanzelf weg. showToast plant dat zelf in; een aanroeper
+   hoeft er niets voor te onthouden -- moest elke aanroeper er zelf een toastWeg
+   achter zetten, dan bleef de toast van wie dat vergat staan tot er toevallig een
+   volgende kwam. Alleen twee soorten blijven staan, omdat iets anders ze wegneemt:
+     - met onTap: die wacht op een tik (het hele scherm, zie tap-veil);
+     - 'teken' en 'hint': de hint bij een misser in de show. Die staat tot het
+       volgende antwoord, en de show haalt hem weg (hideToast in 60-spel).
+   kern zaak TW kijkt dit na, en ook dat toastWeg alleen hier aangeroepen wordt. */
 /* Elke toast krijgt een nummer. toastWeg(ms) haalt alléén de toast weg die er nu
    staat: hier stonden overal losse setTimeout(hideToast, ..)'s, en een klokje van
    een vorige toast haalde dan de volgende weg -- tik op een trofee die op slot
@@ -328,7 +337,7 @@ function showPraise(txt, reward, blauw, duur) {
    (TOAST_UIT); hideToast blijft de harde knip voor wie meteen iets anders laat
    zien. */
 let toastNr = 0, toastFade = null;
-const TOAST_UIT = 160;
+const TOAST_UIT = 160, TOAST_DUUR = 2400;
 function toastWeg(ms) {
   const nr = toastNr;
   setTimeout(() => {
@@ -341,7 +350,7 @@ function toastWeg(ms) {
     toastFade.onfinish = () => { if (nr === toastNr) hideToast(); };
   }, ms);
 }
-function showToast(txt, onTap, sub, soort) {
+function showToast(txt, onTap, sub, soort, duur) {
   toastNr++;
   const t = $('toast');
   if (toastFade) { toastFade.cancel(); toastFade = null; }
@@ -365,7 +374,7 @@ function showToast(txt, onTap, sub, soort) {
   if (onTap) {
     veil.onclick = () => { hideToast(); onTap(); };
     veil.style.display = 'block';
-  }
+  } else if (soort !== 'teken' && soort !== 'hint') toastWeg(duur || TOAST_DUUR);
 }
 function hideToast() {
   const t = $('toast');

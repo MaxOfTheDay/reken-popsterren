@@ -11465,8 +11465,17 @@ function showPraise(txt, reward, blauw, duur) {
 
 
 
+
+
+
+
+
+
+
+
+
 let toastNr = 0, toastFade = null;
-const TOAST_UIT = 160;
+const TOAST_UIT = 160, TOAST_DUUR = 2400;
 function toastWeg(ms) {
   const nr = toastNr;
   setTimeout(() => {
@@ -11479,7 +11488,7 @@ function toastWeg(ms) {
     toastFade.onfinish = () => { if (nr === toastNr) hideToast(); };
   }, ms);
 }
-function showToast(txt, onTap, sub, soort) {
+function showToast(txt, onTap, sub, soort, duur) {
   toastNr++;
   const t = $('toast');
   if (toastFade) { toastFade.cancel(); toastFade = null; }
@@ -11503,7 +11512,7 @@ function showToast(txt, onTap, sub, soort) {
   if (onTap) {
     veil.onclick = () => { hideToast(); onTap(); };
     veil.style.display = 'block';
-  }
+  } else if (soort !== 'teken' && soort !== 'hint') toastWeg(duur || TOAST_DUUR);
 }
 function hideToast() {
   const t = $('toast');
@@ -15000,8 +15009,7 @@ function save() {
     if (!saveFailed) {
       saveFailed = true;
       try {
-        showToast('⚠️ Opslaan lukt niet', null, 'Spelen kan wel');
-        toastWeg(3000);
+        showToast('⚠️ Opslaan lukt niet', null, 'Spelen kan wel', null, 3000);
       } catch (e2) { }
     }
   }
@@ -19630,8 +19638,7 @@ function slotWereld(knop, doel) {
 function slotToast(doel) {
   const w = WORLDS[doel];
 
-  showToast(w ? `🔒 Speel eerst de ${esc(w.name)} uit` : '🔒 Nog niet');
-  toastWeg(2200);
+  showToast(w ? `🔒 Speel eerst de ${esc(w.name)} uit` : '🔒 Nog niet', null, null, null, 2200);
 }
 
 
@@ -22162,8 +22169,7 @@ function wereldFeest(f) {
 function noticeReady(trofees) {
   if (!trofees || !trofees.length) return;
   updateTroDot();
-  showToast(`🎁 ${trofees.length === 1 ? 'Nieuwe trofee' : trofees.length + ' nieuwe trofeeën'}`, null, null, 'goud');
-  toastWeg(1900);
+  showToast(`🎁 ${trofees.length === 1 ? 'Nieuwe trofee' : trofees.length + ' nieuwe trofeeën'}`, null, null, 'goud', 1900);
 }
 
 
@@ -27050,8 +27056,7 @@ function zetWens(id) {
   renderDressBar(it, p);
   paintShop();
   if (p.wens === id) {
-    showToast('💖 Je wens');
-    toastWeg(1300);
+    showToast('💖 Je wens', null, null, null, 1300);
   }
 }
 
@@ -27508,8 +27513,7 @@ function confirmShopBuy(id, blijf) {
   const podiaVoor = ITEMS.filter(st => st.cat === PODIA_CAT && podiumVanJou(p, st)).map(st => st.id);
   if (p.diamonds < prijs) {
     sndWrong();
-    showToast(`Nog ${prijs - p.diamonds} 💎`);
-    toastWeg(1800);
+    showToast(`Nog ${prijs - p.diamonds} 💎`, null, null, null, 1800);
     return;
   }
   p.diamonds -= prijs;
@@ -27561,8 +27565,7 @@ function confirmShopBuy(id, blijf) {
     if (shopJustBoughtId !== it.id || !$('screen-dress').classList.contains('active')) return;
     koopKomtAan(it);
     if (nieuwPodium) {
-      showToast('🎪 Nieuw podium', null, null, 'goud');
-      toastWeg(PODIUM_TOAST);
+      showToast('🎪 Nieuw podium', null, null, 'goud', PODIUM_TOAST);
       speak(`Nieuw podium! ${nieuwPodium.name}.`);
     }
   }, stil ? 0 : DIA_AANKOMST);
@@ -27922,8 +27925,7 @@ function createStar() {
   if (!name || !newStar.base || !newStar.settings.track) return wijsOntbrekende();
   const taken = Object.values(db.profiles).some(p => p.name.toLowerCase() === name.toLowerCase());
   if (taken) {
-    showToast('⚠️ Die naam bestaat al');
-    toastWeg(2600);
+    showToast('⚠️ Die naam bestaat al', null, null, null, 2600);
     return;
   }
   const key = nextProfileKey();
@@ -27955,7 +27957,6 @@ function createStar() {
 
 
   showToast(`👋 Welkom, ${esc(name)}`, null, null, 'blauw');
-  toastWeg(2400);
 }
 
 
@@ -28917,7 +28918,6 @@ function naarOver(e) {
   if (navigator.onLine === false) {
     e.preventDefault();
     showToast('📶 Geen internet');
-    toastWeg(2400);
     return;
   }
   save();
@@ -28925,7 +28925,7 @@ function naarOver(e) {
 
 
 function deelOver() {
-  const melding = t => { showToast(t); toastWeg(2400); };
+  const melding = t => showToast(t);
   if (navigator.share) {
     navigator.share({ title: 'Rekensterren', text: 'Een reken- en telspel voor kinderen van 5 tot 8.', url: OVER_URL })
       .catch(() => {});
@@ -29011,7 +29011,7 @@ function gevaarVraag({ titel, weg, blijft, ja, nee, doe }) {
 
 const TERUG_DUUR = 6000;
 function meldMetTerug(melding, terug) {
-  showToast(`${melding}<button class="toast-terug" type="button">↶ Terug</button>`);
+  showToast(`${melding}<button class="toast-terug" type="button">↶ Terug</button>`, null, null, null, TERUG_DUUR);
   const t = $('toast');
   t.classList.add('onder', 'met-knop');
   t.querySelector('.toast-terug').onclick = () => {
@@ -29022,7 +29022,6 @@ function meldMetTerug(melding, terug) {
     if ($('screen-settings').classList.contains('active')) { renderSettings(); settingsToTop(); }
     renderProfiles();
   };
-  toastWeg(TERUG_DUUR);
 }
 
 function opsomming(woorden) {
@@ -29127,8 +29126,7 @@ function blockedMinOne(el) {
   el.classList.remove('shake');
   void el.offsetWidth;
   el.classList.add('shake');
-  showToast('Minstens 1');
-  toastWeg(1500);
+  showToast('Minstens 1', null, null, null, 1500);
 }
 
 
@@ -29973,7 +29971,7 @@ function ozGevonden(data, vanStart) {
 
 
     if (hier.length) meldMetTerug('✓ Sterren overgezet', () => { db = oud; cur = null; setKey = null; });
-    else { showToast('✓ Sterren overgezet'); toastWeg(2400); }
+    else showToast('✓ Sterren overgezet');
     if (vanStart) confetti(50);
   };
 }

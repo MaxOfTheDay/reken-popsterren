@@ -634,8 +634,7 @@ function zetWens(id) {
   renderDressBar(it, p);
   paintShop();
   if (p.wens === id) {
-    showToast('💖 Je wens');
-    toastWeg(1300);
+    showToast('💖 Je wens', null, null, null, 1300);
   }
 }
 /* Het teken van de wens: zijn emoji, of anders zijn eigen kleine tekening. Hier
@@ -1092,8 +1091,7 @@ function confirmShopBuy(id, blijf) {
   const podiaVoor = ITEMS.filter(st => st.cat === PODIA_CAT && podiumVanJou(p, st)).map(st => st.id);
   if (p.diamonds < prijs) {
     sndWrong();
-    showToast(`Nog ${prijs - p.diamonds} 💎`);
-    toastWeg(1800);
+    showToast(`Nog ${prijs - p.diamonds} 💎`, null, null, null, 1800);
     return;
   }
   p.diamonds -= prijs;
@@ -1145,8 +1143,7 @@ function confirmShopBuy(id, blijf) {
     if (shopJustBoughtId !== it.id || !$('screen-dress').classList.contains('active')) return;
     koopKomtAan(it);
     if (nieuwPodium) {
-      showToast('🎪 Nieuw podium', null, null, 'goud');   // de naam zegt de stem
-      toastWeg(PODIUM_TOAST);
+      showToast('🎪 Nieuw podium', null, null, 'goud', PODIUM_TOAST);   // de naam zegt de stem
       speak(`Nieuw podium! ${nieuwPodium.name}.`);
     }
   }, stil ? 0 : DIA_AANKOMST);

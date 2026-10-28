@@ -819,8 +819,7 @@ function wereldFeest(f) {
 function noticeReady(trofees) {
   if (!trofees || !trofees.length) return;
   updateTroDot();
-  showToast(`🎁 ${trofees.length === 1 ? 'Nieuwe trofee' : trofees.length + ' nieuwe trofeeën'}`, null, null, 'goud');
-  toastWeg(1900);
+  showToast(`🎁 ${trofees.length === 1 ? 'Nieuwe trofee' : trofees.length + ' nieuwe trofeeën'}`, null, null, 'goud', 1900);
 }
 // rood stipje op het Trofeeën-tabblad zolang er trofeeën klaarliggen om te openen
 // De memory-knop belooft nu wat hij oplevert (2 per paar + 3 als de hele set uit
