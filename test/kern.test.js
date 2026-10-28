@@ -1759,7 +1759,7 @@ zaak('ZE', () => {
   const app = laadApp();
   const kaarten = app.run('OEFEN_INSTELLINGEN');
   const gevallen = [
-    ['math', { ops: ['+', '-', 'x', ':'], max: 20, themas: ['geld', 'klok', 'kalender'] }, '["rekenen","tafels","geld","klok","kalender","show"]'],   // alles wat kan staat er
+    ['math', { ops: ['+', '-', 'x', ':'], max: 20, themas: ['geld', 'klok', 'kalender', 'lijn'] }, '["rekenen","tafels","lijn","geld","klok","kalender","show"]'],   // alles wat kan staat er
     ['math', { ops: ['+', '-', 'x', ':'], max: 20 }, '["rekenen","tafels","show"]'],   // geld staat standaard uit
     ['math', { ops: ['+', '-'], max: 10, missNum: false }, '["rekenen","show"]'],      // en met minder
     ['math', { ops: [':'] }, '["tafels","show"]'],
@@ -1794,7 +1794,7 @@ zaak('ZE', () => {
         check(/data-instelling="tafelLijn"/.test(t) && !/data-instelling="tables"/.test(t)
           && /data-instelling="tables"/.test(tv) && !/data-instelling="tafelLijn"/.test(tv),
           'ZE · tafels: op het leerpad de tafelladder, bij Zelf kiezen "Tafels van", nooit allebei', '');
-        for (const [k, lijn, kies] of [['geld', 'geldLijn', 'kiesGeld'], ['klok', 'klokLijn', 'kiesKlok'], ['kalender', 'kalLijn', 'kiesKalender']]) {
+        for (const [k, lijn, kies] of [['geld', 'geldLijn', 'kiesGeld'], ['klok', 'klokLijn', 'kiesKlok'], ['kalender', 'kalLijn', 'kiesKalender'], ['lijn', 'lijnLijn', 'kiesLijn']]) {
           const l = groepen.find(g => g.kaart === k).html, v = vrij.find(g => g.kaart === k).html;
           check(l.includes(`data-instelling="${lijn}"`) && !l.includes(`data-instelling="${kies}"`)
             && v.includes(`data-instelling="${kies}"`) && !v.includes(`data-instelling="${lijn}"`),
@@ -2363,6 +2363,65 @@ zaak('KA', () => {
   check(vier.filter(r => r === 'seizoen').length === 2 && vier.every(r => r === 'seizoen' || r === 'blad'), 'KA · Zelf kiezen: de aangevinkte rijen, om de beurt', vier.join());
 });
 
+/* ================= GL · De getallenlijn als thema =================
+   Elke vorm van elke rij: het antwoord ligt op de lijn die ze ziet, op een
+   streepje, en de keuzes zijn verschillend. Een tik telt voor het streepje
+   het dichtst erbij. En de ladder groeit zoals die van de kalender. */
+zaak('GL', () => {
+  const { app, p } = verseSter('Lijn');
+  const s = p.settings;
+  check(!app.themaAan(s, 'lijn'), 'GL · een verse ster: de getallenlijn staat uit', JSON.stringify(s.themas));
+  check(app.THEMAS.map(t => t.id).join() === 'rekenen,tafels,lijn,geld,klok,kalender', 'GL · de tegels: de getallen bovenaan, de getallenlijn na rekenen en tafels', app.THEMAS.map(t => t.id).join());
+  const mis = [];
+  for (const r of app.LIJNPAD) for (const v of ['lees', 'zoek']) for (let i = 0; i < 300; i++) {
+    const q = app.genLijn(r, v), naam = `${r.id}/${v} ${q.tmpl}`;
+    if (q.rij !== r.id || q.kind !== 'lijn') mis.push(naam + ' soort');
+    if (q.tik) {
+      const [van, tot, stap] = q.bereik;
+      if (q.ans <= van || q.ans >= tot || (q.ans - van) % stap) mis.push(naam + ' niet op een streepje');
+      if (!q.html.includes(`>${q.ans}<`) || q.html.includes('@')) mis.push(naam + ' het getal staat er niet');
+    } else if (!q.html.includes('@')) mis.push(naam + ' geen vakje');
+    if (q.keuzes && (!q.keuzes.includes(q.ans) || new Set(q.keuzes).size !== q.keuzes.length || q.keuzes.length < 2)) mis.push(naam + ' keuzes ' + q.keuzes);
+    if (q.min != null && (q.ans < q.min || q.ans > q.grens)) mis.push(naam + ' buiten de lijn');
+  }
+  check(!mis.length, 'GL · elke rij, elke vorm: het antwoord op de lijn, op een streepje, verschillende keuzes', [...new Set(mis)].slice(0, 3).join(' | '));
+  // de echte getallen: een sprong over 10 gaat in twee keer via 10, afronden naar het dichtste tiental
+  const fout = [];
+  for (let i = 0; i < 300; i++) {
+    let q = app.genLijn(app.LIJNPAD[1], 'lees'); const [, , a, d] = q.tmpl.split(' ').map(Number), bogen = q.html.split('class="boog"').length - 1;
+    if (q.ans !== a + d || bogen !== (a < 10 && a + d > 10 ? 2 : 1)) fout.push(`${q.tmpl}: ${q.ans}, ${bogen} bogen`);
+    q = app.genLijn(app.LIJNPAD[5], 'lees'); const n = +q.tmpl.split(' ').pop();
+    if (q.ans !== Math.round(n / 10) * 10 || n % 10 === 5) fout.push(`${q.tmpl}: ${q.ans}`);
+  }
+  check(!fout.length, 'GL · klopt: 8 + 5 gaat via 10 in twee sprongen, 47 ≈ 50 (nooit een 5 in het midden)', fout.slice(0, 3).join(' | '));
+  // een tik telt voor het dichtste streepje, ook net ernaast en buiten de lijn
+  const tq = { bereik: [300, 500, 10, 100] }, b = 320, x = v => (16 + (v - 300) / 200 * 288) / 320 * b;
+  check(app.lijnRaak(tq, x(370), b) === 370 && app.lijnRaak(tq, x(370) + 3, b) === 370 && app.lijnRaak(tq, x(374), b) === 370 && app.lijnRaak(tq, x(376), b) === 380
+    && app.lijnRaak(tq, 0, b) === 300 && app.lijnRaak(tq, b, b) === 500, 'GL · een tik telt voor het dichtste streepje, en nooit buiten de lijn', '');
+
+  // de ladder groeit: drie goede shows per rij, met rekenen erbij
+  app.themaZet(s, 'lijn', true);
+  check(app.themaPlan(s, 8).filter(k => k === 'lijn').length === 2, 'GL · een show van acht met rekenen: twee lijnvragen', app.themaPlan(s, 8).join());
+  const pad = [], buiten = [], nieuw = [];
+  let shows = 0;
+  while (app.ladderNu(p, 'lijn') !== 'alles' && shows < 60) {
+    shows++;
+    const nu = app.ladderNu(p, 'lijn'), mag = new Set(app.ladderSpeelt(p, 'lijn').rijen.map(r => r.id));
+    const inst = app.rijenInst(p, 'lijn'), qs = Array.from({ length: 8 }, () => app.rijenVraag(inst, []));
+    qs.filter(q => !mag.has(q.rij)).forEach(q => buiten.push(q.rij));
+    const eerste = qs.find(q => q.rij === nu);
+    if (pad.length && pad[pad.length - 1].verder && eerste) nieuw.push(app.vraagIsNieuw(eerste, nu));
+    pad.push({ nu, verder: app.ladderNa(p, 'lijn', 3) });
+  }
+  const per = app.LIJNPAD.map(r => pad.filter(x => x.nu === r.id).length);
+  check(app.ladderNu(p, 'lijn') === 'alles' && per.every(n => n === 3), 'GL · drie goede shows per rij: alle zes rijen, één voor één, tot alles door elkaar', per.join(' '));
+  check(!buiten.length, 'GL · nooit een vraag van een rij die ze nog niet had', buiten.slice(0, 3).join());
+  check(nieuw.length === 5 && nieuw.every(Boolean), 'GL · de eerste vraag van een nieuwe rij is "Nieuw"', nieuw.join());
+  s.modus = 'vrij'; s.kiesLijn = ['lijn20', 'afronden'];
+  const vi = app.rijenInst(p, 'lijn'), vier = Array.from({ length: 4 }, () => app.rijenVraag(vi, []).rij);
+  check(vier.filter(r => r === 'lijn20').length === 2 && vier.every(r => r === 'lijn20' || r === 'afronden'), 'GL · Zelf kiezen: de aangevinkte rijen, om de beurt', vier.join());
+});
+
 /* ================= SO · Elke combinatie van thema's start een show =================
    Een show met alleen geld of alleen de klok startte niet: de speciale vragen
    lazen s.ops van de geldvraagmaker (zie showOpzet). Hier wordt elke
@@ -2371,7 +2430,7 @@ zaak('KA', () => {
    er straks bij komt, valt hier meteen mee. */
 zaak('SO', () => {
   const ids = laadApp().THEMAS.map(t => t.id), kapot = [];
-  for (let m = 1; m < 16; m++) for (const modus of ['pad', 'vrij']) for (const perLevel of [8, 5]) {
+  for (let m = 1; m < 1 << ids.length; m++) for (const modus of ['pad', 'vrij']) for (const perLevel of [8, 5]) {
     const aan = ids.filter((k, i) => m & (1 << i));
     const { app, p } = verseSter('Combi');
     const s = p.settings;

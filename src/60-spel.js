@@ -177,7 +177,7 @@ function renderQuestion() {
   }
   const q = G.qs[G.idx];
   // een vraag die je niet kunt typen (€1,70: geen komma op het cijferblok) is altijd kiezen
-  G.mode = G.count ? 'count' : q.kiezen ? 'kies' : (s.mode === 'mix' ? pick(['kies', 'typ']) : s.mode);
+  G.mode = G.count ? 'count' : q.tik ? 'tik' : q.kiezen ? 'kies' : (s.mode === 'mix' ? pick(['kies', 'typ']) : s.mode);
   G.input = '';
   G.lock = false;
   G.retried = false;
@@ -193,7 +193,15 @@ function renderQuestion() {
     spotZonderTijd();
     return;
   }
-  if (G.mode === 'kies') {
+  if (q.tik) {
+    area.innerHTML = lijnTikvlak(q);
+    const raak = area.querySelector('.gl-raak');
+    raak.onclick = e => {
+      const r = raak.getBoundingClientRect(), v = lijnRaak(q, e.clientX - r.left, r.width);
+      const merk = area.querySelector(`.gl-tik[data-v="${v}"]`);
+      if (!merk.classList.contains('bad')) submitAnswer(v, merk);   // een streepje dat al fout was telt niet nog eens
+    };
+  } else if (G.mode === 'kies') {
     const choices = makeChoices(q, keuzeGrens(q, G.inst, G.lvl));
     area.innerHTML = '<div class="choices">' +
       choices.map(c => `<button class="choice-btn${q.knop ? ' ' + q.knop : ''}" data-v="${c}"${q.kind === 'klok' ? ` aria-label="${klokTekst(q, c)}"` : q.kind === 'kalender' ? ` aria-label="${toonAntwoord(q, c)}"` : ''}>${toonKeuze(q, c)}</button>`).join('') + '</div>';
@@ -427,6 +435,7 @@ function kaartProeven(insts) {
   if (insts.klok) insts.klok.rijen.forEach(r => uit.push(genKlok(r, 'lees').html, genKlok(r, 'zoek').html));
   // de kalender: elke vorm een paar keer, want een maand met zes weken is een rij hoger
   if (insts.kalender) insts.kalender.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genKalender(r, i % 2 ? 'zoek' : 'lees').html); });
+  if (insts.lijn) insts.lijn.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genLijn(r, i % 2 ? 'zoek' : 'lees').html); });
   return uit;
 }
 addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = null; });
@@ -930,6 +939,10 @@ function tweedeMisser(q, p, btnEl) {
       // de pijl van de eerste poging gold voor toen; nu staat het antwoord er
       // zelf, en dan is rood (wat je koos) en groen (wat het was) genoeg
       document.querySelectorAll('#answer-area .tegel-pijl').forEach(el => el.remove());
+    } else if (G.mode === 'tik') {
+      // de getallenlijn: het goede streepje krijgt zijn pijl, groen en rustig
+      const merk = document.querySelector(`#answer-area .gl-tik[data-v="${q.ans}"]`);
+      if (merk) merk.classList.add('good', 'rustig');
     }
     // Ook nu gaat de som dicht, maar rustig: geen vlucht, geen groen, geen feest.
     // Juist hier moet de goede som te zien zijn -- in de som zelf, en niet in een

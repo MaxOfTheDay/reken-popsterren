@@ -3630,6 +3630,48 @@
   .kal-weken .kal-raster { gap: .06em; padding: .08em; }
   .kal-weken .kal-raster i { font-size: inherit; height: .36em; padding: 0; border-radius: .06em; background: #d9c3ec; }
   .kal-weken .kal-raster i.wk { background: #efe6f7; }
+
+
+
+  .gl { display: block; font-size: clamp(18px, .46em, 30px); line-height: 1.1; width: min(calc(100vw - 72px), 440px); margin: 0 auto; padding-top: 2.3em; }
+
+  .gl.hoog { padding-top: 1.6em; padding-bottom: 1.1em; }
+  .gl-merk.onder { transform: translate(-50%, .7em); }
+  .gl-merk.onder::after { bottom: auto; top: -.6em; border-top: .3em solid transparent; border-bottom: .32em solid #e5397a; }
+  .gl-merk.vraag.onder::after { border-bottom-color: #b79ad8; border-top-color: transparent; }
+  .gl-doos { position: relative; display: block; }
+  .gl svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .gl .balk { stroke: #8e3fc8; stroke-width: 6; stroke-linecap: round; }
+  .gl .streep { stroke: #3d2466; stroke-linecap: round; }
+  .gl .lbl text { font-size: 22px; font-weight: 900; fill: #2b2238; text-anchor: middle; }
+  .gl .boog { fill: none; stroke: #e5397a; stroke-width: 3; stroke-linecap: round; }
+  .gl .punt { fill: #e5397a; }
+  .gl text.sprong { font-size: 22px; font-weight: 900; fill: #e5397a; text-anchor: middle; }
+  .gl-merk {
+    position: absolute; top: 56%; transform: translate(-50%, calc(-100% - .55em)); display: inline-flex; align-items: center; justify-content: center;
+    min-width: 2.2em; height: 1.75em; box-sizing: border-box; padding: 0 .3em; border-radius: .5em; font-weight: 900; white-space: nowrap;
+  }
+  .gl-merk::after { content: ''; position: absolute; left: 50%; bottom: -.5em; transform: translateX(-50%); border: .3em solid transparent; border-top: .32em solid #e5397a; }
+  .gl-merk.nu { background: #e5397a; color: #fff; }
+  .gl-merk.vraag::after { border-top-color: #b79ad8; }
+  .gl-merk.vraag .pl-som, .gl-merk.vraag .q-blank { display: flex; align-items: center; justify-content: center; }
+  .gl-merk.vraag .q-blank { box-sizing: border-box; min-width: 2.2em; height: 1.75em; margin: 0; border-radius: .5em; font-size: 1em; background: #fff; }
+  .gl-pijl { position: absolute; top: 56%; transform: translate(-50%, calc(-100% - .3em)); border: .45em solid transparent; border-top: .7em solid #e5397a; }
+  .gl-zin { display: flex; align-items: center; justify-content: center; gap: .2em; font-size: .62em; margin-top: .1em; }
+
+  .gl-vlak { position: relative; display: flex; flex-direction: column; align-items: center; width: min(92vw, 420px); padding: 14px 10px 6px; border-radius: 22px; background: #fffaf3; box-shadow: 0 5px 0 #c9b6dc; }
+  .gl-vlak .gl { font-size: 20px; width: 100%; padding-top: 0; }
+
+  .gl-zoek { font-size: 1.9em; width: 3em; height: 1.7em; }
+  .gl-raak { position: absolute; inset: -14px 0; width: 100%; border: 0; padding: 0; background: none; cursor: pointer; }
+
+  .gl-tik { position: absolute; top: 56%; width: 0; height: 0; pointer-events: none; }
+  .gl-tik.good::before, .gl-tik.bad::before {
+    content: ''; position: absolute; left: 0; bottom: .35em; transform: translateX(-50%);
+    border: .42em solid transparent; border-top: .66em solid var(--green-deep); border-bottom: 0;
+  }
+  .gl-tik.bad::before { border-top-color: var(--red-500); }
+  .gl-hand { font-size: 26px; line-height: 1; margin-top: 2px; }
   .q-blank.done { border-style: solid; border-color: var(--green-deep); background: rgba(102,187,106,.18); color: var(--green-deep); }
 
 
@@ -14562,11 +14604,13 @@ function defaultProfile(name, dress, opts) {
       geldLijn: { ...opts.geldLijn },
       klokLijn: { ...opts.klokLijn },
       kalLijn: { ...opts.kalLijn },
+      lijnLijn: { ...opts.lijnLijn },
 
       ...(opts.themas ? { themas: opts.themas.slice() } : {}),
       ...(opts.kiesGeld ? { kiesGeld: opts.kiesGeld.slice() } : {}),
       ...(opts.kiesKlok ? { kiesKlok: opts.kiesKlok.slice() } : {}),
       ...(opts.kiesKalender ? { kiesKalender: opts.kiesKalender.slice() } : {}),
+      ...(opts.kiesLijn ? { kiesLijn: opts.kiesLijn.slice() } : {}),
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
 
@@ -22561,9 +22605,13 @@ function vraagIsNieuw(q, id) {
 
 
 
+
+
+
 const THEMAS = [
   { id: 'rekenen', naam: 'Rekenen', ops: ['+', '-'] },
   { id: 'tafels',  naam: 'Tafels',  ops: ['x', ':'] },
+  { id: 'lijn',    naam: 'Getallenlijn' },
   { id: 'geld',    naam: 'Geld' },
   { id: 'klok',    naam: 'Klok' },
   { id: 'kalender', naam: 'Kalender' },
@@ -22598,6 +22646,9 @@ function themaIcoon(k, maat) {
   if (k === 'kalender') return svg('<rect x="5" y="7" width="30" height="29" rx="5" fill="#fff" stroke="#9aa0a8" stroke-width="1.5"/>'
     + '<path d="M5 12a5 5 0 0 1 5-5h20a5 5 0 0 1 5 5v4H5z" fill="#e5397a"/><rect x="11" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/><rect x="26" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/>'
     + '<text x="20" y="27" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="900" fill="#2b2238">7</text>');
+  if (k === 'lijn') return svg('<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>'
+    + '<g stroke="#4a2a7a" stroke-linecap="round"><line x1="6" x2="34" y1="25" y2="25" stroke="#8e3fc8" stroke-width="4"/><line x1="9" x2="9" y1="20" y2="30" stroke-width="2.5"/><line x1="20" x2="20" y1="20" y2="30" stroke-width="2.5"/><line x1="31" x2="31" y1="20" y2="30" stroke-width="2.5"/></g>'
+    + '<path d="M25.5 18 l-4 -7 h8z" fill="#e5397a"/>');
   if (k === 'klok') return klokSvg(130, maat, true).replace('class="klok"', 'class="klok thema-ico"');
   const teken = { rekenen: ['+', '−'], tafels: ['×', '÷'] }[k];
   return svg('<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>'
@@ -23017,6 +23068,123 @@ function genKalender(r, vorm) {
 }
 
 
+
+
+
+
+
+
+
+
+
+const LIJNPAD = [
+  { id: 'lijn20',   naam: 'Tot 20',        van: 0, tot: 20,   stap: 1,  label: 5 },
+  { id: 'sprong',   naam: 'Sprongen',      van: 0, tot: 20,   stap: 1,  label: 5, sprong: true },
+  { id: 'lijn100',  naam: 'Tot 100',       stuk: 20, max: 100, stap: 1, label: 10 },
+  { id: 'schat',    naam: 'Schatten',      van: 0, tot: 100,  schat: true },
+  { id: 'lijn1000', naam: 'Tot 1000',      stuk: 200, max: 1000, stap: 10, label: 100 },
+  { id: 'afronden', naam: 'Afronden',      afronden: true },
+];
+
+
+
+
+const GL = { w: 320, x0: 16, x1: 304, lijn: 46, h: 82 };
+function lijnX(v, van, tot) { return GL.x0 + (v - van) / (tot - van) * (GL.x1 - GL.x0); }
+function lijnTekening(van, tot, stap, label, o) {
+  o = o || {};
+  const x = v => lijnX(v, van, tot).toFixed(1), Y = GL.lijn;
+  const streep = [], lbl = [];
+  if (stap) for (let v = van; v <= tot; v += stap) {
+    const groot = v % label === 0, half = !groot && label % 2 === 0 && v % (label / 2) === 0;
+    const h = groot ? 11 : half ? 8 : 5.5;
+    streep.push(`<line x1="${x(v)}" x2="${x(v)}" y1="${Y - h}" y2="${Y + h}" stroke-width="${groot ? 3.2 : 2}"/>`);
+    if (groot && !(o.verberg || []).some(w => Math.abs(w - v) <= stap)) lbl.push(`<text x="${x(v)}" y="${Y + 30}">${v}</text>`);
+  }
+  else [van, tot].forEach(v => { streep.push(`<line x1="${x(v)}" x2="${x(v)}" y1="${Y - 11}" y2="${Y + 11}" stroke-width="3.2"/>`); lbl.push(`<text x="${x(v)}" y="${Y + 30}">${v}</text>`); });
+  const bogen = (o.sprongen || []).map(([a, b, woord]) => {
+    const xa = lijnX(a, van, tot), xb = lijnX(b, van, tot), mid = (xa + xb) / 2, h = Math.min(24, Math.abs(xb - xa) * .4 + 8);
+    const hoek = Math.atan2(2 * h, (xb - xa) / 2) * 180 / Math.PI;
+    return `<path d="M${xa.toFixed(1)} ${Y - 4} Q${mid.toFixed(1)} ${Y - 4 - 2 * h} ${xb.toFixed(1)} ${Y - 4}" class="boog"/>`
+      + `<path d="M0 0 l-9 -5 v10z" class="punt" transform="translate(${xb.toFixed(1)} ${Y - 4}) rotate(${hoek.toFixed(1)})"/>`
+      + `<text class="sprong" x="${mid.toFixed(1)}" y="${Y - 10 - h}">${woord}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${GL.w} ${GL.h}" aria-hidden="true"><line class="balk" x1="${GL.x0 - 6}" x2="${GL.x1 + 6}" y1="${Y}" y2="${Y}"/>`
+    + `<g class="streep">${streep.join('')}</g><g class="lbl">${lbl.join('')}</g>${bogen}</svg>`;
+}
+
+function getallenlijn(van, tot, stap, label, merk, o) {
+  const boven = (merk || []).map(m => {
+    const l = (lijnX(m.v, van, tot) / GL.w * 100).toFixed(2);
+    if (m.soort === 'pijl') return `<i class="gl-pijl" style="left:${l}%"></i>`;
+    const inhoud = m.soort.startsWith('vraag') ? '<span class="pl-som">@</span>' : m.tekst;
+    return `<span class="gl-merk ${m.soort}" style="left:${l}%">${inhoud}</span>`;
+  }).join('');
+  return `<span class="gl${o && o.sprongen ? ' hoog' : ''}"><span class="gl-doos">${lijnTekening(van, tot, stap, label, o)}${boven}</span></span>`;
+}
+
+function lijnStuk(r, n) {
+  if (r.van != null) return [r.van, r.tot];
+  const van = Math.min(r.max - r.stuk, Math.max(0, Math.floor((n - r.stuk / 4) / (r.stuk / 2)) * (r.stuk / 2)));
+  return [van, van + r.stuk];
+}
+function lijnVoorbeeld(r) {
+  return { lijn20: '▼ 13', sprong: '8 ⤻ +5', lijn100: '▼ 47', schat: '0 ▼ 100 ± 70', lijn1000: '▼ 370', afronden: '47 ≈ 50' }[r.id];
+}
+const lijnVraag = (rij, ans, extra) => Object.assign({ kind: 'lijn', op: 'lijn', rij, ans }, extra);
+function genLijn(r, vorm) {
+  const tweede = vorm === 'zoek';
+  if (r.sprong) {
+
+    const a = rnd(3, 12), d = rnd(3, Math.min(8, 19 - a)), b = a + d, brug = a < 10 && b > 10;
+    const bogen = brug ? [[a, 10, `+${10 - a}`], [10, b, `+${b - 10}`]] : [[a, b, `+${d}`]];
+
+    const van = Math.max(0, Math.min(a - 2, 8)), tot = van + 12;
+    if (tweede) return lijnVraag('sprong', d, { kiezen: false, grens: 10, tmpl: `lijn sprong ${a} ${b}`, plus: true,
+      html: getallenlijn(van, tot, 1, 5, [{ v: a, soort: 'nu onder', tekst: a }, { v: b, soort: 'nu onder', tekst: b }], { sprongen: [[a, b, '']], verberg: [a, b] }) + `<span class="gl-zin">+ <span class="pl-som">@</span></span>` });
+    return lijnVraag('sprong', b, { kiezen: false, grens: 20, tmpl: `lijn sprong ${a} ${d}`,
+      html: getallenlijn(van, tot, 1, 5, [{ v: a, soort: 'nu onder', tekst: a }, { v: b, soort: 'vraag onder' }], { sprongen: bogen, verberg: [a, b] }) });
+  }
+  if (r.schat) {
+    const ans = pick([10, 20, 30, 40, 60, 70, 80, 90]), n = ans + rnd(-2, 2);
+    return lijnVraag('schat', ans, { kiezen: true, keuzes: [ans, ...shuffle([...new Set([ans - 20, ans + 20, ans - 40, ans + 40, 100 - ans])].filter(v => v > 0 && v < 100 && v !== ans)).slice(0, 3)],
+      tmpl: `lijn schat ${n}`, html: getallenlijn(0, 100, 0, 100, [{ v: n, soort: 'vraag' }]) });
+  }
+  if (r.afronden) {
+    const tien = rnd(1, 9) * 10, e = pick([1, 2, 3, 4, 6, 7, 8, 9]), n = tien + e, ans = e < 5 ? tien : tien + 10;
+    return lijnVraag('afronden', ans, { kiezen: true, keuzes: [tien, tien + 10], knop: 'twee', tmpl: `lijn rond ${n}`,
+      html: getallenlijn(tien, tien + 10, 1, 10, [{ v: n, soort: 'nu', tekst: n }]) + `<span class="gl-zin">≈ <span class="pl-som">@</span></span>` });
+  }
+  const stap = r.stap, max = r.tot || r.max;
+  let n; do n = rnd(1, max / stap - 1) * stap; while (n % r.label === 0);
+  const [van, tot] = lijnStuk(r, n);
+  if (tweede) return lijnVraag(r.id, n, { kiezen: false, tik: true, bereik: [van, tot, stap, r.label], tmpl: `lijn zoek ${n}`,
+    html: `<span class="kal-rij"><span class="kal-kaart nu gl-zoek">${n}</span></span>` });
+
+  const groot = Math.round(n / r.label) * r.label, spiegel = 2 * groot - n;
+  const keuzes = [...new Set([n, spiegel, n + stap, n - stap, n + 2 * stap].filter(v => v >= van && v <= tot))].slice(0, 4);
+  return lijnVraag(r.id, n, { kiezen: false, keuzes, min: van, grens: tot, tmpl: `lijn lees ${van} ${n}`,
+    html: getallenlijn(van, tot, stap, r.label, [{ v: n, soort: 'vraag' }]) });
+}
+
+
+
+
+
+function lijnTikvlak(q) {
+  const [van, tot, stap, label] = q.bereik, merk = [];
+  for (let v = van; v <= tot; v += stap) merk.push(`<i class="gl-tik" data-v="${v}" style="left:${(lijnX(v, van, tot) / GL.w * 100).toFixed(2)}%"></i>`);
+  return `<div class="gl-vlak"><span class="gl"><span class="gl-doos">${lijnTekening(van, tot, stap, label)}${merk.join('')}`
+    + '<button class="gl-raak" aria-label="Tik op de lijn waar het getal hoort"></button></span></span><span class="gl-hand" aria-hidden="true">👆</span></div>';
+}
+
+function lijnRaak(q, x, b) {
+  const [van, tot, stap] = q.bereik, u = x / b * GL.w;
+  const v = van + Math.round((u - GL.x0) / (GL.x1 - GL.x0) * (tot - van) / stap) * stap;
+  return Math.min(tot, Math.max(van, v));
+}
+
+
 function toonAntwoord(q, v) {
   if (q.kind === 'klok') return klokTekst(q, v);
   if (q.kind === 'kalender') return q.soort === 'dag' ? DAGEN[v] : q.soort === 'maand' ? MAANDEN[v] : q.soort === 'seizoen' ? SEIZOENEN[v].naam
@@ -23047,6 +23215,7 @@ const LADDERS = {
   geld:   { pad: GELDPAD,  lijn: 'geldLijn',  stand: 'geld',   id: 'set-geldpad',  eind: 'Alles met geld door elkaar', vb: geldVoorbeeld, kies: 'kiesGeld' },
   klok:   { pad: KLOKPAD,  lijn: 'klokLijn',  stand: 'klok',   id: 'set-klokpad',  eind: 'Alle tijden door elkaar', vb: klokVoorbeeld, kies: 'kiesKlok' },
   kalender: { pad: KALENDERPAD, lijn: 'kalLijn', stand: 'kalender', id: 'set-kalenderpad', eind: 'Alles met de kalender door elkaar', vb: kalenderVoorbeeld, kies: 'kiesKalender' },
+  lijn:   { pad: LIJNPAD,  lijn: 'lijnLijn',  stand: 'lijn',   id: 'set-lijnpad',  eind: 'Alle lijnen door elkaar', vb: lijnVoorbeeld, kies: 'kiesLijn' },
 };
 Object.values(LADDERS).forEach(L => { L.idx = Object.fromEntries(L.pad.map((r, i) => [r.id, i])); });
 
@@ -23114,7 +23283,7 @@ function rijenVraag(s, net) {
   do {
     const r = s.nu && Math.random() < RIJ_NU_VAAK ? s.nu : s.stapel ? beurt(s, 'stapel', s.rijen) : pick(s.rijen);
     const vorm = s.lees ? 'lees' : 'zoek';
-    q = s.thema === 'klok' ? genKlok(r, vorm) : s.thema === 'kalender' ? genKalender(r, vorm) : genGeld(r);
+    q = s.thema === 'klok' ? genKlok(r, vorm) : s.thema === 'kalender' ? genKalender(r, vorm) : s.thema === 'lijn' ? genLijn(r, vorm) : genGeld(r);
   } while (net.includes(q.tmpl) && ++poging < 8);
   s.lees = !s.lees;
   return q;
@@ -23147,7 +23316,7 @@ function themaInst(p, k) { return k === 'tafels' ? tafelInst(p) : k === 'rekenen
 
 
 
-const THEMA_ERBIJ = ['geld', 'klok', 'kalender'];
+const THEMA_ERBIJ = ['geld', 'klok', 'kalender', 'lijn'];
 function themaPlan(s, total) {
   const aan = themasAan(s);
   const sommen = aan.filter(k => !THEMA_ERBIJ.includes(k)), erbij = aan.filter(k => THEMA_ERBIJ.includes(k));
@@ -25004,7 +25173,7 @@ function renderQuestion() {
   }
   const q = G.qs[G.idx];
 
-  G.mode = G.count ? 'count' : q.kiezen ? 'kies' : (s.mode === 'mix' ? pick(['kies', 'typ']) : s.mode);
+  G.mode = G.count ? 'count' : q.tik ? 'tik' : q.kiezen ? 'kies' : (s.mode === 'mix' ? pick(['kies', 'typ']) : s.mode);
   G.input = '';
   G.lock = false;
   G.retried = false;
@@ -25020,7 +25189,15 @@ function renderQuestion() {
     spotZonderTijd();
     return;
   }
-  if (G.mode === 'kies') {
+  if (q.tik) {
+    area.innerHTML = lijnTikvlak(q);
+    const raak = area.querySelector('.gl-raak');
+    raak.onclick = e => {
+      const r = raak.getBoundingClientRect(), v = lijnRaak(q, e.clientX - r.left, r.width);
+      const merk = area.querySelector(`.gl-tik[data-v="${v}"]`);
+      if (!merk.classList.contains('bad')) submitAnswer(v, merk);
+    };
+  } else if (G.mode === 'kies') {
     const choices = makeChoices(q, keuzeGrens(q, G.inst, G.lvl));
     area.innerHTML = '<div class="choices">' +
       choices.map(c => `<button class="choice-btn${q.knop ? ' ' + q.knop : ''}" data-v="${c}"${q.kind === 'klok' ? ` aria-label="${klokTekst(q, c)}"` : q.kind === 'kalender' ? ` aria-label="${toonAntwoord(q, c)}"` : ''}>${toonKeuze(q, c)}</button>`).join('') + '</div>';
@@ -25254,6 +25431,7 @@ function kaartProeven(insts) {
   if (insts.klok) insts.klok.rijen.forEach(r => uit.push(genKlok(r, 'lees').html, genKlok(r, 'zoek').html));
 
   if (insts.kalender) insts.kalender.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genKalender(r, i % 2 ? 'zoek' : 'lees').html); });
+  if (insts.lijn) insts.lijn.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genLijn(r, i % 2 ? 'zoek' : 'lees').html); });
   return uit;
 }
 addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = null; });
@@ -25757,6 +25935,10 @@ function tweedeMisser(q, p, btnEl) {
 
 
       document.querySelectorAll('#answer-area .tegel-pijl').forEach(el => el.remove());
+    } else if (G.mode === 'tik') {
+
+      const merk = document.querySelector(`#answer-area .gl-tik[data-v="${q.ans}"]`);
+      if (merk) merk.classList.add('good', 'rustig');
     }
 
 
@@ -28541,7 +28723,7 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
 
 
 const OEFEN_INSTELLINGEN = {
-  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], geld: ['geldLijn', 'kiesGeld'], klok: ['klokLijn', 'kiesKlok'], kalender: ['kalLijn', 'kiesKalender'], show: ['mode', 'perLevel'] },
+  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], geld: ['geldLijn', 'kiesGeld'], klok: ['klokLijn', 'kiesKlok'], kalender: ['kalLijn', 'kiesKalender'], lijn: ['lijnLijn', 'kiesLijn'], show: ['mode', 'perLevel'] },
   count: { wat: ['qmax'], pad: ['stage', 'kiesFasen'], show: ['repr', 'perLevel', 'memory'] },
 };
 function oefenGroups(s, pfx, p) {
@@ -28706,6 +28888,8 @@ function oefenGroups(s, pfx, p) {
       : ladder('set-startstap', 'padVanaf', padRijenLadder, startPos, padR.length, hierPos, eind)}`
   }, themaAan(s, 'tafels') && {
     kaart: 'tafels', kop: 'Tafels', ico: 'tafels', html: `${opsBalk('set-tafelops', 'tafelOps', opDefs.slice(2))}${vrij ? tafelsVan : themaLadder('tafels')}`
+  }, themaAan(s, 'lijn') && {
+    kaart: 'lijn', kop: 'Getallenlijn', ico: 'lijn', html: vrij ? rijenKies('lijn') : themaLadder('lijn')
   }, themaAan(s, 'geld') && {
     kaart: 'geld', kop: 'Geld', ico: 'geld', html: vrij ? rijenKies('geld') : themaLadder('geld')
   }, themaAan(s, 'klok') && {
@@ -28735,7 +28919,7 @@ function oefenSamenvatting(s) {
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
   const rijen = padRijen(s).rijen.filter(r => !r.uit);
   const start = s.padVanaf && rijen.length && padVanafRij(s, rijen) !== rijen[0] && padVanafRij(s, rijen);
-  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}${themaAan(s, 'geld') ? ' · €' : ''}${themaAan(s, 'klok') ? ' · 🕐' : ''}${themaAan(s, 'kalender') ? ' · 📅' : ''}`
+  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}${themaAan(s, 'geld') ? ' · €' : ''}${themaAan(s, 'klok') ? ' · 🕐' : ''}${themaAan(s, 'kalender') ? ' · 📅' : ''}${themaAan(s, 'lijn') ? ' · 📏' : ''}`
        + ` · ${modes[s.mode] || s.mode}${start ? ` · vanaf ${start.naam.toLowerCase()}` : ''}`
        + ` · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
 }
@@ -29288,7 +29472,7 @@ function bindOefenChips(s, p, pfx, done) {
 
 
   const opTik = c => {
-    const v = c.dataset.v, eigen = THEMAS.find(t => t.ops.includes(v)).ops;
+    const v = c.dataset.v, eigen = THEMAS.find(t => t.ops && t.ops.includes(v)).ops;
     if (s.ops.includes(v)) {
       if (s.ops.filter(o => eigen.includes(o)).length > 1) s.ops = s.ops.filter(o => o !== v);
       else return blockedMinOne(c), false;
@@ -29569,7 +29753,7 @@ function bindSettings(p, s) {
     const lad = ids.map(id => $(id)).find(Boolean);
     if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
   };
-  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables', 'set-kiesgeld', 'set-kiesklok', 'set-kieskalender'));
+  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables', 'set-kiesgeld', 'set-kiesklok', 'set-kieskalender', 'set-kieslijn'));
   on('tafel-aanpas', 'onclick', naarLadder('set-tafelpad'));
   on('geld-aanpas', 'onclick', naarLadder('set-geldpad'));
   on('klok-aanpas', 'onclick', naarLadder('set-klokpad'));

@@ -376,9 +376,13 @@ function vraagIsNieuw(q, id) {
    hij weer aan gaat. Een thema zonder bewerkingen (geld) staat in s.themas, en
    staat standaard uit: een ster van vóór dat thema merkt er niets van. Het
    laatste thema kan niet uit. */
+/* De volgorde is die van de tegels, drie per rij: bovenaan de getallen
+   (rekenen, de tafels, de getallenlijn), eronder wat ze buiten het schrift
+   tegenkomt (geld, de klok, de kalender). */
 const THEMAS = [
   { id: 'rekenen', naam: 'Rekenen', ops: ['+', '-'] },
   { id: 'tafels',  naam: 'Tafels',  ops: ['x', ':'] },
+  { id: 'lijn',    naam: 'Getallenlijn' },
   { id: 'geld',    naam: 'Geld' },
   { id: 'klok',    naam: 'Klok' },
   { id: 'kalender', naam: 'Kalender' },
@@ -413,6 +417,9 @@ function themaIcoon(k, maat) {
   if (k === 'kalender') return svg('<rect x="5" y="7" width="30" height="29" rx="5" fill="#fff" stroke="#9aa0a8" stroke-width="1.5"/>'
     + '<path d="M5 12a5 5 0 0 1 5-5h20a5 5 0 0 1 5 5v4H5z" fill="#e5397a"/><rect x="11" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/><rect x="26" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/>'
     + '<text x="20" y="27" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="900" fill="#2b2238">7</text>');
+  if (k === 'lijn') return svg('<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>'
+    + '<g stroke="#4a2a7a" stroke-linecap="round"><line x1="6" x2="34" y1="25" y2="25" stroke="#8e3fc8" stroke-width="4"/><line x1="9" x2="9" y1="20" y2="30" stroke-width="2.5"/><line x1="20" x2="20" y1="20" y2="30" stroke-width="2.5"/><line x1="31" x2="31" y1="20" y2="30" stroke-width="2.5"/></g>'
+    + '<path d="M25.5 18 l-4 -7 h8z" fill="#e5397a"/>');
   if (k === 'klok') return klokSvg(130, maat, true).replace('class="klok"', 'class="klok thema-ico"');
   const teken = { rekenen: ['+', '−'], tafels: ['×', '÷'] }[k];
   return svg('<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>'
@@ -831,6 +838,123 @@ function genKalender(r, vorm) {
     html: `<span class="kal-vraag">${kalBlad(m, { [dag]: 'rond' })}</span>${kalVan(kalKaart('datum', dag), 'datum')}` });
 }
 
+/* ---- De getallenlijn --------------------------------------------------------
+   Zes rijen, zoals school ze brengt: in het eerste leerjaar de lijn tot 20 en
+   de sprong erover (eerst tot 10, dan verder), in het tweede een stuk van de
+   lijn tot 100 en schatten op een lege lijn, in het derde tot 1000 en
+   afronden. Lees en zoek wisselen af, zoals bij de klok:
+     lees  de pijl wijst een streepje aan, en ze zegt welk getal
+     zoek  het getal staat op de kaart, en ze tikt op de lijn waar het hoort
+   Dezelfde taal als de kalender: roze is wat je weet, het gestippelde vakje
+   wat je zoekt. Het vakje hangt boven zijn streepje met een puntje naar
+   beneden, dus het getal komt op de lijn te staan waar het hoort. */
+const LIJNPAD = [
+  { id: 'lijn20',   naam: 'Tot 20',        van: 0, tot: 20,   stap: 1,  label: 5 },
+  { id: 'sprong',   naam: 'Sprongen',      van: 0, tot: 20,   stap: 1,  label: 5, sprong: true },
+  { id: 'lijn100',  naam: 'Tot 100',       stuk: 20, max: 100, stap: 1, label: 10 },
+  { id: 'schat',    naam: 'Schatten',      van: 0, tot: 100,  schat: true },
+  { id: 'lijn1000', naam: 'Tot 1000',      stuk: 200, max: 1000, stap: 10, label: 100 },
+  { id: 'afronden', naam: 'Afronden',      afronden: true },
+];
+/* De lijn: een dikke paarse balk met streepjes, de grote streepjes met hun
+   getal eronder. Wat erboven staat (het vakje, een roze kaartje) is HTML op
+   zijn plek in procenten, zodat het vakje een echt antwoordvak blijft.
+   merk: [{ v, soort: 'vraag' | 'nu' | 'pijl', tekst }]; sprongen: [[van, tot, woord]] */
+const GL = { w: 320, x0: 16, x1: 304, lijn: 46, h: 82 };
+function lijnX(v, van, tot) { return GL.x0 + (v - van) / (tot - van) * (GL.x1 - GL.x0); }
+function lijnTekening(van, tot, stap, label, o) {
+  o = o || {};
+  const x = v => lijnX(v, van, tot).toFixed(1), Y = GL.lijn;
+  const streep = [], lbl = [];
+  if (stap) for (let v = van; v <= tot; v += stap) {
+    const groot = v % label === 0, half = !groot && label % 2 === 0 && v % (label / 2) === 0;
+    const h = groot ? 11 : half ? 8 : 5.5;
+    streep.push(`<line x1="${x(v)}" x2="${x(v)}" y1="${Y - h}" y2="${Y + h}" stroke-width="${groot ? 3.2 : 2}"/>`);
+    if (groot && !(o.verberg || []).some(w => Math.abs(w - v) <= stap)) lbl.push(`<text x="${x(v)}" y="${Y + 30}">${v}</text>`);
+  }
+  else [van, tot].forEach(v => { streep.push(`<line x1="${x(v)}" x2="${x(v)}" y1="${Y - 11}" y2="${Y + 11}" stroke-width="3.2"/>`); lbl.push(`<text x="${x(v)}" y="${Y + 30}">${v}</text>`); });
+  const bogen = (o.sprongen || []).map(([a, b, woord]) => {
+    const xa = lijnX(a, van, tot), xb = lijnX(b, van, tot), mid = (xa + xb) / 2, h = Math.min(24, Math.abs(xb - xa) * .4 + 8);
+    const hoek = Math.atan2(2 * h, (xb - xa) / 2) * 180 / Math.PI;
+    return `<path d="M${xa.toFixed(1)} ${Y - 4} Q${mid.toFixed(1)} ${Y - 4 - 2 * h} ${xb.toFixed(1)} ${Y - 4}" class="boog"/>`
+      + `<path d="M0 0 l-9 -5 v10z" class="punt" transform="translate(${xb.toFixed(1)} ${Y - 4}) rotate(${hoek.toFixed(1)})"/>`
+      + `<text class="sprong" x="${mid.toFixed(1)}" y="${Y - 10 - h}">${woord}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${GL.w} ${GL.h}" aria-hidden="true"><line class="balk" x1="${GL.x0 - 6}" x2="${GL.x1 + 6}" y1="${Y}" y2="${Y}"/>`
+    + `<g class="streep">${streep.join('')}</g><g class="lbl">${lbl.join('')}</g>${bogen}</svg>`;
+}
+// de lijn met wat erboven hangt; plek in procenten van de breedte, het puntje op de balk
+function getallenlijn(van, tot, stap, label, merk, o) {
+  const boven = (merk || []).map(m => {
+    const l = (lijnX(m.v, van, tot) / GL.w * 100).toFixed(2);
+    if (m.soort === 'pijl') return `<i class="gl-pijl" style="left:${l}%"></i>`;
+    const inhoud = m.soort.startsWith('vraag') ? '<span class="pl-som">@</span>' : m.tekst;
+    return `<span class="gl-merk ${m.soort}" style="left:${l}%">${inhoud}</span>`;
+  }).join('');
+  return `<span class="gl${o && o.sprongen ? ' hoog' : ''}"><span class="gl-doos">${lijnTekening(van, tot, stap, label, o)}${boven}</span></span>`;
+}
+// het stuk van de lijn rond een getal: tot 20 heel, de grotere lijnen een stuk van 20 (200) op een tiental (honderdtal)
+function lijnStuk(r, n) {
+  if (r.van != null) return [r.van, r.tot];
+  const van = Math.min(r.max - r.stuk, Math.max(0, Math.floor((n - r.stuk / 4) / (r.stuk / 2)) * (r.stuk / 2)));
+  return [van, van + r.stuk];
+}
+function lijnVoorbeeld(r) {
+  return { lijn20: '▼ 13', sprong: '8 ⤻ +5', lijn100: '▼ 47', schat: '0 ▼ 100 ± 70', lijn1000: '▼ 370', afronden: '47 ≈ 50' }[r.id];
+}
+const lijnVraag = (rij, ans, extra) => Object.assign({ kind: 'lijn', op: 'lijn', rij, ans }, extra);
+function genLijn(r, vorm) {
+  const tweede = vorm === 'zoek';
+  if (r.sprong) {
+    // 8 ⤻+5 ?, en over het tiental in twee sprongen: eerst tot 10, dan verder (zo leert school het)
+    const a = rnd(3, 12), d = rnd(3, Math.min(8, 19 - a)), b = a + d, brug = a < 10 && b > 10;
+    const bogen = brug ? [[a, 10, `+${10 - a}`], [10, b, `+${b - 10}`]] : [[a, b, `+${d}`]];
+    // een stuk van 12 rond de sprong: dan staan de streepjes ver genoeg uit elkaar voor twee kaartjes
+    const van = Math.max(0, Math.min(a - 2, 8)), tot = van + 12;
+    if (tweede) return lijnVraag('sprong', d, { kiezen: false, grens: 10, tmpl: `lijn sprong ${a} ${b}`, plus: true,
+      html: getallenlijn(van, tot, 1, 5, [{ v: a, soort: 'nu onder', tekst: a }, { v: b, soort: 'nu onder', tekst: b }], { sprongen: [[a, b, '']], verberg: [a, b] }) + `<span class="gl-zin">+ <span class="pl-som">@</span></span>` });
+    return lijnVraag('sprong', b, { kiezen: false, grens: 20, tmpl: `lijn sprong ${a} ${d}`,
+      html: getallenlijn(van, tot, 1, 5, [{ v: a, soort: 'nu onder', tekst: a }, { v: b, soort: 'vraag onder' }], { sprongen: bogen, verberg: [a, b] }) });
+  }
+  if (r.schat) {
+    const ans = pick([10, 20, 30, 40, 60, 70, 80, 90]), n = ans + rnd(-2, 2);
+    return lijnVraag('schat', ans, { kiezen: true, keuzes: [ans, ...shuffle([...new Set([ans - 20, ans + 20, ans - 40, ans + 40, 100 - ans])].filter(v => v > 0 && v < 100 && v !== ans)).slice(0, 3)],
+      tmpl: `lijn schat ${n}`, html: getallenlijn(0, 100, 0, 100, [{ v: n, soort: 'vraag' }]) });
+  }
+  if (r.afronden) {
+    const tien = rnd(1, 9) * 10, e = pick([1, 2, 3, 4, 6, 7, 8, 9]), n = tien + e, ans = e < 5 ? tien : tien + 10;
+    return lijnVraag('afronden', ans, { kiezen: true, keuzes: [tien, tien + 10], knop: 'twee', tmpl: `lijn rond ${n}`,
+      html: getallenlijn(tien, tien + 10, 1, 10, [{ v: n, soort: 'nu', tekst: n }]) + `<span class="gl-zin">≈ <span class="pl-som">@</span></span>` });
+  }
+  const stap = r.stap, max = r.tot || r.max;
+  let n; do n = rnd(1, max / stap - 1) * stap; while (n % r.label === 0);
+  const [van, tot] = lijnStuk(r, n);
+  if (tweede) return lijnVraag(r.id, n, { kiezen: false, tik: true, bereik: [van, tot, stap, r.label], tmpl: `lijn zoek ${n}`,
+    html: `<span class="kal-rij"><span class="kal-kaart nu gl-zoek">${n}</span></span>` });
+  // de echte fouten: een streepje ernaast, en van het verkeerde grote streepje geteld (63 gelezen als 67)
+  const groot = Math.round(n / r.label) * r.label, spiegel = 2 * groot - n;
+  const keuzes = [...new Set([n, spiegel, n + stap, n - stap, n + 2 * stap].filter(v => v >= van && v <= tot))].slice(0, 4);
+  return lijnVraag(r.id, n, { kiezen: false, keuzes, min: van, grens: tot, tmpl: `lijn lees ${van} ${n}`,
+    html: getallenlijn(van, tot, stap, r.label, [{ v: n, soort: 'vraag' }]) });
+}
+/* Zoeken: de lijn zelf is het antwoordvak. Eén vlak over de hele lijn, en
+   een tik telt voor het dichtstbijzijnde streepje (lijnRaak): op de lijn tot
+   1000 liggen de streepjes op een kleine telefoon 13 pixels uit elkaar, te
+   smal voor een knop per streepje. Op elk streepje staat een onzichtbaar
+   merkje (.gl-tik); dat krijgt goed of fout, zoals een knop. */
+function lijnTikvlak(q) {
+  const [van, tot, stap, label] = q.bereik, merk = [];
+  for (let v = van; v <= tot; v += stap) merk.push(`<i class="gl-tik" data-v="${v}" style="left:${(lijnX(v, van, tot) / GL.w * 100).toFixed(2)}%"></i>`);
+  return `<div class="gl-vlak"><span class="gl"><span class="gl-doos">${lijnTekening(van, tot, stap, label)}${merk.join('')}`
+    + '<button class="gl-raak" aria-label="Tik op de lijn waar het getal hoort"></button></span></span><span class="gl-hand" aria-hidden="true">👆</span></div>';
+}
+// het streepje het dichtst bij een tik op x (in pixels van links in een vlak van breedte b)
+function lijnRaak(q, x, b) {
+  const [van, tot, stap] = q.bereik, u = x / b * GL.w;
+  const v = van + Math.round((u - GL.x0) / (GL.x1 - GL.x0) * (tot - van) / stap) * stap;
+  return Math.min(tot, Math.max(van, v));
+}
+
 // Het antwoord van een vraag zoals het in het vakje staat (toonAntwoord) en op een knop (toonKeuze).
 function toonAntwoord(q, v) {
   if (q.kind === 'klok') return klokTekst(q, v);
@@ -862,6 +986,7 @@ const LADDERS = {
   geld:   { pad: GELDPAD,  lijn: 'geldLijn',  stand: 'geld',   id: 'set-geldpad',  eind: 'Alles met geld door elkaar', vb: geldVoorbeeld, kies: 'kiesGeld' },
   klok:   { pad: KLOKPAD,  lijn: 'klokLijn',  stand: 'klok',   id: 'set-klokpad',  eind: 'Alle tijden door elkaar', vb: klokVoorbeeld, kies: 'kiesKlok' },
   kalender: { pad: KALENDERPAD, lijn: 'kalLijn', stand: 'kalender', id: 'set-kalenderpad', eind: 'Alles met de kalender door elkaar', vb: kalenderVoorbeeld, kies: 'kiesKalender' },
+  lijn:   { pad: LIJNPAD,  lijn: 'lijnLijn',  stand: 'lijn',   id: 'set-lijnpad',  eind: 'Alle lijnen door elkaar', vb: lijnVoorbeeld, kies: 'kiesLijn' },
 };
 Object.values(LADDERS).forEach(L => { L.idx = Object.fromEntries(L.pad.map((r, i) => [r.id, i])); });
 // De rijen met voorbeeld, en waar de twee lijnen staan (indexen, 0 = de eerste rij).
@@ -929,7 +1054,7 @@ function rijenVraag(s, net) {
   do {
     const r = s.nu && Math.random() < RIJ_NU_VAAK ? s.nu : s.stapel ? beurt(s, 'stapel', s.rijen) : pick(s.rijen);
     const vorm = s.lees ? 'lees' : 'zoek';
-    q = s.thema === 'klok' ? genKlok(r, vorm) : s.thema === 'kalender' ? genKalender(r, vorm) : genGeld(r);
+    q = s.thema === 'klok' ? genKlok(r, vorm) : s.thema === 'kalender' ? genKalender(r, vorm) : s.thema === 'lijn' ? genLijn(r, vorm) : genGeld(r);
   } while (net.includes(q.tmpl) && ++poging < 8);
   s.lees = !s.lees;
   return q;
@@ -962,7 +1087,7 @@ function themaInst(p, k) { return k === 'tafels' ? tafelInst(p) : k === 'rekenen
    Afwisselen en niet per toeval: twee tafelvragen na elkaar en dan vijf sommen
    leest als een ander spel, niet als één show. Staat er geen som aan, dan
    delen de andere de show gelijk. */
-const THEMA_ERBIJ = ['geld', 'klok', 'kalender'];
+const THEMA_ERBIJ = ['geld', 'klok', 'kalender', 'lijn'];
 function themaPlan(s, total) {
   const aan = themasAan(s);
   const sommen = aan.filter(k => !THEMA_ERBIJ.includes(k)), erbij = aan.filter(k => THEMA_ERBIJ.includes(k));

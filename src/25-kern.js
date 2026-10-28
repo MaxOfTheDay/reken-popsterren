@@ -779,11 +779,13 @@ function defaultProfile(name, dress, opts) {
       geldLijn: { ...opts.geldLijn },
       klokLijn: { ...opts.klokLijn },               // en op de klokladder (zie KLOKPAD)               // hetzelfde op de geldladder (zie GELDPAD); geld zelf staat uit tot s.themas het noemt
       kalLijn: { ...opts.kalLijn },                 // en op de kalenderladder (zie KALENDERPAD)
+      lijnLijn: { ...opts.lijnLijn },               // en op de getallenlijn (zie LIJNPAD)
       // de thema's zonder bewerkingen (zie THEMAS) en wat er bij Zelf kiezen aanstaat; alleen als ze er zijn
       ...(opts.themas ? { themas: opts.themas.slice() } : {}),
       ...(opts.kiesGeld ? { kiesGeld: opts.kiesGeld.slice() } : {}),
       ...(opts.kiesKlok ? { kiesKlok: opts.kiesKlok.slice() } : {}),
       ...(opts.kiesKalender ? { kiesKalender: opts.kiesKalender.slice() } : {}),
+      ...(opts.kiesLijn ? { kiesLijn: opts.kiesLijn.slice() } : {}),
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
     // FASE 4A. tourStars blijft bij een verse ster voorgoed leeg -- het is de
