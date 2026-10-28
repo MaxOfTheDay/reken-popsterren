@@ -3622,18 +3622,6 @@
   .kal-weken .kal-raster { gap: .06em; padding: .08em; }
   .kal-weken .kal-raster i { font-size: inherit; height: .36em; padding: 0; border-radius: .06em; background: #d9c3ec; }
   .kal-weken .kal-raster i.wk { background: #efe6f7; }
-
-
-  .lijn-vraag { display: flex; justify-content: center; margin: 2px 0 0; }
-  .lijn { display: block; width: 100%; max-width: 9em; height: auto; stroke: #4a2a7a; }
-  .lijn-vraag .lijn { width: 100%; max-width: 7.6em; }
-  .lijn-lbl text { font-size: 19px; font-weight: 800; fill: #2b2238; text-anchor: middle; stroke: none; }
-  .lijn-getal { font-size: 20px; font-weight: 900; fill: #e5397a; text-anchor: middle; stroke: none; }
-  .lijn-zin { display: flex; align-items: center; justify-content: center; gap: .25em; font-size: .8em; }
-  .lijn-zoek-getal { display: inline-block; font-size: 1.1em; padding: .05em .4em; border-radius: .25em; color: #e5397a; }
-  .choices:has(.lijn-zoek) { grid-template-columns: 1fr; gap: 8px; }
-  .choice-btn.lijn-zoek { padding: 4px 10px; min-height: 0; }
-  .choice-btn .lijn.klein { width: 100%; background: #fff; border-radius: 10px; }
   .q-blank.done { border-style: solid; border-color: var(--green-deep); background: rgba(102,187,106,.18); color: var(--green-deep); }
 
 
@@ -9477,7 +9465,6 @@
 
   .fl-vb .klok { vertical-align: middle; margin-right: 6px; }
   .fl-vb .klok-digi { font-size: 13px; }
-  .fl-vb .lijn.klein { display: inline-block; width: 64px; vertical-align: middle; margin-right: 4px; }
   .fl-vak {
     display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 4px; opacity: .55;
     vertical-align: -2px; box-sizing: border-box;
@@ -14543,10 +14530,12 @@ function defaultProfile(name, dress, opts) {
       tafelLijn: { ...opts.tafelLijn },
       geldLijn: { ...opts.geldLijn },
       klokLijn: { ...opts.klokLijn },
+      kalLijn: { ...opts.kalLijn },
 
       ...(opts.themas ? { themas: opts.themas.slice() } : {}),
       ...(opts.kiesGeld ? { kiesGeld: opts.kiesGeld.slice() } : {}),
       ...(opts.kiesKlok ? { kiesKlok: opts.kiesKlok.slice() } : {}),
+      ...(opts.kiesKalender ? { kiesKalender: opts.kiesKalender.slice() } : {}),
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
 
@@ -22550,7 +22539,6 @@ const THEMAS = [
   { id: 'geld',    naam: 'Geld' },
   { id: 'klok',    naam: 'Klok' },
   { id: 'kalender', naam: 'Kalender' },
-  { id: 'lijn',    naam: 'Getallenlijn' },
 ];
 const THEMA = Object.fromEntries(THEMAS.map(t => [t.id, t]));
 function themaAan(s, k) { return THEMA[k].ops ? THEMA[k].ops.some(o => s.ops.includes(o)) : (s.themas || []).includes(k); }
@@ -22582,9 +22570,6 @@ function themaIcoon(k, maat) {
   if (k === 'kalender') return svg('<rect x="5" y="7" width="30" height="29" rx="5" fill="#fff" stroke="#9aa0a8" stroke-width="1.5"/>'
     + '<path d="M5 12a5 5 0 0 1 5-5h20a5 5 0 0 1 5 5v4H5z" fill="#e5397a"/><rect x="11" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/><rect x="26" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/>'
     + '<text x="20" y="27" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="900" fill="#2b2238">7</text>');
-  if (k === 'lijn') return svg('<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>'
-    + '<g stroke="#4a2a7a" stroke-linecap="round"><line x1="6" x2="34" y1="25" y2="25" stroke-width="2.5"/><line x1="9" x2="9" y1="21" y2="29" stroke-width="2"/><line x1="16" x2="16" y1="22" y2="28" stroke-width="1.5"/><line x1="23" x2="23" y1="22" y2="28" stroke-width="1.5"/><line x1="31" x2="31" y1="21" y2="29" stroke-width="2"/></g>'
-    + '<path d="M23 21 l-5 -9 h10 z" fill="#e5397a"/>');
   if (k === 'klok') return klokSvg(130, maat, true).replace('class="klok"', 'class="klok thema-ico"');
   const teken = { rekenen: ['+', '−'], tafels: ['×', '÷'] }[k];
   return svg('<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>'
@@ -22864,12 +22849,21 @@ function kalKaart(soort, inhoud, teken) {
 
 
 
+
+
+
 function kalBrug(woord, dagen, terug) {
-  const w = 60, n = dagen || 0, b = n ? (w - 12) / n : 0;
-  const lijn = n ? Array.from({ length: n }, (_, i) => `<path d="M${6 + i * b} 20 q${b / 2} ${-Math.min(14, b * .7)} ${b} 0" fill="none"/>`).join('')
-    : '<path d="M6 16 H54" fill="none"/>';
-  const punt = terug ? `<path d="M4 ${n ? 20 : 16} l9 -6 v12z" class="punt"/>` : `<path d="M56 ${n ? 20 : 16} l-9 -6 v12z" class="punt"/>`;
-  return `<span class="kal-brug"><b>${woord}</b><svg viewBox="0 0 ${w} 26" aria-hidden="true">${lijn}${punt}</svg></span>`;
+  const n = dagen || 0, Y = 25, x0 = 5, x1 = 55;
+  let tekening;
+  if (n) {
+    const h = 15, stap = (x1 - x0) / n;
+
+    const hoek = Math.atan2(2 * h, (x1 - x0) / 2) * 180 / Math.PI;
+    tekening = `<path d="M${x0} ${Y} Q${(x0 + x1) / 2} ${Y - 2 * h} ${x1} ${Y}" fill="none"/>`
+      + Array.from({ length: n }, (_, i) => `<circle cx="${(x0 + i * stap).toFixed(1)}" cy="${Y + 1}" r="2.3" class="punt"/>`).join('')
+      + `<path d="M0 0 l-9 -5 v10z" class="punt" transform="translate(${x1} ${Y}) rotate(${hoek.toFixed(1)})"/>`;
+  } else tekening = `<path d="M${x0} ${Y - 6} H${x1 - 4}" fill="none"/><path d="M${x1} ${Y - 6} l-9 -5 v10z" class="punt"/>`;
+  return `<span class="kal-brug"><b>${woord}</b><svg viewBox="0 0 60 30" aria-hidden="true">${terug ? `<g transform="translate(60 0) scale(-1 1)">${tekening}</g>` : tekening}</svg></span>`;
 }
 
 const kalPaar = (links, brug, rechts) => `<span class="kal-rij">${links}${brug}${rechts}</span>`;
@@ -22980,70 +22974,6 @@ function genKalender(r, vorm) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-const LIJNPAD = [
-  { id: 'lijn20',   naam: 'Tot 20',     van: 0, tot: 20, stap: 1, label: 10 },
-  { id: 'lijn100',  naam: 'Tot 100',    stuk: 20, max: 100, stap: 1, label: 10 },
-  { id: 'schat',    naam: 'Schatten',   van: 0, tot: 100, schat: true },
-  { id: 'lijn1000', naam: 'Tot 1000',   stuk: 200, max: 1000, stap: 10, label: 100 },
-  { id: 'afronden', naam: 'Afronden',   afronden: true },
-];
-
-
-
-
-function lijnSvg(van, tot, stap, label, pijl, opts) {
-  const o = opts || {}, x = v => 14 + (v - van) / (tot - van) * 272;
-  let streep = '';
-  if (stap) for (let v = van; v <= tot; v += stap) { const lang = v % label === 0;
-    streep += `<line x1="${x(v).toFixed(1)}" x2="${x(v).toFixed(1)}" y1="${lang ? 30 : 34}" y2="${lang ? 52 : 48}" stroke-width="${lang ? 2.4 : 1.4}"/>`; }
-  const labels = (o.labels || (stap ? Array.from({ length: Math.floor((tot - van) / label) + 1 }, (_, i) => van + i * label) : [van, tot]))
-    .map(v => `<text x="${x(v).toFixed(1)}" y="74">${v}</text>`).join('');
-  const eind = stap ? '' : `<line x1="${x(van)}" x2="${x(van)}" y1="30" y2="52" stroke-width="2.4"/><line x1="${x(tot)}" x2="${x(tot)}" y1="30" y2="52" stroke-width="2.4"/>`;
-  const pijlen = pijl == null ? '' : `<path d="M${x(pijl).toFixed(1)} 38 l-10 -17 h20 z" fill="#e5397a"/>${o.getal ? `<text class="lijn-getal" x="${x(pijl).toFixed(1)}" y="13">${o.getal}</text>` : ''}`;
-  return `<svg class="lijn${o.klein ? ' klein' : ''}" viewBox="0 0 300 80"aria-hidden="true"><line x1="6" x2="294" y1="41" y2="41" stroke-width="3" stroke-linecap="round"/>`
-    + `<g stroke="#4a2a7a" stroke-linecap="round">${streep}${eind}</g><g class="lijn-lbl">${labels}</g>${pijlen}</svg>`;
-}
-function lijnVoorbeeld(r) {
-  const vb = { lijn20: [0, 20, 1, 10, 13], lijn100: [40, 60, 1, 10, 47], schat: [0, 100, 0, 100, 70], lijn1000: [300, 500, 10, 100, 370], afronden: [40, 50, 1, 10, 47] }[r.id];
-  return `${lijnSvg(...vb, { klein: true, getal: r.afronden ? '47' : null })}<span class="klok-vb">${r.afronden ? '≈ 50' : r.schat ? '± 70' : vb[4]}</span>`;
-}
-function genLijn(r, vorm) {
-  if (r.schat) {
-    const ans = 5 * rnd(2, 18), af = shuffle([-40, -25, 25, 40]).map(d => ans + d).filter(v => v >= 0 && v <= 100).slice(0, 3);
-    return { kind: 'lijn', op: 'lijn', rij: r.id, ans, kiezen: true, keuzes: [ans, ...af],
-      tmpl: `lijn schat ${ans}`, html: `<span class="lijn-vraag">${lijnSvg(0, 100, 0, 100, ans)}</span><span class="lijn-zin">± <span class="pl-som">@</span></span>` };
-  }
-  if (r.afronden) {
-    const honderd = Math.random() < 0.4, maat = honderd ? 100 : 10;
-    let n; do n = honderd ? rnd(11, 99) * 10 : rnd(11, 99); while (n % maat === 0 || n % maat === maat / 2);
-    const lo = Math.floor(n / maat) * maat, ans = Math.round(n / maat) * maat;
-    return { kind: 'lijn', op: 'lijn', rij: r.id, ans, kiezen: true, keuzes: [lo, lo + maat, lo - maat, lo + 2 * maat].filter(v => v >= 0),
-      tmpl: `lijn rond ${n}`, html: `<span class="lijn-vraag">${lijnSvg(lo, lo + maat, maat / 10, maat, n, { getal: n })}</span><span class="lijn-zin">≈ <span class="pl-som">@</span></span>` };
-  }
-
-  const van = r.stuk ? rnd(0, (r.max - r.stuk) / (r.stuk / 2)) * r.stuk / 2 : r.van, tot = r.stuk ? van + r.stuk : r.tot;
-  let ans; do ans = van + rnd(1, (tot - van) / r.stap - 1) * r.stap; while (ans % r.label === 0);
-  const teken = v => lijnSvg(van, tot, r.stap, r.label, v);
-  const fout = [ans - r.stap, ans + r.stap, ans + 2 * r.stap, ans - 2 * r.stap, r.stuk ? ans + r.label : ans + 5 * r.stap].filter(v => v > van && v < tot && v !== ans);
-  const keuzes = [ans, ...shuffle(fout.slice(0, 2)).concat(shuffle(fout.slice(2)))].slice(0, 4);
-  return vorm === 'zoek'
-    ? { kind: 'lijn', op: 'lijn', rij: r.id, ans, kiezen: true, keuzes, vorm, knop: 'lijn-zoek', bereik: [van, tot, r.stap, r.label],
-        tmpl: `lijn zoek ${ans}`, html: `<span class="lijn-zoek-getal">${ans}</span>` }
-    : { kind: 'lijn', op: 'lijn', rij: r.id, ans, kiezen: false, keuzes, vorm, min: van, grens: tot,
-        tmpl: `lijn lees ${van} ${ans}`, html: `<span class="lijn-vraag">${teken(ans)}</span><span class="pl-som">@</span>` };
-}
-
-
 function toonAntwoord(q, v) {
   if (q.kind === 'klok') return klokTekst(q, v);
   if (q.kind === 'kalender') return q.soort === 'dag' ? DAGEN[v] : q.soort === 'maand' ? MAANDEN[v] : q.soort === 'seizoen' ? SEIZOENEN[v].naam
@@ -23057,7 +22987,6 @@ function toonKeuze(q, v) {
     : q.uur24 ? `<span class="klok-digi">${klokDigitaal(v)}</span>` : `<span class="klok-tekst">${klokWoorden(v)}</span>`;
   if (q.kind === 'kalender') return q.soort === 'getal' || q.soort === 'notatie' ? toonAntwoord(q, v)
     : `<span class="klok-tekst">${q.soort === 'seizoen' ? SEIZOENEN[v].teken + ' ' : ''}${toonAntwoord(q, v)}</span>`;
-  if (q.kind === 'lijn' && q.vorm === 'zoek') return lijnSvg(...q.bereik, v, { klein: true });
   return q.kind === 'geld' ? (q.centen ? euro(v) : `€${v}`) : String(v);
 }
 
@@ -23075,7 +23004,6 @@ const LADDERS = {
   geld:   { pad: GELDPAD,  lijn: 'geldLijn',  stand: 'geld',   id: 'set-geldpad',  eind: 'Alles met geld door elkaar', vb: geldVoorbeeld, kies: 'kiesGeld' },
   klok:   { pad: KLOKPAD,  lijn: 'klokLijn',  stand: 'klok',   id: 'set-klokpad',  eind: 'Alle tijden door elkaar', vb: klokVoorbeeld, kies: 'kiesKlok' },
   kalender: { pad: KALENDERPAD, lijn: 'kalLijn', stand: 'kalender', id: 'set-kalenderpad', eind: 'Alles met de kalender door elkaar', vb: kalenderVoorbeeld, kies: 'kiesKalender' },
-  lijn:   { pad: LIJNPAD,  lijn: 'lijnLijn',  stand: 'lijn',   id: 'set-lijnpad',  eind: 'Alle lijnen door elkaar', vb: lijnVoorbeeld, kies: 'kiesLijn' },
 };
 Object.values(LADDERS).forEach(L => { L.idx = Object.fromEntries(L.pad.map((r, i) => [r.id, i])); });
 
@@ -23143,7 +23071,7 @@ function rijenVraag(s, net) {
   do {
     const r = s.nu && Math.random() < RIJ_NU_VAAK ? s.nu : s.stapel ? beurt(s, 'stapel', s.rijen) : pick(s.rijen);
     const vorm = s.lees ? 'lees' : 'zoek';
-    q = s.thema === 'klok' ? genKlok(r, vorm) : s.thema === 'kalender' ? genKalender(r, vorm) : s.thema === 'lijn' ? genLijn(r, vorm) : genGeld(r);
+    q = s.thema === 'klok' ? genKlok(r, vorm) : s.thema === 'kalender' ? genKalender(r, vorm) : genGeld(r);
   } while (net.includes(q.tmpl) && ++poging < 8);
   s.lees = !s.lees;
   return q;
@@ -23176,7 +23104,7 @@ function themaInst(p, k) { return k === 'tafels' ? tafelInst(p) : k === 'rekenen
 
 
 
-const THEMA_ERBIJ = ['geld', 'klok', 'kalender', 'lijn'];
+const THEMA_ERBIJ = ['geld', 'klok', 'kalender'];
 function themaPlan(s, total) {
   const aan = themasAan(s);
   const sommen = aan.filter(k => !THEMA_ERBIJ.includes(k)), erbij = aan.filter(k => THEMA_ERBIJ.includes(k));
@@ -24793,6 +24721,7 @@ const HINT_DICHTBIJ = 2;
 function hintVoor(q, val) {
   if (typeof val !== 'number' || isNaN(val) || val === q.ans) return null;
   if (q.kind === 'klok') return klokHint(q, val);
+  if (q.kind === 'kalender' && q.soort !== 'getal') return kalHint(q, val);
   const meer = q.ans > val;
   const net = Math.abs(q.ans - val) <= HINT_DICHTBIJ;
   const woord = meer ? 'meer' : 'minder';
@@ -24810,6 +24739,17 @@ function klokHint(q, val) {
   const d = dag ? q.ans - val : ((q.ans - val) % 720 + 1080) % 720 - 360;
   const later = d >= 0;
   return { pijl: later ? 'later' : 'vroeger', woorden: (later ? 'Later dan ' : 'Vroeger dan ') + klokTekst(q, val) };
+}
+
+
+
+
+
+function kalHint(q, val) {
+  const n = { dag: 7, maand: 12, seizoen: 4 }[q.soort];
+  if (!n) return null;
+  const d = ((q.ans - val) % n + n + Math.floor(n / 2)) % n - Math.floor(n / 2), later = d > 0;
+  return { pijl: later ? 'later' : 'vroeger', woorden: (later ? 'Later dan ' : 'Vroeger dan ') + toonAntwoord(q, val) };
 }
 
 function hintTeken(q, val) {
@@ -28531,7 +28471,7 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
 
 
 const OEFEN_INSTELLINGEN = {
-  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], geld: ['geldLijn', 'kiesGeld'], klok: ['klokLijn', 'kiesKlok'], kalender: ['kalLijn', 'kiesKalender'], lijn: ['lijnLijn', 'kiesLijn'], show: ['mode', 'perLevel'] },
+  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], geld: ['geldLijn', 'kiesGeld'], klok: ['klokLijn', 'kiesKlok'], kalender: ['kalLijn', 'kiesKalender'], show: ['mode', 'perLevel'] },
   count: { wat: ['qmax'], pad: ['stage', 'kiesFasen'], show: ['repr', 'perLevel', 'memory'] },
 };
 function oefenGroups(s, pfx, p) {
@@ -28703,8 +28643,6 @@ function oefenGroups(s, pfx, p) {
     kaart: 'klok', kop: 'Klok', ico: 'klok', html: vrij ? rijenKies('klok') : themaLadder('klok')
   }, themaAan(s, 'kalender') && {
     kaart: 'kalender', kop: 'Kalender', ico: 'kalender', html: vrij ? rijenKies('kalender') : themaLadder('kalender')
-  }, themaAan(s, 'lijn') && {
-    kaart: 'lijn', kop: 'Getallenlijn', ico: 'lijn', html: vrij ? rijenKies('lijn') : themaLadder('lijn')
   }, {
     kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}${klokNoot}
       ${perShow}${showMix}`
@@ -28728,7 +28666,7 @@ function oefenSamenvatting(s) {
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
   const rijen = padRijen(s).rijen.filter(r => !r.uit);
   const start = s.padVanaf && rijen.length && padVanafRij(s, rijen) !== rijen[0] && padVanafRij(s, rijen);
-  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}${themaAan(s, 'geld') ? ' · €' : ''}${themaAan(s, 'klok') ? ' · 🕐' : ''}`
+  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}${themaAan(s, 'geld') ? ' · €' : ''}${themaAan(s, 'klok') ? ' · 🕐' : ''}${themaAan(s, 'kalender') ? ' · 📅' : ''}`
        + ` · ${modes[s.mode] || s.mode}${start ? ` · vanaf ${start.naam.toLowerCase()}` : ''}`
        + ` · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
 }
@@ -29565,7 +29503,7 @@ function bindSettings(p, s) {
     const lad = ids.map(id => $(id)).find(Boolean);
     if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
   };
-  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables', 'set-kiesgeld', 'set-kiesklok', 'set-kieskalender', 'set-kieslijn'));
+  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables', 'set-kiesgeld', 'set-kiesklok', 'set-kieskalender'));
   on('tafel-aanpas', 'onclick', naarLadder('set-tafelpad'));
   on('geld-aanpas', 'onclick', naarLadder('set-geldpad'));
   on('klok-aanpas', 'onclick', naarLadder('set-klokpad'));

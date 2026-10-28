@@ -294,7 +294,6 @@
   /* het klokje (zie klokVoorbeeld): klein, met de tijd in woorden ernaast */
   .fl-vb .klok { vertical-align: middle; margin-right: 6px; }
   .fl-vb .klok-digi { font-size: 13px; }
-  .fl-vb .lijn.klein { display: inline-block; width: 64px; vertical-align: middle; margin-right: 4px; }
   .fl-vak {
     display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 4px; opacity: .55;
     vertical-align: -2px; box-sizing: border-box;

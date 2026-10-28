@@ -847,7 +847,7 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
    instelling met twee bedieningen, of een bediening in de verkeerde kaart, valt
    daar om. Komt er een instelling bij, dan kiest hij hier eerst zijn kaart. */
 const OEFEN_INSTELLINGEN = {
-  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], geld: ['geldLijn', 'kiesGeld'], klok: ['klokLijn', 'kiesKlok'], kalender: ['kalLijn', 'kiesKalender'], lijn: ['lijnLijn', 'kiesLijn'], show: ['mode', 'perLevel'] },
+  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], geld: ['geldLijn', 'kiesGeld'], klok: ['klokLijn', 'kiesKlok'], kalender: ['kalLijn', 'kiesKalender'], show: ['mode', 'perLevel'] },
   count: { wat: ['qmax'], pad: ['stage', 'kiesFasen'], show: ['repr', 'perLevel', 'memory'] },
 };
 function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in de volgorde van OEFEN_INSTELLINGEN
@@ -1019,8 +1019,6 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
     kaart: 'klok', kop: 'Klok', ico: 'klok', html: vrij ? rijenKies('klok') : themaLadder('klok')
   }, themaAan(s, 'kalender') && {
     kaart: 'kalender', kop: 'Kalender', ico: 'kalender', html: vrij ? rijenKies('kalender') : themaLadder('kalender')
-  }, themaAan(s, 'lijn') && {
-    kaart: 'lijn', kop: 'Getallenlijn', ico: 'lijn', html: vrij ? rijenKies('lijn') : themaLadder('lijn')
   }, {
     kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}${klokNoot}
       ${perShow}${showMix}`
@@ -1044,7 +1042,7 @@ function oefenSamenvatting(s) {
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
   const rijen = padRijen(s).rijen.filter(r => !r.uit);
   const start = s.padVanaf && rijen.length && padVanafRij(s, rijen) !== rijen[0] && padVanafRij(s, rijen);
-  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}${themaAan(s, 'geld') ? ' · €' : ''}${themaAan(s, 'klok') ? ' · 🕐' : ''}`
+  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}${themaAan(s, 'geld') ? ' · €' : ''}${themaAan(s, 'klok') ? ' · 🕐' : ''}${themaAan(s, 'kalender') ? ' · 📅' : ''}`
        + ` · ${modes[s.mode] || s.mode}${start ? ` · vanaf ${start.naam.toLowerCase()}` : ''}`
        + ` · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
 }
@@ -1881,7 +1879,7 @@ function bindSettings(p, s) {
     const lad = ids.map(id => $(id)).find(Boolean);
     if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
   };
-  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables', 'set-kiesgeld', 'set-kiesklok', 'set-kieskalender', 'set-kieslijn'));
+  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables', 'set-kiesgeld', 'set-kiesklok', 'set-kieskalender'));
   on('tafel-aanpas', 'onclick', naarLadder('set-tafelpad'));
   on('geld-aanpas', 'onclick', naarLadder('set-geldpad'));
   on('klok-aanpas', 'onclick', naarLadder('set-klokpad'));

@@ -733,18 +733,6 @@
   .kal-weken .kal-raster { gap: .06em; padding: .08em; }
   .kal-weken .kal-raster i { font-size: inherit; height: .36em; padding: 0; border-radius: .06em; background: #d9c3ec; }
   .kal-weken .kal-raster i.wk { background: #efe6f7; }
-  /* De getallenlijn (zie genLijn): de lijn op de volle breedte van de kaart,
-     de pijl roze zoals de omcirkelde datum -- wat je moet lezen is roze. */
-  .lijn-vraag { display: flex; justify-content: center; margin: 2px 0 0; }
-  .lijn { display: block; width: 100%; max-width: 9em; height: auto; stroke: #4a2a7a; }
-  .lijn-vraag .lijn { width: 100%; max-width: 7.6em; }
-  .lijn-lbl text { font-size: 19px; font-weight: 800; fill: #2b2238; text-anchor: middle; stroke: none; }
-  .lijn-getal { font-size: 20px; font-weight: 900; fill: #e5397a; text-anchor: middle; stroke: none; }
-  .lijn-zin { display: flex; align-items: center; justify-content: center; gap: .25em; font-size: .8em; }
-  .lijn-zoek-getal { display: inline-block; font-size: 1.1em; padding: .05em .4em; border-radius: .25em; color: #e5397a; }
-  .choices:has(.lijn-zoek) { grid-template-columns: 1fr; gap: 8px; }
-  .choice-btn.lijn-zoek { padding: 4px 10px; min-height: 0; }
-  .choice-btn .lijn.klein { width: 100%; background: #fff; border-radius: 10px; }
   .q-blank.done { border-style: solid; border-color: var(--green-deep); background: rgba(102,187,106,.18); color: var(--green-deep); }
   /* De som valt dicht (zie die kop in de JS). klikt: het goede antwoord is net
      geland en plopt één keer. rustig: na een tweede misser staat het goede
