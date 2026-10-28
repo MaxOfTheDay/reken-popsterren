@@ -992,13 +992,12 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
     return ladder(L.id, L.lijn, lr.rijen.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb) })),
       lr.lo + 1, lr.hi + 1, p && !voorbij ? L.idx[nu] + 1 : 0, staart);
   };
-  /* Onder Kiezen/Mix/Typen: de klok kiest altijd, wat de ouder hier ook zet
-     ("half 4" typen kan het cijferblok niet). En onder Vragen per show hoe
-     een show eruitziet: één icoontje per vraag, in de volgorde van themaPlan
-     -- dan hoeft niemand uit te leggen wat "de helft sommen" betekent. Alleen
-     als er meer dan één thema aan staat; anders is elke vraag hetzelfde. */
-  const kiest = ['klok'].filter(k => themaAan(s, k));   // de kalender kiest alleen bij woorden: een aantal dagen mag getypt
-  const klokNoot = kiest.length ? `<p class="oe-noot">${kiest.map(k => themaIcoon(k, 16)).join(' ')} altijd kiezen</p>` : '';
+  /* Onder Vragen per show hoe een show eruitziet: één icoontje per vraag, in
+     de volgorde van themaPlan -- dan hoeft niemand uit te leggen wat "de helft
+     sommen" betekent. Alleen als er meer dan één thema aan staat; anders is
+     elke vraag hetzelfde. Onder Kiezen/Mix/Typen staat bewust niets: dat de
+     klok (en een woord bij de kalender) altijd kiest, ziet een ouder in de show
+     zelf, en een regel uitleg erbij was er een te veel. */
   const showMix = themasAan(s).length > 1
     ? `<div class="oe-mix" role="img" aria-label="Een show: ${themaPlan(s, s.perLevel).map(k => THEMA[k].naam.toLowerCase()).join(', ')}">${themaPlan(s, s.perLevel).map(k => themaIcoon(k, 20)).join('')}</div>` : '';
   const rijenKies = k => { const L = LADDERS[k];
@@ -1018,7 +1017,7 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
   }, themaAan(s, 'kalender') && {
     kaart: 'kalender', kop: 'Kalender', ico: 'kalender', html: vrij ? rijenKies('kalender') : themaLadder('kalender')
   }, {
-    kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}${klokNoot}
+    kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
       ${perShow}${showMix}`
   }].filter(Boolean);
 }
