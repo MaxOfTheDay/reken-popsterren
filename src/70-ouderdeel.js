@@ -482,16 +482,18 @@ function zelfRijen(s) {
   const t = s.tables.slice().sort((a, b) => a - b), b = t[t.length - 1], a = b === 7 ? 8 : 7;
   if (s.ops.includes('x')) rijen.push({ naam: `Tafels van ${t.join(', ')}`, vb: `${a} × ${b}` });
   if (s.ops.includes(':')) rijen.push({ naam: `Delen door ${t.join(', ')}`, vb: `${a * b} : ${b}` });
-  if (themaAan(s, 'geld')) geldInst({ settings: s }).rijen.forEach(r => rijen.push({ naam: r.naam, vb: geldVoorbeeld(r) }));
+  ['geld', 'klok'].filter(k => themaAan(s, k)).forEach(k => rijenInst({ settings: s }, k).rijen.forEach(r => rijen.push({ naam: r.naam, vb: LADDERS[k].vb(r) })));
   return rijen;
 }
-/* Geld bij Zelf kiezen met nog niets aangevinkt: dan staat de rij waar ze op
-   de ladder is al aan (of de eerste, zonder ster), zoals kiesStart bij
-   rekenen -- de lijst staat nooit leeg terwijl er wél geld gespeeld wordt. */
-function geldKiesStart(s, p) {
-  if (!zelfGekozen(s) || !themaAan(s, 'geld') || (s.kiesGeld || []).length) return;
-  const nu = p ? ladderNu(p, 'geld') : GELDPAD[0].id;
-  s.kiesGeld = [nu === 'alles' ? GELDPAD[ladderRijen(s, 'geld').hi].id : nu];
+/* Geld of de klok bij Zelf kiezen met nog niets aangevinkt: dan staat de rij
+   waar ze op de ladder is al aan (of de eerste, zonder ster), zoals kiesStart
+   bij rekenen -- de lijst staat nooit leeg terwijl er wél iets gespeeld wordt. */
+function rijenKiesStart(s, p) {
+  if (!zelfGekozen(s)) return;
+  ['geld', 'klok'].filter(k => themaAan(s, k) && !(s[LADDERS[k].kies] || []).length).forEach(k => {
+    const L = LADDERS[k], nu = p ? ladderNu(p, k) : L.pad[0].id;
+    s[L.kies] = [nu === 'alles' ? L.pad[ladderRijen(s, k).hi].id : nu];
+  });
 }
 function leerpadHtml(p) {
   const s = p.settings;
@@ -845,7 +847,7 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
    instelling met twee bedieningen, of een bediening in de verkeerde kaart, valt
    daar om. Komt er een instelling bij, dan kiest hij hier eerst zijn kaart. */
 const OEFEN_INSTELLINGEN = {
-  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], geld: ['geldLijn', 'kiesGeld'], show: ['mode', 'perLevel'] },
+  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], geld: ['geldLijn', 'kiesGeld'], klok: ['klokLijn', 'kiesKlok'], show: ['mode', 'perLevel'] },
   count: { wat: ['qmax'], pad: ['stage', 'kiesFasen'], show: ['repr', 'perLevel', 'memory'] },
 };
 function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in de volgorde van OEFEN_INSTELLINGEN
@@ -992,7 +994,16 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
     return ladder(L.id, L.lijn, lr.rijen.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb) })),
       lr.lo + 1, lr.hi + 1, p && !voorbij ? L.idx[nu] + 1 : 0, staart);
   };
-  const geldKies = kiesHtml('set-kiesgeld', 'kiesGeld', GELDPAD.map(r => ({ v: r.id, naam: r.naam, vb: geldVoorbeeld(r) })), s.kiesGeld || []);
+  /* Onder Kiezen/Mix/Typen: de klok kiest altijd, wat de ouder hier ook zet
+     ("half 4" typen kan het cijferblok niet). En onder Vragen per show hoe
+     een show eruitziet: één icoontje per vraag, in de volgorde van themaPlan
+     -- dan hoeft niemand uit te leggen wat "de helft sommen" betekent. Alleen
+     als er meer dan één thema aan staat; anders is elke vraag hetzelfde. */
+  const klokNoot = themaAan(s, 'klok') ? `<p class="oe-noot">${themaIcoon('klok', 16)} altijd kiezen</p>` : '';
+  const showMix = themasAan(s).length > 1
+    ? `<div class="oe-mix" role="img" aria-label="Een show: ${themaPlan(s, s.perLevel).map(k => THEMA[k].naam.toLowerCase()).join(', ')}">${themaPlan(s, s.perLevel).map(k => themaIcoon(k, 20)).join('')}</div>` : '';
+  const rijenKies = k => { const L = LADDERS[k];
+    return kiesHtml(`set-kies${k}`, L.kies, L.pad.map(r => ({ v: r.id, naam: r.naam, vb: L.vb(r) })), s[L.kies] || []); };
   const tafelsVan = `${lbl('Tafels van')}
       <div class="oe-tafels" id="${pfx}set-tables" data-instelling="tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>`;
   return [themaAan(s, 'rekenen') && {
@@ -1002,10 +1013,12 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
   }, themaAan(s, 'tafels') && {
     kaart: 'tafels', kop: 'Tafels', ico: 'tafels', html: `${opsBalk('set-tafelops', 'tafelOps', opDefs.slice(2))}${vrij ? tafelsVan : themaLadder('tafels')}`
   }, themaAan(s, 'geld') && {
-    kaart: 'geld', kop: 'Geld', ico: 'geld', html: vrij ? geldKies : themaLadder('geld')
+    kaart: 'geld', kop: 'Geld', ico: 'geld', html: vrij ? rijenKies('geld') : themaLadder('geld')
+  }, themaAan(s, 'klok') && {
+    kaart: 'klok', kop: 'Klok', ico: 'klok', html: vrij ? rijenKies('klok') : themaLadder('klok')
   }, {
-    kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
-      ${perShow}`
+    kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}${klokNoot}
+      ${perShow}${showMix}`
   }].filter(Boolean);
 }
 /* Wat er in de dichte openklapper te lezen staat: een ouder die hem nooit opent
@@ -1026,7 +1039,7 @@ function oefenSamenvatting(s) {
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
   const rijen = padRijen(s).rijen.filter(r => !r.uit);
   const start = s.padVanaf && rijen.length && padVanafRij(s, rijen) !== rijen[0] && padVanafRij(s, rijen);
-  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}${themaAan(s, 'geld') ? ' · €' : ''}`
+  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}${themaAan(s, 'geld') ? ' · €' : ''}${themaAan(s, 'klok') ? ' · 🕐' : ''}`
        + ` · ${modes[s.mode] || s.mode}${start ? ` · vanaf ${start.naam.toLowerCase()}` : ''}`
        + ` · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
 }
@@ -1593,7 +1606,7 @@ function bindOefenChips(s, p, pfx, done) {
   // de thema's (zie themaZet): het laatste blijft aan
   bind('set-themas', c => {
     if (!themaZet(s, c.dataset.v, !themaAan(s, c.dataset.v))) return blockedMinOne(c), false;
-    geldKiesStart(s, p);
+    rijenKiesStart(s, p);
   });
   bind('set-tables', c => {
     const v = parseInt(c.dataset.v, 10);
@@ -1619,7 +1632,7 @@ function bindOefenChips(s, p, pfx, done) {
     if (!vrij) { delete s.modus; return; }
     s.modus = 'vrij';
     s.missNum = s.chain3 = true;   // overslaan was iets van het leerpad
-    geldKiesStart(s, p);
+    rijenKiesStart(s, p);
     const count = s.track === 'count';
     const had = count ? kiesFasen(s).length : kiesGekozen(s).length;
     if (had || !p) return;
@@ -1639,11 +1652,11 @@ function bindOefenChips(s, p, pfx, done) {
     if (!nu) return blockedMinOne(c), false;
     s.kies = nu;
   });
-  bind('set-kiesgeld', c => {
-    const nu = vink(s.kiesGeld || [], c.dataset.v, GELDPAD.map(r => r.id));
+  ['geld', 'klok'].forEach(k => bind(`set-kies${k}`, c => {
+    const L = LADDERS[k], nu = vink(s[L.kies] || [], c.dataset.v, L.pad.map(r => r.id));
     if (!nu) return blockedMinOne(c), false;
-    s.kiesGeld = nu;
-  });
+    s[L.kies] = nu;
+  }));
   bind('set-kiesfasen', c => {
     const nu = vink(s.kiesFasen || [], parseInt(c.dataset.v, 10), Array.from({ length: COUNT_STAGE_MAX }, (_, i) => i + 1));
     if (!nu) return blockedMinOne(c), false;
@@ -1863,9 +1876,10 @@ function bindSettings(p, s) {
     const lad = ids.map(id => $(id)).find(Boolean);
     if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
   };
-  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables', 'set-kiesgeld'));
+  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables', 'set-kiesgeld', 'set-kiesklok'));
   on('tafel-aanpas', 'onclick', naarLadder('set-tafelpad'));
   on('geld-aanpas', 'onclick', naarLadder('set-geldpad'));
+  on('klok-aanpas', 'onclick', naarLadder('set-klokpad'));
   // De velden zelf staan óók op het maakformulier; de bediening is gedeeld.
   // Het maakformulier heeft niets op te slaan, dus wat er ná een wijziging
   // gebeurt komt van de aanroeper (hier: opslaan + hertekenen).

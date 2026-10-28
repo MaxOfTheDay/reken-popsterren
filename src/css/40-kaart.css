@@ -638,6 +638,21 @@
     background: #fff3c4; color: #7a4f00; font-size: .5em; font-weight: 800;
   }
   .geld-vraag { display: block; font-size: .5em; margin-bottom: .1em; }
+  /* De klok (zie genKlok). Lezen: de klok groot, en het vakje eronder in een
+     kleinere letter -- "10 voor half 4" is langer dan een getal. Zoeken: de
+     tijd in woorden of op een digitale klok, en vier klokjes als knoppen. Alles
+     in em, zodat het met de vraag en de knop meegroeit (tablet). */
+  .klok-vraag { display: flex; justify-content: center; margin: 2px 0 .15em; }
+  .klok-vraag .klok { width: 2.4em; height: 2.4em; }
+  .klok-som { font-size: .55em; }
+  .klok-woord { font-size: .8em; padding: .2em 0; }
+  .klok-digi {
+    display: inline-block; padding: .08em .35em; border-radius: .2em; background: #2b2238; color: #fff;
+    font-variant-numeric: tabular-nums; letter-spacing: .04em;
+  }
+  .choice-btn.klok-zoek { padding-top: 8px; padding-bottom: 8px; }
+  .choice-btn .klok { display: block; width: 2.3em; height: 2.3em; margin: 0 auto; }
+  .choice-btn .klok-tekst { font-size: .7em; white-space: nowrap; }
   .q-blank.done { border-style: solid; border-color: var(--green-deep); background: rgba(102,187,106,.18); color: var(--green-deep); }
   /* De som valt dicht (zie die kop in de JS). klikt: het goede antwoord is net
      geland en plopt één keer. rustig: na een tweede misser staat het goede
