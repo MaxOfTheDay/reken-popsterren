@@ -653,6 +653,49 @@
   .choice-btn.klok-zoek { padding-top: 8px; padding-bottom: 8px; }
   .choice-btn .klok { display: block; width: 2.3em; height: 2.3em; margin: 0 auto; }
   .choice-btn .klok-tekst { font-size: .7em; white-space: nowrap; }
+  /* De kalender (zie genKalender). Een dag of maand is een pilletje, de maand
+     met de kleur én het teken van zijn seizoen. Het kalenderblad is een
+     raster van zeven, het weekend iets lichter, de datum omcirkeld in roze. */
+  .kal-rij { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: .2em; }
+  .kal-rij.klein { font-size: .8em; margin-top: .1em; }
+  .kal-rij .pl-som { display: inline-flex; }
+  .kal-dag, .kal-maand {
+    display: inline-flex; align-items: center; gap: .2em; padding: .14em .4em; border-radius: .4em;
+    background: #f3e5f5; color: #4a2a7a; font-size: .62em; font-weight: 900;
+  }
+  .kal-dag.nu { background: #e5397a; color: #fff; }
+  .kal-maand i { font-style: normal; font-size: .85em; }
+  .kal-maand.winter { background: #dceefe; } .kal-maand.lente { background: #dcf2dc; }
+  .kal-maand.zomer { background: #fff1b8; } .kal-maand.herfst { background: #ffe0c2; }
+  .kal-pijl { font-size: .5em; color: var(--purple-shadow); }
+  .kal-pijl.onder { display: block; transform: rotate(90deg); margin: .05em auto; width: 1em; }
+  .kal-plus { display: inline-flex; flex-direction: column; align-items: center; font-size: .55em; font-weight: 900; color: #e5397a; line-height: 1; }
+  .kal-hops { font-size: .45em; letter-spacing: .15em; margin-top: .25em; }
+  .kal-vraag { display: flex; justify-content: center; margin: 2px 0 .1em; }
+  .kal-som { font-size: .62em; }
+  .kal-blad {
+    display: inline-block; width: 5.4em; font-size: .78em; border-radius: .35em; overflow: hidden;
+    background: #fff; box-shadow: 0 0 0 .06em #c9b6dc, 0 .08em .2em rgba(74,42,122,.18); line-height: 1;
+  }
+  .kal-rij.klein + .kal-blad, .kal-vraag.klein .kal-blad { font-size: .6em; }
+  .kal-blad b { display: block; padding: .18em 0; background: #e5397a; color: #fff; font-size: .5em; }
+  .kal-kop, .kal-raster { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .kal-kop i, .kal-raster i { font-style: normal; font-size: .36em; padding: .32em 0; color: #2b2238; }
+  .kal-kop i { color: #8e3fc8; font-weight: 900; }
+  .kal-raster i.wk { color: #9b8aa9; }
+  .kal-raster i.rond { background: radial-gradient(circle, transparent 54%, #e5397a 56%, #e5397a 66%, transparent 68%); color: #e5397a; font-weight: 900; }
+  /* De getallenlijn (zie genLijn): de lijn op de volle breedte van de kaart,
+     de pijl roze zoals de omcirkelde datum -- wat je moet lezen is roze. */
+  .lijn-vraag { display: flex; justify-content: center; margin: 2px 0 0; }
+  .lijn { display: block; width: 100%; max-width: 9em; height: auto; stroke: #4a2a7a; }
+  .lijn-vraag .lijn { width: 100%; max-width: 7.6em; }
+  .lijn-lbl text { font-size: 19px; font-weight: 800; fill: #2b2238; text-anchor: middle; stroke: none; }
+  .lijn-getal { font-size: 20px; font-weight: 900; fill: #e5397a; text-anchor: middle; stroke: none; }
+  .lijn-zin { display: flex; align-items: center; justify-content: center; gap: .25em; font-size: .8em; }
+  .lijn-zoek-getal { display: inline-block; font-size: 1.1em; padding: .05em .4em; border-radius: .25em; color: #e5397a; }
+  .choices:has(.lijn-zoek) { grid-template-columns: 1fr; gap: 8px; }
+  .choice-btn.lijn-zoek { padding: 4px 10px; min-height: 0; }
+  .choice-btn .lijn.klein { width: 100%; background: #fff; border-radius: 10px; }
   .q-blank.done { border-style: solid; border-color: var(--green-deep); background: rgba(102,187,106,.18); color: var(--green-deep); }
   /* De som valt dicht (zie die kop in de JS). klikt: het goede antwoord is net
      geland en plopt één keer. rustig: na een tweede misser staat het goede

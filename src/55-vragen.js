@@ -342,7 +342,7 @@ function padNa(p, sterren) {
 function vraagIsNieuw(q, id) {
   if (id === 'fase') return true;
   if (id in LADDERS.tafels.idx) return (q.op === 'x' || q.op === ':') && TAFELPAD[LADDERS.tafels.idx[id]].tafels.includes(Number((q.tmpl.match(/\d+/g) || [])[1]));
-  if (id in LADDERS.geld.idx || id in LADDERS.klok.idx) return q.rij === id;
+  if (THEMA_ERBIJ.some(k => id in LADDERS[k].idx)) return q.rij === id;
   const r = LEERPAD[PAD_IDX[id]];
   if (!r) return false;
   if (r.bouwen) return q.kind === 'bouw' && (q.grens || 99) >= r.bereik - 1;   // tot 1000: met honderdtallen
@@ -381,6 +381,8 @@ const THEMAS = [
   { id: 'tafels',  naam: 'Tafels',  ops: ['x', ':'] },
   { id: 'geld',    naam: 'Geld' },
   { id: 'klok',    naam: 'Klok' },
+  { id: 'kalender', naam: 'Kalender' },
+  { id: 'lijn',    naam: 'Getallenlijn' },
 ];
 const THEMA = Object.fromEntries(THEMAS.map(t => [t.id, t]));
 function themaAan(s, k) { return THEMA[k].ops ? THEMA[k].ops.some(o => s.ops.includes(o)) : (s.themas || []).includes(k); }
@@ -409,6 +411,12 @@ function themaIcoon(k, maat) {
   if (k === 'geld') return svg('<circle cx="20" cy="20" r="18" fill="#c9ccd1" stroke="#9aa0a8" stroke-width="1.5"/>'
     + '<circle cx="20" cy="20" r="12.5" fill="#e8c45a"/>'
     + '<text x="20" y="21" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="900" fill="#5d3f00">€</text>');
+  if (k === 'kalender') return svg('<rect x="5" y="7" width="30" height="29" rx="5" fill="#fff" stroke="#9aa0a8" stroke-width="1.5"/>'
+    + '<path d="M5 12a5 5 0 0 1 5-5h20a5 5 0 0 1 5 5v4H5z" fill="#e5397a"/><rect x="11" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/><rect x="26" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/>'
+    + '<text x="20" y="27" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="900" fill="#2b2238">7</text>');
+  if (k === 'lijn') return svg('<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>'
+    + '<g stroke="#4a2a7a" stroke-linecap="round"><line x1="6" x2="34" y1="25" y2="25" stroke-width="2.5"/><line x1="9" x2="9" y1="21" y2="29" stroke-width="2"/><line x1="16" x2="16" y1="22" y2="28" stroke-width="1.5"/><line x1="23" x2="23" y1="22" y2="28" stroke-width="1.5"/><line x1="31" x2="31" y1="21" y2="29" stroke-width="2"/></g>'
+    + '<path d="M23 21 l-5 -9 h10 z" fill="#e5397a"/>');
   if (k === 'klok') return klokSvg(130, maat, true).replace('class="klok"', 'class="klok thema-ico"');
   const teken = { rekenen: ['+', '−'], tafels: ['×', '÷'] }[k];
   return svg('<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>'
@@ -573,14 +581,148 @@ function genKlok(r, vorm) {
       : `<span class="klok-vraag klok-woord">${r.uur24 ? tijd : klokWoorden(t)}</span>` };
 }
 
+/* ---- De kalender ------------------------------------------------------------
+   Vijf rijen, zoals school ze brengt: in het eerste leerjaar de dagen van de
+   week en "over een paar dagen", dan de maanden; in het tweede een
+   kalenderblad lezen; in het derde rekenen met weken. Een dag is 0 tot 6
+   (maandag eerst, zoals op een Vlaamse kalender), een maand 0 tot 11, zodat
+   het antwoord een geheel getal blijft voor de knoppen.
+   Dagen en maanden zijn altijd kiezen (een woord typen kan het cijferblok
+   niet); bij Een week later is het antwoord een datum, en die mag getypt. */
+const DAGEN = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'];
+const MAANDEN = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+// het seizoen van een maand: een kleur én een teken, nooit alleen de kleur
+const SEIZOEN = m => [['winter', '❄️'], ['lente', '🌷'], ['zomer', '☀️'], ['herfst', '🍂']][Math.floor(((m + 1) % 12) / 3)];
+const KALENDERPAD = [
+  { id: 'dagen',    naam: 'Dagen van de week' },
+  { id: 'overdag',  naam: 'Over een paar dagen' },
+  { id: 'maanden',  naam: 'Maanden' },
+  { id: 'blad',     naam: 'Kalenderblad' },
+  { id: 'week',     naam: 'Een week later' },
+];
+const kalDag = (d, nu) => `<span class="kal-dag${nu ? ' nu' : ''}">${DAGEN[d]}</span>`;
+const kalMaand = m => `<span class="kal-maand ${SEIZOEN(m)[0]}"><i aria-hidden="true">${SEIZOEN(m)[1]}</i>${MAANDEN[m]}</span>`;
+/* Een kalenderblad van maand m: de kop in het rood, ma tot zo, en één datum
+   omcirkeld. Het jaar is dit jaar, zodat de dagen kloppen met de echte kalender. */
+function kalBlad(m, dag, klein) {
+  const jaar = new Date().getFullYear(), eerste = (new Date(jaar, m, 1).getDay() + 6) % 7, n = new Date(jaar, m + 1, 0).getDate();
+  const vakjes = Array.from({ length: eerste }, () => '<i></i>').concat(Array.from({ length: n }, (_, i) =>
+    `<i class="${i + 1 === dag ? 'rond' : ''}${(eerste + i) % 7 > 4 ? ' wk' : ''}">${i + 1}</i>`)).join('');
+  return `<span class="kal-blad${klein ? ' klein' : ''}"><b>${MAANDEN[m]}</b><span class="kal-kop">${DAGEN.map(d => `<i>${d.slice(0, 2)}</i>`).join('')}</span><span class="kal-raster">${vakjes}</span></span>`;
+}
+function kalenderVoorbeeld(r) {
+  return { dagen: 'di ➜ wo', overdag: 'vr + 3 ➜ ma', maanden: '🌷 maart ➜ april', blad: '📅 12 mei ➜ di', week: '📅 12 + 7 ➜ 19' }[r.id];
+}
+// vier keuzes rond het goede antwoord: wat ernaast ligt is wat kinderen echt kiezen (een dag te ver, de verkeerde kant op)
+function kalKeuzes(ans, n, fout) { return [...new Set([ans, ...fout.map(v => ((v % n) + n) % n), ...shuffle([1, -1, 2, -2, 3]).map(d => ((ans + d) % n + n) % n)])].slice(0, 4); }
+function genKalender(r) {
+  const jaar = new Date().getFullYear();
+  if (r.id === 'dagen' || r.id === 'maanden') {
+    const n = r.id === 'dagen' ? 7 : 12, x = rnd(0, n - 1), na = Math.random() < 0.65, ans = (x + (na ? 1 : -1) + n) % n;
+    const toon = r.id === 'dagen' ? d => kalDag(d) : kalMaand, pijl = '<span class="kal-pijl" aria-hidden="true">➜</span>';
+    return { kind: 'kalender', op: 'kalender', rij: r.id, ans, kiezen: true, soort: r.id === 'dagen' ? 'dag' : 'maand',
+      keuzes: kalKeuzes(ans, n, [x + (na ? -1 : 1), x]),
+      tmpl: `kal ${r.id} ${x} ${na ? 'na' : 'voor'}`,
+      html: `<span class="kal-rij">${na ? `${toon(x)}${pijl}<span class="pl-som">@</span>` : `<span class="pl-som">@</span>${pijl}${toon(x)}`}</span>` };
+  }
+  if (r.id === 'overdag') {
+    const x = rnd(0, 6), d = rnd(2, 5), ans = (x + d) % 7;
+    return { kind: 'kalender', op: 'kalender', rij: r.id, ans, kiezen: true, soort: 'dag',
+      keuzes: kalKeuzes(ans, 7, [x + d - 1, x + d + 1, x - d]),
+      tmpl: `kal over ${x} ${d}`,
+      html: `<span class="kal-rij">${kalDag(x, true)}<span class="kal-plus">+ ${d}<span class="kal-hops" aria-hidden="true">${'●'.repeat(d)}</span></span></span>`
+        + '<span class="kal-pijl onder" aria-hidden="true">➜</span><span class="pl-som">@</span>' };
+  }
+  const m = rnd(0, 11), n = new Date(jaar, m + 1, 0).getDate();
+  if (r.id === 'blad') {
+    const dag = rnd(1, n), ans = (new Date(jaar, m, dag).getDay() + 6) % 7;
+    return { kind: 'kalender', op: 'kalender', rij: r.id, ans, kiezen: true, soort: 'dag',
+      keuzes: kalKeuzes(ans, 7, [ans - 1, ans + 1]),
+      tmpl: `kal blad ${m} ${dag}`,
+      html: `<span class="kal-vraag">${kalBlad(m, dag)}</span><span class="pl-som kal-som">@</span>` };
+  }
+  const dag = rnd(1, n - 7), w = 1;
+  return { kind: 'kalender', op: 'kalender', rij: r.id, ans: dag + 7 * w, kiezen: false, soort: 'datum', min: 1, grens: n,
+    keuzes: [...new Set([dag + 7, dag + 6, dag + 8, dag + 1, dag + 14].filter(v => v <= n))].slice(0, 4),
+    tmpl: `kal week ${m} ${dag}`,
+    html: `<span class="kal-vraag klein">${kalBlad(m, dag)}</span><span class="kal-rij klein"><span class="kal-plus">+ 1 week</span><span class="kal-pijl" aria-hidden="true">➜</span><span class="pl-som">@</span></span>` };
+}
+
+/* ---- De getallenlijn --------------------------------------------------------
+   Vijf rijen, zoals school ze brengt: in het eerste leerjaar de lijn tot 20,
+   in het tweede een stuk van de lijn tot 100 en dan schatten, in het derde
+   tot 1000 en afronden.
+   Twee soorten vragen, om de beurt, zoals bij de klok:
+     lees  de pijl staat op de lijn, en ze zegt welk getal (typen of kiezen)
+     zoek  het getal staat er, en ze kiest de lijn met de pijl op de goede plek
+   Schatten en afronden zijn altijd lezen en altijd kiezen. De foute keuzes
+   zijn de echte fouten: één streepje ernaast (de streepjes geteld in plaats
+   van de sprongen), en bij een stuk van de lijn tot 100 het verkeerde
+   tiental. */
+const LIJNPAD = [
+  { id: 'lijn20',   naam: 'Tot 20',     van: 0, tot: 20, stap: 1, label: 10 },
+  { id: 'lijn100',  naam: 'Tot 100',    stuk: 20, max: 100, stap: 1, label: 10 },
+  { id: 'schat',    naam: 'Schatten',   van: 0, tot: 100, schat: true },
+  { id: 'lijn1000', naam: 'Tot 1000',   stuk: 200, max: 1000, stap: 10, label: 100 },
+  { id: 'afronden', naam: 'Afronden',   afronden: true },
+];
+/* De lijn zelf, in een eigen viewBox van 300 breed: streepjes per stap, een
+   langer streepje en een getal op elk label, en de pijl van boven. Lange
+   streepjes en getallen staan op de labels, dus wie de korte niet kan
+   tellen, kan nog altijd van het dichtste getal vertrekken. */
+function lijnSvg(van, tot, stap, label, pijl, opts) {
+  const o = opts || {}, x = v => 14 + (v - van) / (tot - van) * 272;
+  let streep = '';
+  if (stap) for (let v = van; v <= tot; v += stap) { const lang = v % label === 0;
+    streep += `<line x1="${x(v).toFixed(1)}" x2="${x(v).toFixed(1)}" y1="${lang ? 30 : 34}" y2="${lang ? 52 : 48}" stroke-width="${lang ? 2.4 : 1.4}"/>`; }
+  const labels = (o.labels || (stap ? Array.from({ length: Math.floor((tot - van) / label) + 1 }, (_, i) => van + i * label) : [van, tot]))
+    .map(v => `<text x="${x(v).toFixed(1)}" y="74">${v}</text>`).join('');
+  const eind = stap ? '' : `<line x1="${x(van)}" x2="${x(van)}" y1="30" y2="52" stroke-width="2.4"/><line x1="${x(tot)}" x2="${x(tot)}" y1="30" y2="52" stroke-width="2.4"/>`;
+  const pijlen = pijl == null ? '' : `<path d="M${x(pijl).toFixed(1)} 38 l-10 -17 h20 z" fill="#e5397a"/>${o.getal ? `<text class="lijn-getal" x="${x(pijl).toFixed(1)}" y="13">${o.getal}</text>` : ''}`;
+  return `<svg class="lijn${o.klein ? ' klein' : ''}" viewBox="0 0 300 80"aria-hidden="true"><line x1="6" x2="294" y1="41" y2="41" stroke-width="3" stroke-linecap="round"/>`
+    + `<g stroke="#4a2a7a" stroke-linecap="round">${streep}${eind}</g><g class="lijn-lbl">${labels}</g>${pijlen}</svg>`;
+}
+function lijnVoorbeeld(r) {
+  const vb = { lijn20: [0, 20, 1, 10, 13], lijn100: [40, 60, 1, 10, 47], schat: [0, 100, 0, 100, 70], lijn1000: [300, 500, 10, 100, 370], afronden: [40, 50, 1, 10, 47] }[r.id];
+  return `${lijnSvg(...vb, { klein: true, getal: r.afronden ? '47' : null })}<span class="klok-vb">${r.afronden ? '≈ 50' : r.schat ? '± 70' : vb[4]}</span>`;
+}
+function genLijn(r, vorm) {
+  if (r.schat) {
+    const ans = 5 * rnd(2, 18), af = shuffle([-40, -25, 25, 40]).map(d => ans + d).filter(v => v >= 0 && v <= 100).slice(0, 3);
+    return { kind: 'lijn', op: 'lijn', rij: r.id, ans, kiezen: true, keuzes: [ans, ...af],
+      tmpl: `lijn schat ${ans}`, html: `<span class="lijn-vraag">${lijnSvg(0, 100, 0, 100, ans)}</span><span class="lijn-zin">± <span class="pl-som">@</span></span>` };
+  }
+  if (r.afronden) {
+    const honderd = Math.random() < 0.4, maat = honderd ? 100 : 10;
+    let n; do n = honderd ? rnd(11, 99) * 10 : rnd(11, 99); while (n % maat === 0 || n % maat === maat / 2);
+    const lo = Math.floor(n / maat) * maat, ans = Math.round(n / maat) * maat;
+    return { kind: 'lijn', op: 'lijn', rij: r.id, ans, kiezen: true, keuzes: [lo, lo + maat, lo - maat, lo + 2 * maat].filter(v => v >= 0),
+      tmpl: `lijn rond ${n}`, html: `<span class="lijn-vraag">${lijnSvg(lo, lo + maat, maat / 10, maat, n, { getal: n })}</span><span class="lijn-zin">≈ <span class="pl-som">@</span></span>` };
+  }
+  // het stuk van de lijn dat te zien is: tot 20 heel, de grotere lijnen een stuk van 20 (of 200) rond het getal
+  const van = r.stuk ? rnd(0, (r.max - r.stuk) / (r.stuk / 2)) * r.stuk / 2 : r.van, tot = r.stuk ? van + r.stuk : r.tot;
+  let ans; do ans = van + rnd(1, (tot - van) / r.stap - 1) * r.stap; while (ans % r.label === 0);
+  const teken = v => lijnSvg(van, tot, r.stap, r.label, v);
+  const fout = [ans - r.stap, ans + r.stap, ans + 2 * r.stap, ans - 2 * r.stap, r.stuk ? ans + r.label : ans + 5 * r.stap].filter(v => v > van && v < tot && v !== ans);
+  const keuzes = [ans, ...shuffle(fout.slice(0, 2)).concat(shuffle(fout.slice(2)))].slice(0, 4);
+  return vorm === 'zoek'
+    ? { kind: 'lijn', op: 'lijn', rij: r.id, ans, kiezen: true, keuzes, vorm, knop: 'lijn-zoek', bereik: [van, tot, r.stap, r.label],
+        tmpl: `lijn zoek ${ans}`, html: `<span class="lijn-zoek-getal">${ans}</span>` }
+    : { kind: 'lijn', op: 'lijn', rij: r.id, ans, kiezen: false, keuzes, vorm, min: van, grens: tot,
+        tmpl: `lijn lees ${van} ${ans}`, html: `<span class="lijn-vraag">${teken(ans)}</span><span class="pl-som">@</span>` };
+}
+
 // Het antwoord van een vraag zoals het in het vakje staat (toonAntwoord) en op een knop (toonKeuze).
 function toonAntwoord(q, v) {
   if (q.kind === 'klok') return klokWoorden(v);
+  if (q.kind === 'kalender') return q.soort === 'dag' ? DAGEN[v] : q.soort === 'maand' ? MAANDEN[v] : String(v);
   if (q.kind !== 'geld') return String(v);
   return q.centen ? euro(v).slice(1) : String(v);
 }
 function toonKeuze(q, v) {
   if (q.kind === 'klok') return q.vorm === 'zoek' ? klokSvg(v, 64) : `<span class="klok-tekst">${klokWoorden(v)}</span>`;
+  if (q.kind === 'kalender') return q.soort === 'datum' ? String(v) : `<span class="klok-tekst">${toonAntwoord(q, v)}</span>`;
+  if (q.kind === 'lijn' && q.vorm === 'zoek') return lijnSvg(...q.bereik, v, { klein: true });   // dezelfde lijn als bij lezen, op knopmaat
   return q.kind === 'geld' ? (q.centen ? euro(v) : `€${v}`) : String(v);
 }
 
@@ -597,6 +739,8 @@ const LADDERS = {
   tafels: { pad: TAFELPAD, lijn: 'tafelLijn', stand: 'tafels', id: 'set-tafelpad', eind: 'Alle tafels door elkaar', vb: tafelVoorbeeld },
   geld:   { pad: GELDPAD,  lijn: 'geldLijn',  stand: 'geld',   id: 'set-geldpad',  eind: 'Alles met geld door elkaar', vb: geldVoorbeeld, kies: 'kiesGeld' },
   klok:   { pad: KLOKPAD,  lijn: 'klokLijn',  stand: 'klok',   id: 'set-klokpad',  eind: 'Alle tijden door elkaar', vb: klokVoorbeeld, kies: 'kiesKlok' },
+  kalender: { pad: KALENDERPAD, lijn: 'kalLijn', stand: 'kalender', id: 'set-kalenderpad', eind: 'Alles met de kalender door elkaar', vb: kalenderVoorbeeld, kies: 'kiesKalender' },
+  lijn:   { pad: LIJNPAD,  lijn: 'lijnLijn',  stand: 'lijn',   id: 'set-lijnpad',  eind: 'Alle lijnen door elkaar', vb: lijnVoorbeeld, kies: 'kiesLijn' },
 };
 Object.values(LADDERS).forEach(L => { L.idx = Object.fromEntries(L.pad.map((r, i) => [r.id, i])); });
 // De rijen met voorbeeld, en waar de twee lijnen staan (indexen, 0 = de eerste rij).
@@ -663,7 +807,8 @@ function rijenVraag(s, net) {
   let q, poging = 0;
   do {
     const r = s.nu && Math.random() < RIJ_NU_VAAK ? s.nu : s.stapel ? beurt(s, 'stapel', s.rijen) : pick(s.rijen);
-    q = s.thema === 'klok' ? genKlok(r, s.lees ? 'lees' : 'zoek') : genGeld(r);
+    const vorm = s.lees ? 'lees' : 'zoek';
+    q = s.thema === 'klok' ? genKlok(r, vorm) : s.thema === 'kalender' ? genKalender(r) : s.thema === 'lijn' ? genLijn(r, vorm) : genGeld(r);
   } while (net.includes(q.tmpl) && ++poging < 8);
   s.lees = !s.lees;
   return q;
@@ -696,7 +841,7 @@ function themaInst(p, k) { return k === 'tafels' ? tafelInst(p) : k === 'rekenen
    Afwisselen en niet per toeval: twee tafelvragen na elkaar en dan vijf sommen
    leest als een ander spel, niet als één show. Staat er geen som aan, dan
    delen de andere de show gelijk. */
-const THEMA_ERBIJ = ['geld', 'klok'];
+const THEMA_ERBIJ = ['geld', 'klok', 'kalender', 'lijn'];
 function themaPlan(s, total) {
   const aan = themasAan(s);
   const sommen = aan.filter(k => !THEMA_ERBIJ.includes(k)), erbij = aan.filter(k => THEMA_ERBIJ.includes(k));
@@ -707,7 +852,7 @@ function themaPlan(s, total) {
     return uit;
   };
   if (!sommen.length) return verdeel(erbij, total);
-  const extra = verdeel(erbij, erbij.length * (total >= 8 ? 2 : 1));
+  const extra = verdeel(erbij, Math.min(erbij.length * (total >= 8 ? 2 : 1), Math.floor(total / 2)));   // de helft blijft sommen
   const plan = verdeel(sommen, total - extra.length);
   extra.forEach((k, j) => plan.splice(Math.round((j + 1) * total / (extra.length + 1)), 0, k));
   return plan;
@@ -2082,7 +2227,7 @@ function buildQuestion(p, lvl, g) {
   const k = g && g.themaPlan ? g.themaPlan[g.idx] : themasAan(p.settings)[0];
   const s = (g && g.insts && g.insts[k]) || themaInst(p, k);
   // geld komt niet uit de zwakke sommen: dat zijn sommen, en een bedrag is elke keer andere munten
-  if (s.thema === 'geld' || s.thema === 'klok') return rijenVraag(s, net);
+  if (THEMA_ERBIJ.includes(s.thema)) return rijenVraag(s, net);
   if (Math.random() < 0.35) {
     const wq = pickWeak(p, s, mag);
     if (wq) { if (al) al.add(wq.tmpl); return wq; }
