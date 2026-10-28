@@ -27,7 +27,9 @@ function showOpzet(p, lvl, goldIdx) {
   const som = insts.rekenen || insts.tafels;
   const bezet = vragenPlan.map((k, i) => k === 'rekenen' ? -1 : i).filter(i => i >= 0);
   // Zelf kiezen (vrij) kent geen accent per wereld: daar is het de keuze van de ouder
-  const plan = som ? planSpecials(p, som, s.perLevel, som.vrij ? null : wereldAccent(lvl, padNu(p)), goldIdx, bezet) : {};
+  // op de rij Zoek het getal of Drie getallen zelf krijgt die soort meer plekken (zie planSpecials)
+  const rijNu = som && som === insts.rekenen && !som.vrij ? padNu(p) : null;
+  const plan = som ? planSpecials(p, som, s.perLevel, som.vrij ? null : wereldAccent(lvl, padNu(p)), goldIdx, bezet, rijNu) : {};
   return { vragenPlan, insts, inst, plan };
 }
 function startLevel(lvl, eigenOvergang) {
@@ -1300,11 +1302,12 @@ function endLevel(success) {
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;   // een show verder gewend aan de grens
   if (!G.count && success && !vrij) telGrensDrie(p, showStars(G));   // voor de grenstip (zie grensDrieSterren)
   /* Een show verder op haar rij, op elke ladder die in deze show speelde, elk
-     op zijn eigen vragen (themaSterren). Schoof ze door, dan is dit haar nieuwe
+     op zijn eigen vragen (themaSterren), en met de antwoorden op het nieuwe
+     van die rij (rijAntwoorden, zie rijVerder). Schoof ze door, dan is dit haar nieuwe
      rij -- rekenen eerst, want daar staat er maar één op het eindscherm. */
   const thema = k => !G.count && !vrij && G.themaPlan.includes(k);
-  const plusMinRij = thema('rekenen') && padNa(p, success ? themaSterren(G, 'rekenen') : 0) ? padNu(p) : null;
-  const ladderRij = Object.keys(LADDERS).map(k => thema(k) && ladderNa(p, k, success ? themaSterren(G, k) : 0) ? ladderNu(p, k) : null);
+  const plusMinRij = thema('rekenen') && padNa(p, success ? themaSterren(G, 'rekenen') : 0, rijAntwoorden(G, 'rekenen', padNu(p))) ? padNu(p) : null;
+  const ladderRij = Object.keys(LADDERS).map(k => thema(k) && ladderNa(p, k, success ? themaSterren(G, k) : 0, rijAntwoorden(G, k, ladderNu(p, k))) ? ladderNu(p, k) : null);
   const nieuweRij = [plusMinRij, ...ladderRij].find(Boolean) || null;
   /* Wat er pas ná het eindscherm gevierd wordt (zie de staart van deze
      functie): een wereld die net uit of perfect werd. Bij een mislukte show

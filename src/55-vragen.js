@@ -262,8 +262,10 @@ function kiesRijen(s) {
     .map(r => ({ ...r, vb: padVoorbeeld(r, { ...s, max: 100 }) }));
 }
 const kiesGekozen = s => kiesRijen(s).filter(r => (s.kies || []).includes(r.id));
-/* Zoek het getal en drie getallen staan in de lijst bij tot 20 (zoals op het
-   leerpad), en blijven daar: aangevinkt naast Tot 100 worden ze geen 47 + ▢. */
+/* Drie getallen staat in de lijst bij tot 20 (zoals op het leerpad), en
+   blijft daar. Zoek het getal groeit mee met de grootste aangevinkte rij
+   sommen: naast Tot 100 is het 47 + ▢ = 72 -- aanvullen tot honderd is
+   tweede leerjaar. Zonder rij erboven is het tot 20. */
 const KIES_VORM_MAX = 20;
 /* De vraagmaker in Zelf kiezen. vrij is de pot waar elke vraag uit komt: één
    ingang per aangevinkte rij, elk met de
@@ -276,8 +278,9 @@ const KIES_VORM_MAX = 20;
 function kiesInst(s) {
   const pm = s.ops.filter(o => o === '+' || o === '-');
   const rijen = kiesGekozen(s);
+  const somMax = rijen.reduce((m, r) => r.soort === 'bereik' && !r.bouwen ? Math.max(m, r.bereik) : m, KIES_VORM_MAX);
   const vrij = rijen.map(r => {
-    if (r.soort !== 'bereik') return { id: r.id, inst: { ...s, ops: r.id === 'drie' ? ['+'] : pm, max: KIES_VORM_MAX, brug: 'vrij' } };
+    if (r.soort !== 'bereik') return { id: r.id, inst: { ...s, ops: r.id === 'drie' ? ['+'] : pm, max: r.id === 'zoek' ? somMax : KIES_VORM_MAX, brug: 'vrij' } };
     return { id: r.id, inst: { ...s, ops: pm, max: r.bereik, brug: r.brug === 'vaak' ? 'altijd' : 'nee',
       tientallen: r.tientallen ? 'altijd' : false, honderdtallen: r.honderdtallen ? 'altijd' : false } };
   });
@@ -314,23 +317,50 @@ function kiesStart(p) {
    juist wacht, en na twee mislukte shows een fase terugzet (advanceCountStage).
    Wie het redt, gaat even snel als altijd; wie strandt, blijft op zijn rij en
    het spel maakt de sommen daar lichter (moeilijkheid). Terug naar een vorige
-   rij gaat rekenen niet: wat al klaar is blijft klaar. */
+   rij gaat rekenen niet: wat al klaar is blijft klaar.
+
+   EN GENOEG VRAGEN VAN DIE RIJ. Shows alleen zeggen niet genoeg: met zes
+   thema's aan krijgt een thema één of twee vragen per show, en dan was een
+   rij "gehaald" na drie shows -- het kalenderblad na twee vragen, de tafels
+   van 6 tot 9 na vijf. eigen zijn de antwoorden van déze show op de vragen
+   die het nieuwe van de rij laten zien (vraagIsNieuw; true = in één keer
+   goed, zie rijAntwoorden in 60-spel). Daarvan moeten er minstens
+   PAD_MIN_VRAGEN zijn, met van de laatste PAD_REEKS hoogstens één misser; de
+   weg "toch verder" wacht op PAD_MAX_VRAGEN (of, als de rij haar vragen niet
+   krijgt, op twee keer PAD_MAX_SHOWS shows). Met alleen rekenen aan zijn er na
+   twee shows al genoeg, en beslissen de shows zoals altijd. In de stand komen
+   twee tellers bij (vragen, reeks); een save zonder begint ze op nul.
+   Zonder eigen (een oude aanroep) telt alleen de show. */
 const PAD_MIN_SHOWS = 3, PAD_MAX_SHOWS = 8, PAD_GOED = 2, PAD_TELT = 2;
-function padNa(p, sterren) {
+const PAD_MIN_VRAGEN = 8, PAD_REEKS = 6, PAD_MAX_VRAGEN = 16;
+// Eén show verder op een rij, voor het leerpad en elke ladder: true = de rij is gehaald.
+function rijVerder(t, sterren, eigen) {
+  if (sterren >= PAD_TELT) t.shows++;
+  t.goed = sterren >= 3 ? t.goed + 1 : 0;
+  if (eigen) {
+    t.vragen = (t.vragen || 0) + eigen.length;
+    t.reeks = (t.reeks || []).concat(eigen.map(g => g ? 1 : 0)).slice(-PAD_REEKS);
+  }
+  const vragen = t.vragen || 0, reeks = t.reeks || [];
+  const kan = !eigen || (vragen >= PAD_MIN_VRAGEN && reeks.length >= PAD_REEKS && reeks.filter(g => !g).length <= 1);
+  const toch = !eigen || vragen >= PAD_MAX_VRAGEN || t.shows >= 2 * PAD_MAX_SHOWS;
+  return (t.shows >= PAD_MIN_SHOWS && t.goed >= PAD_GOED && kan) || (t.shows >= PAD_MAX_SHOWS && toch);
+}
+// een rij die net begint: geen shows, geen vragen
+const rijNul = rij => ({ rij, shows: 0, goed: 0, vragen: 0, reeks: [] });
+function padNa(p, sterren, eigen) {
   const nu = padNu(p);
   if (nu === 'alles') return false;
   const pad = p.pad = p.pad || { klaar: [] };
   if (!Array.isArray(pad.klaar)) pad.klaar = [];
-  if (pad.rij !== nu) Object.assign(pad, { rij: nu, shows: 0, goed: 0 });
-  if (sterren >= PAD_TELT) pad.shows++;
-  pad.goed = sterren >= 3 ? pad.goed + 1 : 0;
-  if (!((pad.shows >= PAD_MIN_SHOWS && pad.goed >= PAD_GOED) || pad.shows >= PAD_MAX_SHOWS)) return false;
+  if (pad.rij !== nu) Object.assign(pad, rijNul(nu));
+  if (!rijVerder(pad, sterren, eigen)) return false;
   /* Klaar: deze rij, en alles ervoor op haar pad -- ook wat "vanaf" oversloeg.
      Zet de ouder "vanaf" daarna terug, dan hoeft ze dat niet alsnog te doen. */
   padRijen(p.settings).rijen.forEach(r => {
     if (PAD_IDX[r.id] <= PAD_IDX[nu] && !pad.klaar.includes(r.id)) pad.klaar.push(r.id);
   });
-  Object.assign(pad, { rij: padNu(p), shows: 0, goed: 0 });
+  Object.assign(pad, rijNul(padNu(p)));
   return true;
 }
 /* Is deze vraag het nieuwe van rij id? Na een stap verder op het leerpad krijgt
@@ -356,6 +386,15 @@ function vraagIsNieuw(q, id) {
   // een nieuw bereik: een getal boven het vorige bereik (tot 20: boven de tien)
   const vorig = LEERPAD.filter(x => x.soort === 'bereik' && x.bereik < r.bereik).reduce((m, x) => Math.max(m, x.bereik), 0);
   return Math.max(a, b, q.ans) > vorig;
+}
+/* De antwoorden van show g op het nieuwe van rij nu, bij thema k: per vraag
+   die vraagIsNieuw is, true als hij in één keer goed ging. Dat is wat
+   rijVerder telt, naast de shows. */
+function rijAntwoorden(g, k, nu) {
+  if (!nu || nu === 'alles') return [];
+  return g.qs.map((q, i) => i)
+    .filter(i => (g.themaPlan ? g.themaPlan[i] : 'rekenen') === k && g.uitslag[i] && vraagIsNieuw(g.qs[i], nu))
+    .map(i => g.uitslag[i] === 'goed');
 }
 /* ================= = Thema's: wat ze oefent =================
    Rekenen is niet één ladder meer. Bovenaan Oefeningen kiest de ouder wat ze
@@ -768,6 +807,10 @@ function kalenderVoorbeeld(r) {
 // Vier keuzes rond het goede antwoord, op een ring van n (een dag te ver, de verkeerde kant op).
 function kalKeuzes(ans, n, fout) { return [...new Set([ans, ...fout.map(v => mod(v, n)), ...shuffle([1, -1, 2, -2, 3]).map(d => mod(ans + d, n))])].slice(0, 4); }
 const kalVraag = (rij, ans, extra) => ({ kind: 'kalender', op: 'kalender', rij, ans, kiezen: true, ...extra });
+/* Een aantal (dagen, weken, een datum): getypt, of gekozen uit knoppen die
+   makeChoices legt -- de echte fout (q.fouten) en de buren, aan een gelote
+   kant. Een vast lijstje had het antwoord altijd op dezelfde plek (bij de
+   weken altijd het derde getal van klein naar groot). */
 const kalGetal = (rij, ans, extra) => ({ kind: 'kalender', op: 'kalender', rij, ans, kiezen: false, soort: 'getal', min: 1, ...extra });
 
 /* Een vraag van rij r. Elke rij heeft twee vormen, om de beurt (vorm 'lees'
@@ -796,19 +839,24 @@ function genKalender(r, vorm) {
       tmpl: `kal verder ${nu} ${terug ? -d : d}`, html: kalVan(dagKaart(nu), `${terug ? '−' : '+'} ${d} dagen`, d, terug) });
   }
   if (r.id === 'maanden') {
-    const m = rnd(0, 11);
-    if (tweede)   // in welk seizoen valt deze maand? het kaartje is dan zonder kleur: de kleur zou het antwoord verklappen
+    /* In welk seizoen valt deze maand? Niet maart, juni, september of
+       december: op een Vlaamse schoolkalender begint de lente op 21 maart, en
+       dan is "winter" voor maart niet fout. Erna en ervoor kan wel met elke
+       maand. Het kaartje is zonder kleur: de kleur zou het antwoord verklappen. */
+    if (tweede) {
+      const m = pick([0, 1, 3, 4, 6, 7, 9, 10]);
       return kalVraag('maanden', seizoenVan(m), { soort: 'seizoen', keuzes: [0, 1, 2, 3], tmpl: `kal maandseizoen ${m}`,
         html: kalVan(kalKaart('kaal', MAANDEN[m]), 'seizoen') });
-    const na = Math.random() < 0.65, ans = mod(m + (na ? 1 : -1), 12);
+    }
+    const m = rnd(0, 11), na = Math.random() < 0.65, ans = mod(m + (na ? 1 : -1), 12);
     return kalVraag('maanden', ans, { soort: 'maand', keuzes: kalKeuzes(ans, 12, [m + (na ? -1 : 1), m]), tmpl: `kal maand ${m} ${na}`,
       html: kalVan(maandKaart(m), na ? 'erna' : 'ervoor', 0, !na) });
   }
   if (r.id === 'weken') {
     // terug naar weken begint bij 2: "7 dagen = 1 week" is geen vraag maar de afspraak zelf
-    const omgekeerd = tweede, w = rnd(omgekeerd ? 2 : 1, 4), week = n => n > 1 ? 'weken' : 'week';
+    const omgekeerd = tweede, w = rnd(omgekeerd ? 2 : 1, omgekeerd ? 5 : 4), week = n => n > 1 ? 'weken' : 'week';
     return kalGetal('weken', omgekeerd ? w : 7 * w, { grens: omgekeerd ? 10 : 35,
-      keuzes: omgekeerd ? [w, w + 1, w - 1, w + 2] : [...new Set([7 * w, 7 * w + 1, 7 * w - 1, 5 * w, 7 * (w + 1)])].slice(0, 4),
+      fouten: omgekeerd ? [w + 1, w - 1] : [5 * w, 7 * (w + 1), 7 * (w - 1)],
       tmpl: `kal weken ${w} ${omgekeerd}`,
       html: `<span class="kal-vraag">${kalWeken(w)}</span>${omgekeerd
         ? kalVan(kalKaart('kaal', `${7 * w} dagen`), 'weken') : kalVan(kalKaart('kaal', `${w} ${week(w)}`), 'dagen')}` });
@@ -817,7 +865,7 @@ function genKalender(r, vorm) {
   if (r.id === 'blad') {
     if (tweede) {   // een week later: één rij naar beneden, in dezelfde kolom
       const dag = rnd(1, n - 7);
-      return kalGetal('blad', dag + 7, { grens: n, keuzes: [...new Set([dag + 7, dag + 6, dag + 8, dag + 1])], tmpl: `kal week ${m} ${dag}`,
+      return kalGetal('blad', dag + 7, { grens: n, fouten: [dag + 6, dag + 8, dag + 1], tmpl: `kal week ${m} ${dag}`,
         html: `<span class="kal-vraag">${kalBlad(m, { [dag]: 'rond', [dag + 7]: 'vraag' })}</span>${kalVan(kalKaart('datum', dag), '+ 1 week')}` });
     }
     const dag = rnd(1, n), ans = dagVan(m, dag);
@@ -827,7 +875,7 @@ function genKalender(r, vorm) {
   // de datum: zoals hij in een schrift staat (28/10), of tellen hoeveel dagen later
   if (tweede) {
     const a = rnd(1, n - 10), d = rnd(3, 10), b = a + d;
-    return kalGetal('datum', d, { grens: 14, keuzes: [...new Set([d, d + 1, d - 1, d + 2])], tmpl: `kal tussen ${m} ${a} ${b}`,
+    return kalGetal('datum', d, { grens: 14, fouten: [d + 1, d - 1], tmpl: `kal tussen ${m} ${a} ${b}`,
       html: `<span class="kal-vraag">${kalBlad(m, { [a]: 'rond', [b]: 'rond' })}</span>${kalVan(kalKaart('datum', `${a} ➜ ${b}`), 'dagen')}` });
   }
   const dag = rnd(1, Math.min(n, 28)), code = (d, mm) => d * 100 + mm + 1;
@@ -925,22 +973,30 @@ function genLijn(r, vorm) {
     return lijnVraag('schat', ans, { kiezen: true, keuzes: [ans, ...shuffle([...new Set([ans - 20, ans + 20, ans - 40, ans + 40, 100 - ans])].filter(v => v > 0 && v < 100 && v !== ans)).slice(0, 3)],
       tmpl: `lijn schat ${n}`, html: getallenlijn(0, 100, 0, 100, [{ v: n, soort: 'vraag' }]) });
   }
+  /* Afronden, zoals het derde leerjaar het doet: een getal tot honderd naar
+     het tiental, en -- de rij komt na Tot 1000 -- ook een getal van drie
+     cijfers naar het tiental (347 ≈ 350) of het honderdtal (370 ≈ 400). Een
+     5 rond je naar boven af: zo leert school het, dus die zit er ook bij. De
+     lijn is altijd het stuk tussen de twee kandidaten, en dat zijn de twee knoppen. */
   if (r.afronden) {
-    const tien = rnd(1, 9) * 10, e = pick([1, 2, 3, 4, 6, 7, 8, 9]), n = tien + e, ans = e < 5 ? tien : tien + 10;
-    return lijnVraag('afronden', ans, { kiezen: true, keuzes: [tien, tien + 10], knop: 'twee', tmpl: `lijn rond ${n}`,
-      html: getallenlijn(tien, tien + 10, 1, 10, [{ v: n, soort: 'nu', tekst: n }]) + `<span class="gl-zin">≈ <span class="pl-som">@</span></span>` });
+    const soort = rnd(0, 3), groot = soort === 3;
+    const maat = groot ? 100 : 10, van = soort < 2 ? rnd(1, 9) * 10 : groot ? rnd(1, 9) * 100 : rnd(10, 99) * 10;
+    const rest = groot ? rnd(1, 9) * 10 : rnd(1, 9), n = van + rest, ans = rest * 2 < maat ? van : van + maat;
+    return lijnVraag('afronden', ans, { kiezen: true, keuzes: [van, van + maat], knop: 'twee', tmpl: `lijn rond ${n}`,
+      html: getallenlijn(van, van + maat, maat / 10, maat, [{ v: n, soort: 'nu', tekst: n }]) + `<span class="gl-zin">≈ <span class="pl-som">@</span></span>` });
   }
   const stap = r.stap, max = r.tot || r.max;
   let n; do n = rnd(1, max / stap - 1) * stap; while (n % r.label === 0);
   const [van, tot] = lijnStuk(r, n);
   if (tweede) return lijnVraag(r.id, n, { kiezen: false, tik: true, bereik: [van, tot, stap, r.label], tmpl: `lijn zoek ${n}`,
     html: `<span class="kal-rij"><span class="kal-kaart nu gl-zoek">${n}</span></span>` });
-  // de echte fouten: een streepje ernaast, en van het verkeerde grote streepje geteld (63 gelezen als 67)
+  /* de echte fout: van het verkeerde grote streepje geteld (63 gelezen als 67).
+     De rest legt makeChoices er een, twee of drie streepjes naast, aan een
+     gelote kant -- een eigen lijstje (het antwoord, de fout, één erboven, één
+     eronder) had het antwoord nooit als kleinste of grootste, en bij 19 op de
+     lijn tot 20 maar drie knoppen. */
   const groot = Math.round(n / r.label) * r.label, spiegel = 2 * groot - n;
-  const keuzes = [...new Set([n, spiegel, n + stap, n - stap, n + 2 * stap].filter(v => v >= van && v <= tot))].slice(0, 4);
-  // naast het eind van de lijn bleven er soms drie over: dan nog een streepje verder aan de andere kant
-  for (let d = 2; keuzes.length < 4; d++) [n - d * stap, n + d * stap].forEach(v => { if (keuzes.length < 4 && v >= van && v <= tot && !keuzes.includes(v)) keuzes.push(v); });
-  return lijnVraag(r.id, n, { kiezen: false, keuzes, min: van, grens: tot, tmpl: `lijn lees ${van} ${n}`,
+  return lijnVraag(r.id, n, { kiezen: false, fouten: [spiegel], min: van, grens: tot, tmpl: `lijn lees ${van} ${n}`,
     html: getallenlijn(van, tot, stap, r.label, [{ v: n, soort: 'vraag' }]) });
 }
 /* De hoogste sprong, voor kaartProeven: een kaartje naast het tiental (laag) en
@@ -1031,17 +1087,15 @@ function ladderSpeelt(p, k) {
   const tot = nuId === 'alles' ? hi : L.idx[nuId];
   return { rijen: L.pad.filter((r, i) => i <= tot || klaar.has(r.id)), nu: nuId === 'alles' ? null : L.pad[tot] };
 }
-function ladderNa(p, k, sterren) {
+function ladderNa(p, k, sterren, eigen) {
   const L = LADDERS[k], nu = ladderNu(p, k);
   if (nu === 'alles') return false;
   const t = p[L.stand] = p[L.stand] || { klaar: [] };
   if (!Array.isArray(t.klaar)) t.klaar = [];
-  if (t.rij !== nu) Object.assign(t, { rij: nu, shows: 0, goed: 0 });
-  if (sterren >= PAD_TELT) t.shows++;
-  t.goed = sterren >= 3 ? t.goed + 1 : 0;
-  if (!((t.shows >= PAD_MIN_SHOWS && t.goed >= PAD_GOED) || t.shows >= PAD_MAX_SHOWS)) return false;
+  if (t.rij !== nu) Object.assign(t, rijNul(nu));
+  if (!rijVerder(t, sterren, eigen)) return false;
   L.pad.slice(0, L.idx[nu] + 1).forEach(r => { if (!t.klaar.includes(r.id)) t.klaar.push(r.id); });
-  Object.assign(t, { rij: ladderNu(p, k), shows: 0, goed: 0 });
+  Object.assign(t, rijNul(ladderNu(p, k)));
   return true;
 }
 
@@ -1068,13 +1122,18 @@ function rijenInst(p, k) {
     const aan = L.pad.filter(r => (s[L.kies] || []).includes(r.id));
     return { ...basis, rijen: aan.length ? aan : L.pad.slice(0, 1), stapel: [] };
   }
+  /* Voorbij de laatste rij (alles door elkaar) komen de twee laatste rijen
+     het vaakst (RIJ_LAATST_VAAK): met elke rij even vaak bleef ze een vijfde
+     van de tijd hele uren lezen of munten tot €10 tellen, show na show. */
   const { rijen, nu } = ladderSpeelt(p, k);
-  return { ...basis, rijen, nu };
+  return { ...basis, rijen, nu, laatste: nu ? null : rijen.slice(-2) };
 }
+const RIJ_LAATST_VAAK = 0.6;
 function rijenVraag(s, net) {
   let q, poging = 0;
   do {
-    const r = s.nu && Math.random() < RIJ_NU_VAAK ? s.nu : s.stapel ? beurt(s, 'stapel', s.rijen) : pick(s.rijen);
+    const r = s.nu && Math.random() < RIJ_NU_VAAK ? s.nu : s.stapel ? beurt(s, 'stapel', s.rijen)
+      : s.laatste && Math.random() < RIJ_LAATST_VAAK ? pick(s.laatste) : pick(s.rijen);
     const vorm = s.lees ? 'lees' : 'zoek';
     q = s.thema === 'klok' ? genKlok(r, vorm) : s.thema === 'kalender' ? genKalender(r, vorm) : s.thema === 'lijn' ? genLijn(r, vorm) : genGeld(r);
   } while (net.includes(q.tmpl) && ++poging < 8);
@@ -1172,6 +1231,26 @@ function grensOmhoog(s, naar) {
   s.max = naar;
   s.padTot = null;
 }
+/* Twee getallen van minstens 1 die samen hoogstens max zijn: voor plus de twee
+   termen, voor min het af te trekken getal en de uitkomst (dan is het eerste
+   getal hun som). ELK PAAR EVEN VAAK. Hier stond eerst het eerste getal loten
+   en dan het tweede binnen wat er nog over was -- dan kwam het tweede getal
+   bijna altijd klein uit, en het eind van het bereik bijna altijd uit: op Tot
+   10 was een derde van de plussommen "= 10" en een derde van de minsommen
+   "− 1". Ze oefende dus vooral +1 en −1, en "kies het grootste getal" klopte te
+   vaak. kaal: een 1 (+1, −1, en een uitkomst van 1) komt half zo vaak -- die
+   zijn er voor wie net begint, niet om de show mee te vullen. De telmodus
+   gebruikt hetzelfde paar, zonder die rem: daar ís één erbij de oefening. */
+function somPaar(max, kaal, deel) {
+  deel = deel || max - 1;
+  for (let poging = 0; poging < 60; poging++) {
+    const x = rnd(1, Math.min(deel, max - 1)), y = rnd(1, Math.min(deel, max - 1));
+    if (x + y > max) continue;
+    if (kaal && (x === 1 || y === 1) && Math.random() < 0.5) continue;
+    return [x, y];
+  }
+  return [1, 1];
+}
 /* Gaat deze som over een tiental heen? Voor plus: tellen de eenheden samen tot
    boven de tien (8 + 5 wel, 7 + 3 en 15 + 5 niet -- die landen óp een tiental).
    Voor min precies andersom: c + b moet over het tiental heen (13 − 6 wel,
@@ -1222,8 +1301,8 @@ function genTriple(s, lvl, perf, op) {
     const magBrug = brug !== 'nee';
     let poging = 0;
     do {
-      if (op === '+') { a = rnd(1, effMax - 1); b = rnd(1, effMax - a); c = a + b; }
-      else { a = rnd(2, effMax); b = rnd(1, a - 1); c = a - b; }
+      if (op === '+') { [a, b] = somPaar(effMax, true); c = a + b; }
+      else { [b, c] = somPaar(effMax, true); a = b + c; }
       const over = overTiental(a, b, c, op);
       if ((wilBrug ? over : (magBrug || !over))) break;
     } while (++poging < 40);
@@ -1256,9 +1335,28 @@ function genQuestion(s, lvl, perf) {
   const brug = (op === '+' || op === '-') && overTiental(a / m, b / m, c / m, op);
   return { tmpl: `${a} ${sym} ${b} = @`, ans: c, op, kind: 'classic', brug };
 }
-// Zoek-het-getal: het tweede getal ontbreekt ("3 + ? = 7"). Alleen + − × (delen
-// blijft voorlopig buiten beeld). 0/1 als antwoord mag, maar niet te vaak.
+/* Zoek het getal: het tweede getal ontbreekt ("3 + ▢ = 7"). Bij plus en min
+   wordt eerst het ontbrekende getal geloot, elk even vaak (een 1 zelden), en
+   dan de som eromheen. Andersom -- een gewone som maken en er een gat in
+   slaan -- was het ontbrekende getal bijna altijd klein: 1 tot 4 in de helft
+   van de vragen, en dan raad je het. De tiental-regel van haar rij (brug 'nee')
+   blijft gelden; tot 1000 is het dezelfde vraag keer tien, zoals genChain.
+   Maal (alleen nog voor oude saves die het zo aan hadden) blijft zoals hij was. */
 function genMissing(s, lvl, perf, op) {
+  if ((op === '+' || op === '-') && s.max > 100) {
+    const k = genMissing({ ...s, max: s.max / 10 }, lvl, perf, op);
+    return { ...k, ans: k.ans * 10, tmpl: k.tmpl.replace(/\d+/g, n => n * 10) };
+  }
+  if (op === '+' || op === '-') {
+    const effMax = Math.max(10, Math.round(s.max * moeilijkheid(perf, s)));
+    let a, b, c, poging = 0;
+    do {
+      b = Math.random() < 0.1 ? 1 : rnd(2, effMax - 1);
+      if (op === '+') { a = rnd(1, effMax - b); c = a + b; }
+      else { c = rnd(1, effMax - b); a = b + c; }
+    } while (s.brug === 'nee' && overTiental(a, b, c, op) && ++poging < 40);
+    return { tmpl: `${a} ${op === '+' ? '+' : '−'} @ = ${c}`, ans: b, op, kind: 'missing' };
+  }
   let tr, tries = 0;
   do { tr = genTriple(s, lvl, perf, op); tries++; }
   while (tries < 4 && (tr.b === 0 || tr.b === 1) && Math.random() < 0.7);
@@ -1386,9 +1484,12 @@ function keuzeGrens(q, s, lvl) {
   if (q.op === '+' || q.op === '-') return Math.max(hoogste, 10, s.max);
   // getallen bouwen: een cijfer blijft onder de tien, een getal onder de honderd
   if (q.op === 'bouw') return q.ans < 10 ? 10 : q.grens || 99;
-  // geld zegt het zelf: wat erboven kan liggen (zie genGeld)
-  if (q.op === 'geld') return q.grens;
-  // tafels: tot het volgende tiental
+  // maal: drie keer de tafel boven het antwoord -- de keuzes zijn de buren in
+  // de tafel (zie makeChoices), en die moeten er ook boven kunnen liggen
+  if (q.op === 'x' && q.kind === 'classic') return q.ans + 3 * getallen[1];
+  // geld, de getallenlijn en de kalender zeggen het zelf (zie hun vraagmaker)
+  if (q.grens != null) return q.grens;
+  // delen: tot het volgende tiental
   return Math.max(10, Math.ceil(hoogste / 10) * 10);
 }
 function makeChoices(q, grens) {
@@ -1399,24 +1500,35 @@ function makeChoices(q, grens) {
      liggen de keuzes ook op die maat -- 461 naast 460 streep je weg zonder te
      rekenen. Bij getallen bouwen telt alleen het antwoord: 368 = ▢ + 60 + 8
      vraagt 300, en dan staan er 200 en 400 naast, niet 299. */
-  const stap = grens > 100 ? [100, 10].find(d => (q.fouten ? [] : getallen).concat(ans).every(v => v % d === 0)) || 1 : 1;
-  // q.min: geld kent geen €0 als antwoord (zie genGeld)
-  const mag = v => Number.isInteger(v) && v >= (q.min || 0) && v <= grens && v !== ans && v % stap === 0;
+  /* DE TAFELS: de buren in de tafel. 7 × 5 had 34, 36 en 33 naast zich, en
+     dan was 35 het enige getal uit de tafel van 5 -- de helft tot driekwart
+     van de tafelsommen kon je zo zonder rekenen, en twee op de drie keer was
+     het ook nog het grootste getal (de knoppen gingen niet boven het volgende
+     tiental). Nu liggen de keuzes een, twee of drie keer de tafel ernaast
+     (30, 40, 45): één keer te weinig of te veel geteld, de fout die een kind
+     met de tafels echt maakt. Daarbij de buur uit de tafel ernaast (7 × 6),
+     als die past. Ook een zwakke som die terugkomt (zonder q.fouten) krijgt
+     dit, want het hangt alleen aan het sjabloon. */
+  const tafel = q.op === 'x' && q.kind === 'classic' && getallen.length >= 2 ? getallen[1] : 0;
+  const stap = tafel || (grens > 100 ? [100, 10].find(d => (q.fouten ? [] : getallen).concat(ans).every(v => v % d === 0)) || 1 : 1);
+  const laagst = q.min != null ? q.min : tafel || 0;
+  // q.min: geld kent geen €0 als antwoord (zie genGeld), een tafel geen 0 × 5
+  const mag = (v, vrij) => Number.isInteger(v) && v >= laagst && v <= grens && v !== ans && (vrij || v % stap === 0);
   // fouten die een kind echt maakt (een vraag kan ze zelf meegeven, zie genBouwen)
-  const fouten = new Set(q.fouten || getallen);
-  if (!q.fouten) for (let i = 0; i < getallen.length; i++)
+  const fouten = new Set(tafel ? [getallen[0] * (tafel + 1), getallen[0] * (tafel - 1)] : q.fouten || getallen);
+  if (!q.fouten && !tafel) for (let i = 0; i < getallen.length; i++)
     for (let j = i + 1; j < getallen.length; j++) {
       fouten.add(getallen[i] + getallen[j]);             // plus i.p.v. min, of er één vergeten
       fouten.add(Math.abs(getallen[i] - getallen[j]));   // min i.p.v. plus
     }
-  if (ans >= 10 && grens >= 50) { fouten.add(ans + 10 * stap); fouten.add(ans - 10 * stap); }
+  if (!tafel && ans >= 10 && grens >= 50) { fouten.add(ans + 10 * stap); fouten.add(ans - 10 * stap); }
   // Eerst loten hoeveel keuzes er onder het antwoord liggen (0 tot 3), en pas
   // dan de echte fout kiezen, aan een kant waar nog plaats is. Andersom lag de
   // fout meestal onder het antwoord (een getal uit de som is kleiner), en was
   // het antwoord bijna nooit meer het kleinste.
   const onder = rnd(0, 3);
   const keuze = new Set([ans]);
-  const fout = shuffle([...fouten].filter(v => mag(v) && (v < ans ? onder > 0 : onder < 3)))[0];
+  const fout = shuffle([...fouten].filter(v => mag(v, !!tafel) && (v < ans ? onder > 0 : onder < 3)))[0];
   if (fout != null) keuze.add(fout);
   // de rest vlak ernaast
   const ernaast = kant => shuffle([1, 2, 3].map(d => ans + kant * d * stap).filter(v => mag(v) && !keuze.has(v)))[0];
@@ -1741,8 +1853,7 @@ function genCount(p) {
     q.choices = countDistractors(q.ans, nCh, q.ans === 0 ? 0 : 1, max, d.delta).map(qgroup);
     q.prompt = dir > 0 ? 'Er komt er één bij. Hoeveel zijn het er nu?' : 'Er gaat er één weg. Hoeveel zijn het er nu?';
   } else if (type === 'combine') {                 // twee groepjes samen
-    const a = rnd(1, Math.max(1, max - 1));
-    const b = rnd(1, Math.max(1, max - a));
+    const [a, b] = somPaar(max);   // elk paar even vaak (zie somPaar)
     q.ans = a + b;
     q.card = { kind: 'combine', a, b, emoji, frame, repr };
     q.choices = countDistractors(q.ans, nCh, 1, max, d.delta).map(qgroup);
@@ -1780,8 +1891,9 @@ function genCount(p) {
   } else if (type === 'sumsym') {                   // visuele som met tekens (＋ ➖ ＝), antwoord = groep
     const sub = Math.random() < 0.4;
     let a, b;
-    if (!sub) { a = rnd(1, Math.min(5, Math.max(1, max - 1))); b = rnd(1, Math.min(5, max - a)); }   // groepjes klein & subitiseerbaar
-    else { a = rnd(2, Math.min(6, max)); b = rnd(1, a - 1); }
+    // groepjes klein & subitiseerbaar; elk paar even vaak (zie somPaar)
+    if (!sub) [a, b] = somPaar(max, false, 5);
+    else { const [x, y] = somPaar(Math.min(6, max)); a = x + y; b = x; }
     const c = sub ? a - b : a + b;
     q.ans = c;
     q.card = { kind: 'sum', style: 'sym', op: sub ? '-' : '+', a, b, c, emoji, repr };
@@ -1791,8 +1903,8 @@ function genCount(p) {
   } else if (type === 'sumdots' || type === 'sumwritten') {   // som met cijfers; stippen altijd (dots) of vervagend (written)
     const sub = Math.random() < 0.4;
     let a, b;
-    if (!sub) { a = rnd(1, max - 1); b = rnd(1, max - a); }
-    else { a = rnd(2, max); b = rnd(1, a - 1); }
+    if (!sub) [a, b] = somPaar(max);
+    else { const [x, y] = somPaar(max); a = x + y; b = x; }
     const c = sub ? a - b : a + b;
     const style = type === 'sumdots' ? 'dots' : 'written';
     const support = style === 'dots' ? 'full' : d.support;   // cijfers-met-stippen houdt de stippen; geschreven laat ze vervagen
@@ -2667,14 +2779,27 @@ function wereldAccent(lvl, nuId) {
 }
 // s = vraagInst (haar rij erover), accent = wereldAccent, bezet = plekken van
 // een ander thema (zie themaPlan): zoek het getal en drie getallen zijn sommen
-function planSpecials(p, s, total, accent, goldIdx, bezet) {
+/* OP HAAR EIGEN RIJ (rijNu 'zoek' of 'drie') is die soort het nieuwe, en dan
+   krijgt hij EIGEN_RIJ_PLEKKEN plekken in plaats van één: op de rij Drie
+   getallen zag ze er anders twee tot vier voor de rij gehaald was, en werd ze
+   beoordeeld op de gewone sommen eromheen. Daar wacht hij ook niet op
+   "beheerst" (opMastered): de rij zegt al dat het tijd is. Alleen een pauze
+   (het lukte echt niet) houdt hem tegen -- en dan wacht de rij, want rijVerder
+   telt de vragen van de rij zelf. */
+const EIGEN_RIJ_PLEKKEN = 3;
+function planSpecials(p, s, total, accent, goldIdx, bezet, rijNu) {
   const missOps = s.ops.filter(o => ['+', '-', 'x'].includes(o) && opReady(p, o, s));
   const missAvail = missOps.length > 0;
   const chainAvail = chainReady(p, s);
   const twoOk = s.perLevel >= 8;   // 2 speciale vragen alleen bij lange optredens (≥8)
   const both = missAvail && chainAvail;
-  let types = [];
-  if (accent === 'miss' && missAvail) {
+  const eigenOps = rijNu === 'zoek' && s.missNum ? s.ops.filter(o => (o === '+' || o === '-') && !(p.opTrack[o] && p.opTrack[o].paused)) : [];
+  const eigenDrie = rijNu === 'drie' && s.chain3 && s.ops.includes('+') && !(p.chainTrack && p.chainTrack.paused);
+  let types = [], eigen = false;
+  if (eigenOps.length || eigenDrie) {
+    eigen = true;
+    types = Array(twoOk ? EIGEN_RIJ_PLEKKEN : 2).fill(eigenDrie ? 'chain' : 'miss');
+  } else if (accent === 'miss' && missAvail) {
     types = twoOk ? ['miss', 'miss'] : ['miss'];
   } else if (accent === 'chain' && chainAvail) {
     // ook hier: in de introductiefase hoogstens één drie-getallen-vraag
@@ -2694,14 +2819,14 @@ function planSpecials(p, s, total, accent, goldIdx, bezet) {
   // (geen van beide beschikbaar: types blijft leeg -- géén speciale vraag)
   // hoeveel speciale plekken passen er (niet de eerste, niet naast elkaar/de gouden)?
   const fit = Math.max(0, Math.floor((total - 1) / 2));
-  const cap = Math.min(fit, twoOk ? 2 : 1);
+  const cap = Math.min(fit, eigen ? types.length : twoOk ? 2 : 1);
   if (types.length > cap) types = types.slice(0, cap);
   const vrijePlekken = Array.from({ length: total }, (_, i) => i).filter(i => i > 0 && !(bezet || []).includes(i) && i !== goldIdx);
   if (types.length > vrijePlekken.length) types = types.slice(0, vrijePlekken.length);
   const slots = pickSlots(total, types.length, (goldIdx >= 0 ? [goldIdx] : []).concat(bezet || []));
   const plan = {};
   slots.forEach((idx, i) => {
-    plan[idx] = { type: types[i], op: types[i] === 'miss' ? pick(missOps) : '+' };
+    plan[idx] = { type: types[i], op: types[i] === 'miss' ? pick(eigen ? eigenOps : missOps) : '+' };
   });
   return plan;
 }

@@ -2288,11 +2288,11 @@ zaak('KA', () => {
   check(!app.themaAan(s, 'kalender'), 'KA · een verse ster: de kalender staat uit', JSON.stringify(s.themas));
   const mis = [];
   for (const r of app.KALENDERPAD) for (const v of ['lees', 'zoek']) for (let i = 0; i < 200; i++) {
-    const q = app.genKalender(r, v);
+    const q = app.genKalender(r, v), knop = app.makeChoices(q, app.keuzeGrens(q, s, 1));   // de knoppen zoals het spel ze legt
     if (q.rij !== r.id || !q.html.includes('@')) mis.push(`${r.id}/${v} vorm`);
-    if (!q.keuzes.includes(q.ans) || q.keuzes.length !== 4 || new Set(q.keuzes).size !== 4) mis.push(`${r.id}/${v} keuzes ${q.keuzes}`);
+    if (!knop.includes(q.ans) || knop.length !== 4 || new Set(knop).size !== 4) mis.push(`${r.id}/${v} keuzes ${knop}`);
     if (q.soort !== 'getal' && !q.kiezen) mis.push(`${r.id}/${v} een woord moet kiezen`);
-    if (q.keuzes.some(k => !app.toonAntwoord(q, k))) mis.push(`${r.id}/${v} lege knop`);
+    if (knop.some(k => !app.toonAntwoord(q, k))) mis.push(`${r.id}/${v} lege knop`);
   }
   check(!mis.length, 'KA · elke rij, elke vorm: het antwoord tussen vier verschillende keuzes, woorden altijd kiezen', [...new Set(mis)].slice(0, 3).join(' | '));
   /* het antwoord staat nooit al in de vraag: niet zijn woord, en bij een seizoen niet zijn teken -- dat
@@ -2389,15 +2389,17 @@ zaak('GL', () => {
     if (r.sprong && !/<text x="[\d.]+" y="76">10<\/text>/.test(q.html)) mis.push(naam + ' zonder 10');
   }
   check(!mis.length, 'GL · elke rij, elke vorm: het antwoord op de lijn, op een streepje, verschillende keuzes', [...new Set(mis)].slice(0, 3).join(' | '));
-  // de echte getallen: een sprong over 10 gaat in twee keer via 10, afronden naar het dichtste tiental
+  // de echte getallen: een sprong over 10 gaat in twee keer via 10, afronden naar het dichtste tiental of honderdtal
   const fout = [];
+  let vijf = 0, drie = 0;
   for (let i = 0; i < 300; i++) {
     let q = app.genLijn(app.LIJNPAD[1], 'lees'); const [, , a, d] = q.tmpl.split(' ').map(Number), bogen = q.html.split('class="boog"').length - 1;
     if (q.ans !== a + d || bogen !== (a < 10 && a + d > 10 ? 2 : 1)) fout.push(`${q.tmpl}: ${q.ans}, ${bogen} bogen`);
-    q = app.genLijn(app.LIJNPAD[5], 'lees'); const n = +q.tmpl.split(' ').pop();
-    if (q.ans !== Math.round(n / 10) * 10 || n % 10 === 5) fout.push(`${q.tmpl}: ${q.ans}`);
+    q = app.genLijn(app.LIJNPAD[5], 'lees'); const n = +q.tmpl.split(' ').pop(), maat = q.keuzes[1] - q.keuzes[0];
+    if (q.ans !== Math.floor((n + maat / 2) / maat) * maat || !q.keuzes.includes(q.ans) || ![10, 100].includes(maat)) fout.push(`${q.tmpl}: ${q.ans}`);
+    vijf += n % 10 === 5 ? 1 : 0; drie += n > 100 ? 1 : 0;
   }
-  check(!fout.length, 'GL · klopt: 8 + 5 gaat via 10 in twee sprongen, 47 ≈ 50 (nooit een 5 in het midden)', fout.slice(0, 3).join(' | '));
+  check(!fout.length && vijf > 5 && drie > 60, `GL · klopt: 8 + 5 gaat via 10 in twee sprongen, 47 ≈ 50, 45 ≈ 50 (een 5 naar boven, zoals op school), en ook 347 ≈ 350 en 370 ≈ 400 (${vijf} vijven, ${drie} van drie cijfers op 300)`, fout.slice(0, 3).join(' | '));
   // een tik telt voor het dichtste streepje, ook net ernaast en buiten de lijn
   const tq = { bereik: [300, 500, 10, 100] }, b = 320, x = v => (16 + (v - 300) / 200 * 288) / 320 * b;
   check(app.lijnRaak(tq, x(370), b) === 370 && app.lijnRaak(tq, x(370) + 3, b) === 370 && app.lijnRaak(tq, x(374), b) === 370 && app.lijnRaak(tq, x(376), b) === 380
@@ -2457,6 +2459,110 @@ zaak('SO', () => {
     } catch (e) { kapot.push(naam + ': ' + e.message); }
   }
   check(!kapot.length, 'SO · elke combinatie van thema\'s (leerpad en Zelf kiezen, 8 en 5 vragen) zet een show op en speelt hem uit', kapot.slice(0, 4).join('; '));
+});
+
+/* KZ · De knoppen van élke rij van élk thema, zoals het spel ze legt
+   (makeChoices met keuzeGrens). Een vraagmaker die zijn eigen lijstje maakte
+   had het antwoord altijd op dezelfde plek (bij de weken altijd het derde
+   getal van klein naar groot), bij de tafels was het antwoord het enige getal
+   uit de tafel, en op Tot 10 was een derde van de plussommen "= 10". Een
+   nieuwe rij of een nieuw thema valt hier vanzelf onder.
+     · vier verschillende knoppen (afronden: twee) met het antwoord erbij;
+     · waar de knoppen getallen zijn: het antwoord even vaak het kleinste, het
+       grootste of ertussen (elke plek 10% tot 40%) -- woorden, dagen en
+       klokjes hebben geen volgorde die je ziet, die tellen hier niet;
+     · de sommen: geen antwoord in meer dan 20% van de vragen;
+     · de tafels: het antwoord is zelden het enige getal uit de tafel. */
+zaak('KZ', () => {
+  const { app, p } = verseSter('Knop');
+  const N = 1500, mis = [];
+  const meet = (naam, maak, getallen, som) => {
+    const plek = [0, 0, 0, 0], ans = {}, enige = { n: 0 };
+    for (let i = 0; i < N; i++) {
+      const { q, s } = maak();
+      if (q.tik) continue;
+      const k = app.makeChoices(q, app.keuzeGrens(q, s, 1)), wil = q.knop === 'twee' ? 2 : 4;
+      if (k.length !== wil || new Set(k).size !== wil || !k.includes(q.ans)) { mis.push(`${naam}: ${q.tmpl} -> ${k}`); return; }
+      plek[k.slice().sort((a, b) => a - b).indexOf(q.ans)]++;
+      ans[q.ans] = (ans[q.ans] || 0) + 1;
+      if (q.op === 'x') { const b = +q.tmpl.match(/\d+/g)[1]; if (k.filter(v => v % b === 0).length === 1) enige.n++; }
+    }
+    const n = plek.reduce((a, b) => a + b, 0);
+    if (getallen && n && plek.some(v => v / n < 0.1 || v / n > 0.4)) mis.push(`${naam}: plek ${plek.map(v => Math.round(100 * v / n)).join('/')}`);
+    const top = Math.max(...Object.values(ans));
+    if (som && n && top / n > 0.2) mis.push(`${naam}: één antwoord in ${Math.round(100 * top / n)}%`);
+    if (n && enige.n / n > 0.3) mis.push(`${naam}: het enige uit de tafel in ${Math.round(100 * enige.n / n)}%`);
+  };
+  // rekenen: elke rij van tot 1000, met haar vragen zoals de show ze bouwt
+  p.settings.max = 1000;
+  for (const [i, r] of app.LEERPAD.entries()) {
+    p.pad = { klaar: app.LEERPAD.slice(0, i).map(x => x.id) };
+    const s = app.vraagInst(p);
+    const g = () => ({ idx: 3, qs: [], herhaald: new Set(), themaPlan: Array(8).fill('rekenen'), insts: { rekenen: s } });
+    meet('rekenen ' + r.id, () => ({ s, q: r.id === 'zoek' ? app.genMissing(s, 1, 0.5, Math.random() < 0.5 ? '+' : '-') : r.id === 'drie' ? app.genChain(s, 1, 0.5) : app.buildQuestion(p, 1, g()) }), true, r.id !== 'drie');
+  }
+  p.pad = null;
+  // de tafels: × en ÷, elke rij
+  for (const ops of [['x'], [':']]) for (const [i, r] of app.TAFELPAD.entries()) {
+    const t = verseSter('Tafel').p; t.settings.ops = ops; t.tafels = { klaar: app.TAFELPAD.slice(0, i).map(x => x.id) };
+    const s = app.themaInst(t, 'tafels');
+    meet(`tafels ${ops} ${r.id}`, () => ({ s, q: app.buildQuestion(t, 1, { idx: 3, qs: [], herhaald: new Set(), themaPlan: Array(8).fill('tafels'), insts: { tafels: s } }) }), true, false);
+  }
+  // geld, de klok, de kalender en de getallenlijn: elke rij, elke vorm
+  const maker = { geld: app.genGeld, klok: app.genKlok, kalender: app.genKalender, lijn: app.genLijn };
+  for (const k of Object.keys(maker)) for (const r of app.LADDERS[k].pad) for (const v of ['lees', 'zoek']) {
+    const q0 = maker[k](r, v);
+    const getallen = k === 'geld' || k === 'lijn' || q0.soort === 'getal';
+    meet(`${k} ${r.id} ${v}`, () => ({ s: p.settings, q: maker[k](r, v) }), getallen && q0.knop !== 'twee', false);
+  }
+  check(!mis.length, 'KZ · elke rij van elk thema: vier verschillende knoppen met het antwoord, op een gelote plek, geen antwoord dat overheerst, en bij de tafels niet het enige uit de tafel', mis.slice(0, 5).join(' | '));
+  // B4: in welk seizoen valt deze maand -- nooit een maand waarin het seizoen wisselt
+  const grens = [2, 5, 8, 11].map(m => app.MAANDEN[m]);
+  const wissel = Array.from({ length: 400 }, () => app.genKalender(app.KALENDERPAD[3], 'zoek')).filter(q => grens.some(m => q.html.includes('>' + m + '<')));
+  check(!wissel.length, 'KZ · "in welk seizoen?" vraagt nooit maart, juni, september of december (de lente begint op 21 maart)', wissel.slice(0, 2).map(q => q.tmpl).join());
+  // somPaar: elk paar even vaak, en een 1 half zo vaak -- op Tot 10 geen derde meer "= 10" of "− 1"
+  const paren = Array.from({ length: 20000 }, () => app.somPaar(10, true));
+  const tien = paren.filter(([x, y]) => x + y === 10).length / paren.length, een = paren.filter(([x, y]) => x === 1 || y === 1).length / paren.length;
+  check(paren.every(([x, y]) => x >= 1 && y >= 1 && x + y <= 10) && tien < 0.25 && een < 0.3, `KZ · tot 10: ${Math.round(100 * tien)}% "= 10" en ${Math.round(100 * een)}% met een 1 (eerst allebei een derde)`, '');
+  // zoek het getal: het ontbrekende getal is niet meer meestal klein
+  p.settings.max = 20; p.pad = { klaar: ['tot10', 'tot20', 'brug20'] };
+  const zs = app.vraagInst(p), klein = Array.from({ length: 4000 }, () => app.genMissing(zs, 1, 0.9, '+')).filter(q => q.ans <= 4).length / 4000;
+  check(klein < 0.3, `KZ · zoek het getal tot 20: het ontbrekende getal is 1 tot 4 in ${Math.round(100 * klein)}% (eerst 45%)`, '');
+});
+
+/* RV · Een rij is pas gehaald met genoeg vragen van die rij (rijVerder). Shows
+   alleen zeiden te weinig: met zes thema's aan kreeg een thema één vraag per
+   show, en was een rij gehaald na twee of drie vragen. */
+zaak('RV', () => {
+  const { app, p } = verseSter('Rij');
+  app.themaZet(p.settings, 'kalender', true);
+  const nu = () => app.ladderNu(p, 'kalender');
+  // één vraag per show, en elke keer goed: drie shows is niet genoeg meer
+  for (let i = 0; i < 3; i++) app.ladderNa(p, 'kalender', 3, [true]);
+  check(nu() === 'morgen', 'RV · drie goede shows met elk één vraag van de rij: nog niet gehaald', nu());
+  let shows = 3;
+  while (nu() === 'morgen' && shows < 40) { app.ladderNa(p, 'kalender', 3, [true]); shows++; }
+  check(shows === app.PAD_MIN_VRAGEN, `RV · gehaald na ${app.PAD_MIN_VRAGEN} goede vragen van de rij (${shows} shows)`, String(shows));
+  // twee missers in de laatste zes: wacht; de weg "toch" komt na genoeg vragen
+  const q = verseSter('Mis'), mp = q.p; q.app.themaZet(mp.settings, 'kalender', true);
+  for (let i = 0; i < 12; i++) q.app.ladderNa(mp, 'kalender', 3, [i % 3 !== 0]);
+  check(q.app.ladderNu(mp, 'kalender') === 'morgen', 'RV · één op drie mis in de vragen van de rij: nog niet gehaald, ook niet na twaalf shows', JSON.stringify(mp.kalender));
+  for (let i = 0; i < 6; i++) q.app.ladderNa(mp, 'kalender', 2, [i % 3 !== 0]);
+  check(q.app.ladderNu(mp, 'kalender') === 'seizoen', `RV · maar na ${q.app.PAD_MAX_VRAGEN} vragen en ${q.app.PAD_MAX_SHOWS} shows toch verder`, JSON.stringify(mp.kalender));
+  // met alleen rekenen (acht vragen per show) verandert er niets: drie shows, de laatste twee foutloos
+  const r = verseSter('Reken'), rp = r.p;
+  [3, 3, 3].forEach(() => r.app.padNa(rp, 3, Array(5).fill(true)));
+  check(r.app.padNu(rp) === 'tot20', 'RV · alleen rekenen: na drie foutloze shows door, zoals altijd', r.app.padNu(rp));
+  // de antwoorden: alleen de vragen van dat thema die het nieuwe van de rij laten zien
+  const g = { themaPlan: ['rekenen', 'kalender', 'rekenen'], uitslag: ['goed', 'hint', 'goed'],
+    qs: [{ kind: 'classic', op: '+', tmpl: '13 + 4 = @', ans: 17 }, { kind: 'kalender', rij: 'morgen' }, { kind: 'classic', op: '+', tmpl: '3 + 4 = @', ans: 7 }] };
+  check(r.app.rijAntwoorden(g, 'rekenen', 'tot20').join() === 'true' && r.app.rijAntwoorden(g, 'kalender', 'morgen').join() === 'false',
+    'RV · rijAntwoorden telt per thema alleen het nieuwe van de rij (13 + 4 op Tot 20, niet 3 + 4)', '');
+  // op de rij Zoek het getal zelf: drie plekken voor zoek het getal, ook als het nog niet "beheerst" is
+  const z = verseSter('Zoek'), zp = z.p;
+  zp.pad = { klaar: ['tot10', 'tot20', 'brug20'] };
+  const plan = z.app.planSpecials(zp, z.app.vraagInst(zp), 8, null, -1, [], 'zoek');
+  check(Object.values(plan).filter(x => x.type === 'miss').length === 3, 'RV · op de rij Zoek het getal: drie vragen zoek het getal per show', JSON.stringify(plan));
 });
 
 /* TW · Een toast gaat vanzelf weg. showToast plant dat zelf in (zie DE REGEL in
