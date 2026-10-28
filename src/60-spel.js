@@ -37,7 +37,8 @@ function startLevel(lvl, eigenOvergang) {
   /* inst: de instellingen voor de vraagmaker, met haar rij op het leerpad erover
      (zie vraagInst). Eén keer per show: de rij verandert pas in endLevel. */
   const inst = count ? null : vraagInst(p);
-  const plan = count ? [] : planSpecials(p, inst, s.perLevel, wereldAccent(lvl, padNu(p)), goldIdx);
+  // Zelf kiezen (inst.vrij) kent geen accent per wereld: daar is het de keuze van de ouder
+  const plan = count ? [] : planSpecials(p, inst, s.perLevel, inst.vrij ? null : wereldAccent(lvl, padNu(p)), goldIdx);
   // FASE 1: de publieksmeter is uit het spel gehaald. De teller zelf loopt stil door
   // (zie submitAnswer/endLevel): hij bepaalt nog altijd het applaus en de restbonus,
   // maar er staat geen balk meer op het scherm. G.fan/G.fanStep zijn daarmee interne
@@ -996,7 +997,10 @@ function groeiMoment(p, g, voor, rij) {
    fase. Een andere modus is ook een andere stap. Alleen voor het ouderrapport:
    het zegt waar de shows in p.stap bij horen. */
 function stapSleutel(p) {
-  return p.settings.track === 'count' ? 'fase' + countLiveStage(p) : 'pad:' + padNu(p);
+  const s = p.settings;
+  // Zelf kiezen: wat er aangevinkt staat is de stap -- vink je iets bij, dan begint het label opnieuw
+  if (zelfGekozen(s)) return 'vrij:' + (s.track === 'count' ? kiesFasen(s) : kiesGekozen(s).map(r => r.id).concat(s.ops.filter(o => o === 'x' || o === ':'))).join(',');
+  return s.track === 'count' ? 'fase' + countLiveStage(p) : 'pad:' + padNu(p);
 }
 /* De uitkomst onthouden, met de stap waar hij bij hoort (stap = stapSleutel van
    vóór de show: de show die haar een stap verder brengt telde nog op de oude).
@@ -1109,15 +1113,17 @@ function endLevel(success) {
   applyRampUpdates(p, G);   // frequentie-trap van de extra uitdagingen bijstellen
   const faseVoor = G.count ? countLiveStage(p) : 0;   // voor groeiMoment
   const stapVoor = stapSleutel(p);                     // de stap waar deze show bij hoort (zie onthoudUitkomst)
-  if (G.count) {
+  // Zelf kiezen: ze speelt wat de ouder aanvinkte, en daar schuift niets aan (zie zelfGekozen)
+  const vrij = zelfGekozen(p.settings);
+  if (G.count && !vrij) {
     advanceCountStage(p, success, success && showStars(G) === 3);   // telmodus: fase mee laten klimmen/zakken
     telPlafondTel(p, success ? showStars(G) : 0);
   }
   onthoudUitkomst(p, success ? showStars(G) : 0, stapVoor);   // voor de stand in Voortgang (beide takken hieronder bewaren)
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;   // een show verder gewend aan de grens
-  if (!G.count && success) telGrensDrie(p, showStars(G));   // voor de grenstip (zie grensDrieSterren)
+  if (!G.count && success && !vrij) telGrensDrie(p, showStars(G));   // voor de grenstip (zie grensDrieSterren)
   // een show verder op haar rij van het leerpad; schoof ze door, dan is dit haar nieuwe rij
-  const nieuweRij = !G.count && padNa(p, success ? showStars(G) : 0) ? padNu(p) : null;
+  const nieuweRij = !G.count && !vrij && padNa(p, success ? showStars(G) : 0) ? padNu(p) : null;
   /* Wat er pas ná het eindscherm gevierd wordt (zie de staart van deze
      functie): een wereld die net uit of perfect werd. Bij een mislukte show
      blijft het leeg. */

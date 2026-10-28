@@ -990,7 +990,7 @@ zaak('Q', () => {
   check(nu() === 'tot10' && p.pad === null, 'Q · een verse ster begint vooraan', nu());
   check(padNamen(app, p.settings) === 'Tot 10,Tot 20,Over het tiental,Zoek het getal,Drie getallen',
     'Q · + − tot 20: de rijen in de volgorde van school', padNamen(app, p.settings));
-  check(app.padRijen(p.settings).later.map(r => r.naam).join() === 'Getallen bouwen,Tientallen,Tot 100,Over het tiental',
+  check(app.padRijen(p.settings).later.map(r => r.naam).join() === 'Getallen bouwen tot 100,Tientallen,Tot 100,Over het tiental tot 100',
     'Q · onder de lijn staat alleen het volgende blok', app.padRijen(p.settings).later.map(r => r.naam).join());
 
   // beheersing: minstens drie shows, de laatste twee met drie sterren
@@ -1224,6 +1224,13 @@ zaak('Q5', () => {
   let over = 0;
   for (let k = 0; k < 200; k++) if (app.genQuestion({ ...p.settings, ...op('brug1000'), ops: ['+'] }, 1, 0.5).brug) over++;
   check(over > 40, 'Q5 · op Over het honderdtal gaat een flink deel erover (en telt als brug)', `${over}/200`);
+  // Zelf kiezen: elke rij tot 1000 speelt precies zichzelf
+  const kies = id => { const k = { ...p.settings, modus: 'vrij', ops: ['+', '-'], kies: [id] }; return app.kiesInst(k); };
+  const uitKies = (id, n) => Array.from({ length: n }, () => app.run('kiesVraag')(kies(id), 1, 0.5, []));
+  check(uitKies('honderdtallen', 60).every(q => (q.tmpl.match(/\d+/g) || []).every(v => v % 100 === 0)),
+    'Q5 · Zelf kiezen, alleen Honderdtallen: alles hele honderdtallen', '');
+  check(uitKies('bouwen1000', 30).every(q => q.kind === 'bouw' && q.grens === 999), 'Q5 · Zelf kiezen, Getallen bouwen tot 1000: met platen', '');
+  check(uitKies('brug1000', 60).every(q => q.brug), 'Q5 · Zelf kiezen, alleen Over het honderdtal: altijd erover', JSON.stringify(uitKies('brug1000', 60).filter(q => !q.brug).slice(0, 3)));
 });
 
 /* ================= Q4 · De lijn "tot" is een rij =================
@@ -1759,9 +1766,17 @@ zaak('ZE', () => {
     const fout = Object.entries(gezien).filter(([k, ks]) => !(kaarten[track][ks[0]] || []).includes(k));
     check(!fout.length, `ZE · ${track}: elke bediening staat in de kaart die OEFEN_INSTELLINGEN zegt`, JSON.stringify(fout));
     if (opts.ops && opts.ops.length === 4 || track === 'count') {
+      /* De kaart pad wisselt met de modus (Leerpad of Zelf kiezen): samen
+         hebben ze elke instelling, en elk alleen de zijne. */
+      const vrij = app.run('oefenGroups')({ ...s, modus: 'vrij' }, '', null);
+      for (const g of vrij) for (const [, k] of g.html.matchAll(/data-instelling="(\w+)"/g)) (gezien[k] = gezien[k] || []).push(g.kaart);
       const alle = Object.values(kaarten[track]).flat();
       const mist = alle.filter(k => !gezien[k]);
-      check(!mist.length, `ZE · ${track}: met alles aan heeft elke instelling een bediening`, JSON.stringify(mist));
+      check(!mist.length, `ZE · ${track}: met alles aan heeft elke instelling een bediening (leerpad + zelf kiezen)`, JSON.stringify(mist));
+      const pad = groepen.find(g => g.kaart === 'pad').html, kies = vrij.find(g => g.kaart === 'pad').html;
+      check(/data-instelling="(padVanaf|stage)"/.test(pad) && !/data-instelling="kies/.test(pad)
+        && /data-instelling="kies/.test(kies) && !/data-instelling="(padVanaf|stage)"/.test(kies),
+        `ZE · ${track}: het leerpad heeft zijn lijnen, Zelf kiezen zijn vinkjes, nooit allebei`, '');
     }
   }
 });
@@ -1853,10 +1868,10 @@ zaak('ZF', () => {
   check(maal.map(st => `${st.naam}=${st.vb}`).join() === 'Tafels=7 × 8,Zoek het getal=3 × ▢ = 24',
     'ZF · alleen ×: tafels, en zoek het getal met een tafel die aan staat', maal.map(st => `${st.naam}=${st.vb}`).join());
   const alles = padNamen(app, instVan(app, { ops: ['+', '-', 'x', ':'], max: 100 }));
-  check(alles === 'Tot 10,Tot 20,Over het tiental,Tafels,Delen,Zoek het getal,Drie getallen,Getallen bouwen,Tientallen,Tot 100,Over het tiental',
+  check(alles === 'Tot 10,Tot 20,Over het tiental,Tafels,Delen,Zoek het getal,Drie getallen,Getallen bouwen tot 100,Tientallen,Tot 100,Over het tiental tot 100',
     'ZF · alles aan tot 100: de hele ladder in de volgorde van school', alles);
   const duizend = padNamen(app, instVan(app, { ops: ['+', '-'], max: 1000 }));
-  check(duizend.endsWith('Tot 100,Over het tiental,Getallen bouwen,Honderdtallen,Tot 1000,Over het honderdtal'),
+  check(duizend.endsWith('Tot 100,Over het tiental tot 100,Getallen bouwen tot 1000,Honderdtallen,Tot 1000,Over het honderdtal'),
     'ZF · tot 1000: het blok van het derde leerjaar komt erachter', duizend);
   // de tafels zijn heel vanaf de eerste show, ook voor een kind dat worstelt
   const s = instVan(app, { ops: ['x', ':'], tables: [7] });
@@ -1936,6 +1951,64 @@ zaak('ZH', () => {
   const tel = app.run('leerpadHtml(db.profiles.p1)');
   check(tel.includes('Tellen 1–3 … Meer / minder') && !/Fase 1/.test(tel),
     'ZH · ook bij tellen: de namen van de fases', (tel.match(/fl-rij klaar[\s\S]*?<\/div>/) || [''])[0].replace(/<[^>]+>/g, ' '));
+});
+
+/* ================= ZI · Zelf kiezen: precies wat er aangevinkt staat =================
+   Naast het leerpad (dat zelf doorschuift) kan een ouder zeggen wat er gespeeld
+   wordt (s.modus 'vrij', zie zelfGekozen in 55-vragen). Elke vraag komt dan uit
+   één aangevinkte rij, met de regels van die rij alleen -- en niets schuift
+   door: geen tip, en bij "gaat vlot" zegt het label "Klaar voor meer". */
+zaak('ZI', () => {
+  const { app, p } = verseSter('Kies');
+  const s = p.settings;
+  p.weak = {}; p.learned = {};
+  const vragen = (n) => { const inst = app.vraagInst(p); const g = { idx: 0, qs: [], inst }; return Array.from({ length: n || 150 }, () => app.buildQuestion(p, 1, g)); };
+  const getallen = q => (q.tmpl.match(/\d+/g) || []).map(Number);
+  s.modus = 'vrij'; s.ops = ['+', '-']; s.max = 10;
+  check(app.zelfGekozen(s) && !app.zelfGekozen({ ...s, modus: undefined }), 'ZI · modus vrij is Zelf kiezen, zonder modus het leerpad (oude saves)', '');
+  check(app.kiesRijen(s).map(r => r.id).join() === 'tot10,tot20,brug20,zoek,drie,bouwen100,tientallen,tot100,brug100,bouwen1000,honderdtallen,tot1000,brug1000',
+    'ZI · aan te vinken: alle + − rijen, ook boven de grens van het leerpad', app.kiesRijen(s).map(r => r.id).join());
+  s.kies = ['brug20'];
+  let qs = vragen();
+  check(qs.every(q => q.kind === 'classic' && q.brug && Math.max(...getallen(q), q.ans) <= 20),
+    'ZI · alleen Over het tiental: elke som gaat over het tiental, tot 20', qs.filter(q => !q.brug).slice(0, 3).map(q => q.tmpl).join(' | '));
+  s.kies = ['tientallen'];
+  qs = vragen();
+  check(qs.every(q => getallen(q).every(n => n % 10 === 0)), 'ZI · alleen Tientallen: hele tientallen', qs.filter(q => getallen(q).some(n => n % 10)).slice(0, 3).map(q => q.tmpl).join(' | '));
+  s.kies = ['zoek'];
+  check(vragen().every(q => q.kind === 'missing'), 'ZI · alleen Zoek het getal: elke vraag zoekt het getal (zonder op beheersing te wachten)', '');
+  s.kies = ['bouwen100'];
+  check(vragen().every(q => q.kind === 'bouw'), 'ZI · alleen Getallen bouwen: elke vraag bouwt', '');
+  s.kies = ['tot10']; s.ops = ['+', 'x']; s.tables = [3];
+  qs = vragen();
+  const pm = qs.filter(q => q.op === '+'), keer = qs.filter(q => q.op === 'x');
+  check(pm.length && keer.length && pm.every(q => q.ans <= 10) && keer.every(q => getallen(q)[1] === 3) && qs.every(q => q.op === '+' || q.op === 'x'),
+    'ZI · × uit de kaart Sommen speelt mee, naast de aangevinkte + rij', `${pm.length} plus, ${keer.length} keer`);
+  check(Object.keys(app.planSpecials(p, app.vraagInst(p), 8, null, -1)).length === 0, 'ZI · geen ingeroosterde extra vragen: wat er speelt is wat er aanstaat', '');
+  // niets schuift door, en geen tip
+  s.ops = ['+', '-'];
+  for (let i = 0; i < 6; i++) app.onthoudUitkomst(p, 3, app.run('stapSleutel(db.profiles.p1)'));
+  check(app.run('vgStand(db.profiles.p1)') === 'meer' && app.run('grensTip(db.profiles.p1)') === null,
+    'ZI · gaat het vlot: "Klaar voor meer", zonder tip die een lijn verzet', app.run('vgStand(db.profiles.p1)'));
+  s.kies = ['tot10', 'tot20'];
+  check(app.run('vgStand(db.profiles.p1)') !== 'meer', 'ZI · iets bijgevinkt: het label begint opnieuw', app.run('vgStand(db.profiles.p1)'));
+  const html = app.run('leerpadHtml(db.profiles.p1)');
+  check(/Zelf gekozen/.test(html) && /Tot 10/.test(html) && /Tot 20/.test(html) && !/niveau-bezig/.test(html),
+    'ZI · Voortgang: wat er aangevinkt staat, zonder "hier"', '');
+  // naar Zelf kiezen: de rij waar ze op het leerpad is staat al aan
+  delete s.modus; s.max = 20; s.kies = undefined;
+  p.pad = { klaar: ['tot10', 'tot20'], rij: 'brug20', shows: 0, goed: 0 };
+  check(app.kiesStart(p).join() === 'brug20', 'ZI · start: de rij waar ze nu is', app.kiesStart(p).join());
+  s.ops = ['+', '-', 'x'];
+  p.pad = { klaar: ['tot10', 'tot20', 'brug20'], rij: 'tafels', shows: 0, goed: 0 };
+  check(app.kiesStart(p).join() === 'brug20', 'ZI · start op Tafels: de laatste + − rij die ze had (× staat al in Sommen)', app.kiesStart(p).join());
+  // tellen: elke vraag uit een aangevinkte fase, en de fase schuift niet
+  const t = app.defaultProfile('Tel', 'dress_roze', app.COUNT_OPTS);
+  t.settings.modus = 'vrij'; t.settings.kiesFasen = [3, 7];
+  const fases = new Set(Array.from({ length: 80 }, () => app.telFase(t)));
+  check([...fases].sort().join() === '3,7', 'ZI · tellen: elke vraag uit een aangevinkte fase', [...fases].join());
+  check(app.run('stapSleutel')({ settings: t.settings }) !== app.run('stapSleutel')({ settings: { ...t.settings, kiesFasen: [3] }, countTrack: t.countTrack }),
+    'ZI · tellen: een andere keuze is een andere stap', '');
 });
 
 klaar();

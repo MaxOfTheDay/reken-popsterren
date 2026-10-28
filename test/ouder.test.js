@@ -383,7 +383,7 @@ function check(ok, label, detail) {
       };
     });
     let r = await pad();
-    check(r.namen === 'Tot 10,Tot 20,Over het tiental,Zoek het getal,Drie getallen,Getallen bouwen,Tientallen,Tot 100,Over het tiental'
+    check(r.namen === 'Tot 10,Tot 20,Over het tiental,Zoek het getal,Drie getallen,Getallen bouwen tot 100,Tientallen,Tot 100,Over het tiental tot 100'
       && r.vanaf === 1 && r.tot === 5 && r.grijs.join() === '6,7,8,9' && r.hier === 1 && r.pop && !r.balk,
       'tot 20: vijf rijen tussen "vanaf" en "tot", het blok tot 100 grijs eronder, haar pop op de eerste, geen balk "Getallen tot"', JSON.stringify(r));
     const plek = r.plek;
@@ -418,31 +418,36 @@ function check(ok, label, detail) {
     r = await pad();
     check(r.max === 20 && r.tot === 5 && r.totId === null && r.grijs.join() === '6,7,8,9',
       'zakt hij weer tot 20, dan is het hele blok terug, met zoek en drie getallen', JSON.stringify(r));
-    /* De vinkjes: overslaan haalt de rij niet weg. Hij blijft staan,
-       doorgestreept, met zijn nummer, en niets schuift op. */
-    const vinkjes = () => page.evaluate(() => ({
-      vinkjes: [...document.querySelectorAll('#set-startstap .fl-vink')].map(v => v.matches('button') ? (v.classList.contains('aan') ? 'aan' : 'uit') : 'vast'),
-      over: [...document.querySelectorAll('#set-startstap .chip.overgeslagen')].map(c => +c.dataset.v),
-      nummers: [...document.querySelectorAll('#set-startstap .chip .fl-n')].map(n => n.textContent).join(','),
-      plek: [...document.querySelectorAll('#set-startstap .chip')].map(c => c.offsetTop).join(','),
-      chain3: db.profiles.p1.settings.chain3, start: db.profiles.p1.settings.padVanaf,
-      extra: !!document.getElementById('set-extra'),
+    /* Geen vinkjes meer op het leerpad: begin en eind zijn de keuzes. Wie
+       precies wil kiezen, tikt bovenaan op Zelf kiezen (zie modusKaartHtml). */
+    check(!(await page.$('#set-startstap .fl-vink')) && !(await page.$('.fl-blok')),
+      'het leerpad heeft geen vinkjes en geen blokkoppen meer', '');
+    const kies = () => page.evaluate(() => ({
+      modus: db.profiles.p1.settings.modus || 'pad', kies: (db.profiles.p1.settings.kies || []).join(),
+      aan: [...document.querySelectorAll('#set-kies .chip.aan')].map(c => c.dataset.v).join(),
+      rijen: document.querySelectorAll('#set-kies .chip').length, ladder: !!document.getElementById('set-startstap'),
+      sommen: !!document.getElementById('set-ops'), toast: document.getElementById('toast').textContent,
+      lijn: document.querySelector('.modus-uitleg').textContent,
     }));
-    let v = await vinkjes();
-    check(v.vinkjes.join(',') === 'vast,vast,vast,aan,aan,vast,vast,vast,vast,vast' && !v.extra,
-      'elke rij een vinkje: stil bij de vaste, vol bij zoek en drie getallen; geen losse schakelaars meer', JSON.stringify(v));
-    const voor = v;
-    await page.click('#set-startstap .fl-vink[data-instelling="chain3"]');
+    await page.click('#set-modus .chip[data-v="vrij"]');
     await page.waitForTimeout(200);
-    v = await vinkjes();
-    check(v.chain3 === false && v.over.join(',') === '5' && v.vinkjes[4] === 'uit',
-      'een tik op het vinkje slaat drie getallen over: doorgestreept, niet weg', JSON.stringify(v));
-    check(v.plek === voor.plek && v.nummers === voor.nummers && v.start === voor.start,
-      'en er schuift niets op, en "vanaf" blijft waar hij stond', JSON.stringify({ voor, v }));
-    await page.click('#set-startstap .fl-vink[data-instelling="chain3"]');
+    let k = await kies();
+    check(k.modus === 'vrij' && k.kies === k.aan && k.aan.split(',').length === 1 && !k.ladder && k.sommen && k.rijen === 9,
+      'Zelf kiezen: de ladder wordt een lijst met vinkjes, Sommen blijft staan, en één rij staat al aan', JSON.stringify(k));
+    check(/daar was/.test(k.toast) && k.lijn === 'Alleen wat je aanvinkt.', 'een toast zegt welke rij al aan staat', JSON.stringify(k));
+    const eerste = k.aan;
+    await page.click(`#set-kies .chip[data-v="${eerste}"]`);
     await page.waitForTimeout(200);
-    v = await vinkjes();
-    check(v.chain3 === true && !v.over.length, 'nog een tik neemt hem weer mee', JSON.stringify(v));
+    k = await kies();
+    check(k.aan === eerste, 'de laatste die aan staat mag niet uit', JSON.stringify(k));
+    await page.click('#set-kies .chip[data-v="zoek"]');
+    await page.waitForTimeout(200);
+    k = await kies();
+    check(k.aan.split(',').sort().join() === [eerste, 'zoek'].sort().join() && k.kies.split(',').length === 2, 'een tik vinkt een rij erbij', JSON.stringify(k));
+    await page.click('#set-modus .chip[data-v="pad"]');
+    await page.waitForTimeout(200);
+    k = await kies();
+    check(k.modus === 'pad' && k.ladder && k.kies.split(',').length === 2, 'terug naar het leerpad: de ladder is terug, en de keuze blijft bewaard', JSON.stringify(k));
     await ctx.close();
   }
 
@@ -1308,7 +1313,8 @@ function check(ok, label, detail) {
      zelfde grootte, zelfde kleur, op allebei de tabbladen en in beide modi.
      Hier stonden drie soorten kop naast elkaar; wie een kaart bijzet zonder
      kaartKop, of een eigen kopstijl meegeeft, valt hier om. Alleen de notitie
-     over de stem heeft geen kop -- dat is een melding, geen onderwerp.
+     over de stem heeft geen kop -- dat is een melding, geen onderwerp -- en
+     de wissel Leerpad | Zelf kiezen bovenaan Oefeningen.
      Daarnaast: het leerpad op Voortgang is een weg (vol tot haar, gestippeld
      erna), en die op Oefeningen niet. */
   {
@@ -1319,6 +1325,8 @@ function check(ok, label, detail) {
       const kaarten = [...document.querySelectorAll('#settings-body .settings-panel > .set-card')];
       const zonder = kaarten.filter(k => {
         if (k.querySelector('.stem-notitie')) return false;
+        // de wissel Leerpad | Zelf kiezen is bewust koploos: één schakelaar en één regel
+        if (k.classList.contains('modus-kaart')) return false;
         const eerste = k.tagName === 'DETAILS' ? k.querySelector('summary').firstElementChild : k.firstElementChild;
         return !(eerste && eerste.classList.contains('kaart-kop'));
       }).map(k => k.className);

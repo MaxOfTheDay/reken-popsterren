@@ -53,11 +53,11 @@ const LEERPAD = [
   { id: 'delen',      soort: 'vorm',   op: ':',                   naam: 'Delen' },
   { id: 'zoek',       soort: 'vorm',   keuze: 'missNum',          naam: 'Zoek het getal' },
   { id: 'drie',       soort: 'vorm',   keuze: 'chain3',           naam: 'Drie getallen' },
-  { id: 'bouwen100',  soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Getallen bouwen', bouwen: true },
+  { id: 'bouwen100',  soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Getallen bouwen tot 100', bouwen: true },
   { id: 'tientallen', soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Tientallen', tientallen: true },
   { id: 'tot100',     soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Tot 100' },
-  { id: 'brug100',    soort: 'bereik', bereik: 100, brug: 'vaak', naam: 'Over het tiental' },
-  { id: 'bouwen1000', soort: 'bereik', bereik: 1000, brug: 'nee', naam: 'Getallen bouwen', bouwen: true },
+  { id: 'brug100',    soort: 'bereik', bereik: 100, brug: 'vaak', naam: 'Over het tiental tot 100' },
+  { id: 'bouwen1000', soort: 'bereik', bereik: 1000, brug: 'nee', naam: 'Getallen bouwen tot 1000', bouwen: true },
   { id: 'honderdtallen', soort: 'bereik', bereik: 1000, brug: 'nee', naam: 'Honderdtallen', honderdtallen: true },
   { id: 'tot1000',    soort: 'bereik', bereik: 1000, brug: 'nee',  naam: 'Tot 1000' },
   { id: 'brug1000',   soort: 'bereik', bereik: 1000, brug: 'vaak', naam: 'Over het honderdtal' },
@@ -239,7 +239,75 @@ function padStand(s, nuId, klaar) {
   };
 }
 // De instellingen voor de vraagmaker: die van de ouder, met haar rij erover.
-function vraagInst(p) { return { ...p.settings, ...padStand(p.settings, padNu(p), p.pad && p.pad.klaar) }; }
+function vraagInst(p) {
+  if (zelfGekozen(p.settings)) return kiesInst(p.settings);
+  return { ...p.settings, ...padStand(p.settings, padNu(p), p.pad && p.pad.klaar) };
+}
+/* ---- Zelf kiezen: precies wat de ouder aanvinkt ----------------------------
+   Naast het leerpad (dat zelf doorschuift) kan een ouder ook gewoon zeggen wat
+   er geoefend wordt: s.modus 'vrij'. Wat er gekozen wordt, is hetzelfde als op
+   het leerpad, alleen niet na elkaar:
+     + en −    de rijen van LEERPAD die over plus en min gaan (kiesRijen), elk
+               met een vinkje; s.kies zijn de ids
+     × en ÷    gewoon de tegels en de tafels van de kaart Sommen -- daar staan
+               ze in beide modi, dus in de lijst niet nog eens
+     tellen    de fases, s.kiesFasen (zie telFase)
+   Elke vraag komt dan uit één aangevinkte rij, door elkaar, en NIETS SCHUIFT
+   DOOR: geen padNa, geen fase erbij of eraf, geen "Nieuw", geen tip die een
+   lijn verzet. Wat ze lastig vindt komt wel terug (de zwakke sommen), en
+   binnen een rij maakt het spel het lichter of pittiger zoals altijd.
+   Ontbreekt s.modus, dan is het het leerpad: oude saves hoeven niets. */
+function zelfGekozen(s) { return s.modus === 'vrij'; }
+// de + − rijen die je kunt aanvinken, met hun voorbeeld (ook boven de grens:
+// de grens is van het leerpad, hier zegt elke rij zelf hoe ver hij gaat)
+function kiesRijen(s) {
+  if (!s.ops.includes('+') && !s.ops.includes('-')) return [];
+  const t = { ...s, max: Infinity };
+  return LEERPAD.filter(r => (r.soort === 'bereik' || r.id === 'zoek' || r.id === 'drie') && padPast(r, t))
+    .map(r => ({ ...r, vb: padVoorbeeld(r, { ...s, max: 100 }) }));
+}
+const kiesGekozen = s => kiesRijen(s).filter(r => (s.kies || []).includes(r.id));
+/* Zoek het getal en drie getallen staan in de lijst bij tot 20 (zoals op het
+   leerpad), en blijven daar: aangevinkt naast Tot 100 worden ze geen 47 + ▢. */
+const KIES_VORM_MAX = 20;
+/* De vraagmaker in Zelf kiezen. vrij is de pot waar elke vraag uit komt: één
+   ingang per aangevinkte rij, plus × en ÷ als die aan staan, elk met de
+   instellingen van die ene rij -- niet cumulatief zoals padStand, want hier
+   betekent een vinkje "dit", niet "tot hier". Over het tiental speelt dan
+   altijd over het tiental (brug 'altijd'), Tientallen altijd hele tientallen,
+   Honderdtallen altijd hele honderdtallen.
+   De rest (max, ops) is voor wat elke vraag deelt: de zwakke sommen
+   (pastNog) en de antwoordknoppen (keuzeGrens). */
+function kiesInst(s) {
+  const pm = s.ops.filter(o => o === '+' || o === '-');
+  const rijen = kiesGekozen(s);
+  const vrij = rijen.map(r => {
+    if (r.soort !== 'bereik') return { id: r.id, inst: { ...s, ops: r.id === 'drie' ? ['+'] : pm, max: KIES_VORM_MAX, brug: 'vrij' } };
+    return { id: r.id, inst: { ...s, ops: pm, max: r.bereik, brug: r.brug === 'vaak' ? 'altijd' : 'nee',
+      tientallen: r.tientallen ? 'altijd' : false, honderdtallen: r.honderdtallen ? 'altijd' : false } };
+  });
+  ['x', ':'].filter(o => s.ops.includes(o)).forEach(o => vrij.push({ id: o === 'x' ? 'tafels' : 'delen', inst: { ...s, ops: [o] } }));
+  // + of − aan maar niets aangevinkt dat kan (bv. alleen drie getallen, en + uit): dan gewoon tot 20
+  if (!vrij.length) vrij.push({ id: 'tot20', inst: { ...s, ops: pm.length ? pm : s.ops, max: 20, brug: 'vrij' } });
+  const max = vrij.reduce((m, v) => Math.max(m, v.inst.ops.some(o => o === '+' || o === '-') ? v.inst.max : 0), 0);
+  const ops = [...new Set(vrij.flatMap(v => v.inst.ops))];
+  return { ...s, ops, max: max || s.max, brug: 'vrij', missNum: false, chain3: false, tientallen: false, honderdtallen: false, bouwen: null, vrij };
+}
+/* Welke + − rij staat er aan als een ouder op Zelf kiezen tikt? De rij waar ze
+   op het leerpad nu is -- zo begint de lijst nooit leeg, en speelt ze de
+   volgende show wat ze gewend was. Is dat geen + − rij (Tafels, of alles door
+   elkaar), dan de laatste + − rij die ze al had. */
+function kiesStart(p) {
+  const s = p.settings;
+  const kan = kiesRijen(s).map(r => r.id);
+  if (!kan.length) return [];
+  const nu = padNu(p);
+  if (kan.includes(nu)) return [nu];
+  const pad = padRijen(s).rijen.map(r => r.id);
+  const tot = nu === 'alles' ? pad.length : pad.indexOf(nu);
+  const had = pad.slice(0, Math.max(0, tot)).filter(id => kan.includes(id));
+  return [had.length ? had[had.length - 1] : kan[0]];
+}
 /* Na een rekenshow: een show verder op haar rij. Ze gaat door als ze hem kan --
    minstens PAD_MIN_SHOWS shows erop en de laatste twee met drie sterren -- of
    na PAD_MAX_SHOWS shows toch: zo is ze nooit trager dan toen elke stap één
@@ -339,7 +407,7 @@ function overTiental(a, b, c, op) {
 function genTriple(s, lvl, perf, op) {
   // Zo krijgt een kind dat worstelt lichtere sommen en een sterk kind wat pittigere.
   const t = moeilijkheid(perf, s);
-  const effMax = Math.max(10, Math.round(s.max * t)); // binnen ingestelde grens
+  let effMax = Math.max(10, Math.round(s.max * t)); // binnen ingestelde grens
   const tables = s.tables.length ? s.tables : [2, 5, 10];
   let a, b, c, sym;
   if ((op === '+' || op === '-') && s.max > 100) {
@@ -348,7 +416,7 @@ function genTriple(s, lvl, perf, op) {
        leerjaar uit het hoofd, en zo blijft een antwoord te typen. Het is
        dezelfde som een maat kleiner, keer tien of honderd -- dus wordt "over
        het tiental" vanzelf "over het honderdtal" (38 + 5 -> 380 + 50). */
-    const stap = s.honderdtallen && Math.random() < HONDERDTALLEN_VAAK ? 100 : 10;
+    const stap = s.honderdtallen && Math.random() < (s.honderdtallen === 'altijd' ? 1 : HONDERDTALLEN_VAAK) ? 100 : 10;
     const k = genTriple({ ...s, max: s.max / stap, tientallen: false, honderdtallen: false }, lvl, perf, op);
     return { ...k, a: k.a * stap, b: k.b * stap, c: k.c * stap, effMax: k.effMax * stap };
   }
@@ -358,13 +426,17 @@ function genTriple(s, lvl, perf, op) {
     const brug = s.brug || 'vrij';
     /* De rij "tientallen": vaak een som met hele tientallen (40 + 30, 70 − 30),
        de rest gewoon -- het nieuwe is er het meest, niet als enige. */
-    if (s.tientallen && effMax >= 20 && Math.random() < TIENTALLEN_VAAK) {
+    if (s.tientallen && effMax >= 20 && Math.random() < (s.tientallen === 'altijd' ? 1 : TIENTALLEN_VAAK)) {
       const T = Math.floor(effMax / 10);
       if (op === '+') { a = 10 * rnd(1, T - 1); b = 10 * rnd(1, T - a / 10); c = a + b; }
       else { a = 10 * rnd(2, T); b = 10 * rnd(1, a / 10 - 1); c = a - b; }
       return { a, b, c, sym: op === '+' ? '+' : '−', op, t, effMax };
     }
-    const wilBrug = brug === 'vaak' && effMax > 10 && Math.random() < BRUG_VAAK;
+    /* 'altijd' is Zelf kiezen met alleen Over het tiental aangevinkt: dan
+       moet elke som erover, ook als het spel de getallen nu kleiner maakt --
+       onder de 11 kan dat niet, dus daar gaat het plafond niet onder. */
+    if (brug === 'altijd') effMax = Math.max(effMax, Math.min(s.max, 18));
+    const wilBrug = (brug === 'altijd' || (brug === 'vaak' && Math.random() < BRUG_VAAK)) && effMax > 10;
     const magBrug = brug !== 'nee';
     let poging = 0;
     do {
@@ -653,6 +725,15 @@ function countLiveStage(p) {
   const st = (p.countTrack && p.countTrack.stage) || lo;
   return Math.min(hi, Math.max(lo, st));
 }
+/* Zelf kiezen bij tellen (zie zelfGekozen): de aangevinkte fases. Elke vraag
+   komt uit één ervan (telFase), en de fase schuift niet (advanceCountStage
+   wordt dan overgeslagen). De trap bínnen een fase (rung) loopt wel gewoon mee:
+   één trap voor alle gekozen fases, zodat het spel ook hier lichter of
+   pittiger wordt. Zonder Zelf kiezen is het de fase van het leerpad. */
+function kiesFasen(s) { return zelfGekozen(s) ? (s.kiesFasen || []).filter(v => v >= 1 && v <= COUNT_STAGE_MAX) : []; }
+function telFase(p) { const f = kiesFasen(p.settings); return f.length ? pick(f) : countLiveStage(p); }
+// de hoogste fase die ze nu speelt (memory, de trap): bij Zelf kiezen de hoogste aangevinkte
+function telTopFase(p) { const f = kiesFasen(p.settings); return f.length ? Math.max(...f) : countLiveStage(p); }
 // Moeilijkheid bínnen de fase, op basis van de rung + de ouder-bovengrens (qmax).
 // Hogere rung = groter bereik, afleiders dichterbij, minder cijfersteun, tienraam.
 function countDifficulty(p, stage) {
@@ -780,7 +861,7 @@ function sumEqHTML(card) {
 // numeriek antwoord (q.ans) en keuzeknoppen (q.choices), plus de voor te lezen tekst.
 function genCount(p) {
   const s = p.settings;
-  const stage = countLiveStage(p);
+  const stage = telFase(p);
   const info = countStageInfo(stage);
   const d = countDifficulty(p, stage);
   const type = pick(countStageTypes(stage));
@@ -1146,7 +1227,7 @@ function updateCountAcc(p, correct, firstTry) {
   const ct = p.countTrack;
   ct.seen = (ct.seen || 0) + 1;
   ct.acc = lopend(ct.acc == null ? 0.5 : ct.acc, antwoordWaarde(correct, firstTry));
-  const top = countTopRung(countLiveStage(p));
+  const top = countTopRung(telTopFase(p));
   if (correct && firstTry) {
     ct.streak = (ct.streak || 0) + 1;
     if (ct.streak >= 3 && (ct.rung || 0) < top) { ct.rung = (ct.rung || 0) + 1; ct.streak = 0; }
@@ -1289,7 +1370,7 @@ function memFaceHTML(c) {
 // krijgt de sommenvariant (memSomDeck).
 function buildMemoryDeck(p) {
   if (p.settings.track !== 'count') return memSomDeck(p);
-  const stage = countLiveStage(p);
+  const stage = telTopFase(p);
   const d = countDifficulty(p, stage);
   const max = Math.max(3, Math.min(10, d.effMax));   // memory blijft binnen de tien, ook in fase 12
   // minstens vier paren: met drie was een potje na een twintigtal tellen al uit
@@ -1644,6 +1725,8 @@ function buildQuestion(p, lvl, g) {
     const rq = pickRefresh(p, s, mag);
     if (rq) { if (al) al.add(rq.tmpl); return rq; }
   }
+  // Zelf kiezen: elke vraag uit één aangevinkte rij (zie kiesInst)
+  if (s.vrij) return kiesVraag(s, lvl, p.perf, net);
   // getallen bouwen: vaak op zijn eigen rij, daarna af en toe (zie padStand)
   if (s.bouwen && Math.random() < (s.bouwen === 'vaak' ? BOUWEN_VAAK : BOUWEN_SOMS)) {
     /* De allereerste keer (het gouden "Nieuw", zie vraagIsNieuw) is het de
@@ -1660,6 +1743,19 @@ function buildQuestion(p, lvl, g) {
   return q;
 }
 
+/* Eén vraag in Zelf kiezen: een rij uit de pot, en dan de maker die bij die rij
+   hoort. net: de sommen van net (niet meteen dezelfde, zie buildQuestion). */
+function kiesVraag(s, lvl, perf, net) {
+  let q, poging = 0;
+  do {
+    const { id, inst } = pick(s.vrij);
+    q = LEERPAD[PAD_IDX[id]] && LEERPAD[PAD_IDX[id]].bouwen ? genBouwen(LEERPAD[PAD_IDX[id]].bereik)
+      : id === 'zoek' ? genMissing(inst, lvl, perf, pick(inst.ops))
+      : id === 'drie' ? genChain(inst, lvl, perf)
+      : genQuestion(inst, lvl, perf);
+  } while (net.includes(q.tmpl) && ++poging < 8);
+  return q;
+}
 /* ================= Extra uitdagingen: klaarheid, tempo, inroostering =================
    Twee losse dimensies, elk met een eigen aan/uit-knop voor de ouder:
      • missNum  — zoek-het-getal (2e getal ontbreekt), + − ×
