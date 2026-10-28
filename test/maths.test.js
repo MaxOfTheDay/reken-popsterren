@@ -67,7 +67,7 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
   /* ================= 1 + 2 · Sommen en weergave ================= */
   const OPSETS = [['+'], ['+', '-'], ['x'], [':'], ['+', '-', 'x', ':']];
   for (const ops of OPSETS) {
-    for (const max of [10, 20, 100]) {
+    for (const max of [10, 20, 100, 1000]) {
       for (const lvl of [1, 6, 12]) {
         const rows = await page.evaluate(({ ops, max, lvl, samples }) => {
           const p = P();
@@ -165,13 +165,14 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
      vakje, niets loopt over de rand, ook op een smalle telefoon. */
   const bouw = await page.evaluate(() => {
     const uit = [];
-    for (let i = 0; i < 120; i++) {
-      const q = genBouwen();
+    for (let i = 0; i < 160; i++) {
+      const q = genBouwen(i % 2 ? 1000 : 100);
       G.qs[G.idx] = q; G.count = false; G.mode = i % 2 ? 'typ' : 'kies';
       drawQuestion();
       const card = document.getElementById('question-text');
       uit.push({ tmpl: q.tmpl, soort: q.soort, blanks: card.querySelectorAll('.q-blank').length,
         overflow: card.scrollWidth > card.clientWidth + 1,
+        platen: card.querySelectorAll('.pl-plaat').length,
         staven: card.querySelectorAll('.pl-staaf').length, blokjes: card.querySelectorAll('.pl-blok').length,
         hoog: document.getElementById('question-card').offsetHeight });
     }
@@ -179,9 +180,27 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
   });
   check(bouw.every(r => r.blanks === 1), 'getallen bouwen: precies één vakje op de kaart', JSON.stringify(bouw.find(r => r.blanks !== 1)));
   check(bouw.every(r => !r.overflow), 'getallen bouwen: de kaart loopt niet over de rand', JSON.stringify(bouw.find(r => r.overflow)));
-  check(bouw.filter(r => r.soort === 'blokken').every(r => { const [t, e] = r.tmpl.match(/\d+/g).map(Number); return r.staven === t && r.blokjes === e; }),
-    'getallen bouwen: zoveel staven en blokjes als het getal zegt', JSON.stringify(bouw.filter(r => r.soort === 'blokken').slice(0, 3)));
+  check(bouw.filter(r => r.soort === 'blokken').every(r => {
+    const g = r.tmpl.match(/\d+/g).map(Number), [h, t, e] = g.length === 3 ? g : [0, ...g];
+    return r.platen === h && r.staven === t && r.blokjes === e;
+  }), 'getallen bouwen: zoveel platen, staven en blokjes als het getal zegt (ook tot 1000)', JSON.stringify(bouw.filter(r => r.soort === 'blokken').slice(0, 3)));
   check(Math.max(...bouw.map(r => r.hoog)) < 260, 'getallen bouwen: de kaart blijft binnen een redelijke hoogte', String(Math.max(...bouw.map(r => r.hoog))));
+  /* Tot 1000 wordt een som lang (368 = ▢ + 60 + 8, 230 + 190 + 410 = ▢). Valt
+     hij in twee regels uiteen, dan zet drawQuestion hem een maat kleiner: hier
+     moet elke som op één regel staan. */
+  const regels = await page.evaluate(() => {
+    const s = { ...vraagInst(P()), max: 1000 };
+    const vragen = [];
+    for (let i = 0; i < 40; i++) vragen.push(genBouwen(1000), genChain(s, 1, 1), genQuestion(s, 1, 1));
+    return vragen.map(q => {
+      G.qs[G.idx] = q; G.count = false; G.mode = 'kies'; drawQuestion();
+      const el = document.getElementById('question-text');
+      const r = document.createRange(); r.selectNodeContents(el.querySelector('.pl-som') || el);
+      const onder = [...r.getClientRects()].map(x => x.bottom);
+      return { tmpl: q.tmpl, een: Math.max(...onder) - Math.min(...onder) < parseFloat(getComputedStyle(el).fontSize) / 2 };
+    });
+  });
+  check(regels.every(r => r.een), 'tot 1000: elke som op één regel (een lange een maat kleiner)', JSON.stringify(regels.filter(r => !r.een).slice(0, 3)));
 
   /* ================= 3 · Adaptieve motor (pure logica) ================= */
   const engine = await page.evaluate(() => {

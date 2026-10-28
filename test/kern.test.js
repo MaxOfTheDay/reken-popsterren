@@ -1165,6 +1165,53 @@ zaak('Q3', () => {
     'Q3 · ze begint het blok tot honderd met Getallen bouwen', JSON.stringify(q.pad));
 });
 
+/* ================= Q5 · Het blok tot 1000 =================
+   Het derde leerjaar: getallen bouwen met honderdtallen, en rekenen in hele
+   tientallen en honderdtallen. Elke vraag één getal, te typen, met keuzes op
+   dezelfde maat -- 461 naast 460 streep je weg zonder te rekenen. */
+zaak('Q5', () => {
+  const { app, p } = verseSter('Duizend');
+  const fouten = [], soorten = {};
+  for (let i = 0; i < 600; i++) {
+    const q = app.genBouwen(1000);
+    soorten[q.soort] = (soorten[q.soort] || 0) + 1;
+    const g = (q.tmpl.match(/\d+/g) || []).map(Number);
+    const waar = `${q.soort}: ${q.tmpl} -> ${q.ans}`;
+    const klopt = q.soort === 'blokken' ? q.ans === 100 * g[0] + 10 * g[1] + g[2]
+      : q.soort === 'tiental' ? 100 * q.ans + 10 * g[1] + g[2] === g[0]
+      : g[0] === g.slice(1).reduce((a, b) => a + b, 0) + q.ans;
+    if (!klopt) fouten.push('klopt niet: ' + waar);
+    if (q.ans > 999 || (q.html.match(/@/g) || []).length !== 1) fouten.push('vakje of te groot: ' + waar);
+    const grens = app.keuzeGrens(q, p.settings);
+    const c = app.makeChoices(q, grens);
+    if (c.length !== 4 || new Set(c).size !== 4 || c.filter(v => v === q.ans).length !== 1 || c.some(v => v < 0 || v > 999))
+      fouten.push(`knoppen ${c}: ` + waar);
+  }
+  check(!fouten.length, 'Q5 · 600 bouwvragen tot 1000 kloppen, met vier goede knoppen', fouten.slice(0, 5).join(' | '));
+  check(Object.keys(soorten).sort().join() === 'blokken,splits,tiental', 'Q5 · alle drie de soorten komen voor', JSON.stringify(soorten));
+
+  p.settings.max = 1000;
+  const op = id => app.padStand(p.settings, id);
+  check(op('bouwen1000').max === 100 && op('bouwen1000').bouwen === 'vaak' && op('bouwen1000').bouwTot === 1000,
+    'Q5 · op Getallen bouwen tot 1000: de sommen blijven tot 100', JSON.stringify(op('bouwen1000')));
+  check(op('tot1000').bouwen === 'soms' && op('tot1000').bouwTot === 1000 && op('tientallen').bouwTot === 100,
+    'Q5 · daarna komt het grootste blok af en toe terug', JSON.stringify([op('tot1000'), op('tientallen')]));
+  const s = { ...p.settings, ...op('honderdtallen') };
+  let honderd = 0, maat = [];
+  for (let k = 0; k < 300; k++) {
+    const tr = app.genTriple(s, 1, 0.5, k % 2 ? '+' : '-');
+    if ([tr.a, tr.b, tr.c].every(v => v % 100 === 0)) honderd++;
+    if ([tr.a, tr.b, tr.c].some(v => v % 10)) maat.push(`${tr.a} ${tr.sym} ${tr.b}`);
+    const q = { tmpl: `${tr.a} ${tr.sym} ${tr.b} = @`, ans: tr.c, op: tr.op };
+    const c = app.makeChoices(q, app.keuzeGrens(q, s));
+    if (c.some(v => v % 10)) maat.push(`keuzes ${c} bij ${q.tmpl}`);
+  }
+  check(!maat.length, 'Q5 · tot 1000 in hele tientallen, en de keuzes ook', maat.slice(0, 4).join(' | '));
+  check(honderd > 120, 'Q5 · op Honderdtallen is het meer dan de helft hele honderdtallen', `${honderd}/300`);
+  const ketting = app.genChain({ ...p.settings, ...op('tot1000') }, 1, 0.5);
+  check(/^\d*0 \+ \d*0 \+ \d*0 = @$/.test(ketting.tmpl) && ketting.ans <= 1000, 'Q5 · drie getallen tot 1000: ook in tientallen', ketting.tmpl);
+});
+
 /* ================= Q4 · De lijn "tot" is een rij =================
    Net als op de faseladder van tellen: "tot" staat onder een rij, ook midden
    in een blok, en de grens van de getallen is het blok van die rij. Eerst was
@@ -1178,7 +1225,7 @@ zaak('Q4', () => {
   s.max = 100;
   app.padTotOp(s, rij('tientallen'));
   check(s.max === 100 && s.padTot === 'tientallen' && namen().endsWith('bouwen100,tientallen')
-    && app.padRijen(s).later.map(r => r.id).join() === 'tot100,brug100',
+    && app.padRijen(s).later.map(r => r.id).join().startsWith('tot100,brug100,bouwen1000'),
     'Q4 · "tot" op Tientallen: tot honderd, maar Tot 100 en Over het tiental staan nog grijs', namen());
   const alles = app.padStand(s, 'alles');
   check(alles.max === 100 && alles.tientallen, 'Q4 · en door elkaar blijven het hele tientallen', JSON.stringify(alles));
@@ -1232,7 +1279,11 @@ zaak('R', () => {
   p.settings.grensTipBasis = app.run('grensDrieSterren(P())');
   check(tip() === null, 'R · net omgezet naar 100: geen tip meer', JSON.stringify(tip()));
   for (let l = eerste + n; l < eerste + 2 * n; l++) p.stars[l] = 3;
-  check(tip() === null, 'R · ook na nieuwe drie-sterrenshows: bij "tot 100" is er niets hogers', JSON.stringify(tip()));
+  check(JSON.stringify(tip()) === JSON.stringify({ soort: 'grens', naar: 1000 }), 'R · na nieuwe drie-sterrenshows bij "tot 100": de tip zegt 1000', JSON.stringify(tip()));
+  p.settings.max = 1000;
+  p.settings.grensTipBasis = app.run('grensDrieSterren(P())');
+  for (let l = eerste + 2 * n; l < eerste + 3 * n; l++) p.stars[l] = 3;
+  check(tip() === null, 'R · ook na nieuwe drie-sterrenshows: bij "tot 1000" is er niets hogers (dat is het vierde leerjaar)', JSON.stringify(tip()));
   p.settings.max = 20;
   p.settings.track = 'count';
   check(tip() === null, 'R · in de telmodus geen getallengrens, dus geen tip', JSON.stringify(tip()));
@@ -1703,7 +1754,7 @@ zaak('ZF', () => {
   for (let m = 1; m < 16; m++) opsSets.push(['+', '-', 'x', ':'].filter((_, i) => m & (1 << i)));
   let n = 0, beloofd = 0;
   const fouten = [], beloftes = [];
-  for (const ops of opsSets) for (const max of [10, 20, 100]) for (const tables of [[2, 5, 10], [7], [3, 8]]) {
+  for (const ops of opsSets) for (const max of [10, 20, 100, 1000]) for (const tables of [[2, 5, 10], [7], [3, 8]]) {
     const s = instVan(app, { ops, max, tables });
     const { rijen, later } = app.padRijen(s);
     const plusMin = ops.includes('+') || ops.includes('-');
@@ -1727,7 +1778,9 @@ zaak('ZF', () => {
         const [a, op, b] = st.vb.split(' ');
         const uit = op === '+' ? +a + +b : +a - +b;
         if (Math.max(...getallen, uit) > grens) fouten.push('boven het bereik: ' + waar);
-        const over = op === '+' ? (+a % 10) + (+b % 10) > 10 : (uit % 10) + (+b % 10) > 10;
+        // tot 1000 in hele tientallen: over het honderdtal is daar over het tiental, een maat groter
+        const m = grens > 100 ? 10 : 1;
+        const over = op === '+' ? (+a / m % 10) + (+b / m % 10) > 10 : (uit / m % 10) + (+b / m % 10) > 10;
         if (over !== (st.brug === 'vaak')) fouten.push('over het tiental klopt niet: ' + waar);
       }
       if (/[×:]/.test(st.vb)) {
@@ -1748,7 +1801,9 @@ zaak('ZF', () => {
         const waar = `${ops.join('')} tot ${max} · ${r.naam}: ${t.a} ${t.sym} ${t.b} = ${t.c}`;
         if (!ops.includes(op)) beloftes.push('teken niet gekozen: ' + waar);
         if ((op === '+' || op === '-') && Math.max(t.a, t.b, t.c) > st.max) beloftes.push('boven het bereik: ' + waar);
-        if ((op === '+' || op === '-') && st.brug === 'nee' && app.run('overTiental')(t.a, t.b, t.c, op)) beloftes.push('over het tiental te vroeg: ' + waar);
+        const m = st.max > 100 ? 10 : 1;   // tot 1000: in hele tientallen (zie genTriple)
+        if ((op === '+' || op === '-') && [t.a, t.b, t.c].some(v => v % m)) beloftes.push('tot 1000 niet in hele tientallen: ' + waar);
+        if ((op === '+' || op === '-') && st.brug === 'nee' && app.run('overTiental')(t.a / m, t.b / m, t.c / m, op)) beloftes.push('over het tiental te vroeg: ' + waar);
       }
       const plek = app.PAD_IDX[r.id];
       if ((st.ops.includes('x') && plek < app.PAD_IDX.tafels) || (st.ops.includes(':') && plek < app.PAD_IDX.delen))
@@ -1766,6 +1821,9 @@ zaak('ZF', () => {
   const alles = padNamen(app, instVan(app, { ops: ['+', '-', 'x', ':'], max: 100 }));
   check(alles === 'Tot 10,Tot 20,Over het tiental,Tafels,Delen,Zoek het getal,Drie getallen,Getallen bouwen,Tientallen,Tot 100,Over het tiental',
     'ZF · alles aan tot 100: de hele ladder in de volgorde van school', alles);
+  const duizend = padNamen(app, instVan(app, { ops: ['+', '-'], max: 1000 }));
+  check(duizend.endsWith('Tot 100,Over het tiental,Getallen bouwen,Honderdtallen,Tot 1000,Over het honderdtal'),
+    'ZF · tot 1000: het blok van het derde leerjaar komt erachter', duizend);
   // de tafels zijn heel vanaf de eerste show, ook voor een kind dat worstelt
   const s = instVan(app, { ops: ['x', ':'], tables: [7] });
   const factoren = new Set();

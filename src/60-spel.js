@@ -299,6 +299,19 @@ function drawQuestion() {
   const shown = G.mode === 'typ' ? (G.input || '?') : '?';
   // q.html: een vraag met meer dan tekst (getallen bouwen); anders de som zelf
   $('question-text').innerHTML = (q.html || q.tmpl).replace('@', `<span class="q-blank">${shown}</span>`);
+  /* Tot 1000 wordt een som langer (368 = ▢ + 60 + 8, 130 + 240 + 310 = ▢):
+     valt hij in twee regels uiteen, dan een maat kleiner. Gemeten, niet
+     geteld -- de breedte hangt aan het scherm, de letter en de kleurtjes. Op
+     de onderkant van elk stukje, want het vakje is hoger dan de cijfers. */
+  const tekst = $('question-text');
+  tekst.classList.remove('lang', 'langer');
+  const rij = document.createRange();
+  rij.selectNodeContents(tekst.querySelector('.pl-som') || tekst);   // de blokken staan erboven
+  const breekt = () => {
+    const onder = [...rij.getClientRects()].map(r => r.bottom);
+    return Math.max(...onder) - Math.min(...onder) > parseFloat(getComputedStyle(tekst).fontSize) / 2;
+  };
+  for (const maat of ['lang', 'langer']) if (breekt()) tekst.classList.add(maat);
   // ⌫ en ✔ slapen tot er iets getypt is: een ✔ die er klaar uitziet maar niets
   // doet, is een knop die liegt (zie .numpad.heeft in het stijlblad)
   const pad = document.querySelector('#answer-area .numpad');
@@ -308,7 +321,7 @@ function numpadPress(n) {
   if (!G || G.lock) return;
   if (n === 'del') { if (G.input === '') return; G.input = G.input.slice(0, -1); sndClick(); }
   else if (n === 'ok') { if (G.input !== '') submitAnswer(parseInt(G.input, 10), null); return; }
-  else if (G.input.length < 3) { G.input += n; sndClick(); }
+  else if (G.input.length < (G.inst && G.inst.max >= 1000 ? 4 : 3)) { G.input += n; sndClick(); }   // 500 + 500 = 1000
   else return;
   drawQuestion();
   // het getikte cijfer landt in het vakje: een kleine plop, zodat de tik

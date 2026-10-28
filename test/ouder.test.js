@@ -396,7 +396,7 @@ function check(ok, label, detail) {
     await page.click('#set-startstap .chip[data-v="7"]');
     await page.waitForTimeout(200);
     r = await pad();
-    check(r.max === 100 && r.tot === 7 && r.totId === 'tientallen' && r.grijs.join() === '8,9' && r.plek === plek,
+    check(r.max === 100 && r.tot === 7 && r.totId === 'tientallen' && r.grijs.join() === '8,9,10,11,12,13' && r.plek === plek,
       'een tik op een grijze rij laat "tot" precies daar zakken: tot Tientallen, en dus tot 100', JSON.stringify(r));
     check(await page.evaluate(() => db.profiles.p1.settings.wennen > 0), 'en ze went aan de grotere getallen (wennen)', '');
     await page.click('#set-startstap .chip[data-v="1"]');

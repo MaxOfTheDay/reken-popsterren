@@ -589,6 +589,15 @@
     background: repeating-linear-gradient(0deg, transparent 0 6px, rgba(0,0,0,.18) 6px 7px), var(--plaats-t-blok);
     box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.18);
   }
+  /* een plaat van honderd: tien bij tien, in rijen van drie zodat negen platen
+     naast de staven passen op een smalle telefoon */
+  .pl-platen { display: grid; grid-template-columns: repeat(3, 26px); gap: 4px; align-content: end; }
+  .pl-plaat {
+    display: block; width: 26px; height: 26px; border-radius: 2px;
+    background: repeating-linear-gradient(0deg, transparent 0 2.2px, rgba(0,0,0,.16) 2.2px 2.6px),
+                repeating-linear-gradient(90deg, transparent 0 2.2px, rgba(0,0,0,.16) 2.2px 2.6px), var(--plaats-h-blok);
+    box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.18);
+  }
   .pl-blokjes { display: grid; grid-template-columns: repeat(3, 10px); gap: 3px; align-content: end; }
   .pl-blok { display: block; width: 10px; height: 10px; border-radius: 2px; background: var(--plaats-e-blok); box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.18); }
   .pl-som { display: block; }
