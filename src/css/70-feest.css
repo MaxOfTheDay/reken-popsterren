@@ -361,6 +361,8 @@
     color: var(--ink-on-gold); font-weight: 700; font-size: var(--tx-label);
   }
   @media (max-height: 740px) { .groei-pil { padding: 6px 13px; min-height: 30px; } }
+  /* het voorbeeld van de nieuwe stap, zoals op de ladder bij Voortgang ("8 + 5") */
+  .groei-vb { padding: 1px 9px; border-radius: var(--r-pill); background: rgba(255,255,255,.7); white-space: nowrap; }
   .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; }
   /* tot ze opkomen tellen tikken niet mee (zie eindWacht) */
   .end-actions.wacht { pointer-events: none; }

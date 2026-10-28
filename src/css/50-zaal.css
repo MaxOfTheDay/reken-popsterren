@@ -1091,6 +1091,15 @@
      ademt alleen niet meer. De gloed staat in de regel hierboven, dus zonder de
      animatie is de kaart nog steeds herkenbaar de gouden. */
   @media (prefers-reduced-motion: reduce) { .question-card.golden { animation: none; } }
+  /* ---- Nieuw: de eerste vraag van een nieuwe stap (zie vraagIsNieuw) ----
+     Eén klein goud labeltje linksboven, één keer: het gouden "Nieuw:" van het
+     eindscherm, terug op het moment dat het nieuwe er echt staat. Geen kaart in
+     goud -- dat is de gouden vraag, en die betekent iets anders. */
+  .question-card.nieuw::before {
+    content: "✨ Nieuw"; position: absolute; top: 8px; left: 10px; z-index: 1;
+    padding: 2px 10px; border-radius: var(--r-pill); background: rgba(var(--goud-rgb), .88);
+    color: var(--ink-on-gold); font-size: var(--tx-klein); font-weight: 700; line-height: 1.5;
+  }
   .gold-banner { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); text-shadow: var(--goud-ink); margin-top: 6px; height: 22px; }
 
   /* ---- Wereldtournee: één wereld per scherm, volledig in beeld ----
