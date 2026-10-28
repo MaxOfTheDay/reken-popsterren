@@ -775,6 +775,7 @@ function defaultProfile(name, dress, opts) {
       memory: opts.memory !== false,                // memory-spelletje op de kaart (standaard aan)
       padVanaf: opts.padVanaf || null,              // rekenmodus: de rij van het leerpad waar het spel minstens begint (zie padNu)
       padTot: null,                                 // en de rij waar de lijn "tot" onder staat; null = het eind van het blok (zie padRijen)
+      tafelLijn: { ...opts.tafelLijn },             // de lijnen "vanaf" en "tot" op de tafelladder (zie TAFELPAD)
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
     // FASE 4A. tourStars blijft bij een verse ster voorgoed leeg -- het is de
@@ -958,6 +959,19 @@ function migrate(p) {
      niet meer; wat ernaar wees, wijst nu naar die eerste rij. */
   if (p.settings.max === 50) grensOmhoog(p.settings, 100);
   if (p.settings.padVanaf === 'tot50') p.settings.padVanaf = 'bouwen100';
+  /* Tafels en Delen waren twee rijen van LEERPAD; nu zijn ze een eigen thema
+     met een eigen ladder (TAFELPAD, p.tafels). Wie Tafels al haalde, krijgt de
+     rijen van de tafelladder waarvan ze alle tafels speelde (s.tables): met
+     2, 5 en 10 de eerste, met alle tien de hele ladder. Stond "vanaf" of "tot"
+     op een van de twee, dan schuift die naar de rij erna of ervoor; stond ze
+     erop, dan telt ze op haar volgende rij opnieuw. */
+  if (p.pad && Array.isArray(p.pad.klaar) && !p.tafels && p.pad.klaar.some(id => id === 'tafels' || id === 'delen')) {
+    const t = p.settings.tables || [];
+    p.tafels = { klaar: TAFELPAD.filter(r => r.tafels.every(v => t.includes(v))).map(r => r.id) };
+  }
+  if (p.pad && (p.pad.rij === 'tafels' || p.pad.rij === 'delen')) p.pad.rij = null;
+  if (p.settings.padVanaf === 'tafels' || p.settings.padVanaf === 'delen') p.settings.padVanaf = 'zoek';
+  if (p.settings.padTot === 'tafels' || p.settings.padTot === 'delen') p.settings.padTot = 'brug20';
   if (p.pad && Array.isArray(p.pad.klaar)) p.pad.klaar = p.pad.klaar.filter(id => id in PAD_IDX);
   if (!('pad' in p)) {
     const s = p.settings;

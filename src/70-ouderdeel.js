@@ -112,6 +112,7 @@ function renderNewStar() {
               <span class="sr-val">${oefenSamenvatting(s)}</span></span>
           </summary>
           <div class="set-reveal-body">
+            ${s.track === 'math' ? `<div class="reveal-group">${oeLbl('Wat oefent je ster?')}${themaTegels(s, 'ns-')}</div>` : ''}
             ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${oeLbl(g.kop)}${g.html}</div>`).join('')}
             <div class="note" style="margin-top:14px">Later te wijzigen bij 👨‍👩‍👧 Voor ouders.</div>
           </div>
@@ -449,6 +450,7 @@ function stapNu(p) {
       meter: `<span class="vg-rungs" aria-hidden="true">${Array.from({ length: top + 1 }, (_, i) => `<i class="${i <= rung ? 'aan' : ''}"></i>`).join('')}</span>`,
       tekst: `stapje ${rung + 1} van ${top + 1}`, waar: `Fase ${st} van ${countMaxStage(s)}` };
   }
+  if (!themaAan(s, 'rekenen')) return tafelStap(p);
   const nuId = padNu(p);
   if (nuId === 'alles') return { naam: 'Alles door elkaar', vb: '', meter: '', tekst: '', waar: '' };
   const speel = padRijen(s).rijen.filter(r => !r.uit);
@@ -459,21 +461,37 @@ function stapNu(p) {
     meter: `<span class="vg-bol" aria-hidden="true">${Array.from({ length: PAD_GOED }, (_, i) => `<i class="${i < goed ? 'aan' : ''}"></i>`).join('')}</span>`,
     tekst: nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show', waar: `Stap ${speel.indexOf(nu) + 1} van ${speel.length}` };
 }
+// Hetzelfde voor de tafelladder (zie TAFELPAD): waar ze staat en hoe ver.
+function tafelStap(p) {
+  const nuId = tafelNu(p);
+  if (nuId === 'alles') return { naam: 'Alle tafels door elkaar', vb: '', meter: '', tekst: '', waar: '' };
+  const { rijen, lo, hi } = tafelRijen(p.settings);
+  const nu = rijen[TAFEL_IDX[nuId]];
+  const t = p.tafels && p.tafels.rij === nuId ? p.tafels : { goed: 0 };
+  const goed = Math.min(PAD_GOED, t.goed || 0), nog = PAD_GOED - goed;
+  return { naam: nu.naam, vb: nu.vb,
+    meter: `<span class="vg-bol" aria-hidden="true">${Array.from({ length: PAD_GOED }, (_, i) => `<i class="${i < goed ? 'aan' : ''}"></i>`).join('')}</span>`,
+    tekst: nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show', waar: `Stap ${TAFEL_IDX[nuId] - lo + 1} van ${hi - lo + 1}` };
+}
 /* Wat Zelf kiezen aangevinkt heeft, als rijen om te lezen: [{ naam, vb }]. Bij
    rekenen de + − rijen en dan × en ÷ uit de kaart Sommen, met de tafels in de
    naam; bij tellen de fases. Voortgang en het overzicht lezen allebei dit. */
 function zelfRijen(s) {
   if (s.track === 'count') return kiesFasen(s).map(v => ({ naam: COUNT_STAGE_LABELS[v], vb: COUNT_STAGE_VB[v] }));
   const rijen = kiesGekozen(s).map(r => ({ naam: r.naam, vb: r.vb }));
-  const tafels = s.tables.slice().sort((a, b) => a - b).join(', ');
-  const vb = id => padVoorbeeld(LEERPAD[PAD_IDX[id]], s);
-  if (s.ops.includes('x')) rijen.push({ naam: `Tafels van ${tafels}`, vb: vb('tafels') });
-  if (s.ops.includes(':')) rijen.push({ naam: `Delen door ${tafels}`, vb: vb('delen') });
+  const t = s.tables.slice().sort((a, b) => a - b), b = t[t.length - 1], a = b === 7 ? 8 : 7;
+  if (s.ops.includes('x')) rijen.push({ naam: `Tafels van ${t.join(', ')}`, vb: `${a} × ${b}` });
+  if (s.ops.includes(':')) rijen.push({ naam: `Delen door ${t.join(', ')}`, vb: `${a * b} : ${b}` });
   return rijen;
 }
 function leerpadHtml(p) {
   const s = p.settings;
   if (zelfGekozen(s)) return zelfGekozenHtml(p);
+  if (s.track !== 'count') return (themaAan(s, 'rekenen') ? rekenLadderHtml(p) : '') + (themaAan(s, 'tafels') ? tafelLadderHtml(p) : '');
+  return rekenLadderHtml(p);
+}
+function rekenLadderHtml(p) {
+  const s = p.settings;
   const stand = vgStand(p);
   const rijen = [];
   let kop, onder = '', verder;   // onder: de regel onder haar stap; verder: schuift het pad nog zelf door?
@@ -496,9 +514,8 @@ function leerpadHtml(p) {
       `<button class="btn small purple" id="tel-tip-ja" type="button">${tt.knop}</button>`);
   } else {
     // dezelfde tekens als de tegels op Oefeningen
-    const glyph = { '+': '+', '-': '−', 'x': '×', ':': '÷' };
-    const plusMin = s.ops.includes('+') || s.ops.includes('-');
-    kop = `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${plusMin ? ` tot ${s.max}` : ''}`;
+    const glyph = { '+': '+', '-': '−' };
+    kop = `${['+', '-'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')} tot ${s.max}`;
     const alle = padRijen(s).rijen;
     const nuId = padNu(p);
     verder = nuId !== 'alles';
@@ -531,6 +548,32 @@ function leerpadHtml(p) {
     ${kaartKop(`Leerpad <span>· ${kop}</span>`, vgLabel(stand))}
     <div class="fase-ladder vg-ladder">${rijen.join('')}</div>
     <div class="vg-voet"><button class="vg-aanpas" id="leerpad-aanpas" type="button">Aanpassen ›</button></div>
+  </div>`;
+}
+/* De tafelladder op Voortgang: dezelfde vorm als die van rekenen -- wat ze
+   haalde in één ✓-rij, haar rij met de pop en hoe ver, de rest grijs eronder.
+   Tips om een lijn te verzetten zijn er hier niet: de ladder is kort, en
+   "vanaf" en "tot" staan één tik verder, op Oefeningen. */
+function tafelLadderHtml(p) {
+  const s = p.settings;
+  const { rijen, lo, hi } = tafelRijen(s);
+  const speel = rijen.slice(lo, hi + 1);
+  const nuId = tafelNu(p);
+  const nr = nuId === 'alles' ? speel.length : speel.findIndex(r => r.id === nuId);
+  const uit = [];
+  if (nr) uit.push(flRij(' klaar', '✓', klaarNamen(speel.slice(0, nr).map(r => r.naam))));
+  if (nuId === 'alles') uit.push(flRij(' hier niveau-bezig', flAva(p), 'Alle tafels door elkaar', ''));
+  else {
+    const nu = tafelStap(p);
+    uit.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}<small class="vg-hoever">${nu.meter}${nu.tekst}</small>`, flVb(nu.vb)));
+    speel.slice(nr + 1).forEach((r, i) => uit.push(flRij(' later', nr + 2 + i, r.naam, flVb(r.vb))));
+    uit.push(flRij(' later', '∞', 'Alle tafels door elkaar'));
+  }
+  const kop = ['x', ':'].filter(o => s.ops.includes(o)).map(o => ({ x: '×', ':': '÷' })[o]).join(' ');
+  return `<div class="set-card vg-kaart niveau-blok">
+    ${kaartKop(`Tafels <span>· ${kop}</span>`)}
+    <div class="fase-ladder vg-ladder">${uit.join('')}</div>
+    <div class="vg-voet"><button class="vg-aanpas" id="tafel-aanpas" type="button">Aanpassen ›</button></div>
   </div>`;
 }
 /* Voortgang bij Zelf kiezen: geen pad om op te staan, dus ook geen "hier" en
@@ -775,12 +818,15 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
    zonder voorvoegsel vindt getElementById in bindOefenChips stilletjes de
    verkeerde kopie. Het ouderdeel houdt pfx = '' (alle bestaande selectors en
    tests blijven kloppen), het maakformulier gebruikt 'ns-'. */
-/* WELKE INSTELLING IN WELKE KAART. Oefenen is drie kaarten, in beide modi in
-   dezelfde volgorde:
-     wat    wat het kind oefent en hoe groot (bewerkingen, getallen, tafels)
-     pad    het leerpad: wat er na elkaar komt, en wat ze overslaat
-     show   hoe een show speelt (antwoorden of hoe het getoond wordt, hoeveel
-            vragen, en bij tellen het memory-spel)
+/* WELKE INSTELLING IN WELKE KAART. Oefenen is een kaart per thema en dan één
+   voor de show, in beide modi in dezelfde volgorde:
+     rekenen  + en −, en het leerpad of de vinkjes (alleen als het thema aan staat)
+     tafels   × en ÷, en de tafelladder of "Tafels van" (idem; zie THEMAS)
+     show     hoe een show speelt (antwoorden, hoeveel vragen)
+   Bij tellen is het nog altijd wat · pad · show: wat het kind oefent en hoe
+   groot, het leerpad, en hoe een show speelt (met het memory-spel).
+   Welke thema's aan staan, staat erboven, in de kaart Wat oefent ze (zie
+   themaKaartHtml) -- niet hier, want het maakformulier heeft die ook.
    Elke instelling staat hier één keer, met zijn kaart, en heeft op het scherm
    precies één bediening (data-instelling). Hiervoor groeide er een tweede kaart
    waar alles in belandde wat nergens anders paste: de extra's stonden daar als
@@ -789,16 +835,14 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
    instelling met twee bedieningen, of een bediening in de verkeerde kaart, valt
    daar om. Komt er een instelling bij, dan kiest hij hier eerst zijn kaart. */
 const OEFEN_INSTELLINGEN = {
-  math:  { wat: ['ops', 'tables'], pad: ['padVanaf', 'kies'], show: ['mode', 'perLevel'] },
+  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], show: ['mode', 'perLevel'] },
   count: { wat: ['qmax'], pad: ['stage', 'kiesFasen'], show: ['repr', 'perLevel', 'memory'] },
 };
-function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, html }], in de volgorde wat · pad · show
+function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in de volgorde van OEFEN_INSTELLINGEN
   pfx = pfx || '';                       // p: het kind, als er een is (het maakformulier heeft er nog geen)
   // Het teken alleen, groot: een ouder leest + − × ÷ sneller dan "Plus" of "Delen".
   // Het woord staat er voor een schermlezer nog bij (aria-label).
   const opDefs = [['+', '+', 'Plus'], ['-', '−', 'Min'], ['x', '×', 'Maal'], [':', '÷', 'Delen']];
-  const plusMin = s.ops.includes('+') || s.ops.includes('-');
-  const tablesRelevant = s.ops.includes('x') || s.ops.includes(':');
   const availMax = COUNT_STAGE_MAX;
   const stageNums = [];
   for (let v = 1; v <= availMax; v++) stageNums.push(v);
@@ -917,28 +961,37 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, html }], in de volg
   const padRijenLadder = padAlle.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb), uit: r.uit, blok: blok(r) }));
   // Zelf kiezen: de + − rijen (kiesRijen), met hun id als waarde
   const kiesLijst = kiesRijen(s).map(r => ({ v: r.id, naam: r.naam, vb: flVb(r.vb), blok: padBlok(r, { max: 20 }) }));
-  /* + − en × ÷ hebben elk hun eigen maat, en die staat er alleen als ze geldt.
-     "Getallen tot" gold vroeger ongezegd ook voor de tafels: met tot 20 en de
-     tafel van 7 kwam er nooit meer dan 7 × 2. Nu is "tot" alleen van plus en
-     min, en is een tafel altijd heel: × 1 tot × 10 (zie genTriple).
+  /* + − en × ÷ staan elk in de kaart van hun thema, als een balk met alleen
+     hun eigen twee tekens; de laatste van een thema kan niet uit (zet het thema
+     uit, bovenaan). "Getallen tot" gold vroeger ongezegd ook voor de tafels:
+     met tot 20 en de tafel van 7 kwam er nooit meer dan 7 × 2. Nu is "tot"
+     alleen van plus en min, en is een tafel altijd heel: × 1 tot × 10 (zie
+     genTriple).
      Er is geen stem-schakelaar (rekenen is zonder stem, zie stemAan) en bij
      rekenen geen memory (zie memoryAan). */
-  return [{
-    kaart: 'wat', kop: 'Sommen', html: `
-      <div class="oe-ops" id="${pfx}set-ops" data-instelling="ops">${opDefs.map(([v, teken, woord]) =>
-        `<button class="chip${s.ops.includes(v) ? ' on' : ''}" data-v="${v}" aria-label="${woord}" aria-pressed="${s.ops.includes(v)}">${teken}</button>`).join('')}</div>
-      ${tablesRelevant ? `${lbl('Tafels van')}
-      <div class="oe-tafels" id="${pfx}set-tables" data-instelling="tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>` : ''}`
-  }, vrij ? {
-    // zonder plus en min is er niets aan te vinken: × en ÷ staan al in Sommen (lege kaart, zie oefenenPanelHtml)
-    kaart: 'pad', kop: 'Plus en min', html: plusMin ? kiesHtml('set-kies', 'kies', kiesLijst, (s.kies || [])) : ''
-  } : {
-    kaart: 'pad', kop: 'Leerpad', html: `${ladder('set-startstap', 'padVanaf', padRijenLadder,
-      startPos, plusMin ? padR.length : Infinity, hierPos, eind)}`
+  const opsBalk = (id, instelling, defs) => `<div class="oe-ops" id="${pfx}${id}" data-instelling="${instelling}">${defs.map(([v, teken, woord]) =>
+    `<button class="chip${s.ops.includes(v) ? ' on' : ''}" data-v="${v}" aria-label="${woord}" aria-pressed="${s.ops.includes(v)}">${teken}</button>`).join('')}</div>`;
+  /* De tafelladder (zie TAFELPAD): dezelfde ladder met dezelfde twee lijnen,
+     en onderaan om te lezen "Alle tafels door elkaar". Bij Zelf kiezen de balk
+     "Tafels van": daar tikt de ouder precies aan welke. */
+  const tl = tafelRijen(s);
+  const tafelNuId = p && tafelNu(p);
+  const tafelHier = p && tafelNuId !== 'alles' ? TAFEL_IDX[tafelNuId] + 1 : 0;
+  const tafelEind = flRij(` eind${tafelNuId === 'alles' ? ' hier' : ''}`, tafelNuId === 'alles' && ava ? ava : '∞', 'Alle tafels door elkaar');
+  const tafelLadder = ladder('set-tafelpad', 'tafelLijn', tl.rijen.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb) })),
+    tl.lo + 1, tl.hi + 1, tafelHier, tafelEind);
+  const tafelsVan = `${lbl('Tafels van')}
+      <div class="oe-tafels" id="${pfx}set-tables" data-instelling="tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>`;
+  return [themaAan(s, 'rekenen') && {
+    kaart: 'rekenen', kop: 'Rekenen', ico: 'rekenen', html: `${opsBalk('set-ops', 'ops', opDefs.slice(0, 2))}${vrij
+      ? kiesHtml('set-kies', 'kies', kiesLijst, (s.kies || []))
+      : ladder('set-startstap', 'padVanaf', padRijenLadder, startPos, padR.length, hierPos, eind)}`
+  }, themaAan(s, 'tafels') && {
+    kaart: 'tafels', kop: 'Tafels', ico: 'tafels', html: `${opsBalk('set-tafelops', 'tafelOps', opDefs.slice(2))}${vrij ? tafelsVan : tafelLadder}`
   }, {
     kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
       ${perShow}`
-  }];
+  }].filter(Boolean);
 }
 /* Wat er in de dichte openklapper te lezen staat: een ouder die hem nooit opent
    ziet zo tóch waar haar kind mee begint. */
@@ -953,7 +1006,8 @@ function oefenSamenvatting(s) {
   const modes = { kies: 'kiezen', typ: 'typen', mix: 'mix' };
   const totRij = s.padTot && padRijen(s).rijen.slice(-1)[0];   // de lijn midden in een blok: zeg de rij
   const tot = (s.ops.includes('+') || s.ops.includes('-')) ? ` · tot ${totRij ? totRij.naam.toLowerCase() : s.max}` : '';
-  const tafels = (s.ops.includes('x') || s.ops.includes(':'))
+  // de tafels: op het leerpad zegt de ladder welke, bij Zelf kiezen de ouder
+  const tafels = themaAan(s, 'tafels') && zelfGekozen(s)
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
   const rijen = padRijen(s).rijen.filter(r => !r.uit);
   const start = s.padVanaf && rijen.length && padVanafRij(s, rijen) !== rijen[0] && padVanafRij(s, rijen);
@@ -961,8 +1015,9 @@ function oefenSamenvatting(s) {
        + ` · ${modes[s.mode] || s.mode}${start ? ` · vanaf ${start.naam.toLowerCase()}` : ''}`
        + ` · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
 }
-/* DE VOLGORDE VAN OEFENEN. Eerst wat het kind oefent, dan het leerpad, dan hoe
-   een show speelt: de drie kaarten van oefenGroups, en verder niets.
+/* DE VOLGORDE VAN OEFENEN. Eerst wat ze oefent en hoe (themaKaartHtml), dan
+   per thema zijn kaart, dan hoe een show speelt: de kaarten van oefenGroups,
+   en verder niets.
    De modus (tellen of rekenen) staat hier niet: die wordt één keer gekozen,
    bij het maken van de ster, en daarna nog één keer als de tip in Voortgang
    zegt dat het tijd is om te rekenen. Hij staat in haar blad, bij wie ze is
@@ -970,22 +1025,37 @@ function oefenSamenvatting(s) {
    een duim op viel na het scrollen. */
 function oefenenPanelHtml(p, s) {
   const cards = oefenGroups(s, '', p).filter(g => g.html).map(g => `
-    <div class="set-card oefen-kaart primary" data-kaart="${g.kaart}">${kaartKop(g.kop)}${g.html}</div>`).join('');
-  return `<div class="settings-panel">${modusKaartHtml(s)}${cards}
+    <div class="set-card oefen-kaart primary" data-kaart="${g.kaart}">${kaartKop(g.ico ? `${themaIcoon(g.ico, 22)}${g.kop}` : g.kop)}${g.html}</div>`).join('');
+  return `<div class="settings-panel">${themaKaartHtml(s, p)}${cards}
   </div>`;
 }
-/* HOE OEFENT ZE? Bovenaan Oefeningen, de twee manieren (zie zelfGekozen):
+/* DE THEMA'S, als tegels: wat ze oefent (zie THEMAS). Meer tegelijk mag, de
+   laatste kan niet uit. Elke tegel is een schakelaar (role=switch), met het
+   woord onder het icoontje -- uit is grijs én lichter, niet alleen een andere
+   kleur. Gedeeld met het maakformulier (pfx 'ns-'). */
+function themaTegels(s, pfx) {
+  return `<div class="thema-bar" id="${pfx || ''}set-themas">${THEMAS.map(t => {
+    const aan = themaAan(s, t.id);
+    return `<button class="chip thema${aan ? ' on' : ''}" data-v="${t.id}" role="switch" aria-checked="${aan}">${themaIcoon(t.id, 30)}<span>${t.naam}</span></button>`;
+  }).join('')}</div>`;
+}
+/* WAT OEFENT ZE, EN HOE? Bovenaan Oefeningen één kaart: eerst de thema's
+   (themaTegels; alleen bij rekenen), dan de twee manieren (zie zelfGekozen),
+   voor alle thema's samen:
      🧭 Leerpad      het spel schuift zelf door; de ouder zet begin en eind
-     ✋ Zelf kiezen  precies wat de ouder aanvinkt, door elkaar
-   Zonder kop: de twee woorden en één korte regel zeggen het. Hij staat niet in
-   oefenGroups, want het maakformulier begint altijd op het leerpad -- wie
-   precies wil kiezen, doet dat als de ster er is. */
-function modusKaartHtml(s) {
+     ✋ Zelf kiezen  precies wat de ouder aanvinkt, om de beurt
+   Eerst wat, dan hoe: zo leest de kaart van boven naar onder. De manier staat
+   niet in oefenGroups, want het maakformulier begint altijd op het leerpad --
+   wie precies wil kiezen, doet dat als de ster er is. */
+function themaKaartHtml(s, p) {
   const vrij = zelfGekozen(s);
+  const tellen = s.track === 'count';
+  const meer = !tellen && themasAan(s).length > 1;
   return `
     <div class="set-card oefen-kaart primary modus-kaart" data-kaart="hoe">
+      ${tellen ? '' : `${kaartKop(`Wat oefent ${p ? esc(p.name) : 'ze'}?`)}${themaTegels(s, '')}<div class="thema-naad" aria-hidden="true"></div>`}
       <div class="oe-seg" id="set-modus" data-instelling="modus">${chip('pad', '🧭 Leerpad', !vrij)}${chip('vrij', '✋ Zelf kiezen', vrij)}</div>
-      <p class="modus-uitleg">${vrij ? 'Alleen wat je aanvinkt.' : 'Groeit vanzelf mee.'}</p>
+      <p class="modus-uitleg">${vrij ? 'Alleen wat je aanvinkt.' : meer ? 'Elk thema groeit vanzelf mee.' : 'Groeit vanzelf mee.'}</p>
     </div>`;
 }
 
@@ -1495,12 +1565,19 @@ function bindOefenChips(s, p, pfx, done) {
   // meerkeuze-chips (aan/uit) -- de laatst overgebleven mag niet uit (er moet altijd
   // iets geoefend worden); dat blokkeren gebeurde eerst stilletjes, nu met een
   // duidelijke schud + tekstje zodat het niet als "kapot" aanvoelt
-  bind('set-ops', c => {
-    const v = c.dataset.v;
+  // + − en × ÷: de laatste van een thema blijft aan (een thema uitzetten gaat bovenaan)
+  const opTik = c => {
+    const v = c.dataset.v, eigen = THEMAS.find(t => t.ops.includes(v)).ops;
     if (s.ops.includes(v)) {
-      if (s.ops.length > 1) s.ops = s.ops.filter(o => o !== v);
+      if (s.ops.filter(o => eigen.includes(o)).length > 1) s.ops = s.ops.filter(o => o !== v);
       else return blockedMinOne(c), false;
     } else s.ops.push(v);
+  };
+  bind('set-ops', opTik);
+  bind('set-tafelops', opTik);
+  // de thema's (zie themaZet): het laatste blijft aan
+  bind('set-themas', c => {
+    if (!themaZet(s, c.dataset.v, !themaAan(s, c.dataset.v))) return blockedMinOne(c), false;
   });
   bind('set-tables', c => {
     const v = parseInt(c.dataset.v, 10);
@@ -1515,7 +1592,7 @@ function bindOefenChips(s, p, pfx, done) {
     if (p) s.grensTipBasis = grensDrieSterren(p);   // ook een antwoordstap telt opnieuw
   });
   bind('set-perlevel', c => { s.perLevel = parseInt(c.dataset.v, 10); });
-  /* Leerpad of Zelf kiezen (zie modusKaartHtml). Naar Zelf kiezen: is er nog
+  /* Leerpad of Zelf kiezen (zie themaKaartHtml). Naar Zelf kiezen: is er nog
      niets aangevinkt, dan staat de stap waar ze nu is al aan (kiesStart, of de
      fase van nu), en een toast zegt welke -- zo begint de lijst nooit leeg.
      Wat er al eens aangevinkt was, blijft. Terug naar het leerpad: ze staat
@@ -1597,6 +1674,23 @@ function bindOefenChips(s, p, pfx, done) {
       return;
     }
     s.padVanaf = v === 1 ? null : r.id;
+  });
+  /* De tafelladder (zie TAFELPAD): dezelfde regel als de twee ladders
+     hierboven. "vanaf" tilt haar hoogstens mee omhoog (tafelNu), en de twee
+     lijnen kunnen elkaar niet kruisen. */
+  bind('set-tafelpad', c => {
+    const v = parseInt(c.dataset.v, 10), r = TAFELPAD[v - 1];
+    if (!r) return false;
+    const { lo, hi } = tafelRijen(s);
+    const l = s.tafelLijn = { ...s.tafelLijn };
+    const id = (i, rand) => i === rand ? null : TAFELPAD[i].id;
+    if (dichtsteLijn(v, lo + 1, hi + 1) === 'vanaf') {
+      l.vanaf = id(v - 1, 0);
+      if (v - 1 > hi) l.tot = id(v - 1, TAFELPAD.length - 1);
+    } else {
+      l.tot = id(v - 1, TAFELPAD.length - 1);
+      if (v - 1 < lo) l.vanaf = id(v - 1, 0);
+    }
   });
   bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); telPlafondOpnieuw(p); });
   bind('set-memory', c => { s.memory = (c.dataset.v === 'on'); });
@@ -1740,13 +1834,15 @@ function bindSettings(p, s) {
     renderSettings();
   });
   // "Aanpassen ›" op het leerpad: naar dezelfde ladder op Oefeningen, midden in beeld
-  on('leerpad-aanpas', 'onclick', () => {
+  const naarLadder = (...ids) => () => {
     sndClick();
     setTab = 'oefenen';
     renderSettings();
-    const lad = $('set-startstap') || $('set-fase') || $('set-kies') || $('set-kiesfasen');
+    const lad = ids.map(id => $(id)).find(Boolean);
     if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
-  });
+  };
+  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables'));
+  on('tafel-aanpas', 'onclick', naarLadder('set-tafelpad'));
   // De velden zelf staan óók op het maakformulier; de bediening is gedeeld.
   // Het maakformulier heeft niets op te slaan, dus wat er ná een wijziging
   // gebeurt komt van de aanroeper (hier: opslaan + hertekenen).

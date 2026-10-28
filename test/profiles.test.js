@@ -57,7 +57,7 @@ function check(ok, label, detail) {
   }
 
   // Het formulier invullen en verzenden. `settings` is optioneel: een kaartje
-  // {'set-ops': 'x'} klapt de oefening-openklapper open en tikt die chips aan.
+  // {'set-themas': 'tafels'} klapt de oefening-openklapper open en tikt die chips aan.
   // Een lijst tikt er meer na elkaar; 'grijs' is de eerste grijze rij onder
   // "tot" op het leerpad (de grens omhoog, zie bindOefenChips).
   async function makeStar(page, { name, base, hair, dress, track, settings } = {}) {
@@ -2567,7 +2567,7 @@ function check(ok, label, detail) {
     });
     const mathWant = { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8,
       missNum: true, chain3: true, track: 'math', stage: 1, stageMax: 12, fasesBekend: 12, repr: 'objects',
-      numerals: true, qmax: 10, memory: true, padVanaf: null, padTot: null };
+      numerals: true, qmax: 10, memory: true, padVanaf: null, padTot: null, tafelLijn: {} };
     const countWant = { ...mathWant, track: 'count', perLevel: 5 };
     check(JSON.stringify(r.math) === JSON.stringify(mathWant),
       'zonder de openklapper aan te raken blijft de rekenster ongewijzigd', JSON.stringify(r.math));
@@ -2579,7 +2579,7 @@ function check(ok, label, detail) {
   // 10c · wat een ouder vooraf instelt, komt ook echt in het profiel
   zaak(async () => {
     const { ctx, page } = await fresh();
-    await makeStar(page, { name: 'Maal', settings: { 'set-ops': 'x', 'set-startstap': 'grijs' } });
+    await makeStar(page, { name: 'Maal', settings: { 'set-themas': 'tafels', 'set-startstap': 'grijs' } });
     const s = await page.evaluate(() => Object.values(db.profiles)[0].settings);
     check(s.ops.includes('x'), 'een vooraf gekozen bewerking landt in het profiel', JSON.stringify(s.ops));
     check(s.max === 100, 'een vooraf gekozen bereik landt in het profiel', `max=${s.max}`);

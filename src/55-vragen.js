@@ -10,7 +10,7 @@
 /* ---- Het leerpad: één ladder, in de volgorde van school -----------------
    Wat een rekenkind leert staat in één tabel, LEERPAD, in de volgorde waarin
    een Vlaamse school het brengt. De instellingen bovenaan Oefeningen (+ − × ÷,
-   de tafels, de grens) zeggen welke rijen op háár pad staan; de volgorde zelf
+   de grens) zeggen welke rijen op háár pad staan; de volgorde zelf
    verandert nooit. Oefeningen, Voortgang en de vraagmaker lezen alle drie deze
    tabel (padRijen), en nergens anders staat een lijst stapnamen.
 
@@ -23,8 +23,8 @@
                      daar komt honderd via de opbouw (eerst de getallen bouwen,
                      dan hele tientallen), en het wennen (wenPlafond) doet de
                      rest.
-     soort 'vorm'    een andere soort vraag met dezelfde getallen (tafels,
-                     delen, zoek het getal, drie getallen). Die laten de
+     soort 'vorm'    een andere soort vraag met dezelfde getallen (zoek het
+                     getal, drie getallen). Die laten de
                      getallen niet groeien, dus de lijn "tot" snijdt ze niet af:
                      ze staan in de tabel vóór alles boven twintig, en daarmee
                      altijd boven de lijn. Bij "tot 10" is het pad dus Tot 10,
@@ -41,6 +41,10 @@
    buiten het pad om, in één keer. Nu blijft ze op een rij tot ze hem kan
    (padNa), en de werelden zijn alleen nog de reis.
 
+   De tafels staan hier niet: dat is een eigen thema, met een eigen ladder en
+   een eigen plek op die ladder (zie "= Thema's", TAFELPAD). Hier is het plus
+   en min, en wat daarbij hoort.
+
    Een nieuw onderwerp is één rij hier, met zijn plek, zijn voorwaarde (past),
    zijn voorbeeld (vb) en wat het aan de vragen verandert (padStand) -- geen
    nieuw scherm, geen nieuwe instelling. test/kern.test.js zaak ZF houdt de
@@ -49,8 +53,6 @@ const LEERPAD = [
   { id: 'tot10',      soort: 'bereik', bereik: 10,  brug: 'nee',  naam: 'Tot 10' },
   { id: 'tot20',      soort: 'bereik', bereik: 20,  brug: 'nee',  naam: 'Tot 20' },
   { id: 'brug20',     soort: 'bereik', bereik: 20,  brug: 'vaak', naam: 'Over het tiental' },
-  { id: 'tafels',     soort: 'vorm',   op: 'x',                   naam: 'Tafels' },
-  { id: 'delen',      soort: 'vorm',   op: ':',                   naam: 'Delen' },
   { id: 'zoek',       soort: 'vorm',   keuze: 'missNum',          naam: 'Zoek het getal' },
   { id: 'drie',       soort: 'vorm',   keuze: 'chain3',           naam: 'Drie getallen' },
   { id: 'bouwen100',  soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Getallen bouwen tot 100', bouwen: true },
@@ -83,22 +85,16 @@ const PAD_VB = {
 function plaats(p, tekst) { return `<span class="pl-${p}">${tekst}</span>`; }
 function padVoorbeeld(r, s) {
   const pm = s.ops.includes('+') ? '+' : '-';
-  const tafel = Math.max(...(s.tables.length ? s.tables : [2, 5, 10]));
-  const keer = tafel === 7 ? 8 : 7;                   // 7 × 7 leest als een vergissing
-  if (r.id === 'tafels') return `${keer} × ${tafel}`;
-  if (r.id === 'delen') return `${keer * tafel} : ${tafel}`;
   if (r.id === 'drie') return '3 + 4 + 2';
   if (r.bouwen) return `${r.bereik > 100 ? plaats('h', '3H') + ' ' : ''}${plaats('t', '4T')} ${plaats('e', '5E')}`;
-  if (r.id === 'zoek') return s.ops.includes('+') ? (s.max > 10 ? '7 + ▢ = 12' : '3 + ▢ = 7')
-    : s.ops.includes('-') ? '9 − ▢ = 4' : `3 × ▢ = ${3 * tafel}`;
+  if (r.id === 'zoek') return s.ops.includes('+') ? (s.max > 10 ? '7 + ▢ = 12' : '3 + ▢ = 7') : '9 − ▢ = 4';
   return PAD_VB[pm][r.brug === 'vaak' ? r.id : r.tientallen ? 'tientallen' : r.honderdtallen ? 'honderdtallen' : r.bereik];
 }
 // Kan deze rij met deze instellingen? (bereik: ook binnen de grens -- zie padRijen)
 function padPast(r, s) {
   const plusMin = s.ops.includes('+') || s.ops.includes('-');
   if (r.soort === 'bereik') return plusMin && (r.brug !== 'vaak' || r.bereik > 10);
-  if (r.op) return s.ops.includes(r.op);
-  if (r.id === 'zoek') return s.ops.some(o => o !== ':');
+  if (r.id === 'zoek') return plusMin;
   if (r.id === 'drie') return s.ops.includes('+');
   return true;
 }
@@ -124,7 +120,7 @@ function padRijen(s) {
   return { rijen, later };
 }
 /* In welk blok staat deze rij -- welke grens hoort erbij als "tot" er komt?
-   Een bereik-rij zegt het zelf. De vormen (tafels, zoek het getal, ...) staan
+   Een bereik-rij zegt het zelf. De vormen (zoek het getal, drie getallen) staan
    in het blok tot 20, of tot 10 zolang de grens nog daar staat. */
 function padBlok(r, s) { return r.soort === 'bereik' ? r.bereik : Math.min(s.max, 20); }
 /* Zet de lijn "tot" op deze rij: de grens wordt zijn blok (grensOmhoog, met
@@ -148,8 +144,8 @@ function padTotOp(s, r) {
    ze gehaald heeft (zie padNa), rij de rij waar shows en goed over tellen. Ze
    staat op de eerste rij van haar pad die nog niet klaar is, en nooit vóór
    "vanaf" (s.padVanaf). Zo kan het pad onder haar veranderen zonder dat er iets
-   verloren gaat: zet de ouder × aan, dan komt Tafels terug ook als ze al verder
-   was; laat de ouder de lijn "tot" zakken, dan komen de nieuwe getallen op hun
+   verloren gaat: zet de ouder + aan, dan komt Drie getallen terug ook als ze al
+   verder was; laat de ouder de lijn "tot" zakken, dan komen de nieuwe getallen op hun
    plek -- ook Tot 20 bij een kind dat tot tien al alles door elkaar deed, al
    staat die rij in de tabel vóór Zoek het getal. Geeft het id, of 'alles' als
    er geen rij meer open is. Verandert niets. */
@@ -203,14 +199,14 @@ function padUitOudeStap(s, stap) {
      honderdtallen  zoals tientallen, op die rij in het blok tot 1000
    Tientallen en Getallen bouwen tellen op 'alles' als "de rij zelf" als de
    lijn "tot" eronder staat (zie eigen).
-     ops      + − vanaf de eerste bereik-rij, × vanaf Tafels, : vanaf Delen
+     ops      + en −, vanaf de eerste bereik-rij (× en ÷ zijn het thema Tafels)
      missNum, chain3   zoek het getal en drie getallen, vanaf hun rij en als ze
               aangevinkt zijn
      tientallen  alleen op de rij zelf: vaak een som met hele tientallen
    Op 'alles' is het alles tot de lijn, gemengd.
    klaar (p.pad.klaar): een vorm die ze al haalde blijft meedoen, ook als ze
-   terug moet naar een rij ervoor (de lijn "tot" zakte, zie padNu): wie de
-   tafels kent, verliest ze niet omdat Tot 20 er nog tussen kwam. */
+   terug moet naar een rij ervoor (de lijn "tot" zakte, zie padNu): wie zoek
+   het getal kent, verliest het niet omdat Tot 20 er nog tussen kwam. */
 function padStand(s, nuId, klaar) {
   const rijen = padRijen(s).rijen;
   const i = nuId === 'alles' ? rijen.length - 1 : rijen.findIndex(r => r.id === nuId);
@@ -223,7 +219,7 @@ function padStand(s, nuId, klaar) {
   const bereik = tot.filter(r => r.soort === 'bereik' && !r.bouwen);
   const gehaald = new Set(klaar || []);
   const heeft = id => rijen.some((r, j) => r.id === id && !r.uit && (j <= i || gehaald.has(id)));
-  const ops = s.ops.filter(o => (o === '+' || o === '-') ? bereik.length > 0 : heeft(o === 'x' ? 'tafels' : 'delen'));
+  const ops = s.ops.filter(o => (o === '+' || o === '-') && bereik.length > 0);
   // het grootste blok dat ze al bouwde: daar komt het af en toe uit terug
   const gebouwd = rijen.filter(r => r.bouwen && heeft(r.id)).pop();
   return {
@@ -249,10 +245,9 @@ function vraagInst(p) {
    het leerpad, alleen niet na elkaar:
      + en −    de rijen van LEERPAD die over plus en min gaan (kiesRijen), elk
                met een vinkje; s.kies zijn de ids
-     × en ÷    gewoon de tegels en de tafels van de kaart Sommen -- daar staan
-               ze in beide modi, dus in de lijst niet nog eens
+     × en ÷    het thema Tafels: × en ÷ en de balk "Tafels van" (tafelInst)
      tellen    de fases, s.kiesFasen (zie telFase)
-   Elke vraag komt dan uit één aangevinkte rij, door elkaar, en NIETS SCHUIFT
+   Elke vraag komt dan uit één aangevinkte rij, om de beurt, en NIETS SCHUIFT
    DOOR: geen padNa, geen fase erbij of eraf, geen "Nieuw", geen tip die een
    lijn verzet. Wat ze lastig vindt komt wel terug (de zwakke sommen), en
    binnen een rij maakt het spel het lichter of pittiger zoals altijd.
@@ -271,7 +266,7 @@ const kiesGekozen = s => kiesRijen(s).filter(r => (s.kies || []).includes(r.id))
    leerpad), en blijven daar: aangevinkt naast Tot 100 worden ze geen 47 + ▢. */
 const KIES_VORM_MAX = 20;
 /* De vraagmaker in Zelf kiezen. vrij is de pot waar elke vraag uit komt: één
-   ingang per aangevinkte rij, plus × en ÷ als die aan staan, elk met de
+   ingang per aangevinkte rij, elk met de
    instellingen van die ene rij -- niet cumulatief zoals padStand, want hier
    betekent een vinkje "dit", niet "tot hier". Over het tiental speelt dan
    altijd over het tiental (brug 'altijd'), Tientallen altijd hele tientallen,
@@ -286,17 +281,16 @@ function kiesInst(s) {
     return { id: r.id, inst: { ...s, ops: pm, max: r.bereik, brug: r.brug === 'vaak' ? 'altijd' : 'nee',
       tientallen: r.tientallen ? 'altijd' : false, honderdtallen: r.honderdtallen ? 'altijd' : false } };
   });
-  ['x', ':'].filter(o => s.ops.includes(o)).forEach(o => vrij.push({ id: o === 'x' ? 'tafels' : 'delen', inst: { ...s, ops: [o] } }));
   // + of − aan maar niets aangevinkt dat kan (bv. alleen drie getallen, en + uit): dan gewoon tot 20
   if (!vrij.length) vrij.push({ id: 'tot20', inst: { ...s, ops: pm.length ? pm : s.ops, max: 20, brug: 'vrij' } });
   const max = vrij.reduce((m, v) => Math.max(m, v.inst.ops.some(o => o === '+' || o === '-') ? v.inst.max : 0), 0);
   const ops = [...new Set(vrij.flatMap(v => v.inst.ops))];
-  return { ...s, ops, max: max || s.max, brug: 'vrij', missNum: false, chain3: false, tientallen: false, honderdtallen: false, bouwen: null, vrij };
+  return { ...s, ops, max: max || s.max, brug: 'vrij', missNum: false, chain3: false, tientallen: false, honderdtallen: false, bouwen: null, vrij, vrijStapel: [] };
 }
 /* Welke + − rij staat er aan als een ouder op Zelf kiezen tikt? De rij waar ze
    op het leerpad nu is -- zo begint de lijst nooit leeg, en speelt ze de
-   volgende show wat ze gewend was. Is dat geen + − rij (Tafels, of alles door
-   elkaar), dan de laatste + − rij die ze al had. */
+   volgende show wat ze gewend was. Is dat geen + − rij (alles door elkaar),
+   dan de laatste + − rij die ze al had. */
 function kiesStart(p) {
   const s = p.settings;
   const kan = kiesRijen(s).map(r => r.id);
@@ -347,12 +341,12 @@ function padNa(p, sterren) {
    fase het nieuwe. */
 function vraagIsNieuw(q, id) {
   if (id === 'fase') return true;
+  if (id in TAFEL_IDX) return (q.op === 'x' || q.op === ':') && TAFELPAD[TAFEL_IDX[id]].tafels.includes(Number((q.tmpl.match(/\d+/g) || [])[1]));
   const r = LEERPAD[PAD_IDX[id]];
   if (!r) return false;
   if (r.bouwen) return q.kind === 'bouw' && (q.grens || 99) >= r.bereik - 1;   // tot 1000: met honderdtallen
   if (id === 'zoek') return q.kind === 'missing';
   if (id === 'drie') return q.kind === 'chain';
-  if (r.op) return q.op === r.op;
   if (q.kind !== 'classic' || (q.op !== '+' && q.op !== '-')) return false;
   const [a, b] = (q.tmpl.match(/\d+/g) || []).map(Number);
   if (r.tientallen) return a % 10 === 0 && b % 10 === 0;
@@ -361,6 +355,160 @@ function vraagIsNieuw(q, id) {
   // een nieuw bereik: een getal boven het vorige bereik (tot 20: boven de tien)
   const vorig = LEERPAD.filter(x => x.soort === 'bereik' && x.bereik < r.bereik).reduce((m, x) => Math.max(m, x.bereik), 0);
   return Math.max(a, b, q.ans) > vorig;
+}
+/* ================= = Thema's: wat ze oefent =================
+   Rekenen is niet één ladder meer. Bovenaan Oefeningen kiest de ouder wat ze
+   oefent, en elk thema heeft daaronder zijn eigen kaart, zijn eigen ladder en
+   zijn eigen plek erop:
+     rekenen   plus en min: LEERPAD, met zijn blokken en zijn grens
+     tafels    maal en delen: TAFELPAD, de tafels in de volgorde van school
+   Een thema groeit apart. Ze kan op Tot 100 staan en op de tafels van 3 en 4:
+   klok of tafels hoeven niet te wachten tot de sommen klaar zijn, en
+   andersom. Een show mengt de thema's die aan staan (themaPlan), en elk thema
+   schuift door op zijn eigen vragen in die show (themaSterren, themaNa).
+
+   AAN OF UIT ZIT IN s.ops. Rekenen staat aan als + of − aan staat, tafels als ×
+   of ÷ aan staat -- er is geen tweede vlag die kan gaan afwijken van de
+   bewerkingen, en een save van vóór de thema's heeft zijn thema's al. Zet een
+   ouder een thema uit, dan gaan zijn bewerkingen opzij in s.opsRust, en komen
+   ze zo terug als hij weer aan gaat. Het laatste thema kan niet uit. */
+const THEMAS = [
+  { id: 'rekenen', naam: 'Rekenen', ops: ['+', '-'] },
+  { id: 'tafels',  naam: 'Tafels',  ops: ['x', ':'] },
+];
+const THEMA = Object.fromEntries(THEMAS.map(t => [t.id, t]));
+function themaAan(s, k) { return THEMA[k].ops.some(o => s.ops.includes(o)); }
+const themasAan = s => THEMAS.filter(t => themaAan(s, t.id)).map(t => t.id);
+// Zet een thema aan of uit; false als het het laatste is (dan blijft het aan).
+function themaZet(s, k, aan) {
+  const ops = THEMA[k].ops;
+  if (aan === themaAan(s, k)) return true;
+  if (!aan) {
+    if (themasAan(s).length < 2) return false;
+    s.opsRust = { ...s.opsRust, [k]: s.ops.filter(o => ops.includes(o)) };
+    s.ops = s.ops.filter(o => !ops.includes(o));
+  } else {
+    const terug = ((s.opsRust || {})[k] || []).filter(o => ops.includes(o));
+    s.ops = s.ops.concat(terug.length ? terug : ops.slice(0, 1));
+  }
+  return true;
+}
+/* Het ICOONTJE van een thema: getekend, geen emoji -- 🧮 en ✖️ zien er op elk
+   toestel anders uit, en op een oude Android klein en vaag. Twee tekens op een
+   lichtpaars tegeltje, dezelfde vorm voor elk thema. aria-hidden: het woord
+   staat er altijd naast. */
+function themaIcoon(k, maat) {
+  const teken = { rekenen: ['+', '−'], tafels: ['×', '÷'] }[k];
+  return `<svg class="thema-ico" viewBox="0 0 40 40" width="${maat}" height="${maat}" aria-hidden="true">`
+    + `<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>`
+    + `<g fill="#8e24aa" font-weight="900" font-size="21" text-anchor="middle" dominant-baseline="central">`
+    + `<text x="13.5" y="14">${teken[0]}</text><text x="26.5" y="26">${teken[1]}</text></g></svg>`;
+}
+
+/* ---- De tafels: een eigen ladder ------------------------------------------
+   Drie rijen, zoals een Vlaamse school ze brengt: eerst de tafels van 2, 5 en
+   10 (die met een ritme), dan 3 en 4, dan de rest. ÷ hoort bij elke rij, niet
+   als rij erachter: op school is het de maal- en deeltafel samen. Welke van de
+   twee er speelt, zeggen × en ÷ bovenaan de kaart.
+   Op een rij zijn is ook hier cumulatief: op de tafels van 3 en 4 komen 2, 5
+   en 10 nog terug, maar de nieuwe zijn er het meest (TAFEL_NU_VAAK). Voorbij
+   de laatste rij is het alles door elkaar, tot de lijn "tot".
+   s.tafelLijn = { vanaf, tot } (rij-ids, null = het begin of het eind), net als
+   padVanaf en padTot bij rekenen. p.tafels = { rij, shows, goed, klaar }, net
+   als p.pad. Bij Zelf kiezen speelt dit allemaal niet: dan zijn het de tafels
+   die de ouder aantikt (s.tables), om de beurt. */
+const TAFELPAD = [
+  { id: 'tafels2510', tafels: [2, 5, 10],   naam: 'Tafels van 2, 5 en 10' },
+  { id: 'tafels34',   tafels: [3, 4],       naam: 'Tafels van 3 en 4' },
+  { id: 'tafels69',   tafels: [6, 7, 8, 9], naam: 'Tafels van 6 tot 9' },
+];
+const TAFEL_IDX = Object.fromEntries(TAFELPAD.map((r, i) => [r.id, i]));
+const TAFEL_NU_VAAK = 0.6;
+function tafelVoorbeeld(r, s) {
+  const b = r.tafels[r.tafels.length > 2 ? 1 : 0], a = b === 7 ? 8 : 7;   // 7 × 7 leest als een vergissing
+  return s.ops.includes('x') ? `${a} × ${b}` : `${a * b} : ${b}`;
+}
+// De rijen met voorbeeld, en waar de twee lijnen staan (indexen, 0 = de eerste rij).
+function tafelRijen(s) {
+  const l = s.tafelLijn || {};
+  const hi = l.tot in TAFEL_IDX ? TAFEL_IDX[l.tot] : TAFELPAD.length - 1;
+  const lo = Math.min(l.vanaf in TAFEL_IDX ? TAFEL_IDX[l.vanaf] : 0, hi);
+  return { rijen: TAFELPAD.map(r => ({ ...r, vb: tafelVoorbeeld(r, s) })), lo, hi };
+}
+// Waar staat ze op de tafels? De eerste rij tussen de lijnen die nog niet klaar is.
+function tafelNu(p) {
+  const { lo, hi } = tafelRijen(p.settings);
+  const klaar = new Set((p.tafels && p.tafels.klaar) || []);
+  const r = TAFELPAD.slice(lo, hi + 1).find(x => !klaar.has(x.id));
+  return r ? r.id : 'alles';
+}
+/* De vraagmaker voor de tafels: × en ÷ zoals de ouder ze aanzette, en de
+   tafels van haar rij en alles ervoor (ook wat ze al haalde, als "vanaf"
+   later hoger kwam). Zelf kiezen: de aangetikte tafels, om de beurt. */
+function tafelInst(p) {
+  const s = p.settings;
+  const ops = s.ops.filter(o => o === 'x' || o === ':');
+  const basis = { ...s, ops, missNum: false, chain3: false, tientallen: false, honderdtallen: false, bouwen: null };
+  if (zelfGekozen(s)) return { ...basis, tables: s.tables.length ? s.tables.slice() : [2, 5, 10], tafelStapel: [] };
+  const nuId = tafelNu(p), { hi } = tafelRijen(s);
+  const klaar = new Set((p.tafels && p.tafels.klaar) || []);
+  const tot = nuId === 'alles' ? hi : TAFEL_IDX[nuId];
+  const tables = TAFELPAD.filter((r, i) => i <= tot || klaar.has(r.id)).flatMap(r => r.tafels);
+  return { ...basis, tables, tafelNu: nuId === 'alles' ? null : TAFELPAD[tot].tafels };
+}
+/* Welke tafel deze som? Op het leerpad vaak die van haar rij; bij Zelf kiezen
+   om de beurt (s.tafelStapel, een geschud stapeltje dat de show lang meegaat),
+   zodat in een show van acht élke aangetikte tafel langskomt -- met pick() kon
+   de tafel van 7 er een hele show niet bij zitten. */
+function kiesTafel(s, tables) {
+  if (s.tafelNu && Math.random() < TAFEL_NU_VAAK) return pick(s.tafelNu);
+  return beurt(s, 'tafelStapel', tables);
+}
+// De volgende uit een stapeltje dat om de beurt gaat; zonder stapeltje gewoon pick.
+function beurt(s, sleutel, lijst) {
+  const stapel = s[sleutel];
+  if (!stapel) return pick(lijst);
+  if (!stapel.length) stapel.push(...shuffle(lijst.slice()));
+  return stapel.pop();
+}
+/* Een show verder op de tafels: dezelfde regel als padNa, op haar
+   tafelvragen in die show. */
+function tafelNa(p, sterren) {
+  const nu = tafelNu(p);
+  if (nu === 'alles') return false;
+  const t = p.tafels = p.tafels || { klaar: [] };
+  if (!Array.isArray(t.klaar)) t.klaar = [];
+  if (t.rij !== nu) Object.assign(t, { rij: nu, shows: 0, goed: 0 });
+  if (sterren >= PAD_TELT) t.shows++;
+  t.goed = sterren >= 3 ? t.goed + 1 : 0;
+  if (!((t.shows >= PAD_MIN_SHOWS && t.goed >= PAD_GOED) || t.shows >= PAD_MAX_SHOWS)) return false;
+  TAFELPAD.slice(0, TAFEL_IDX[nu] + 1).forEach(r => { if (!t.klaar.includes(r.id)) t.klaar.push(r.id); });
+  Object.assign(t, { rij: tafelNu(p), shows: 0, goed: 0 });
+  return true;
+}
+// De vraagmaker van een thema (zie vraagInst en tafelInst).
+function themaInst(p, k) { return k === 'tafels' ? tafelInst(p) : vraagInst(p); }
+
+/* ---- De show mengen ---------------------------------------------------------
+   Welk thema elke vraag van de show krijgt, vooraf: [k, k, ...]. Ze krijgen
+   evenveel vragen (de rest naar wie eerst staat), en ze wisselen elkaar af in
+   plaats van per toeval: twee tafelvragen na elkaar en dan vijf sommen leest
+   als een ander spel, niet als één show. */
+function themaPlan(s, total) {
+  const aan = themasAan(s);
+  const tel = Object.fromEntries(aan.map((k, i) => [k, Math.floor(total / aan.length) + (i < total % aan.length ? 1 : 0)]));
+  const plan = [];
+  while (plan.length < total) aan.forEach(k => { if (tel[k] > 0) { plan.push(k); tel[k]--; } });
+  return plan;
+}
+/* De sterren van één thema in een show: dezelfde maat als showStars, op
+   alleen zijn eigen vragen. Zo schuift de tafelladder niet door omdat de
+   sommen goed gingen, en blijft hij niet staan omdat er één som misging. */
+function themaSterren(g, k) {
+  const mijn = g.qs.map((q, i) => i).filter(i => (g.themaPlan ? g.themaPlan[i] : 'rekenen') === k);
+  if (!mijn.length) return 0;
+  const mis = mijn.filter(i => g.uitslag[i] && g.uitslag[i] !== 'goed').length;
+  return mis === 0 ? 3 : mis <= Math.floor(mijn.length * STER_MARGE) ? 2 : 1;
 }
 // Moeilijkheid 0..1, bijgestuurd op vaardigheid (perf 0..1 → ±0.25): een kind
 // dat worstelt krijgt op elke rij lichtere sommen, nooit zwaardere dan de rij.
@@ -448,16 +596,16 @@ function genTriple(s, lvl, perf, op) {
     sym = op === '+' ? '+' : '−';
   } else if (op === 'x') {
     /* Een tafel is altijd de hele tafel, van × 1 tot × 10, vanaf de eerste
-       show: zo leert een kind ze op school, en de ouder kiest wélke tafels, niet
-       hoe ver. t speelt hier niet mee. Met t begon wereld 1 op × 1 tot × 5, en
+       show: zo leert een kind ze op school, en de tafelladder of de ouder kiest
+       wélke tafels (kiesTafel), niet hoe ver. t speelt hier niet mee. Met t begon wereld 1 op × 1 tot × 5, en
        dan stond er op het leerpad een stap "tot × 5" die geen ouder zo bedoelde.
        Vroeger knipte "Getallen tot" hem ook nog ongezegd af (tot 20 en de tafel
        van 7 gaf nooit meer dan 7 × 2) -- die grens is alleen van plus en min. */
-    b = pick(tables);
+    b = kiesTafel(s, tables);
     a = rnd(1, 10);
     c = a * b; sym = '×';
   } else { // ':'
-    b = pick(tables);
+    b = kiesTafel(s, tables);
     const q = rnd(1, 10);
     a = q * b; c = q; sym = ':';
   }
@@ -1715,7 +1863,9 @@ function buildQuestion(p, lvl, g) {
   if (g) for (let i = Math.max(0, g.idx - HERHAAL_AFSTAND); i < g.idx; i++) if (g.qs[i]) net.push(g.qs[i].tmpl);
   const al = g && g.herhaald;
   const mag = k => !net.includes(k) && !(al && al.has(k));
-  const s = (g && g.inst) || vraagInst(p);      // haar rij op het leerpad (zie vraagInst)
+  // het thema van deze vraag (zie themaPlan), en zijn vraagmaker: haar rij op zijn ladder
+  const k = g && g.themaPlan ? g.themaPlan[g.idx] : themasAan(p.settings)[0];
+  const s = (g && g.insts && g.insts[k]) || themaInst(p, k);
   if (Math.random() < 0.35) {
     const wq = pickWeak(p, s, mag);
     if (wq) { if (al) al.add(wq.tmpl); return wq; }
@@ -1744,11 +1894,13 @@ function buildQuestion(p, lvl, g) {
 }
 
 /* Eén vraag in Zelf kiezen: een rij uit de pot, en dan de maker die bij die rij
-   hoort. net: de sommen van net (niet meteen dezelfde, zie buildQuestion). */
+   hoort. De rijen gaan om de beurt (beurt, s.vrijStapel): met drie rijen
+   aangevinkt en een show van acht kon er met pick() een hele show één
+   ontbreken. net: de sommen van net (niet meteen dezelfde, zie buildQuestion). */
 function kiesVraag(s, lvl, perf, net) {
   let q, poging = 0;
   do {
-    const { id, inst } = pick(s.vrij);
+    const { id, inst } = beurt(s, 'vrijStapel', s.vrij);
     q = LEERPAD[PAD_IDX[id]] && LEERPAD[PAD_IDX[id]].bouwen ? genBouwen(LEERPAD[PAD_IDX[id]].bereik)
       : id === 'zoek' ? genMissing(inst, lvl, perf, pick(inst.ops))
       : id === 'drie' ? genChain(inst, lvl, perf)
@@ -1799,8 +1951,7 @@ function opMastered(p, op) {
   return (t.fast == null ? 0.5 : t.fast) >= FLUENT_MIN || t.n >= PATIENCE_N;
 }
 /* Klaar voor zoek het getal bij deze bewerking: haar rij op het leerpad heeft
-   het (s.missNum, zie padStand), de bewerking speelt al (s.ops: × pas vanaf de
-   rij Tafels), ze beheerst hem, en ze staat er niet op pauze. s = vraagInst.
+   het (s.missNum, zie padStand), de bewerking speelt al (s.ops), ze beheerst hem, en ze staat er niet op pauze. s = vraagInst.
    Wanneer het komt zegt het leerpad; "nooit twee nieuwe dingen tegelijk" ook:
    zoek het getal en drie getallen zijn twee rijen, en een rij duurt tot ze hem
    kan. */
@@ -1874,8 +2025,9 @@ const WERELD_ACCENT = [null, 'miss', 'chain'];
 function wereldAccent(lvl, nuId) {
   return nuId === 'alles' ? WERELD_ACCENT[worldFor(lvl).index % WERELD_ACCENT.length] : null;
 }
-// s = vraagInst (haar rij erover), accent = wereldAccent
-function planSpecials(p, s, total, accent, goldIdx) {
+// s = vraagInst (haar rij erover), accent = wereldAccent, bezet = plekken van
+// een ander thema (zie themaPlan): zoek het getal en drie getallen zijn sommen
+function planSpecials(p, s, total, accent, goldIdx, bezet) {
   const missOps = s.ops.filter(o => ['+', '-', 'x'].includes(o) && opReady(p, o, s));
   const missAvail = missOps.length > 0;
   const chainAvail = chainReady(p, s);
@@ -1904,7 +2056,9 @@ function planSpecials(p, s, total, accent, goldIdx) {
   const fit = Math.max(0, Math.floor((total - 1) / 2));
   const cap = Math.min(fit, twoOk ? 2 : 1);
   if (types.length > cap) types = types.slice(0, cap);
-  const slots = pickSlots(total, types.length, goldIdx >= 0 ? [goldIdx] : []);
+  const vrijePlekken = Array.from({ length: total }, (_, i) => i).filter(i => i > 0 && !(bezet || []).includes(i) && i !== goldIdx);
+  if (types.length > vrijePlekken.length) types = types.slice(0, vrijePlekken.length);
+  const slots = pickSlots(total, types.length, (goldIdx >= 0 ? [goldIdx] : []).concat(bezet || []));
   const plan = {};
   slots.forEach((idx, i) => {
     plan[idx] = { type: types[i], op: types[i] === 'miss' ? pick(missOps) : '+' };
