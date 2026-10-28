@@ -45,6 +45,7 @@
  *   ZF leerpad                          -> naam en voorbeeld van elke stap kloppen met de gekozen sommen
  *   ZG onomkeerbaar                     -> elke rode ja-knop gaat door gevaarVraag, met Weg en Terug
  *   ZH past het niveau                  -> alleen de shows op de stap van nu, en de namen van het pad
+ *   TW toasts                           -> elke toast gaat vanzelf weg, behalve wie op een tik of het volgende antwoord wacht
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -2393,6 +2394,46 @@ zaak('SO', () => {
     } catch (e) { kapot.push(naam + ': ' + e.message); }
   }
   check(!kapot.length, 'SO · elke combinatie van thema\'s (leerpad en Zelf kiezen, 8 en 5 vragen) zet een show op en speelt hem uit', kapot.slice(0, 4).join('; '));
+});
+
+/* TW · Een toast gaat vanzelf weg. showToast plant dat zelf in (zie DE REGEL in
+   10-feestjes.js); de enige die blijven staan wachten op een tik (onTap) of zijn
+   de hint bij een misser, die de show bij het volgende antwoord weghaalt. Zo kan
+   geen aanroeper het meer vergeten -- "✓ Munten tot €10 · daar was Marie" bleef
+   op Oefeningen staan omdat er één toastWeg ontbrak. Daarom ook: toastWeg wordt
+   buiten 10-feestjes.js nergens aangeroepen. */
+zaak('TW', () => {
+  const fs = require('fs'), path = require('path');
+  const app = laadApp();
+  // de klokjes van de app vasthouden, en "minder beweging" aan: dan is weg meteen weg (geen fade)
+  app.run(`(() => { const els = {};
+    document.getElementById = id => els[id] || (els[id] = document.createElement('div'));
+    globalThis.__klokjes = [];
+    setTimeout = (f, ms) => { __klokjes.push(f); return __klokjes.length; };
+    matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} });
+  })()`);
+  const na = code => app.run(`(() => { __klokjes = []; hideToast(); ${code};
+    const aan = document.getElementById('toast').style.display;
+    for (let i = 0; i < 20 && __klokjes.length; i++) __klokjes.splice(0).forEach(f => f());
+    return aan + '>' + document.getElementById('toast').style.display; })()`);
+  const gevallen = {
+    'gewone toast':        [`showToast('✓ Munten tot €10 · daar was Marie')`, 'flex>none'],
+    'met een tweede regel': [`showToast('⚠️', null, 'Spelen kan wel')`, 'flex>none'],
+    'goud, eigen duur':    [`showToast('🎪', null, null, 'goud', 1900)`, 'flex>none'],
+    'met Terug':           [`meldMetTerug('✓ Weg', () => {})`, 'flex>none'],
+    'wacht op een tik':    [`showToast('👉', () => {}, null, 'teken')`, 'flex>flex'],
+    'hint bij een misser': [`showToast('🤔', null, null, 'teken')`, 'flex>flex'],
+  };
+  const fout = Object.entries(gevallen).map(([naam, [code, moet]]) => [naam, na(code), moet]).filter(([, is, moet]) => is !== moet);
+  check(!fout.length, 'TW · elke toast gaat vanzelf weg, behalve wie op een tik of het volgende antwoord wacht', JSON.stringify(fout));
+  // een tweede toast mag niet weg door het klokje van de eerste
+  const twee = app.run(`(() => { __klokjes = []; showToast('een'); const oud = __klokjes.splice(0);
+    showToast('twee'); oud.forEach(f => f()); return document.getElementById('toast').style.display; })()`);
+  check(twee === 'flex', 'TW · het klokje van een vorige toast haalt de volgende niet weg', twee);
+  const src = path.join(__dirname, '..', 'src');
+  const los = fs.readdirSync(src).filter(f => f.endsWith('.js') && f !== '10-feestjes.js')
+    .filter(f => /\btoastWeg\s*\(/.test(fs.readFileSync(path.join(src, f), 'utf8')));
+  check(!los.length, 'TW · toastWeg wordt alleen door showToast zelf aangeroepen (geef een duur mee aan showToast)', los.join(', '));
 });
 
 klaar();

@@ -211,8 +211,7 @@ function slotWereld(knop, doel) {
 function slotToast(doel) {
   const w = WORLDS[doel];
   // één teken: het slotje. Het wereldicoon erachter was een tweede emoji in één regel.
-  showToast(w ? `🔒 Speel eerst de ${esc(w.name)} uit` : '🔒 Nog niet');
-  toastWeg(2200);
+  showToast(w ? `🔒 Speel eerst de ${esc(w.name)} uit` : '🔒 Nog niet', null, null, null, 2200);
 }
 /* De baan opbouwen. Alles hier komt uit reisPlaatsen() en uit de staphoogte in het
    stijlblad -- er wordt niets opgemeten, dus draaien, resizen of een wereld erbij
