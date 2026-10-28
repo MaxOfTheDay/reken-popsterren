@@ -832,6 +832,7 @@ function antwoordGoed(q, p, btnEl) {
   }
   save();
   if (btnEl) btnEl.classList.add('good');
+  if (q.tik) lijnLand(q);
   // Eerst landt het antwoord in de som (zie "= De som valt dicht"), en dán pas
   // vliegen de diamanten -- uit de dichte som naar de teller: jouw antwoord
   // maakt de som af, en de som betaalt je uit. Zonder vakje (telmodus) komen ze
@@ -987,9 +988,8 @@ function tweedeMisser(q, p, btnEl) {
       // zelf, en dan is rood (wat je koos) en groen (wat het was) genoeg
       document.querySelectorAll('#answer-area .tegel-pijl').forEach(el => el.remove());
     } else if (G.mode === 'tik') {
-      // de getallenlijn: het goede streepje krijgt zijn pijl, groen en rustig
-      const merk = document.querySelector(`#answer-area .gl-tik[data-v="${q.ans}"]`);
-      if (merk) merk.classList.add('good', 'rustig');
+      // de getallenlijn: het getal staat op het goede streepje, rustig
+      lijnLand(q, true);
     }
     // Ook nu gaat de som dicht, maar rustig: geen vlucht, geen groen, geen feest.
     // Juist hier moet de goede som te zien zijn -- in de som zelf, en niet in een

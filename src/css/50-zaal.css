@@ -1083,6 +1083,10 @@
     color: var(--c-white); opacity: .92; pointer-events: none;
     filter: drop-shadow(0 1px 1px rgba(0,0,0,.25));
   }
+  /* op de getallenlijn: naast het rode streepje, op de lijn, de kant op waar het getal ligt */
+  .gl-tik .tegel-pijl { top: auto; right: auto; bottom: .3em; left: 0; width: 22px; height: 22px; color: var(--red-500); opacity: 1; filter: none; }
+  .gl-tik .tegel-pijl.rechts { transform: translateX(.55em); }
+  .gl-tik .tegel-pijl.links { transform: translateX(calc(-100% - .55em)); }
   @media (max-height: 700px) {
     .toast.hint.docked .toast-main { font-size: 28px; }
     .toast.hint.docked .hint-pijl { width: 26px; height: 26px; }

@@ -2383,6 +2383,10 @@ zaak('GL', () => {
     } else if (!q.html.includes('@')) mis.push(naam + ' geen vakje');
     if (q.keuzes && (!q.keuzes.includes(q.ans) || new Set(q.keuzes).size !== q.keuzes.length || q.keuzes.length < 2)) mis.push(naam + ' keuzes ' + q.keuzes);
     if (q.min != null && (q.ans < q.min || q.ans > q.grens)) mis.push(naam + ' buiten de lijn');
+    // altijd vier knoppen (Afronden: twee), ook als het antwoord naast het eind van de lijn ligt
+    if (q.keuzes && q.keuzes.length !== (q.knop === 'twee' ? 2 : 4)) mis.push(naam + ' ' + q.keuzes.length + ' keuzes');
+    // over het tiental springen: de 10 staat er altijd bij
+    if (r.sprong && !/<text x="[\d.]+" y="76">10<\/text>/.test(q.html)) mis.push(naam + ' zonder 10');
   }
   check(!mis.length, 'GL · elke rij, elke vorm: het antwoord op de lijn, op een streepje, verschillende keuzes', [...new Set(mis)].slice(0, 3).join(' | '));
   // de echte getallen: een sprong over 10 gaat in twee keer via 10, afronden naar het dichtste tiental
