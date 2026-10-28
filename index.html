@@ -9128,9 +9128,10 @@
   .sr-tekst small { display: block; font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); margin-top: 2px; }
 
 
-  .sr-tekst .sr-stap { display: flex; align-items: center; gap: 7px; color: var(--paper-ink); font-weight: 700; }
+
+  .sr-tekst .sr-stap { display: flex; align-items: baseline; gap: 4px; color: var(--paper-ink); font-weight: 700; }
   .sr-stap > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .sr-stap .vg-bol, .sr-stap .vg-rungs { flex: none; }
+  .sr-stap em { flex: none; font-style: normal; font-weight: 600; color: var(--paper-ink-muted); }
   .sr-wie { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .sr-wie b { min-width: 0; }
   .sr-wie .vg-tag { flex: none; }
@@ -9329,54 +9330,27 @@
 
 
 
-  .fase-ladder.naad { gap: 10px; padding: 10px 0; }
+
+
+  .fase-ladder.naad { gap: 16px; padding: 14px 0 10px; }
   .fase-ladder.naad .fl-rij { position: relative; min-height: 38px; padding-top: 4px; padding-bottom: 4px; }
-  .fl-rij .fl-lijn { position: absolute; left: 0; right: 0; height: 10px; margin: 0; pointer-events: none; }
-  .fl-rij .fl-lijn.boven { top: -10px; }
-  .fl-rij .fl-lijn.onder { bottom: -10px; }
+  .fl-rij .fl-lijn { position: absolute; left: 0; right: 0; height: 16px; margin: 0; pointer-events: none; }
+  .fl-rij .fl-lijn.boven { top: -16px; }
+  .fl-rij .fl-lijn.onder { bottom: -16px; }
   .fl-rij .fl-lijn::before { flex: 0 0 18px; }
-
-
-
-  .fl-blok {
-    margin: 8px 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase;
-    color: var(--paper-ink-muted);
-  }
-
-  .fl-blok.stil { visibility: hidden; }
-
-
-
-
-
-
-
-  .fl-plek { display: flex; align-items: center; }
-  .fl-plek > .fl-rij { flex: 1; min-width: 0; }
-  .fl-vink {
-    flex: none; display: grid; place-items: center; width: 40px; align-self: stretch; padding: 0;
-    border: none; background: none; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
-  }
-  .fl-vink::before {
-    content: ""; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; box-sizing: border-box;
-    border: 2.5px solid var(--purple-light); color: var(--c-white); font-size: 14px; font-weight: 900; line-height: 1;
-    transition: background var(--t-tik) ease, border-color var(--t-tik) ease, transform var(--t-tik) ease;
-  }
-  .fl-vink.aan::before { content: "✓"; background: var(--purple-mid); border-color: transparent; }
-  .fl-vink:active::before { transform: scale(.88); }
-  .fl-vink.vast { cursor: default; }
-  .fl-vink.vast::before { content: "✓"; border-color: transparent; color: var(--purple-light); opacity: .55; }
 
 
   .fl-vb:empty { min-width: 0; }
 
 
 
-  @media (max-width: 360px) {
-    .fase-ladder.met-vinkjes .fl-rij { gap: 8px; padding-left: 6px; padding-right: 4px; }
-    .fase-ladder.met-vinkjes .fl-vb { min-width: 0; }
-    .fl-vink { width: 34px; }
-  }
+
+  .fl-rij.kies .fl-n { background: var(--c-white); color: transparent; box-shadow: inset 0 0 0 2px var(--lavender-wash-3); transition: background var(--t-tik) ease; }
+  .fl-rij.kies.aan .fl-n { background: var(--purple-mid); color: var(--c-white); box-shadow: none; }
+  .fl-rij.kies:not(.aan) .fl-naam, .fl-rij.kies:not(.aan) .fl-vb { opacity: .55; }
+  .kies-lijst { padding: 2px 0; }
+  .kies-naad { height: 1px; margin: 6px 8px; background: var(--paper-border); }
+  @media (max-width: 360px) { .kies-lijst .fl-rij { gap: 8px; padding-left: 6px; padding-right: 4px; } .kies-lijst .fl-vb { min-width: 0; } }
 
 
 
@@ -9446,11 +9420,22 @@
   .oe-lbl { display: flex; align-items: center; gap: 6px; margin: 14px 2px 7px; font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
   .oe-lbl:first-child { margin-top: 0; }
   .oe-teken { padding: 1px 8px; border-radius: var(--r-sm); background: var(--lavender-wash); color: var(--purple-mid); font-size: var(--tx-label); letter-spacing: .5px; }
-  .oe-ops { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .oe-ops .chip { height: 56px; padding: 0; border-radius: var(--r-md); font-size: 30px; font-weight: 700; line-height: 1; }
 
 
-  .oe-ops .chip.on, .oe-tafels .chip.on { background: var(--purple-mid); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
+
+
+  .oe-ops, .oe-tafels { display: grid; gap: 2px; padding: 4px; border-radius: 14px; background: var(--lavender-wash); }
+  .oe-ops { grid-template-columns: repeat(4, 1fr); }
+  .oe-tafels { grid-template-columns: repeat(10, 1fr); }
+  .oe-ops .chip, .oe-ops .chip:hover, .oe-tafels .chip, .oe-tafels .chip:hover {
+    min-width: 0; padding: 0; border: none; border-radius: 10px; background: none; box-shadow: none;
+    color: var(--purple-mid); font-weight: 700; line-height: 1;
+  }
+  .oe-ops .chip { height: 46px; font-size: 26px; }
+  .oe-tafels .chip { height: 40px; font-size: var(--tx-label); }
+  .oe-ops .chip.on, .oe-tafels .chip.on { background: var(--purple-mid); color: var(--c-white); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
+
+  .modus-kaart .modus-uitleg { margin: 8px 0 0; text-align: center; font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); }
 
 
 
@@ -9466,8 +9451,6 @@
 
 
   @media (max-width: 360px) { .oe-seg .chip { font-size: var(--tx-klein); } }
-  .oe-tafels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
-  .oe-tafels .chip { min-width: 0; height: 42px; padding: 0; border-radius: var(--r-sm); font-size: var(--tx-body); font-weight: 700; }
 
 
   .oe-rij, .oe-rij.chip, .oe-rij.chip.on, .oe-rij.chip:hover {
@@ -9659,6 +9642,8 @@
 
 
   #screen-newstar .oe-seg .chip, #screen-newstar .oe-seg .chip:hover,
+  #screen-newstar .oe-ops .chip, #screen-newstar .oe-ops .chip:hover,
+  #screen-newstar .oe-tafels .chip, #screen-newstar .oe-tafels .chip:hover,
   #screen-newstar .oe-rij.chip, #screen-newstar .oe-rij.chip:hover, #screen-newstar .oe-rij.chip.on,
   #screen-newstar .fase-ladder .chip.fl-rij { background: none; border: none; }
   #screen-newstar .fase-ladder .chip.fl-rij:hover { background: var(--lavender-wash-2); }
@@ -9860,6 +9845,11 @@
     padding: 4px 2px; border: none; background: none; cursor: pointer; white-space: nowrap;
     font: inherit; font-size: var(--tx-klein); font-weight: 700; color: var(--purple-mid);
   }
+
+
+  .vg-aanpas.vol { margin-top: 4px; padding: 8px 16px; border-radius: var(--r-pill); background: var(--purple-mid); color: var(--c-white); }
+
+  .vg-zelf > .fl-rij::before, .vg-zelf > .fl-rij::after { display: none; }
 
   .vg-rungs { display: inline-flex; gap: 3px; }
   .vg-rungs i { width: 14px; height: 6px; border-radius: 3px; background: var(--lavender-wash-3); }
@@ -22033,10 +22023,10 @@ const LEERPAD = [
   { id: 'delen',      soort: 'vorm',   op: ':',                   naam: 'Delen' },
   { id: 'zoek',       soort: 'vorm',   keuze: 'missNum',          naam: 'Zoek het getal' },
   { id: 'drie',       soort: 'vorm',   keuze: 'chain3',           naam: 'Drie getallen' },
-  { id: 'bouwen100',  soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Getallen bouwen', bouwen: true },
+  { id: 'bouwen100',  soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Getallen bouwen tot 100', bouwen: true },
   { id: 'tientallen', soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Tientallen', tientallen: true },
   { id: 'tot100',     soort: 'bereik', bereik: 100, brug: 'nee',  naam: 'Tot 100' },
-  { id: 'brug100',    soort: 'bereik', bereik: 100, brug: 'vaak', naam: 'Over het tiental' },
+  { id: 'brug100',    soort: 'bereik', bereik: 100, brug: 'vaak', naam: 'Over het tiental tot 100' },
 ];
 const PAD_IDX = Object.fromEntries(LEERPAD.map((r, i) => [r.id, i]));
 const BRUG_VAAK = 0.5;
@@ -22206,7 +22196,74 @@ function padStand(s, nuId, klaar) {
   };
 }
 
-function vraagInst(p) { return { ...p.settings, ...padStand(p.settings, padNu(p), p.pad && p.pad.klaar) }; }
+function vraagInst(p) {
+  if (zelfGekozen(p.settings)) return kiesInst(p.settings);
+  return { ...p.settings, ...padStand(p.settings, padNu(p), p.pad && p.pad.klaar) };
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function zelfGekozen(s) { return s.modus === 'vrij'; }
+
+
+function kiesRijen(s) {
+  if (!s.ops.includes('+') && !s.ops.includes('-')) return [];
+  const t = { ...s, max: Infinity };
+  return LEERPAD.filter(r => (r.soort === 'bereik' || r.id === 'zoek' || r.id === 'drie') && padPast(r, t))
+    .map(r => ({ ...r, vb: padVoorbeeld(r, { ...s, max: 100 }) }));
+}
+const kiesGekozen = s => kiesRijen(s).filter(r => (s.kies || []).includes(r.id));
+
+
+const KIES_VORM_MAX = 20;
+
+
+
+
+
+
+
+function kiesInst(s) {
+  const pm = s.ops.filter(o => o === '+' || o === '-');
+  const rijen = kiesGekozen(s);
+  const vrij = rijen.map(r => {
+    if (r.soort !== 'bereik') return { id: r.id, inst: { ...s, ops: r.id === 'drie' ? ['+'] : pm, max: KIES_VORM_MAX, brug: 'vrij' } };
+    return { id: r.id, inst: { ...s, ops: pm, max: r.bereik, brug: r.brug === 'vaak' ? 'altijd' : 'nee',
+      tientallen: r.tientallen ? 'altijd' : false } };
+  });
+  ['x', ':'].filter(o => s.ops.includes(o)).forEach(o => vrij.push({ id: o === 'x' ? 'tafels' : 'delen', inst: { ...s, ops: [o] } }));
+
+  if (!vrij.length) vrij.push({ id: 'tot20', inst: { ...s, ops: pm.length ? pm : s.ops, max: 20, brug: 'vrij' } });
+  const max = vrij.reduce((m, v) => Math.max(m, v.inst.ops.some(o => o === '+' || o === '-') ? v.inst.max : 0), 0);
+  const ops = [...new Set(vrij.flatMap(v => v.inst.ops))];
+  return { ...s, ops, max: max || s.max, brug: 'vrij', missNum: false, chain3: false, tientallen: false, bouwen: null, vrij };
+}
+
+
+
+
+function kiesStart(p) {
+  const s = p.settings;
+  const kan = kiesRijen(s).map(r => r.id);
+  if (!kan.length) return [];
+  const nu = padNu(p);
+  if (kan.includes(nu)) return [nu];
+  const pad = padRijen(s).rijen.map(r => r.id);
+  const tot = nu === 'alles' ? pad.length : pad.indexOf(nu);
+  const had = pad.slice(0, Math.max(0, tot)).filter(id => kan.includes(id));
+  return [had.length ? had[had.length - 1] : kan[0]];
+}
 
 
 
@@ -22305,7 +22362,7 @@ function overTiental(a, b, c, op) {
 function genTriple(s, lvl, perf, op) {
 
   const t = moeilijkheid(perf, s);
-  const effMax = Math.max(10, Math.round(s.max * t));
+  let effMax = Math.max(10, Math.round(s.max * t));
   const tables = s.tables.length ? s.tables : [2, 5, 10];
   let a, b, c, sym;
   if (op === '+' || op === '-') {
@@ -22314,13 +22371,17 @@ function genTriple(s, lvl, perf, op) {
     const brug = s.brug || 'vrij';
 
 
-    if (s.tientallen && effMax >= 20 && Math.random() < TIENTALLEN_VAAK) {
+    if (s.tientallen && effMax >= 20 && Math.random() < (s.tientallen === 'altijd' ? 1 : TIENTALLEN_VAAK)) {
       const T = Math.floor(effMax / 10);
       if (op === '+') { a = 10 * rnd(1, T - 1); b = 10 * rnd(1, T - a / 10); c = a + b; }
       else { a = 10 * rnd(2, T); b = 10 * rnd(1, a / 10 - 1); c = a - b; }
       return { a, b, c, sym: op === '+' ? '+' : '−', op, t, effMax };
     }
-    const wilBrug = brug === 'vaak' && effMax > 10 && Math.random() < BRUG_VAAK;
+
+
+
+    if (brug === 'altijd') effMax = Math.max(effMax, Math.min(s.max, 18));
+    const wilBrug = (brug === 'altijd' || (brug === 'vaak' && Math.random() < BRUG_VAAK)) && effMax > 10;
     const magBrug = brug !== 'nee';
     let poging = 0;
     do {
@@ -22566,6 +22627,15 @@ function countLiveStage(p) {
 }
 
 
+
+
+
+function kiesFasen(s) { return zelfGekozen(s) ? (s.kiesFasen || []).filter(v => v >= 1 && v <= COUNT_STAGE_MAX) : []; }
+function telFase(p) { const f = kiesFasen(p.settings); return f.length ? pick(f) : countLiveStage(p); }
+
+function telTopFase(p) { const f = kiesFasen(p.settings); return f.length ? Math.max(...f) : countLiveStage(p); }
+
+
 function countDifficulty(p, stage) {
   const s = p.settings;
   const info = countStageInfo(stage);
@@ -22691,7 +22761,7 @@ function sumEqHTML(card) {
 
 function genCount(p) {
   const s = p.settings;
-  const stage = countLiveStage(p);
+  const stage = telFase(p);
   const info = countStageInfo(stage);
   const d = countDifficulty(p, stage);
   const type = pick(countStageTypes(stage));
@@ -23057,7 +23127,7 @@ function updateCountAcc(p, correct, firstTry) {
   const ct = p.countTrack;
   ct.seen = (ct.seen || 0) + 1;
   ct.acc = lopend(ct.acc == null ? 0.5 : ct.acc, antwoordWaarde(correct, firstTry));
-  const top = countTopRung(countLiveStage(p));
+  const top = countTopRung(telTopFase(p));
   if (correct && firstTry) {
     ct.streak = (ct.streak || 0) + 1;
     if (ct.streak >= 3 && (ct.rung || 0) < top) { ct.rung = (ct.rung || 0) + 1; ct.streak = 0; }
@@ -23200,7 +23270,7 @@ function memFaceHTML(c) {
 
 function buildMemoryDeck(p) {
   if (p.settings.track !== 'count') return memSomDeck(p);
-  const stage = countLiveStage(p);
+  const stage = telTopFase(p);
   const d = countDifficulty(p, stage);
   const max = Math.max(3, Math.min(10, d.effMax));
 
@@ -23556,6 +23626,8 @@ function buildQuestion(p, lvl, g) {
     if (rq) { if (al) al.add(rq.tmpl); return rq; }
   }
 
+  if (s.vrij) return kiesVraag(s, lvl, p.perf, net);
+
   if (s.bouwen && Math.random() < (s.bouwen === 'vaak' ? BOUWEN_VAAK : BOUWEN_SOMS)) {
 
 
@@ -23571,6 +23643,19 @@ function buildQuestion(p, lvl, g) {
   return q;
 }
 
+
+
+function kiesVraag(s, lvl, perf, net) {
+  let q, poging = 0;
+  do {
+    const { id, inst } = pick(s.vrij);
+    q = id === 'bouwen100' ? genBouwen()
+      : id === 'zoek' ? genMissing(inst, lvl, perf, pick(inst.ops))
+      : id === 'drie' ? genChain(inst, lvl, perf)
+      : genQuestion(inst, lvl, perf);
+  } while (net.includes(q.tmpl) && ++poging < 8);
+  return q;
+}
 
 
 
@@ -23808,7 +23893,8 @@ function startLevel(lvl, eigenOvergang) {
 
 
   const inst = count ? null : vraagInst(p);
-  const plan = count ? [] : planSpecials(p, inst, s.perLevel, wereldAccent(lvl, padNu(p)), goldIdx);
+
+  const plan = count ? [] : planSpecials(p, inst, s.perLevel, inst.vrij ? null : wereldAccent(lvl, padNu(p)), goldIdx);
 
 
 
@@ -24754,7 +24840,10 @@ function groeiMoment(p, g, voor, rij) {
 
 
 function stapSleutel(p) {
-  return p.settings.track === 'count' ? 'fase' + countLiveStage(p) : 'pad:' + padNu(p);
+  const s = p.settings;
+
+  if (zelfGekozen(s)) return 'vrij:' + (s.track === 'count' ? kiesFasen(s) : kiesGekozen(s).map(r => r.id).concat(s.ops.filter(o => o === 'x' || o === ':'))).join(',');
+  return s.track === 'count' ? 'fase' + countLiveStage(p) : 'pad:' + padNu(p);
 }
 
 
@@ -24867,15 +24956,17 @@ function endLevel(success) {
   applyRampUpdates(p, G);
   const faseVoor = G.count ? countLiveStage(p) : 0;
   const stapVoor = stapSleutel(p);
-  if (G.count) {
+
+  const vrij = zelfGekozen(p.settings);
+  if (G.count && !vrij) {
     advanceCountStage(p, success, success && showStars(G) === 3);
     telPlafondTel(p, success ? showStars(G) : 0);
   }
   onthoudUitkomst(p, success ? showStars(G) : 0, stapVoor);
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;
-  if (!G.count && success) telGrensDrie(p, showStars(G));
+  if (!G.count && success && !vrij) telGrensDrie(p, showStars(G));
 
-  const nieuweRij = !G.count && padNa(p, success ? showStars(G) : 0) ? padNu(p) : null;
+  const nieuweRij = !G.count && !vrij && padNa(p, success ? showStars(G) : 0) ? padNu(p) : null;
 
 
 
@@ -26870,6 +26961,11 @@ const STAND_TEKST = {
 function vgStand(p) {
   if (p.settings.track === 'count' ? telTip(p) : grensTip(p)) return 'meer';
   const u = uitdagingStand(p);
+
+
+
+
+  if (u && zelfGekozen(p.settings)) return u.stand === 'vlot' ? 'meer' : u.stand;
   if (u) return u.stand;
   return p.stap ? 'stap' : 'nieuw';
 }
@@ -26952,19 +27048,33 @@ function stapNu(p) {
     const rung = Math.min(top, Math.max(0, (p.countTrack && p.countTrack.rung) || 0));
     return { naam: COUNT_STAGE_LABELS[st], vb: COUNT_STAGE_VB[st],
       meter: `<span class="vg-rungs" aria-hidden="true">${Array.from({ length: top + 1 }, (_, i) => `<i class="${i <= rung ? 'aan' : ''}"></i>`).join('')}</span>`,
-      tekst: `stapje ${rung + 1} van ${top + 1}` };
+      tekst: `stapje ${rung + 1} van ${top + 1}`, waar: `Fase ${st} van ${countMaxStage(s)}` };
   }
   const nuId = padNu(p);
-  if (nuId === 'alles') return { naam: 'Alles door elkaar', vb: '', meter: '', tekst: '' };
-  const nu = padRijen(s).rijen.find(r => r.id === nuId);
+  if (nuId === 'alles') return { naam: 'Alles door elkaar', vb: '', meter: '', tekst: '', waar: '' };
+  const speel = padRijen(s).rijen.filter(r => !r.uit);
+  const nu = speel.find(r => r.id === nuId);
   const pad = p.pad && p.pad.rij === nuId ? p.pad : { shows: 0, goed: 0 };
   const goed = Math.min(PAD_GOED, pad.goed || 0), nog = PAD_GOED - goed;
   return { naam: nu.naam, vb: nu.vb,
     meter: `<span class="vg-bol" aria-hidden="true">${Array.from({ length: PAD_GOED }, (_, i) => `<i class="${i < goed ? 'aan' : ''}"></i>`).join('')}</span>`,
-    tekst: nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show' };
+    tekst: nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show', waar: `Stap ${speel.indexOf(nu) + 1} van ${speel.length}` };
+}
+
+
+
+function zelfRijen(s) {
+  if (s.track === 'count') return kiesFasen(s).map(v => ({ naam: COUNT_STAGE_LABELS[v], vb: COUNT_STAGE_VB[v] }));
+  const rijen = kiesGekozen(s).map(r => ({ naam: r.naam, vb: r.vb }));
+  const tafels = s.tables.slice().sort((a, b) => a - b).join(', ');
+  const vb = id => padVoorbeeld(LEERPAD[PAD_IDX[id]], s);
+  if (s.ops.includes('x')) rijen.push({ naam: `Tafels van ${tafels}`, vb: vb('tafels') });
+  if (s.ops.includes(':')) rijen.push({ naam: `Delen door ${tafels}`, vb: vb('delen') });
+  return rijen;
 }
 function leerpadHtml(p) {
   const s = p.settings;
+  if (zelfGekozen(s)) return zelfGekozenHtml(p);
   const stand = vgStand(p);
   const rijen = [];
   let kop, onder = '', verder;
@@ -27022,6 +27132,21 @@ function leerpadHtml(p) {
     ${kaartKop(`Leerpad <span>· ${kop}</span>`, vgLabel(stand))}
     <div class="fase-ladder vg-ladder">${rijen.join('')}</div>
     <div class="vg-voet"><button class="vg-aanpas" id="leerpad-aanpas" type="button">Aanpassen ›</button></div>
+  </div>`;
+}
+
+
+
+
+
+function zelfGekozenHtml(p) {
+  const stand = vgStand(p);
+  const rijen = zelfRijen(p.settings).map(r => flRij(' kies aan', '✓', r.naam, flVb(r.vb)));
+  const onder = stand === 'pittig' ? vgOnder('Het spel maakt het nu wat makkelijker.') : '';
+  return `<div class="set-card vg-kaart niveau-blok zelf-blok">
+    ${kaartKop('Zelf gekozen', vgLabel(stand))}
+    <div class="fase-ladder vg-ladder vg-zelf">${rijen.join('')}</div>${onder}
+    <div class="vg-voet"><button class="vg-aanpas${stand === 'meer' ? ' vol' : ''}" id="leerpad-aanpas" type="button">Aanpassen ›</button></div>
   </div>`;
 }
 
@@ -27176,7 +27301,7 @@ function telGrensDrie(p, sterren) {
 const MODE_LADDER = { kies: 'mix', mix: 'typ' };
 function grensTip(p) {
   const s = p.settings;
-  if (s.track === 'count') return null;
+  if (s.track === 'count' || zelfGekozen(s)) return null;
   if (grensDrieSterren(p) - (s.grensTipBasis || 0) < GRENS_TIP_SHOWS) return null;
   if (MODE_LADDER[s.mode]) return { soort: 'mode', naar: MODE_LADDER[s.mode] };
 
@@ -27199,7 +27324,7 @@ function grensTip(p) {
 
 function telTip(p) {
   const s = p.settings;
-  if (s.track !== 'count' || !p.countTrack) return null;
+  if (s.track !== 'count' || !p.countTrack || zelfGekozen(s)) return null;
   if ((p.countTrack.plafond || 0) < GRENS_TIP_SHOWS) return null;
   const hi = countMaxStage(s);
   const qnaar = [6, 8, 10].find(v => v > (s.qmax || 10));
@@ -27265,8 +27390,8 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
 
 
 const OEFEN_INSTELLINGEN = {
-  math:  { wat: ['ops', 'tables'], pad: ['padVanaf', 'missNum', 'chain3'], show: ['mode', 'perLevel'] },
-  count: { wat: ['qmax'], pad: ['stage'], show: ['repr', 'perLevel', 'memory'] },
+  math:  { wat: ['ops', 'tables'], pad: ['padVanaf', 'kies'], show: ['mode', 'perLevel'] },
+  count: { wat: ['qmax'], pad: ['stage', 'kiesFasen'], show: ['repr', 'perLevel', 'memory'] },
 };
 function oefenGroups(s, pfx, p) {
   pfx = pfx || '';
@@ -27313,26 +27438,25 @@ function oefenGroups(s, pfx, p) {
 
 
 
+
+
+
   const ava = p ? flAva(p) : '';
   const lijn = (woord, kant) => `<span class="fl-lijn ${kant}" aria-hidden="true">${woord}</span>`;
-  const vink = r => !r.keuze ? '<span class="fl-vink vast" aria-hidden="true"></span>'
-    : `<button class="fl-vink${r.uit ? '' : ' aan'}" type="button" data-instelling="${r.keuze}" role="checkbox"`
-      + ` aria-checked="${!r.uit}" aria-label="${r.naam}"></button>`;
+  const ladder = (id, instelling, rijen, lo, hi, hier, staart) => `<div class="fase-ladder naad" id="${pfx}${id}" data-instelling="${instelling}">${rijen.map((r, i) => {
 
-
-
-
-
-
-
-  const ladder = (id, instelling, rijen, lo, hi, hier, staart, vinkjes) => `<div class="fase-ladder naad${vinkjes ? ' met-vinkjes' : ''}" id="${pfx}${id}" data-instelling="${instelling}">${rijen.map((r, i) => {
-    const kop = r.kop ? `<div class="fl-blok${r.v === lo || r.v - 1 === hi ? ' stil' : ''}" aria-hidden="true">${r.kop}</div>` : '';
-    const totWoord = rijen[i + 1] && rijen[i + 1].kop ? `tot ${r.blok}` : 'tot';
-    const rij = flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}${r.uit ? ' overgeslagen' : ''}`,
+    const totWoord = r.blok && rijen[i + 1] && rijen[i + 1].blok !== r.blok ? `tot ${r.blok}` : 'tot';
+    return flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}${r.uit ? ' overgeslagen' : ''}`,
       r.v === hier && ava ? ava : i + 1, r.naam, r.vb, r.v,
       (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn(totWoord, 'onder') : ''));
-    return kop + (vinkjes ? `<div class="fl-plek">${rij}${vink(r)}</div>` : rij);
   }).join('')}${staart || ''}</div>`;
+
+
+
+
+  const kiesHtml = (id, instelling, rijen, aan) => `<div class="fase-ladder kies-lijst" id="${pfx}${id}" data-instelling="${instelling}">${rijen.map((r, i) =>
+    (r.blok && i && rijen[i - 1].blok !== r.blok ? '<div class="kies-naad" aria-hidden="true"></div>' : '')
+    + flRij(` kies${aan.includes(r.v) ? ' aan' : ''}`, '✓', r.naam, r.vb, r.v).replace('<button ', `<button role="checkbox" aria-checked="${aan.includes(r.v)}" `)).join('')}</div>`;
 
 
 
@@ -27354,11 +27478,17 @@ function oefenGroups(s, pfx, p) {
   const aanUit = (id, instelling, ico, woord, aan) => `<div id="${pfx}${id}"><button class="chip oe-rij${aan ? ' on' : ''}" data-v="${aan ? 'off' : 'on'}" data-instelling="${instelling}" role="switch" aria-checked="${aan}">`
     + `<span class="oe-i" aria-hidden="true">${ico}</span><span class="oe-w">${woord}</span><span class="oe-stand" aria-hidden="true"></span></button></div>`;
   const perShow = `${lbl('Vragen per show')}${balk('set-perlevel', 'perLevel', [[5, '5'], [8, '8'], [10, '10']], s.perLevel)}`;
+
+
+
+  const vrij = zelfGekozen(s);
+  const fases = stageNums.map(v => ({ v, naam: COUNT_STAGE_LABELS[v], vb: COUNT_STAGE_VB[v] }));
   if (s.track === 'count') return [{
     kaart: 'wat', kop: 'Hoeveelheden tot', html: `${balk('set-qmax', 'qmax', [[6, '6'], [8, '8'], [10, '10']], s.qmax || 10)}`
-  }, {
-    kaart: 'pad', kop: 'Leerpad', html: `${ladder('set-fase', 'stage',
-      stageNums.map(v => ({ v, naam: COUNT_STAGE_LABELS[v], vb: COUNT_STAGE_VB[v] })), lo, hi, p && countLiveStage(p))}`
+  }, vrij ? {
+    kaart: 'pad', kop: `Wat oefent ${p ? esc(p.name) : 'je ster'}?`, html: kiesHtml('set-kiesfasen', 'kiesFasen', fases, kiesFasen(s))
+  } : {
+    kaart: 'pad', kop: 'Leerpad', html: `${ladder('set-fase', 'stage', fases, lo, hi, p && countLiveStage(p))}`
   }, {
     kaart: 'show', kop: 'Tonen als', html: `${balk('set-repr', 'repr',
       [['objects', 'Voorwerpen'], ['mix', 'Mix'], ['dots', 'Stippen']], s.repr || 'objects')}
@@ -27378,18 +27508,16 @@ function oefenGroups(s, pfx, p) {
   const { rijen: padR, later: padL } = padRijen(s);
   const padAlle = padR.concat(padL);
   const blok = r => r.soort === 'bereik' && r.bereik > 20 ? r.bereik : 20;
-  const blokken = plusMin && new Set(padAlle.map(blok)).size > 1;
   const speel = padR.filter(r => !r.uit);
   const startPos = speel.length ? padR.indexOf(padVanafRij(s, speel)) + 1 : 1;
   const nuId = p && padNu(p);
   const voorbij = nuId === 'alles';
   const hierPos = p && !voorbij ? padR.findIndex(r => r.id === nuId) + 1 : 0;
-  const eind = `<div class="fl-plek">${flRij(` eind${voorbij ? ' hier' : ''}`, voorbij && ava ? ava : '∞',
-    'Alles door elkaar<small>alles tot de lijn, gemengd</small>')}`
-    + '<span class="fl-vink vast" aria-hidden="true"></span></div>';
+  const eind = flRij(` eind${voorbij ? ' hier' : ''}`, voorbij && ava ? ava : '∞',
+    'Alles door elkaar<small>alles tot de lijn, gemengd</small>');
+  const padRijenLadder = padAlle.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb), uit: r.uit, blok: blok(r) }));
 
-  const padRijenLadder = padAlle.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb), keuze: r.keuze, uit: r.uit, blok: blok(r),
-    kop: blokken && (i === 0 || blok(padAlle[i - 1]) !== blok(r)) ? `Tot ${blok(r)}` : '' }));
+  const kiesLijst = kiesRijen(s).map(r => ({ v: r.id, naam: r.naam, vb: flVb(r.vb), blok: padBlok(r, { max: 20 }) }));
 
 
 
@@ -27400,11 +27528,14 @@ function oefenGroups(s, pfx, p) {
     kaart: 'wat', kop: 'Sommen', html: `
       <div class="oe-ops" id="${pfx}set-ops" data-instelling="ops">${opDefs.map(([v, teken, woord]) =>
         `<button class="chip${s.ops.includes(v) ? ' on' : ''}" data-v="${v}" aria-label="${woord}" aria-pressed="${s.ops.includes(v)}">${teken}</button>`).join('')}</div>
-      ${tablesRelevant ? `${lbl('Tafels van', '× ÷')}
+      ${tablesRelevant ? `${lbl('Tafels van')}
       <div class="oe-tafels" id="${pfx}set-tables" data-instelling="tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>` : ''}`
-  }, {
+  }, vrij ? {
+
+    kaart: 'pad', kop: 'Plus en min', html: plusMin ? kiesHtml('set-kies', 'kies', kiesLijst, (s.kies || [])) : ''
+  } : {
     kaart: 'pad', kop: 'Leerpad', html: `${ladder('set-startstap', 'padVanaf', padRijenLadder,
-      startPos, plusMin ? padR.length : Infinity, hierPos, eind, true)}`
+      startPos, plusMin ? padR.length : Infinity, hierPos, eind)}`
   }, {
     kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
       ${perShow}`
@@ -27439,10 +27570,24 @@ function oefenSamenvatting(s) {
 
 
 function oefenenPanelHtml(p, s) {
-  const cards = oefenGroups(s, '', p).map(g => `
+  const cards = oefenGroups(s, '', p).filter(g => g.html).map(g => `
     <div class="set-card oefen-kaart primary" data-kaart="${g.kaart}">${kaartKop(g.kop)}${g.html}</div>`).join('');
-  return `<div class="settings-panel">${cards}
+  return `<div class="settings-panel">${modusKaartHtml(s)}${cards}
   </div>`;
+}
+
+
+
+
+
+
+function modusKaartHtml(s) {
+  const vrij = zelfGekozen(s);
+  return `
+    <div class="set-card oefen-kaart primary modus-kaart" data-kaart="hoe">
+      <div class="oe-seg" id="set-modus" data-instelling="modus">${chip('pad', '🧭 Leerpad', !vrij)}${chip('vrij', '✋ Zelf kiezen', vrij)}</div>
+      <p class="modus-uitleg">${vrij ? 'Alleen wat je aanvinkt.' : 'Groeit vanzelf mee.'}</p>
+    </div>`;
 }
 
 
@@ -27755,11 +27900,22 @@ function overzichtHtml() {
 
 
 
-    const nu = stapNu(p);
+
+
+
+
+    let regel;
+    if (zelfGekozen(p.settings)) {
+      const z = zelfRijen(p.settings);
+      regel = `<span>✋ ${z.length ? z[0].naam : ''}</span>${z.length > 1 ? ` <em>+${z.length - 1}</em>` : ''}`;
+    } else {
+      const nu = stapNu(p);
+      regel = `<span>${nu.naam}</span>${nu.waar ? ` <em>· ${nu.waar}</em>` : ''}`;
+    }
     return `<button class="ster-rij" type="button" data-key="${key}">`
       + `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
       + `<span class="sr-tekst"><span class="sr-wie"><b>${esc(p.name)}</b>${vgLabel(vgStand(p))}</span>`
-      + `<small class="sr-stap"><span>${nu.naam}</span>${nu.meter}</small></span>`
+      + `<small class="sr-stap">${regel}</small></span>`
       + `<span class="sr-pijl" aria-hidden="true">›</span></button>`;
   };
   const nieuw = profileKeys().length < MAX_PROFILES
@@ -27963,11 +28119,37 @@ function bindOefenChips(s, p, pfx, done) {
 
 
 
-  const pad = $((pfx || '') + 'set-startstap');
-  if (pad) pad.querySelectorAll('.fl-vink[data-instelling]').forEach(b => b.onclick = () => {
-    const k = b.dataset.instelling;
-    s[k] = (s[k] === false);
-    done('set-startstap');
+
+
+  bind('set-modus', c => {
+    const vrij = c.dataset.v === 'vrij';
+    if (vrij === zelfGekozen(s)) return false;
+    if (!vrij) { delete s.modus; return; }
+    s.modus = 'vrij';
+    s.missNum = s.chain3 = true;
+    const count = s.track === 'count';
+    const had = count ? kiesFasen(s).length : kiesGekozen(s).length;
+    if (had || !p) return;
+    if (count) s.kiesFasen = [countLiveStage(p)];
+    else s.kies = kiesStart(p);
+    const eerste = zelfRijen(s)[0];
+    if (eerste) showToast(`✓ ${eerste.naam} · daar was ${esc(p.name)}`);
+  });
+
+  const vink = (lijst, v, geldig) => {
+    const aan = lijst.filter(x => geldig.includes(x));
+    if (!aan.includes(v)) return aan.concat(v);
+    return aan.length > 1 ? aan.filter(x => x !== v) : null;
+  };
+  bind('set-kies', c => {
+    const nu = vink(s.kies || [], c.dataset.v, kiesRijen(s).map(r => r.id));
+    if (!nu) return blockedMinOne(c), false;
+    s.kies = nu;
+  });
+  bind('set-kiesfasen', c => {
+    const nu = vink(s.kiesFasen || [], parseInt(c.dataset.v, 10), Array.from({ length: COUNT_STAGE_MAX }, (_, i) => i + 1));
+    if (!nu) return blockedMinOne(c), false;
+    s.kiesFasen = nu;
   });
 
 
@@ -28010,6 +28192,7 @@ function bindOefenChips(s, p, pfx, done) {
     const plusMin = s.ops.includes('+') || s.ops.includes('-');
     if (plusMin && dichtsteLijn(v, lo, hi) === 'tot') {
       const max = s.max;
+      s.missNum = s.chain3 = true;
       padTotOp(s, r);
       if (p && s.max !== max) s.grensTipBasis = grensDrieSterren(p);
       return;
@@ -28162,7 +28345,7 @@ function bindSettings(p, s) {
     sndClick();
     setTab = 'oefenen';
     renderSettings();
-    const lad = $('set-startstap') || $('set-fase');
+    const lad = $('set-startstap') || $('set-fase') || $('set-kies') || $('set-kiesfasen');
     if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
   });
 
