@@ -342,7 +342,7 @@ function padNa(p, sterren) {
 function vraagIsNieuw(q, id) {
   if (id === 'fase') return true;
   if (id in LADDERS.tafels.idx) return (q.op === 'x' || q.op === ':') && TAFELPAD[LADDERS.tafels.idx[id]].tafels.includes(Number((q.tmpl.match(/\d+/g) || [])[1]));
-  if (id in LADDERS.geld.idx || id in LADDERS.klok.idx) return q.rij === id;
+  if (THEMA_ERBIJ.some(k => id in LADDERS[k].idx)) return q.rij === id;
   const r = LEERPAD[PAD_IDX[id]];
   if (!r) return false;
   if (r.bouwen) return q.kind === 'bouw' && (q.grens || 99) >= r.bereik - 1;   // tot 1000: met honderdtallen
@@ -381,6 +381,7 @@ const THEMAS = [
   { id: 'tafels',  naam: 'Tafels',  ops: ['x', ':'] },
   { id: 'geld',    naam: 'Geld' },
   { id: 'klok',    naam: 'Klok' },
+  { id: 'kalender', naam: 'Kalender' },
 ];
 const THEMA = Object.fromEntries(THEMAS.map(t => [t.id, t]));
 function themaAan(s, k) { return THEMA[k].ops ? THEMA[k].ops.some(o => s.ops.includes(o)) : (s.themas || []).includes(k); }
@@ -409,6 +410,9 @@ function themaIcoon(k, maat) {
   if (k === 'geld') return svg('<circle cx="20" cy="20" r="18" fill="#c9ccd1" stroke="#9aa0a8" stroke-width="1.5"/>'
     + '<circle cx="20" cy="20" r="12.5" fill="#e8c45a"/>'
     + '<text x="20" y="21" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="900" fill="#5d3f00">€</text>');
+  if (k === 'kalender') return svg('<rect x="5" y="7" width="30" height="29" rx="5" fill="#fff" stroke="#9aa0a8" stroke-width="1.5"/>'
+    + '<path d="M5 12a5 5 0 0 1 5-5h20a5 5 0 0 1 5 5v4H5z" fill="#e5397a"/><rect x="11" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/><rect x="26" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/>'
+    + '<text x="20" y="27" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="900" fill="#2b2238">7</text>');
   if (k === 'klok') return klokSvg(130, maat, true).replace('class="klok"', 'class="klok thema-ico"');
   const teken = { rekenen: ['+', '−'], tafels: ['×', '÷'] }[k];
   return svg('<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>'
@@ -622,9 +626,201 @@ function klokDag(r, t) {
 // Hoe een klokwaarde als tekst staat: de digitale tijd bij de 24 uur lezen (zie klokDag), anders in woorden.
 function klokTekst(q, v) { return q.uur24 && q.vorm === 'lees' ? klokDigitaal(v) : klokWoorden(v); }
 
+/* ---- De kalender ------------------------------------------------------------
+   Zeven rijen, zoals een Vlaamse school de tijd op de kalender brengt:
+     1e leerjaar  gisteren en morgen, de seizoenen, dagen verder tellen
+     2e leerjaar  de maanden en hun seizoen, weken en dagen, een kalenderblad
+     3e leerjaar  de datum schrijven (28/10) en dagen tellen tussen twee data
+
+   ÉÉN BEELD PER VRAAG, EN DAT BEELD ZEGT HET. Elke vraag is twee kaartjes even
+   groot met een brug ertussen (zie kalKaart): wat eerst komt staat links, en
+   het woord op de brug zegt wat er gevraagd wordt. Een wiel of zeven lege
+   vakjes moest ze eerst leren lezen voor ze aan de vraag toekwam; twee
+   kaartjes en een woord leest ze zoals een zin.
+   Waar de vraag om de kalender zelf gaat (weken, een datum) staat er een echt
+   kalenderblad, groot genoeg om de cijfers te lezen.
+     seizoenen   elk een kleur én een teken (❄️ 🌷 ☀️ 🍂), op een seizoen, op
+                 een maand en op de kop van het kalenderblad
+     roze        wat je zoekt of waar je vertrekt: ⭐ vandaag, de omcirkelde datum
+
+   Een waarde is altijd een geheel getal voor de knoppen: een dag 0-6 (maandag
+   eerst, zoals op een Vlaamse kalender), een seizoen 0-3, een maand 0-11, een
+   datum zijn getal, en 28/10 is 2810. Woorden zijn altijd kiezen; een aantal
+   (dagen, weken, een datum) mag getypt. */
+const DAGEN = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'];
+const MAANDEN = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+const SEIZOENEN = [
+  { id: 'winter', naam: 'winter', teken: '❄️', dingen: ['⛄', '🧤', '🛷', '🎄'] },
+  { id: 'lente',  naam: 'lente',  teken: '🌷', dingen: ['🐣', '🌷', '🐝', '🌱'] },
+  { id: 'zomer',  naam: 'zomer',  teken: '☀️', dingen: ['🏖️', '🍦', '🩴', '🍉'] },
+  { id: 'herfst', naam: 'herfst', teken: '🍂', dingen: ['🍂', '🍄', '🌰', '☔'] },
+];
+// het seizoen van een maand: december, januari en februari zijn winter
+const seizoenVan = m => Math.floor(((m + 1) % 12) / 3);
+// de woorden die de klas gebruikt, van twee dagen terug tot twee dagen verder
+const DAGWOORD = { '-2': 'eergisteren', '-1': 'gisteren', 0: 'vandaag', 1: 'morgen', 2: 'overmorgen' };
+const KALENDERPAD = [
+  { id: 'morgen',   naam: 'Gisteren en morgen' },
+  { id: 'seizoen',  naam: 'Seizoenen' },
+  { id: 'verder',   naam: 'Dagen verder' },
+  { id: 'maanden',  naam: 'Maanden' },
+  { id: 'weken',    naam: 'Weken en dagen' },
+  { id: 'blad',     naam: 'Kalenderblad' },
+  { id: 'datum',    naam: 'De datum' },
+];
+const JAAR = new Date().getFullYear();
+const dagVan = (m, d) => (new Date(JAAR, m, d).getDay() + 6) % 7;
+const dagenIn = m => new Date(JAAR, m + 1, 0).getDate();
+const mod = (v, n) => ((v % n) + n) % n;
+
+/* EEN KAARTJE, en twee kaartjes met een brug ertussen: dat is elke vraag
+   zonder kalenderblad, en altijd op dezelfde maat. Twee kaartjes even groot,
+   wat het ook is (een dag, een seizoen, een maand, twee dingen, het vakje),
+   en ertussen de brug met één woord erboven: morgen, + 5 dagen, erna. De pijl
+   vertrekt altijd bij wat ze weet en wijst naar het vakje -- ook als dat
+   links staat (gisteren, ervoor): dan wijst hij terug. Eén vaste vorm leest
+   na drie vragen vanzelf; verschillende maten en woordjes op verschillende
+   hoogtes leest ze elke vraag opnieuw.
+   soort: 'nu' (roze, met ⭐: vandaag), 'vraag' (het vakje, '@'), of een
+   kaartje in de kleur van zijn seizoen ('winter', ...) of zonder ('kaal'). */
+function kalKaart(soort, inhoud, teken) {
+  if (soort === 'vraag') return '<span class="kal-kaart vraag"><span class="pl-som">@</span></span>';
+  // het teken (⭐ vandaag, ❄️ het seizoen) zit bovenop de rand, nooit naast het woord: zo blijft elk woord op dezelfde plek
+  return `<span class="kal-kaart ${soort}">${teken ? `<i class="kal-teken" aria-hidden="true">${teken}</i>` : ''}${inhoud}</span>`;
+}
+/* DE BRUG: het woord erboven, en eronder een pijl. Gaat het om dagen, dan
+   is het één grote boog met onderaan een stip per dag, zodat ze de dagen
+   kan tellen; anders een gewone rechte pijl. Altijd even breed, zodat de
+   kaartjes niet verspringen.
+   Eén boogje per dag paste niet: vijf sprongen op deze breedte worden een
+   kronkel, en dat las als een slinger in plaats van als een sprong. Terug is
+   dezelfde tekening gespiegeld. */
+function kalBrug(woord, dagen, terug) {
+  const n = dagen || 0, Y = 25, x0 = 5, x1 = 55;
+  let tekening;
+  if (n) {
+    const h = 15, stap = (x1 - x0) / n;
+    // de punt volgt de boog waar hij landt: een kwadratische boog komt daar binnen onder (x1 - midden, 2h)
+    const hoek = Math.atan2(2 * h, (x1 - x0) / 2) * 180 / Math.PI;
+    tekening = `<path d="M${x0} ${Y} Q${(x0 + x1) / 2} ${Y - 2 * h} ${x1} ${Y}" fill="none"/>`
+      + Array.from({ length: n }, (_, i) => `<circle cx="${(x0 + i * stap).toFixed(1)}" cy="${Y + 1}" r="2.3" class="punt"/>`).join('')
+      + `<path d="M0 0 l-9 -5 v10z" class="punt" transform="translate(${x1} ${Y}) rotate(${hoek.toFixed(1)})"/>`;
+  } else tekening = `<path d="M${x0} ${Y - 6} H${x1 - 4}" fill="none"/><path d="M${x1} ${Y - 6} l-9 -5 v10z" class="punt"/>`;
+  return `<span class="kal-brug"><b>${woord}</b><svg viewBox="0 0 60 30" aria-hidden="true">${terug ? `<g transform="translate(60 0) scale(-1 1)">${tekening}</g>` : tekening}</svg></span>`;
+}
+// links ➜ rechts, met de brug ertussen
+const kalPaar = (links, brug, rechts) => `<span class="kal-rij">${links}${brug}${rechts}</span>`;
+const vakje = () => kalKaart('vraag');
+const dagKaart = d => kalKaart('nu', DAGEN[d], '⭐');
+const seizoenKaart = z => kalKaart(SEIZOENEN[z].id, SEIZOENEN[z].naam, SEIZOENEN[z].teken);
+const maandKaart = m => kalKaart(SEIZOENEN[seizoenVan(m)].id, MAANDEN[m], SEIZOENEN[seizoenVan(m)].teken);
+// wat ze weet, de brug, en het vakje: naar rechts als het erna komt, naar links als het ervoor komt
+const kalVan = (weet, woord, dagen, terug) => terug ? kalPaar(vakje(), kalBrug(woord, dagen, true), weet) : kalPaar(weet, kalBrug(woord, dagen), vakje());
+
+/* HET KALENDERBLAD van maand m: de kop in de kleur van zijn seizoen, ma tot
+   zo, het weekend lichter. Het jaar is dit jaar, zodat de dagen kloppen met
+   de kalender in de keuken. merk: { [datum]: 'rond' | 'vraag' }. Op de volle
+   breedte van de kaart: een cijfer op het blad is even groot als een woord
+   op een knop, anders zoekt ze een datum die ze niet kan lezen. */
+function kalBlad(m, merk) {
+  const eerste = dagVan(m, 1), n = dagenIn(m), z = SEIZOENEN[seizoenVan(m)];
+  const vakjes = Array.from({ length: eerste }, () => '<i></i>').concat(Array.from({ length: n }, (_, i) => {
+    const d = i + 1, soort = merk[d] || '';
+    return `<i class="${soort}${(eerste + i) % 7 > 4 ? ' wk' : ''}">${soort === 'vraag' ? '?' : d}</i>`;
+  })).join('');
+  return `<span class="kal-blad ${z.id}"><b>${z.teken} ${MAANDEN[m]}</b>`
+    + `<span class="kal-kop">${DAGEN.map(d => `<i>${d.slice(0, 2)}</i>`).join('')}</span><span class="kal-raster">${vakjes}</span></span>`;
+}
+/* WEKEN als een leeg kalenderblad: ma tot zo erboven, elke rij één week.
+   Dezelfde kolommen als het echte blad, zodat "een rij is een week" daar
+   al bekend is. */
+function kalWeken(w) {
+  const rij = Array.from({ length: 7 }, (_, i) => `<i class="${i > 4 ? 'wk' : ''}"></i>`).join('');
+  return `<span class="kal-blad kal-weken"><span class="kal-kop">${DAGEN.map(d => `<i>${d.slice(0, 2)}</i>`).join('')}</span>`
+    + `<span class="kal-raster">${Array(w).fill(rij).join('')}</span></span>`;
+}
+
+function kalenderVoorbeeld(r) {
+  return { morgen: '⭐ di ➜ morgen', seizoen: '❄️ ➜ 🌷', verder: '⭐ vr + 3', maanden: '🌷 maart ➜ april', weken: '2 weken = 14', blad: '📅 12 ➜ di', datum: '28/10' }[r.id];
+}
+// Vier keuzes rond het goede antwoord, op een ring van n (een dag te ver, de verkeerde kant op).
+function kalKeuzes(ans, n, fout) { return [...new Set([ans, ...fout.map(v => mod(v, n)), ...shuffle([1, -1, 2, -2, 3]).map(d => mod(ans + d, n))])].slice(0, 4); }
+const kalVraag = (rij, ans, extra) => ({ kind: 'kalender', op: 'kalender', rij, ans, kiezen: true, ...extra });
+const kalGetal = (rij, ans, extra) => ({ kind: 'kalender', op: 'kalender', rij, ans, kiezen: false, soort: 'getal', min: 1, ...extra });
+
+/* Een vraag van rij r. Elke rij heeft twee vormen, om de beurt (vorm 'lees'
+   of 'zoek', zoals de klok). */
+function genKalender(r, vorm) {
+  const tweede = vorm === 'zoek';
+  if (r.id === 'morgen') {
+    // ⭐ donderdag ─morgen➜ ?, of ? ⬅overmorgen─ ⭐ donderdag: één boogje per dag
+    const stap = pick(tweede ? [-2, 2] : [-1, 1, 1]), nu = rnd(0, 6), ans = mod(nu + stap, 7);
+    return kalVraag('morgen', ans, { soort: 'dag', keuzes: kalKeuzes(ans, 7, [nu - stap, nu]),
+      tmpl: `kal morgen ${nu} ${stap}`, html: kalVan(dagKaart(nu), DAGWOORD[stap], Math.abs(stap), stap < 0) });
+  }
+  if (r.id === 'seizoen') {
+    if (tweede) {   // wat hoort bij welk seizoen: twee dingen uit hetzelfde seizoen
+      const z = rnd(0, 3), twee = shuffle(SEIZOENEN[z].dingen.slice()).slice(0, 2);
+      return kalVraag('seizoen', z, { soort: 'seizoen', keuzes: [0, 1, 2, 3], tmpl: `kal ding ${twee.join('')}`,
+        html: kalVan(kalKaart('kaal ding', twee.join('')), 'seizoen') });
+    }
+    const z = rnd(0, 3), na = Math.random() < 0.65, ans = mod(z + (na ? 1 : -1), 4);
+    return kalVraag('seizoen', ans, { soort: 'seizoen', keuzes: [0, 1, 2, 3], tmpl: `kal seizoen ${z} ${na}`,
+      html: kalVan(seizoenKaart(z), na ? 'erna' : 'ervoor', 0, !na) });
+  }
+  if (r.id === 'verder') {
+    const d = rnd(3, 5), terug = tweede, nu = rnd(0, 6), ans = mod(nu + (terug ? -d : d), 7);
+    return kalVraag('verder', ans, { soort: 'dag', keuzes: kalKeuzes(ans, 7, [ans + (terug ? 1 : -1), ans + (terug ? -1 : 1)]),
+      tmpl: `kal verder ${nu} ${terug ? -d : d}`, html: kalVan(dagKaart(nu), `${terug ? '−' : '+'} ${d} dagen`, d, terug) });
+  }
+  if (r.id === 'maanden') {
+    const m = rnd(0, 11);
+    if (tweede)   // in welk seizoen valt deze maand? het kaartje is dan zonder kleur: de kleur zou het antwoord verklappen
+      return kalVraag('maanden', seizoenVan(m), { soort: 'seizoen', keuzes: [0, 1, 2, 3], tmpl: `kal maandseizoen ${m}`,
+        html: kalVan(kalKaart('kaal', MAANDEN[m]), 'seizoen') });
+    const na = Math.random() < 0.65, ans = mod(m + (na ? 1 : -1), 12);
+    return kalVraag('maanden', ans, { soort: 'maand', keuzes: kalKeuzes(ans, 12, [m + (na ? -1 : 1), m]), tmpl: `kal maand ${m} ${na}`,
+      html: kalVan(maandKaart(m), na ? 'erna' : 'ervoor', 0, !na) });
+  }
+  if (r.id === 'weken') {
+    // terug naar weken begint bij 2: "7 dagen = 1 week" is geen vraag maar de afspraak zelf
+    const omgekeerd = tweede, w = rnd(omgekeerd ? 2 : 1, 4), week = n => n > 1 ? 'weken' : 'week';
+    return kalGetal('weken', omgekeerd ? w : 7 * w, { grens: omgekeerd ? 10 : 35,
+      keuzes: omgekeerd ? [w, w + 1, w - 1, w + 2] : [...new Set([7 * w, 7 * w + 1, 7 * w - 1, 5 * w, 7 * (w + 1)])].slice(0, 4),
+      tmpl: `kal weken ${w} ${omgekeerd}`,
+      html: `<span class="kal-vraag">${kalWeken(w)}</span>${omgekeerd
+        ? kalVan(kalKaart('kaal', `${7 * w} dagen`), 'weken') : kalVan(kalKaart('kaal', `${w} ${week(w)}`), 'dagen')}` });
+  }
+  const m = rnd(0, 11), n = dagenIn(m);
+  if (r.id === 'blad') {
+    if (tweede) {   // een week later: één rij naar beneden, in dezelfde kolom
+      const dag = rnd(1, n - 7);
+      return kalGetal('blad', dag + 7, { grens: n, keuzes: [...new Set([dag + 7, dag + 6, dag + 8, dag + 1])], tmpl: `kal week ${m} ${dag}`,
+        html: `<span class="kal-vraag">${kalBlad(m, { [dag]: 'rond', [dag + 7]: 'vraag' })}</span>${kalVan(kalKaart('datum', dag), '+ 1 week')}` });
+    }
+    const dag = rnd(1, n), ans = dagVan(m, dag);
+    return kalVraag('blad', ans, { soort: 'dag', keuzes: kalKeuzes(ans, 7, [ans - 1, ans + 1]), tmpl: `kal blad ${m} ${dag}`,
+      html: `<span class="kal-vraag">${kalBlad(m, { [dag]: 'rond' })}</span>${kalVan(kalKaart('datum', dag), 'dag')}` });
+  }
+  // de datum: zoals hij in een schrift staat (28/10), of tellen hoeveel dagen later
+  if (tweede) {
+    const a = rnd(1, n - 10), d = rnd(3, 10), b = a + d;
+    return kalGetal('datum', d, { grens: 14, keuzes: [...new Set([d, d + 1, d - 1, d + 2])], tmpl: `kal tussen ${m} ${a} ${b}`,
+      html: `<span class="kal-vraag">${kalBlad(m, { [a]: 'rond', [b]: 'rond' })}</span>${kalVan(kalKaart('datum', `${a} ➜ ${b}`), 'dagen')}` });
+  }
+  const dag = rnd(1, Math.min(n, 28)), code = (d, mm) => d * 100 + mm + 1;
+  return kalVraag('datum', code(dag, m), { soort: 'notatie',
+    // de echte fouten: maand en dag omgedraaid (10/28), de maand ernaast (oktober is de 10e, niet de 9e)
+    keuzes: [...new Set([code(dag, m), (m + 1) * 100 + dag, code(dag, mod(m - 1, 12)), code(dag, mod(m + 1, 12)), code(dag + 1, m)])].slice(0, 4),   // 5/5: omgedraaid is hetzelfde, dan de dag ernaast
+    tmpl: `kal datum ${m} ${dag}`,
+    html: `<span class="kal-vraag">${kalBlad(m, { [dag]: 'rond' })}</span>${kalVan(kalKaart('datum', dag), 'datum')}` });
+}
+
 // Het antwoord van een vraag zoals het in het vakje staat (toonAntwoord) en op een knop (toonKeuze).
 function toonAntwoord(q, v) {
   if (q.kind === 'klok') return klokTekst(q, v);
+  if (q.kind === 'kalender') return q.soort === 'dag' ? DAGEN[v] : q.soort === 'maand' ? MAANDEN[v] : q.soort === 'seizoen' ? SEIZOENEN[v].naam
+    : q.soort === 'notatie' ? `${Math.floor(v / 100)}/${v % 100}` : String(v);
   if (q.kind !== 'geld') return String(v);
   return q.centen ? euro(v).slice(1) : String(v);
 }
@@ -632,6 +828,8 @@ function toonKeuze(q, v) {
   // zoeken: een lege regel tekst houdt de knop op zijn gewone hoogte, het klokje vult hem (zie .klok-zoek)
   if (q.kind === 'klok') return q.vorm === 'zoek' ? '&#8203;' + klokSvg(v, 64)
     : q.uur24 ? `<span class="klok-digi">${klokDigitaal(v)}</span>` : `<span class="klok-tekst">${klokWoorden(v)}</span>`;
+  if (q.kind === 'kalender') return q.soort === 'getal' || q.soort === 'notatie' ? toonAntwoord(q, v)
+    : `<span class="klok-tekst">${q.soort === 'seizoen' ? SEIZOENEN[v].teken + ' ' : ''}${toonAntwoord(q, v)}</span>`;
   return q.kind === 'geld' ? (q.centen ? euro(v) : `€${v}`) : String(v);
 }
 
@@ -648,6 +846,7 @@ const LADDERS = {
   tafels: { pad: TAFELPAD, lijn: 'tafelLijn', stand: 'tafels', id: 'set-tafelpad', eind: 'Alle tafels door elkaar', vb: tafelVoorbeeld },
   geld:   { pad: GELDPAD,  lijn: 'geldLijn',  stand: 'geld',   id: 'set-geldpad',  eind: 'Alles met geld door elkaar', vb: geldVoorbeeld, kies: 'kiesGeld' },
   klok:   { pad: KLOKPAD,  lijn: 'klokLijn',  stand: 'klok',   id: 'set-klokpad',  eind: 'Alle tijden door elkaar', vb: klokVoorbeeld, kies: 'kiesKlok' },
+  kalender: { pad: KALENDERPAD, lijn: 'kalLijn', stand: 'kalender', id: 'set-kalenderpad', eind: 'Alles met de kalender door elkaar', vb: kalenderVoorbeeld, kies: 'kiesKalender' },
 };
 Object.values(LADDERS).forEach(L => { L.idx = Object.fromEntries(L.pad.map((r, i) => [r.id, i])); });
 // De rijen met voorbeeld, en waar de twee lijnen staan (indexen, 0 = de eerste rij).
@@ -714,7 +913,8 @@ function rijenVraag(s, net) {
   let q, poging = 0;
   do {
     const r = s.nu && Math.random() < RIJ_NU_VAAK ? s.nu : s.stapel ? beurt(s, 'stapel', s.rijen) : pick(s.rijen);
-    q = s.thema === 'klok' ? genKlok(r, s.lees ? 'lees' : 'zoek') : genGeld(r);
+    const vorm = s.lees ? 'lees' : 'zoek';
+    q = s.thema === 'klok' ? genKlok(r, vorm) : s.thema === 'kalender' ? genKalender(r, vorm) : genGeld(r);
   } while (net.includes(q.tmpl) && ++poging < 8);
   s.lees = !s.lees;
   return q;
@@ -747,7 +947,7 @@ function themaInst(p, k) { return k === 'tafels' ? tafelInst(p) : k === 'rekenen
    Afwisselen en niet per toeval: twee tafelvragen na elkaar en dan vijf sommen
    leest als een ander spel, niet als één show. Staat er geen som aan, dan
    delen de andere de show gelijk. */
-const THEMA_ERBIJ = ['geld', 'klok'];
+const THEMA_ERBIJ = ['geld', 'klok', 'kalender'];
 function themaPlan(s, total) {
   const aan = themasAan(s);
   const sommen = aan.filter(k => !THEMA_ERBIJ.includes(k)), erbij = aan.filter(k => THEMA_ERBIJ.includes(k));
@@ -758,7 +958,11 @@ function themaPlan(s, total) {
     return uit;
   };
   if (!sommen.length) return verdeel(erbij, total);
-  const extra = verdeel(erbij, erbij.length * (total >= 8 ? 2 : 1));
+  /* De helft blijft sommen. Staan er meer extra thema's aan dan er plaats is,
+     dan begint elke show bij een ander (geschud): anders kreeg het eerste
+     altijd twee vragen en het laatste er één, show na show. */
+  const plaats = Math.floor(total / 2), wil = erbij.length * (total >= 8 ? 2 : 1);
+  const extra = verdeel(wil > plaats ? shuffle(erbij.slice()) : erbij, Math.min(wil, plaats));
   const plan = verdeel(sommen, total - extra.length);
   extra.forEach((k, j) => plan.splice(Math.round((j + 1) * total / (extra.length + 1)), 0, k));
   return plan;
@@ -2139,7 +2343,7 @@ function buildQuestion(p, lvl, g) {
   const k = g && g.themaPlan ? g.themaPlan[g.idx] : themasAan(p.settings)[0];
   const s = (g && g.insts && g.insts[k]) || themaInst(p, k);
   // geld komt niet uit de zwakke sommen: dat zijn sommen, en een bedrag is elke keer andere munten
-  if (s.thema === 'geld' || s.thema === 'klok') return rijenVraag(s, net);
+  if (THEMA_ERBIJ.includes(s.thema)) return rijenVraag(s, net);
   if (Math.random() < 0.35) {
     const wq = pickWeak(p, s, mag);
     if (wq) { if (al) al.add(wq.tmpl); return wq; }
@@ -2360,6 +2564,7 @@ const HINT_DICHTBIJ = 2;
 function hintVoor(q, val) {
   if (typeof val !== 'number' || isNaN(val) || val === q.ans) return null;
   if (q.kind === 'klok') return klokHint(q, val);
+  if (q.kind === 'kalender' && q.soort !== 'getal') return kalHint(q, val);
   const meer = q.ans > val;
   const net = Math.abs(q.ans - val) <= HINT_DICHTBIJ;
   const woord = meer ? 'meer' : 'minder';
@@ -2377,6 +2582,17 @@ function klokHint(q, val) {
   const d = dag ? q.ans - val : ((q.ans - val) % 720 + 1080) % 720 - 360;
   const later = d >= 0;
   return { pijl: later ? 'later' : 'vroeger', woorden: (later ? 'Later dan ' : 'Vroeger dan ') + klokTekst(q, val) };
+}
+/* Bij de kalender is meer of minder: later of vroeger in de week, het jaar
+   of de seizoenen -- langs de kortste weg rond (zondag en maandag liggen een
+   dag uit elkaar, niet zes). Een datum in de vorm 28/10 heeft geen later of
+   vroeger dat helpt (de fout is meestal dag en maand omgedraaid): daar alleen
+   het 🤔. Een aantal (dagen, weken, een datum) is gewoon meer of minder. */
+function kalHint(q, val) {
+  const n = { dag: 7, maand: 12, seizoen: 4 }[q.soort];
+  if (!n) return null;
+  const d = ((q.ans - val) % n + n + Math.floor(n / 2)) % n - Math.floor(n / 2), later = d > 0;
+  return { pijl: later ? 'later' : 'vroeger', woorden: (later ? 'Later dan ' : 'Vroeger dan ') + toonAntwoord(q, val) };
 }
 // Wat ze tikte, in de andere vorm (zie klokHint); bij getallen gewoon de keuze zelf.
 function hintTeken(q, val) {

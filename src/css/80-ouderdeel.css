@@ -416,7 +416,7 @@
      hoog: icoontje en woord, en een duim op een oude tablet raakt hem. Uit is
      het icoontje grijs en de tegel licht -- twee tekens, niet alleen kleur. */
   .modus-kaart .modus-uitleg { margin: 8px 0 0; text-align: center; font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); }
-  .thema-bar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+  .thema-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .thema-bar .chip.thema, .thema-bar .chip.thema:hover {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
     min-width: 0; min-height: 64px; padding: 9px 4px 8px; border: none; border-radius: 14px; box-shadow: none;

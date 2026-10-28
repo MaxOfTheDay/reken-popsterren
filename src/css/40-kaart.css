@@ -680,6 +680,59 @@
   .choice-btn .klok { position: absolute; left: 50%; top: 3px; height: calc(100% - 6px); width: auto; aspect-ratio: 1; transform: translateX(-50%); }
   .choice-btn .klok-digi { font-size: .9em; }
   .choice-btn .klok-tekst { font-size: .7em; white-space: nowrap; }
+  /* De kalender (zie genKalender). Elke vraag is een rij kaartjes die van
+     links naar rechts in de tijd loopt, met een woordje boven elk kaartje
+     (vandaag, morgen, erna), of een echt kalenderblad. Elk seizoen heeft een
+     kleur én een teken; roze is waar je vertrekt of wat je zoekt. Alles in
+     em, zodat het met de vraag meegroeit (tablet). */
+  .kal-rij {
+    display: flex; align-items: flex-end; justify-content: center; gap: .3em; margin: 0 auto;
+    font-size: clamp(14px, .37em, 24px); line-height: 1.1;
+  }
+  /* twee kaartjes even groot, wat er ook op staat (zie kalKaart) */
+  .kal-kaart {
+    position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .25em;
+    width: 5.7em; height: 2.5em; box-sizing: border-box; border-radius: .6em; padding: 0 .2em;
+    background: #f3e5f5; color: #3a2a55; font-weight: 900; white-space: nowrap;
+  }
+  .kal-kaart i { font-style: normal; }
+  .kal-kaart.nu { background: #e5397a; color: #fff; }
+  .kal-teken { position: absolute; top: -.8em; left: 50%; transform: translateX(-50%); font-size: 1.1em; line-height: 1; }
+  .kal-kaart.winter { background: #bfe0fb; } .kal-kaart.lente { background: #c8ecc8; }
+  .kal-kaart.zomer { background: #ffe79a; } .kal-kaart.herfst { background: #ffd2a8; }
+  .kal-kaart.ding { font-size: 1.5em; width: 4em; height: 1.733em; letter-spacing: .1em; background: #f3e5f5; }
+  .kal-kaart.vraag { background: none; }
+  /* een datum van het blad: wit met de roze ring, zoals op het blad zelf */
+  .kal-kaart.datum { background: #fff; color: #e5397a; box-shadow: inset 0 0 0 .16em #e5397a; font-size: 1.1em; width: 5.18em; height: 2.27em; }
+  .kal-kaart.vraag .pl-som, .kal-kaart.vraag .q-blank { display: flex; width: 100%; height: 100%; }
+  .kal-kaart.vraag .q-blank { box-sizing: border-box; align-items: center; justify-content: center; margin: 0; border-radius: .6em; font-size: 1.7em; min-width: 0; }
+  .kal-kaart.vraag .q-blank.done { font-size: 1em; }
+  /* de brug: één woord erboven, eronder de boogjes (een per dag) of een pijl */
+  .kal-brug { display: inline-flex; flex-direction: column; align-items: center; width: 3.8em; padding-bottom: .5em; }
+  .kal-brug b { font-size: .9em; font-weight: 900; color: #e5397a; white-space: nowrap; margin-bottom: .15em; }
+  .kal-brug svg { width: 100%; height: auto; stroke: #e5397a; stroke-width: 2.6; stroke-linecap: round; }
+  .kal-brug .punt { fill: #e5397a; stroke: none; }
+  .kal-vraag { display: flex; justify-content: center; margin: 2px 0 .08em; }
+  /* het kalenderblad: op de volle breedte van de kaart, de kop in de kleur van zijn seizoen */
+  .kal-blad {
+    display: inline-block; font-size: clamp(28px, .88em, 50px); width: 6.6em; max-width: calc(100vw - 80px); border-radius: .22em; overflow: hidden;
+    background: #fff; box-shadow: 0 0 0 .04em #c9b6dc, 0 .06em .16em rgba(74,42,122,.18); line-height: 1;
+  }
+  .kal-blad b { display: block; padding: .22em 0; color: #3a2a55; font-size: .4em; font-weight: 900; }
+  .kal-blad.winter b { background: #bfe0fb; } .kal-blad.lente b { background: #c8ecc8; }
+  .kal-blad.zomer b { background: #ffe79a; } .kal-blad.herfst b { background: #ffd2a8; }
+  .kal-kop, .kal-raster { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .kal-kop i, .kal-raster i { font-style: normal; font-size: .34em; padding: .17em 0; color: #2b2238; font-weight: 800; }
+  .kal-kop i { color: #8e3fc8; font-weight: 900; border-bottom: .06em solid #eadff3; }
+  .kal-raster i.wk { color: #9b8aa9; background: #faf7fc; }
+  .kal-raster i.rond { background: radial-gradient(circle, #fff 50%, #e5397a 53%, #e5397a 66%, transparent 69%); color: #e5397a; font-weight: 900; }
+  .kal-raster i.vraag { color: #e5397a; font-weight: 900; background: radial-gradient(circle, #fff3f8 62%, transparent 65%); }
+  /* weken: een leeg blad, elke rij een week van zeven vakjes */
+  .kal-weken { width: 5.4em; }
+  .kal-som { flex-wrap: nowrap; }
+  .kal-weken .kal-raster { gap: .06em; padding: .08em; }
+  .kal-weken .kal-raster i { font-size: inherit; height: .36em; padding: 0; border-radius: .06em; background: #d9c3ec; }
+  .kal-weken .kal-raster i.wk { background: #efe6f7; }
   .q-blank.done { border-style: solid; border-color: var(--green-deep); background: rgba(102,187,106,.18); color: var(--green-deep); }
   /* De som valt dicht (zie die kop in de JS). klikt: het goede antwoord is net
      geland en plopt één keer. rustig: na een tweede misser staat het goede

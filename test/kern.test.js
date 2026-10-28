@@ -1758,7 +1758,7 @@ zaak('ZE', () => {
   const app = laadApp();
   const kaarten = app.run('OEFEN_INSTELLINGEN');
   const gevallen = [
-    ['math', { ops: ['+', '-', 'x', ':'], max: 20, themas: ['geld', 'klok'] }, '["rekenen","tafels","geld","klok","show"]'],   // alles wat kan staat er
+    ['math', { ops: ['+', '-', 'x', ':'], max: 20, themas: ['geld', 'klok', 'kalender'] }, '["rekenen","tafels","geld","klok","kalender","show"]'],   // alles wat kan staat er
     ['math', { ops: ['+', '-', 'x', ':'], max: 20 }, '["rekenen","tafels","show"]'],   // geld staat standaard uit
     ['math', { ops: ['+', '-'], max: 10, missNum: false }, '["rekenen","show"]'],      // en met minder
     ['math', { ops: [':'] }, '["tafels","show"]'],
@@ -1793,7 +1793,7 @@ zaak('ZE', () => {
         check(/data-instelling="tafelLijn"/.test(t) && !/data-instelling="tables"/.test(t)
           && /data-instelling="tables"/.test(tv) && !/data-instelling="tafelLijn"/.test(tv),
           'ZE · tafels: op het leerpad de tafelladder, bij Zelf kiezen "Tafels van", nooit allebei', '');
-        for (const [k, lijn, kies] of [['geld', 'geldLijn', 'kiesGeld'], ['klok', 'klokLijn', 'kiesKlok']]) {
+        for (const [k, lijn, kies] of [['geld', 'geldLijn', 'kiesGeld'], ['klok', 'klokLijn', 'kiesKlok'], ['kalender', 'kalLijn', 'kiesKalender']]) {
           const l = groepen.find(g => g.kaart === k).html, v = vrij.find(g => g.kaart === k).html;
           check(l.includes(`data-instelling="${lijn}"`) && !l.includes(`data-instelling="${kies}"`)
             && v.includes(`data-instelling="${kies}"`) && !v.includes(`data-instelling="${lijn}"`),
@@ -2276,6 +2276,72 @@ zaak('KL', () => {
   check(Array.from({ length: 50 }, () => app.rijenVraag(ki, []).rij).every(r => r === 'uren'), 'KL · op hele uren: alleen hele uren', '');
 });
 
+/* ================= KA · De kalender als thema =================
+   Elke vorm van elke rij: het antwoord tussen vier verschillende keuzes, en
+   het klopt met de echte kalender. En de ladder groeit: een kind dat het kan
+   klimt alle zeven rijen op, rij na rij, nooit een vraag van een rij die ze
+   nog niet had, en de eerste vraag van een nieuwe rij is "Nieuw". */
+zaak('KA', () => {
+  const { app, p } = verseSter('Kalender');
+  const s = p.settings, jaar = new Date().getFullYear();
+  check(!app.themaAan(s, 'kalender'), 'KA · een verse ster: de kalender staat uit', JSON.stringify(s.themas));
+  const mis = [];
+  for (const r of app.KALENDERPAD) for (const v of ['lees', 'zoek']) for (let i = 0; i < 200; i++) {
+    const q = app.genKalender(r, v);
+    if (q.rij !== r.id || !q.html.includes('@')) mis.push(`${r.id}/${v} vorm`);
+    if (!q.keuzes.includes(q.ans) || q.keuzes.length !== 4 || new Set(q.keuzes).size !== 4) mis.push(`${r.id}/${v} keuzes ${q.keuzes}`);
+    if (q.soort !== 'getal' && !q.kiezen) mis.push(`${r.id}/${v} een woord moet kiezen`);
+    if (q.keuzes.some(k => !app.toonAntwoord(q, k))) mis.push(`${r.id}/${v} lege knop`);
+  }
+  check(!mis.length, 'KA · elke rij, elke vorm: het antwoord tussen vier verschillende keuzes, woorden altijd kiezen', [...new Set(mis)].slice(0, 3).join(' | '));
+  let fout = 0;
+  for (let i = 0; i < 200; i++) {
+    let q = app.genKalender(app.KALENDERPAD[5], 'lees'), [, , m, d] = q.tmpl.split(' ').map(Number);
+    if (q.ans !== (new Date(jaar, m, d).getDay() + 6) % 7) fout++;
+    q = app.genKalender(app.KALENDERPAD[6], 'lees'); [, , m, d] = q.tmpl.split(' ').map(Number);
+    if (app.toonAntwoord(q, q.ans) !== `${d}/${m + 1}`) fout++;
+    q = app.genKalender(app.KALENDERPAD[0], i % 2 ? 'lees' : 'zoek'); const [, , nu, st] = q.tmpl.split(' ').map(Number);
+    if (q.ans !== ((nu + st) % 7 + 7) % 7 || !q.html.includes(['eergisteren', 'gisteren', '', 'morgen', 'overmorgen'][st + 2])) fout++;
+  }
+  check(!fout, 'KA · klopt met de echte kalender: de dag van een datum, 28/10, morgen en eergisteren', String(fout));
+  // de hint: later of vroeger rond de week, niets bij 28/10, meer of minder bij een aantal
+  const dq = { kind: 'kalender', soort: 'dag', ans: 0 }, h = app.hintVoor(dq, 6);
+  check(h.pijl === 'later' && app.hintVoor({ ...dq, ans: 5 }, 6).pijl === 'vroeger' && !app.hintVoor({ kind: 'kalender', soort: 'notatie', ans: 2810 }, 1028)
+    && app.hintVoor({ kind: 'kalender', soort: 'getal', ans: 14 }, 7).pijl === 'op',
+    'KA · de hint: zondag → maandag is later (de kortste weg), 28/10 alleen 🤔, een aantal meer of minder', JSON.stringify(h));
+
+  // de ladder groeit: drie goede shows per rij, met rekenen erbij
+  app.themaZet(s, 'kalender', true);
+  check(app.themaPlan(s, 8).filter(k => k === 'kalender').length === 2, 'KA · een show van acht met rekenen: twee kalendervragen', app.themaPlan(s, 8).join());
+  const pad = [], buiten = [], nieuw = [];
+  let shows = 0;
+  while (app.ladderNu(p, 'kalender') !== 'alles' && shows < 60) {
+    shows++;
+    const nu = app.ladderNu(p, 'kalender'), mag = new Set(app.ladderSpeelt(p, 'kalender').rijen.map(r => r.id));
+    const inst = app.rijenInst(p, 'kalender'), qs = Array.from({ length: 8 }, () => app.rijenVraag(inst, []));
+    qs.filter(q => !mag.has(q.rij)).forEach(q => buiten.push(q.rij));
+    const eerste = qs.find(q => q.rij === nu);
+    if (pad.length && pad[pad.length - 1].verder && eerste) nieuw.push(app.vraagIsNieuw(eerste, nu));
+    pad.push({ nu, verder: app.ladderNa(p, 'kalender', 3) });
+  }
+  const per = app.KALENDERPAD.map(r => pad.filter(x => x.nu === r.id).length);
+  check(app.ladderNu(p, 'kalender') === 'alles' && per.every(n => n === 3), 'KA · drie goede shows per rij: alle zeven rijen, één voor één, tot alles door elkaar', per.join(' '));
+  check(!buiten.length, 'KA · nooit een vraag van een rij die ze nog niet had', buiten.slice(0, 3).join());
+  check(nieuw.length === 6 && nieuw.every(Boolean), 'KA · de eerste vraag van een nieuwe rij is "Nieuw"', nieuw.join());
+
+  // de lijnen en Zelf kiezen
+  const { app: a2, p: p2 } = verseSter('Lijnen'), s2 = p2.settings;
+  a2.themaZet(s2, 'kalender', true);
+  s2.kalLijn = { vanaf: 'maanden', tot: 'blad' };
+  check(a2.ladderNu(p2, 'kalender') === 'maanden', 'KA · "vanaf Maanden": daar begint ze', a2.ladderNu(p2, 'kalender'));
+  for (let i = 0; i < 9; i++) a2.ladderNa(p2, 'kalender', 3);
+  const gemengd = new Set(Array.from({ length: 300 }, () => a2.rijenVraag(a2.rijenInst(p2, 'kalender'), []).rij));
+  check(a2.ladderNu(p2, 'kalender') === 'alles' && !gemengd.has('datum'), 'KA · "tot Kalenderblad": daarna door elkaar, zonder De datum', [...gemengd].join());
+  s2.modus = 'vrij'; s2.kiesKalender = ['seizoen', 'blad'];
+  const vi = a2.rijenInst(p2, 'kalender'), vier = Array.from({ length: 4 }, () => a2.rijenVraag(vi, []).rij);
+  check(vier.filter(r => r === 'seizoen').length === 2 && vier.every(r => r === 'seizoen' || r === 'blad'), 'KA · Zelf kiezen: de aangevinkte rijen, om de beurt', vier.join());
+});
+
 /* ================= SO · Elke combinatie van thema's start een show =================
    Een show met alleen geld of alleen de klok startte niet: de speciale vragen
    lazen s.ops van de geldvraagmaker (zie showOpzet). Hier wordt elke
@@ -2283,7 +2349,7 @@ zaak('KL', () => {
    leerpad en bij Zelf kiezen, in een lange en een korte show -- een thema dat
    er straks bij komt, valt hier meteen mee. */
 zaak('SO', () => {
-  const ids = ['rekenen', 'tafels', 'geld', 'klok'], kapot = [];
+  const ids = laadApp().THEMAS.map(t => t.id), kapot = [];
   for (let m = 1; m < 16; m++) for (const modus of ['pad', 'vrij']) for (const perLevel of [8, 5]) {
     const aan = ids.filter((k, i) => m & (1 << i));
     const { app, p } = verseSter('Combi');

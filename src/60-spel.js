@@ -195,7 +195,7 @@ function renderQuestion() {
   if (G.mode === 'kies') {
     const choices = makeChoices(q, keuzeGrens(q, G.inst, G.lvl));
     area.innerHTML = '<div class="choices">' +
-      choices.map(c => `<button class="choice-btn${q.knop ? ' ' + q.knop : ''}" data-v="${c}"${q.kind === 'klok' ? ` aria-label="${klokTekst(q, c)}"` : ''}>${toonKeuze(q, c)}</button>`).join('') + '</div>';
+      choices.map(c => `<button class="choice-btn${q.knop ? ' ' + q.knop : ''}" data-v="${c}"${q.kind === 'klok' ? ` aria-label="${klokTekst(q, c)}"` : q.kind === 'kalender' ? ` aria-label="${toonAntwoord(q, c)}"` : ''}>${toonKeuze(q, c)}</button>`).join('') + '</div>';
     area.querySelectorAll('.choice-btn').forEach(b => {
       b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
     });
@@ -393,6 +393,8 @@ function kaartProeven(insts) {
   if (insts.geld) insts.geld.rijen.forEach(r => uit.push(r.terug ? genGeld(r).html
     : `<span class="geld-rij">${Array(r.stuks).fill(r.briefje ? 1000 : 200).map(geldStuk).join('')}</span><span class="pl-som">€ @</span>`));
   if (insts.klok) insts.klok.rijen.forEach(r => uit.push(genKlok(r, 'lees').html, genKlok(r, 'zoek').html));
+  // de kalender: elke vorm een paar keer, want een maand met zes weken is een rij hoger
+  if (insts.kalender) insts.kalender.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genKalender(r, i % 2 ? 'zoek' : 'lees').html); });
   return uit;
 }
 addEventListener('resize', () => { if (G) G.kaartMin = null; });

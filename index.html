@@ -3569,6 +3569,59 @@
   .choice-btn .klok { position: absolute; left: 50%; top: 3px; height: calc(100% - 6px); width: auto; aspect-ratio: 1; transform: translateX(-50%); }
   .choice-btn .klok-digi { font-size: .9em; }
   .choice-btn .klok-tekst { font-size: .7em; white-space: nowrap; }
+
+
+
+
+
+  .kal-rij {
+    display: flex; align-items: flex-end; justify-content: center; gap: .3em; margin: 0 auto;
+    font-size: clamp(14px, .37em, 24px); line-height: 1.1;
+  }
+
+  .kal-kaart {
+    position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .25em;
+    width: 5.7em; height: 2.5em; box-sizing: border-box; border-radius: .6em; padding: 0 .2em;
+    background: #f3e5f5; color: #3a2a55; font-weight: 900; white-space: nowrap;
+  }
+  .kal-kaart i { font-style: normal; }
+  .kal-kaart.nu { background: #e5397a; color: #fff; }
+  .kal-teken { position: absolute; top: -.8em; left: 50%; transform: translateX(-50%); font-size: 1.1em; line-height: 1; }
+  .kal-kaart.winter { background: #bfe0fb; } .kal-kaart.lente { background: #c8ecc8; }
+  .kal-kaart.zomer { background: #ffe79a; } .kal-kaart.herfst { background: #ffd2a8; }
+  .kal-kaart.ding { font-size: 1.5em; width: 4em; height: 1.733em; letter-spacing: .1em; background: #f3e5f5; }
+  .kal-kaart.vraag { background: none; }
+
+  .kal-kaart.datum { background: #fff; color: #e5397a; box-shadow: inset 0 0 0 .16em #e5397a; font-size: 1.1em; width: 5.18em; height: 2.27em; }
+  .kal-kaart.vraag .pl-som, .kal-kaart.vraag .q-blank { display: flex; width: 100%; height: 100%; }
+  .kal-kaart.vraag .q-blank { box-sizing: border-box; align-items: center; justify-content: center; margin: 0; border-radius: .6em; font-size: 1.7em; min-width: 0; }
+  .kal-kaart.vraag .q-blank.done { font-size: 1em; }
+
+  .kal-brug { display: inline-flex; flex-direction: column; align-items: center; width: 3.8em; padding-bottom: .5em; }
+  .kal-brug b { font-size: .9em; font-weight: 900; color: #e5397a; white-space: nowrap; margin-bottom: .15em; }
+  .kal-brug svg { width: 100%; height: auto; stroke: #e5397a; stroke-width: 2.6; stroke-linecap: round; }
+  .kal-brug .punt { fill: #e5397a; stroke: none; }
+  .kal-vraag { display: flex; justify-content: center; margin: 2px 0 .08em; }
+
+  .kal-blad {
+    display: inline-block; font-size: clamp(28px, .88em, 50px); width: 6.6em; max-width: calc(100vw - 80px); border-radius: .22em; overflow: hidden;
+    background: #fff; box-shadow: 0 0 0 .04em #c9b6dc, 0 .06em .16em rgba(74,42,122,.18); line-height: 1;
+  }
+  .kal-blad b { display: block; padding: .22em 0; color: #3a2a55; font-size: .4em; font-weight: 900; }
+  .kal-blad.winter b { background: #bfe0fb; } .kal-blad.lente b { background: #c8ecc8; }
+  .kal-blad.zomer b { background: #ffe79a; } .kal-blad.herfst b { background: #ffd2a8; }
+  .kal-kop, .kal-raster { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .kal-kop i, .kal-raster i { font-style: normal; font-size: .34em; padding: .17em 0; color: #2b2238; font-weight: 800; }
+  .kal-kop i { color: #8e3fc8; font-weight: 900; border-bottom: .06em solid #eadff3; }
+  .kal-raster i.wk { color: #9b8aa9; background: #faf7fc; }
+  .kal-raster i.rond { background: radial-gradient(circle, #fff 50%, #e5397a 53%, #e5397a 66%, transparent 69%); color: #e5397a; font-weight: 900; }
+  .kal-raster i.vraag { color: #e5397a; font-weight: 900; background: radial-gradient(circle, #fff3f8 62%, transparent 65%); }
+
+  .kal-weken { width: 5.4em; }
+  .kal-som { flex-wrap: nowrap; }
+  .kal-weken .kal-raster { gap: .06em; padding: .08em; }
+  .kal-weken .kal-raster i { font-size: inherit; height: .36em; padding: 0; border-radius: .06em; background: #d9c3ec; }
+  .kal-weken .kal-raster i.wk { background: #efe6f7; }
   .q-blank.done { border-style: solid; border-color: var(--green-deep); background: rgba(102,187,106,.18); color: var(--green-deep); }
 
 
@@ -9534,7 +9587,7 @@
 
 
   .modus-kaart .modus-uitleg { margin: 8px 0 0; text-align: center; font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); }
-  .thema-bar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+  .thema-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .thema-bar .chip.thema, .thema-bar .chip.thema:hover {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
     min-width: 0; min-height: 64px; padding: 9px 4px 8px; border: none; border-radius: 14px; box-shadow: none;
@@ -14477,10 +14530,12 @@ function defaultProfile(name, dress, opts) {
       tafelLijn: { ...opts.tafelLijn },
       geldLijn: { ...opts.geldLijn },
       klokLijn: { ...opts.klokLijn },
+      kalLijn: { ...opts.kalLijn },
 
       ...(opts.themas ? { themas: opts.themas.slice() } : {}),
       ...(opts.kiesGeld ? { kiesGeld: opts.kiesGeld.slice() } : {}),
       ...(opts.kiesKlok ? { kiesKlok: opts.kiesKlok.slice() } : {}),
+      ...(opts.kiesKalender ? { kiesKalender: opts.kiesKalender.slice() } : {}),
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
 
@@ -22444,7 +22499,7 @@ function padNa(p, sterren) {
 function vraagIsNieuw(q, id) {
   if (id === 'fase') return true;
   if (id in LADDERS.tafels.idx) return (q.op === 'x' || q.op === ':') && TAFELPAD[LADDERS.tafels.idx[id]].tafels.includes(Number((q.tmpl.match(/\d+/g) || [])[1]));
-  if (id in LADDERS.geld.idx || id in LADDERS.klok.idx) return q.rij === id;
+  if (THEMA_ERBIJ.some(k => id in LADDERS[k].idx)) return q.rij === id;
   const r = LEERPAD[PAD_IDX[id]];
   if (!r) return false;
   if (r.bouwen) return q.kind === 'bouw' && (q.grens || 99) >= r.bereik - 1;
@@ -22483,6 +22538,7 @@ const THEMAS = [
   { id: 'tafels',  naam: 'Tafels',  ops: ['x', ':'] },
   { id: 'geld',    naam: 'Geld' },
   { id: 'klok',    naam: 'Klok' },
+  { id: 'kalender', naam: 'Kalender' },
 ];
 const THEMA = Object.fromEntries(THEMAS.map(t => [t.id, t]));
 function themaAan(s, k) { return THEMA[k].ops ? THEMA[k].ops.some(o => s.ops.includes(o)) : (s.themas || []).includes(k); }
@@ -22511,6 +22567,9 @@ function themaIcoon(k, maat) {
   if (k === 'geld') return svg('<circle cx="20" cy="20" r="18" fill="#c9ccd1" stroke="#9aa0a8" stroke-width="1.5"/>'
     + '<circle cx="20" cy="20" r="12.5" fill="#e8c45a"/>'
     + '<text x="20" y="21" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="900" fill="#5d3f00">€</text>');
+  if (k === 'kalender') return svg('<rect x="5" y="7" width="30" height="29" rx="5" fill="#fff" stroke="#9aa0a8" stroke-width="1.5"/>'
+    + '<path d="M5 12a5 5 0 0 1 5-5h20a5 5 0 0 1 5 5v4H5z" fill="#e5397a"/><rect x="11" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/><rect x="26" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/>'
+    + '<text x="20" y="27" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="900" fill="#2b2238">7</text>');
   if (k === 'klok') return klokSvg(130, maat, true).replace('class="klok"', 'class="klok thema-ico"');
   const teken = { rekenen: ['+', '−'], tafels: ['×', '÷'] }[k];
   return svg('<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>'
@@ -22725,8 +22784,200 @@ function klokDag(r, t) {
 function klokTekst(q, v) { return q.uur24 && q.vorm === 'lees' ? klokDigitaal(v) : klokWoorden(v); }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const DAGEN = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'];
+const MAANDEN = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+const SEIZOENEN = [
+  { id: 'winter', naam: 'winter', teken: '❄️', dingen: ['⛄', '🧤', '🛷', '🎄'] },
+  { id: 'lente',  naam: 'lente',  teken: '🌷', dingen: ['🐣', '🌷', '🐝', '🌱'] },
+  { id: 'zomer',  naam: 'zomer',  teken: '☀️', dingen: ['🏖️', '🍦', '🩴', '🍉'] },
+  { id: 'herfst', naam: 'herfst', teken: '🍂', dingen: ['🍂', '🍄', '🌰', '☔'] },
+];
+
+const seizoenVan = m => Math.floor(((m + 1) % 12) / 3);
+
+const DAGWOORD = { '-2': 'eergisteren', '-1': 'gisteren', 0: 'vandaag', 1: 'morgen', 2: 'overmorgen' };
+const KALENDERPAD = [
+  { id: 'morgen',   naam: 'Gisteren en morgen' },
+  { id: 'seizoen',  naam: 'Seizoenen' },
+  { id: 'verder',   naam: 'Dagen verder' },
+  { id: 'maanden',  naam: 'Maanden' },
+  { id: 'weken',    naam: 'Weken en dagen' },
+  { id: 'blad',     naam: 'Kalenderblad' },
+  { id: 'datum',    naam: 'De datum' },
+];
+const JAAR = new Date().getFullYear();
+const dagVan = (m, d) => (new Date(JAAR, m, d).getDay() + 6) % 7;
+const dagenIn = m => new Date(JAAR, m + 1, 0).getDate();
+const mod = (v, n) => ((v % n) + n) % n;
+
+
+
+
+
+
+
+
+
+
+
+function kalKaart(soort, inhoud, teken) {
+  if (soort === 'vraag') return '<span class="kal-kaart vraag"><span class="pl-som">@</span></span>';
+
+  return `<span class="kal-kaart ${soort}">${teken ? `<i class="kal-teken" aria-hidden="true">${teken}</i>` : ''}${inhoud}</span>`;
+}
+
+
+
+
+
+
+
+function kalBrug(woord, dagen, terug) {
+  const n = dagen || 0, Y = 25, x0 = 5, x1 = 55;
+  let tekening;
+  if (n) {
+    const h = 15, stap = (x1 - x0) / n;
+
+    const hoek = Math.atan2(2 * h, (x1 - x0) / 2) * 180 / Math.PI;
+    tekening = `<path d="M${x0} ${Y} Q${(x0 + x1) / 2} ${Y - 2 * h} ${x1} ${Y}" fill="none"/>`
+      + Array.from({ length: n }, (_, i) => `<circle cx="${(x0 + i * stap).toFixed(1)}" cy="${Y + 1}" r="2.3" class="punt"/>`).join('')
+      + `<path d="M0 0 l-9 -5 v10z" class="punt" transform="translate(${x1} ${Y}) rotate(${hoek.toFixed(1)})"/>`;
+  } else tekening = `<path d="M${x0} ${Y - 6} H${x1 - 4}" fill="none"/><path d="M${x1} ${Y - 6} l-9 -5 v10z" class="punt"/>`;
+  return `<span class="kal-brug"><b>${woord}</b><svg viewBox="0 0 60 30" aria-hidden="true">${terug ? `<g transform="translate(60 0) scale(-1 1)">${tekening}</g>` : tekening}</svg></span>`;
+}
+
+const kalPaar = (links, brug, rechts) => `<span class="kal-rij">${links}${brug}${rechts}</span>`;
+const vakje = () => kalKaart('vraag');
+const dagKaart = d => kalKaart('nu', DAGEN[d], '⭐');
+const seizoenKaart = z => kalKaart(SEIZOENEN[z].id, SEIZOENEN[z].naam, SEIZOENEN[z].teken);
+const maandKaart = m => kalKaart(SEIZOENEN[seizoenVan(m)].id, MAANDEN[m], SEIZOENEN[seizoenVan(m)].teken);
+
+const kalVan = (weet, woord, dagen, terug) => terug ? kalPaar(vakje(), kalBrug(woord, dagen, true), weet) : kalPaar(weet, kalBrug(woord, dagen), vakje());
+
+
+
+
+
+
+function kalBlad(m, merk) {
+  const eerste = dagVan(m, 1), n = dagenIn(m), z = SEIZOENEN[seizoenVan(m)];
+  const vakjes = Array.from({ length: eerste }, () => '<i></i>').concat(Array.from({ length: n }, (_, i) => {
+    const d = i + 1, soort = merk[d] || '';
+    return `<i class="${soort}${(eerste + i) % 7 > 4 ? ' wk' : ''}">${soort === 'vraag' ? '?' : d}</i>`;
+  })).join('');
+  return `<span class="kal-blad ${z.id}"><b>${z.teken} ${MAANDEN[m]}</b>`
+    + `<span class="kal-kop">${DAGEN.map(d => `<i>${d.slice(0, 2)}</i>`).join('')}</span><span class="kal-raster">${vakjes}</span></span>`;
+}
+
+
+
+function kalWeken(w) {
+  const rij = Array.from({ length: 7 }, (_, i) => `<i class="${i > 4 ? 'wk' : ''}"></i>`).join('');
+  return `<span class="kal-blad kal-weken"><span class="kal-kop">${DAGEN.map(d => `<i>${d.slice(0, 2)}</i>`).join('')}</span>`
+    + `<span class="kal-raster">${Array(w).fill(rij).join('')}</span></span>`;
+}
+
+function kalenderVoorbeeld(r) {
+  return { morgen: '⭐ di ➜ morgen', seizoen: '❄️ ➜ 🌷', verder: '⭐ vr + 3', maanden: '🌷 maart ➜ april', weken: '2 weken = 14', blad: '📅 12 ➜ di', datum: '28/10' }[r.id];
+}
+
+function kalKeuzes(ans, n, fout) { return [...new Set([ans, ...fout.map(v => mod(v, n)), ...shuffle([1, -1, 2, -2, 3]).map(d => mod(ans + d, n))])].slice(0, 4); }
+const kalVraag = (rij, ans, extra) => ({ kind: 'kalender', op: 'kalender', rij, ans, kiezen: true, ...extra });
+const kalGetal = (rij, ans, extra) => ({ kind: 'kalender', op: 'kalender', rij, ans, kiezen: false, soort: 'getal', min: 1, ...extra });
+
+
+
+function genKalender(r, vorm) {
+  const tweede = vorm === 'zoek';
+  if (r.id === 'morgen') {
+
+    const stap = pick(tweede ? [-2, 2] : [-1, 1, 1]), nu = rnd(0, 6), ans = mod(nu + stap, 7);
+    return kalVraag('morgen', ans, { soort: 'dag', keuzes: kalKeuzes(ans, 7, [nu - stap, nu]),
+      tmpl: `kal morgen ${nu} ${stap}`, html: kalVan(dagKaart(nu), DAGWOORD[stap], Math.abs(stap), stap < 0) });
+  }
+  if (r.id === 'seizoen') {
+    if (tweede) {
+      const z = rnd(0, 3), twee = shuffle(SEIZOENEN[z].dingen.slice()).slice(0, 2);
+      return kalVraag('seizoen', z, { soort: 'seizoen', keuzes: [0, 1, 2, 3], tmpl: `kal ding ${twee.join('')}`,
+        html: kalVan(kalKaart('kaal ding', twee.join('')), 'seizoen') });
+    }
+    const z = rnd(0, 3), na = Math.random() < 0.65, ans = mod(z + (na ? 1 : -1), 4);
+    return kalVraag('seizoen', ans, { soort: 'seizoen', keuzes: [0, 1, 2, 3], tmpl: `kal seizoen ${z} ${na}`,
+      html: kalVan(seizoenKaart(z), na ? 'erna' : 'ervoor', 0, !na) });
+  }
+  if (r.id === 'verder') {
+    const d = rnd(3, 5), terug = tweede, nu = rnd(0, 6), ans = mod(nu + (terug ? -d : d), 7);
+    return kalVraag('verder', ans, { soort: 'dag', keuzes: kalKeuzes(ans, 7, [ans + (terug ? 1 : -1), ans + (terug ? -1 : 1)]),
+      tmpl: `kal verder ${nu} ${terug ? -d : d}`, html: kalVan(dagKaart(nu), `${terug ? '−' : '+'} ${d} dagen`, d, terug) });
+  }
+  if (r.id === 'maanden') {
+    const m = rnd(0, 11);
+    if (tweede)
+      return kalVraag('maanden', seizoenVan(m), { soort: 'seizoen', keuzes: [0, 1, 2, 3], tmpl: `kal maandseizoen ${m}`,
+        html: kalVan(kalKaart('kaal', MAANDEN[m]), 'seizoen') });
+    const na = Math.random() < 0.65, ans = mod(m + (na ? 1 : -1), 12);
+    return kalVraag('maanden', ans, { soort: 'maand', keuzes: kalKeuzes(ans, 12, [m + (na ? -1 : 1), m]), tmpl: `kal maand ${m} ${na}`,
+      html: kalVan(maandKaart(m), na ? 'erna' : 'ervoor', 0, !na) });
+  }
+  if (r.id === 'weken') {
+
+    const omgekeerd = tweede, w = rnd(omgekeerd ? 2 : 1, 4), week = n => n > 1 ? 'weken' : 'week';
+    return kalGetal('weken', omgekeerd ? w : 7 * w, { grens: omgekeerd ? 10 : 35,
+      keuzes: omgekeerd ? [w, w + 1, w - 1, w + 2] : [...new Set([7 * w, 7 * w + 1, 7 * w - 1, 5 * w, 7 * (w + 1)])].slice(0, 4),
+      tmpl: `kal weken ${w} ${omgekeerd}`,
+      html: `<span class="kal-vraag">${kalWeken(w)}</span>${omgekeerd
+        ? kalVan(kalKaart('kaal', `${7 * w} dagen`), 'weken') : kalVan(kalKaart('kaal', `${w} ${week(w)}`), 'dagen')}` });
+  }
+  const m = rnd(0, 11), n = dagenIn(m);
+  if (r.id === 'blad') {
+    if (tweede) {
+      const dag = rnd(1, n - 7);
+      return kalGetal('blad', dag + 7, { grens: n, keuzes: [...new Set([dag + 7, dag + 6, dag + 8, dag + 1])], tmpl: `kal week ${m} ${dag}`,
+        html: `<span class="kal-vraag">${kalBlad(m, { [dag]: 'rond', [dag + 7]: 'vraag' })}</span>${kalVan(kalKaart('datum', dag), '+ 1 week')}` });
+    }
+    const dag = rnd(1, n), ans = dagVan(m, dag);
+    return kalVraag('blad', ans, { soort: 'dag', keuzes: kalKeuzes(ans, 7, [ans - 1, ans + 1]), tmpl: `kal blad ${m} ${dag}`,
+      html: `<span class="kal-vraag">${kalBlad(m, { [dag]: 'rond' })}</span>${kalVan(kalKaart('datum', dag), 'dag')}` });
+  }
+
+  if (tweede) {
+    const a = rnd(1, n - 10), d = rnd(3, 10), b = a + d;
+    return kalGetal('datum', d, { grens: 14, keuzes: [...new Set([d, d + 1, d - 1, d + 2])], tmpl: `kal tussen ${m} ${a} ${b}`,
+      html: `<span class="kal-vraag">${kalBlad(m, { [a]: 'rond', [b]: 'rond' })}</span>${kalVan(kalKaart('datum', `${a} ➜ ${b}`), 'dagen')}` });
+  }
+  const dag = rnd(1, Math.min(n, 28)), code = (d, mm) => d * 100 + mm + 1;
+  return kalVraag('datum', code(dag, m), { soort: 'notatie',
+
+    keuzes: [...new Set([code(dag, m), (m + 1) * 100 + dag, code(dag, mod(m - 1, 12)), code(dag, mod(m + 1, 12)), code(dag + 1, m)])].slice(0, 4),
+    tmpl: `kal datum ${m} ${dag}`,
+    html: `<span class="kal-vraag">${kalBlad(m, { [dag]: 'rond' })}</span>${kalVan(kalKaart('datum', dag), 'datum')}` });
+}
+
+
 function toonAntwoord(q, v) {
   if (q.kind === 'klok') return klokTekst(q, v);
+  if (q.kind === 'kalender') return q.soort === 'dag' ? DAGEN[v] : q.soort === 'maand' ? MAANDEN[v] : q.soort === 'seizoen' ? SEIZOENEN[v].naam
+    : q.soort === 'notatie' ? `${Math.floor(v / 100)}/${v % 100}` : String(v);
   if (q.kind !== 'geld') return String(v);
   return q.centen ? euro(v).slice(1) : String(v);
 }
@@ -22734,6 +22985,8 @@ function toonKeuze(q, v) {
 
   if (q.kind === 'klok') return q.vorm === 'zoek' ? '&#8203;' + klokSvg(v, 64)
     : q.uur24 ? `<span class="klok-digi">${klokDigitaal(v)}</span>` : `<span class="klok-tekst">${klokWoorden(v)}</span>`;
+  if (q.kind === 'kalender') return q.soort === 'getal' || q.soort === 'notatie' ? toonAntwoord(q, v)
+    : `<span class="klok-tekst">${q.soort === 'seizoen' ? SEIZOENEN[v].teken + ' ' : ''}${toonAntwoord(q, v)}</span>`;
   return q.kind === 'geld' ? (q.centen ? euro(v) : `€${v}`) : String(v);
 }
 
@@ -22750,6 +23003,7 @@ const LADDERS = {
   tafels: { pad: TAFELPAD, lijn: 'tafelLijn', stand: 'tafels', id: 'set-tafelpad', eind: 'Alle tafels door elkaar', vb: tafelVoorbeeld },
   geld:   { pad: GELDPAD,  lijn: 'geldLijn',  stand: 'geld',   id: 'set-geldpad',  eind: 'Alles met geld door elkaar', vb: geldVoorbeeld, kies: 'kiesGeld' },
   klok:   { pad: KLOKPAD,  lijn: 'klokLijn',  stand: 'klok',   id: 'set-klokpad',  eind: 'Alle tijden door elkaar', vb: klokVoorbeeld, kies: 'kiesKlok' },
+  kalender: { pad: KALENDERPAD, lijn: 'kalLijn', stand: 'kalender', id: 'set-kalenderpad', eind: 'Alles met de kalender door elkaar', vb: kalenderVoorbeeld, kies: 'kiesKalender' },
 };
 Object.values(LADDERS).forEach(L => { L.idx = Object.fromEntries(L.pad.map((r, i) => [r.id, i])); });
 
@@ -22816,7 +23070,8 @@ function rijenVraag(s, net) {
   let q, poging = 0;
   do {
     const r = s.nu && Math.random() < RIJ_NU_VAAK ? s.nu : s.stapel ? beurt(s, 'stapel', s.rijen) : pick(s.rijen);
-    q = s.thema === 'klok' ? genKlok(r, s.lees ? 'lees' : 'zoek') : genGeld(r);
+    const vorm = s.lees ? 'lees' : 'zoek';
+    q = s.thema === 'klok' ? genKlok(r, vorm) : s.thema === 'kalender' ? genKalender(r, vorm) : genGeld(r);
   } while (net.includes(q.tmpl) && ++poging < 8);
   s.lees = !s.lees;
   return q;
@@ -22849,7 +23104,7 @@ function themaInst(p, k) { return k === 'tafels' ? tafelInst(p) : k === 'rekenen
 
 
 
-const THEMA_ERBIJ = ['geld', 'klok'];
+const THEMA_ERBIJ = ['geld', 'klok', 'kalender'];
 function themaPlan(s, total) {
   const aan = themasAan(s);
   const sommen = aan.filter(k => !THEMA_ERBIJ.includes(k)), erbij = aan.filter(k => THEMA_ERBIJ.includes(k));
@@ -22860,7 +23115,11 @@ function themaPlan(s, total) {
     return uit;
   };
   if (!sommen.length) return verdeel(erbij, total);
-  const extra = verdeel(erbij, erbij.length * (total >= 8 ? 2 : 1));
+
+
+
+  const plaats = Math.floor(total / 2), wil = erbij.length * (total >= 8 ? 2 : 1);
+  const extra = verdeel(wil > plaats ? shuffle(erbij.slice()) : erbij, Math.min(wil, plaats));
   const plan = verdeel(sommen, total - extra.length);
   extra.forEach((k, j) => plan.splice(Math.round((j + 1) * total / (extra.length + 1)), 0, k));
   return plan;
@@ -24241,7 +24500,7 @@ function buildQuestion(p, lvl, g) {
   const k = g && g.themaPlan ? g.themaPlan[g.idx] : themasAan(p.settings)[0];
   const s = (g && g.insts && g.insts[k]) || themaInst(p, k);
 
-  if (s.thema === 'geld' || s.thema === 'klok') return rijenVraag(s, net);
+  if (THEMA_ERBIJ.includes(s.thema)) return rijenVraag(s, net);
   if (Math.random() < 0.35) {
     const wq = pickWeak(p, s, mag);
     if (wq) { if (al) al.add(wq.tmpl); return wq; }
@@ -24462,6 +24721,7 @@ const HINT_DICHTBIJ = 2;
 function hintVoor(q, val) {
   if (typeof val !== 'number' || isNaN(val) || val === q.ans) return null;
   if (q.kind === 'klok') return klokHint(q, val);
+  if (q.kind === 'kalender' && q.soort !== 'getal') return kalHint(q, val);
   const meer = q.ans > val;
   const net = Math.abs(q.ans - val) <= HINT_DICHTBIJ;
   const woord = meer ? 'meer' : 'minder';
@@ -24479,6 +24739,17 @@ function klokHint(q, val) {
   const d = dag ? q.ans - val : ((q.ans - val) % 720 + 1080) % 720 - 360;
   const later = d >= 0;
   return { pijl: later ? 'later' : 'vroeger', woorden: (later ? 'Later dan ' : 'Vroeger dan ') + klokTekst(q, val) };
+}
+
+
+
+
+
+function kalHint(q, val) {
+  const n = { dag: 7, maand: 12, seizoen: 4 }[q.soort];
+  if (!n) return null;
+  const d = ((q.ans - val) % n + n + Math.floor(n / 2)) % n - Math.floor(n / 2), later = d > 0;
+  return { pijl: later ? 'later' : 'vroeger', woorden: (later ? 'Later dan ' : 'Vroeger dan ') + toonAntwoord(q, val) };
 }
 
 function hintTeken(q, val) {
@@ -24708,7 +24979,7 @@ function renderQuestion() {
   if (G.mode === 'kies') {
     const choices = makeChoices(q, keuzeGrens(q, G.inst, G.lvl));
     area.innerHTML = '<div class="choices">' +
-      choices.map(c => `<button class="choice-btn${q.knop ? ' ' + q.knop : ''}" data-v="${c}"${q.kind === 'klok' ? ` aria-label="${klokTekst(q, c)}"` : ''}>${toonKeuze(q, c)}</button>`).join('') + '</div>';
+      choices.map(c => `<button class="choice-btn${q.knop ? ' ' + q.knop : ''}" data-v="${c}"${q.kind === 'klok' ? ` aria-label="${klokTekst(q, c)}"` : q.kind === 'kalender' ? ` aria-label="${toonAntwoord(q, c)}"` : ''}>${toonKeuze(q, c)}</button>`).join('') + '</div>';
     area.querySelectorAll('.choice-btn').forEach(b => {
       b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
     });
@@ -24906,6 +25177,8 @@ function kaartProeven(insts) {
   if (insts.geld) insts.geld.rijen.forEach(r => uit.push(r.terug ? genGeld(r).html
     : `<span class="geld-rij">${Array(r.stuks).fill(r.briefje ? 1000 : 200).map(geldStuk).join('')}</span><span class="pl-som">€ @</span>`));
   if (insts.klok) insts.klok.rijen.forEach(r => uit.push(genKlok(r, 'lees').html, genKlok(r, 'zoek').html));
+
+  if (insts.kalender) insts.kalender.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genKalender(r, i % 2 ? 'zoek' : 'lees').html); });
   return uit;
 }
 addEventListener('resize', () => { if (G) G.kaartMin = null; });
@@ -27833,7 +28106,7 @@ function zelfRijen(s) {
   const t = s.tables.slice().sort((a, b) => a - b), b = t[t.length - 1], a = b === 7 ? 8 : 7;
   if (s.ops.includes('x')) rijen.push({ naam: `Tafels van ${t.join(', ')}`, vb: `${a} × ${b}` });
   if (s.ops.includes(':')) rijen.push({ naam: `Delen door ${t.join(', ')}`, vb: `${a * b} : ${b}` });
-  ['geld', 'klok'].filter(k => themaAan(s, k)).forEach(k => rijenInst({ settings: s }, k).rijen.forEach(r => rijen.push({ naam: r.naam, vb: LADDERS[k].vb(r) })));
+  THEMA_ERBIJ.filter(k => themaAan(s, k)).forEach(k => rijenInst({ settings: s }, k).rijen.forEach(r => rijen.push({ naam: r.naam, vb: LADDERS[k].vb(r) })));
   return rijen;
 }
 
@@ -27841,7 +28114,7 @@ function zelfRijen(s) {
 
 function rijenKiesStart(s, p) {
   if (!zelfGekozen(s)) return;
-  ['geld', 'klok'].filter(k => themaAan(s, k) && !(s[LADDERS[k].kies] || []).length).forEach(k => {
+  THEMA_ERBIJ.filter(k => themaAan(s, k) && !(s[LADDERS[k].kies] || []).length).forEach(k => {
     const L = LADDERS[k], nu = p ? ladderNu(p, k) : L.pad[0].id;
     s[L.kies] = [nu === 'alles' ? L.pad[ladderRijen(s, k).hi].id : nu];
   });
@@ -28198,7 +28471,7 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
 
 
 const OEFEN_INSTELLINGEN = {
-  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], geld: ['geldLijn', 'kiesGeld'], klok: ['klokLijn', 'kiesKlok'], show: ['mode', 'perLevel'] },
+  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], geld: ['geldLijn', 'kiesGeld'], klok: ['klokLijn', 'kiesKlok'], kalender: ['kalLijn', 'kiesKalender'], show: ['mode', 'perLevel'] },
   count: { wat: ['qmax'], pad: ['stage', 'kiesFasen'], show: ['repr', 'perLevel', 'memory'] },
 };
 function oefenGroups(s, pfx, p) {
@@ -28350,7 +28623,8 @@ function oefenGroups(s, pfx, p) {
 
 
 
-  const klokNoot = themaAan(s, 'klok') ? `<p class="oe-noot">${themaIcoon('klok', 16)} altijd kiezen</p>` : '';
+  const kiest = ['klok'].filter(k => themaAan(s, k));
+  const klokNoot = kiest.length ? `<p class="oe-noot">${kiest.map(k => themaIcoon(k, 16)).join(' ')} altijd kiezen</p>` : '';
   const showMix = themasAan(s).length > 1
     ? `<div class="oe-mix" role="img" aria-label="Een show: ${themaPlan(s, s.perLevel).map(k => THEMA[k].naam.toLowerCase()).join(', ')}">${themaPlan(s, s.perLevel).map(k => themaIcoon(k, 20)).join('')}</div>` : '';
   const rijenKies = k => { const L = LADDERS[k];
@@ -28367,6 +28641,8 @@ function oefenGroups(s, pfx, p) {
     kaart: 'geld', kop: 'Geld', ico: 'geld', html: vrij ? rijenKies('geld') : themaLadder('geld')
   }, themaAan(s, 'klok') && {
     kaart: 'klok', kop: 'Klok', ico: 'klok', html: vrij ? rijenKies('klok') : themaLadder('klok')
+  }, themaAan(s, 'kalender') && {
+    kaart: 'kalender', kop: 'Kalender', ico: 'kalender', html: vrij ? rijenKies('kalender') : themaLadder('kalender')
   }, {
     kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}${klokNoot}
       ${perShow}${showMix}`
@@ -28390,7 +28666,7 @@ function oefenSamenvatting(s) {
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
   const rijen = padRijen(s).rijen.filter(r => !r.uit);
   const start = s.padVanaf && rijen.length && padVanafRij(s, rijen) !== rijen[0] && padVanafRij(s, rijen);
-  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}${themaAan(s, 'geld') ? ' · €' : ''}${themaAan(s, 'klok') ? ' · 🕐' : ''}`
+  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}${themaAan(s, 'geld') ? ' · €' : ''}${themaAan(s, 'klok') ? ' · 🕐' : ''}${themaAan(s, 'kalender') ? ' · 📅' : ''}`
        + ` · ${modes[s.mode] || s.mode}${start ? ` · vanaf ${start.naam.toLowerCase()}` : ''}`
        + ` · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
 }
@@ -29003,7 +29279,7 @@ function bindOefenChips(s, p, pfx, done) {
     if (!nu) return blockedMinOne(c), false;
     s.kies = nu;
   });
-  ['geld', 'klok'].forEach(k => bind(`set-kies${k}`, c => {
+  THEMA_ERBIJ.forEach(k => bind(`set-kies${k}`, c => {
     const L = LADDERS[k], nu = vink(s[L.kies] || [], c.dataset.v, L.pad.map(r => r.id));
     if (!nu) return blockedMinOne(c), false;
     s[L.kies] = nu;
@@ -29227,7 +29503,7 @@ function bindSettings(p, s) {
     const lad = ids.map(id => $(id)).find(Boolean);
     if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
   };
-  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables', 'set-kiesgeld', 'set-kiesklok'));
+  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables', 'set-kiesgeld', 'set-kiesklok', 'set-kieskalender'));
   on('tafel-aanpas', 'onclick', naarLadder('set-tafelpad'));
   on('geld-aanpas', 'onclick', naarLadder('set-geldpad'));
   on('klok-aanpas', 'onclick', naarLadder('set-klokpad'));

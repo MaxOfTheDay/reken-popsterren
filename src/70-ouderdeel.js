@@ -482,7 +482,7 @@ function zelfRijen(s) {
   const t = s.tables.slice().sort((a, b) => a - b), b = t[t.length - 1], a = b === 7 ? 8 : 7;
   if (s.ops.includes('x')) rijen.push({ naam: `Tafels van ${t.join(', ')}`, vb: `${a} × ${b}` });
   if (s.ops.includes(':')) rijen.push({ naam: `Delen door ${t.join(', ')}`, vb: `${a * b} : ${b}` });
-  ['geld', 'klok'].filter(k => themaAan(s, k)).forEach(k => rijenInst({ settings: s }, k).rijen.forEach(r => rijen.push({ naam: r.naam, vb: LADDERS[k].vb(r) })));
+  THEMA_ERBIJ.filter(k => themaAan(s, k)).forEach(k => rijenInst({ settings: s }, k).rijen.forEach(r => rijen.push({ naam: r.naam, vb: LADDERS[k].vb(r) })));
   return rijen;
 }
 /* Geld of de klok bij Zelf kiezen met nog niets aangevinkt: dan staat de rij
@@ -490,7 +490,7 @@ function zelfRijen(s) {
    bij rekenen -- de lijst staat nooit leeg terwijl er wél iets gespeeld wordt. */
 function rijenKiesStart(s, p) {
   if (!zelfGekozen(s)) return;
-  ['geld', 'klok'].filter(k => themaAan(s, k) && !(s[LADDERS[k].kies] || []).length).forEach(k => {
+  THEMA_ERBIJ.filter(k => themaAan(s, k) && !(s[LADDERS[k].kies] || []).length).forEach(k => {
     const L = LADDERS[k], nu = p ? ladderNu(p, k) : L.pad[0].id;
     s[L.kies] = [nu === 'alles' ? L.pad[ladderRijen(s, k).hi].id : nu];
   });
@@ -847,7 +847,7 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
    instelling met twee bedieningen, of een bediening in de verkeerde kaart, valt
    daar om. Komt er een instelling bij, dan kiest hij hier eerst zijn kaart. */
 const OEFEN_INSTELLINGEN = {
-  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], geld: ['geldLijn', 'kiesGeld'], klok: ['klokLijn', 'kiesKlok'], show: ['mode', 'perLevel'] },
+  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], geld: ['geldLijn', 'kiesGeld'], klok: ['klokLijn', 'kiesKlok'], kalender: ['kalLijn', 'kiesKalender'], show: ['mode', 'perLevel'] },
   count: { wat: ['qmax'], pad: ['stage', 'kiesFasen'], show: ['repr', 'perLevel', 'memory'] },
 };
 function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in de volgorde van OEFEN_INSTELLINGEN
@@ -999,7 +999,8 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
      een show eruitziet: één icoontje per vraag, in de volgorde van themaPlan
      -- dan hoeft niemand uit te leggen wat "de helft sommen" betekent. Alleen
      als er meer dan één thema aan staat; anders is elke vraag hetzelfde. */
-  const klokNoot = themaAan(s, 'klok') ? `<p class="oe-noot">${themaIcoon('klok', 16)} altijd kiezen</p>` : '';
+  const kiest = ['klok'].filter(k => themaAan(s, k));   // de kalender kiest alleen bij woorden: een aantal dagen mag getypt
+  const klokNoot = kiest.length ? `<p class="oe-noot">${kiest.map(k => themaIcoon(k, 16)).join(' ')} altijd kiezen</p>` : '';
   const showMix = themasAan(s).length > 1
     ? `<div class="oe-mix" role="img" aria-label="Een show: ${themaPlan(s, s.perLevel).map(k => THEMA[k].naam.toLowerCase()).join(', ')}">${themaPlan(s, s.perLevel).map(k => themaIcoon(k, 20)).join('')}</div>` : '';
   const rijenKies = k => { const L = LADDERS[k];
@@ -1016,6 +1017,8 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
     kaart: 'geld', kop: 'Geld', ico: 'geld', html: vrij ? rijenKies('geld') : themaLadder('geld')
   }, themaAan(s, 'klok') && {
     kaart: 'klok', kop: 'Klok', ico: 'klok', html: vrij ? rijenKies('klok') : themaLadder('klok')
+  }, themaAan(s, 'kalender') && {
+    kaart: 'kalender', kop: 'Kalender', ico: 'kalender', html: vrij ? rijenKies('kalender') : themaLadder('kalender')
   }, {
     kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}${klokNoot}
       ${perShow}${showMix}`
@@ -1039,7 +1042,7 @@ function oefenSamenvatting(s) {
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
   const rijen = padRijen(s).rijen.filter(r => !r.uit);
   const start = s.padVanaf && rijen.length && padVanafRij(s, rijen) !== rijen[0] && padVanafRij(s, rijen);
-  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}${themaAan(s, 'geld') ? ' · €' : ''}${themaAan(s, 'klok') ? ' · 🕐' : ''}`
+  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}${themaAan(s, 'geld') ? ' · €' : ''}${themaAan(s, 'klok') ? ' · 🕐' : ''}${themaAan(s, 'kalender') ? ' · 📅' : ''}`
        + ` · ${modes[s.mode] || s.mode}${start ? ` · vanaf ${start.naam.toLowerCase()}` : ''}`
        + ` · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
 }
@@ -1652,7 +1655,7 @@ function bindOefenChips(s, p, pfx, done) {
     if (!nu) return blockedMinOne(c), false;
     s.kies = nu;
   });
-  ['geld', 'klok'].forEach(k => bind(`set-kies${k}`, c => {
+  THEMA_ERBIJ.forEach(k => bind(`set-kies${k}`, c => {
     const L = LADDERS[k], nu = vink(s[L.kies] || [], c.dataset.v, L.pad.map(r => r.id));
     if (!nu) return blockedMinOne(c), false;
     s[L.kies] = nu;
@@ -1876,7 +1879,7 @@ function bindSettings(p, s) {
     const lad = ids.map(id => $(id)).find(Boolean);
     if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
   };
-  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables', 'set-kiesgeld', 'set-kiesklok'));
+  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables', 'set-kiesgeld', 'set-kiesklok', 'set-kieskalender'));
   on('tafel-aanpas', 'onclick', naarLadder('set-tafelpad'));
   on('geld-aanpas', 'onclick', naarLadder('set-geldpad'));
   on('klok-aanpas', 'onclick', naarLadder('set-klokpad'));
