@@ -1227,8 +1227,7 @@ function save() {
     if (!saveFailed) {
       saveFailed = true;
       try {
-        showToast('⚠️ Opslaan lukt niet', null, 'Spelen kan wel');
-        toastWeg(3000);
+        showToast('⚠️ Opslaan lukt niet', null, 'Spelen kan wel', null, 3000);
       } catch (e2) { /* UI nog niet klaar: stil doorgaan */ }
     }
   }

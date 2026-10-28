@@ -228,8 +228,7 @@ function createStar() {
   if (!name || !newStar.base || !newStar.settings.track) return wijsOntbrekende();
   const taken = Object.values(db.profiles).some(p => p.name.toLowerCase() === name.toLowerCase());
   if (taken) {
-    showToast('⚠️ Die naam bestaat al');
-    toastWeg(2600);
+    showToast('⚠️ Die naam bestaat al', null, null, null, 2600);
     return;
   }
   const key = nextProfileKey();
@@ -261,7 +260,6 @@ function createStar() {
      pop zwaait al. Die tik is haar eerste eigen stap; de kaart hoeft hem niet voor
      te zeggen. */
   showToast(`👋 Welkom, ${esc(name)}`, null, null, 'blauw');
-  toastWeg(2400);
 }
 
 /* ================= Instellingen ================= */
@@ -1224,7 +1222,6 @@ function naarOver(e) {
   if (navigator.onLine === false) {
     e.preventDefault();
     showToast('📶 Geen internet');
-    toastWeg(2400);
     return;
   }
   save();
@@ -1232,7 +1229,7 @@ function naarOver(e) {
 // Delen: eerst het deelmenu van het toestel, anders de link naar het klembord,
 // en lukt ook dat niet, dan staat hij in de melding zodat je hem kunt overtikken.
 function deelOver() {
-  const melding = t => { showToast(t); toastWeg(2400); };
+  const melding = t => showToast(t);
   if (navigator.share) {
     navigator.share({ title: 'Rekensterren', text: 'Een reken- en telspel voor kinderen van 5 tot 8.', url: OVER_URL })
       .catch(() => {});   // wegtikken is geen fout
@@ -1318,7 +1315,7 @@ function gevaarVraag({ titel, weg, blijft, ja, nee, doe }) {
    waar je dan toevallig staat. */
 const TERUG_DUUR = 6000;
 function meldMetTerug(melding, terug) {
-  showToast(`${melding}<button class="toast-terug" type="button">↶ Terug</button>`);
+  showToast(`${melding}<button class="toast-terug" type="button">↶ Terug</button>`, null, null, null, TERUG_DUUR);
   const t = $('toast');
   t.classList.add('onder', 'met-knop');
   t.querySelector('.toast-terug').onclick = () => {
@@ -1329,7 +1326,6 @@ function meldMetTerug(melding, terug) {
     if ($('screen-settings').classList.contains('active')) { renderSettings(); settingsToTop(); }
     renderProfiles();
   };
-  toastWeg(TERUG_DUUR);
 }
 // "Sem", "Sem en Noor", "Sem, Noor en Lina"
 function opsomming(woorden) {
@@ -1434,8 +1430,7 @@ function blockedMinOne(el) {
   el.classList.remove('shake');
   void el.offsetWidth;
   el.classList.add('shake');
-  showToast('Minstens 1');
-  toastWeg(1500);
+  showToast('Minstens 1', null, null, null, 1500);
 }
 // gewone instellingen slaan meteen op -- geen aparte "Opslaan"-knop nodig,
 // alleen een kort, subtiel pilletje in de kop dat het bevestigt
@@ -2280,7 +2275,7 @@ function ozGevonden(data, vanStart) {
     // melding met Terug (zie meldMetTerug). Het blad zelf blijft zijn eigen vorm:
     // het is geen vraag maar een voorbeeld van wat er komt.
     if (hier.length) meldMetTerug('✓ Sterren overgezet', () => { db = oud; cur = null; setKey = null; });
-    else { showToast('✓ Sterren overgezet'); toastWeg(2400); }
+    else showToast('✓ Sterren overgezet');
     if (vanStart) confetti(50);
   };
 }
