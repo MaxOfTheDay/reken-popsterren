@@ -741,6 +741,48 @@
   .kal-weken .kal-raster { gap: .06em; padding: .08em; }
   .kal-weken .kal-raster i { font-size: inherit; height: .36em; padding: 0; border-radius: .06em; background: #d9c3ec; }
   .kal-weken .kal-raster i.wk { background: #efe6f7; }
+  /* De getallenlijn (zie genLijn): de lijn op de volle breedte van de kaart, een paarse balk
+     zoals de rand van de klok. Wat erboven hangt staat op zijn streepje (left in procenten),
+     met het puntje op de balk; de doos is zo hoog als de tekening, dus top 56% is de balk (46/82). */
+  .gl { display: block; font-size: clamp(18px, .46em, 30px); line-height: 1.1; width: min(calc(100vw - 72px), 440px); margin: 0 auto; padding-top: 2.3em; }
+  /* met sprongen staan de kaartjes onder de lijn, op de plek van het getal: de bogen erboven blijven vrij */
+  .gl.hoog { padding-top: 1.6em; padding-bottom: 1.1em; }
+  .gl-merk.onder { transform: translate(-50%, .7em); }
+  .gl-merk.onder::after { bottom: auto; top: -.6em; border-top: .3em solid transparent; border-bottom: .32em solid #e5397a; }
+  .gl-merk.vraag.onder::after { border-bottom-color: #b79ad8; border-top-color: transparent; }
+  .gl-doos { position: relative; display: block; }
+  .gl svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .gl .balk { stroke: #8e3fc8; stroke-width: 6; stroke-linecap: round; }
+  .gl .streep { stroke: #3d2466; stroke-linecap: round; }
+  .gl .lbl text { font-size: 22px; font-weight: 900; fill: #2b2238; text-anchor: middle; }
+  .gl .boog { fill: none; stroke: #e5397a; stroke-width: 3; stroke-linecap: round; }
+  .gl .punt { fill: #e5397a; }
+  .gl text.sprong { font-size: 22px; font-weight: 900; fill: #e5397a; text-anchor: middle; }
+  .gl-merk {
+    position: absolute; top: 56%; transform: translate(-50%, calc(-100% - .55em)); display: inline-flex; align-items: center; justify-content: center;
+    min-width: 2.2em; height: 1.75em; box-sizing: border-box; padding: 0 .3em; border-radius: .5em; font-weight: 900; white-space: nowrap;
+  }
+  .gl-merk::after { content: ''; position: absolute; left: 50%; bottom: -.5em; transform: translateX(-50%); border: .3em solid transparent; border-top: .32em solid #e5397a; }
+  .gl-merk.nu { background: #e5397a; color: #fff; }
+  .gl-merk.vraag::after { border-top-color: #b79ad8; }
+  .gl-merk.vraag .pl-som, .gl-merk.vraag .q-blank { display: flex; align-items: center; justify-content: center; }
+  .gl-merk.vraag .q-blank { box-sizing: border-box; min-width: 2.2em; height: 1.75em; margin: 0; border-radius: .5em; font-size: 1em; background: #fff; }
+  .gl-pijl { position: absolute; top: 56%; transform: translate(-50%, calc(-100% - .3em)); border: .45em solid transparent; border-top: .7em solid #e5397a; }
+  .gl-zin { display: flex; align-items: center; justify-content: center; gap: .2em; font-size: .62em; margin-top: .1em; }
+  /* zoeken: de lijn is het antwoordvak, elk streepje een knop zo breed als de ruimte ernaast */
+  .gl-vlak { position: relative; display: flex; flex-direction: column; align-items: center; width: min(92vw, 420px); padding: 14px 10px 6px; border-radius: 22px; background: #fffaf3; box-shadow: 0 5px 0 #c9b6dc; }
+  .gl-vlak .gl { font-size: 20px; width: 100%; padding-top: 0; }
+  /* het getal om te zoeken: groot, roze, alleen */
+  .gl-zoek { font-size: 1.9em; width: 3em; height: 1.7em; }
+  .gl-raak { position: absolute; inset: -14px 0; width: 100%; border: 0; padding: 0; background: none; cursor: pointer; }
+  /* het merkje op een streepje: niets, tot een tik het goed of fout maakt -- dan een pijl erboven */
+  .gl-tik { position: absolute; top: 56%; width: 0; height: 0; pointer-events: none; }
+  .gl-tik.good::before, .gl-tik.bad::before {
+    content: ''; position: absolute; left: 0; bottom: .35em; transform: translateX(-50%);
+    border: .42em solid transparent; border-top: .66em solid var(--green-deep); border-bottom: 0;
+  }
+  .gl-tik.bad::before { border-top-color: var(--red-500); }
+  .gl-hand { font-size: 26px; line-height: 1; margin-top: 2px; }
   .q-blank.done { border-style: solid; border-color: var(--green-deep); background: rgba(102,187,106,.18); color: var(--green-deep); }
   /* De som valt dicht (zie die kop in de JS). klikt: het goede antwoord is net
      geland en plopt één keer. rustig: na een tweede misser staat het goede
