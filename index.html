@@ -9621,7 +9621,6 @@
 
   .oefen-kaart .kaart-kop h2 .thema-ico { vertical-align: -4px; margin-right: 7px; }
 
-  .oe-noot { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 8px 0 0; font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
   .oe-mix { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
 
 
@@ -28693,8 +28692,7 @@ function oefenGroups(s, pfx, p) {
 
 
 
-  const kiest = ['klok'].filter(k => themaAan(s, k));
-  const klokNoot = kiest.length ? `<p class="oe-noot">${kiest.map(k => themaIcoon(k, 16)).join(' ')} altijd kiezen</p>` : '';
+
   const showMix = themasAan(s).length > 1
     ? `<div class="oe-mix" role="img" aria-label="Een show: ${themaPlan(s, s.perLevel).map(k => THEMA[k].naam.toLowerCase()).join(', ')}">${themaPlan(s, s.perLevel).map(k => themaIcoon(k, 20)).join('')}</div>` : '';
   const rijenKies = k => { const L = LADDERS[k];
@@ -28714,7 +28712,7 @@ function oefenGroups(s, pfx, p) {
   }, themaAan(s, 'kalender') && {
     kaart: 'kalender', kop: 'Kalender', ico: 'kalender', html: vrij ? rijenKies('kalender') : themaLadder('kalender')
   }, {
-    kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}${klokNoot}
+    kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
       ${perShow}${showMix}`
   }].filter(Boolean);
 }
