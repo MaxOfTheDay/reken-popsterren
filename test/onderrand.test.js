@@ -37,6 +37,8 @@
  *   I  terug op de kaart (uit de kleedkamer) zoomt de memory-knop mee in en
  *      landt waar hij hoort, ook als het venster gegroeid is -- geen sprong na
  *      afloop
+ *   J  op een bureaublad houdt de kleedkamer haar opmaak terwijl ze wegvalt
+ *      (het rek klapte terug naar de telefoonopmaak, zie inhoud zaak O)
  *
  * De reden voor C: --vh-drift mag nooit onder nul lopen. Zou hij dat wel doen,
  * dan schoof de bediening bij een openschuivend toetsenbord juist eráchter.
@@ -416,6 +418,35 @@ async function zetOnderrandAan(page) {
       'I · en hij landt met zijn onderrand op de navigatiebalk',
       `onderrand ${r.onder.toFixed(1)}, balk ${r.nav.toFixed(1)}`);
     check(fouten.length === 0, 'I · geen javascript-fouten', fouten.join(' | '));
+    await ctx.close();
+  }
+
+  /* ---- J · een kleedkamer die vertrekt houdt haar opmaak ----
+     Op een bureaublad staat het rek in een eigen kolom naast de spiegel. Die
+     opmaak hing aan .active, en show() haalt .active weg op het moment van de
+     tik: het scherm dat dan nog wegdooft viel terug naar de telefoonopmaak, met
+     het rek als één lange rij onder de spiegel. Gemeten zonder wachten en zonder
+     beeldjes: offsetLeft/offsetTop trekken zich niets aan van de animatie, dus
+     het rek staat vlak na goMap() op precies dezelfde plek als ervoor, of niet. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    const fouten = [];
+    page.on('pageerror', e => fouten.push(e.message));
+    await page.goto(APP_URL + '&demo&star=p1&screen=dress');
+    await page.waitForFunction(() => $('screen-dress').classList.contains('active') && $('item-grid').children.length > 0);
+    const r = await page.evaluate(() => {
+      const rek = $('item-grid'), plek = () => [rek.offsetLeft, rek.offsetTop, rek.offsetWidth];
+      const voor = plek();
+      goMap();
+      return { voor, na: plek(), weg: $('screen-dress').classList.contains('wegvallend') };
+    });
+    check(r.weg, 'J · de kleedkamer valt weg (anders meet de rest niets)', '');
+    check(r.voor.every((v, i) => Math.abs(v - r.na[i]) <= 1),
+      'J · en het rek blijft tijdens het wegvallen staan waar het stond',
+      `voor ${r.voor.join(',')} · tijdens ${r.na.join(',')}`);
+    check(fouten.length === 0, 'J · geen javascript-fouten', fouten.join(' | '));
     await ctx.close();
   }
 

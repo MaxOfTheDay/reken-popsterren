@@ -394,7 +394,16 @@
      doet de doorzichtigheid, wie aankomt beweegt en is dekkend.
 
      Eén id per scherm i.p.v. !important: #screen-map/#screen-profile zetten zelf
-     al een position, en een klasse verliest daar altijd van. */
+     al een position, en een klasse verliest daar altijd van.
+
+     HOE EEN SCHERM ERUITZIET HANGT NOOIT AAN .active. show() haalt .active weg
+     op het moment van de tik, en het scherm dat dan nog 140ms wegvalt is precies
+     het scherm dat je net zag. Hing de opmaak aan .active, dan viel het tijdens
+     dat wegvallen terug op iets anders: de kleedkamer klapte op een bureaublad
+     terug naar de telefoonopmaak (het rek als één lange rij onder de spiegel)
+     terwijl ze wegdoofde. Wie per scherm iets aan .active hangt omdat het id
+     anders van .screen {display:none} wint, schrijft dus
+     `#screen-x:is(.active, .wegvallend)`. inhoud.test.js zaak O kijkt het na. */
   #screen-map.wegvallend, #screen-game.wegvallend, #screen-end.wegvallend,
   #screen-journey.wegvallend, #screen-dress.wegvallend, #screen-trophies.wegvallend,
   #screen-settings.wegvallend, #screen-memory.wegvallend, #screen-newstar.wegvallend,

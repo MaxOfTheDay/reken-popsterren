@@ -29,7 +29,7 @@
  *
  * Draaien:  npm run test:schuiven
  */
-const { launch, cacheFonts, APP_URL } = require('./browser');
+const { launch, cacheFonts, rust, APP_URL } = require('./browser');
 const { check, klaar } = require('./meld')('schuiven');
 
 /* Hoeveel lucht een vak onder zijn laatste ding mag houden, bovenop de 8 die
@@ -38,6 +38,12 @@ const { check, klaar } = require('./meld')('schuiven');
 const SPELING = 44;
 
 const MATEN = [[320, 568], [390, 844], [412, 915], [640, 360], [844, 390], [1024, 768], [1180, 820]];
+/* Alle maten tegelijk, elk in een eigen context van dezelfde browser: geen
+   gedeelde opslag, geen gedeelde maat, dus ze zitten elkaar niet in de weg. De
+   suite wacht vooral op schermen die binnenkomen (de kaart doet er ruim twee
+   seconden over), en dat wachten kan naast elkaar -- het rekenwerk zelf is een
+   halve minuut, ook op een CI-machine met vier kernen. */
+const TEGELIJK = MATEN.length;
 const KIJK = '&demo&star=p1&wereld=4&diamanten=60&stand=halverwege';
 const SCHERMEN = [
   ['beginscherm', '&demo&screen=profile'],
@@ -101,98 +107,105 @@ const meet = page => page.evaluate(() => {
 
 const tabs = page => page.locator('#screen-dress .tab-btn');
 
+async function perMaat(browser, [w, h]) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true });
+  await cacheFonts(ctx);
+  for (const [naam, param, js] of SCHERMEN) {
+    const page = await ctx.newPage();
+    const fouten = [];
+    page.on('pageerror', e => fouten.push(e.message));
+    await page.goto(APP_URL + param);
+    await rust(page);
+    if (js) { await page.evaluate(js); await rust(page); }
+    // het eindscherm bouwt in getimede stappen op, die ziet rust niet aankomen
+    if (naam === 'eindscherm') await rust(page, { minstens: 1300 });
+    // ---- D · wat geen lijst is, past ----
+    const past = await page.evaluate(() => {
+      const s = document.querySelector('.screen.active');
+      return { id: s.id, lijst: s.classList.contains('lijst'), weg: s.scrollHeight - s.clientHeight };
+    });
+    if (!past.lijst) check(past.weg <= 1, 'D · een beeldscherm past',
+      `${naam} op ${w}x${h}: #${past.id} is ${past.weg}px te hoog en wordt afgeknipt`);
+    // de kleedkamer per lade: elke categorie is een ander rek
+    const laden = naam === 'kleedkamer' ? await tabs(page).count() : 1;
+    for (let i = 0; i < laden; i++) {
+      if (naam === 'kleedkamer') { await tabs(page).nth(i).click(); await rust(page); }
+      const wie = `${naam}${laden > 1 ? ' lade ' + (i + 1) : ''} op ${w}x${h}`;
+      for (const v of await meet(page)) {
+        check(v.schuift - v.nodig <= SPELING, 'A · niet verder dan nodig',
+          `${wie}: ${v.vak} schuift ${v.schuift}, nodig ${v.nodig}`);
+        if (naam === 'kleedkamer' || naam === 'kast')
+          check(v.schuift + 8 >= v.nodig, 'B · tot onderaan te schuiven',
+            `${wie}: ${v.vak} schuift ${v.schuift}, nodig ${v.nodig}`);
+      }
+    }
+    check(!fouten.length, 'A · niet verder dan nodig', `${naam} op ${w}x${h}: ${fouten.join(' | ')}`);
+    await page.close();
+  }
+  await ctx.close();
+}
+
+
+// ---- C · de ruimte onder de balken groeit meteen en krimpt pas later ----
+async function zaakC(browser) {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  await cacheFonts(ctx);
+  const page = await ctx.newPage();
+  await page.goto(APP_URL + KIJK + '&screen=dress');
+  await rust(page);
+  const stand = id => page.evaluate(id => {
+    const s = document.getElementById(id);
+    return { vrij: parseFloat(s.style.getPropertyValue('--onder-vrij')) || 0,
+             hoog: s.scrollHeight, top: s.scrollTop };
+  }, id);
+  const dicht = await stand('screen-dress');
+  check(dicht.vrij > 0 && dicht.vrij < 120, 'C · de ruimte onder de balken',
+    'met de lade dicht hoort er alleen de navigatie onder: ' + JSON.stringify(dicht));
+  // een spulletje dat nog niet van haar is: de lade gaat open
+  await page.evaluate(() => {
+    [...document.querySelectorAll('#item-grid .item-card')]
+      .find(c => c.dataset.item && !P().owned.includes(c.dataset.item)).click();
+  });
+  await rust(page);
+  const open = await stand('screen-dress');
+  check(open.vrij > dicht.vrij + 40 && open.hoog > dicht.hoog, 'C · de ruimte onder de balken',
+    'lade open maar het rek kreeg er geen ruimte bij: ' + JSON.stringify({ dicht, open }));
+  // helemaal onderaan, en dan de lade dicht (niets meer passen)
+  await page.evaluate(() => { document.getElementById('screen-dress').scrollTop = 1e5; });
+  await rust(page);
+  const onder = await stand('screen-dress');
+  await page.evaluate(() => stopPassen());
+  await rust(page);
+  const terug = await stand('screen-dress');
+  check(terug.top === onder.top, 'C · de ruimte onder de balken',
+    `de lade ging dicht en het rek sprong: ${onder.top} -> ${terug.top}`);
+  await tabs(page).nth(0).click();
+  await rust(page);
+  const ander = await stand('screen-dress');
+  check(ander.vrij === dicht.vrij, 'C · de ruimte onder de balken',
+    `een andere lade houdt de ruimte voor de dichte lade vast: ${ander.vrij} tegen ${dicht.vrij}`);
+  // de kast: een getikte trofee opent zijn balk, en die krijgt ook ruimte
+  await page.goto(APP_URL + KIJK + '&screen=tro');
+  await rust(page);
+  const kastDicht = await stand('screen-trophies');
+  await page.evaluate(() => {
+    const k = [...document.querySelectorAll('#trophy-shelves .trophy-card')].pop();
+    k.click();
+  });
+  await rust(page);
+  const kastOpen = await page.evaluate(() => document.getElementById('kast-bar').style.display);
+  const kastNa = await stand('screen-trophies');
+  check(kastOpen === 'none' || kastNa.vrij > kastDicht.vrij + 30, 'C · de ruimte onder de balken',
+    'de balk van de kast ging open zonder ruimte eronder: ' + JSON.stringify({ kastDicht, kastNa }));
+  await ctx.close();
+}
+
 (async () => {
   const browser = await launch();
-  for (const [w, h] of MATEN) {
-    const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true });
-    await cacheFonts(ctx);
-    for (const [naam, param, js] of SCHERMEN) {
-      const page = await ctx.newPage();
-      const fouten = [];
-      page.on('pageerror', e => fouten.push(e.message));
-      await page.goto(APP_URL + param);
-      await page.waitForTimeout(1200);
-      if (js) { await page.evaluate(js); await page.waitForTimeout(1200); }
-      if (naam === 'eindscherm') await page.waitForTimeout(1300);
-      // ---- D · wat geen lijst is, past ----
-      const past = await page.evaluate(() => {
-        const s = document.querySelector('.screen.active');
-        return { id: s.id, lijst: s.classList.contains('lijst'), weg: s.scrollHeight - s.clientHeight };
-      });
-      if (!past.lijst) check(past.weg <= 1, 'D · een beeldscherm past',
-        `${naam} op ${w}x${h}: #${past.id} is ${past.weg}px te hoog en wordt afgeknipt`);
-      // de kleedkamer per lade: elke categorie is een ander rek
-      const laden = naam === 'kleedkamer' ? await tabs(page).count() : 1;
-      for (let i = 0; i < laden; i++) {
-        if (naam === 'kleedkamer') { await tabs(page).nth(i).click(); await page.waitForTimeout(250); }
-        const wie = `${naam}${laden > 1 ? ' lade ' + (i + 1) : ''} op ${w}x${h}`;
-        for (const v of await meet(page)) {
-          check(v.schuift - v.nodig <= SPELING, 'A · niet verder dan nodig',
-            `${wie}: ${v.vak} schuift ${v.schuift}, nodig ${v.nodig}`);
-          if (naam === 'kleedkamer' || naam === 'kast')
-            check(v.schuift + 8 >= v.nodig, 'B · tot onderaan te schuiven',
-              `${wie}: ${v.vak} schuift ${v.schuift}, nodig ${v.nodig}`);
-        }
-      }
-      check(!fouten.length, 'A · niet verder dan nodig', `${naam} op ${w}x${h}: ${fouten.join(' | ')}`);
-      await page.close();
-    }
-    await ctx.close();
-  }
-
-  // ---- C · de ruimte onder de balken groeit meteen en krimpt pas later ----
-  {
-    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
-    await cacheFonts(ctx);
-    const page = await ctx.newPage();
-    await page.goto(APP_URL + KIJK + '&screen=dress');
-    await page.waitForTimeout(1200);
-    const stand = id => page.evaluate(id => {
-      const s = document.getElementById(id);
-      return { vrij: parseFloat(s.style.getPropertyValue('--onder-vrij')) || 0,
-               hoog: s.scrollHeight, top: s.scrollTop };
-    }, id);
-    const dicht = await stand('screen-dress');
-    check(dicht.vrij > 0 && dicht.vrij < 120, 'C · de ruimte onder de balken',
-      'met de lade dicht hoort er alleen de navigatie onder: ' + JSON.stringify(dicht));
-    // een spulletje dat nog niet van haar is: de lade gaat open
-    await page.evaluate(() => {
-      [...document.querySelectorAll('#item-grid .item-card')]
-        .find(c => c.dataset.item && !P().owned.includes(c.dataset.item)).click();
-    });
-    await page.waitForTimeout(300);
-    const open = await stand('screen-dress');
-    check(open.vrij > dicht.vrij + 40 && open.hoog > dicht.hoog, 'C · de ruimte onder de balken',
-      'lade open maar het rek kreeg er geen ruimte bij: ' + JSON.stringify({ dicht, open }));
-    // helemaal onderaan, en dan de lade dicht (niets meer passen)
-    await page.evaluate(() => { document.getElementById('screen-dress').scrollTop = 1e5; });
-    await page.waitForTimeout(150);
-    const onder = await stand('screen-dress');
-    await page.evaluate(() => stopPassen());
-    await page.waitForTimeout(300);
-    const terug = await stand('screen-dress');
-    check(terug.top === onder.top, 'C · de ruimte onder de balken',
-      `de lade ging dicht en het rek sprong: ${onder.top} -> ${terug.top}`);
-    await tabs(page).nth(0).click();
-    await page.waitForTimeout(300);
-    const ander = await stand('screen-dress');
-    check(ander.vrij === dicht.vrij, 'C · de ruimte onder de balken',
-      `een andere lade houdt de ruimte voor de dichte lade vast: ${ander.vrij} tegen ${dicht.vrij}`);
-    // de kast: een getikte trofee opent zijn balk, en die krijgt ook ruimte
-    await page.goto(APP_URL + KIJK + '&screen=tro');
-    await page.waitForTimeout(1200);
-    const kastDicht = await stand('screen-trophies');
-    await page.evaluate(() => {
-      const k = [...document.querySelectorAll('#trophy-shelves .trophy-card')].pop();
-      k.click();
-    });
-    await page.waitForTimeout(400);
-    const kastOpen = await page.evaluate(() => document.getElementById('kast-bar').style.display);
-    const kastNa = await stand('screen-trophies');
-    check(kastOpen === 'none' || kastNa.vrij > kastDicht.vrij + 30, 'C · de ruimte onder de balken',
-      'de balk van de kast ging open zonder ruimte eronder: ' + JSON.stringify({ kastDicht, kastNa }));
-    await ctx.close();
-  }
+  const rij = [...MATEN];
+  await Promise.all([zaakC(browser), ...Array.from({ length: TEGELIJK }, async () => {
+    for (let m; (m = rij.shift());) await perMaat(browser, m);
+  })]);
 
   await browser.close();
   klaar();

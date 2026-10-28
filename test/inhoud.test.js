@@ -33,6 +33,8 @@
  *   M  de over-pagina     -- over/ staat op zichzelf: wat hij noemt bestaat, hij
  *                           leidt terug naar het spel, en het filmpje laadt pas
  *                           als iemand het afspeelt
+ *   O  de schermwissel    -- een vertrekkend scherm houdt zijn opmaak, en de
+ *                           vaste lucht van de schil ligt op een eigen vel
  *   N  twee talen, één regel -- een mediaregel die JavaScript zelf vraagt,
  *                           staat letterlijk zo in het stijlblad
  *
@@ -1070,6 +1072,33 @@ zaak('N', () => {
     check(!!m, `N · ${naam} staat nog in het script`, '');
     if (m) check(stijl.includes('@media ' + m[1] + ' {'), `N · ${naam} staat letterlijk zo als @media in het stijlblad`, m[1]);
   }
+});
+
+/* ================= O · De schermwissel ================= */
+/* Twee flitsen bij het wisselen van tabblad op een bureaublad, allebei in de
+   kleedkamer, en allebei zonder dat er iets brak:
+   - de opmaak hing aan #screen-dress.active, en show() haalt .active weg op het
+     moment dat het scherm nog 140ms wegvalt -- dan klapte het rek tijdens het
+     wegdoven terug naar de telefoonopmaak (zie "Hoe een scherm eruitziet" bij
+     .wegvallend in 50-zaal);
+   - de lucht van de schil werd na elke opkomst opnieuw geschilderd, en dat lukte
+     op een groot venster niet in één beeldje (zie .app-sfeer::before in 20-schil).
+   Beide zijn een regel in het stijlblad; hier staan ze als regel vast. */
+zaak('O', () => {
+  const html = fs.readFileSync(path.join(WORTEL, 'index.html'), 'utf8');
+  const stijl = html.slice(html.indexOf('<style>') + 7, html.indexOf('</style>'));
+  // :has(#screen-x.active) gaat over iets búiten het scherm (de navigatie), en
+  // dat mag wel: dat verdwijnt ook echt met de tik.
+  const zonderHas = stijl.replace(/:has\([^()]*\)/g, '');
+  const kaal = zonderHas.match(/#screen-[\w-]+\.active\b[^{,]*/g) || [];
+  check(kaal.length === 0, 'O · niets hangt per scherm aan .active alleen (schrijf :is(.active, .wegvallend))',
+    kaal.join(' | '));
+  for (const sel of ['.app-sfeer::before', '.screen.gebruik.app-sfeer::after']) {
+    const m = stijl.match(new RegExp('(?:^|})\\s*' + sel.replace(/[.]/g, '\\.') + '\\s*\\{([^}]*)\\}'));
+    check(!!m && /will-change:\s*transform/.test(m[1]), `O · ${sel} ligt op een eigen vel (will-change: transform)`,
+      m ? m[1].slice(0, 80) : 'regel niet gevonden');
+  }
+  check(!/::(?:before|after)[^{]*\{[^}]*will-change:\s*auto/.test(stijl), 'O · en geen latere regel zet dat weer uit', '');
 });
 
 klaar();
