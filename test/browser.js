@@ -77,7 +77,41 @@ async function cacheFonts(target) {
   await target.route('**://static.cloudflareinsights.com/**', route => route.fulfill(LEEG_SCRIPT));
 }
 
+/*
+ * Wachten tot het scherm stilstaat, in plaats van een vaste tel.
+ *
+ * Een vaste waitForTimeout(1200) wacht op een snelle machine veel te lang en op
+ * een drukke CI-machine soms net te kort. Dit wacht tot de letters er zijn en er
+ * geen eindige animatie of overgang meer loopt (een animatie die nog in haar
+ * vertraging zit telt als lopend), en dat RUST_MS lang zo blijft. Eindeloze
+ * animaties (het wiegen van de pop, de glans op een knop) tellen niet: die
+ * stoppen nooit en veranderen niets aan de maten. Lange ook niet (meer dan
+ * RUST_LANG in totaal): dat zijn klokken, zoals de balk die in een show de
+ * bonustijd aftelt, en geen scherm dat binnenkomt.
+ *
+ * Wat een setTimeout pas later start, ziet dit niet: dat bestaat nog niet als
+ * animatie. Waar een scherm in stappen opbouwt (het eindscherm), geef dan
+ * `minstens` mee -- dan wacht hij minstens zo lang en daarna nog tot het stil is.
+ * Na `max` geeft hij het op zonder fout; de meting daarna zegt dan wel wat er mis is.
+ */
+const RUST_MS = 120;
+const RUST_LANG = 3000;
+async function rust(page, { minstens = 0, max = 5000 } = {}) {
+  const t0 = Date.now();
+  if (minstens) await page.waitForTimeout(minstens);
+  await page.waitForFunction(([stil, lang]) => {
+    const nu = performance.now();
+    const loopt = document.fonts.status !== 'loaded' || document.getAnimations().some(a =>
+      (a.playState === 'running' || a.playState === 'pending') &&
+      a.effect && a.effect.getComputedTiming().endTime <= lang);
+    if (loopt) window.__rustSinds = 0;
+    else if (!window.__rustSinds) window.__rustSinds = nu;
+    return !loopt && nu - window.__rustSinds >= stil;
+  }, [RUST_MS, RUST_LANG], { polling: 'raf', timeout: Math.max(500, max - (Date.now() - t0)) }).catch(() => {});
+  await page.evaluate(() => { window.__rustSinds = 0; }).catch(() => {});
+}
+
 // file://-URL van de app, met ?debug zodat window.__game beschikbaar is.
 const APP_URL = 'file://' + path.resolve(__dirname, '..', 'index.html') + '?debug';
 
-module.exports = { launch, cacheFonts, APP_URL };
+module.exports = { launch, cacheFonts, rust, APP_URL };
