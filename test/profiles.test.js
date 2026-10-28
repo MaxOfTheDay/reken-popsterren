@@ -11,7 +11,7 @@
  * Draaien:
  *   npm run test:sterren        (of: npm test voor alle suites)
  */
-const { launch, cacheFonts, APP_URL } = require('./browser');
+const { launch, cacheFonts, rust, APP_URL } = require('./browser');
 
 const fails = [];
 const counts = {};
@@ -1761,7 +1761,8 @@ function check(ok, label, detail) {
     const page = await c.newPage();
     page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
     await page.goto(APP_URL + '&demo&star=p1&screen=map');
-    await page.waitForTimeout(400);
+    // de kaart komt binnen: wie in wereld 1 meet terwijl dat nog loopt, meet de opkomst mee
+    await rust(page, { minstens: 400 });
     const gemeten = [];
     const aantal = await page.evaluate(() => WORLDS.length);
     for (let wi = 0; wi < aantal; wi++) {
