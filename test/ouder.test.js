@@ -432,7 +432,7 @@ function check(ok, label, detail) {
     await page.click('#set-modus .chip[data-v="vrij"]');
     await page.waitForTimeout(200);
     let k = await kies();
-    check(k.modus === 'vrij' && k.kies === k.aan && k.aan.split(',').length === 1 && !k.ladder && k.sommen && k.rijen === 9,
+    check(k.modus === 'vrij' && k.kies === k.aan && k.aan.split(',').length === 1 && !k.ladder && k.sommen && k.rijen === 13,
       'Zelf kiezen: de ladder wordt een lijst met vinkjes, Sommen blijft staan, en één rij staat al aan', JSON.stringify(k));
     check(/daar was/.test(k.toast) && k.lijn === 'Alleen wat je aanvinkt.', 'een toast zegt welke rij al aan staat', JSON.stringify(k));
     const eerste = k.aan;
