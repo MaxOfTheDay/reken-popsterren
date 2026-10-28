@@ -228,7 +228,7 @@ const BRUG = `globalThis.__api = {
   genTriple, genMissing, genChain, genBouwen,
   // Zelf kiezen: precies wat de ouder aanvinkt
   zelfGekozen, kiesRijen, kiesInst, kiesStart, kiesFasen, telFase,
-  THEMAS, themaAan, themasAan, themaZet, themaInst, themaPlan, themaSterren, TAFELPAD, TAFEL_IDX, tafelRijen, tafelNu, tafelInst, tafelNa, kiesTafel, beurt,
+  THEMAS, themaAan, themasAan, themaZet, themaInst, themaPlan, themaSterren, TAFELPAD, GELDPAD, LADDERS, ladderRijen, ladderNu, ladderSpeelt, ladderNa, tafelInst, geldInst, geldVraag, genGeld, euro, toonAntwoord, toonKeuze, geldKiesStart, kiesTafel, beurt,
   // de antwoordknoppen
   genQuestion, keuzeGrens, makeChoices,
   // herhalen wat bewaard staat: alleen wat nog bij de instellingen past

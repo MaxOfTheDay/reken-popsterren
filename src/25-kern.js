@@ -776,6 +776,10 @@ function defaultProfile(name, dress, opts) {
       padVanaf: opts.padVanaf || null,              // rekenmodus: de rij van het leerpad waar het spel minstens begint (zie padNu)
       padTot: null,                                 // en de rij waar de lijn "tot" onder staat; null = het eind van het blok (zie padRijen)
       tafelLijn: { ...opts.tafelLijn },             // de lijnen "vanaf" en "tot" op de tafelladder (zie TAFELPAD)
+      geldLijn: { ...opts.geldLijn },               // hetzelfde op de geldladder (zie GELDPAD); geld zelf staat uit tot s.themas het noemt
+      // de thema's zonder bewerkingen (zie THEMAS) en wat er bij Zelf kiezen aanstaat; alleen als ze er zijn
+      ...(opts.themas ? { themas: opts.themas.slice() } : {}),
+      ...(opts.kiesGeld ? { kiesGeld: opts.kiesGeld.slice() } : {}),
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
     // FASE 4A. tourStars blijft bij een verse ster voorgoed leeg -- het is de

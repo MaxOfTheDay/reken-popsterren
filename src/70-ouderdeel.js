@@ -450,7 +450,7 @@ function stapNu(p) {
       meter: `<span class="vg-rungs" aria-hidden="true">${Array.from({ length: top + 1 }, (_, i) => `<i class="${i <= rung ? 'aan' : ''}"></i>`).join('')}</span>`,
       tekst: `stapje ${rung + 1} van ${top + 1}`, waar: `Fase ${st} van ${countMaxStage(s)}` };
   }
-  if (!themaAan(s, 'rekenen')) return tafelStap(p);
+  if (!themaAan(s, 'rekenen')) return ladderStap(p, Object.keys(LADDERS).find(k => themaAan(s, k)));
   const nuId = padNu(p);
   if (nuId === 'alles') return { naam: 'Alles door elkaar', vb: '', meter: '', tekst: '', waar: '' };
   const speel = padRijen(s).rijen.filter(r => !r.uit);
@@ -461,17 +461,17 @@ function stapNu(p) {
     meter: `<span class="vg-bol" aria-hidden="true">${Array.from({ length: PAD_GOED }, (_, i) => `<i class="${i < goed ? 'aan' : ''}"></i>`).join('')}</span>`,
     tekst: nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show', waar: `Stap ${speel.indexOf(nu) + 1} van ${speel.length}` };
 }
-// Hetzelfde voor de tafelladder (zie TAFELPAD): waar ze staat en hoe ver.
-function tafelStap(p) {
-  const nuId = tafelNu(p);
-  if (nuId === 'alles') return { naam: 'Alle tafels door elkaar', vb: '', meter: '', tekst: '', waar: '' };
-  const { rijen, lo, hi } = tafelRijen(p.settings);
-  const nu = rijen[TAFEL_IDX[nuId]];
-  const t = p.tafels && p.tafels.rij === nuId ? p.tafels : { goed: 0 };
+// Hetzelfde voor de ladder van tafels of geld (zie LADDERS): waar ze staat en hoe ver.
+function ladderStap(p, k) {
+  const L = LADDERS[k], nuId = ladderNu(p, k);
+  if (nuId === 'alles') return { naam: L.eind, vb: '', meter: '', tekst: '', waar: '' };
+  const { rijen, lo, hi } = ladderRijen(p.settings, k);
+  const nu = rijen[L.idx[nuId]];
+  const t = p[L.stand] && p[L.stand].rij === nuId ? p[L.stand] : { goed: 0 };
   const goed = Math.min(PAD_GOED, t.goed || 0), nog = PAD_GOED - goed;
   return { naam: nu.naam, vb: nu.vb,
     meter: `<span class="vg-bol" aria-hidden="true">${Array.from({ length: PAD_GOED }, (_, i) => `<i class="${i < goed ? 'aan' : ''}"></i>`).join('')}</span>`,
-    tekst: nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show', waar: `Stap ${TAFEL_IDX[nuId] - lo + 1} van ${hi - lo + 1}` };
+    tekst: nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show', waar: `Stap ${L.idx[nuId] - lo + 1} van ${hi - lo + 1}` };
 }
 /* Wat Zelf kiezen aangevinkt heeft, als rijen om te lezen: [{ naam, vb }]. Bij
    rekenen de + − rijen en dan × en ÷ uit de kaart Sommen, met de tafels in de
@@ -482,12 +482,22 @@ function zelfRijen(s) {
   const t = s.tables.slice().sort((a, b) => a - b), b = t[t.length - 1], a = b === 7 ? 8 : 7;
   if (s.ops.includes('x')) rijen.push({ naam: `Tafels van ${t.join(', ')}`, vb: `${a} × ${b}` });
   if (s.ops.includes(':')) rijen.push({ naam: `Delen door ${t.join(', ')}`, vb: `${a * b} : ${b}` });
+  if (themaAan(s, 'geld')) geldInst({ settings: s }).rijen.forEach(r => rijen.push({ naam: r.naam, vb: geldVoorbeeld(r) }));
   return rijen;
+}
+/* Geld bij Zelf kiezen met nog niets aangevinkt: dan staat de rij waar ze op
+   de ladder is al aan (of de eerste, zonder ster), zoals kiesStart bij
+   rekenen -- de lijst staat nooit leeg terwijl er wél geld gespeeld wordt. */
+function geldKiesStart(s, p) {
+  if (!zelfGekozen(s) || !themaAan(s, 'geld') || (s.kiesGeld || []).length) return;
+  const nu = p ? ladderNu(p, 'geld') : GELDPAD[0].id;
+  s.kiesGeld = [nu === 'alles' ? GELDPAD[ladderRijen(s, 'geld').hi].id : nu];
 }
 function leerpadHtml(p) {
   const s = p.settings;
   if (zelfGekozen(s)) return zelfGekozenHtml(p);
-  if (s.track !== 'count') return (themaAan(s, 'rekenen') ? rekenLadderHtml(p) : '') + (themaAan(s, 'tafels') ? tafelLadderHtml(p) : '');
+  if (s.track !== 'count') return (themaAan(s, 'rekenen') ? rekenLadderHtml(p) : '')
+    + Object.keys(LADDERS).filter(k => themaAan(s, k)).map(k => themaLadderHtml(p, k)).join('');
   return rekenLadderHtml(p);
 }
 function rekenLadderHtml(p) {
@@ -550,30 +560,30 @@ function rekenLadderHtml(p) {
     <div class="vg-voet"><button class="vg-aanpas" id="leerpad-aanpas" type="button">Aanpassen ›</button></div>
   </div>`;
 }
-/* De tafelladder op Voortgang: dezelfde vorm als die van rekenen -- wat ze
+/* De ladder van tafels of geld op Voortgang: dezelfde vorm als die van rekenen -- wat ze
    haalde in één ✓-rij, haar rij met de pop en hoe ver, de rest grijs eronder.
    Tips om een lijn te verzetten zijn er hier niet: de ladder is kort, en
    "vanaf" en "tot" staan één tik verder, op Oefeningen. */
-function tafelLadderHtml(p) {
-  const s = p.settings;
-  const { rijen, lo, hi } = tafelRijen(s);
+function themaLadderHtml(p, k) {
+  const s = p.settings, L = LADDERS[k];
+  const { rijen, lo, hi } = ladderRijen(s, k);
   const speel = rijen.slice(lo, hi + 1);
-  const nuId = tafelNu(p);
+  const nuId = ladderNu(p, k);
   const nr = nuId === 'alles' ? speel.length : speel.findIndex(r => r.id === nuId);
   const uit = [];
   if (nr) uit.push(flRij(' klaar', '✓', klaarNamen(speel.slice(0, nr).map(r => r.naam))));
-  if (nuId === 'alles') uit.push(flRij(' hier niveau-bezig', flAva(p), 'Alle tafels door elkaar', ''));
+  if (nuId === 'alles') uit.push(flRij(' hier niveau-bezig', flAva(p), L.eind, ''));
   else {
-    const nu = tafelStap(p);
+    const nu = ladderStap(p, k);
     uit.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}<small class="vg-hoever">${nu.meter}${nu.tekst}</small>`, flVb(nu.vb)));
     speel.slice(nr + 1).forEach((r, i) => uit.push(flRij(' later', nr + 2 + i, r.naam, flVb(r.vb))));
-    uit.push(flRij(' later', '∞', 'Alle tafels door elkaar'));
+    uit.push(flRij(' later', '∞', L.eind));
   }
-  const kop = ['x', ':'].filter(o => s.ops.includes(o)).map(o => ({ x: '×', ':': '÷' })[o]).join(' ');
+  const kop = k === 'tafels' ? `Tafels <span>· ${['x', ':'].filter(o => s.ops.includes(o)).map(o => ({ x: '×', ':': '÷' })[o]).join(' ')}</span>` : THEMA[k].naam;
   return `<div class="set-card vg-kaart niveau-blok">
-    ${kaartKop(`Tafels <span>· ${kop}</span>`)}
+    ${kaartKop(kop)}
     <div class="fase-ladder vg-ladder">${uit.join('')}</div>
-    <div class="vg-voet"><button class="vg-aanpas" id="tafel-aanpas" type="button">Aanpassen ›</button></div>
+    <div class="vg-voet"><button class="vg-aanpas" id="${k === 'tafels' ? 'tafel' : k}-aanpas" type="button">Aanpassen ›</button></div>
   </div>`;
 }
 /* Voortgang bij Zelf kiezen: geen pad om op te staan, dus ook geen "hier" en
@@ -835,7 +845,7 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
    instelling met twee bedieningen, of een bediening in de verkeerde kaart, valt
    daar om. Komt er een instelling bij, dan kiest hij hier eerst zijn kaart. */
 const OEFEN_INSTELLINGEN = {
-  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], show: ['mode', 'perLevel'] },
+  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], geld: ['geldLijn', 'kiesGeld'], show: ['mode', 'perLevel'] },
   count: { wat: ['qmax'], pad: ['stage', 'kiesFasen'], show: ['repr', 'perLevel', 'memory'] },
 };
 function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in de volgorde van OEFEN_INSTELLINGEN
@@ -971,15 +981,18 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
      rekenen geen memory (zie memoryAan). */
   const opsBalk = (id, instelling, defs) => `<div class="oe-ops" id="${pfx}${id}" data-instelling="${instelling}">${defs.map(([v, teken, woord]) =>
     `<button class="chip${s.ops.includes(v) ? ' on' : ''}" data-v="${v}" aria-label="${woord}" aria-pressed="${s.ops.includes(v)}">${teken}</button>`).join('')}</div>`;
-  /* De tafelladder (zie TAFELPAD): dezelfde ladder met dezelfde twee lijnen,
-     en onderaan om te lezen "Alle tafels door elkaar". Bij Zelf kiezen de balk
-     "Tafels van": daar tikt de ouder precies aan welke. */
-  const tl = tafelRijen(s);
-  const tafelNuId = p && tafelNu(p);
-  const tafelHier = p && tafelNuId !== 'alles' ? TAFEL_IDX[tafelNuId] + 1 : 0;
-  const tafelEind = flRij(` eind${tafelNuId === 'alles' ? ' hier' : ''}`, tafelNuId === 'alles' && ava ? ava : '∞', 'Alle tafels door elkaar');
-  const tafelLadder = ladder('set-tafelpad', 'tafelLijn', tl.rijen.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb) })),
-    tl.lo + 1, tl.hi + 1, tafelHier, tafelEind);
+  /* De ladders van tafels en geld (zie LADDERS): dezelfde ladder met dezelfde
+     twee lijnen, en onderaan om te lezen "alles door elkaar". Bij Zelf kiezen
+     de balk "Tafels van" of de vinkjes van geld: daar tikt de ouder precies
+     aan welke. */
+  const themaLadder = k => {
+    const L = LADDERS[k], lr = ladderRijen(s, k);
+    const nu = p && ladderNu(p, k), voorbij = nu === 'alles';
+    const staart = flRij(` eind${voorbij ? ' hier' : ''}`, voorbij && ava ? ava : '∞', L.eind);
+    return ladder(L.id, L.lijn, lr.rijen.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb) })),
+      lr.lo + 1, lr.hi + 1, p && !voorbij ? L.idx[nu] + 1 : 0, staart);
+  };
+  const geldKies = kiesHtml('set-kiesgeld', 'kiesGeld', GELDPAD.map(r => ({ v: r.id, naam: r.naam, vb: geldVoorbeeld(r) })), s.kiesGeld || []);
   const tafelsVan = `${lbl('Tafels van')}
       <div class="oe-tafels" id="${pfx}set-tables" data-instelling="tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>`;
   return [themaAan(s, 'rekenen') && {
@@ -987,7 +1000,9 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
       ? kiesHtml('set-kies', 'kies', kiesLijst, (s.kies || []))
       : ladder('set-startstap', 'padVanaf', padRijenLadder, startPos, padR.length, hierPos, eind)}`
   }, themaAan(s, 'tafels') && {
-    kaart: 'tafels', kop: 'Tafels', ico: 'tafels', html: `${opsBalk('set-tafelops', 'tafelOps', opDefs.slice(2))}${vrij ? tafelsVan : tafelLadder}`
+    kaart: 'tafels', kop: 'Tafels', ico: 'tafels', html: `${opsBalk('set-tafelops', 'tafelOps', opDefs.slice(2))}${vrij ? tafelsVan : themaLadder('tafels')}`
+  }, themaAan(s, 'geld') && {
+    kaart: 'geld', kop: 'Geld', ico: 'geld', html: vrij ? geldKies : themaLadder('geld')
   }, {
     kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
       ${perShow}`
@@ -1011,7 +1026,7 @@ function oefenSamenvatting(s) {
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
   const rijen = padRijen(s).rijen.filter(r => !r.uit);
   const start = s.padVanaf && rijen.length && padVanafRij(s, rijen) !== rijen[0] && padVanafRij(s, rijen);
-  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}`
+  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}${themaAan(s, 'geld') ? ' · €' : ''}`
        + ` · ${modes[s.mode] || s.mode}${start ? ` · vanaf ${start.naam.toLowerCase()}` : ''}`
        + ` · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
 }
@@ -1578,6 +1593,7 @@ function bindOefenChips(s, p, pfx, done) {
   // de thema's (zie themaZet): het laatste blijft aan
   bind('set-themas', c => {
     if (!themaZet(s, c.dataset.v, !themaAan(s, c.dataset.v))) return blockedMinOne(c), false;
+    geldKiesStart(s, p);
   });
   bind('set-tables', c => {
     const v = parseInt(c.dataset.v, 10);
@@ -1603,6 +1619,7 @@ function bindOefenChips(s, p, pfx, done) {
     if (!vrij) { delete s.modus; return; }
     s.modus = 'vrij';
     s.missNum = s.chain3 = true;   // overslaan was iets van het leerpad
+    geldKiesStart(s, p);
     const count = s.track === 'count';
     const had = count ? kiesFasen(s).length : kiesGekozen(s).length;
     if (had || !p) return;
@@ -1621,6 +1638,11 @@ function bindOefenChips(s, p, pfx, done) {
     const nu = vink(s.kies || [], c.dataset.v, kiesRijen(s).map(r => r.id));
     if (!nu) return blockedMinOne(c), false;
     s.kies = nu;
+  });
+  bind('set-kiesgeld', c => {
+    const nu = vink(s.kiesGeld || [], c.dataset.v, GELDPAD.map(r => r.id));
+    if (!nu) return blockedMinOne(c), false;
+    s.kiesGeld = nu;
   });
   bind('set-kiesfasen', c => {
     const nu = vink(s.kiesFasen || [], parseInt(c.dataset.v, 10), Array.from({ length: COUNT_STAGE_MAX }, (_, i) => i + 1));
@@ -1675,23 +1697,23 @@ function bindOefenChips(s, p, pfx, done) {
     }
     s.padVanaf = v === 1 ? null : r.id;
   });
-  /* De tafelladder (zie TAFELPAD): dezelfde regel als de twee ladders
-     hierboven. "vanaf" tilt haar hoogstens mee omhoog (tafelNu), en de twee
-     lijnen kunnen elkaar niet kruisen. */
-  bind('set-tafelpad', c => {
-    const v = parseInt(c.dataset.v, 10), r = TAFELPAD[v - 1];
-    if (!r) return false;
-    const { lo, hi } = tafelRijen(s);
-    const l = s.tafelLijn = { ...s.tafelLijn };
-    const id = (i, rand) => i === rand ? null : TAFELPAD[i].id;
+  /* De ladders van tafels en geld (zie LADDERS): dezelfde regel als de twee
+     ladders hierboven. "vanaf" tilt haar hoogstens mee omhoog (ladderNu), en
+     de twee lijnen kunnen elkaar niet kruisen. */
+  Object.entries(LADDERS).forEach(([k, L]) => bind(L.id, c => {
+    const v = parseInt(c.dataset.v, 10);
+    if (!L.pad[v - 1]) return false;
+    const { lo, hi } = ladderRijen(s, k);
+    const l = s[L.lijn] = { ...s[L.lijn] };
+    const id = (i, rand) => i === rand ? null : L.pad[i].id;
     if (dichtsteLijn(v, lo + 1, hi + 1) === 'vanaf') {
       l.vanaf = id(v - 1, 0);
-      if (v - 1 > hi) l.tot = id(v - 1, TAFELPAD.length - 1);
+      if (v - 1 > hi) l.tot = id(v - 1, L.pad.length - 1);
     } else {
-      l.tot = id(v - 1, TAFELPAD.length - 1);
+      l.tot = id(v - 1, L.pad.length - 1);
       if (v - 1 < lo) l.vanaf = id(v - 1, 0);
     }
-  });
+  }));
   bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); telPlafondOpnieuw(p); });
   bind('set-memory', c => { s.memory = (c.dataset.v === 'on'); });
   bind('set-repr', c => { s.repr = c.dataset.v; });
@@ -1841,8 +1863,9 @@ function bindSettings(p, s) {
     const lad = ids.map(id => $(id)).find(Boolean);
     if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
   };
-  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables'));
+  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables', 'set-kiesgeld'));
   on('tafel-aanpas', 'onclick', naarLadder('set-tafelpad'));
+  on('geld-aanpas', 'onclick', naarLadder('set-geldpad'));
   // De velden zelf staan óók op het maakformulier; de bediening is gedeeld.
   // Het maakformulier heeft niets op te slaan, dus wat er ná een wijziging
   // gebeurt komt van de aanroeper (hier: opslaan + hertekenen).

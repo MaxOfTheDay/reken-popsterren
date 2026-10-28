@@ -2567,7 +2567,7 @@ function check(ok, label, detail) {
     });
     const mathWant = { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8,
       missNum: true, chain3: true, track: 'math', stage: 1, stageMax: 12, fasesBekend: 12, repr: 'objects',
-      numerals: true, qmax: 10, memory: true, padVanaf: null, padTot: null, tafelLijn: {} };
+      numerals: true, qmax: 10, memory: true, padVanaf: null, padTot: null, tafelLijn: {}, geldLijn: {} };
     const countWant = { ...mathWant, track: 'count', perLevel: 5 };
     check(JSON.stringify(r.math) === JSON.stringify(mathWant),
       'zonder de openklapper aan te raken blijft de rekenster ongewijzigd', JSON.stringify(r.math));
