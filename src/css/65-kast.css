@@ -158,6 +158,19 @@
     box-shadow: inset 0 1.5px 0 rgba(255,255,255,.14),
       0 25vh 0 var(--lade), 0 50vh 0 var(--lade), 0 75vh 0 var(--lade), 0 100vh 0 var(--lade);
   }
+  /* Op een bureaublad is de kast geen lade maar een paneel, net als het rek van
+     de kleedkamer ernaast (zie "Liggend en breed" in 75-kleedkamer): rondom
+     afgerond, en hij houdt op onder de laatste plank. Doorgetrokken tot de
+     onderrand stond hij daar als een rechte zuil in de kamer, ook als de planken
+     halverwege al ophielden -- precies het soort halve laag met een harde kant
+     dat de regel bij DE DERDE LAAG (20-schil) niet wil. De lucht voor de balken
+     komt hier als marge onder het paneel, niet als padding erin. */
+  @media (min-width: 1000px) and (orientation: landscape) and (min-height: 501px) {
+    #trophy-shelves {
+      border-radius: 26px; padding-bottom: 14px; margin-bottom: var(--lade-onder);
+      box-shadow: inset 0 1.5px 0 rgba(255,255,255,.14), 0 18px 40px rgba(8,1,20,.35);
+    }
+  }
   /* ---- Een plank is een kopregel geworden, geen doos ---------------------
      PS-32. De kast stond in drie dozen tegelijk: het scherm, daarin vier grote
      afgeronde panelen met eigen rand en eigen schaduw, en dáárin per kaartje
