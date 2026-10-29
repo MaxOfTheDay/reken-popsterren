@@ -88,7 +88,7 @@ function startLevel(lvl, eigenOvergang) {
   bundelAan();
   // kan er een cijferblok komen? dan houdt zij er vanaf de eerste vraag ruimte
   // voor (zie "ZIJ GROEIT MEE" in 50-zaal)
-  $('screen-game').classList.toggle('met-cijfers', !count && s.mode !== 'kies');
+  $('screen-game').classList.toggle('met-cijfers', !count && kanTypen(s));
   $('screen-game').classList.toggle('telt', !!count);   // liggend: plaats voor 🔊 naast de kaart (zie "NAAST ELKAAR")
   if (eigenOvergang) show('screen-game');
   else toonHub('screen-game');
@@ -179,8 +179,9 @@ function renderQuestion() {
     G.qs[G.idx] = built;
   }
   const q = G.qs[G.idx];
-  // een vraag die je niet kunt typen (€1,70: geen komma op het cijferblok) is altijd kiezen
-  G.mode = G.count ? 'count' : q.tik ? 'tik' : q.kiezen ? 'kies' : (s.mode === 'mix' ? pick(['kies', 'typ']) : s.mode);
+  // een vraag die je niet kunt typen (€1,70: geen komma op het cijferblok) is altijd kiezen,
+  // en een vraag met een plaatje ook (zie PLAATJE)
+  G.mode = G.count ? 'count' : q.tik ? 'tik' : q.kiezen || PLAATJE.includes(q.kind) ? 'kies' : (s.mode === 'mix' ? pick(['kies', 'typ']) : s.mode);
   G.input = '';
   G.lock = false;
   G.retried = false;
@@ -197,6 +198,7 @@ function renderQuestion() {
   if (G.count) {
     antwoordOpMaat(area, true);
     renderCountAnswers(q, area);
+    vakVullen(area);
     zaalPast();
     goudPlek();
     spotZonderTijd();
@@ -230,6 +232,7 @@ function renderQuestion() {
   }
   antwoordOpMaat(area);
   klokZoekRuim(area);
+  vakVullen(area);
   zaalPast();
   goudPlek();
   startSpot();
@@ -247,30 +250,161 @@ function goudPlek() {
   const past = onderkant(kaart) + 2 + b.offsetHeight <= window.innerHeight;
   b.style.top = (past ? onder : kaart.offsetTop - b.offsetHeight - 2) + 'px';
 }
-/* ---- De klok zoeken: de klokjes krijgen de ruimte ---------------------------
+/* ---- De klok zoeken, liggend --------------------------------------------------
    Bij "zoek de klok" staan er op de kaart twee woorden (kwart voor 6), en zijn
-   de vier klokjes op de knoppen wat ze echt moet lezen. Die waren 64px, liggend
-   45 -- het moeilijkste stuk van de vraag op de kleinste maat, onder een kaart
-   die verder leeg was. Nu geeft de kaart wat hij over heeft aan de knoppen
-   (kaartOpMaat zet het in G.kaartOver), en is kaart + knoppen samen even hoog
-   als bij elke andere vraag van de show: er verspringt niets. Liggend staan ze
-   naast elkaar: dan worden de knoppen zo hoog als de kaart (en de kaart smaller,
-   zie .zoek-klok in 50-zaal). KLOK_ZOEK_MAX: groter dan dat is een klok op een
-   tablet die over zijn knop heen groeit. */
-const KLOK_ZOEK_MAX = 150;
+   de vier klokjes op de knoppen wat ze echt moet lezen. Liggend staan kaart en
+   knoppen naast elkaar: dan worden de knoppen zo hoog als de kaart (en de kaart
+   smaller, zie .zoek-klok in 50-zaal). Staand doet vakVullen het, voor elke
+   knop en niet alleen voor de klokjes. */
 const klokZoekt = q => q.kind === 'klok' && q.vorm === 'zoek';
 function klokZoekRuim(area) {
-  area.style.removeProperty('--zoek-h');
   const q = G.qs[G.idx], rij = area.querySelector('.choices');
-  if (!klokZoekt(q) || !rij) return;
-  const kaart = $('question-card'), naast = getComputedStyle(area.parentNode).flexDirection === 'row';
-  const hoog = naast ? kaart.offsetHeight : (G.antwoordMin || area.offsetHeight) + (G.kaartOver || 0);
-  const cs = getComputedStyle(area), rs = getComputedStyle(rij);
-  const rand = naast ? 0 : parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + parseFloat(rs.paddingTop) + parseFloat(rs.paddingBottom) + parseFloat(rs.marginTop) + parseFloat(rs.marginBottom);
-  const h = Math.min(KLOK_ZOEK_MAX, Math.floor((hoog - rand - (parseFloat(rs.rowGap) || 0)) / 2));
-  if (h <= rij.firstElementChild.offsetHeight) return;
-  if (!naast) area.style.minHeight = hoog + 'px';
-  area.style.setProperty('--zoek-h', h + 'px');
+  if (!klokZoekt(q) || !rij || !naastElkaar()) return;
+  const h = Math.min(KNOP_MAX, Math.floor(($('question-card').offsetHeight - (parseFloat(getComputedStyle(rij).rowGap) || 0)) / 2));
+  if (h > rij.firstElementChild.offsetHeight) area.style.setProperty('--knop-h', h + 'px');
+}
+const naastElkaar = () => getComputedStyle($('answer-area').parentNode).flexDirection === 'row';
+/* ---- Eén vak voor de vraag en de knoppen ------------------------------------
+   DE REGEL (staand). In een show liggen drie dingen vast: zij (plek en maat),
+   de bovenkant van de kaart en de onderkant van de knoppen, waar de duim is.
+   Wat daartussen ligt is één vak, even hoog voor elke vraag van de show, en
+   elke vraag vult het helemaal: eerst worden de kiesknoppen hoger (tot
+   KNOP_MAX), wat dan nog over is krijgt de kaart, met de vraag in het midden.
+   Zo verspringt er niets, en staat er nergens een lege vlakte.
+   Hiervoor kregen de kaart en het vak elk apart de maat van hun grootste
+   vraag. Dan reserveert een show de zwaarste combinatie die nooit samen komt:
+   een kalenderblad bóven een cijferblok. Op een telefoon van 390 was dat 549px
+   voor een som met vier knoppen die er 291 nodig heeft -- een gewone som in een
+   wit vlak, en zij op 108 in plaats van 180. Daarom kies je nu ook een vraag
+   met een plaatje altijd (PLAATJE): het cijferblok staat nooit onder een plaatje.
+   Het vak wordt één keer per show gemeten (vakMeten, en opnieuw na een resize),
+   met wat er in deze show kan komen. Is een echte vraag toch groter, dan groeit
+   het vak vanaf die vraag mee: liever één keer verschuiven dan een knop onder
+   de rand. Liggend staan kaart en knoppen naast elkaar en houden ze elk hun
+   eigen maat (kaartOpMaat, antwoordOpMaat); alleen de telmodus meet daar hier.
+   Schuiven zaak E kijkt het na, voor elk thema en elke telfase. */
+// geld, klok, kalender en de getallenlijn: een plaatje op de kaart, dus vier knoppen eronder
+const PLAATJE = ['geld', 'klok', 'kalender', 'lijn'];
+// kan er in deze show een cijferblok komen? alleen bij een som (rekenen of tafels)
+const kanTypen = s => s.mode !== 'kies' && themasAan(s).some(k => !PLAATJE.includes(k));
+// hoger dan dit wordt een knop een plank; een klokje erin blijft dan nog op zijn knop
+const KNOP_MAX = 150;
+function vakVullen(area) {
+  const kaart = $('question-card'), tekst = $('question-text');
+  const naast = naastElkaar();
+  if (naast && !G.count) return;
+  if (!naast) area.style.removeProperty('--knop-h');
+  tekst.style.paddingTop = tekst.style.paddingBottom = '';
+  area.style.minHeight = '';
+  area.classList.remove('vast');
+  if (G.vakMin == null) G.vakMin = vakMeten(area);
+  const m = G.vakMin, rand = kaart.offsetHeight - tekst.offsetHeight;
+  if (naast) {
+    /* De telmodus liggend: de kaart en de tegels elk op hun grootste maat, net
+       als de andere shows. Maar nooit hoger dan het scherm: zij krimpt hier
+       niet (ze staat ernaast), en een scherm dat schuift is erger dan een kaart
+       die een vraag lang een paar pixels lager begint. */
+    const hoog = tekst.offsetHeight;
+    let lucht = Math.max(0, m.tekst - hoog);
+    if (m.vak > area.offsetHeight) { area.style.minHeight = m.vak + 'px'; area.classList.add('vast'); }
+    if (lucht) tekst.style.paddingTop = tekst.style.paddingBottom = lucht / 2 + 'px';
+    const teHoog = () => Math.ceil(Math.max(arenaOver(), onderkant(area) + 6 - window.innerHeight, onderkant(kaart) + 6 - window.innerHeight));
+    if (teHoog() > 0) {
+      lucht = Math.max(0, lucht - teHoog());
+      tekst.style.paddingTop = tekst.style.paddingBottom = lucht / 2 + 'px';
+      if (teHoog() > 0) { area.style.minHeight = ''; area.classList.remove('vast'); }
+    }
+    return;
+  }
+  const nu = () => kaart.offsetHeight + area.offsetHeight;
+  m.samen = Math.max(m.samen + rand, nu()) - rand;   // groter dan gemeten: het vak groeit mee
+  const vak = m.samen + rand;
+  const knoppen = [...area.querySelectorAll('.choice-btn')];
+  if (vak > nu() && knoppen.length) {
+    const rijen = new Set(knoppen.map(b => b.offsetTop)).size, h0 = knoppen[0].offsetHeight;
+    const h = Math.min(KNOP_MAX, h0 + Math.floor((vak - nu()) / rijen));
+    if (h > h0) area.style.setProperty('--knop-h', h + 'px');
+  }
+  if (vak > nu()) tekst.style.paddingTop = tekst.style.paddingBottom = (vak - nu()) / 2 + 'px';
+}
+/* Wat er in deze show kan komen, als paren van kaart en knoppen. Gemeten in
+   de kaart en het vak zelf, niet op een kopie: een telkaart is zo breed als
+   wat erin staat, en op een kopie van volle breedte bleef een rij van vijf
+   bloemen op één regel die in het echt brak (52px te laag geschat). De vraag
+   die er al staat gaat zolang opzij, met zijn knoppen en hun tik, en komt
+   daarna terug -- alles in dezelfde taak, er wordt niets getekend.
+   tekst: de hoogste vraag, vak: het hoogste antwoordvak, samen: het hoogste
+   paar (zonder de rand van de kaart, die is voor elke vraag dezelfde). */
+const telMaten = new Map();
+function vakMeten(area) {
+  /* De telmodus meet honderd kaarten (op een trage tablet een kwart seconde):
+     één keer per fase, trede en schermmaat, en daarna uit het geheugen. */
+  const s = P().settings, sleutel = G.count && [kiesFasen(s).join(',') || countLiveStage(P()), P().countTrack.rung, innerWidth, innerHeight, s.repr, s.numerals, s.qmax].join('|');
+  if (sleutel && telMaten.has(sleutel)) return { ...telMaten.get(sleutel) };
+  const m = vakMetenNu(area);
+  if (sleutel) telMaten.set(sleutel, { ...m });
+  return m;
+}
+function vakMetenNu(area) {
+  const tekst = $('question-text');
+  const weg = [tekst, area].map(el => {
+    const f = document.createDocumentFragment();
+    while (el.firstChild) f.appendChild(el.firstChild);
+    return { el, f, cls: el.className, font: el.style.fontSize };
+  });
+  tekst.classList.remove('lang', 'langer');
+  tekst.style.fontSize = '';
+  /* Alle proeven tegelijk, elk in een eigen blokje onder elkaar: één keer
+     opmaken in plaats van één keer per proef (een telfase heeft er honderd).
+     De kaart wordt dan zo breed als de breedste, maar een proef die alleen
+     niet breekt, breekt in een bredere kaart ook niet. */
+  const rand = el => { const c = getComputedStyle(el); return ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth'].reduce((n, k) => n + parseFloat(c[k]), 0); };
+  const hoogten = (el, html) => {
+    el.innerHTML = html.map(h => `<div style="display:flow-root">${h}</div>`).join('');
+    const r = rand(el);
+    return [...el.children].map(d => d.offsetHeight + r);
+  };
+  const proeven = vakProeven();
+  const a = hoogten(tekst, proeven.map(([k]) => k.replace('@', '<span class="q-blank">?</span>')));
+  const b = hoogten(area, proeven.map(([, v]) => v));
+  const m = { tekst: Math.max(0, ...a), vak: Math.max(0, ...b), samen: Math.max(0, ...a.map((h, i) => h + b[i])) };
+  for (const { el, f, cls, font } of weg) { el.innerHTML = ''; el.appendChild(f); el.className = cls; el.style.fontSize = font; }
+  if (G.count) m.samen = m.tekst + m.vak;   // de telmodus meet kaarten en tegels apart (zie telProeven)
+  return m;
+}
+function vakProeven() {
+  const knoppen = (k, n) => Array(n).fill(`<button class="${k}">8</button>`).join('');
+  if (G.count) { const t = telProeven(); return [...t.kaarten.map(k => [k, '']), ...t.tegels.map(v => ['', v])]; }
+  const vier = `<div class="choices">${knoppen('choice-btn', 4)}</div>`, s = P().settings;
+  // een som, met het cijferblok als dat kan; en elk plaatje met vier knoppen
+  const uit = [['88 + 88 = @', kanTypen(s) ? `<div class="numpad">${knoppen('num-btn', 12)}</div>` : vier],
+    ...kaartProeven(G.insts || {}).map(k => [k, vier])];
+  if (G.insts && G.insts.lijn) uit.push(['<span class="kal-rij"><span class="kal-kaart nu gl-zoek">88</span></span>', lijnTikvlak({ bereik: [0, 20, 1, 5] })]);
+  return uit;
+}
+/* De telmodus: de vragen van deze fase, ook zoals ze op de hoogste trede van
+   de fase zijn (de trede klimt in de show, en daarmee de aantallen; en op de
+   tweede trede staan er nog stippen onder de cijfers, op de hoogste niet). Geen
+   echte vragen van de show: die worden per stuk gebouwd, en een handvol
+   getrokken vragen miste de grootste soms (4 + 1 in twee raampjes: 22px).
+   Dus veel trekken, en elke kaart en elke rij tegels één keer meten -- apart,
+   want samen zijn er te veel (200ms bij het begin van een show). Welk
+   voorwerp het is en waar het ligt maakt voor de maat niets uit. Het paar
+   van de hoogste kaart en de hoogste tegels komt misschien nooit samen: dan
+   houdt de kaart een paar pixels lucht, en verspringt er niets. */
+const TEL_PROEVEN = 600;
+function telProeven() {
+  const p = P(), ct = p.countTrack, was = ct.rung, kaarten = new Map(), tegels = new Map();
+  const vorm = (k, v) => ['emoji', 'pos', 'v'].includes(k) ? undefined : v;
+  for (let i = 0; i < TEL_PROEVEN; i++) {
+    ct.rung = was + i % 5;   // elke trede vanaf die van nu (countDifficulty houdt hem binnen de fase)
+    const q = genCount(p);
+    const k = JSON.stringify(q.card, vorm), t = JSON.stringify(q.choices.map(c => JSON.stringify(c, vorm)).sort());
+    if (!kaarten.has(k)) kaarten.set(k, telKaartHTML(q));
+    if (!tegels.has(t)) tegels.set(t, telTegelsHTML(q));
+  }
+  ct.rung = was;
+  return { kaarten: [...kaarten.values()], tegels: [...tegels.values()] };
 }
 /* ---- Alles past -------------------------------------------------------------
    Steekt de vraag of het antwoord onder het scherm uit, dan krimpt zij (de
@@ -317,15 +451,19 @@ function zaalPast() {
      stond die netjes 6px boven de rand maar schoof het scherm nog 24px op
      onder je vinger -- in de telmodus op elke hoge telefoon. Gemeten met
      offsets, niet met scrollHeight: de vraag komt binnen met een transform. */
-  const sg = $('screen-game'), arena = zaal.closest('.game-arena');
-  const schermOnder = onderkant(sg) - sg.offsetHeight + sg.clientHeight;
-  const arenaOver = arena ? onderkant(arena) + (parseFloat(getComputedStyle(sg).paddingBottom) || 0) - schermOnder : 0;
-  zet(zaal.offsetHeight - Math.ceil(Math.max(laatste + 6 - window.innerHeight, arenaOver)));
+  zet(zaal.offsetHeight - Math.ceil(Math.max(laatste + 6 - window.innerHeight, arenaOver())));
   /* Het gezicht. Een kleinere zaal zet haar ogen lager, maar de onderkant van
      de zaal blijft niet altijd staan (de som schuift soms mee omhoog): dus
      opnieuw meten na elke stap, tot drie keer. Alles in dezelfde taak, vóór
      er iets getekend is -- er krimpt niets zichtbaar. */
   for (let i = 0; i < 3 && zet(gezichtVrij(zaal)); i++);
+}
+// hoeveel de arena onder het scherm uitsteekt, met de rand van het scherm erbij (zie zaalPast)
+function arenaOver() {
+  const sg = $('screen-game'), arena = sg.querySelector('.game-arena');
+  if (!arena) return 0;
+  const schermOnder = onderkant(sg) - sg.offsetHeight + sg.clientHeight;
+  return onderkant(arena) + (parseFloat(getComputedStyle(sg).paddingBottom) || 0) - schermOnder;
 }
 const onderkant = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y + el.offsetHeight; };
 // Hoe hoog de zaal mag zijn zodat haar ogen onder de pil staan; Infinity als dat al zo is.
@@ -358,7 +496,7 @@ function gezichtVrij(zaal) {
 function antwoordOpMaat(area, los) {
   area.style.minHeight = '';
   area.classList.remove('vast');
-  if (los) return;   // los: de telmodus heeft zijn eigen tegels
+  if (los || !naastElkaar()) return;   // de telmodus, en staand: zie vakVullen
   if (G.antwoordMin == null) G.antwoordMin = antwoordMeten(area);
   if (!G.antwoordMin) return;
   area.style.minHeight = G.antwoordMin + 'px';
@@ -376,7 +514,7 @@ function antwoordMeten(area) {
      een show met alleen knoppen viel Afronden (twee knoppen) of de lijn er
      eerst buiten, en schoof de kaart 38 à 45px. */
   const vormen = [`<div class="choices">${knop('choice-btn', 4)}</div>`];
-  if (P().settings.mode !== 'kies') vormen.push(`<div class="numpad">${knop('num-btn', 12)}</div>`);
+  if (kanTypen(P().settings)) vormen.push(`<div class="numpad">${knop('num-btn', 12)}</div>`);
   let hoogste = Math.max(...vormen.map(hoog));
   if (G.insts && G.insts.lijn) {
     // de lijn om op te tikken krijgt liggend een breder vak (lijn-tik, zie "NAAST ELKAAR"): op die breedte meten
@@ -562,18 +700,10 @@ function drawQuestion() {
    bouwen met hun blokken, die daar al bij de sommen horen. */
 function kaartOpMaat(tekst) {
   tekst.style.paddingTop = tekst.style.paddingBottom = '';
-  G.kaartOver = 0;
+  if (!naastElkaar()) return;   // staand vult vakVullen de kaart, samen met de knoppen
   if (G.kaartMin == null) G.kaartMin = kaartMeten(tekst);
   const over = G.kaartMin - tekst.offsetHeight;
-  if (over <= 0) return;
-  // de klok zoeken, staand: wat de kaart over heeft gaat naar de klokjes (zie klokZoekRuim)
-  const naast = getComputedStyle(tekst.parentNode.parentNode).flexDirection === 'row';
-  tekst.style.paddingTop = tekst.style.paddingBottom = over / 2 + 'px';
-  if (!klokZoekt(G.qs[G.idx]) || naast) return;
-  // gemeten aan de kaart zelf: wat hij krimpt is wat de knoppen erbij krijgen, op de pixel
-  const vol = tekst.parentNode.offsetHeight;
-  tekst.style.paddingTop = tekst.style.paddingBottom = '';
-  G.kaartOver = vol - tekst.parentNode.offsetHeight;
+  if (over > 0) tekst.style.paddingTop = tekst.style.paddingBottom = over / 2 + 'px';
 }
 function kaartMeten(tekst) {
   const proeven = kaartProeven(G.insts || {});
@@ -614,7 +744,7 @@ function kaartProeven(insts) {
   if (insts.lijn) insts.lijn.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genLijn(r, i % 2 ? 'zoek' : 'lees').html); if (r.sprong) uit.push(...lijnHoogste()); });
   return uit;
 }
-addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = G.zaalVol = null; $('show-stage').style.height = $('show-stage').style.width = ''; });
+addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = G.vakMin = G.zaalVol = null; $('show-stage').style.height = $('show-stage').style.width = ''; });
 function numpadPress(n) {
   if (!G || G.lock) return;
   if (n === 'del') { if (G.input === '') return; G.input = G.input.slice(0, -1); sndClick(); }

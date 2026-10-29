@@ -995,8 +995,8 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
   /* Onder Vragen per show hoe een show eruitziet: één icoontje per vraag, in
      de volgorde van themaPlan -- dan hoeft niemand uit te leggen wat "de helft
      sommen" betekent. Alleen als er meer dan één thema aan staat; anders is
-     elke vraag hetzelfde. Onder Kiezen/Mix/Typen staat bewust niets: dat de
-     klok (en een woord bij de kalender) altijd kiest, ziet een ouder in de show
+     elke vraag hetzelfde. Onder Kiezen/Mix/Typen staat bewust niets: dat een
+     vraag met een plaatje (geld, klok, kalender, lijn) altijd kiest, ziet een ouder in de show
      zelf, en een regel uitleg erbij was er een te veel. */
   const showMix = themasAan(s).length > 1
     ? `<div class="oe-mix" role="img" aria-label="Een show: ${themaPlan(s, s.perLevel).map(k => THEMA[k].naam.toLowerCase()).join(', ')}">${themaPlan(s, s.perLevel).map(k => themaIcoon(k, 20)).join('')}</div>` : '';

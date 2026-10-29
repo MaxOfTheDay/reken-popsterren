@@ -868,6 +868,8 @@
        af: elke gouden vraag werd de kaart smaller, sprong de som en stak een
        telsom eruit. */
     .gold-banner { position: absolute; left: 0; top: 100%; width: var(--kaart-w); margin: 0; pointer-events: none; }
+    /* leeg (geen gouden vraag) hangt hij anders onder een hoog antwoordvak, onder de rand: dan schuift het scherm */
+    .gold-banner:empty { display: none; }
     #answer-area { width: min(30vw, 260px); flex: 0 0 auto; }
     #answer-area.vast { justify-content: center; }   /* naast de kaart: op zijn hoogte, in het midden */
     .choices, .gl-vlak, .count-tiles { width: 100%; box-sizing: border-box; }

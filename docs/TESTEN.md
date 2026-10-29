@@ -468,12 +468,13 @@ beloftes:
 - **wat geen lijst is, past** (zaak D) — op elke maat en in elke stand: een
   beeldscherm schuift niet, dus wat er niet past valt weg. Met `?debug` zegt de
   console het ook (`[schuiven] … past niet`), zodat je het in de studio al ziet.
-- **een show springt niet** (zaak E) — op vier maten, typen en "allebei", met
-  rekenen, geld, de klok en de kalender door elkaar: de kaart, het antwoordvak en
-  zij staan bij elke vraag op dezelfde plek. Het cijferblok en vier knoppen
-  wisselden elkaar af, en dan schoof alles tot 86px op (`antwoordOpMaat`).
-  Het antwoordvak telt op zijn onderkant (liggend: zijn midden), want bij de klok
-  zoeken krijgt het de ruimte die de kaart over heeft (`klokZoekRuim`);
+- **een show springt niet** (zaak E) — op zes maten, kiezen, typen en "allebei"
+  met elk thema door elkaar, en elke fase van de telmodus: zij, de bovenkant van
+  de kaart en de onderkant van de knoppen staan bij elke vraag op dezelfde plek.
+  Het cijferblok en vier knoppen wisselden elkaar af, en dan schoof alles tot
+  86px op; in de telmodus sprong zij tot 83px. Staand vullen kaart en knoppen
+  samen één vak (`vakVullen`), en daarom kijkt E ook dat er boven de knoppen geen
+  lege band staat (`VAK_LUCHT`). Liggend telt het antwoordvak op zijn midden;
 - **elk antwoord past** (zaak F) — elk thema uit `THEMAS` en de telmodus, elke
   stap, kiezen en typen, op zes maten: de kaart en elke knop staan in beeld. En
   wat je pas ziet als je echt speelt: een som is even hoog met het antwoord erin
