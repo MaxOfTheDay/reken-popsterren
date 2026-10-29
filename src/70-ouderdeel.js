@@ -337,7 +337,7 @@ function openSter(key) {
    wil ik iets veranderen? Alle drie gaan over dezelfde rijen -- de ladder van
    een thema -- en staan dus in één kaart per thema (themaKaart):
 
-     HAAR CIJFERS  -- één regel onder haar naam: shows, % goed, sterren, trofeeën.
+     HAAR CIJFERS  -- niet op de pagina maar achter 📊 in de kop (openCijfers).
      WAT OEFENT ZE -- de thema's als tegels. Dit bepaalt welke kaarten eronder
                       staan, dus staat het bovenaan.
      HOE OEFENT ZE -- Leerpad of Zelf kiezen, antwoord, vragen per show en hoe
@@ -352,23 +352,12 @@ function openSter(key) {
    dezelfde ladders: één keer om te lezen, één keer om te zetten. Bij drie
    thema's stonden er zes ladders, en een ouder las elke stap twee keer.
 
-   GEEN LABEL OP DE KAART. Hier stond rechtsboven "Net begonnen", "Past goed",
-   "Even pittig" en zo verder (vgStand). De meeste daarvan zeiden wat het
-   volle rij nu laat zien, of wat het spel zelf al doet; alleen "Klaar voor meer"
-   vroeg de ouder iets. Dat staat er nu als knop ín haar rij ("↑ Meer"), en
-   doet de stap meteen, met ↶ Terug in de melding. Het overzicht van alle
-   sterren houdt het label wel: daar zie je alle kinderen in één oogopslag. */
-/* Het label: één woord over het niveau, en de kleur zegt wie er aan zet is.
-   Groen: niets te doen. Geel: het gaat vlot (het spel schuift door, of de ouder
-   kan een stap zetten). Oranje: het spel helpt nu. Grijs: nog te vroeg. */
-const STAND_TEKST = {
-  goed:   { ico: '✓', kop: 'Past goed' },
-  vlot:   { ico: '↑', kop: 'Gaat vlot' },
-  pittig: { ico: '↓', kop: 'Even pittig' },
-  meer:   { ico: '★', kop: 'Klaar voor meer' },
-  stap:   { ico: '•', kop: 'Nieuwe stap' },
-  nieuw:  { ico: '•', kop: 'Net begonnen' },
-};
+   GEEN LABEL. Hier stond "Net begonnen", "Past goed", "Even pittig" en zo
+   verder (vgStand), op de kaart én in het overzicht. De meeste zeiden wat
+   haar volle rij nu laat zien, of wat het spel zelf al doet; alleen "Klaar
+   voor meer" vroeg de ouder iets. Op haar pagina is dat een knop ín haar rij
+   ("↑ Meer"), die de stap meteen doet, met ↶ Terug in de melding. In het
+   overzicht van alle sterren is het het enige label dat nog bestaat (vgLabel). */
 /* De stand van het label. Een tip (grensTip, telTip) gaat voor: dan is er iets
    voor de ouder te doen, en dat is het eerste wat die moet zien. Anders de
    uitdaging op deze stap; is die er nog niet, dan "nieuwe stap" (ze speelde al,
@@ -384,10 +373,8 @@ function vgStand(p) {
   if (u) return u.stand;
   return p.stap ? 'stap' : 'nieuw';
 }
-function vgLabel(stand) {
-  const t = STAND_TEKST[stand];
-  return `<span class="vg-tag ${stand}" data-stand="${stand}"><b aria-hidden="true">${t.ico}</b>${t.kop}</span>`;
-}
+// goud, met een teken ervoor: dan zegt het het ook zonder kleurenzicht
+const vgLabel = () => '<span class="vg-tag meer" data-stand="meer"><b aria-hidden="true">★</b>Klaar voor meer</span>';
 // De notitie over de stem staat los boven het leerpad, en alleen als er iets mis is.
 function stemKaartHtml(p) {
   const stem = stemAan(p) ? stemNotitie(p.name) : '';
@@ -455,32 +442,28 @@ const kaartKop = (titel, rechts) => `<div class="kaart-kop"><h2>${titel}</h2>${r
 // het kleine grijze label boven een veld in een kaart (zie kaartKop)
 const oeLbl = (tekst, teken) => `<div class="oe-lbl">${teken ? `<span class="oe-teken">${teken}</span>` : ''}${tekst}</div>`;
 const klaarNamen = namen => namen.length > 2 ? `${namen[0]} … ${namen[namen.length - 1]}` : namen.join(', ');
-/* Waar ze nu staat, en hoe ver ze op die stap is: { naam, vb, balk, waar }.
-   De themakaart laat haar rij vollopen (deel), het overzicht zet "waar" naast
-   haar naam: één bron, zodat die twee nooit iets anders zeggen. */
+/* Waar ze nu staat, en hoe ver ze op die stap is: { naam, vb, deel }. De
+   themakaart laat haar rij ermee vollopen. */
 function stapNu(p) {
   const s = p.settings;
   if (s.track === 'count') {
     const st = countLiveStage(p), top = countTopRung(st);
     const rung = Math.min(top, Math.max(0, (p.countTrack && p.countTrack.rung) || 0));
-    return { naam: COUNT_STAGE_LABELS[st], vb: COUNT_STAGE_VB[st], deel: rung / (top + 1), waar: `Fase ${st} van ${countMaxStage(s)}` };
+    return { naam: COUNT_STAGE_LABELS[st], vb: COUNT_STAGE_VB[st], deel: rung / (top + 1) };
   }
   if (!themaAan(s, 'rekenen')) return ladderStap(p, Object.keys(LADDERS).find(k => themaAan(s, k)));
   const nuId = padNu(p);
-  if (nuId === 'alles') return { naam: 'Alles door elkaar', vb: '', deel: 0, waar: '' };
+  if (nuId === 'alles') return { naam: 'Alles door elkaar', vb: '', deel: 0 };
   const speel = padRijen(s).rijen.filter(r => !r.uit);
   const nu = speel.find(r => r.id === nuId);
-  return { naam: nu.naam, vb: nu.vb, deel: rijDeel(p.pad && p.pad.rij === nuId ? p.pad : null),
-    waar: `Stap ${speel.indexOf(nu) + 1} van ${speel.length}` };
+  return { naam: nu.naam, vb: nu.vb, deel: rijDeel(p.pad && p.pad.rij === nuId ? p.pad : null) };
 }
 // Hetzelfde voor de ladder van tafels of geld (zie LADDERS): waar ze staat en hoe ver.
 function ladderStap(p, k) {
   const L = LADDERS[k], nuId = ladderNu(p, k);
-  if (nuId === 'alles') return { naam: L.eind, vb: '', deel: 0, waar: '' };
-  const { rijen, lo, hi } = ladderRijen(p.settings, k);
-  const nu = rijen[L.idx[nuId]];
-  return { naam: nu.naam, vb: nu.vb, deel: rijDeel(p[L.stand] && p[L.stand].rij === nuId ? p[L.stand] : null),
-    waar: `Stap ${L.idx[nuId] - lo + 1} van ${hi - lo + 1}` };
+  if (nuId === 'alles') return { naam: L.eind, vb: '', deel: 0 };
+  const nu = ladderRijen(p.settings, k).rijen[L.idx[nuId]];
+  return { naam: nu.naam, vb: nu.vb, deel: rijDeel(p[L.stand] && p[L.stand].rij === nuId ? p[L.stand] : null) };
 }
 /* HOE VER OP DEZE RIJ, van 0 tot 1: hoe ver ze is op de weg waarlangs ze hoe
    dan ook verder gaat ("toch", zie rijVerder). Dat zijn PAD_MAX_SHOWS goede
@@ -545,7 +528,7 @@ const themaKaarten = s => s.track === 'count' ? ['tellen'] : THEMAS.map(t => t.i
 function sterPaginaHtml(p, s) {
   const groepen = oefenGroups(s, '', p, { deel: k => k === 'tellen' || k === 'rekenen' ? stapNu(p).deel : ladderStap(p, k).deel });
   const show = groepen.find(g => g.kaart === 'show');
-  return `<div class="settings-panel">${sterCijfersHtml(p)}${stemKaartHtml(p)}${themaKaartHtml(s, p, show)}${themaKaarten(s).map(k => themaKaart(p, k, groepen)).join('')}</div>`;
+  return `<div class="settings-panel">${stemKaartHtml(p)}${themaKaartHtml(s, p, show)}${themaKaarten(s).map(k => themaKaart(p, k, groepen)).join('')}</div>`;
 }
 /* EÉN THEMA, ÉÉN KAART. Dicht staat de ladder om te lezen (leesLadder); ✏️
    rechtsboven zet dezelfde kaart open (setOpen), met wat oefenGroups voor dat
@@ -722,20 +705,44 @@ function zelfErbij(p) {
   }
   return null;
 }
-/* HAAR CIJFERS, in één regel onder haar naam: shows, % goed, sterren en
-   trofeeën, sinds het begin. Geen kaart en niets om open te klappen: een
-   ouder ziet het in één oogopslag, en het neemt bijna geen plaats in. Hier
-   stond een dichte kaart "Meer cijfers" onderaan, en daar keek niemand in.
+/* HAAR CIJFERS, in een eigen blad achter 📊 in de kop (openCijfers): shows,
+   % goed, sterren en trofeeën sinds het begin, en daaronder hoe goed het gaat
+   per thema. Kijken en aanpassen zijn zo twee plekken: de pagina zelf is om
+   te zetten wat ze oefent, en wie wil weten hoe het gaat, tikt op 📊. Hier
+   stond eerst een kaart "Meer cijfers" onderaan (daar keek niemand in), en
+   daarna een regel onder haar naam die op de pagina een plek innam voor iets
+   wat je zelden nodig hebt.
    De trofeeteller is een breuk; de noemer komt uit activeTrophies() -- dezelfde
    bron als de kop van de kast, zodat er nooit twee verschillende totalen in de
    app staan. */
-function sterCijfersHtml(p) {
+const procent = (goed, fout) => Math.round(100 * goed / (goed + fout));
+function cijfersBladHtml(p) {
   const shows = playedCount(p);
   const answered = p.stats.correct + p.stats.wrong;
   const delen = [`<b>${shows}</b> ${mv(shows, 'show', 'shows')}`];
-  if (answered) delen.push(`<b>${Math.round(100 * p.stats.correct / answered)}%</b> goed`);
-  delen.push(`<b>${totalStarCount(p)}</b> ⭐`, `<b>${earnedActiveCount(p)}/${activeTrophies().length}</b> 🏆`);
-  return `<div class="ster-cijfers">${delen.map(d => `<span>${d}</span>`).join('')}</div>`;
+  if (answered) delen.push(`<b>${procent(p.stats.correct, p.stats.wrong)}%</b> goed`);
+  delen.push(`<b>${totalStarCount(p)}</b> ⭐ sterren`, `<b>${earnedActiveCount(p)}/${activeTrophies().length}</b> 🏆 trofeeën`);
+  /* Per thema (stats.thema, zie telThema), in de volgorde van de tegels en
+     alleen wat ze al speelde -- ook een thema dat nu uit staat, want wat ze
+     deed blijft waar. Het balkje is het percentage; bij minder dan twee
+     thema's staat het er niet, want dan zegt het niets meer dan het totaal. */
+  const t = p.stats.thema || {};
+  const rijen = THEMAS.filter(th => t[th.id] && t[th.id][0] + t[th.id][1] > 0).map(th => {
+    const pct = procent(t[th.id][0], t[th.id][1]);
+    return `<div class="cijfer-thema"><span>${th.naam}</span><i style="--pct:${pct}%"></i><b>${pct}%</b></div>`;
+  });
+  return `<div class="ster-cijfers">${delen.map(d => `<span>${d}</span>`).join('')}</div>`
+    + (rijen.length > 1 ? `<div class="oe-lbl cijfer-kop">Goed per thema</div>${rijen.join('')}` : '');
+}
+function openCijfers() {
+  const p = setKey && db.profiles[setKey];
+  if (!p) return;
+  $('confirm-title').textContent = `${p.name} in cijfers`;
+  $('confirm-body').innerHTML = cijfersBladHtml(p);
+  $('confirm-actions').innerHTML = '<button class="btn small purple" id="cijfers-klaar">Klaar</button>';
+  $('cijfers-klaar').onclick = closeConfirmModal;
+  $('confirm-modal').classList.add('open');
+  syncBackGuard();
 }
 /* Kan dit toestel de stem laten horen? Een ouder ziet dat anders nergens: zonder
    stem blijft de telmodus speelbaar, maar valt de luisteroefening (fase 5) stil
@@ -1468,8 +1475,8 @@ function openWieBlad() {
   $('confirm-modal').classList.add('open');
   syncBackGuard();
 }
-/* Het overzicht: waar ⚙️ opent. Bovenaan elke ster als één rij, met hoe het
-   gaat met een label (vgLabel) -- wie
+/* Het overzicht: waar ⚙️ opent. Bovenaan elke ster als één rij, met wat ze
+   oefent, en een label (vgLabel) alleen bij wie er iets te doen is -- wie
    alleen even wil kijken, ziet het hier al voor alle kinderen tegelijk. Een tik
    opent haar pagina. "Nieuwe ster" is de laatste rij, met dezelfde gestreepte
    cirkel als de "+"-tegel op de sterrenkeuze; bij zes sterren is er geen plek
@@ -1478,28 +1485,22 @@ function openWieBlad() {
 function overzichtHtml() {
   const rij = key => {
     const p = db.profiles[key];
-    /* Onder haar naam: waar ze staat en hoe ver (stapNu, dezelfde regel als op
-       haar themakaart); het label staat naast haar naam. Hier stond "Net begonnen · 5
-       shows": het label was vaak voor elk kind hetzelfde, en het aantal shows
-       zegt een ouder weinig. Zo zie je zonder door te tikken hoe het met elk
-       kind gaat. Het label op de eerste regel en niet rechts: op 320 punten
-       hield de stap er dan geen letter meer over. */
-    /* De tweede regel zegt het in woorden: "Over het tiental · Stap 3 van 6".
-       Hier stonden bolletjes achter de stap (de shows met drie sterren), en
-       niemand zag wat die telden. Bij Zelf kiezen: ✋ en het eerste wat er
-       aangevinkt staat, "+2" voor de rest. */
-    let regel;
-    if (zelfGekozen(p.settings)) {
-      const z = zelfRijen(p.settings);
-      regel = `<span>✋ ${z.length ? z[0].naam : ''}</span>${z.length > 1 ? ` <em>+${z.length - 1}</em>` : ''}`;
-    } else {
-      const nu = stapNu(p);
-      regel = `<span>${nu.naam}</span>${nu.waar ? ` <em>· ${nu.waar}</em>` : ''}`;
-    }
+    /* Onder haar naam: wát ze oefent, als de icoontjes van de tegels op haar
+       pagina (bij tellen de 🧸). Hier stond haar stap met "Stap 3 van 5" en
+       een label ("Net begonnen", "Past goed" ...) bij elk kind: het label was
+       meestal grijs en voor iedereen hetzelfde, en "Stap 3 van 5" telde iets
+       wat je hier niet zag. Waar ze staat, en hoe ver, ziet een ouder op haar
+       pagina, in haar rij die volloopt.
+       Het label staat er alleen nog als de ouder iets kan doen ("Klaar voor
+       meer", zie vgStand): dan valt het op, juist omdat het er anders niet
+       staat. */
+    const iconen = p.settings.track === 'count'
+      ? '<span class="kaart-emoji">🧸</span>'
+      : themasAan(p.settings).map(k => themaIcoon(k, 22)).join('');
     return `<button class="ster-rij" type="button" data-key="${key}">`
       + `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
-      + `<span class="sr-tekst"><span class="sr-wie"><b>${esc(p.name)}</b>${vgLabel(vgStand(p))}</span>`
-      + `<small class="sr-stap">${regel}</small></span>`
+      + `<span class="sr-tekst"><span class="sr-wie"><b>${esc(p.name)}</b>${vgStand(p) === 'meer' ? vgLabel() : ''}</span>`
+      + `<span class="sr-themas" aria-label="Oefent ${p.settings.track === 'count' ? 'tellen' : themasAan(p.settings).map(k => THEMA[k].naam.toLowerCase()).join(', ')}">${iconen}</span></span>`
       + `<span class="sr-pijl" aria-hidden="true">›</span></button>`;
   };
   const nieuw = profileKeys().length < MAX_PROFILES
@@ -1555,7 +1556,7 @@ function speelAlsGekozen() {
 function speelAlsKnop(p) {
   const b = $('speel-als');
   if (!b) return;
-  b.hidden = !p;
+  b.hidden = $('cijfers-knop').hidden = !p;   // 📊 staat ernaast, en alleen op haar pagina (zie openCijfers)
   if (!p) return;
   b.setAttribute('aria-label', 'Speel als ' + p.name);
   b.title = 'Speel als ' + p.name;

@@ -210,7 +210,7 @@ const BRUG = `globalThis.__api = {
   PODIA_CAT, podiumStukken, podiumVanJou, podiumRest, podiumPrijs, podiumOpSlot, zichtbarePodia, podiumVan, bezit, tagStand,
   grantWorldRewards, grantHistoricRewards, checkTrophies,
   activeTrophies, isRetiredTrophy, earnedActiveCount, trophyProgress, unitText, trophyStatus,
-  trophyBoog, ladderStand, pwNaam, spreekbaar, telLeer, leerTel, telModus,
+  trophyBoog, ladderStand, pwNaam, spreekbaar, telLeer, telThema, leerTel, telModus,
   // tellers
   totalStarCount, perfectCount, playedCount, doneWorldCount, boughtCount,
   // opslag

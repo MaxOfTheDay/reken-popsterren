@@ -2718,4 +2718,20 @@ zaak('VV', () => {
   check(p.diamonds === 77 && p.level === 3 && JSON.stringify(p.stars) === JSON.stringify({ 1: 3, 2: 2 }), 'VV · een gezonde voortgang blijft precies staan');
 });
 
+/* ================= PT · Goed per thema =================
+   Elk antwoord telt bij het thema van zijn vraag (telThema, het plan van de
+   show), met dezelfde maat als stats.correct en stats.wrong. Tellen telt niet
+   mee, en een show zonder plan is rekenen. */
+zaak('PT', () => {
+  const { app, p } = verseSter('Thema');
+  app.run("G = { count: false, themaPlan: ['rekenen', 'klok', 'rekenen'], idx: 0 }");
+  app.telThema(p, true);
+  app.run('G.idx = 1'); app.telThema(p, false); app.telThema(p, true);
+  app.run('G.idx = 2'); app.telThema(p, true);
+  check(JSON.stringify(p.stats.thema) === '{"rekenen":[2,0],"klok":[1,1]}', 'PT · elk antwoord bij het thema van zijn vraag', JSON.stringify(p.stats.thema));
+  app.run('G = { count: true, idx: 0 }'); app.telThema(p, true);
+  app.run('G = { count: false, idx: 0 }'); app.telThema(p, false);
+  check(JSON.stringify(p.stats.thema) === '{"rekenen":[2,1],"klok":[1,1]}', 'PT · tellen telt niet, zonder plan is het rekenen', JSON.stringify(p.stats.thema));
+});
+
 klaar();

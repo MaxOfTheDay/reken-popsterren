@@ -242,8 +242,12 @@ function check(ok, label, detail) {
       speel: document.getElementById('speel-als').hidden,
       alle: !!document.getElementById('set-sound') && !!document.getElementById('set-backup'),
       naam: !!document.getElementById('set-name'),
+      // onder haar naam de icoontjes van wat ze oefent; een label alleen als er iets te doen is
+      themas: [...document.querySelectorAll('#set-sterren .ster-rij[data-key]')].map(b => b.querySelectorAll('.sr-themas .thema-ico').length),
+      labels: document.querySelectorAll('#set-sterren .vg-tag').length,
     }));
     check(r.setKey === null && r.rijen.join(',') === 'Anna,Bas,Cato', 'het tandwiel opent het overzicht, met elk kind als rij', JSON.stringify(r));
+    check(r.themas.every(n => n === 1) && r.labels === 0, 'onder elke naam wat ze oefent (rekenen), en geen label zonder iets te doen', JSON.stringify(r));
     check(r.laatste === 'set-newstar', 'en als laatste rij "Nieuwe ster"', r.laatste);
     check(r.titel && r.speel, 'het overzicht heeft een titel en geen ▶', JSON.stringify(r));
     check(r.alle && !r.naam, 'en daaronder wat voor alle sterren geldt -- niets van één kind', JSON.stringify(r));
@@ -751,11 +755,17 @@ function check(ok, label, detail) {
   /* FASE 5D.1. Alle tellers stonden in het meervoud, dus las een kind dat net
      één show had gespeeld "1 shows gespeeld". Wat hier vastligt is niet de
      tekst maar de regel: enkelvoud alléén bij precies 1 -- óók bij 0
-     ("0 shows"), want dat is Nederlands. De tellers staan in één regel onder
-     haar naam (sterCijfersHtml). */
+     ("0 shows"), want dat is Nederlands. De tellers staan in het blad achter
+     📊 in de kop (cijfersBladHtml). */
   {
     const { ctx, page } = await fresh();
-    const regel = async () => page.evaluate(() => [...document.querySelectorAll('.ster-cijfers span')].map(e => e.textContent.trim()));
+    const regel = async () => {
+      await page.click('#cijfers-knop');
+      await page.waitForTimeout(150);
+      const r = await page.evaluate(() => [...document.querySelectorAll('#confirm-body .ster-cijfers span')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
+      await page.click('#cijfers-klaar');
+      return r;
+    };
     // niets gespeeld: nul is meervoud, en nog geen % goed
     await open(page, 'p1', 'voortgang');
     await page.waitForTimeout(200);
@@ -777,7 +787,18 @@ function check(ok, label, detail) {
     await open(page, 'p1', 'voortgang');
     await page.waitForTimeout(200);
     r = await regel();
-    check(r[0] === '2 shows' && /^6 ⭐$/.test(r[2]), 'twee is weer meervoud', JSON.stringify(r));
+    check(r[0] === '2 shows' && /^6 ⭐ sterren$/.test(r[2]), 'twee is weer meervoud', JSON.stringify(r));
+    // per thema (stats.thema, zie telThema): pas vanaf twee thema's, met het percentage erbij
+    const perThema = async th => page.evaluate(th => {
+      db.profiles.p1.stats.thema = th; save(); openCijfers();
+      const r = [...document.querySelectorAll('#confirm-body .cijfer-thema')].map(e => e.textContent.trim());
+      closeConfirmModal();
+      return r;
+    }, th);
+    let t = await perThema({ rekenen: [9, 1] });
+    check(!t.length, 'cijfers: met één thema geen "Goed per thema" (dat zegt het totaal al)', JSON.stringify(t));
+    t = await perThema({ geld: [3, 1], rekenen: [9, 1], klok: [0, 0] });
+    check(JSON.stringify(t) === '["Rekenen90%","Geld75%"]', 'cijfers: per thema in de volgorde van de tegels, zonder wat ze niet speelde', JSON.stringify(t));
     await ctx.close();
   }
 
@@ -794,7 +815,9 @@ function check(ok, label, detail) {
       p.trophies.push('first', 'sums25');
       save();
       openSettings(); setKey = 'p1'; renderSettings();
-      const oogst = [...document.querySelectorAll('.ster-cijfers span')].map(e => e.textContent.trim());
+      openCijfers();
+      const oogst = [...document.querySelectorAll('#confirm-body .ster-cijfers span')].map(e => e.textContent.trim());
+      closeConfirmModal();
       cur = 'p1';        // de kast leest P(), en die heeft een gekozen ster nodig
       openTrophies();
       return {
@@ -1059,7 +1082,8 @@ function check(ok, label, detail) {
       balk: [...document.querySelectorAll('#settings-body .vg-ladder .hier')].filter(e => e.style.getPropertyValue('--vul')).length
         - document.querySelectorAll('#settings-body .vg-balk').length,
       knop: (document.querySelector('#settings-body .kaart-tip') || {}).id || '',
-      cijfers: document.querySelectorAll('#settings-body .ster-cijfers').length,
+      // haar cijfers staan niet op de pagina maar achter 📊 in de kop
+      cijfers: !document.querySelector('#settings-body .ster-cijfers') && !document.getElementById('cijfers-knop').hidden,
       meerKaart: document.querySelectorAll('#settings-body .vg-meer').length,
       lastig: [...document.querySelectorAll('#settings-body .thema-kaart .vg-lastig .practice-chip')].map(e => e.textContent + (e.classList.contains('verborgen') ? '~' : '')),
       nu: document.querySelectorAll('.vg-ladder .hier').length,
@@ -1083,7 +1107,7 @@ function check(ok, label, detail) {
       'P · rekenen, zonder lastige sommen: alleen de kaart Rekenen', JSON.stringify(r.kaarten));
     check(r.oud === 0 && !r.labels.length && !r.onder, 'P · geen statuskaart, geen label en geen regel onder haar stap', JSON.stringify(r));
     check(r.balk === 1, 'P · haar rij loopt vol, zonder apart balkje', String(r.balk));
-    check(r.cijfers === 1 && !r.meerKaart && !r.lastig.length, 'P · haar cijfers in één regel, geen kaart "Meer cijfers", geen regel Lastig', JSON.stringify(r));
+    check(r.cijfers && !r.meerKaart && !r.lastig.length, 'P · haar cijfers achter 📊, geen kaart "Meer cijfers", geen regel Lastig', JSON.stringify(r));
     // een tik op haar stap: één regel uitleg eronder, nog een tik en hij is weg
     await page.click('#settings-body [data-uitleg="rekenen"]');
     await page.waitForTimeout(150);

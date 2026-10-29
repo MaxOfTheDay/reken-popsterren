@@ -94,12 +94,10 @@
   .sr-tekst { flex: 1; min-width: 0; }
   .sr-tekst b { display: block; font-size: var(--tx-body); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sr-tekst small { display: block; font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); margin-top: 2px; }
-  /* waar ze staat (stapNu): de naam van haar stap, en daarachter in woorden
-     hoe ver ("· Stap 3 van 6"), of bij Zelf kiezen "+2". De naam krimpt als
-     het niet past; het stuk erachter blijft heel. */
-  .sr-tekst .sr-stap { display: flex; align-items: baseline; gap: 4px; color: var(--paper-ink); font-weight: 700; }
-  .sr-stap > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .sr-stap em { flex: none; font-style: normal; font-weight: 600; color: var(--paper-ink-muted); }
+  /* wat ze oefent: de icoontjes van haar thema's, zoals op de tegels van haar
+     pagina. Zes passen ook op 320 punten. */
+  .sr-themas { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+  .sr-themas .kaart-emoji { font-size: 20px; }
   .sr-wie { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .sr-wie b { min-width: 0; }
   .sr-wie .vg-tag { flex: none; }
@@ -129,6 +127,17 @@
     .btn.speel-als { width: var(--hud-h); height: var(--hud-h); font-size: 24px; }
   }
   .speel-als[hidden] { display: none; }
+  /* 📊 (zie openCijfers) vlak voor ▶: een gewone ronde kopknop, even groot als ←.
+     De rechterkant van de kop wordt daarvoor een rij. */
+  #screen-settings .header-right { display: flex; align-items: center; gap: 8px; }
+  .cijfers-knop { font-size: 18px; }
+  .cijfers-knop[hidden] { display: none; }
+  /* Op een smalle telefoon (320) hield haar naam tussen ← en twee knoppen nog
+     twee letters over: de knoppen rechts krimpen daar naar 38, zoals in de lage kop. */
+  @media (max-width: 359px) {
+    #screen-settings .hub-sticky .cijfers-knop, #screen-settings .speel-als { width: 38px; height: 38px; font-size: 16px; }
+    #screen-settings .header-right { gap: 6px; }
+  }
   /* de getekende ▶ (zie .ico): als teken werd hij op een iPhone een emoji-knopje.
      Een tikje naar rechts, want een driehoek met zijn punt naar rechts staat
      optisch pas in het midden als zijn zwaartepunt daar staat. */
@@ -757,25 +766,18 @@
   .kaart-kop h2 span { color: var(--paper-ink-muted); font-weight: 600; }
 
   /* ---- De pagina van één ster: haar cijfers, de themakaarten, lastige sommen (zie sterPaginaHtml) ---- */
-  /* Het label (zie vgLabel): één woord met een teken ervoor. De kleur zegt wie
-     er aan zet is, het teken en het woord zeggen het ook zonder kleurenzicht.
-     Alleen nog op het overzicht, in de rij van elke ster. */
+  /* Het label (zie vgLabel): "Klaar voor meer", goud met een ★ ervoor. Alleen
+     nog op het overzicht, in de rij van een ster waar de ouder iets kan doen. */
   .vg-tag {
     display: inline-flex; align-items: center; gap: 5px; flex: none; white-space: nowrap; vertical-align: middle;
     padding: 4px 10px 4px 5px; border-radius: var(--r-pill);
     font-size: var(--tx-klein); font-weight: 700; line-height: 1.1;
-    background: var(--lavender-wash); color: var(--paper-ink-muted);
+    background: var(--goud-tint); color: var(--ink-on-gold-card);
   }
   .vg-tag b, .sr-tekst .vg-tag b {
     display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%;
-    font-size: 11px; font-weight: 800; line-height: 1; color: var(--c-white); background: var(--paper-ink-muted);
+    font-size: 11px; font-weight: 800; line-height: 1; color: var(--c-white); background: var(--ink-on-gold-card);
   }
-  .vg-tag.goed { background: var(--stat-green-bg); color: var(--stat-green-tekst); }
-  .vg-tag.goed b { background: var(--stat-green-tekst); }
-  .vg-tag.vlot, .vg-tag.meer { background: var(--goud-tint); color: var(--ink-on-gold-card); }
-  .vg-tag.vlot b, .vg-tag.meer b { background: var(--ink-on-gold-card); }
-  .vg-tag.pittig { background: var(--practice-bg); color: var(--practice-text); }
-  .vg-tag.pittig b { background: var(--practice-text); }
   /* Haar rij loopt van links vol (zie metVul, rijDeel): hoe ver ze op weg is
      naar de volgende stap. Geen tekst, geen getal, geen eigen balkje -- en dus
      ook geen hogere rij. Een harde grens, geen verloop: een verloop las als
@@ -869,12 +871,23 @@
   .vg-lastig .practice-chip { padding: 3px 10px; font-size: var(--tx-klein); }
   .vg-lastig .practice-chip.verborgen { display: none; }
   .vg-lastig .lastig-meer { cursor: pointer; font-family: inherit; background: var(--lavender-wash); border-color: transparent; color: var(--paper-ink-muted); }
-  /* Haar cijfers, in één regel op de donkere band onder haar naam (zie sterCijfersHtml) */
-  .ster-cijfers {
-    display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; margin: -2px 0 2px;
-    font-size: var(--tx-klein); font-weight: 600; color: rgba(255, 255, 255, .72);
+  /* Haar cijfers, in het blad achter 📊 (zie cijfersBladHtml): vier tegels,
+     het getal groot en het woord eronder, en per thema een balkje. */
+  .ster-cijfers { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ster-cijfers span {
+    display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 6px;
+    border-radius: var(--r-md); background: var(--lavender-wash);
+    font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted);
   }
-  .ster-cijfers b { color: var(--c-white); }
+  .ster-cijfers b { font-size: 26px; font-weight: 700; color: var(--paper-ink); line-height: 1.1; }
+  .cijfer-kop { justify-content: center; margin-top: 18px; }
+  .cijfer-thema { display: flex; align-items: center; gap: 10px; margin: 6px 0; font-size: var(--tx-klein); }
+  .cijfer-thema span { flex: 0 0 92px; font-weight: 700; color: var(--paper-ink-muted); }
+  .cijfer-thema i {
+    flex: 1; height: 10px; border-radius: 5px;
+    background: linear-gradient(90deg, var(--purple-mid) var(--pct), var(--lavender-wash) var(--pct));
+  }
+  .cijfer-thema b { flex: 0 0 42px; text-align: right; color: var(--paper-ink); }
   /* Zelf gekozen: losse keuzes, geen pad -- dus ook geen padlijn tussen de bolletjes */
   .vg-zelf > .fl-rij::before, .vg-zelf > .fl-rij::after { display: none; }
   .vg-kaart > .note { margin-top: 8px; }

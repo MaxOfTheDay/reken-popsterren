@@ -1068,6 +1068,7 @@ function antwoordGoed(q, p, btnEl) {
   else if (q.kind === 'chain') updateChainAcc(p, true, firstTry);
   else if (q.count) updateCountAcc(p, true, firstTry);
   p.stats.correct++;
+  telThema(p, true);
   telLeer(p, q);   // over het tiental, zoek het getal, drie getallen (zie de plank Nieuwe sommen)
   // enkel een directe treffer telt als "beheerst" -- en zet het onderhoudsinterval
   // van een al geleerde som verder vooruit (zie toLearned/bumpLearned)
@@ -1173,12 +1174,26 @@ function antwoordGoed(q, p, btnEl) {
   // intussen gestopt (of al een nieuwe begonnen), dan is er geen volgende vraag.
   zegEnDan(lof, null, rust, () => { if (G === g) nextStep(); });
 }
+/* Goed en fout per thema, voor "Goed per thema" in haar cijfers (zie
+   cijfersBladHtml): [goed, fout], met dezelfde maat als stats.correct en
+   stats.wrong ernaast. Het thema van de vraag staat in het plan van de show
+   (themaPlan); zonder plan is het rekenen. Tellen telt niet mee: daar is maar
+   één thema, en dat zegt het totaal al. Telt pas sinds het er is -- wie ervoor
+   speelde, begint hier op nul, en dat is eerlijker dan het totaal verdelen. */
+function telThema(p, goed) {
+  if (G.count) return;
+  const k = (G.themaPlan && G.themaPlan[G.idx]) || 'rekenen';
+  if (!p.stats.thema) p.stats.thema = {};
+  const r = p.stats.thema[k] || (p.stats.thema[k] = [0, 0]);
+  r[goed ? 0 : 1]++;
+}
 /* Een fout antwoord (zachte, vriendelijke animatie). Wat élke misser doet staat
    hier; daarna splitst het in de eerste (een hint, nog een kans) en de tweede
    (de vraag is gemist, en het antwoord komt). */
 function antwoordFout(q, p, val, btnEl) {
   updatePerf(p, false, false);
   p.stats.wrong++;
+  telThema(p, false);
   incWeak(p, q);                                  // deze som vaker laten terugkomen
   demoteLearned(p, q);                            // stond hij in onderhoud? dan is hij weer zwak
   G.streak = 0;
