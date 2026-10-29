@@ -90,7 +90,7 @@ function check(ok, label, detail) {
   const open = (page, key, tab) => page.evaluate(([k, t]) => {
     openSettings();
     if (k) setKey = k;
-    if (t === 'oefenen') { setOpen = true; setUitgeklapt = true; }
+    if (t === 'oefenen') setOpen = true;
     renderSettings();
     if (t === 'beheer') openWieBlad();
   }, [key, tab]);
@@ -748,58 +748,36 @@ function check(ok, label, detail) {
   }
 
   /* ================= K · Eén of meer ================= */
-  /* FASE 5D.1. Alle tellers op Voortgang stonden in het meervoud, dus las een
-     kind dat net één show had gespeeld "1 shows gespeeld". Wat hier vastligt is
-     niet de tekst maar de regel: enkelvoud alléén bij precies 1 -- óók bij 0
-     ("0 shows"), want dat is Nederlands. */
+  /* FASE 5D.1. Alle tellers stonden in het meervoud, dus las een kind dat net
+     één show had gespeeld "1 shows gespeeld". Wat hier vastligt is niet de
+     tekst maar de regel: enkelvoud alléén bij precies 1 -- óók bij 0
+     ("0 shows"), want dat is Nederlands. De tellers staan in één regel onder
+     haar naam (sterCijfersHtml). */
   {
     const { ctx, page } = await fresh();
-    const kaarten = async () => page.evaluate(() => ({
-      tegels: [...document.querySelectorAll('.vg-getal')].map(e => e.textContent.trim()),
-      oogst: [...document.querySelectorAll('.oogst-item')].map(e => e.textContent.trim()),
-    }));
-    // niets gespeeld: nul is meervoud
+    const regel = async () => page.evaluate(() => [...document.querySelectorAll('.ster-cijfers span')].map(e => e.textContent.trim()));
+    // niets gespeeld: nul is meervoud, en nog geen % goed
     await open(page, 'p1', 'voortgang');
     await page.waitForTimeout(200);
-    let r = await kaarten();
-    check(r.tegels[0] === '0 shows' && r.tegels[1] === '0 sommen',
-      'nul is meervoud (0 shows, 0 sommen)', JSON.stringify(r.tegels));
-    check(/0 sterren/.test(r.oogst[0]) && /0 perfecte shows/.test(r.oogst[1]),
-      'en dat geldt ook voor de oogstregel', JSON.stringify(r.oogst));
-    // precies één van alles
+    let r = await regel();
+    check(r[0] === '0 shows' && !r.some(t => /goed/.test(t)), 'nul is meervoud (0 shows), en zonder antwoorden geen % goed', JSON.stringify(r));
+    // precies één
     await page.evaluate(() => {
       const p = db.profiles.p1;
-      p.stars[1] = 1;                       // één show, één ster, geen perfecte
+      p.stars[1] = 1;
       p.stats.correct = 1; p.stats.wrong = 0;
       save();
     });
     await open(page, 'p1', 'voortgang');
     await page.waitForTimeout(200);
-    r = await kaarten();
-    check(r.tegels[0] === '1 show', 'één show is enkelvoud', JSON.stringify(r.tegels));
-    check(r.tegels[1] === '1 som', 'één som is enkelvoud', JSON.stringify(r.tegels));
-    check(/\b1 ster\b/.test(r.oogst[0]), 'één ster is enkelvoud', JSON.stringify(r.oogst));
-    // en in de telmodus heet een som een vraag
-    await page.evaluate(() => { db.profiles.p1.settings.track = 'count'; save(); });
+    r = await regel();
+    check(r[0] === '1 show' && r[1] === '100% goed', 'één show is enkelvoud', JSON.stringify(r));
+    // twee: weer meervoud
+    await page.evaluate(() => { const p = db.profiles.p1; p.stars[1] = 3; p.stars[2] = 3; save(); });
     await open(page, 'p1', 'voortgang');
     await page.waitForTimeout(200);
-    r = await kaarten();
-    check(r.tegels[1] === '1 vraag', 'in de telmodus is het één vraag', JSON.stringify(r.tegels));
-    // twee: alles weer meervoud
-    await page.evaluate(() => {
-      const p = db.profiles.p1;
-      p.stars[1] = 3; p.stars[2] = 3;       // twee shows, zes sterren, twee perfect
-      p.stats.correct = 2;
-      db.profiles.p1.settings.track = 'math';
-      save();
-    });
-    await open(page, 'p1', 'voortgang');
-    await page.waitForTimeout(200);
-    r = await kaarten();
-    check(r.tegels[0] === '2 shows' && r.tegels[1] === '2 sommen',
-      'twee is weer meervoud', JSON.stringify(r.tegels));
-    check(/6 sterren/.test(r.oogst[0]) && /2 perfecte shows/.test(r.oogst[1]),
-      'ook in de oogstregel', JSON.stringify(r.oogst));
+    r = await regel();
+    check(r[0] === '2 shows' && /^6 ⭐$/.test(r[2]), 'twee is weer meervoud', JSON.stringify(r));
     await ctx.close();
   }
 
@@ -816,11 +794,11 @@ function check(ok, label, detail) {
       p.trophies.push('first', 'sums25');
       save();
       openSettings(); setKey = 'p1'; renderSettings();
-      const oogst = [...document.querySelectorAll('.oogst-item')].map(e => e.textContent.trim());
+      const oogst = [...document.querySelectorAll('.ster-cijfers span')].map(e => e.textContent.trim());
       cur = 'p1';        // de kast leest P(), en die heeft een gekozen ster nodig
       openTrophies();
       return {
-        teller: oogst[2],
+        teller: oogst.find(t => /🏆/.test(t)) || '',
         bron: `${earnedActiveCount(p)}/${activeTrophies().length}`,
         kast: document.getElementById('trophy-count').getAttribute('aria-label'),
         actief: activeTrophies().length,
@@ -1068,18 +1046,21 @@ function check(ok, label, detail) {
   /* Eén kaart per thema: haar stap met een balkje, en geen label (zie
      sterPaginaHtml). Alleen als er iets voor de ouder te doen is, staat er een
      knop in haar rij ("↑ Meer"), en die doet de stap meteen -- met ↶ Terug in
-     de melding. De tellers sinds het begin staan dicht onder Meer cijfers. */
+     de melding. De tellers sinds het begin staan in één regel onder haar naam,
+     en de lastige sommen onderaan het thema waar ze bij horen. */
   {
     const { ctx, page } = await fresh();
     const lees = async () => page.evaluate(() => ({
       // de naam van de kaart, zonder de tekens in het icoontje ervoor
-      kaarten: [...document.querySelectorAll('#settings-body .vg-kaart:not(.vg-meer) > .kaart-kop h2')]
+      kaarten: [...document.querySelectorAll('#settings-body .vg-kaart > .kaart-kop h2')]
         .map(e => [...e.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim()),
       labels: [...document.querySelectorAll('#settings-body .vg-tag')].map(e => e.dataset.stand),
       onder: document.querySelectorAll('#settings-body .vg-onder').length,
       balk: document.querySelectorAll('#settings-body .vg-ladder .hier .vg-balk').length,
       knop: (document.querySelector('#settings-body .kaart-tip') || {}).id || '',
-      meerOpen: document.querySelector('.vg-meer').open,
+      cijfers: document.querySelectorAll('#settings-body .ster-cijfers').length,
+      meerKaart: document.querySelectorAll('#settings-body .vg-meer').length,
+      lastig: [...document.querySelectorAll('#settings-body .thema-kaart .vg-lastig .practice-chip')].map(e => e.textContent + (e.classList.contains('verborgen') ? '~' : '')),
       nu: document.querySelectorAll('.vg-ladder .hier').length,
       oud: document.querySelectorAll('.vg-status, .vg-reeks').length,
     }));
@@ -1096,12 +1077,20 @@ function check(ok, label, detail) {
       await page.waitForTimeout(150);
       return lees();
     };
-    let r = await met([]);
+    let r = await met([]), t0;
     check(r.kaarten.join() === 'Rekenen',
-      'P · rekenen, zonder lastige sommen: alleen de kaart Rekenen (en Meer cijfers)', JSON.stringify(r.kaarten));
+      'P · rekenen, zonder lastige sommen: alleen de kaart Rekenen', JSON.stringify(r.kaarten));
     check(r.oud === 0 && !r.labels.length && !r.onder, 'P · geen statuskaart, geen label en geen regel onder haar stap', JSON.stringify(r));
     check(r.balk === 1, 'P · wel een balkje onder haar stap', String(r.balk));
-    check(r.meerOpen === false, 'P · "meer cijfers" staat dicht', String(r.meerOpen));
+    check(r.cijfers === 1 && !r.meerKaart && !r.lastig.length, 'P · haar cijfers in één regel, geen kaart "Meer cijfers", geen regel Lastig', JSON.stringify(r));
+    // een tik op haar stap: één regel uitleg eronder, nog een tik en hij is weg
+    await page.click('#settings-body [data-uitleg="rekenen"]');
+    await page.waitForTimeout(150);
+    t0 = await page.evaluate(() => ({ uitleg: (document.querySelector('.vg-uitleg') || {}).textContent || '', open: document.querySelector('[data-uitleg="rekenen"]').getAttribute('aria-expanded') }));
+    check(/Nog 2 topshows.*op rij of 8 shows/.test(t0.uitleg) && t0.open === 'true', 'P · tik op haar stap: hoeveel topshows of shows nog', JSON.stringify(t0));
+    await page.click('#settings-body [data-uitleg="rekenen"]');
+    await page.waitForTimeout(150);
+    check(!(await page.$('.vg-uitleg')), 'P · nog een tik: de uitleg is weg', '');
     check(r.nu === 1, 'P · er is precies één stap "nu" op het pad', String(r.nu));
     for (const [recent, wat] of [[[3, 2, 3, 2, 3, 3, 2, 3], 'past goed'], [[3, 3, 3, 3, 3], 'gaat vlot'], [[3, 3, 3, 3, 3, 3, 3, 0, 0, 0], 'even pittig']]) {
       r = await met(recent);
@@ -1122,10 +1111,16 @@ function check(ok, label, detail) {
     t = await page.evaluate(() => ({ max: db.profiles.p1.settings.max, knop: !!document.getElementById('grens-tip-ja') }));
     check(t.max === 20 && t.knop, 'P · ↶ Terug zet het terug', JSON.stringify(t));
     await page.evaluate(() => { const p = db.profiles.p1; p.pad = null; delete p.grensDrie; p.settings.mode = 'kies'; save(); });
-    // lastige sommen: dan is er een kaart
-    await page.evaluate(() => { db.profiles.p1.weak = { '8 + @ = 13': { w: 3, ans: 5 } }; save(); });
+    // lastige sommen: onderaan Rekenen, hoogstens twee en dan "+N"
+    await page.evaluate(() => { db.profiles.p1.weak = { '8 + @ = 13': { w: 3, ans: 5 }, '7 + 8 = @': { w: 2, ans: 15, op: '+' },
+      '13 - 6 = @': { w: 1, ans: 7, op: '-' }, '9 + 4 = @': { w: 1, ans: 13, op: '+' }, '7 × 8 = @': { w: 5, ans: 56, op: 'x' } }; save(); });
     r = await met([3, 2, 3]);
-    check(r.kaarten.length === 2 && /extra/.test(r.kaarten[1]), 'P · met lastige sommen staat "Oefent extra op" er', JSON.stringify(r.kaarten));
+    check(r.kaarten.join() === 'Rekenen' && JSON.stringify(r.lastig) === '["8 + 5 = 13","7 + 8","13 − 6~","9 + 4~","+2"]',
+      'P · lastige sommen onderaan Rekenen: twee, dan "+2" (een tafelsom hoort daar niet bij)', JSON.stringify(r));
+    await page.click('#settings-body .lastig-meer');
+    await page.waitForTimeout(100);
+    r = await lees();
+    check(r.lastig.length === 4 && !r.lastig.some(t => /~/.test(t)), 'P · een tik op "+2" zet ze er allemaal', JSON.stringify(r.lastig));
     // de telmodus heeft geen sommenkaart
     r = await met([3, 3, 3, 3], { track: 'count', stage: 1, stageMax: 12, numerals: true });
     check(r.kaarten.length === 1 && !/extra/.test(r.kaarten.join(' ')),
@@ -1309,8 +1304,8 @@ function check(ok, label, detail) {
       eind: !!document.querySelector('#set-startstap .fl-rij.eind.hier'),
       uitklap: !!document.querySelector('#set-startstap .fl-uitklap'),
       terug: backTarget() === ouderTerug }));
-    check(r.open === 'rekenen' && r.pen === '✓' && oe === vg && r.eind,
-      'S · ✏️ zet dezelfde kaart open, met haar op dezelfde stap, en wordt een ✓', JSON.stringify({ ...r, oe }));
+    check(r.open === 'rekenen' && r.pen === '✓' && oe === vg && r.eind && !r.uitklap,
+      'S · ✏️ zet dezelfde kaart open, met haar op dezelfde stap, de hele ladder, en wordt een ✓', JSON.stringify({ ...r, oe }));
     await page.evaluate(() => ouderTerug());
     await page.waitForTimeout(200);
     r = await page.evaluate(() => ({ open: setOpen, key: setKey }));
@@ -1368,7 +1363,8 @@ function check(ok, label, detail) {
         const eerste = k.tagName === 'DETAILS' ? k.querySelector('summary').firstElementChild : k.firstElementChild;
         return !(eerste && eerste.classList.contains('kaart-kop'));
       }).map(k => k.className);
-      const stijl = [...document.querySelectorAll('#settings-body .kaart-kop h2')].map(h => {
+      // de kleine grijze koppen (Wat en Hoe, .klein) zijn bewust anders: een vraag boven een bediening
+      const stijl = [...document.querySelectorAll('#settings-body .kaart-kop:not(.klein) h2')].map(h => {
         const c = getComputedStyle(h); return c.fontSize + ' ' + c.fontWeight + ' ' + c.color;
       });
       return { n: kaarten.length, zonder, stijl, oud: document.querySelectorAll('#settings-body .vg-kop, #settings-body .vg-kop-rij').length };

@@ -9780,15 +9780,31 @@
 
 
 
-  .thema-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+  .thema-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .thema-bar .chip.thema, .thema-bar .chip.thema:hover {
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-    min-width: 0; min-height: 64px; padding: 9px 4px 8px; border: none; border-radius: 14px; box-shadow: none;
-    background: var(--lavender-wash); color: var(--purple-mid); font-size: var(--tx-label); font-weight: 700; line-height: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    min-width: 0; min-height: 52px; padding: 5px 2px; border: none; border-radius: 12px; box-shadow: none;
+    background: var(--lavender-wash); color: var(--purple-mid); font-size: var(--tx-klein); font-weight: 700; line-height: 1;
   }
+  .thema-bar .chip.thema .thema-ico { width: 22px; height: 22px; }
   .thema-bar .chip.thema.on { background: var(--purple-mid); color: var(--c-white); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
   .thema-bar .chip.thema:not(.on) .thema-ico { filter: grayscale(1); opacity: .55; }
-  .thema-naad { height: 1px; margin: 14px 2px 12px; background: var(--lavender-wash); }
+
+
+
+
+  .oe-regel { display: flex; align-items: center; gap: 10px; }
+  .oe-regel + .oe-regel { margin-top: 8px; }
+  .oe-regel-lbl { flex: 0 0 76px; font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
+  .oe-regel > :not(.oe-regel-lbl) { flex: 1; min-width: 0; }
+  .oe-regel .oe-seg .chip { height: 36px; font-size: var(--tx-klein); padding: 0 2px; }
+  .oe-regel .oe-mix { justify-content: flex-start; margin: 0; padding-left: 4px; }
+
+
+
+  .oe-regel.breed { flex-wrap: wrap; row-gap: 6px; }
+  .oe-regel.breed > :not(.oe-regel-lbl) { flex: 1 1 250px; }
 
   .oefen-kaart .kaart-kop h2 .thema-ico { vertical-align: -4px; margin-right: 7px; }
 
@@ -10119,8 +10135,13 @@
 
 
 
+
+
+
+
   .kaart-kop { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; margin: 0 2px 10px; }
-  .kaart-kop h2 { margin: 0; white-space: nowrap; font-size: var(--tx-body); font-weight: 700; color: var(--purple-mid); }
+  .kaart-kop h2 { margin: 0; white-space: nowrap; font-size: var(--tx-body); font-weight: 700; color: var(--paper-ink); }
+  .kaart-kop.klein h2 { font-size: var(--tx-label); color: var(--paper-ink-muted); }
   .kaart-kop h2 span { color: var(--paper-ink-muted); font-weight: 600; }
 
 
@@ -10183,14 +10204,13 @@
   .vg-ladder > .fl-rij::before { top: 0; height: calc(50% - 13px); }
   .vg-ladder > .fl-rij::after { bottom: 0; height: calc(50% - 13px); }
   .vg-ladder > .fl-rij.klaar::after, .vg-ladder > .fl-rij.hier::before { background: var(--purple-light); }
-  .vg-ladder > .fl-rij.vg-gat::before, .vg-ladder > .fl-rij.vg-gat::after {
-    left: 19.5px; width: 3px; height: 50%; border-radius: 0;
-    background: radial-gradient(circle, var(--purple-light) 1.5px, transparent 2px) center top / 3px 6px repeat-y;
-  }
+  .vg-ladder > .fl-rij.vg-gat::before, .vg-ladder > .fl-rij.vg-gat::after { height: 50%; border-radius: 0; }
   .vg-ladder > .fl-rij:first-child::before, .vg-ladder > .fl-rij:last-child::after,
   .vg-ladder > .fl-rij:has(+ .fl-lijn)::after { display: none; }
 
-  .vg-gat .fl-n { background: none !important; color: transparent; }
+  .vg-gat .fl-n { background: none !important; visibility: hidden; }
+  .vg-ladder > .fl-rij.vg-gat { min-height: 30px; }
+  .vg-gat .fl-naam { color: var(--paper-ink-muted); font-weight: 600; }
 
 
 
@@ -10221,38 +10241,31 @@
   .thema-kaart.open .fase-ladder.naad .fl-rij:not(.hier) .fl-n { background: var(--lavender-wash-3); color: var(--purple-mid); }
   .fase-ladder.naad .fl-rij.hier .vg-balk { position: absolute; left: 44px; bottom: 3px; height: 5px; margin: 0; width: min(150px, calc(100% - 150px)); }
 
-  .fase-ladder .fl-uitklap { cursor: pointer; font: inherit; font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); min-height: 30px; }
-  .fase-ladder .fl-uitklap .fl-n { background: none; color: var(--purple-light); font-size: 18px; }
-  .vg-vlot { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
-  .vg-vlot span {
-    padding: 3px 10px; border-radius: var(--r-pill); border: 1.5px solid var(--paper-border); background: var(--paper-tint);
+
+
+  .vg-ladder > .fl-rij.hier[data-uitleg] { cursor: pointer; }
+  .vg-ladder > .fl-rij.uitleg-open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+  .vg-uitleg {
+    margin: 0 0 4px; padding: 0 12px 9px 44px; border-radius: 0 0 12px 12px; background: var(--lavender-wash);
     font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted);
   }
-  .vg-vlot b { color: var(--paper-ink); margin-right: 2px; }
+  .vg-uitleg b { color: var(--paper-ink); }
+
+  .vg-lastig { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 2px 0; padding-top: 10px; border-top: 1px solid var(--lavender-wash); }
+  .vg-lastig > span:first-child { margin-right: 2px; font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
+  .vg-lastig .practice-chip { padding: 3px 10px; font-size: var(--tx-klein); }
+  .vg-lastig .practice-chip.verborgen { display: none; }
+  .vg-lastig .lastig-meer { cursor: pointer; font-family: inherit; background: var(--lavender-wash); border-color: transparent; color: var(--paper-ink-muted); }
+
+  .ster-cijfers {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; margin: -2px 0 2px;
+    font-size: var(--tx-klein); font-weight: 600; color: rgba(255, 255, 255, .72);
+  }
+  .ster-cijfers b { color: var(--c-white); }
 
   .vg-zelf > .fl-rij::before, .vg-zelf > .fl-rij::after { display: none; }
   .vg-kaart > .note { margin-top: 8px; }
-  .vg-noot { margin-top: 10px; }
-  .practice-chips { display: flex; flex-wrap: wrap; gap: 7px; }
   .practice-chip { background: var(--practice-bg); border: 1px solid var(--gold-light); color: var(--practice-text); border-radius: var(--r-pill); padding: 6px 13px; font-weight: 700; font-size: var(--tx-label); }
-
-  .vg-meer { padding-top: 12px; padding-bottom: 12px; }
-  .vg-meer > summary { list-style: none; cursor: pointer; display: flex; align-items: center; min-height: 32px; color: var(--purple-mid); }
-  .vg-meer > summary .kaart-kop { flex: 1; margin: 0 2px; }
-  .vg-meer > summary::-webkit-details-marker { display: none; }
-  .vg-meer > summary::after { content: '▾'; margin-left: auto; opacity: .7; }
-  .vg-meer[open] > summary::after { content: '▴'; }
-
-
-
-
-
-  .vg-cijfers {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 8px; margin: 10px 2px 2px;
-    font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted);
-  }
-  .vg-cijfers b { display: block; font-size: var(--tx-sub); font-weight: 700; line-height: 1.1; color: var(--paper-ink); }
-  .vg-cijfers-lijn { grid-column: 1 / -1; height: 1px; margin: -4px 0; background: var(--paper-border); }
 
   .stem-notitie { margin-top: 10px; }
   .vg-kaart > .stem-notitie:first-child { margin-top: 0; }
@@ -29120,14 +29133,15 @@ let setKey = null;
 
 let setOpen = null;
 
-let setUitgeklapt = false;
+
+let setUitleg = null;
 function openSettings() {
 
 
 
 
   setKey = null;
-  setOpen = null;
+  setOpen = setUitleg = null;
   renderSettings();
   toonHub('screen-settings');
 
@@ -29152,10 +29166,11 @@ function ouderTerug() {
 function openSter(key) {
   sndClick();
   setKey = key;
-  setOpen = null;
+  setOpen = setUitleg = null;
   renderSettings();
   settingsToTop();
 }
+
 
 
 
@@ -29271,6 +29286,7 @@ const flVb = vb => (vb || '').replace('▢', '<i class="fl-vak"></i>');
 
 
 
+
 const kaartKop = (titel, rechts) => `<div class="kaart-kop"><h2>${titel}</h2>${rechts || ''}</div>`;
 
 const oeLbl = (tekst, teken) => `<div class="oe-lbl">${teken ? `<span class="oe-teken">${teken}</span>` : ''}${tekst}</div>`;
@@ -29345,11 +29361,11 @@ function rijenKiesStart(s, p) {
 
 const themaKaarten = s => s.track === 'count' ? ['tellen'] : THEMAS.map(t => t.id).filter(k => themaAan(s, k));
 function sterPaginaHtml(p, s) {
-  const groepen = oefenGroups(s, '', p, { inklappen: !setUitgeklapt, balk: k => k === 'tellen' || k === 'rekenen' ? stapNu(p).balk : ladderStap(p, k).balk });
+  const groepen = oefenGroups(s, '', p, { balk: k => k === 'tellen' || k === 'rekenen' ? stapNu(p).balk : ladderStap(p, k).balk });
   const show = groepen.find(g => g.kaart === 'show');
-  return `<div class="settings-panel">${stemKaartHtml(p)}${themaKaartHtml(s, p)}${themaKaarten(s).map(k => themaKaart(p, k, groepen)).join('')}${oefentExtraHtml(p)}
-    <div class="set-card oefen-kaart primary" data-kaart="show">${kaartKop(show.kop)}${show.html}</div>${meerCijfersHtml(p)}</div>`;
+  return `<div class="settings-panel">${sterCijfersHtml(p)}${stemKaartHtml(p)}${themaKaartHtml(s, p, show)}${themaKaarten(s).map(k => themaKaart(p, k, groepen)).join('')}</div>`;
 }
+
 
 
 
@@ -29366,7 +29382,7 @@ function themaKaart(p, k, groepen) {
   const ico = k === 'tellen' ? '<span class="kaart-emoji" aria-hidden="true">🧸</span>' : themaIcoon(k, 30);
   const pen = `<button class="kaart-pen${open ? ' aan' : ''}" type="button" data-kaart="${k}" aria-expanded="${open}" aria-label="${open ? 'Klaar' : naam + ' aanpassen'}">${open ? '✓' : '✏️'}</button>`;
   const kop = kaartKop(`${ico}${naam}`, pen);
-  if (!open) return `<div class="set-card vg-kaart thema-kaart niveau-blok${zelfGekozen(p.settings) ? ' zelf-blok' : ''}" data-kaart="${k}">${kop}${leesLadder(p, k)}</div>`;
+  if (!open) return `<div class="set-card vg-kaart thema-kaart niveau-blok${zelfGekozen(p.settings) ? ' zelf-blok' : ''}" data-kaart="${k}">${kop}${leesLadder(p, k)}${lastigHtml(p, k)}</div>`;
 
   const delen = k === 'tellen'
     ? groepen.filter(g => g.kaart === 'wat' || g.kaart === 'pad').map(g => g.kaart === 'wat' ? oeLbl(g.kop) + g.html : g.html)
@@ -29377,6 +29393,9 @@ function leesLadder(p, k) {
   if (zelfGekozen(p.settings)) return zelfLadderHtml(p, k);
   return k === 'tellen' || k === 'rekenen' ? rekenLadderHtml(p) : themaLadderHtml(p, k);
 }
+
+
+
 
 
 const vgKort = (rijen, een, meer) => rijen.length <= 3 ? rijen
@@ -29409,9 +29428,8 @@ function rekenLadderHtml(p) {
       rijen.push(flRij(' hier niveau-bezig', flAva(p), 'Alles door elkaar', tip));
     } else {
       const nu = stapNu(p);
-      rijen.push(flRij(' hier niveau-bezig', flAva(p), nu.naam + nu.balk, tip || flVb(nu.vb)));
+      rijen.push(...hierMetUitleg(flRij(' hier niveau-bezig', flAva(p), nu.naam + nu.balk, tip || flVb(nu.vb)), 'rekenen', p.pad && p.pad.rij === nuId ? p.pad : null));
       rijen.push(...vgKort(alle.slice(nr + 1).map((r, i) => flRij(` later${r.uit ? ' overgeslagen' : ''}`, nr + 2 + i, r.naam, flVb(r.vb))), 'stap', 'stappen'));
-      rijen.push(flRij(' later', '∞', 'Alles door elkaar'));
     }
   }
   return `<div class="fase-ladder vg-ladder">${rijen.join('')}</div>`;
@@ -29431,11 +29449,56 @@ function themaLadderHtml(p, k) {
   if (nuId === 'alles') uit.push(flRij(' hier niveau-bezig', flAva(p), L.eind, ''));
   else {
     const nu = ladderStap(p, k);
-    uit.push(flRij(' hier niveau-bezig', flAva(p), nu.naam + nu.balk, flVb(nu.vb)));
+    uit.push(...hierMetUitleg(flRij(' hier niveau-bezig', flAva(p), nu.naam + nu.balk, flVb(nu.vb)), k, p[L.stand] && p[L.stand].rij === nuId ? p[L.stand] : null));
     uit.push(...vgKort(speel.slice(nr + 1).map((r, i) => flRij(' later', nr + 2 + i, r.naam, flVb(r.vb))), 'stap', 'stappen'));
-    uit.push(flRij(' later', '∞', L.eind));
   }
   return `<div class="fase-ladder vg-ladder">${uit.join('')}</div>`;
+}
+
+
+
+
+
+
+
+
+
+
+
+function vgUitleg(t) {
+  const top = Math.max(0, PAD_GOED - ((t && t.goed) || 0));
+  const shows = Math.max(1, PAD_MAX_SHOWS - ((t && t.shows) || 0));
+  return `<div class="vg-uitleg">Nog <b>${top} ${mv(top, 'topshow', 'topshows')}</b> ⭐⭐⭐${top > 1 ? ' op rij' : ''} of <b>${shows} ${mv(shows, 'show', 'shows')}</b></div>`;
+}
+
+function hierMetUitleg(rij, k, t) {
+  const open = setUitleg === k;
+  return [rij.replace('<div class="fl-rij', `<div role="button" tabindex="0" aria-expanded="${open}" data-uitleg="${k}" class="fl-rij${open ? ' uitleg-open' : ''}`)]
+    .concat(open ? vgUitleg(t) : []);
+}
+
+
+
+
+
+
+
+
+const LASTIG_OPS = { rekenen: ['+', '-'], tafels: ['x', ':'] };
+function lastigHtml(p, k) {
+  const ops = LASTIG_OPS[k];
+  if (!ops || p.settings.track === 'count') return '';
+
+
+
+
+  const op = (tmpl, e) => e.op || (/×/.test(tmpl) ? 'x' : /[÷:]/.test(tmpl) ? ':' : / [-−] /.test(tmpl) ? '-' : '+');
+  const sommen = Object.entries(p.weak || {}).filter(([tmpl, e]) => ops.includes(op(tmpl, e))).sort((a, b) => b[1].w - a[1].w).slice(0, 8)
+    .map(([tmpl, e]) => (/ = @$/.test(tmpl) ? tmpl.replace(/ = @$/, '') : tmpl.replace('@', e.ans == null ? '?' : e.ans)).replace(' - ', ' − '));
+  if (!sommen.length) return '';
+  const zicht = sommen.length > 3 ? 2 : sommen.length;
+  return `<div class="vg-lastig"><span>Lastig</span>${sommen.map((t, i) => `<span class="practice-chip${i >= zicht ? ' verborgen' : ''}">${t}</span>`).join('')}${
+    sommen.length > zicht ? `<button class="practice-chip lastig-meer" type="button" aria-label="Alle lastige sommen">+${sommen.length - zicht}</button>` : ''}</div>`;
 }
 
 
@@ -29474,67 +29537,17 @@ function zelfErbij(p) {
 
 
 
-function oefentExtraHtml(p) {
-  if (p.settings.track === 'count') return '';
-
-
-  const weak = Object.entries(p.weak).sort((a, b) => b[1].w - a[1].w).slice(0, 8)
-    .map(([tmpl, e]) => tmpl.replace('@', e.ans == null ? '?' : e.ans));
-
-
-  if (!weak.length) return '';
-
-
-  const nLearned = Object.keys(p.learned || {}).length;
-  return `<div class="set-card vg-kaart">
-    ${kaartKop('Oefent extra op')}
-    ${vlotHtml(p)}
-    <div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>
-    ${nLearned ? `<div class="note vg-noot">🧠 ${nLearned} geleerde ${mv(nLearned, 'som komt', 'sommen komen')} later terug.</div>` : ''}
-  </div>`;
-}
 
 
 
 
-
-
-function vlotHtml(p) {
-  const glyph = { '+': '+', '-': '−', 'x': '×', ':': '÷' };
-  const ops = (p.settings.ops || []).filter(o => p.opTrack[o] && p.opTrack[o].n >= 10);
-  if (!ops.length) return '';
-  return `<div class="vg-vlot">${ops.map(o => {
-    const t = p.opTrack[o];
-    return `<span><b>${glyph[o]}</b> ${(t.fast == null ? 0.5 : t.fast) >= FLUENT_MIN ? 'vlot' : 'rekent nog'}</span>`;
-  }).join('')}</div>`;
-}
-
-
-
-
-
-
-
-function meerCijfersHtml(p) {
+function sterCijfersHtml(p) {
   const shows = playedCount(p);
   const answered = p.stats.correct + p.stats.wrong;
-  const getallen = [
-    [shows, mv(shows, 'show', 'shows')],
-    [answered, p.settings.track === 'count' ? mv(answered, 'vraag', 'vragen') : mv(answered, 'som', 'sommen')],
-  ];
-  if (answered) getallen.push([Math.round(100 * p.stats.correct / answered) + '%', 'goed']);
-  const stars = totalStarCount(p);
-  const perfect = perfectCount(p);
-  const oogst = [
-    [stars, mv(stars, 'ster', 'sterren')],
-    [perfect, mv(perfect, 'perfecte show', 'perfecte shows')],
-    [`${earnedActiveCount(p)}/${activeTrophies().length}`, 'trofeeën'],
-  ];
-  return `<details class="set-card vg-kaart vg-meer"><summary>${kaartKop('Meer cijfers')}</summary>
-    <div class="vg-cijfers">${getallen.map(([n, w]) => `<span class="vg-getal"><b>${n}</b> ${w}</span>`).join('')}
-      <span class="vg-cijfers-lijn" aria-hidden="true"></span>${
-      oogst.map(([n, w]) => `<span class="oogst-item"><b>${n}</b> ${w}</span>`).join('')}</div>
-  </details>`;
+  const delen = [`<b>${shows}</b> ${mv(shows, 'show', 'shows')}`];
+  if (answered) delen.push(`<b>${Math.round(100 * p.stats.correct / answered)}%</b> goed`);
+  delen.push(`<b>${totalStarCount(p)}</b> ⭐`, `<b>${earnedActiveCount(p)}/${activeTrophies().length}</b> 🏆`);
+  return `<div class="ster-cijfers">${delen.map(d => `<span>${d}</span>`).join('')}</div>`;
 }
 
 
@@ -29767,26 +29780,14 @@ function oefenGroups(s, pfx, p, opt) {
 
 
 
+  const ladder = (id, instelling, rijen, lo, hi, hier, staart, balk, naTot) => {
+    const uit = rijen.map((r, i) => {
 
-
-
-  const ladder = (id, instelling, rijen, lo, hi, hier, staart, balk) => {
-    const anker = Math.max(hier || 0, lo), uit = [];
-    let weg = [];
-    const klap = () => {
-      if (weg.length > 1) uit.push(`<button class="fl-rij later vg-gat fl-uitklap" type="button"><span class="fl-n" aria-hidden="true">⋮</span><span class="fl-naam">nog ${weg.length} ${id === 'set-fase' ? mv(weg.length, 'fase', 'fases') : mv(weg.length, 'stap', 'stappen')}</span><span class="fl-vb"></span></button>`);
-      else uit.push(...weg);
-      weg = [];
-    };
-    rijen.forEach((r, i) => {
-
-      const totWoord = r.blok && rijen[i + 1] && rijen[i + 1].blok !== r.blok ? `tot ${r.blok}` : 'tot';
-      const html = flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}${r.uit ? ' overgeslagen' : ''}`,
+      const totWoord = (r.blok && rijen[i + 1] && rijen[i + 1].blok !== r.blok ? `tot ${r.blok}` : 'tot') + (naTot ? ` · ${naTot}` : '');
+      return flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}${r.uit ? ' overgeslagen' : ''}`,
         r.v === hier && ava ? ava : i + 1, r.v === hier && balk ? r.naam + balk : r.naam, r.vb, r.v,
         (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn(totWoord, 'onder') : ''));
-      if (!opt.inklappen || r.v <= anker + 2 || r.v === hi || r.v === hi + 1) { klap(); uit.push(html); } else weg.push(html);
     });
-    klap();
     return `<div class="fase-ladder naad" id="${pfx}${id}" data-instelling="${instelling}">${uit.join('')}${staart || ''}</div>`;
   };
   const hierBalk = k => opt.balk ? opt.balk(k) : '';
@@ -29817,7 +29818,11 @@ function oefenGroups(s, pfx, p, opt) {
 
   const aanUit = (id, instelling, ico, woord, aan) => `<div id="${pfx}${id}"><button class="chip oe-rij${aan ? ' on' : ''}" data-v="${aan ? 'off' : 'on'}" data-instelling="${instelling}" role="switch" aria-checked="${aan}">`
     + `<span class="oe-i" aria-hidden="true">${ico}</span><span class="oe-w">${woord}</span><span class="oe-stand" aria-hidden="true"></span></button></div>`;
-  const perShow = `${lbl('Vragen per show')}${balk('set-perlevel', 'perLevel', [[5, '5'], [8, '8'], [10, '10']], s.perLevel)}`;
+  const perLevelBalk = balk('set-perlevel', 'perLevel', [[5, '5'], [8, '8'], [10, '10']], s.perLevel);
+  const perShow = `${lbl('Vragen per show')}${perLevelBalk}`;
+
+
+
 
 
 
@@ -29829,12 +29834,13 @@ function oefenGroups(s, pfx, p, opt) {
     kaart: 'pad', kop: `Wat oefent ${p ? esc(p.name) : 'je ster'}?`, html: kiesHtml('set-kiesfasen', 'kiesFasen', fases, kiesFasen(s))
   } : {
     kaart: 'pad', kop: 'Leerpad', html: `${ladder('set-fase', 'stage', fases, lo, hi, p && countLiveStage(p), '', hierBalk('tellen'))}`
-  }, {
-    kaart: 'show', kop: 'Tonen als', html: `${balk('set-repr', 'repr',
-      [['objects', 'Voorwerpen'], ['mix', 'Mix'], ['dots', 'Stippen']], s.repr || 'objects')}
-      ${perShow}
-      ${aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false)}`
-  }];
+  }, (() => {
+    const repr = balk('set-repr', 'repr', [['objects', 'Voorwerpen'], ['mix', 'Mix'], ['dots', 'Stippen']], s.repr || 'objects');
+    const mem = aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false);
+    return { kaart: 'show', kop: 'Tonen als', html: `${repr}${perShow}${mem}`,
+      regels: [['Tonen als', repr, 'breed'], ['Per show', perLevelBalk], ['', mem]] };
+  })()];
+
 
 
 
@@ -29853,8 +29859,7 @@ function oefenGroups(s, pfx, p, opt) {
   const nuId = p && padNu(p);
   const voorbij = nuId === 'alles';
   const hierPos = p && !voorbij ? padR.findIndex(r => r.id === nuId) + 1 : 0;
-  const eind = flRij(` eind${voorbij ? ' hier' : ''}`, voorbij && ava ? ava : '∞',
-    'Alles door elkaar<small>alles tot de lijn, gemengd</small>');
+  const eind = voorbij ? flRij(' eind hier', ava || '∞', 'Alles door elkaar') : '';
   const padRijenLadder = padAlle.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb), uit: r.uit, blok: blok(r) }));
 
   const kiesLijst = kiesRijen(s).map(r => ({ v: r.id, naam: r.naam, vb: flVb(r.vb), blok: padBlok(r, { max: 20 }) }));
@@ -29875,9 +29880,9 @@ function oefenGroups(s, pfx, p, opt) {
   const themaLadder = k => {
     const L = LADDERS[k], lr = ladderRijen(s, k);
     const nu = p && ladderNu(p, k), voorbij = nu === 'alles';
-    const staart = flRij(` eind${voorbij ? ' hier' : ''}`, voorbij && ava ? ava : '∞', L.eind);
+    const staart = voorbij ? flRij(' eind hier', ava || '∞', L.eind) : '';
     return ladder(L.id, L.lijn, lr.rijen.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb) })),
-      lr.lo + 1, lr.hi + 1, p && !voorbij ? L.idx[nu] + 1 : 0, staart, hierBalk(k));
+      lr.lo + 1, lr.hi + 1, p && !voorbij ? L.idx[nu] + 1 : 0, staart, hierBalk(k), 'daarna alles door elkaar');
   };
 
 
@@ -29894,7 +29899,7 @@ function oefenGroups(s, pfx, p, opt) {
   return [themaAan(s, 'rekenen') && {
     kaart: 'rekenen', kop: 'Rekenen', ico: 'rekenen', html: `${opsBalk('set-ops', 'ops', opDefs.slice(0, 2))}${vrij
       ? kiesHtml('set-kies', 'kies', kiesLijst, (s.kies || []))
-      : ladder('set-startstap', 'padVanaf', padRijenLadder, startPos, padR.length, hierPos, eind, hierBalk('rekenen'))}`
+      : ladder('set-startstap', 'padVanaf', padRijenLadder, startPos, padR.length, hierPos, eind, hierBalk('rekenen'), 'daarna alles door elkaar')}`
   }, themaAan(s, 'tafels') && {
     kaart: 'tafels', kop: 'Tafels', ico: 'tafels', html: `${opsBalk('set-tafelops', 'tafelOps', opDefs.slice(2))}${vrij ? tafelsVan : themaLadder('tafels')}`
   }, themaAan(s, 'lijn') && {
@@ -29905,10 +29910,11 @@ function oefenGroups(s, pfx, p, opt) {
     kaart: 'klok', kop: 'Klok', ico: 'klok', html: vrij ? rijenKies('klok') : themaLadder('klok')
   }, themaAan(s, 'kalender') && {
     kaart: 'kalender', kop: 'Kalender', ico: 'kalender', html: vrij ? rijenKies('kalender') : themaLadder('kalender')
-  }, {
-    kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
-      ${perShow}${showMix}`
-  }].filter(Boolean);
+  }, (() => {
+    const mode = balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode);
+    return { kaart: 'show', kop: 'Antwoord', html: `${mode}${perShow}${showMix}`,
+      regels: [['Antwoord', mode], ['Per show', perLevelBalk]].concat(showMix ? [['Een show', showMix]] : []) };
+  })()].filter(Boolean);
 }
 
 
@@ -29960,14 +29966,25 @@ function themaTegels(s, pfx) {
 
 
 
-function themaKaartHtml(s, p) {
+
+
+
+
+
+
+
+function themaKaartHtml(s, p, show) {
   const vrij = zelfGekozen(s);
   const tellen = s.track === 'count';
-  return `
-    <div class="set-card oefen-kaart primary modus-kaart" data-kaart="hoe">
-      ${tellen ? '' : `${kaartKop(`Wat oefent ${p ? esc(p.name) : 'ze'}?`)}${themaTegels(s, '')}<div class="thema-naad" aria-hidden="true"></div>`}
-      <div class="oe-seg" id="set-modus" data-instelling="modus">${chip('pad', '🧭 Leerpad', !vrij)}${chip('vrij', '✋ Zelf kiezen', vrij)}</div>
-    </div>`;
+  const naam = p ? esc(p.name) : 'ze';
+
+  const regel = (label, html, breed) => `<div class="oe-regel${breed ? ' breed' : ''}">${label ? `<span class="oe-regel-lbl">${label}</span>` : ''}${html}</div>`;
+  const kleinKop = t => kaartKop(t).replace('class="kaart-kop"', 'class="kaart-kop klein"');
+  const modus = `<div class="oe-seg" id="set-modus" data-instelling="modus">${chip('pad', 'Leerpad', !vrij)}${chip('vrij', 'Zelf kiezen', vrij)}</div>`;
+  return `${tellen ? '' : `
+    <div class="set-card oefen-kaart primary wat-kaart" data-kaart="wat">${kleinKop(`Wat oefent ${naam}?`)}${themaTegels(s, '')}</div>`}
+    <div class="set-card oefen-kaart primary modus-kaart" data-kaart="hoe">${kleinKop(`Hoe oefent ${naam}?`)}${regel('Niveau', modus)}${
+      (show ? show.regels : []).map(([l, h, b]) => regel(l, h, b)).join('')}</div>`;
 }
 
 
@@ -30756,16 +30773,26 @@ function bindSettings(p, s) {
     sndClick();
     const k = b.dataset.kaart, voor = b.getBoundingClientRect().top;
     setOpen = setOpen === k ? null : k;
-    setUitgeklapt = false;
     renderSettings();
     const na = document.querySelector(`#settings-body .kaart-pen[data-kaart="${k}"]`);
     if (na) $('screen-settings').scrollTop += na.getBoundingClientRect().top - voor;
   });
 
-  document.querySelectorAll('#settings-body .fl-uitklap').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#settings-body [data-uitleg]').forEach(r => {
+    const wissel = e => {
+      if (e.target.closest('.kaart-tip')) return;
+      sndClick();
+      setUitleg = setUitleg === r.dataset.uitleg ? null : r.dataset.uitleg;
+      renderSettings();
+    };
+    r.onclick = wissel;
+    r.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); wissel(e); } };
+  });
+
+  document.querySelectorAll('#settings-body .lastig-meer').forEach(b => b.onclick = () => {
     sndClick();
-    setUitgeklapt = true;
-    renderSettings();
+    b.parentNode.querySelectorAll('.verborgen').forEach(c => c.classList.remove('verborgen'));
+    b.remove();
   });
 
 
