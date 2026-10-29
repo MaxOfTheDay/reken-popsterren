@@ -40,7 +40,9 @@
  *      som is even hoog met het vraagteken als met het antwoord erin (vóór
  *      oktober 2026 brak "400 + 500 = 900" pas als de 900 erin viel, en sprong
  *      zij omhoog); een telsom staat op één regel en past in zijn kaart; en de
- *      klokjes bij "zoek de klok" zijn geen postzegels (KLOK_ZOEK_MIN).
+ *      klokjes bij "zoek de klok" zijn geen postzegels (KLOK_ZOEK_MIN). Bij een
+ *      gouden vraag houdt de kaart zijn breedte (liggend nam de gouden regel
+ *      er 50px van af, en stak een telsom eruit).
  *   Z  haar gezicht blijft vrij: op een gewone hoge telefoon valt de hint (de
  *      🤔, "half 3 ↷") niet op haar hoofd, ook niet als zij hoog staat (de
  *      telmodus, een show met de klok of de kalender). Zie zaalPast.
@@ -317,6 +319,17 @@ async function zaakF(browser, [w, h]) {
           const raam = [...som.querySelectorAll('.dframe')].map(d => d.getBoundingClientRect());
           if (Math.max(...tops) - Math.min(...tops) > 8) uit.push(`${naam}: de telsom breekt`);
           if (raam.some(r => r.left < kaart.left - 1 || r.right > kaart.right + 1)) uit.push(`${naam}: een stippenraam steekt uit de kaart`);
+        }
+        // elke vraag kan de gouden zijn: zijn regel staat in beeld en neemt de kaart
+        // geen breedte af (liggend stond hij mee in de rij, en was de kaart 50px
+        // smaller). Op elke vraag nagebootst, niet alleen op de ene die het lot koos.
+        {
+          const b = $('gold-banner'), t = b.textContent;
+          b.textContent = ''; goudPlek(); const zonder = $('question-card').offsetWidth;
+          b.textContent = '🌟 3× 💎 🌟'; goudPlek(); const met = $('question-card').offsetWidth;
+          if (met !== zonder) uit.push(`${naam}: gouden vraag, kaart ${zonder} -> ${met}`);
+          if (!binnen(b)) uit.push(`${naam}: gold-banner`);
+          b.textContent = t; goudPlek();
         }
         // de klok zoeken: echte klokjes
         const klokje = q.kind === 'klok' && q.vorm === 'zoek' && $('answer-area').querySelector('.choice-btn');

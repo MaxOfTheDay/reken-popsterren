@@ -479,7 +479,8 @@ beloftes:
   wat je pas ziet als je echt speelt: een som is even hoog met het antwoord erin
   als met het vraagteken ("400 + 500 = 900" brak pas als de 900 erin viel), een
   telsom staat op één regel binnen zijn kaart, en de klokjes bij "zoek de klok"
-  zijn minstens `KLOK_ZOEK_MIN` hoog;
+  zijn minstens `KLOK_ZOEK_MIN` hoog. Een gouden vraag maakt de kaart niet smaller
+  (liggend stond de gouden regel mee in de rij);
 - **haar gezicht blijft vrij** (zaak Z) — op drie hoge telefoons valt de 🤔 in de
   telmodus, een klokshow en een kalendershow niet op haar ogen (`zaalPast`).
 
