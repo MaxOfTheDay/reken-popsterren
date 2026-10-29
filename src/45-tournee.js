@@ -1129,53 +1129,67 @@ const WERELD_STOF = {
   dino:       { beweging: 'zweef',  kleur: ['#fff0a0', '#ffe08a'] },
   vuur:       { beweging: 'stijg',  kleur: ['#fff4cc', '#ffe08a'] },
 };
-/* duur: per beweging, in seconden (gemiddeld; elk puntje wijkt tot 15% af).
-   slaap: zo lang zonder tik blijft het stof aan. Eerst 20 tellen, en dan zag
-   een kind dat gewoon naar de kaart keek het juist verdwijnen. */
-const STOF = { aantal: 12, wacht: 400, slaap: 120000, duur: { stijg: 13, bel: 12, val: 14, zweef: 10, fonkel: 6 } };
+/* duur: hoe lang één beurt van een puntje duurt, in seconden (van-tot; elk
+   puntje krijgt een eigen duur). Een beurt is een korte reis gevolgd door een
+   rust waarin het puntje weg is (zie de keyframes), dus er is er nooit meer
+   dan de helft tegelijk te zien.
+   slaap: zo lang zonder tik blijft het stof aan. */
+const STOF = { aantal: 6, wacht: 400, slaap: 120000, duur: [10, 18] };
 let stofSlaap = 0, stofWacht = 0;
 
-/* Waar de puntjes mogen staan, in procenten van het kader. Altijd dezelfde
-   plekken voor dezelfde wereld (een vast zaadje), zodat de kaart niet bij elke
-   keer openen anders oogt. Weg van elke halte, en van het vak erboven waar zij
-   staat als ze daar is: 13% opzij en van 24% erboven tot 7% eronder -- haar
-   maat (20cqw breed, ~40cqw hoog) omgerekend naar procenten van een 1215x2160
-   kader. Opzij en in de hoogte binnen ZONE plus een randje: daarbuiten valt de
-   tekening op een staande telefoon al van het scherm. Is een vakje helemaal
-   bezet door haltes, dan blijft het leeg en worden het er minder. */
-function stofPlekken(idx, nodes, beweging) {
-  let z = (idx + 1) * 7919;
-  const rnd = () => ((z = (z * 9301 + 49297) % 233280) / 233280);
-  /* Gespreid: het kader in twaalf vakjes (twee breed, zes hoog) en in elk vakje
-     één puntje, als het er vrij kan. Zuiver willekeurig klonterden ze samen in
-     het enige grote vrije stuk, en dan is het een zwerm en geen sfeer. */
-  /* Binnen ZONE en niet erbuiten: daarbuiten valt de tekening op een staande
-     telefoon bijna van het scherm, en een puntje helemaal aan de rand ziet
-     niemand. Wat stijgt begint lager en wat valt hoger, zodat de reis zelf
-     door het midden gaat (zie de keyframes: een derde van het kader). */
-  const schuif = beweging === 'stijg' || beweging === 'bel' ? 12 : beweging === 'val' ? -12 : 0;
-  const x0 = ZONE.x0, bx = (ZONE.x1 - ZONE.x0) / 2;
-  const y0 = ZONE.y0 - 4 + schuif, by = (ZONE.y1 - ZONE.y0 + 4) / (STOF.aantal / 2);
-  const uit = [];
-  for (let vak = 0; vak < STOF.aantal; vak++) {
-    for (let poging = 0; poging < 40; poging++) {
-      const x = x0 + (vak % 2 + rnd()) * bx, y = y0 + (Math.floor(vak / 2) + rnd()) * by;
-      if (nodes.every(n => Math.abs(n.x - x) > 13 || y < n.y - 24 || y > n.y + 7)) { uit.push({ x, y, r: rnd() }); break; }
-    }
+/* Een plek voor één puntje, in procenten van het kader. WILLEKEURIG, en bij
+   elke beurt een nieuwe: met vaste plekken liep een puntje steeds hetzelfde
+   spoor en volgden ze elkaar op in rijtjes, als bubbels in een glas frisdrank.
+   De regels: binnen ZONE (daarbuiten valt de tekening op een staande telefoon
+   van het scherm); niet op een halte of op het vak erboven waar zij staat als
+   ze daar is (13% opzij en van 24% erboven tot 7% eronder -- haar maat omgerekend
+   naar procenten van een 1215x2160 kader); en niet vlak bij een ander puntje,
+   zodat er nooit twee samen reizen. Wat stijgt begint wat lager en wat valt
+   wat hoger. Lukt het niet, dan blijft het puntje waar het was. */
+function stofPlek(nodes, beweging, buren) {
+  const schuif = beweging === 'stijg' || beweging === 'bel' ? 8 : beweging === 'val' ? -8 : 0;
+  for (let poging = 0; poging < 30; poging++) {
+    const x = ZONE.x0 + Math.random() * (ZONE.x1 - ZONE.x0);
+    const y = ZONE.y0 + schuif + Math.random() * (ZONE.y1 - ZONE.y0);
+    if (!nodes.every(n => Math.abs(n.x - x) > 13 || y < n.y - 24 || y > n.y + 7)) continue;
+    if (buren.some(b => Math.abs(b.x - x) < 18 && Math.abs(b.y - y) < 14)) continue;
+    return { x, y };
   }
-  return uit;
+  return null;
 }
+// Zet een puntje op een nieuwe plek met een nieuwe richting en lengte van zijn reis.
+function stofZet(i, plek) {
+  i.style.left = plek.x.toFixed(1) + '%';
+  i.style.top = plek.y.toFixed(1) + '%';
+  i.style.setProperty('--dx', (Math.random() * 2 - 1).toFixed(2));
+  i.style.setProperty('--dy', (0.5 + Math.random() * 0.5).toFixed(2));
+  i.style.setProperty('--o', (0.55 + Math.random() * 0.3).toFixed(2));
+}
+const stofBuren = (laag, zelf) => [...laag.children].filter(j => j !== zelf)
+  .map(j => ({ x: parseFloat(j.style.left), y: parseFloat(j.style.top) }));
 function wereldStof(shown, nodes) {
   const stof = WERELD_STOF[shown.world.id] || FONKEL_STOF;
   const laag = document.createElement('div');
   laag.className = 'wereld-stof ' + stof.beweging;
   laag.setAttribute('aria-hidden', 'true');
-  laag.innerHTML = stofPlekken(shown.index, nodes, stof.beweging).map((s, i) => {
-    const duur = (STOF.duur[stof.beweging] || 10) * (0.85 + s.r * 0.3);
-    return `<i style="left:${s.x.toFixed(1)}%;top:${s.y.toFixed(1)}%;--c:${stof.kleur[i % 2]};` +
-      `--s:${(0.75 + s.r * 0.5).toFixed(2)};--dx:${((s.r - 0.5) * 8).toFixed(1)};` +
-      `animation-duration:${duur.toFixed(1)}s;animation-delay:-${(s.r * duur * 0.9 + i).toFixed(1)}s"></i>`;
-  }).join('');
+  for (let n = 0; n < STOF.aantal; n++) {
+    const plek = stofPlek(nodes, stof.beweging, stofBuren(laag));
+    if (!plek) continue;
+    const i = document.createElement('i');
+    const duur = STOF.duur[0] + Math.random() * (STOF.duur[1] - STOF.duur[0]);
+    stofZet(i, plek);
+    i.style.setProperty('--c', stof.kleur[n % 2]);
+    i.style.setProperty('--s', (0.8 + Math.random() * 0.4).toFixed(2));
+    i.style.animationDuration = duur.toFixed(1) + 's';
+    i.style.animationDelay = '-' + (Math.random() * duur).toFixed(1) + 's';
+    laag.appendChild(i);
+  }
+  /* Elke nieuwe beurt begint ergens anders. De wissel valt op de grens van een
+     beurt, en daar is het puntje onzichtbaar (opacity 0), dus je ziet hem niet. */
+  laag.addEventListener('animationiteration', e => {
+    const plek = stofPlek(nodes, stof.beweging, stofBuren(laag, e.target));
+    if (plek) stofZet(e.target, plek);
+  });
   return laag;
 }
 // Staat de kaart helemaal stil? Grendels dicht of een eindige animatie in het

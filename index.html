@@ -6595,60 +6595,56 @@
 
 
 
-
   .wereld-stof i {
-    position: absolute; width: min(calc(5.6cqw * var(--s)), 34px); aspect-ratio: 1;
+    position: absolute; width: min(calc(4cqw * var(--s)), 24px); aspect-ratio: 1;
     translate: -50% -50%; border-radius: 50%; opacity: 0;
-    background: radial-gradient(circle, var(--c) 0 30%, color-mix(in srgb, var(--c) 60%, transparent) 42%,
-      rgba(40, 8, 60, .3) 52%, transparent 70%);
-    animation: stofStijg 13s linear infinite; animation-play-state: paused;
+    background: radial-gradient(circle, var(--c) 0 26%, color-mix(in srgb, var(--c) 50%, transparent) 40%,
+      rgba(40, 8, 60, .2) 50%, transparent 70%);
+    animation: stofStijg 14s linear infinite; animation-play-state: paused;
   }
   .wereld-stof.wakker i { animation-play-state: running; }
   .wereld-stof.val i    { animation-name: stofVal; }
 
-
   .wereld-stof.zweef i  { animation-name: stofZweef; animation-timing-function: ease-in-out;
-    filter: drop-shadow(0 0 4px var(--c)); }
-
+    filter: drop-shadow(0 0 3px var(--c)); }
 
 
   .wereld-stof.fonkel i { animation-name: stofFonkel; animation-timing-function: ease-in-out;
-    width: min(calc(9cqw * var(--s)), 52px); border-radius: 0;
-    background: radial-gradient(circle, var(--c) 0 12%, transparent 24%),
-      linear-gradient(90deg, transparent 43%, var(--c) 50%, transparent 57%),
-      linear-gradient(0deg, transparent 43%, var(--c) 50%, transparent 57%);
-    -webkit-mask-image: radial-gradient(circle, #000 26%, transparent 66%);
-    mask-image: radial-gradient(circle, #000 26%, transparent 66%);
-    filter: drop-shadow(0 0 1.5px rgba(40, 8, 60, .6)); }
+    width: min(calc(6.5cqw * var(--s)), 38px); border-radius: 0;
+    background: radial-gradient(circle, var(--c) 0 11%, transparent 23%),
+      linear-gradient(90deg, transparent 44%, var(--c) 50%, transparent 56%),
+      linear-gradient(0deg, transparent 44%, var(--c) 50%, transparent 56%);
+    -webkit-mask-image: radial-gradient(circle, #000 24%, transparent 64%);
+    mask-image: radial-gradient(circle, #000 24%, transparent 64%);
+    filter: drop-shadow(0 0 1.5px rgba(40, 8, 60, .5)); }
 
-  .wereld-stof.bel i { width: min(calc(6.5cqw * var(--s)), 40px);
-    background: radial-gradient(circle, transparent 0 40%, var(--c) 46% 60%, rgba(20, 40, 70, .3) 66%, transparent 72%); }
+  .wereld-stof.bel i { width: min(calc(5cqw * var(--s)), 30px);
+    background: radial-gradient(circle, transparent 0 42%, var(--c) 48% 60%, rgba(20, 40, 70, .22) 66%, transparent 72%); }
+
+
   @keyframes stofStijg {
-    0% { opacity: 0; transform: none; } 10%, 82% { opacity: 1; }
-    50% { transform: translate(calc(var(--dx) * 1cqw), -15cqh); }
-    100% { opacity: 0; transform: translate(calc(var(--dx) * -.4cqw), -30cqh); } }
-
+    0% { opacity: 0; transform: none; } 12%, 46% { opacity: var(--o); }
+    60%, 100% { opacity: 0; transform: translate(calc(var(--dx) * 3cqw), calc(var(--dy) * -12cqh)); } }
   @keyframes stofVal {
-    0% { opacity: 0; transform: none; } 10%, 84% { opacity: 1; }
-    25% { transform: translate(calc(var(--dx) * 1cqw), 8cqh); }
-    50% { transform: translate(calc(var(--dx) * -.6cqw), 16cqh); }
-    75% { transform: translate(calc(var(--dx) * 1cqw), 24cqh); }
-    100% { opacity: 0; transform: translate(0, 32cqh); } }
+    0% { opacity: 0; transform: none; } 12%, 46% { opacity: var(--o); }
+    20% { transform: translate(calc(var(--dx) * 1.5cqw), calc(var(--dy) * 4cqh)); }
+    40% { transform: translate(calc(var(--dx) * -1cqw), calc(var(--dy) * 9cqh)); }
+    60%, 100% { opacity: 0; transform: translate(calc(var(--dx) * 1cqw), calc(var(--dy) * 13cqh)); } }
   @keyframes stofZweef {
-    0%, 100% { opacity: 0; transform: none; }
-    20% { opacity: .95; transform: translate(calc(var(--dx) * 1.6cqw), -3cqh); }
-    45% { opacity: .5; transform: translate(calc(var(--dx) * -.8cqw), -6cqh); }
-    70% { opacity: .95; transform: translate(calc(var(--dx) * 2cqw), -4cqh); }
-    90% { opacity: .4; transform: translate(calc(var(--dx) * .6cqw), -1cqh); } }
+    0% { opacity: 0; transform: none; }
+    15% { opacity: var(--o); transform: translate(calc(var(--dx) * 1.5cqw), calc(var(--dy) * -2cqh)); }
+    30% { opacity: calc(var(--o) * .4); transform: translate(calc(var(--dx) * -.5cqw), calc(var(--dy) * -3.5cqh)); }
+    45% { opacity: var(--o); transform: translate(calc(var(--dx) * 2cqw), calc(var(--dy) * -2.5cqh)); }
+    60%, 100% { opacity: 0; transform: translate(calc(var(--dx) * 1cqw), calc(var(--dy) * -1cqh)); } }
   @keyframes stofFonkel {
-    0%, 100% { opacity: 0; transform: scale(.3) rotate(0); }
-    25% { opacity: 1; transform: translate(calc(var(--dx) * .5cqw), -2cqh) scale(1) rotate(45deg); }
-    45% { opacity: .45; transform: translate(calc(var(--dx) * 1cqw), -4cqh) scale(.65) rotate(70deg); }
-    65% { opacity: 1; transform: translate(calc(var(--dx) * 1.4cqw), -6cqh) scale(.95) rotate(90deg); }
-    85% { opacity: 0; transform: translate(calc(var(--dx) * 1.8cqw), -8cqh) scale(.3) rotate(110deg); } }
+    0% { opacity: 0; transform: scale(.3) rotate(0); }
+    18% { opacity: var(--o); transform: translate(calc(var(--dx) * .5cqw), -1cqh) scale(1) rotate(45deg); }
+    32% { opacity: calc(var(--o) * .4); transform: translate(calc(var(--dx) * .8cqw), -2cqh) scale(.6) rotate(65deg); }
+    46% { opacity: var(--o); transform: translate(calc(var(--dx) * 1cqw), -3cqh) scale(.9) rotate(85deg); }
+    60%, 100% { opacity: 0; transform: translate(calc(var(--dx) * 1.2cqw), -4cqh) scale(.3) rotate(100deg); } }
   .wereld-stof.bel i { animation-name: stofStijg; }
 
-  @media (max-width: 359px) { .wereld-stof i:nth-child(n+9) { display: none; } }
+  @media (max-width: 359px) { .wereld-stof i:nth-child(n+5) { display: none; } }
 
 
 
@@ -21020,7 +21016,9 @@ const WERELD_STOF = {
 
 
 
-const STOF = { aantal: 12, wacht: 400, slaap: 120000, duur: { stijg: 13, bel: 12, val: 14, zweef: 10, fonkel: 6 } };
+
+
+const STOF = { aantal: 6, wacht: 400, slaap: 120000, duur: [10, 18] };
 let stofSlaap = 0, stofWacht = 0;
 
 
@@ -21031,39 +21029,51 @@ let stofSlaap = 0, stofWacht = 0;
 
 
 
-function stofPlekken(idx, nodes, beweging) {
-  let z = (idx + 1) * 7919;
-  const rnd = () => ((z = (z * 9301 + 49297) % 233280) / 233280);
 
-
-
-
-
-
-
-  const schuif = beweging === 'stijg' || beweging === 'bel' ? 12 : beweging === 'val' ? -12 : 0;
-  const x0 = ZONE.x0, bx = (ZONE.x1 - ZONE.x0) / 2;
-  const y0 = ZONE.y0 - 4 + schuif, by = (ZONE.y1 - ZONE.y0 + 4) / (STOF.aantal / 2);
-  const uit = [];
-  for (let vak = 0; vak < STOF.aantal; vak++) {
-    for (let poging = 0; poging < 40; poging++) {
-      const x = x0 + (vak % 2 + rnd()) * bx, y = y0 + (Math.floor(vak / 2) + rnd()) * by;
-      if (nodes.every(n => Math.abs(n.x - x) > 13 || y < n.y - 24 || y > n.y + 7)) { uit.push({ x, y, r: rnd() }); break; }
-    }
+function stofPlek(nodes, beweging, buren) {
+  const schuif = beweging === 'stijg' || beweging === 'bel' ? 8 : beweging === 'val' ? -8 : 0;
+  for (let poging = 0; poging < 30; poging++) {
+    const x = ZONE.x0 + Math.random() * (ZONE.x1 - ZONE.x0);
+    const y = ZONE.y0 + schuif + Math.random() * (ZONE.y1 - ZONE.y0);
+    if (!nodes.every(n => Math.abs(n.x - x) > 13 || y < n.y - 24 || y > n.y + 7)) continue;
+    if (buren.some(b => Math.abs(b.x - x) < 18 && Math.abs(b.y - y) < 14)) continue;
+    return { x, y };
   }
-  return uit;
+  return null;
 }
+
+function stofZet(i, plek) {
+  i.style.left = plek.x.toFixed(1) + '%';
+  i.style.top = plek.y.toFixed(1) + '%';
+  i.style.setProperty('--dx', (Math.random() * 2 - 1).toFixed(2));
+  i.style.setProperty('--dy', (0.5 + Math.random() * 0.5).toFixed(2));
+  i.style.setProperty('--o', (0.55 + Math.random() * 0.3).toFixed(2));
+}
+const stofBuren = (laag, zelf) => [...laag.children].filter(j => j !== zelf)
+  .map(j => ({ x: parseFloat(j.style.left), y: parseFloat(j.style.top) }));
 function wereldStof(shown, nodes) {
   const stof = WERELD_STOF[shown.world.id] || FONKEL_STOF;
   const laag = document.createElement('div');
   laag.className = 'wereld-stof ' + stof.beweging;
   laag.setAttribute('aria-hidden', 'true');
-  laag.innerHTML = stofPlekken(shown.index, nodes, stof.beweging).map((s, i) => {
-    const duur = (STOF.duur[stof.beweging] || 10) * (0.85 + s.r * 0.3);
-    return `<i style="left:${s.x.toFixed(1)}%;top:${s.y.toFixed(1)}%;--c:${stof.kleur[i % 2]};` +
-      `--s:${(0.75 + s.r * 0.5).toFixed(2)};--dx:${((s.r - 0.5) * 8).toFixed(1)};` +
-      `animation-duration:${duur.toFixed(1)}s;animation-delay:-${(s.r * duur * 0.9 + i).toFixed(1)}s"></i>`;
-  }).join('');
+  for (let n = 0; n < STOF.aantal; n++) {
+    const plek = stofPlek(nodes, stof.beweging, stofBuren(laag));
+    if (!plek) continue;
+    const i = document.createElement('i');
+    const duur = STOF.duur[0] + Math.random() * (STOF.duur[1] - STOF.duur[0]);
+    stofZet(i, plek);
+    i.style.setProperty('--c', stof.kleur[n % 2]);
+    i.style.setProperty('--s', (0.8 + Math.random() * 0.4).toFixed(2));
+    i.style.animationDuration = duur.toFixed(1) + 's';
+    i.style.animationDelay = '-' + (Math.random() * duur).toFixed(1) + 's';
+    laag.appendChild(i);
+  }
+
+
+  laag.addEventListener('animationiteration', e => {
+    const plek = stofPlek(nodes, stof.beweging, stofBuren(laag, e.target));
+    if (plek) stofZet(e.target, plek);
+  });
   return laag;
 }
 
