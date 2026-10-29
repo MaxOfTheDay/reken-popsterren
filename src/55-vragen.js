@@ -2561,9 +2561,35 @@ function pastNog(tmpl, e, s) {
   const ops = s.ops.length ? s.ops : ['+'];
   if (!ops.includes(e.op)) return false;
   const getallen = (tmpl.match(/\d+/g) || []).map(Number);
-  if (e.op === '+' || e.op === '-') return Math.max(e.ans, ...getallen) <= s.max;
+  if (e.op === '+' || e.op === '-') {
+    if (Math.max(e.ans, ...getallen) > s.max) return false;
+    // Zelf kiezen: ook niet ver eronder -- zie somInRij
+    return !s.vrij || s.vrij.some(v => v.inst.ops.includes(e.op) && somInRij(getallen, e, LEERPAD[PAD_IDX[v.id]]));
+  }
   const tables = s.tables.length ? s.tables : [2, 5, 10];
   return tables.includes(getallen[1]);
+}
+/* Past een bewaarde som bij één aangevinkte rij van Zelf kiezen? Alleen een
+   bovengrens was niet genoeg: wie alleen Over het honderdtal aanvinkte, kreeg
+   een gemiste "4 − 1" van vroeger ertussen, en dat leest als een vergissing
+   van het spel. Op het leerpad mag dat wel (ze miste hem, en alles daar is
+   cumulatief); bij Zelf kiezen betekent een vinkje "dit". De som past bij een
+   rij als hij is wat die rij nieuw maakt (zoals vraagIsNieuw, maar dan uit het
+   sjabloon alleen): binnen het bereik en erboven wat de rij ervoor al had,
+   hele tientallen of honderdtallen, of over het tiental (honderdtal). Zoek het
+   getal, drie getallen en getallen bouwen nemen geen gewone som terug. */
+function somInRij(getallen, e, r) {
+  if (!r || r.soort !== 'bereik' || r.bouwen) return false;
+  const [a, b] = getallen, c = e.ans, top = Math.max(a, b, c);
+  if (top > r.bereik) return false;
+  if (r.tientallen) return a % 10 === 0 && b % 10 === 0;
+  if (r.honderdtallen) return a % 100 === 0 && b % 100 === 0;
+  if (r.brug === 'vaak') {
+    const m = r.bereik > 100 ? 10 : 1;
+    return [a, b, c].every(v => v % m === 0) && overTiental(a / m, b / m, c / m, e.op) && top > r.bereik / 10;
+  }
+  const vorig = LEERPAD.filter(x => x.soort === 'bereik' && x.bereik < r.bereik).reduce((m, x) => Math.max(m, x.bereik), 0);
+  return top > vorig;
 }
 // Een som die aan onderhoud toe is: het langst over tijd gaat voor. Alleen wat
 // met de instellingen van nu nog kan (pastNog).
