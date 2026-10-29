@@ -4384,6 +4384,23 @@
   .sum-eq .cgroup.big .cg-obj { font-size: clamp(22px, 6vw, 32px); }
   .sum-eq .cgroup.big { max-width: 128px; }
 
+
+
+
+
+
+  .sum-eq { flex-wrap: nowrap; }
+  .sum-eq > * { flex-shrink: 0; }
+  .sum-eq > .cgroup { flex-shrink: 1; }
+
+
+
+  @media (max-width: 360px) {
+    .sum-eq { column-gap: 6px; }
+    .sum-eq .cgroup.big { gap: 2px 4px; }
+    .sum-eq .cgroup.big .cg-obj { font-size: 20px; }
+  }
+
   .sum-operand .dframe.mini { position: absolute; top: 100%; left: 50%; transform: translate(-50%, calc(var(--df-mini) * -2 - 10px)); }
 
 

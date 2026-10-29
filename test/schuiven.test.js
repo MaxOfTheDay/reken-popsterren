@@ -43,8 +43,9 @@
  *      som is even hoog met het vraagteken als met het antwoord erin (vóór
  *      oktober 2026 brak "400 + 500 = 900" pas als de 900 erin viel, en sprong
  *      zij omhoog); een telsom staat op één regel en past in zijn kaart; en de
- *      klokjes bij "zoek de klok" zijn geen postzegels (KLOK_ZOEK_MIN). Bij een
- *      gouden vraag houdt de kaart zijn breedte (liggend nam de gouden regel
+ *      klokjes bij "zoek de klok" zijn geen postzegels (KLOK_ZOEK_MIN). Elke
+ *      telsom (vorm, teken, paar) loopt het apart af, niet alleen wat het lot
+ *      trekt. Bij een gouden vraag houdt de kaart zijn breedte (liggend nam de gouden regel
  *      er 50px van af, en stak een telsom eruit).
  *   Z  haar gezicht blijft vrij: op een gewone hoge telefoon valt de hint (de
  *      🤔, "half 3 ↷") niet op haar hoofd, ook niet als zij hoog staat (de
@@ -312,6 +313,19 @@ async function zaakF(browser, [w, h]) {
       let y = 0; for (let e = arena; e; e = e.offsetParent) y += e.offsetTop;
       return y + arena.offsetHeight + (parseFloat(getComputedStyle(sg).paddingBottom) || 0) > sg.clientHeight + 8 ? [{ id: 'scherm schuift' }] : [];
     };
+    // een telsom: één regel, en binnen zijn kaart
+    const telsomNa = naam => {
+      const som = $('question-text').querySelector('.sum-eq');
+      if (!som) return;
+      // gebroken is: een stuk begint pas onder een ander stuk. Niet "de tops
+      // verschillen" -- de stukken staan op hun grondlijn, en een groep van
+      // 70px hoog naast een "=" van 43 begint vanzelf lager (fase 9 tot 12)
+      const kaart = $('question-card').getBoundingClientRect();
+      const raam = [...som.querySelectorAll('.dframe, .cgroup')].map(d => d.getBoundingClientRect());
+      const stukken = [...som.children].filter(c => c.offsetHeight);
+      if (Math.max(...stukken.map(c => c.offsetTop)) >= Math.min(...stukken.map(c => c.offsetTop + c.offsetHeight))) uit.push(`${naam}: de telsom breekt`);
+      if (raam.some(r => r.left < kaart.left - 1 || r.right > kaart.right + 1)) uit.push(`${naam}: een stippenraam of groepje steekt uit de kaart`);
+    };
     for (const [k, zet] of zetten) for (const mode of ['kies', 'typ']) {
       zet(); s.mode = mode; s.perLevel = 12;
       if (s.track === 'count' && mode === 'typ') continue;   // tellen kent alleen tegels
@@ -330,18 +344,7 @@ async function zaakF(browser, [w, h]) {
           vak.textContent = was;
           if (na !== voor) uit.push(`${naam} ${q.tmpl || ''}: kaart ${voor} -> ${na} met het antwoord`);
         }
-        // een telsom: één regel, en binnen zijn kaart
-        const som = $('question-text').querySelector('.sum-eq');
-        if (som) {
-          // gebroken is: een stuk begint pas onder een ander stuk. Niet "de tops
-          // verschillen" -- de stukken staan op hun grondlijn, en een groep van
-          // 70px hoog naast een "=" van 43 begint vanzelf lager (fase 9 tot 12)
-          const kaart = $('question-card').getBoundingClientRect();
-          const raam = [...som.querySelectorAll('.dframe')].map(d => d.getBoundingClientRect());
-          const stukken = [...som.children].filter(c => c.offsetHeight);
-          if (Math.max(...stukken.map(c => c.offsetTop)) >= Math.min(...stukken.map(c => c.offsetTop + c.offsetHeight))) uit.push(`${naam}: de telsom breekt`);
-          if (raam.some(r => r.left < kaart.left - 1 || r.right > kaart.right + 1)) uit.push(`${naam}: een stippenraam steekt uit de kaart`);
-        }
+        telsomNa(naam);
         // elke vraag kan de gouden zijn: zijn regel staat in beeld en neemt de kaart
         // geen breedte af (liggend stond hij mee in de rij, en was de kaart 50px
         // smaller). Op elke vraag nagebootst, niet alleen op de ene die het lot koos.
@@ -358,6 +361,20 @@ async function zaakF(browser, [w, h]) {
         if (klokje && klokje.offsetHeight < KLOK_ZOEK_MIN) uit.push(`${naam}: zoek-klokje ${klokje.offsetHeight}px`);
       }
     }
+    /* En elke telsom zelf, niet alleen wat het lot trekt: "3 + 3" brak op 320
+       breed maar kwam in één show van twaalf vragen maar af en toe langs, en
+       dan was deze zaak de ene keer groen en de andere rood. Dus elke vorm, elk
+       teken en elk paar, op de kaart van een gewone telvraag. */
+    zetten.find(([k]) => k === 'tellen 9 objects')[1]();
+    startLevel(P().level); G.idx = 0; renderQuestion();
+    const basis = G.qs[0], emoji = (basis.card && basis.card.emoji) || '🐢';
+    for (const style of ['sym', 'dots', 'written']) for (const repr of ['objects', 'dots']) for (const op of ['+', '-'])
+      for (let a = 1; a <= (style === 'sym' ? 6 : 10); a++) for (let b = 1; b <= (style === 'sym' ? 5 : 10); b++) {
+        if (op === '-' ? b >= a : style === 'sym' && a > 5) continue;
+        G.qs[0] = { ...basis, card: { kind: 'sum', style, op, a, b, c: op === '-' ? a - b : a + b, emoji, repr, support: 'full', cap: 10 } };
+        G.idx = 0; renderQuestion();
+        telsomNa(`telsom ${style}/${repr} ${a} ${op} ${b}`);
+      }
     return [...new Set(uit)];
   }, KLOK_ZOEK_MIN);
   check(!r.length, 'F · elk antwoord past', `${w}x${h}: ${r.slice(0, 8).join(' | ')}${r.length > 8 ? ` (+${r.length - 8})` : ''}`);
