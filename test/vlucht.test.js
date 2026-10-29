@@ -729,7 +729,8 @@ const STOF_WEK = 900;
     await page.waitForFunction(() => window.__opkomst, null, { timeout: 10000 }).catch(() => {});
     const op = await page.evaluate(() => window.__opkomst);
     check(op && op.rustig && op.lopen === 0, 'O · het stof wacht tot ze geland is en komt dan op', JSON.stringify(op));
-    await page.waitForTimeout(3000);
+    // ruim na STOF.slaap (1,5 s) plus het uitdoven; wachten óp de stand, niet op een klok
+    await page.waitForFunction(() => getComputedStyle($('screen-map').querySelector('.wereld-stof')).visibility === 'hidden', null, { timeout: 10000 }).catch(() => {});
     const slaapt = await page.evaluate(() => {
       const l = $('screen-map').querySelector('.wereld-stof');
       return { wakker: l.classList.contains('wakker'), zicht: getComputedStyle(l).visibility,
@@ -737,8 +738,8 @@ const STOF_WEK = 900;
     });
     check(!slaapt.wakker && slaapt.zicht === 'hidden' && !slaapt.lopen, 'O · zonder tik slaapt het stof en staat het stil', JSON.stringify(slaapt));
     await page.mouse.click(30, 420);
-    await page.waitForTimeout(STOF_WEK);
-    check(await page.evaluate(() => !!document.querySelector('#screen-map .wereld-stof.wakker')), 'O · een tik op de kaart wekt het weer', '');
+    const wekt = await page.waitForFunction(() => document.querySelector('#screen-map .wereld-stof.wakker'), null, { timeout: 5000 }).then(() => true, () => false);
+    check(wekt, 'O · een tik op de kaart wekt het weer', '');
     await ctx.close();
   }
   {
