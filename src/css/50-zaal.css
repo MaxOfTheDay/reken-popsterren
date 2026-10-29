@@ -1463,25 +1463,21 @@
     .vlucht-doek.hoog { z-index: 3; }
     .klim-doek { position: absolute; inset: 0; z-index: -1; }
     /* Tijdens een vlucht ligt de wereld in de vluchtlaag en staat deze rand uit
-       (zie .vlucht-weg). Hij komt er niet terug met een knip maar in dezelfde 80ms
-       als de overvloeier -- dat is het enige stukje kaart dat op de landing niet
-       al onder de vluchtlaag klaar ligt. Het overvloeien zelf doet .vlucht-doek:
-       die ligt er tijdens de hele vlucht onder en is precies dezelfde rand, dus
-       deze laag uit of aan zetten is op geen enkel beeldje te zien. */
-    #screen-map::after { transition: opacity 90ms linear; }
-    /* Maar wég gaat hij in één keer. Die overgang gold ook voor het vertrek, en
-       daar lag hij precies verkeerd: de scherpe tekening gaat met .vlucht-weg meteen
-       uit, maar deze laag hoort bij de kaart, en de kaart ligt bóven de
-       vluchtlaag (z 2 tegen z 1; op de terugweg z 4 tegen z 3). Ze dekten de
-       vliegende tekening dus af terwijl ze nog aan het wegdoven waren. Opgemeten
-       op 1024x768: drie beeldjes een kaart zonder tekening -- haltes op een
-       onscherpe achtergrond -- en de vlucht verscheen pas toen hij al 40% op weg
-       was. Terug was het één volledig onscherp scherm. Zonder deze overgang is de
-       tekening op elk beeldje van de vlucht te zien, heen en terug. */
-    #screen-map.vlucht-weg::after { transition: none; }
-    @media (prefers-reduced-motion: reduce) {
-      #screen-map::after { transition: none; }
-    }
+       (zie .vlucht-weg). Hij gaat in één keer weg en komt in één keer terug, en
+       dat is op geen enkel beeldje te zien: .vlucht-doek ligt er de hele vlucht
+       onder en is precies dezelfde rand.
+
+       GEEN OVERGANG ERBIJ, OOK NIET TERUG. Hier stond een opkomst van 90ms voor de
+       landing, en die liep op twee manieren mis:
+         - op de heenweg dekte de nog wegdovende rand de vliegende tekening af (de
+           kaart ligt bóven de vluchtlaag, z 2 tegen z 1): drie beeldjes haltes op
+           een onscherpe achtergrond;
+         - op de terugweg begint een overgang op een onscherpe laag pas als die
+           laag getekend is, en dat duurde op 1440x900 drie beeldjes. Ondertussen
+           ruimde vluchtKlaar .vlucht-doek al op, en stond naast het podium even de
+           kale, felle gloed van <body> (de rand stond pas op een vijfde).
+       Een knip heeft dat gat niet: de rand gaat aan in hetzelfde beeldje als de
+       klasse eraf gaat, met de identieke .vlucht-doek er nog onder. */
     /* Het podium is zo groot als de hóógte toelaat, en niet kleiner.
        Hier stond padding: var(--kop-h) 0 var(--nav-h) -- het podium werd dus vrij
        gehouden van de kop en de balk. Dat is precies andersom dan op een telefoon,

@@ -1052,6 +1052,25 @@ function vluchtKlaar() {
   if (v.doek && v.doek.parentNode) v.doek.parentNode.removeChild(v.doek);
   if (v.globe) v.globe();   // de globe landt normaal zelf; wordt de vlucht afgebroken, dan hij ook
 }
+/* DE LANDING HANGT AAN DE BEWEGING, NIET AAN EEN KLOK. Wat er op de landing
+   gebeurt (de échte tekening terug, Werelden weg) moet samenvallen met het
+   moment waarop de vluchtlaag er écht ligt. Hier stond setTimeout(…, kruis), en
+   die klok loopt vanaf de tik -- maar de animaties pas vanaf het eerste beeldje
+   dat getekend wordt, en dat eerste beeldje is het zware: goMap bouwt de hele
+   kaart op. Op 1440x900 duurde dat 250ms, en dan landde de klok terwijl de
+   onscherpe rand (.vlucht-doek) pas op een kwart stond: Werelden ging weg, de
+   rand van de kaart was er nog niet, en een tiende seconde lang stond naast het
+   podium de kale, felle gloed van <body>. Een trage telefoon of een groot
+   venster maakt dat gat alleen maar groter.
+   fn loopt dus op het einde van de beweging zelf, en alleen als het nog
+   dezelfde vlucht is (een nieuwe tik ruimt deze eerst op, zie vluchtKlaar). */
+function naVluchtLanding(fn) {
+  const v = vluchtOp;
+  if (!v) return;
+  const doe = () => { if (vluchtOp === v) fn(); };
+  if (v.beweging && v.beweging.finished) v.beweging.finished.then(doe, () => {});
+  else setTimeout(doe, VLUCHT.duur);
+}
 /* De vlucht zelf. van/naar zijn twee vlakken; bron levert de kleuren en de
    tekening (de wereld waar het om gaat). 'op' is het opruimwerk van de aanroeper
    en loopt altijd precies één keer.
@@ -1140,7 +1159,7 @@ function wereldVlucht(van, naar, bron, op, hoog) {
      compositor af zou trekken. */
   const beelden = vluchtBeelden(van, naar);
   const tijd = { duration: VLUCHT.duur, easing: 'linear', fill: 'forwards' };
-  laag.animate(beelden.vorm, tijd);
+  const beweging = laag.animate(beelden.vorm, tijd);
   laag.animate(beelden.rand, tijd);
   kunst.animate(beelden.binnen, tijd);
   /* De landing: pas ná de beweging dooft de tekening weg op wat er dan al staat.
@@ -1158,7 +1177,7 @@ function wereldVlucht(van, naar, bron, op, hoog) {
      tikt hoort gewoon antwoord te krijgen in plaats van een tik die verdwijnt.
      Veilig, want elke ingang begint met vluchtKlaar(): een tik in dat venster
      sluit deze vlucht eerst netjes af en begint dan pas aan de volgende. */
-  vluchtOp = { laag, doek, op,
+  vluchtOp = { laag, doek, op, beweging,
     timer: setTimeout(vluchtKlaar, VLUCHT.duur + VLUCHT.kruis + MOTION.vangnet),
     grendel: setTimeout(() => { overgangBezig = false; }, VLUCHT.duur) };
   eind.onfinish = vluchtKlaar;
