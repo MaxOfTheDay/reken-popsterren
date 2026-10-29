@@ -2398,7 +2398,7 @@ function vraagMemoryStop() {
 }
 // "Stoppen" in dat venster: memory uit, of de show uit.
 function stopNu() {
-  if ($('screen-memory').classList.contains('active')) { $('quit-modal').classList.remove('open'); exitMemory(); }
+  if ($('screen-memory').classList.contains('active')) { modalDicht('quit-modal'); exitMemory(); }
   else quitGame();
 }
 // MEM_DRAAI is de draai van een kaart (.mem-inner in 50-zaal: transition .35s).

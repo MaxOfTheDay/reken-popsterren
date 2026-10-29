@@ -36,7 +36,27 @@
    systeem-confirm()/alert() die verder nergens in de app voorkomen en er (vooral
    rond het definitief wissen van voortgang) als een foutmelding uitzien i.p.v.
    een vraag van de app zelf. */
-function closeConfirmModal() { $('confirm-modal').classList.remove('open'); syncBackGuard(); }
+/* DICHT, MET EEN SCHILD. Een venster verdween in één beeldje (display: none),
+   en dan landde de tweede tik van een dubbeltik op wat eronder lag: "Sluiten"
+   twee keer in het vel van Als app opende "Over Rekensterren" en verliet de
+   app, en "Stoppen" twee keer kon op de kaart al een halte raken. Elk venster
+   gaat daarom hierlangs dicht: het is meteen weg, maar de doorzichtige achtergrond
+   blijft MODAL_SCHILD ms liggen en vangt die tweede tik (.schild in
+   80-ouderdeel). Een venster dat intussen weer opengaat heeft er geen last
+   van: .open wint. Sluit dus nooit met classList.remove('open') -- inhoud
+   zaak P kijkt dat na. Geeft false als het venster al dicht was. */
+const MODAL_SCHILD = 350;
+function modalDicht(id) {
+  const m = $(id);
+  if (!m.classList.contains('open')) return false;
+  m.classList.remove('open');
+  m.classList.add('schild');
+  clearTimeout(m._schild);
+  m._schild = setTimeout(() => m.classList.remove('schild'), MODAL_SCHILD);
+  syncBackGuard();
+  return true;
+}
+function closeConfirmModal() { modalDicht('confirm-modal'); }
 function showConfirm(title, body, confirmLabel, onConfirm) {
   $('confirm-title').textContent = title;
   $('confirm-body').textContent = body;

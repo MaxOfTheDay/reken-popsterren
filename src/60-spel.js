@@ -112,16 +112,15 @@ function askQuit() {
   syncBackGuard();
 }
 function closeQuitModal() {
+  if (!modalDicht('quit-modal')) return;   // een tik op het schild: al dicht
   sndClick();
-  $('quit-modal').classList.remove('open');
-  syncBackGuard();
   if (G && G.spotPauze) {
     G.spotPauze = false;
     if (!G.lock && G.spot > 0) spotLoopt();
   }
 }
 function quitGame() {
-  $('quit-modal').classList.remove('open');
+  modalDicht('quit-modal');
   stopSpot();
   hideToast();
   // de show is van het scherm dat we nu verlaten -- geen woord ervan hoort nog
@@ -313,7 +312,15 @@ function zaalPast() {
     return true;
   };
   const laatste = [...area.querySelectorAll('button, .gl-vlak')].reduce((m, el) => Math.max(m, onderkant(el)), onderkant(area));
-  zet(zaal.offsetHeight - Math.ceil(laatste + 6 - window.innerHeight));
+  /* En de zaal zelf mag niet schuiven: onder de laatste knop houdt de arena
+     nog zijn eigen rand (en het scherm de zijne). Telde alleen de knop, dan
+     stond die netjes 6px boven de rand maar schoof het scherm nog 24px op
+     onder je vinger -- in de telmodus op elke hoge telefoon. Gemeten met
+     offsets, niet met scrollHeight: de vraag komt binnen met een transform. */
+  const sg = $('screen-game'), arena = zaal.closest('.game-arena');
+  const schermOnder = onderkant(sg) - sg.offsetHeight + sg.clientHeight;
+  const arenaOver = arena ? onderkant(arena) + (parseFloat(getComputedStyle(sg).paddingBottom) || 0) - schermOnder : 0;
+  zet(zaal.offsetHeight - Math.ceil(Math.max(laatste + 6 - window.innerHeight, arenaOver)));
   /* Het gezicht. Een kleinere zaal zet haar ogen lager, maar de onderkant van
      de zaal blijft niet altijd staan (de som schuift soms mee omhoog): dus
      opnieuw meten na elke stap, tot drie keer. Alles in dezelfde taak, vóór

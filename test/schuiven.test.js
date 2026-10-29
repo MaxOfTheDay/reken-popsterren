@@ -35,13 +35,17 @@
  *      vanzelf mee) en de telmodus, elke stap, kiezen en typen, staan de kaart
  *      en elke knop van het antwoord helemaal in beeld. Vóór oktober 2026 vielen
  *      liggend met een getallenlijn, klok of kalender de antwoorden 85 tot 125px
- *      onder het scherm -- die van de sommen in dezelfde show ook.
+ *      onder het scherm -- die van de sommen in dezelfde show ook. Elke fase van
+ *      de telmodus doet apart mee, en het scherm zelf mag niet schuiven: de
+ *      tegels stonden binnen beeld terwijl de zaal op een hoge telefoon nog 24px
+ *      opschoof (zie zaalPast).
  *      En meteen drie dingen die je pas ziet als je de vraag écht speelt: een
  *      som is even hoog met het vraagteken als met het antwoord erin (vóór
  *      oktober 2026 brak "400 + 500 = 900" pas als de 900 erin viel, en sprong
  *      zij omhoog); een telsom staat op één regel en past in zijn kaart; en de
- *      klokjes bij "zoek de klok" zijn geen postzegels (KLOK_ZOEK_MIN). Bij een
- *      gouden vraag houdt de kaart zijn breedte (liggend nam de gouden regel
+ *      klokjes bij "zoek de klok" zijn geen postzegels (KLOK_ZOEK_MIN). Elke
+ *      telsom (vorm, teken, paar) loopt het apart af, niet alleen wat het lot
+ *      trekt. Bij een gouden vraag houdt de kaart zijn breedte (liggend nam de gouden regel
  *      er 50px van af, en stak een telsom eruit).
  *   Z  haar gezicht blijft vrij: op een gewone hoge telefoon valt de hint (de
  *      🤔, "half 3 ↷") niet op haar hoofd, ook niet als zij hoog staat (de
@@ -289,18 +293,46 @@ async function zaakF(browser, [w, h]) {
       s.ops = t.ops ? t.ops.slice() : []; s.themas = t.ops ? [] : [t.id];
       if (t.id === 'rekenen') s.kies = padRijen(s).rijen.map(r => r.id);
       if (LADDERS[t.id] && LADDERS[t.id].kies) s[LADDERS[t.id].kies] = LADDERS[t.id].pad.map(r => r.id);
-    }]).concat([['tellen', () => { s.track = 'count'; s.modus = 'pad'; }]]);
+    }]).concat([['tellen', () => { s.track = 'count'; s.modus = 'pad'; }]])
+      // elke fase van de telmodus apart, met dingen en met stippen: het leerpad
+      // alleen kwam nooit voorbij fase 1, en de tegels van fase 2 schoven het scherm op
+      .concat(Array.from({ length: COUNT_STAGE_MAX }, (_, i) => ['objects', 'dots'].map(repr => [`tellen ${i + 1} ${repr}`, () => {
+        s.track = 'count'; s.modus = 'vrij'; s.kiesFasen = [i + 1]; s.repr = repr;
+      }])).flat());
     // offsetTop en niet getBoundingClientRect: de vraag komt binnen met een transform (zie zaak E)
     const binnen = el => {
       let x = 0, y = 0; for (let e = el; e; e = e.offsetParent) { x += e.offsetLeft; y += e.offsetTop; }
       return el.offsetWidth && x >= -1 && y >= -1 && x + el.offsetWidth <= innerWidth + 1 && y + el.offsetHeight <= innerHeight + 1;
     };
+    /* en het scherm zelf schuift niet: de arena met zijn rand eronder past (zie
+       zaalPast). Een paar pixels mag: op 320 breed is zij met een getallenlijn al
+       zo klein als ze wordt (ZAAL_MIN), en dan schuift het 6px -- dat voel je
+       niet. Wat je wel voelt, de 24px van de telmodus, valt erbuiten. */
+    const sg = $('screen-game'), arena = sg.querySelector('.game-arena');
+    const schuift = () => {
+      let y = 0; for (let e = arena; e; e = e.offsetParent) y += e.offsetTop;
+      return y + arena.offsetHeight + (parseFloat(getComputedStyle(sg).paddingBottom) || 0) > sg.clientHeight + 8 ? [{ id: 'scherm schuift' }] : [];
+    };
+    // een telsom: één regel, en binnen zijn kaart
+    const telsomNa = naam => {
+      const som = $('question-text').querySelector('.sum-eq');
+      if (!som) return;
+      // gebroken is: een stuk begint pas onder een ander stuk. Niet "de tops
+      // verschillen" -- de stukken staan op hun grondlijn, en een groep van
+      // 70px hoog naast een "=" van 43 begint vanzelf lager (fase 9 tot 12)
+      const kaart = $('question-card').getBoundingClientRect();
+      const raam = [...som.querySelectorAll('.dframe, .cgroup')].map(d => d.getBoundingClientRect());
+      const stukken = [...som.children].filter(c => c.offsetHeight);
+      if (Math.max(...stukken.map(c => c.offsetTop)) >= Math.min(...stukken.map(c => c.offsetTop + c.offsetHeight))) uit.push(`${naam}: de telsom breekt`);
+      if (raam.some(r => r.left < kaart.left - 1 || r.right > kaart.right + 1)) uit.push(`${naam}: een stippenraam of groepje steekt uit de kaart`);
+    };
     for (const [k, zet] of zetten) for (const mode of ['kies', 'typ']) {
       zet(); s.mode = mode; s.perLevel = 12;
+      if (s.track === 'count' && mode === 'typ') continue;   // tellen kent alleen tegels
       startLevel(P().level);
       for (let i = 0; i < G.total; i++) {
         G.idx = i; renderQuestion();
-        const q = G.qs[i], weg = [$('question-card'), ...$('answer-area').querySelectorAll('button:not(.gl-raak), .gl-vlak')].filter(el => !binnen(el));
+        const q = G.qs[i], weg = [$('question-card'), ...$('answer-area').querySelectorAll('button:not(.gl-raak), .gl-vlak')].filter(el => !binnen(el)).concat(schuift());
         const naam = `${k}/${mode}/${q.rij || q.soort || q.kind}${q.tik ? '·tik' : ''}${G.count ? '·fase ' + countLiveStage(P()) + ' ' + (q.type || '') : ''}`;
         if (weg.length) uit.push(`${naam}: ${weg.map(el => el.id || el.className.split(' ')[0]).slice(0, 2).join(',')}`);
         // met het antwoord erin even hoog (zie drawQuestion)
@@ -312,14 +344,7 @@ async function zaakF(browser, [w, h]) {
           vak.textContent = was;
           if (na !== voor) uit.push(`${naam} ${q.tmpl || ''}: kaart ${voor} -> ${na} met het antwoord`);
         }
-        // een telsom: één regel, en binnen zijn kaart
-        const som = $('question-text').querySelector('.sum-eq');
-        if (som) {
-          const tops = [...som.children].map(c => c.offsetTop), kaart = $('question-card').getBoundingClientRect();
-          const raam = [...som.querySelectorAll('.dframe')].map(d => d.getBoundingClientRect());
-          if (Math.max(...tops) - Math.min(...tops) > 8) uit.push(`${naam}: de telsom breekt`);
-          if (raam.some(r => r.left < kaart.left - 1 || r.right > kaart.right + 1)) uit.push(`${naam}: een stippenraam steekt uit de kaart`);
-        }
+        telsomNa(naam);
         // elke vraag kan de gouden zijn: zijn regel staat in beeld en neemt de kaart
         // geen breedte af (liggend stond hij mee in de rij, en was de kaart 50px
         // smaller). Op elke vraag nagebootst, niet alleen op de ene die het lot koos.
@@ -336,6 +361,20 @@ async function zaakF(browser, [w, h]) {
         if (klokje && klokje.offsetHeight < KLOK_ZOEK_MIN) uit.push(`${naam}: zoek-klokje ${klokje.offsetHeight}px`);
       }
     }
+    /* En elke telsom zelf, niet alleen wat het lot trekt: "3 + 3" brak op 320
+       breed maar kwam in één show van twaalf vragen maar af en toe langs, en
+       dan was deze zaak de ene keer groen en de andere rood. Dus elke vorm, elk
+       teken en elk paar, op de kaart van een gewone telvraag. */
+    zetten.find(([k]) => k === 'tellen 9 objects')[1]();
+    startLevel(P().level); G.idx = 0; renderQuestion();
+    const basis = G.qs[0], emoji = (basis.card && basis.card.emoji) || '🐢';
+    for (const style of ['sym', 'dots', 'written']) for (const repr of ['objects', 'dots']) for (const op of ['+', '-'])
+      for (let a = 1; a <= (style === 'sym' ? 6 : 10); a++) for (let b = 1; b <= (style === 'sym' ? 5 : 10); b++) {
+        if (op === '-' ? b >= a : style === 'sym' && a > 5) continue;
+        G.qs[0] = { ...basis, card: { kind: 'sum', style, op, a, b, c: op === '-' ? a - b : a + b, emoji, repr, support: 'full', cap: 10 } };
+        G.idx = 0; renderQuestion();
+        telsomNa(`telsom ${style}/${repr} ${a} ${op} ${b}`);
+      }
     return [...new Set(uit)];
   }, KLOK_ZOEK_MIN);
   check(!r.length, 'F · elk antwoord past', `${w}x${h}: ${r.slice(0, 8).join(' | ')}${r.length > 8 ? ` (+${r.length - 8})` : ''}`);

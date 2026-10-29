@@ -892,6 +892,10 @@
      venster een paar pixels omhoog -- dezelfde popFade als het trofeefeestje
      (70-feest). Geen beweging erin bij beperkte beweging: alleen de fade. */
   .modal-bg.open { display: flex; animation: popFade .2s ease-out both; }
+  /* net dicht: onzichtbaar, maar nog even een schild tegen de tweede tik van
+     een dubbeltik (zie modalDicht) */
+  .modal-bg.schild:not(.open) { display: block; background: transparent; animation: none; }
+  .modal-bg.schild:not(.open) > * { display: none; }
   .modal-bg.open .modal { animation: modalOp .22s ease-out both; }
   @keyframes modalOp { from { transform: translateY(10px); } to { transform: none; } }
   @media (prefers-reduced-motion: reduce) { .modal-bg.open .modal { animation: none; } }

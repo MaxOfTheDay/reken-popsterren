@@ -4384,6 +4384,23 @@
   .sum-eq .cgroup.big .cg-obj { font-size: clamp(22px, 6vw, 32px); }
   .sum-eq .cgroup.big { max-width: 128px; }
 
+
+
+
+
+
+  .sum-eq { flex-wrap: nowrap; }
+  .sum-eq > * { flex-shrink: 0; }
+  .sum-eq > .cgroup { flex-shrink: 1; }
+
+
+
+  @media (max-width: 360px) {
+    .sum-eq { column-gap: 6px; }
+    .sum-eq .cgroup.big { gap: 2px 4px; }
+    .sum-eq .cgroup.big .cg-obj { font-size: 20px; }
+  }
+
   .sum-operand .dframe.mini { position: absolute; top: 100%; left: 50%; transform: translate(-50%, calc(var(--df-mini) * -2 - 10px)); }
 
 
@@ -10207,6 +10224,10 @@
 
 
   .modal-bg.open { display: flex; animation: popFade .2s ease-out both; }
+
+
+  .modal-bg.schild:not(.open) { display: block; background: transparent; animation: none; }
+  .modal-bg.schild:not(.open) > * { display: none; }
   .modal-bg.open .modal { animation: modalOp .22s ease-out both; }
   @keyframes modalOp { from { transform: translateY(10px); } to { transform: none; } }
   @media (prefers-reduced-motion: reduce) { .modal-bg.open .modal { animation: none; } }
@@ -11295,7 +11316,27 @@ if ((location.search || '').indexOf('foutproef') !== -1) {
 
 
 
-function closeConfirmModal() { $('confirm-modal').classList.remove('open'); syncBackGuard(); }
+
+
+
+
+
+
+
+
+
+const MODAL_SCHILD = 350;
+function modalDicht(id) {
+  const m = $(id);
+  if (!m.classList.contains('open')) return false;
+  m.classList.remove('open');
+  m.classList.add('schild');
+  clearTimeout(m._schild);
+  m._schild = setTimeout(() => m.classList.remove('schild'), MODAL_SCHILD);
+  syncBackGuard();
+  return true;
+}
+function closeConfirmModal() { modalDicht('confirm-modal'); }
 function showConfirm(title, body, confirmLabel, onConfirm) {
   $('confirm-title').textContent = title;
   $('confirm-body').textContent = body;
@@ -14744,7 +14785,36 @@ function instellingenHerstel(p) {
     for (const [k, e] of Object.entries(p[lijst])) if (!e || typeof e !== 'object') delete p[lijst][k];
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+function voortgangHerstel(p) {
+  const d = Number(p.diamonds);
+  p.diamonds = Number.isFinite(d) ? Math.max(0, Math.floor(d)) : 0;
+  for (const veld of ['stars', 'tourStars']) {
+    const m = p[veld];
+    if (m == null) continue;
+    if (typeof m !== 'object' || Array.isArray(m)) { p[veld] = {}; continue; }
+    for (const [k, v] of Object.entries(m)) {
+      const n = Number(v);
+      if (v == null || !Number.isFinite(n)) delete m[k];
+      else m[k] = Math.min(3, Math.max(0, Math.round(n)));
+    }
+  }
+  if (!p.stars) p.stars = {};
+  const l = Number(p.level);
+  p.level = Number.isFinite(l) ? Math.max(1, Math.floor(l)) : 1;
+}
 function migrate(p) {
+  voortgangHerstel(p);
   if (!p.trophies) p.trophies = [];
 
 
@@ -24735,7 +24805,7 @@ function vraagMemoryStop() {
 }
 
 function stopNu() {
-  if ($('screen-memory').classList.contains('active')) { $('quit-modal').classList.remove('open'); exitMemory(); }
+  if ($('screen-memory').classList.contains('active')) { modalDicht('quit-modal'); exitMemory(); }
   else quitGame();
 }
 
@@ -25391,16 +25461,15 @@ function askQuit() {
   syncBackGuard();
 }
 function closeQuitModal() {
+  if (!modalDicht('quit-modal')) return;
   sndClick();
-  $('quit-modal').classList.remove('open');
-  syncBackGuard();
   if (G && G.spotPauze) {
     G.spotPauze = false;
     if (!G.lock && G.spot > 0) spotLoopt();
   }
 }
 function quitGame() {
-  $('quit-modal').classList.remove('open');
+  modalDicht('quit-modal');
   stopSpot();
   hideToast();
 
@@ -25592,7 +25661,15 @@ function zaalPast() {
     return true;
   };
   const laatste = [...area.querySelectorAll('button, .gl-vlak')].reduce((m, el) => Math.max(m, onderkant(el)), onderkant(area));
-  zet(zaal.offsetHeight - Math.ceil(laatste + 6 - window.innerHeight));
+
+
+
+
+
+  const sg = $('screen-game'), arena = zaal.closest('.game-arena');
+  const schermOnder = onderkant(sg) - sg.offsetHeight + sg.clientHeight;
+  const arenaOver = arena ? onderkant(arena) + (parseFloat(getComputedStyle(sg).paddingBottom) || 0) - schermOnder : 0;
+  zet(zaal.offsetHeight - Math.ceil(Math.max(laatste + 6 - window.innerHeight, arenaOver)));
 
 
 

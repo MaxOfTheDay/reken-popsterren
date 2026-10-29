@@ -607,6 +607,23 @@
   .sum-num { font-size: clamp(30px, 8vw, 46px); font-weight: 700; color: var(--purple-shadow); line-height: 1; }
   .sum-eq .cgroup.big .cg-obj { font-size: clamp(22px, 6vw, 32px); }
   .sum-eq .cgroup.big { max-width: 128px; }   /* alleen de zichtbare voorwerp-groepjes (fase 9) breed */
+  /* EEN TELSOM BLIJFT ÉÉN REGEL. Met flex-wrap brak "3 + 3 = ?" op elke
+     telefoon in twee regels zodra de groepjes breed werden (fase 9, voorwerpen):
+     een flexregel breekt vóór iemand krimpt. Dus nowrap, en wie te breed is
+     krimpt: een groepje voorwerpen gaat dan binnen zichzelf op twee rijen (het
+     is zelf een wrappende flex), de tekens en de raampjes krimpen nooit.
+     Schuiven zaak F loopt elke som-vorm van fase 9 af op 320 en 390. */
+  .sum-eq { flex-wrap: nowrap; }
+  .sum-eq > * { flex-shrink: 0; }
+  .sum-eq > .cgroup { flex-shrink: 1; }
+  /* krimpen is het vangnet; op de smalste telefoons past het al met wat
+     kleinere dingen dichter op elkaar (zonder dat werd een groepje van drie
+     een torentje van één breed) */
+  @media (max-width: 360px) {
+    .sum-eq { column-gap: 6px; }
+    .sum-eq .cgroup.big { gap: 2px 4px; }
+    .sum-eq .cgroup.big .cg-obj { font-size: 20px; }
+  }
   /* de cijfer-stippen (fase 10/11) staan als net rijtje ónder het cijfer, gecentreerd */
   .sum-operand .dframe.mini { position: absolute; top: 100%; left: 50%; transform: translate(-50%, calc(var(--df-mini) * -2 - 10px)); }
   /* Wegstrepen bij aftrekken gebeurt per stuk binnen één startgroep (5 dingen,

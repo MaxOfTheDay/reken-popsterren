@@ -37,6 +37,9 @@
  *                           vaste lucht van de schil ligt op een eigen vel
  *   N  twee talen, één regel -- een mediaregel die JavaScript zelf vraagt,
  *                           staat letterlijk zo in het stijlblad
+ *   P  vensters dicht     -- een venster (.modal-bg) gaat alleen dicht via
+ *                           modalDicht, zodat de tweede tik van een dubbeltik
+ *                           niet op het scherm eronder landt
  *
  * Draaien:
  *   npm run test:inhoud      (of: npm test voor alle suites)
@@ -1099,6 +1102,19 @@ zaak('O', () => {
       m ? m[1].slice(0, 80) : 'regel niet gevonden');
   }
   check(!/::(?:before|after)[^{]*\{[^}]*will-change:\s*auto/.test(stijl), 'O · en geen latere regel zet dat weer uit', '');
+});
+
+zaak('P', () => {
+  const html = fs.readFileSync(path.join(WORTEL, 'index.html'), 'utf8');
+  const script = html.slice(html.indexOf('<script>') + 8, html.indexOf('</script>'));
+  const stijl = html.slice(html.indexOf('<style>') + 7, html.indexOf('</style>'));
+  const vensters = [...html.matchAll(/class="modal-bg"[^>]*id="([\w-]+)"|id="([\w-]+)"[^>]*class="modal-bg"/g)].map(m => m[1] || m[2]);
+  check(vensters.length >= 2, 'P · de vensters gevonden', vensters.join(','));
+  for (const id of vensters) {
+    const kaal = script.match(new RegExp(`(?:\\$\\('${id}'\\)|getElementById\\('${id}'\\))\\.classList\\.(?:remove\\('open'|toggle\\('open')`, 'g')) || [];
+    check(!kaal.length, `P · #${id} gaat alleen dicht via modalDicht (schild tegen een dubbeltik)`, kaal.join(' | '));
+  }
+  check(/\.modal-bg\.schild:not\(\.open\)\s*\{[^}]*display:\s*block/.test(stijl), 'P · het schild ligt er echt (.modal-bg.schild in het stijlblad)', '');
 });
 
 klaar();
