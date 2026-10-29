@@ -1933,15 +1933,16 @@ zaak('ZG', () => {
 });
 
 /* ================= ZH · Past het niveau? =================
-   Het label op het leerpad (vgStand) zegt hoe de stap van NU past. Twee
+   Het label (vgStand, op het overzicht van de sterren) zegt hoe de stap van NU past. Twee
    valkuilen houdt deze zaak dicht:
      - de shows van de vorige stap tellen niet mee. Het pad schuift door zodra
        ze een rij kan, en dan waren de laatste tien bijna allemaal makkelijker:
        "gaat vlot" boven de stap die ze net lastig vindt.
      - de tellers sinds het begin (p.stats, p.stars) veranderen het label niet;
        die staan in Meer cijfers.
-   En de rij met wat al kan noemt de stappen zoals de ladder op Oefeningen
-   (padRijen, COUNT_STAGE_LABELS), niet "Stap 1–3" of "Fase 1–2". */
+   En de rij met wat al kan noemt de stappen zoals de ladder in de open kaart
+   (padRijen, COUNT_STAGE_LABELS), niet "Stap 1–3" of "Fase 1–2". Op de
+   themakaart zelf staat geen label meer; haar rij loopt vol (metVul, rijDeel). */
 zaak('ZH', () => {
   const { app, p } = verseSter('Niveau');
   const stand = () => app.run('vgStand(db.profiles.p1)');
@@ -1964,14 +1965,32 @@ zaak('ZH', () => {
   // de rij met wat al kan: de namen van de ladder
   p.pad = { klaar: ['tot10', 'tot20', 'brug20'], rij: 'zoek', shows: 0, goed: 0 };
   p.settings.max = 20;
-  const html = app.run('leerpadHtml(db.profiles.p1)');
+  const html = app.run('rekenLadderHtml(db.profiles.p1)');
   const namen = app.run('padRijen(db.profiles.p1.settings).rijen.slice(0, 3).map(r => r.naam)');
   check(html.includes(`${namen[0]} … ${namen[2]}`) && !/Stap 1/.test(html),
     'ZH · wat al kan heet zoals op de ladder ("Tot 10 … Over het tiental")', namen.join(', '));
-  check((html.match(/vg-tag/g) || []).length === 1, 'ZH · precies één label op het leerpad', '');
+  check(!/vg-tag/.test(html) && !/vg-balk/.test(html) && (html.match(/--vul:/g) || []).length === 1,
+    'ZH · op de themakaart geen label en geen balkje: alleen haar rij loopt vol', '');
+  // haar rij loopt alleen vol: een mindere show maakt hem niet leger (rijDeel leest shows en vragen, niet de reeks)
+  const deel = t => app.run('rijDeel')(t);
+  check(deel({ shows: 2, goed: 2, vragen: 12 }) === deel({ shows: 2, goed: 0, vragen: 12 }) && deel({ shows: 3, goed: 0, vragen: 18 }) > deel({ shows: 2, goed: 2, vragen: 12 })
+    && deel({ shows: 99, vragen: 99 }) === 1,
+    'ZH · de volle rij telt goede shows op deze rij, niet de drie-sterrenreeks', '');
+  /* Bij een mix krijgt een thema maar een paar vragen per show, en gaat ze na
+     acht shows nog niet door (rijVerder: ook PAD_MAX_VRAGEN). Dan mag de rij
+     niet vol staan; en "nog N shows" telt dat mee. Op de grens zelf is hij wél
+     vol, en dan zegt rijVerder ook dat ze verder mag. */
+  check(deel({ shows: 8, vragen: 8 }) < 1 && deel({ shows: 8, vragen: 16 }) === 1 && deel({ shows: 16, vragen: 8 }) === 1,
+    'ZH · bij weinig vragen per show staat de rij na acht shows nog niet vol', JSON.stringify([deel({ shows: 8, vragen: 8 })]));
+  const rv = t => app.run('rijVerder')(Object.assign({ goed: 0, reeks: [1, 0, 1, 0, 1, 0] }, t), 2, []);
+  check(!rv({ shows: 7, vragen: 8 }) && rv({ shows: 7, vragen: 16 }) && rv({ shows: 15, vragen: 8 }),
+    'ZH · (en dat is ook wat rijVerder doet: de rij is vol precies als ze verder mag)', '');
+  const nog = t => app.run('showsNog')(t);
+  check(nog({ shows: 3, vragen: 15 }) === 5 && nog({ shows: 4, vragen: 4 }) === 12 && nog(null) === 8,
+    'ZH · nog N shows: wat er aan shows ontbreekt, of aan vragen in haar tempo', JSON.stringify([nog({ shows: 3, vragen: 15 }), nog({ shows: 4, vragen: 4 }), nog(null)]));
   p.settings.track = 'count';
   p.countTrack = { stage: 4, rung: 0, streak: 0, seen: 0, acc: 0.5 };
-  const tel = app.run('leerpadHtml(db.profiles.p1)');
+  const tel = app.run('rekenLadderHtml(db.profiles.p1)');
   check(tel.includes('Tellen 1–3 … Meer / minder') && !/Fase 1/.test(tel),
     'ZH · ook bij tellen: de namen van de fases', (tel.match(/fl-rij klaar[\s\S]*?<\/div>/) || [''])[0].replace(/<[^>]+>/g, ' '));
 });
@@ -1980,7 +1999,8 @@ zaak('ZH', () => {
    Naast het leerpad (dat zelf doorschuift) kan een ouder zeggen wat er gespeeld
    wordt (s.modus 'vrij', zie zelfGekozen in 55-vragen). Elke vraag komt dan uit
    één aangevinkte rij, met de regels van die rij alleen -- en niets schuift
-   door: geen tip, en bij "gaat vlot" zegt het label "Klaar voor meer". */
+   door: geen tip, en bij "gaat vlot" zegt het label "Klaar voor meer" en staat
+   de volgende rij er op de themakaart bij met "↑ Erbij" (zelfErbij). */
 zaak('ZI', () => {
   const { app, p } = verseSter('Kies');
   const s = p.settings;
@@ -2018,11 +2038,15 @@ zaak('ZI', () => {
   for (let i = 0; i < 6; i++) app.onthoudUitkomst(p, 3, app.run('stapSleutel(db.profiles.p1)'));
   check(app.run('vgStand(db.profiles.p1)') === 'meer' && app.run('grensTip(db.profiles.p1)') === null,
     'ZI · gaat het vlot: "Klaar voor meer", zonder tip die een lijn verzet', app.run('vgStand(db.profiles.p1)'));
-  s.kies = ['tot10', 'tot20'];
-  check(app.run('vgStand(db.profiles.p1)') !== 'meer', 'ZI · iets bijgevinkt: het label begint opnieuw', app.run('vgStand(db.profiles.p1)'));
-  const html = app.run('leerpadHtml(db.profiles.p1)');
-  check(/Zelf gekozen/.test(html) && /Tot 10/.test(html) && /Tot 20/.test(html) && !/niveau-bezig/.test(html),
-    'ZI · Voortgang: wat er aangevinkt staat, zonder "hier"', '');
+  const erbij = app.run('zelfErbij(db.profiles.p1)');
+  check(erbij && erbij.k === 'rekenen' && erbij.naam === 'Tot 20' && /erbij-ja/.test(app.run('zelfLadderHtml(db.profiles.p1, "rekenen")')),
+    'ZI · gaat het vlot: de volgende rij staat erbij, met "↑ Erbij"', erbij && erbij.naam);
+  erbij.doe();
+  check(s.kies.join() === 'tot10,tot20' && app.run('vgStand(db.profiles.p1)') !== 'meer' && !app.run('zelfErbij(db.profiles.p1)'),
+    'ZI · ↑ Erbij vinkt hem aan, en het label begint opnieuw', s.kies.join());
+  const html = app.run('zelfLadderHtml(db.profiles.p1, "rekenen")');
+  check(/Tot 10/.test(html) && /Tot 20/.test(html) && !/niveau-bezig/.test(html),
+    'ZI · de themakaart: wat er aangevinkt staat, zonder "hier"', '');
   // naar Zelf kiezen: de rij waar ze op het leerpad is staat al aan
   delete s.modus; s.max = 20; s.kies = undefined;
   p.pad = { klaar: ['tot10', 'tot20'], rij: 'brug20', shows: 0, goed: 0 };
@@ -2692,6 +2716,22 @@ zaak('VV', () => {
   // een gezonde voortgang blijft precies staan
   p = geval(() => {});
   check(p.diamonds === 77 && p.level === 3 && JSON.stringify(p.stars) === JSON.stringify({ 1: 3, 2: 2 }), 'VV · een gezonde voortgang blijft precies staan');
+});
+
+/* ================= PT · Goed per thema =================
+   Elk antwoord telt bij het thema van zijn vraag (telThema, het plan van de
+   show), met dezelfde maat als stats.correct en stats.wrong. Tellen telt niet
+   mee, en een show zonder plan is rekenen. */
+zaak('PT', () => {
+  const { app, p } = verseSter('Thema');
+  app.run("G = { count: false, themaPlan: ['rekenen', 'klok', 'rekenen'], idx: 0 }");
+  app.telThema(p, true);
+  app.run('G.idx = 1'); app.telThema(p, false); app.telThema(p, true);
+  app.run('G.idx = 2'); app.telThema(p, true);
+  check(JSON.stringify(p.stats.thema) === '{"rekenen":[2,0],"klok":[1,1]}', 'PT · elk antwoord bij het thema van zijn vraag', JSON.stringify(p.stats.thema));
+  app.run('G = { count: true, idx: 0 }'); app.telThema(p, true);
+  app.run('G = { count: false, idx: 0 }'); app.telThema(p, false);
+  check(JSON.stringify(p.stats.thema) === '{"rekenen":[2,1],"klok":[1,1]}', 'PT · tellen telt niet, zonder plan is het rekenen', JSON.stringify(p.stats.thema));
 });
 
 klaar();

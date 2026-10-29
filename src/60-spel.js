@@ -1068,6 +1068,7 @@ function antwoordGoed(q, p, btnEl) {
   else if (q.kind === 'chain') updateChainAcc(p, true, firstTry);
   else if (q.count) updateCountAcc(p, true, firstTry);
   p.stats.correct++;
+  telThema(p, true);
   telLeer(p, q);   // over het tiental, zoek het getal, drie getallen (zie de plank Nieuwe sommen)
   // enkel een directe treffer telt als "beheerst" -- en zet het onderhoudsinterval
   // van een al geleerde som verder vooruit (zie toLearned/bumpLearned)
@@ -1173,12 +1174,26 @@ function antwoordGoed(q, p, btnEl) {
   // intussen gestopt (of al een nieuwe begonnen), dan is er geen volgende vraag.
   zegEnDan(lof, null, rust, () => { if (G === g) nextStep(); });
 }
+/* Goed en fout per thema, voor "Goed per thema" in haar cijfers (zie
+   cijfersBladHtml): [goed, fout], met dezelfde maat als stats.correct en
+   stats.wrong ernaast. Het thema van de vraag staat in het plan van de show
+   (themaPlan); zonder plan is het rekenen. Tellen telt niet mee: daar is maar
+   één thema, en dat zegt het totaal al. Telt pas sinds het er is -- wie ervoor
+   speelde, begint hier op nul, en dat is eerlijker dan het totaal verdelen. */
+function telThema(p, goed) {
+  if (G.count) return;
+  const k = (G.themaPlan && G.themaPlan[G.idx]) || 'rekenen';
+  if (!p.stats.thema) p.stats.thema = {};
+  const r = p.stats.thema[k] || (p.stats.thema[k] = [0, 0]);
+  r[goed ? 0 : 1]++;
+}
 /* Een fout antwoord (zachte, vriendelijke animatie). Wat élke misser doet staat
    hier; daarna splitst het in de eerste (een hint, nog een kans) en de tweede
    (de vraag is gemist, en het antwoord komt). */
 function antwoordFout(q, p, val, btnEl) {
   updatePerf(p, false, false);
   p.stats.wrong++;
+  telThema(p, false);
   incWeak(p, q);                                  // deze som vaker laten terugkomen
   demoteLearned(p, q);                            // stond hij in onderhoud? dan is hij weer zwak
   G.streak = 0;
@@ -1410,14 +1425,14 @@ function bumpPintjeTaps(el) {
 const STER_MARGE = 0.45;
 /* De laatste RECENT_N shows, als getal: de sterren, of 0 voor een mislukte show.
    p.stars onthoudt per show alleen het beste resultaat, en een mislukte show
-   helemaal niet -- daarmee kan Voortgang wel zeggen hoeveel er ooit gehaald is,
+   helemaal niet -- daarmee kan de themakaart wel zeggen hoeveel er ooit gehaald is,
    maar niet hoe het de laatste tijd gaat. Dit is geen voortgang: geen wereld,
    halte of beloning leest het. Alleen het ouderrapport (zie uitdagingStand). */
 const RECENT_N = 10;
 /* Groeien mag gezien worden. Een stap verder op het leerpad kwam er stil bij:
    het kind merkte alleen dat het ineens moeilijker was. Nu staat er op het
    eindscherm één gouden "Nieuw:", met de naam en het voorbeeld van die stap --
-   dezelfde als op de ladder bij Voortgang -- en in de telmodus zegt de stem het.
+   dezelfde als op de ladder van de themakaart -- en in de telmodus zegt de stem het.
    Alleen na een gelukte show, en de eerste vraag die het nieuwe laat zien krijgt
    in de volgende show nog één keer "Nieuw" (nieuwTeTonen, zie vraagIsNieuw).
 
@@ -1478,7 +1493,7 @@ function onthoudUitkomst(p, sterren, stap) {
    zodra ze een rij kan (padNa), en dan waren de laatste tien shows nog bijna
    allemaal van de makkelijkere rij. Dan stond er "gaat vlot" boven de stap die
    ze net moeilijker vindt. Onder de STAND_MIN shows op deze stap zegt het nog
-   niets (null); Voortgang zegt dan "nieuwe stap".
+   niets (null); de themakaart zegt dan "nieuwe stap".
 
    Een save van vóór p.stap weet niet bij welke stap zijn shows horen; die kijkt
    zoals eerst naar de laatste tien, vanaf vier shows. */
@@ -1576,7 +1591,7 @@ function endLevel(success) {
     advanceCountStage(p, success, success && showStars(G) === 3);   // telmodus: fase mee laten klimmen/zakken
     telPlafondTel(p, success ? showStars(G) : 0);
   }
-  onthoudUitkomst(p, success ? showStars(G) : 0, stapVoor);   // voor de stand in Voortgang (beide takken hieronder bewaren)
+  onthoudUitkomst(p, success ? showStars(G) : 0, stapVoor);   // voor de stand op de themakaart (beide takken hieronder bewaren)
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;   // een show verder gewend aan de grens
   if (!G.count && success && !vrij) telGrensDrie(p, showStars(G));   // voor de grenstip (zie grensDrieSterren)
   /* Een show verder op haar rij, op elke ladder die in deze show speelde, elk

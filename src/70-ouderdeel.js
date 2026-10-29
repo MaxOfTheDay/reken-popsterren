@@ -68,7 +68,7 @@ function renderNewStar() {
   const keep = scr ? scr.scrollTop : 0;
   /* De twee zwaarste keuzes ("wie ben je?" en "hoe speel je?") als twee volle
      helften met het icoon boven het woord: exact het onderdeel dat het ouderdeel
-     voor dezelfde vragen gebruikt (zie half in oefenenPanelHtml). Ze stonden
+     voor dezelfde vragen gebruikt (zie de moduskeuze in themaKaartHtml). Ze stonden
      hier als gewone pillen -- dezelfde vraag, twee verschillende bedieningen. */
   const halfChip = (v, ico, label, on) => `<button class="chip gestapeld${on ? ' on' : ''}" data-v="${v}">`
     + `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${label}</span></button>`;
@@ -251,9 +251,8 @@ function createStar() {
      Uit het ouderdeel blijft het wél een terugkeer: daar is een ster maken iets
      wat een ouder doet terwijl er misschien een ánder kind aan het spelen is, en
      dan is meteen wegspringen naar de kaart van de nieuwe ster juist verkeerd.
-     Het onderdeel blijft staan: de "+" staat boven alle drie de tabbladen, dus
-     wie hem vanuit Oefenen indrukte, ziet nu meteen hoe de nieuwe ster oefent. */
-  if (newStarReturn === 'settings') { setKey = key; setTab = 'voortgang'; renderSettings(); toonHub('screen-settings'); settingsToTop(); }
+     De nieuwe ster opent op haar pagina, dus de ouder ziet meteen hoe ze oefent. */
+  if (newStarReturn === 'settings') { setKey = key; setOpen = null; renderSettings(); toonHub('screen-settings'); settingsToTop(); }
   else { kiesBezig = false; selectProfile(key); }
   /* Alleen dat ze er staat. Hier stond eronder "Jouw eerste show begint!", maar er
      begint niets tot ze zelf op halte 1 tikt -- en die gouden halte pulst al en de
@@ -269,8 +268,11 @@ function createStar() {
                        het gaat), "Nieuwe ster", en daaronder wat voor álle
                        sterren geldt: geluid, als app, de back-up.
      ÉÉN STER       -- tik op een rij. ← gaat terug naar het overzicht, en de
-                       drie onderdelen (Voortgang, Oefeningen, ✏️) gaan alleen
-                       over haar.
+                       pagina gaat alleen over haar: wat ze oefent, per thema
+                       één kaart die je leest én met ✏️ aanpast, haar naam.
+                       Lezen en aanpassen staan op één kaart, omdat het om
+                       dezelfde stappen gaat; twee tabbladen lieten een ouder
+                       ze twee keer lezen.
 
    Hiervoor was er alleen het tweede niveau, met een rij sterren in de kop en
    "⋯" als derde tabblad. Onder ⋯ stonden dan haar naam en het wissen náást het
@@ -285,15 +287,22 @@ function createStar() {
    plek afzet is erger dan geen. */
 // null = het overzicht; anders de sleutel van de ster waar je naar kijkt.
 let setKey = null;
-// 'voortgang' (lezen) | 'oefenen' (hoe dit kind oefent). Wie ze is: zie openWieBlad.
-let setTab = 'voortgang';
+/* Welke themakaart nu open staat om aan te passen (zie themaKaart): null, of
+   de sleutel van die kaart ('rekenen', 'klok', 'tellen', ...). Een ouder zet er
+   hoogstens één open. true zet ze allemaal open: dat doen alleen de tests, die
+   de bediening van meer thema's achter elkaar aantikken. Wie ze is: zie
+   openWieBlad. */
+let setOpen = null;
+/* Onder welke stap staat de uitleg van hoe ver ze is open (zie vgUitleg)? null, of
+   de sleutel van de themakaart. Een tik op haar stap zet hem aan en uit. */
+let setUitleg = null;
 function openSettings() {
   // Altijd het overzicht: daar staat elk kind met hoe het gaat, dus wie even wil
   // kijken heeft aan één scherm genoeg. Nul sterren mag ook: dan is er alleen de
   // lege pagina, want dáár zit "Back-up terugzetten" -- de reden dat een nieuw
   // toestel hier komt.
   setKey = null;
-  setTab = 'voortgang';
+  setOpen = setUitleg = null;
   renderSettings();
   toonHub('screen-settings');
   // één keer aanhangen (een tweede toewijzing aan onscroll vervángt de vorige,
@@ -305,10 +314,12 @@ function closeSettings() {
   save();
   goProfiles();
 }
-/* ← linksboven, en de terugknop van Android (zie backTarget): van één ster
-   terug naar het overzicht, en van het overzicht het ouderdeel uit. */
+/* ← linksboven, en de terugknop van Android (zie backTarget): eerst een open
+   kaart dicht, dan van één ster terug naar het overzicht, en van het overzicht
+   het ouderdeel uit. */
 function ouderTerug() {
   if (!setKey || !db.profiles[setKey]) return closeSettings();
+  if (setOpen) { setOpen = null; renderSettings(); return; }
   setKey = null;
   renderSettings();
   settingsToTop();
@@ -316,42 +327,37 @@ function ouderTerug() {
 function openSter(key) {
   sndClick();
   setKey = key;
-  setTab = 'voortgang';
+  setOpen = setUitleg = null;
   renderSettings();
   settingsToTop();
 }
-/* Tabblad "Voortgang" -- het ouderrapport, alleen-lezen.
+/* DE PAGINA VAN ÉÉN STER -- hoe het gaat én hoe ze oefent, op één pagina.
 
-   Een ouder komt hier met drie vragen: waar staat ze, past het, en moet ik iets
-   doen? Die drie horen bij één plek -- de stap waar ze nu is -- en staan dus
-   in één kaart, het leerpad:
+   Een ouder komt hier met drie vragen: waar staat ze, moet ik iets doen, en
+   wil ik iets veranderen? Alle drie gaan over dezelfde rijen -- de ladder van
+   een thema -- en staan dus in één kaart per thema (themaKaart):
 
-     LEERPAD      -- wat al kan (één rij ✓), de stap van nu met hoe ver ze is,
-                     wat er nog komt. Rechtsboven één label: past het niveau
-                     (vgStand). Onder haar stap één regel, alleen als er iets
-                     gebeurt: het spel schuift zelf door, het spel maakt het
-                     lichter, of een knop voor de ouder.
-     EXTRA OEFENEN -- de sommen die nog lastig zijn. Alleen bij rekenen, en
-                     alleen als die er zijn.
-     MEER CIJFERS -- dicht: de tellers sinds het begin en de oogst.
+     HAAR CIJFERS  -- niet op de pagina maar achter 📊 in de kop (openCijfers).
+     WAT OEFENT ZE -- de thema's als tegels. Dit bepaalt welke kaarten eronder
+                      staan, dus staat het bovenaan.
+     HOE OEFENT ZE -- Leerpad of Zelf kiezen, antwoord, vragen per show en hoe
+                      een show eruitziet; voor alle thema's samen.
+     ÉÉN KAART PER THEMA -- om te lezen: wat al kan (één rij ✓), haar stap met
+                      haar rij die volloopt, de volgende twee, de rest als "nog N
+                      stappen", en onderaan de sommen die nog lastig zijn. ✏️
+                      rechtsboven zet dezelfde kaart open om aan te passen, en
+                      wordt dan ✓ om hem weer dicht te doen.
 
-   Hier stond eerst een aparte kaart "Hoe gaat het met …?" met een stoplicht,
-   een rij bolletjes en tellers sinds het begin. Die beantwoordde een andere
-   vraag dan zijn kop (de uitdaging, niet het kind), geel betekende goed nieuws,
-   en de bolletjes en de tellers telden over twee verschillende tijden. Valkuil:
-   zet in het label niets wat niet uit uitdagingStand komt -- de tellers sinds
-   het begin horen in Meer cijfers, anders spreken ze het label tegen. */
-/* Het label: één woord over het niveau, en de kleur zegt wie er aan zet is.
-   Groen: niets te doen. Geel: het gaat vlot (het spel schuift door, of de ouder
-   kan een stap zetten). Oranje: het spel helpt nu. Grijs: nog te vroeg. */
-const STAND_TEKST = {
-  goed:   { ico: '✓', kop: 'Past goed' },
-  vlot:   { ico: '↑', kop: 'Gaat vlot' },
-  pittig: { ico: '↓', kop: 'Even pittig' },
-  meer:   { ico: '★', kop: 'Klaar voor meer' },
-  stap:   { ico: '•', kop: 'Nieuwe stap' },
-  nieuw:  { ico: '•', kop: 'Net begonnen' },
-};
+   Hier stonden twee tabbladen, Voortgang en Oefeningen, met op allebei
+   dezelfde ladders: één keer om te lezen, één keer om te zetten. Bij drie
+   thema's stonden er zes ladders, en een ouder las elke stap twee keer.
+
+   GEEN LABEL. Hier stond "Net begonnen", "Past goed", "Even pittig" en zo
+   verder (vgStand), op de kaart én in het overzicht. De meeste zeiden wat
+   haar volle rij nu laat zien, of wat het spel zelf al doet; alleen "Klaar
+   voor meer" vroeg de ouder iets. Op haar pagina is dat een knop ín haar rij
+   ("↑ Meer"), die de stap meteen doet, met ↶ Terug in de melding. In het
+   overzicht van alle sterren is het het enige label dat nog bestaat (vgLabel). */
 /* De stand van het label. Een tip (grensTip, telTip) gaat voor: dan is er iets
    voor de ouder te doen, en dat is het eerste wat die moet zien. Anders de
    uitdaging op deze stap; is die er nog niet, dan "nieuwe stap" (ze speelde al,
@@ -361,35 +367,32 @@ function vgStand(p) {
   const u = uitdagingStand(p);
   /* Zelf kiezen schuift niet zelf door en kent geen tip: gaat het vlot, dan is
      dát het moment voor de ouder om iets bij te vinken ("Klaar voor meer", en
-     Aanpassen wordt een volle knop -- zie zelfGekozenHtml). Anders bleef een
+     op de themakaart "↑ Erbij" -- zie zelfErbij). Anders bleef een
      kind dat het allang kon eindeloos hetzelfde spelen. */
   if (u && zelfGekozen(p.settings)) return u.stand === 'vlot' ? 'meer' : u.stand;
   if (u) return u.stand;
   return p.stap ? 'stap' : 'nieuw';
 }
-function vgLabel(stand) {
-  const t = STAND_TEKST[stand];
-  return `<span class="vg-tag ${stand}" data-stand="${stand}"><b aria-hidden="true">${t.ico}</b>${t.kop}</span>`;
-}
+// goud, met een teken ervoor: dan zegt het het ook zonder kleurenzicht
+const vgLabel = () => '<span class="vg-tag meer" data-stand="meer"><b aria-hidden="true">★</b>Klaar voor meer</span>';
 // De notitie over de stem staat los boven het leerpad, en alleen als er iets mis is.
 function stemKaartHtml(p) {
   const stem = stemAan(p) ? stemNotitie(p.name) : '';
   return stem ? `<div class="set-card vg-kaart"><div class="note stem-notitie">${stem}${!db.sound
     ? '<button class="btn small purple stem-aan" id="stem-aan" type="button">🔊 Zet aan</button>' : ''}</div></div>` : '';
 }
-/* Het leerpad van rekenen staat in 55-vragen (LEERPAD, padRijen): Voortgang en
-   Oefeningen tekenen allebei die rijen, met naam en voorbeeld. OVERSLAAN IS GEEN
+/* Het leerpad van rekenen staat in 55-vragen (LEERPAD, padRijen): de themakaart
+   tekent die rijen, met naam en voorbeeld, dicht om te lezen en open om aan te
+   passen. OVERSLAAN IS GEEN
    WEGHALEN: zoek het getal en drie getallen kan de ouder uitvinken (keuze: de
    naam van de vlag); zo'n rij blijft staan, doorgestreept, en houdt zijn nummer.
    Eerst viel hij weg, en dan schoof alles erachter een nummer op. */
-/* EÉN RIJ VAN DE LADDER, voor Voortgang én Oefenen. Bolletje, naam, en rechts
+/* EÉN RIJ VAN DE LADDER, voor de dichte én de open themakaart. Bolletje, naam, en rechts
    een voorbeeld in een vaste kolom. Met een v is het een knop (.chip met data-v,
    daar hangt bindOefenChips aan); zonder is het een rij om te lezen.
 
-   Hiervoor stond hetzelfde leerpad twee keer in twee talen: Voortgang had een
-   pad met ringen, een "nu"-label en voorbeelden in grijze pilletjes, Oefenen de
-   ladder. Een ouder die van het ene tabblad naar het andere ging las dezelfde
-   stappen twee keer, en moest de tweede keer opnieuw uitzoeken wat wat was. */
+   Eén rij voor lezen en aanpassen: tekent de open kaart zijn rijen anders dan
+   de dichte, dan moet een ouder na ✏️ opnieuw uitzoeken wat wat is. */
 function flRij(klas, n, naam, vb, v, lijnen) {
   const binnen = `<span class="fl-n">${n}</span><span class="fl-naam">${naam}</span><span class="fl-vb">${vb || ''}</span>${lijnen || ''}`;
   return v == null
@@ -411,77 +414,103 @@ const flVb = vb => (vb || '').replace('▢', '<i class="fl-vak"></i>');
    p.perf niet -- het is een meelopende maat waarmee het spel de vragen
    makkelijker of moeilijker maakt, en hij zweeft rond het midden omdat hij
    dáárop stuurt. p.perf stuurt nog precies zoals hiervoor; hij wordt alleen
-   niet getoond. Wat wél onder haar stap staat is hoe ver ze op die stap is, in
-   de maat waarmee het spel zelf doorschuift: bij rekenen de shows met drie
-   sterren op rij (padNa), bij tellen de stapjes binnen een fase
+   niet getoond. Wat wél te zien is, is hoe ver ze op die stap is, in de maat
+   waarmee het spel zelf doorschuift: bij rekenen en de andere thema's de
+   shows en vragen op die rij (rijDeel), bij tellen de stapjes binnen een fase
    (countTrack.rung).
 
-   Dezelfde rijen als de ladder op Oefeningen (flRij), maar om te lezen: wat al
-   kan is één rij met een ✓, met de namen van die ladder (de eerste en de
+   Dat is iets anders dan dat percentage: het zegt niet hoe goed ze is, maar
+   hoe ver ze op weg is naar de volgende stap, en het loopt alleen vol -- nooit
+   terug. Het staat er als haar rij die van links volloopt (metVul), niet als
+   een eigen balkje: het heeft maar een handvol standen (acht bij rekenen,
+   twee of drie bij tellen), en een balkje onder haar stap maakte de rij hoger
+   en drukker voor zo weinig.
+
+   Dezelfde rijen als de ladder om aan te passen (flRij), maar om te lezen: wat
+   al kan is één rij met een ✓, met de namen van die ladder (de eerste en de
    laatste, "Tot 10 … Drie getallen"); dan de stap van nu met haar pop in het
-   bolletje, dan wat er komt. Rechtsboven het label (vgStand), onderaan
-   "Aanpassen ›" naar dezelfde ladder op Oefeningen. Een tip staat onder haar
-   stap, één regel met de knop ernaast: daar is wat hij verandert. */
-/* DE KAARTKOP. Elke kaart op Voortgang en Oefeningen begint met deze ene kop:
-   paars, even groot, met rechts eventueel iets kleins (het label op het
-   leerpad). Daaronder heten de velden van een kaart met het kleine grijze
-   label (oeLbl). Hier stonden drie soorten kop naast elkaar -- groot paars op
-   Voortgang, klein paars op Meer cijfers, klein grijs op Oefeningen -- en
-   dezelfde ladder kreeg op het ene tabblad een titel en op het andere een
-   veldlabel. ouder.test.js zaak Q houdt het bij één. */
+   bolletje en haar rij die volloopt, dan de volgende twee, en de rest als één rij
+   "nog N stappen" (vgKort). */
+/* DE KAARTKOP. Elke kaart op de pagina van een ster begint met deze ene kop:
+   donkere inkt, even groot, met rechts eventueel iets kleins (de ✏️ van een
+   themakaart). Daaronder heten de velden van een kaart met het kleine grijze
+   label (oeLbl). Hier stonden drie soorten kop naast elkaar, en dezelfde
+   ladder kreeg op de ene plek een titel en op de andere een veldlabel.
+   ouder.test.js zaak U houdt het bij één; alleen de vragen boven Wat en Hoe
+   (.klein, zie themaKaartHtml) zijn bewust kleiner. */
 const kaartKop = (titel, rechts) => `<div class="kaart-kop"><h2>${titel}</h2>${rechts || ''}</div>`;
 // het kleine grijze label boven een veld in een kaart (zie kaartKop)
 const oeLbl = (tekst, teken) => `<div class="oe-lbl">${teken ? `<span class="oe-teken">${teken}</span>` : ''}${tekst}</div>`;
 const klaarNamen = namen => namen.length > 2 ? `${namen[0]} … ${namen[namen.length - 1]}` : namen.join(', ');
-/* Waar ze nu staat, en hoe ver ze op die stap is: { naam, meter, tekst }. De
-   meter is in de maat waarmee het spel zelf doorschuift -- bij rekenen de shows
-   met drie sterren op rij (padNa, bolletjes), bij tellen de stapjes binnen een
-   fase (countTrack.rung, streepjes). Voortgang zet hem onder haar stap op het
-   leerpad, het overzicht naast haar naam: één bron, zodat die twee nooit iets
-   anders zeggen. */
+/* Waar ze nu staat, en hoe ver ze op die stap is: { naam, vb, deel }. De
+   themakaart laat haar rij ermee vollopen. */
 function stapNu(p) {
   const s = p.settings;
   if (s.track === 'count') {
     const st = countLiveStage(p), top = countTopRung(st);
     const rung = Math.min(top, Math.max(0, (p.countTrack && p.countTrack.rung) || 0));
-    return { naam: COUNT_STAGE_LABELS[st], vb: COUNT_STAGE_VB[st],
-      meter: `<span class="vg-rungs" aria-hidden="true">${Array.from({ length: top + 1 }, (_, i) => `<i class="${i <= rung ? 'aan' : ''}"></i>`).join('')}</span>`,
-      tekst: `stapje ${rung + 1} van ${top + 1}`, waar: `Fase ${st} van ${countMaxStage(s)}` };
+    return { naam: COUNT_STAGE_LABELS[st], vb: COUNT_STAGE_VB[st], deel: rung / (top + 1) };
   }
   if (!themaAan(s, 'rekenen')) return ladderStap(p, Object.keys(LADDERS).find(k => themaAan(s, k)));
   const nuId = padNu(p);
-  if (nuId === 'alles') return { naam: 'Alles door elkaar', vb: '', meter: '', tekst: '', waar: '' };
+  if (nuId === 'alles') return { naam: 'Alles door elkaar', vb: '', deel: 0 };
   const speel = padRijen(s).rijen.filter(r => !r.uit);
   const nu = speel.find(r => r.id === nuId);
-  const pad = p.pad && p.pad.rij === nuId ? p.pad : { shows: 0, goed: 0 };
-  const goed = Math.min(PAD_GOED, pad.goed || 0), nog = PAD_GOED - goed;
-  return { naam: nu.naam, vb: nu.vb,
-    meter: `<span class="vg-bol" aria-hidden="true">${Array.from({ length: PAD_GOED }, (_, i) => `<i class="${i < goed ? 'aan' : ''}"></i>`).join('')}</span>`,
-    tekst: nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show', waar: `Stap ${speel.indexOf(nu) + 1} van ${speel.length}` };
+  return { naam: nu.naam, vb: nu.vb, deel: rijDeel(p.pad && p.pad.rij === nuId ? p.pad : null) };
 }
 // Hetzelfde voor de ladder van tafels of geld (zie LADDERS): waar ze staat en hoe ver.
 function ladderStap(p, k) {
   const L = LADDERS[k], nuId = ladderNu(p, k);
-  if (nuId === 'alles') return { naam: L.eind, vb: '', meter: '', tekst: '', waar: '' };
-  const { rijen, lo, hi } = ladderRijen(p.settings, k);
-  const nu = rijen[L.idx[nuId]];
-  const t = p[L.stand] && p[L.stand].rij === nuId ? p[L.stand] : { goed: 0 };
-  const goed = Math.min(PAD_GOED, t.goed || 0), nog = PAD_GOED - goed;
-  return { naam: nu.naam, vb: nu.vb,
-    meter: `<span class="vg-bol" aria-hidden="true">${Array.from({ length: PAD_GOED }, (_, i) => `<i class="${i < goed ? 'aan' : ''}"></i>`).join('')}</span>`,
-    tekst: nog > 0 ? `nog ${nog}× ⭐⭐⭐` : 'nog 1 show', waar: `Stap ${L.idx[nuId] - lo + 1} van ${hi - lo + 1}` };
+  if (nuId === 'alles') return { naam: L.eind, vb: '', deel: 0 };
+  const nu = ladderRijen(p.settings, k).rijen[L.idx[nuId]];
+  return { naam: nu.naam, vb: nu.vb, deel: rijDeel(p[L.stand] && p[L.stand].rij === nuId ? p[L.stand] : null) };
 }
-/* Wat Zelf kiezen aangevinkt heeft, als rijen om te lezen: [{ naam, vb }]. Bij
-   rekenen de + − rijen en dan × en ÷ uit de kaart Sommen, met de tafels in de
-   naam; bij tellen de fases. Voortgang en het overzicht lezen allebei dit. */
+/* HOE VER OP DEZE RIJ, van 0 tot 1: hoe ver ze is op de weg waarlangs ze hoe
+   dan ook verder gaat ("toch", zie rijVerder). Dat zijn PAD_MAX_SHOWS goede
+   shows (t.shows telt alleen shows met PAD_TELT sterren of meer) én genoeg
+   vragen van die rij: PAD_MAX_VRAGEN, of anders het dubbele aantal shows. Dat
+   tweede telt bij een mix: staan er vier thema's aan, dan krijgt een thema
+   maar een paar vragen per show, en duurt het langer dan acht shows. Zonder
+   die vragen stond het vol terwijl ze nog bleef.
+   Ze kan eerder verder (twee keer drie sterren op rij, zie rijVerder); dan
+   begint ze leeg op de volgende rij. Bewust níet de drie-sterrenreeks (t.goed):
+   die gaat na één mindere show terug naar nul, en iets wat leegloopt leest een
+   ouder als achteruitgang. */
+const rijDeel = t => {
+  if (!t) return 0;
+  const shows = t.shows || 0, vragen = t.vragen || 0;
+  return Math.min(1, shows / PAD_MAX_SHOWS, Math.max(vragen / PAD_MAX_VRAGEN, shows / (2 * PAD_MAX_SHOWS)));
+};
+/* Hoeveel shows nog, langs diezelfde weg: wat er aan shows ontbreekt, of aan
+   vragen in het tempo waarin ze er tot nu toe per show kreeg. Een schatting
+   bij een mix, maar nooit minder dan het echte minimum. */
+function showsNog(t) {
+  const shows = (t && t.shows) || 0, vragen = (t && t.vragen) || 0;
+  const perShow = shows ? vragen / shows : 0;
+  const voorVragen = vragen >= PAD_MAX_VRAGEN ? 0 : perShow ? Math.ceil((PAD_MAX_VRAGEN - vragen) / perShow) : 0;
+  return Math.max(1, PAD_MAX_SHOWS - shows, Math.min(voorVragen, 2 * PAD_MAX_SHOWS - shows));
+}
+/* Haar rij loopt van links vol (zie .fl-rij.hier in het stijlblad): de stand
+   gaat mee als --vul. Eén plek die dat doet, voor de dichte en de open kaart. */
+const metVul = (rij, deel) => rij.replace(/class="(chip )?fl-rij/, m => `style="--vul:${Math.round(100 * Math.min(1, Math.max(0, deel || 0)))}%" ${m}`);
+/* Wat Zelf kiezen aangevinkt heeft, als rijen om te lezen: [{ naam, vb }], per
+   thema (zelfRijenVan) of voor alle samen (zelfRijen). Bij rekenen de + −
+   rijen, bij tafels × en ÷ met de tafels in de naam, bij tellen de fases. De
+   themakaart en het overzicht lezen allebei dit. */
+function zelfRijenVan(s, k) {
+  if (k === 'tellen') return kiesFasen(s).map(v => ({ naam: COUNT_STAGE_LABELS[v], vb: COUNT_STAGE_VB[v] }));
+  if (k === 'rekenen') return kiesGekozen(s).map(r => ({ naam: r.naam, vb: r.vb }));
+  if (k === 'tafels') {
+    const t = s.tables.slice().sort((a, b) => a - b), b = t[t.length - 1], a = b === 7 ? 8 : 7, rijen = [];
+    if (s.ops.includes('x')) rijen.push({ naam: `Tafels van ${t.join(', ')}`, vb: `${a} × ${b}` });
+    if (s.ops.includes(':')) rijen.push({ naam: `Delen door ${t.join(', ')}`, vb: `${a * b} : ${b}` });
+    return rijen;
+  }
+  return rijenInst({ settings: s }, k).rijen.map(r => ({ naam: r.naam, vb: LADDERS[k].vb(r) }));
+}
 function zelfRijen(s) {
-  if (s.track === 'count') return kiesFasen(s).map(v => ({ naam: COUNT_STAGE_LABELS[v], vb: COUNT_STAGE_VB[v] }));
-  const rijen = kiesGekozen(s).map(r => ({ naam: r.naam, vb: r.vb }));
-  const t = s.tables.slice().sort((a, b) => a - b), b = t[t.length - 1], a = b === 7 ? 8 : 7;
-  if (s.ops.includes('x')) rijen.push({ naam: `Tafels van ${t.join(', ')}`, vb: `${a} × ${b}` });
-  if (s.ops.includes(':')) rijen.push({ naam: `Delen door ${t.join(', ')}`, vb: `${a * b} : ${b}` });
-  THEMA_ERBIJ.filter(k => themaAan(s, k)).forEach(k => rijenInst({ settings: s }, k).rijen.forEach(r => rijen.push({ naam: r.naam, vb: LADDERS[k].vb(r) })));
-  return rijen;
+  if (s.track === 'count') return zelfRijenVan(s, 'tellen');
+  return THEMAS.map(t => t.id).filter(k => themaAan(s, k)).flatMap(k => zelfRijenVan(s, k));
 }
 /* Geld of de klok bij Zelf kiezen met nog niets aangevinkt: dan staat de rij
    waar ze op de ladder is al aan (of de eerste, zonder ster), zoals kiesStart
@@ -493,77 +522,93 @@ function rijenKiesStart(s, p) {
     s[L.kies] = [nu === 'alles' ? L.pad[ladderRijen(s, k).hi].id : nu];
   });
 }
-function leerpadHtml(p) {
-  const s = p.settings;
-  if (zelfGekozen(s)) return zelfGekozenHtml(p);
-  if (s.track !== 'count') return (themaAan(s, 'rekenen') ? rekenLadderHtml(p) : '')
-    + Object.keys(LADDERS).filter(k => themaAan(s, k)).map(k => themaLadderHtml(p, k)).join('');
-  return rekenLadderHtml(p);
+/* De kaarten op de pagina: welke themakaarten er staan. Bij tellen is dat er
+   één; bij rekenen één per thema dat aan staat, in de volgorde van de tegels. */
+const themaKaarten = s => s.track === 'count' ? ['tellen'] : THEMAS.map(t => t.id).filter(k => themaAan(s, k));
+function sterPaginaHtml(p, s) {
+  const groepen = oefenGroups(s, '', p, { deel: k => k === 'tellen' || k === 'rekenen' ? stapNu(p).deel : ladderStap(p, k).deel });
+  const show = groepen.find(g => g.kaart === 'show');
+  return `<div class="settings-panel">${stemKaartHtml(p)}${themaKaartHtml(s, p, show)}${themaKaarten(s).map(k => themaKaart(p, k, groepen)).join('')}</div>`;
 }
+/* EÉN THEMA, ÉÉN KAART. Dicht staat de ladder om te lezen (leesLadder); ✏️
+   rechtsboven zet dezelfde kaart open (setOpen), met wat oefenGroups voor dat
+   thema heeft: + − of × ÷, en de ladder met de lijnen vanaf en tot. De ✏️
+   wordt dan een ✓, en die doet hem weer dicht. Er is geen Opslaan: elke tik
+   wordt meteen bewaard (bindOefenChips), dus de ✓ is "klaar met kijken" en
+   wie de pagina verlaat met een kaart open, verliest niets.
+   Open ziet de ladder er zo veel mogelijk uit als dicht -- dezelfde rijen,
+   dezelfde lichte nummers, haar rij blijft gevuld -- zodat een tik op ✏️ niet
+   voelt als naar een ander scherm gaan (zie .thema-kaart.open in het
+   stijlblad). Open staat de hele ladder er: wie aanpast, wil kunnen kiezen
+   tot waar ze gaat, en dicht blijft de kaart kort. */
+function themaKaart(p, k, groepen) {
+  const open = setOpen === true || setOpen === k;
+  const naam = k === 'tellen' ? 'Tellen' : THEMA[k].naam;
+  const ico = k === 'tellen' ? '<span class="kaart-emoji" aria-hidden="true">🧸</span>' : themaIcoon(k, 30);
+  const pen = `<button class="kaart-pen${open ? ' aan' : ''}" type="button" data-kaart="${k}" aria-expanded="${open}" aria-label="${open ? 'Klaar' : naam + ' aanpassen'}">${open ? '✓' : '✏️'}</button>`;
+  if (!open) return `<div class="set-card vg-kaart thema-kaart niveau-blok${zelfGekozen(p.settings) ? ' zelf-blok' : ''}" data-kaart="${k}">${kaartKop(`${ico}${naam}`, pen)}${leesLadder(p, k)}${lastigHtml(p, k)}</div>`;
+  // tellen: eerst hoe groot de hoeveelheden zijn, dan het pad
+  const delen = k === 'tellen'
+    ? groepen.filter(g => g.kaart === 'wat' || g.kaart === 'pad').map(g => g.kaart === 'wat' ? oeLbl(g.kop) + g.html : g.html)
+    : [groepen.find(g => g.kaart === k).html];
+  /* + − of × ÷ gaan open naar de kop, naast de ✓: klein, want aan of uit
+     zetten is één tik en geen veld. Als volle balk boven de ladder waren het
+     de grootste knoppen van de pagina. De balk zelf blijft dezelfde (id,
+     data-instelling, bindOefenChips), alleen de plek verandert; bij een nieuwe
+     ster staat hij nog gewoon als balk. */
+  let ops = '';
+  delen[0] = delen[0].replace(/<div class="oe-ops"[^>]*>.*?<\/div>/, m => (ops = m.replace('class="oe-ops"', 'class="oe-ops kop-ops"'), ''));
+  return `<div class="set-card oefen-kaart primary thema-kaart open" data-kaart="${k}">${kaartKop(`${ico}${naam}`, ops + pen)}${delen.join('')}</div>`;
+}
+function leesLadder(p, k) {
+  if (zelfGekozen(p.settings)) return zelfLadderHtml(p, k);
+  return k === 'tellen' || k === 'rekenen' ? rekenLadderHtml(p) : themaLadderHtml(p, k);
+}
+/* Wat er na haar stap komt, om te lezen: de volgende twee, en de rest als één
+   rij "nog N stappen". Eén rij inklappen heeft geen zin, dus vanaf vier.
+   "Alles door elkaar" (∞) staat er dicht niet onder: dat is waar ze komt als
+   ze aan de lijn "tot" is, en dat zegt de open kaart op die lijn zelf. Is ze
+   er, dan is het haar rij. */
+const vgKort = (rijen, een, meer) => rijen.length <= 3 ? rijen
+  : rijen.slice(0, 2).concat(flRij(' later vg-gat', '⋮', `nog ${rijen.length - 2} ${mv(rijen.length - 2, een, meer)}`));
+// "↑ Meer" in haar rij, in plaats van het voorbeeld: er is iets voor de ouder te doen (zie bindSettings)
+const kaartTip = (id, data, woord) => `<button class="kaart-tip" id="${id}" type="button"${data || ''}>↑ ${woord || 'Meer'}</button>`;
 function rekenLadderHtml(p) {
   const s = p.settings;
-  const stand = vgStand(p);
   const rijen = [];
-  let kop, onder = '', verder;   // onder: de regel onder haar stap; verder: schuift het pad nog zelf door?
   if (s.track === 'count') {
     const st = countLiveStage(p), hi = countMaxStage(s);
-    kop = 'tellen';
-    verder = st < hi;
     if (st > 1) rijen.push(flRij(' klaar', '✓', klaarNamen(COUNT_STAGE_LABELS.slice(1, st))));
     const nu = stapNu(p);
-    rijen.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}<small class="vg-hoever">${nu.meter}${nu.tekst}</small>`, nu.vb));
+    rijen.push(metVul(flRij(' hier niveau-bezig', flAva(p), nu.naam, telTip(p) ? kaartTip('tel-tip-ja') : nu.vb), nu.deel));
     // de twee volgende fases, en de laatste die de ouder toelaat; wat ertussen zit is één rij "⋮"
     for (let v = st + 1; v <= Math.min(hi, st + 2); v++) rijen.push(flRij(' later', v, COUNT_STAGE_LABELS[v], COUNT_STAGE_VB[v]));
     const tussen = hi - st - 3;
     if (tussen > 0) rijen.push(flRij(' later vg-gat', '⋮', `nog ${tussen} ${mv(tussen, 'fase', 'fases')}`));
     if (hi > st + 2) rijen.push(flRij(' later', hi, COUNT_STAGE_LABELS[hi], COUNT_STAGE_VB[hi]));
-    // dezelfde "tot"-lijn als op Oefeningen; zonder grens is rekenen de volgende stap
+    // dezelfde "tot"-lijn als in de open kaart; zonder grens is rekenen de volgende stap
     rijen.push(hi < COUNT_STAGE_MAX ? '<div class="fl-lijn">tot</div>' : flRij(' later', '🧮', 'Daarna rekenen'));
-    const tt = telTip(p);
-    if (tt) onder = vgOnder({ fase: 'Volgende fase?', qmax: 'Grotere aantallen?', rekenen: 'Klaar om te rekenen?' }[tt.soort],
-      `<button class="btn small purple" id="tel-tip-ja" type="button">${tt.knop}</button>`);
   } else {
-    // dezelfde tekens als de tegels op Oefeningen
-    const glyph = { '+': '+', '-': '−' };
-    kop = `${['+', '-'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')} tot ${s.max}`;
     const alle = padRijen(s).rijen;
     const nuId = padNu(p);
-    verder = nuId !== 'alles';
     const nr = nuId === 'alles' ? alle.length : alle.findIndex(r => r.id === nuId);   // = hoeveel rijen er al achter liggen
     if (nr) rijen.push(flRij(' klaar', '✓', klaarNamen(alle.slice(0, nr).map(r => r.naam))));
+    const grens = grensTip(p);
+    const tip = grens ? kaartTip('grens-tip-ja', ` data-soort="${grens.soort}" data-v="${grens.naar}"`) : '';
     if (nuId === 'alles') {
-      rijen.push(flRij(' hier niveau-bezig', flAva(p), 'Alles door elkaar', ''));
+      rijen.push(flRij(' hier niveau-bezig', flAva(p), 'Alles door elkaar', tip));
     } else {
       const nu = stapNu(p);
-      rijen.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}<small class="vg-hoever">${nu.meter}${nu.tekst}</small>`, flVb(nu.vb)));
-      alle.slice(nr + 1).forEach((r, i) => rijen.push(flRij(` later${r.uit ? ' overgeslagen' : ''}`, nr + 2 + i, r.naam, flVb(r.vb))));
-      rijen.push(flRij(' later', '∞', 'Alles door elkaar'));
-    }
-    const grens = grensTip(p);
-    if (grens) {
-      const [tekst, knop] = grens.soort === 'grens' ? ['Grotere getallen?', `Tot ${grens.naar}`]
-        : grens.naar === 'mix' ? ['Af en toe zelf typen?', 'Afwisselen'] : ['Altijd zelf typen?', 'Zelf typen'];
-      onder = vgOnder(tekst, `<button class="btn small purple" id="grens-tip-ja" type="button" data-soort="${grens.soort}" data-v="${grens.naar}">${knop}</button>`);
+      rijen.push(...hierMetUitleg(metVul(flRij(' hier niveau-bezig', flAva(p), nu.naam, tip || flVb(nu.vb)), nu.deel), 'rekenen', p.pad && p.pad.rij === nuId ? p.pad : null));
+      rijen.push(...vgKort(alle.slice(nr + 1).map((r, i) => flRij(` later${r.uit ? ' overgeslagen' : ''}`, nr + 2 + i, r.naam, flVb(r.vb))), 'stap', 'stappen'));
     }
   }
-  // zonder tip: alleen een regel als het spel zelf iets doet
-  if (!onder && stand === 'pittig') onder = vgOnder('Het spel maakt het nu wat makkelijker.');
-  if (!onder && stand === 'vlot' && verder) onder = vgOnder('Gaat zelf door naar de volgende stap.');
-  // de regel hoort bij haar stap: direct onder die rij, in hetzelfde vlak
-  if (onder) {
-    const i = rijen.findIndex(r => r.includes('niveau-bezig'));
-    rijen[i] = rijen[i].replace('fl-rij hier niveau-bezig', 'fl-rij hier niveau-bezig met-onder') + onder;
-  }
-  return `<div class="set-card vg-kaart niveau-blok">
-    ${kaartKop(`Leerpad <span>· ${kop}</span>`, vgLabel(stand))}
-    <div class="fase-ladder vg-ladder">${rijen.join('')}</div>
-    <div class="vg-voet"><button class="vg-aanpas" id="leerpad-aanpas" type="button">Aanpassen ›</button></div>
-  </div>`;
+  return `<div class="fase-ladder vg-ladder">${rijen.join('')}</div>`;
 }
-/* De ladder van tafels of geld op Voortgang: dezelfde vorm als die van rekenen -- wat ze
-   haalde in één ✓-rij, haar rij met de pop en hoe ver, de rest grijs eronder.
-   Tips om een lijn te verzetten zijn er hier niet: de ladder is kort, en
-   "vanaf" en "tot" staan één tik verder, op Oefeningen. */
+/* De ladder van tafels of geld om te lezen: dezelfde vorm als die van rekenen
+   -- wat ze haalde in één ✓-rij, haar rij met de pop die volloopt, de rest
+   grijs eronder. Een tip is er hier niet: de ladder is kort, en de lijnen
+   staan één tik verder, achter de ✏️. */
 function themaLadderHtml(p, k) {
   const s = p.settings, L = LADDERS[k];
   const { rijen, lo, hi } = ladderRijen(s, k);
@@ -575,101 +620,129 @@ function themaLadderHtml(p, k) {
   if (nuId === 'alles') uit.push(flRij(' hier niveau-bezig', flAva(p), L.eind, ''));
   else {
     const nu = ladderStap(p, k);
-    uit.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}<small class="vg-hoever">${nu.meter}${nu.tekst}</small>`, flVb(nu.vb)));
-    speel.slice(nr + 1).forEach((r, i) => uit.push(flRij(' later', nr + 2 + i, r.naam, flVb(r.vb))));
-    uit.push(flRij(' later', '∞', L.eind));
+    uit.push(...hierMetUitleg(metVul(flRij(' hier niveau-bezig', flAva(p), nu.naam, flVb(nu.vb)), nu.deel), k, p[L.stand] && p[L.stand].rij === nuId ? p[L.stand] : null));
+    uit.push(...vgKort(speel.slice(nr + 1).map((r, i) => flRij(' later', nr + 2 + i, r.naam, flVb(r.vb))), 'stap', 'stappen'));
   }
-  const kop = k === 'tafels' ? `Tafels <span>· ${['x', ':'].filter(o => s.ops.includes(o)).map(o => ({ x: '×', ':': '÷' })[o]).join(' ')}</span>` : THEMA[k].naam;
-  return `<div class="set-card vg-kaart niveau-blok">
-    ${kaartKop(kop)}
-    <div class="fase-ladder vg-ladder">${uit.join('')}</div>
-    <div class="vg-voet"><button class="vg-aanpas" id="${k === 'tafels' ? 'tafel' : k}-aanpas" type="button">Aanpassen ›</button></div>
-  </div>`;
+  return `<div class="fase-ladder vg-ladder">${uit.join('')}</div>`;
 }
-/* Voortgang bij Zelf kiezen: geen pad om op te staan, dus ook geen "hier" en
-   geen ✓ voor wat al kan -- alleen wat er aangevinkt staat, in dezelfde rijen
-   als de lijst op Oefeningen (het vinkje in het bolletje), met het label
-   erboven. "Klaar voor meer" maakt Aanpassen een volle knop: dat is hier de
-   enige manier om verder te komen (zie vgStand). */
-function zelfGekozenHtml(p) {
-  const stand = vgStand(p);
-  const rijen = zelfRijen(p.settings).map(r => flRij(' kies aan', '✓', r.naam, flVb(r.vb)));
-  const onder = stand === 'pittig' ? vgOnder('Het spel maakt het nu wat makkelijker.') : '';
-  return `<div class="set-card vg-kaart niveau-blok zelf-blok">
-    ${kaartKop('Zelf gekozen', vgLabel(stand))}
-    <div class="fase-ladder vg-ladder vg-zelf">${rijen.join('')}</div>${onder}
-    <div class="vg-voet"><button class="vg-aanpas${stand === 'meer' ? ' vol' : ''}" id="leerpad-aanpas" type="button">Aanpassen ›</button></div>
-  </div>`;
+/* WAT HAAR VOLLE RIJ ZEGT. Een tik op haar stap zet er één regel onder: hoeveel
+   topshows (drie sterren) op rij ze nog nodig heeft, of hoeveel shows het
+   hoogstens nog duurt (showsNog) -- de twee wegen van rijVerder. Haar rij
+   vult zich langs de tweede (zie rijDeel). Bewust één regel: de volgende stap staat er al net
+   onder, en een balkje of een kop erbij herhaalde wat je al zag. Het rekent
+   de eis van PAD_MIN_SHOWS en de reeks losse vragen niet mee; die houden haar
+   zelden langer op dan de twee topshows, en een regel die ze allemaal noemt
+   leest niemand.
+   t: haar stand op deze rij (p.pad of p[L.stand]), of null als ze er net is.
+   Tellen heeft dit niet: daar vult haar rij met de stapjes binnen een fase,
+   en die zijn voor een ouder geen eenheid. */
+function vgUitleg(t) {
+  const top = Math.max(0, PAD_GOED - ((t && t.goed) || 0));
+  const shows = showsNog(t);
+  return `<div class="vg-uitleg">Nog <b>${top} ${mv(top, 'topshow', 'topshows')}</b> ⭐⭐⭐${top > 1 ? ' op rij' : ''} of <b>${shows} ${mv(shows, 'show', 'shows')}</b></div>`;
 }
-// De regel onder haar stap: wat er nu gebeurt, met hooguit één knop.
-const vgOnder = (tekst, knop) => `<div class="vg-onder"${knop ? ' id="grens-tip"' : ''}><span>${tekst}</span>${knop || ''}</div>`;
-/* De sommen waar het spel nu extra op oefent -- het nuttigste blok van het
-   oude scherm, dat helemaal onderaan stond. Alleen bij rekenen: de telmodus
-   kent geen lijst met losse lastige vragen, die stuurt per fase. */
-function oefentExtraHtml(p) {
-  if (p.settings.track === 'count') return '';
+// Haar rij als knop die de uitleg aan en uit zet, met de uitleg eronder als die open staat.
+function hierMetUitleg(rij, k, t) {
+  const open = setUitleg === k;
+  return [rij.replace('<div ', `<div role="button" tabindex="0" aria-expanded="${open}" data-uitleg="${k}" `).replace('class="fl-rij', `class="fl-rij${open ? ' uitleg-open' : ''}`)]
+    .concat(open ? vgUitleg(t) : []);
+}
+/* LASTIGE SOMMEN, onderaan het thema waar ze bij horen: + en − bij Rekenen,
+   × en ÷ bij Tafels. Het spel oefent er extra op (p.weak). Hoogstens twee, en
+   dan "+3": de lijst kan lang worden, en een kaart die daarvan groeit
+   verdringt de ladder. Een tik op "+3" zet ze er allemaal (zie bindSettings).
+   Geen lastige sommen: dan geen regel. Hier stond een eigen kaart "Oefent
+   extra op", los van het thema, met de vlotheid per teken en hoeveel
+   geleerde sommen later terugkomen; dat was een kaart extra voor iets wat bij
+   de ladder van dat thema hoort. */
+const LASTIG_OPS = { rekenen: ['+', '-'], tafels: ['x', ':'] };
+function lastigHtml(p, k) {
+  const ops = LASTIG_OPS[k];
+  if (!ops || p.settings.track === 'count') return '';
   // p.weak wordt op sjabloon gesleuteld ("7 × 8 = @"), met @ als de lege plek.
-  // Die plaatshouder is intern; een ouder hoort gewoon de som te zien.
-  const weak = Object.entries(p.weak).sort((a, b) => b[1].w - a[1].w).slice(0, 8)
-    .map(([tmpl, e]) => tmpl.replace('@', e.ans == null ? '?' : e.ans));
-  // Geen lastige sommen: dan geen kaart. "Geen lastige sommen op dit moment"
-  // was een hele kaart om te zeggen dat er niets te zeggen is.
-  if (!weak.length) return '';
-  // onderhoud zichtbaar maken: geleerde sommen komen later nog eens terug,
-  // zodat we merken of het blijft zitten (i.p.v. ze definitief te vergeten)
-  const nLearned = Object.keys(p.learned || {}).length;
-  return `<div class="set-card vg-kaart">
-    ${kaartKop('Oefent extra op')}
-    ${vlotHtml(p)}
-    <div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>
-    ${nLearned ? `<div class="note vg-noot">🧠 ${nLearned} geleerde ${mv(nLearned, 'som komt', 'sommen komen')} later terug.</div>` : ''}
-  </div>`;
+  // Staat die achteraan, dan de som zonder uitkomst ("7 × 8"): korter, en de
+  // uitkomst weet een ouder. Staat hij ertussen ("7 + @ = 12"), dan het getal erin.
+  // e.op ontbreekt in sommen van vóór er per teken bijgehouden werd: lees dan het teken
+  const op = (tmpl, e) => e.op || (/×/.test(tmpl) ? 'x' : /[÷:]/.test(tmpl) ? ':' : / [-−] /.test(tmpl) ? '-' : '+');
+  const sommen = Object.entries(p.weak || {}).filter(([tmpl, e]) => ops.includes(op(tmpl, e))).sort((a, b) => b[1].w - a[1].w).slice(0, 8)
+    .map(([tmpl, e]) => (/ = @$/.test(tmpl) ? tmpl.replace(/ = @$/, '') : tmpl.replace('@', e.ans == null ? '?' : e.ans)).replace(' - ', ' − '));
+  if (!sommen.length) return '';
+  const zicht = sommen.length > 3 ? 2 : sommen.length;
+  return `<div class="vg-lastig"><span>Lastig</span>${sommen.map((t, i) => `<span class="practice-chip${i >= zicht ? ' verborgen' : ''}">${t}</span>`).join('')}${
+    sommen.length > zicht ? `<button class="practice-chip lastig-meer" type="button" aria-label="Alle lastige sommen">+${sommen.length - zicht}</button>` : ''}</div>`;
 }
-/* Vlotheid, per soort som: komt een goed antwoord er zó uit, of wordt het
-   uitgerekend? Een woord per teken ("+ vlot · − rekent nog") en geen
-   percentage met een balk: dat las als een rapportcijfer, net als het oude
-   niveaugetal (FASE 5D.1). Pas na tien sommen van die soort, anders zegt het
-   niets. Hier stond één zin over alle soorten samen, en dan zag je niet dat
-   plus vlot ging en min niet. */
-function vlotHtml(p) {
-  const glyph = { '+': '+', '-': '−', 'x': '×', ':': '÷' };
-  const ops = (p.settings.ops || []).filter(o => p.opTrack[o] && p.opTrack[o].n >= 10);
-  if (!ops.length) return '';
-  return `<div class="vg-vlot">${ops.map(o => {
-    const t = p.opTrack[o];
-    return `<span><b>${glyph[o]}</b> ${(t.fast == null ? 0.5 : t.fast) >= FLUENT_MIN ? 'vlot' : 'rekent nog'}</span>`;
-  }).join('')}</div>`;
+/* Zelf kiezen, om te lezen: geen pad om op te staan, dus ook geen "hier" en
+   geen ✓ voor wat al kan -- alleen wat er aangevinkt staat, in dezelfde rijen
+   als de vinklijst (het vinkje in het bolletje). Gaat het vlot (vgStand
+   'meer'), dan staat de volgende rij er licht bij met "↑ Erbij": hier schuift
+   niets vanzelf door, dus dat is de enige manier om verder te komen. */
+function zelfLadderHtml(p, k) {
+  const rijen = zelfRijenVan(p.settings, k).map(r => flRij(' kies aan', '✓', r.naam, flVb(r.vb)));
+  const erbij = zelfErbij(p);
+  if (erbij && erbij.k === k) rijen.push(flRij(' kies erbij', '✓', erbij.naam, kaartTip('erbij-ja', '', 'Erbij')));
+  return `<div class="fase-ladder vg-ladder vg-zelf">${rijen.join('')}</div>`;
 }
-/* "Meer cijfers": wat er sinds het begin gebeurde, dicht tot een ouder hem
-   opent. Shows, sommen en % goed tellen over alles -- daarom staan ze hier en
-   niet bij het label, dat alleen over de stap van nu gaat.
-   De trofeeteller is een breuk, en die is altijd meervoud: "1/18 trofeeën"
-   spreek je uit als "1 van de 18 trofeeën". De noemer komt uit
-   activeTrophies() -- dezelfde bron als de kop van de kast, zodat er nooit
-   twee verschillende totalen in de app kunnen staan. */
-function meerCijfersHtml(p) {
+/* De rij die er bij Zelf kiezen bij kan, als het vlot gaat: { k, naam, doe }
+   of null. De eerste die nog niet aan staat ná de laatste die wel aan staat,
+   in het eerste thema waar er zo een is. Tafels hebben geen volgende rij (de
+   ouder kiest ze los, "Tafels van"). */
+function zelfErbij(p) {
+  const s = p.settings;
+  if (!zelfGekozen(s) || vgStand(p) !== 'meer') return null;
+  const volgende = (alle, aan) => alle.slice(Math.max(-1, ...aan.map(v => alle.indexOf(v))) + 1).find(v => !aan.includes(v));
+  if (s.track === 'count') {
+    const v = volgende(Array.from({ length: COUNT_STAGE_MAX }, (_, i) => i + 1), kiesFasen(s));
+    return v ? { k: 'tellen', naam: COUNT_STAGE_LABELS[v], doe: () => { s.kiesFasen = kiesFasen(s).concat(v); } } : null;
+  }
+  for (const k of themaKaarten(s)) {
+    if (k === 'rekenen') {
+      const rijen = kiesRijen(s), v = volgende(rijen.map(r => r.id), s.kies || []);
+      if (v) return { k, naam: rijen.find(r => r.id === v).naam, doe: () => { s.kies = (s.kies || []).concat(v); } };
+    } else if (LADDERS[k] && LADDERS[k].kies) {
+      const L = LADDERS[k], v = volgende(L.pad.map(r => r.id), s[L.kies] || []);
+      if (v) return { k, naam: L.pad.find(r => r.id === v).naam, doe: () => { s[L.kies] = (s[L.kies] || []).concat(v); } };
+    }
+  }
+  return null;
+}
+/* HAAR CIJFERS, in een eigen blad achter 📊 in de kop (openCijfers): shows,
+   % goed, sterren en trofeeën sinds het begin, en daaronder hoe goed het gaat
+   per thema. Kijken en aanpassen zijn zo twee plekken: de pagina zelf is om
+   te zetten wat ze oefent, en wie wil weten hoe het gaat, tikt op 📊. Hier
+   stond eerst een kaart "Meer cijfers" onderaan (daar keek niemand in), en
+   daarna een regel onder haar naam die op de pagina een plek innam voor iets
+   wat je zelden nodig hebt.
+   De trofeeteller is een breuk; de noemer komt uit activeTrophies() -- dezelfde
+   bron als de kop van de kast, zodat er nooit twee verschillende totalen in de
+   app staan. */
+const procent = (goed, fout) => Math.round(100 * goed / (goed + fout));
+function cijfersBladHtml(p) {
   const shows = playedCount(p);
   const answered = p.stats.correct + p.stats.wrong;
-  const getallen = [
-    [shows, mv(shows, 'show', 'shows')],
-    [answered, p.settings.track === 'count' ? mv(answered, 'vraag', 'vragen') : mv(answered, 'som', 'sommen')],
-  ];
-  if (answered) getallen.push([Math.round(100 * p.stats.correct / answered) + '%', 'goed']);
-  const stars = totalStarCount(p);
-  const perfect = perfectCount(p);
-  const oogst = [
-    [stars, mv(stars, 'ster', 'sterren')],
-    [perfect, mv(perfect, 'perfecte show', 'perfecte shows')],
-    [`${earnedActiveCount(p)}/${activeTrophies().length}`, 'trofeeën'],
-  ];
-  return `<details class="set-card vg-kaart vg-meer"><summary>${kaartKop('Meer cijfers')}</summary>
-    <div class="vg-cijfers">${getallen.map(([n, w]) => `<span class="vg-getal"><b>${n}</b> ${w}</span>`).join('')}
-      <span class="vg-cijfers-lijn" aria-hidden="true"></span>${
-      oogst.map(([n, w]) => `<span class="oogst-item"><b>${n}</b> ${w}</span>`).join('')}</div>
-  </details>`;
+  const delen = [`<b>${shows}</b> ${mv(shows, 'show', 'shows')}`];
+  if (answered) delen.push(`<b>${procent(p.stats.correct, p.stats.wrong)}%</b> goed`);
+  delen.push(`<b>${totalStarCount(p)}</b> ⭐ sterren`, `<b>${earnedActiveCount(p)}/${activeTrophies().length}</b> 🏆 trofeeën`);
+  /* Per thema (stats.thema, zie telThema), in de volgorde van de tegels en
+     alleen wat ze al speelde -- ook een thema dat nu uit staat, want wat ze
+     deed blijft waar. Het balkje is het percentage; bij minder dan twee
+     thema's staat het er niet, want dan zegt het niets meer dan het totaal. */
+  const t = p.stats.thema || {};
+  const rijen = THEMAS.filter(th => t[th.id] && t[th.id][0] + t[th.id][1] > 0).map(th => {
+    const pct = procent(t[th.id][0], t[th.id][1]);
+    return `<div class="cijfer-thema"><span>${th.naam}</span><i style="--pct:${pct}%"></i><b>${pct}%</b></div>`;
+  });
+  return `<div class="ster-cijfers">${delen.map(d => `<span>${d}</span>`).join('')}</div>`
+    + (rijen.length > 1 ? `<div class="oe-lbl cijfer-kop">Goed per thema</div>${rijen.join('')}` : '');
 }
-function statsPanelHtml(p) {
-  return `<div class="settings-panel">${stemKaartHtml(p)}${leerpadHtml(p)}${oefentExtraHtml(p)}${meerCijfersHtml(p)}</div>`;
+function openCijfers() {
+  const p = setKey && db.profiles[setKey];
+  if (!p) return;
+  $('confirm-title').textContent = `${p.name} in cijfers`;
+  $('confirm-body').innerHTML = cijfersBladHtml(p);
+  $('confirm-actions').innerHTML = '<button class="btn small purple" id="cijfers-klaar">Klaar</button>';
+  $('cijfers-klaar').onclick = closeConfirmModal;
+  $('confirm-modal').classList.add('open');
+  syncBackGuard();
 }
 /* Kan dit toestel de stem laten horen? Een ouder ziet dat anders nergens: zonder
    stem blijft de telmodus speelbaar, maar valt de luisteroefening (fase 5) stil
@@ -684,7 +757,7 @@ function stemNotitie(naam) {
   if (!db.sound) return `🔇 Het geluid staat uit, dus ${esc(naam || 'je ster')} hoort de vragen niet.`;
   if (!hasSpeech()) return '🔇 Dit toestel kan niet voorlezen. Alles blijft speelbaar, maar de luisteroefening (fase 5) wordt overgeslagen.';
   /* Eén regel; de uitleg pas als een ouder erom vraagt. Hier stond een zin van
-     vijfendertig woorden, de langste tekst van Voortgang, over een instelling
+     vijfendertig woorden, de langste tekst op haar pagina, over een instelling
      van het toestel en niet van het spel. */
   if (!nlVoice()) return '🗣️ Geen Nederlandse stem op dit toestel.'
     + '<details class="stem-hoe"><summary>Hoe?</summary>Kies een Nederlandse stem bij de spraakinstellingen van het toestel'
@@ -704,9 +777,9 @@ function stemNotitie(naam) {
    die laatste is een gemiddelde over de laatste paar antwoorden en springt heen
    en weer; drie sterren in een hele reeks shows is een stand die blijft staan.
    Alleen voor rekenen, alleen als er nog een blok op de ladder is (10, 20,
-   100, 1000 -- dezelfde blokken als op het leerpad van het tabblad Oefeningen).
+   100, 1000 -- dezelfde blokken als op de open themakaart Rekenen).
 
-   Zet de ouder de grens om (met de tip of op Oefeningen), dan begint het tellen
+   Zet de ouder de grens om (met "↑ Meer" of op de open themakaart), dan begint het tellen
    opnieuw: s.grensTipBasis onthoudt hoeveel drie-sterrenshows er toen al waren,
    en pas GRENS_TIP_SHOWS nieuwe op de nieuwe grens geven de volgende tip. Anders
    stond direct na "tot 20" al de vraag of het niet 100 moest.
@@ -816,7 +889,7 @@ function chip(v, label, on, extra) {
   return `<button class="chip ${on ? 'on' : ''}${extra ? ' ' + extra : ''}" data-v="${v}">${label}</button>`;
 }
 const COUNT_STAGE_LABELS = ['', 'Tellen 1–3', 'Tellen 1–5', 'Meer / minder', 'Evenveel', 'Luister', 'Cijfers', 'Eén meer / minder', 'Samen / splitsen', 'Som met tekens', 'Cijfers met stippen', 'Geschreven som', 'Tot 20'];
-// Per fase een voorbeeld, rechts in de ladder op Oefeningen: wat het kind daar ziet.
+// Per fase een voorbeeld, rechts in de ladder op de themakaart Tellen: wat het kind daar ziet.
 const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 · 🐞🐞🐞🐞', '●●● = ●●●', '🔊 → ●●●●', '4 = ●●●●', '5 → 6', '●●● + ●●', '🍎 + 🍎🍎', '2 + 3', '4 + 3', '10 + 4'];
 /* De oefenvelden zelf, los van de omlijsting eromheen. Het ouderdeel zet ze in
    .set-card primary met een icoonkop; het maakformulier zet ze plat in een
@@ -848,8 +921,9 @@ const OEFEN_INSTELLINGEN = {
   math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], geld: ['geldLijn', 'kiesGeld'], klok: ['klokLijn', 'kiesKlok'], kalender: ['kalLijn', 'kiesKalender'], lijn: ['lijnLijn', 'kiesLijn'], show: ['mode', 'perLevel'] },
   count: { wat: ['qmax'], pad: ['stage', 'kiesFasen'], show: ['repr', 'perLevel', 'memory'] },
 };
-function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in de volgorde van OEFEN_INSTELLINGEN
+function oefenGroups(s, pfx, p, opt) {  // -> [{ kaart, kop, ico?, html }], in de volgorde van OEFEN_INSTELLINGEN
   pfx = pfx || '';                       // p: het kind, als er een is (het maakformulier heeft er nog geen)
+  opt = opt || {};                       // opt.deel(k): alleen op de pagina van een ster (sterPaginaHtml)
   // Het teken alleen, groot: een ouder leest + − × ÷ sneller dan "Plus" of "Delen".
   // Het woord staat er voor een schermlezer nog bij (aria-label).
   const opDefs = [['+', '+', 'Plus'], ['-', '−', 'Min'], ['x', '×', 'Maal'], [':', '÷', 'Delen']];
@@ -896,13 +970,23 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
      staart: een rij om te lezen achteraan (zie het leerpad van rekenen). */
   const ava = p ? flAva(p) : '';
   const lijn = (woord, kant) => `<span class="fl-lijn ${kant}" aria-hidden="true">${woord}</span>`;
-  const ladder = (id, instelling, rijen, lo, hi, hier, staart) => `<div class="fase-ladder naad" id="${pfx}${id}" data-instelling="${instelling}">${rijen.map((r, i) => {
-    // "tot" aan het eind van een blok zegt welk: "tot 20"
-    const totWoord = r.blok && rijen[i + 1] && rijen[i + 1].blok !== r.blok ? `tot ${r.blok}` : 'tot';
-    return flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}${r.uit ? ' overgeslagen' : ''}`,
-      r.v === hier && ava ? ava : i + 1, r.naam, r.vb, r.v,
-      (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn(totWoord, 'onder') : ''));
-  }).join('')}${staart || ''}</div>`;
+  /* DE LIJN "TOT" ZEGT WAT ER DAARNA KOMT (naTot): "tot 20 · daarna alles door
+     elkaar". Hier stond onderaan een eigen rij ∞ "Alles door elkaar", en die
+     las als nog een stap -- terwijl het is wat ze doet als ze aan de lijn is.
+     Alleen als ze daar al is, staat die rij er (staart), met haar pop. Tellen
+     heeft geen naTot: daar komt na de lijn niets, of rekenen. */
+  const ladder = (id, instelling, rijen, lo, hi, hier, staart, deel, naTot) => {
+    const uit = rijen.map((r, i) => {
+      // "tot" aan het eind van een blok zegt welk: "tot 20"
+      const totWoord = (r.blok && rijen[i + 1] && rijen[i + 1].blok !== r.blok ? `tot ${r.blok}` : 'tot') + (naTot ? ` · ${naTot}` : '');
+      const html = flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}${r.uit ? ' overgeslagen' : ''}`,
+        r.v === hier && ava ? ava : i + 1, r.naam, r.vb, r.v,
+        (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn(totWoord, 'onder') : ''));
+      return r.v === hier && deel != null ? metVul(html, deel) : html;
+    });
+    return `<div class="fase-ladder naad" id="${pfx}${id}" data-instelling="${instelling}">${uit.join('')}${staart || ''}</div>`;
+  };
+  const hierDeel = k => opt.deel ? opt.deel(k) : null;
   /* ZELF KIEZEN (zie zelfGekozen): dezelfde rijen, maar elk met een vinkje in
      het bolletje, zonder nummer -- een nummer zou een volgorde beloven die er
      hier niet is -- en zonder lijnen. Tussen de blokken een dun streepje.
@@ -930,7 +1014,11 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
   // ervan maakt ('on'/'off', zie bindOefenChips).
   const aanUit = (id, instelling, ico, woord, aan) => `<div id="${pfx}${id}"><button class="chip oe-rij${aan ? ' on' : ''}" data-v="${aan ? 'off' : 'on'}" data-instelling="${instelling}" role="switch" aria-checked="${aan}">`
     + `<span class="oe-i" aria-hidden="true">${ico}</span><span class="oe-w">${woord}</span><span class="oe-stand" aria-hidden="true"></span></button></div>`;
-  const perShow = `${lbl('Vragen per show')}${balk('set-perlevel', 'perLevel', [[5, '5'], [8, '8'], [10, '10']], s.perLevel)}`;
+  const perLevelBalk = balk('set-perlevel', 'perLevel', [[5, '5'], [8, '8'], [10, '10']], s.perLevel);
+  const perShow = `${lbl('Vragen per show')}${perLevelBalk}`;
+  /* De kaart show heeft naast html ook regels: [[label, bediening, breed?]]. Het
+     maakformulier zet html neer (labels erboven), de pagina van een ster zet
+     de regels in de kaart Hoe (zie themaKaartHtml), met het label links. */
   /* De kaart pad wisselt met de modus (zie zelfGekozen): het leerpad met zijn
      lijnen, of bij Zelf kiezen de lijst met vinkjes. Wat erboven staat (wat)
      en eronder (show) is in beide modi precies hetzelfde. */
@@ -941,13 +1029,13 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
   }, vrij ? {
     kaart: 'pad', kop: `Wat oefent ${p ? esc(p.name) : 'je ster'}?`, html: kiesHtml('set-kiesfasen', 'kiesFasen', fases, kiesFasen(s))
   } : {
-    kaart: 'pad', kop: 'Leerpad', html: `${ladder('set-fase', 'stage', fases, lo, hi, p && countLiveStage(p))}`
-  }, {
-    kaart: 'show', kop: 'Tonen als', html: `${balk('set-repr', 'repr',
-      [['objects', 'Voorwerpen'], ['mix', 'Mix'], ['dots', 'Stippen']], s.repr || 'objects')}
-      ${perShow}
-      ${aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false)}`
-  }];
+    kaart: 'pad', kop: 'Leerpad', html: `${ladder('set-fase', 'stage', fases, lo, hi, p && countLiveStage(p), '', hierDeel('tellen'))}`
+  }, (() => {
+    const repr = balk('set-repr', 'repr', [['objects', 'Voorwerpen'], ['mix', 'Mix'], ['dots', 'Stippen']], s.repr || 'objects');
+    const mem = aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false);
+    return { kaart: 'show', kop: 'Tonen als', html: `${repr}${perShow}${mem}`,
+      regels: [['Tonen als', repr, 'breed'], ['Per show', perLevelBalk], ['', mem]] };
+  })()];
   /* Het leerpad van rekenen: de rijen van LEERPAD die op háár pad staan (zie
      padRijen), genummerd op plaats. Twee lijnen, net als bij tellen:
        vanaf  boven de rij waar het spel minstens begint (s.padVanaf)
@@ -956,8 +1044,9 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
               want die zei met een getal wat de lijn hier met de rijen zegt.
      Onder "tot" staat grijs wat komt als de lijn zakt: de rest van het blok,
      en het volgende blok (Getallen bouwen, Tientallen, Tot 100 en Over het
-     tiental) -- niet alles tot het eind, alleen de volgende stap. "Alles door elkaar" staat helemaal onderaan om te lezen:
-     daar begin je niet, maar een kind voorbij de laatste rij staat daar. */
+     tiental) -- niet alles tot het eind, alleen de volgende stap. Wat er na
+     de lijn komt, zegt de lijn zelf (naTot); alleen een kind voorbij de
+     laatste rij krijgt onderaan de rij "Alles door elkaar", met haar pop. */
   const { rijen: padR, later: padL } = padRijen(s);
   const padAlle = padR.concat(padL);
   const blok = r => r.soort === 'bereik' && r.bereik > 20 ? r.bereik : 20;
@@ -966,8 +1055,7 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
   const nuId = p && padNu(p);
   const voorbij = nuId === 'alles';
   const hierPos = p && !voorbij ? padR.findIndex(r => r.id === nuId) + 1 : 0;
-  const eind = flRij(` eind${voorbij ? ' hier' : ''}`, voorbij && ava ? ava : '∞',
-    'Alles door elkaar<small>alles tot de lijn, gemengd</small>');
+  const eind = voorbij ? flRij(' eind hier', ava || '∞', 'Alles door elkaar') : '';
   const padRijenLadder = padAlle.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb), uit: r.uit, blok: blok(r) }));
   // Zelf kiezen: de + − rijen (kiesRijen), met hun id als waarde
   const kiesLijst = kiesRijen(s).map(r => ({ v: r.id, naam: r.naam, vb: flVb(r.vb), blok: padBlok(r, { max: 20 }) }));
@@ -982,15 +1070,15 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
   const opsBalk = (id, instelling, defs) => `<div class="oe-ops" id="${pfx}${id}" data-instelling="${instelling}">${defs.map(([v, teken, woord]) =>
     `<button class="chip${s.ops.includes(v) ? ' on' : ''}" data-v="${v}" aria-label="${woord}" aria-pressed="${s.ops.includes(v)}">${teken}</button>`).join('')}</div>`;
   /* De ladders van tafels en geld (zie LADDERS): dezelfde ladder met dezelfde
-     twee lijnen, en onderaan om te lezen "alles door elkaar". Bij Zelf kiezen
+     twee lijnen, en op "tot" wat daarna komt. Bij Zelf kiezen
      de balk "Tafels van" of de vinkjes van geld: daar tikt de ouder precies
      aan welke. */
   const themaLadder = k => {
     const L = LADDERS[k], lr = ladderRijen(s, k);
     const nu = p && ladderNu(p, k), voorbij = nu === 'alles';
-    const staart = flRij(` eind${voorbij ? ' hier' : ''}`, voorbij && ava ? ava : '∞', L.eind);
+    const staart = voorbij ? flRij(' eind hier', ava || '∞', L.eind) : '';
     return ladder(L.id, L.lijn, lr.rijen.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb) })),
-      lr.lo + 1, lr.hi + 1, p && !voorbij ? L.idx[nu] + 1 : 0, staart);
+      lr.lo + 1, lr.hi + 1, p && !voorbij ? L.idx[nu] + 1 : 0, staart, hierDeel(k), 'daarna alles door elkaar');
   };
   /* Onder Vragen per show hoe een show eruitziet: één icoontje per vraag, in
      de volgorde van themaPlan -- dan hoeft niemand uit te leggen wat "de helft
@@ -1007,7 +1095,7 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
   return [themaAan(s, 'rekenen') && {
     kaart: 'rekenen', kop: 'Rekenen', ico: 'rekenen', html: `${opsBalk('set-ops', 'ops', opDefs.slice(0, 2))}${vrij
       ? kiesHtml('set-kies', 'kies', kiesLijst, (s.kies || []))
-      : ladder('set-startstap', 'padVanaf', padRijenLadder, startPos, padR.length, hierPos, eind)}`
+      : ladder('set-startstap', 'padVanaf', padRijenLadder, startPos, padR.length, hierPos, eind, hierDeel('rekenen'), 'daarna alles door elkaar')}`
   }, themaAan(s, 'tafels') && {
     kaart: 'tafels', kop: 'Tafels', ico: 'tafels', html: `${opsBalk('set-tafelops', 'tafelOps', opDefs.slice(2))}${vrij ? tafelsVan : themaLadder('tafels')}`
   }, themaAan(s, 'lijn') && {
@@ -1018,10 +1106,11 @@ function oefenGroups(s, pfx, p) {       // -> [{ kaart, kop, ico?, html }], in d
     kaart: 'klok', kop: 'Klok', ico: 'klok', html: vrij ? rijenKies('klok') : themaLadder('klok')
   }, themaAan(s, 'kalender') && {
     kaart: 'kalender', kop: 'Kalender', ico: 'kalender', html: vrij ? rijenKies('kalender') : themaLadder('kalender')
-  }, {
-    kaart: 'show', kop: 'Antwoord', html: `${balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
-      ${perShow}${showMix}`
-  }].filter(Boolean);
+  }, (() => {
+    const mode = balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode);
+    return { kaart: 'show', kop: 'Antwoord', html: `${mode}${perShow}${showMix}`,
+      regels: [['Antwoord', mode], ['Per show', perLevelBalk]].concat(showMix ? [['Een show', showMix]] : []) };
+  })()].filter(Boolean);
 }
 /* Wat er in de dichte openklapper te lezen staat: een ouder die hem nooit opent
    ziet zo tóch waar haar kind mee begint. */
@@ -1045,20 +1134,12 @@ function oefenSamenvatting(s) {
        + ` · ${modes[s.mode] || s.mode}${start ? ` · vanaf ${start.naam.toLowerCase()}` : ''}`
        + ` · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
 }
-/* DE VOLGORDE VAN OEFENEN. Eerst wat ze oefent en hoe (themaKaartHtml), dan
-   per thema zijn kaart, dan hoe een show speelt: de kaarten van oefenGroups,
-   en verder niets.
-   De modus (tellen of rekenen) staat hier niet: die wordt één keer gekozen,
-   bij het maken van de ster, en daarna nog één keer als de tip in Voortgang
-   zegt dat het tijd is om te rekenen. Hij staat in haar blad, bij wie ze is
-   (zie wieBladHtml). Onderaan Oefeningen was hij nog steeds het eerste waar
-   een duim op viel na het scrollen. */
-function oefenenPanelHtml(p, s) {
-  const cards = oefenGroups(s, '', p).filter(g => g.html).map(g => `
-    <div class="set-card oefen-kaart primary" data-kaart="${g.kaart}">${kaartKop(g.ico ? `${themaIcoon(g.ico, 22)}${g.kop}` : g.kop)}${g.html}</div>`).join('');
-  return `<div class="settings-panel">${themaKaartHtml(s, p)}${cards}
-  </div>`;
-}
+/* De modus (tellen of rekenen) staat niet op de pagina van een ster: die wordt
+   één keer gekozen, bij het maken van de ster, en daarna nog één keer als de
+   tip op de kaart Tellen zegt dat het tijd is om te rekenen. Hij staat in haar
+   blad, bij wie ze is (zie wieBladHtml). Onderaan de pagina was hij nog steeds
+   het eerste waar een duim op viel na het scrollen. De volgorde van de pagina
+   zelf: zie sterPaginaHtml. */
 /* DE THEMA'S, als tegels: wat ze oefent (zie THEMAS). Meer tegelijk mag, de
    laatste kan niet uit. Elke tegel is een schakelaar (role=switch), met het
    woord onder het icoontje -- uit is grijs én lichter, niet alleen een andere
@@ -1069,24 +1150,37 @@ function themaTegels(s, pfx) {
     return `<button class="chip thema${aan ? ' on' : ''}" data-v="${t.id}" role="switch" aria-checked="${aan}">${themaIcoon(t.id, 30)}<span>${t.naam}</span></button>`;
   }).join('')}</div>`;
 }
-/* WAT OEFENT ZE, EN HOE? Bovenaan Oefeningen één kaart: eerst de thema's
-   (themaTegels; alleen bij rekenen), dan de twee manieren (zie zelfGekozen),
-   voor alle thema's samen:
-     🧭 Leerpad      het spel schuift zelf door; de ouder zet begin en eind
-     ✋ Zelf kiezen  precies wat de ouder aanvinkt, om de beurt
-   Eerst wat, dan hoe: zo leest de kaart van boven naar onder. De manier staat
-   niet in oefenGroups, want het maakformulier begint altijd op het leerpad --
-   wie precies wil kiezen, doet dat als de ster er is. */
-function themaKaartHtml(s, p) {
+/* WAT OEFENT ZE, EN HOE? Bovenaan de pagina van een ster twee kaarten met
+   alles wat over de show gaat, voor alle thema's samen. De kaarten eronder
+   gaan dan alleen nog over hoe ver ze is, per thema.
+     Wat  de thema's (themaTegels; alleen bij rekenen -- tellen is één ding)
+     Hoe  Niveau, en de regels van de kaart show (zie oefenGroups): antwoord,
+          vragen per show en hoe een show eruitziet; bij tellen tonen als en
+          memory. Elk op één regel, met het label links, zodat de kaart als
+          een lijstje leest.
+   Niveau is de manier (zie zelfGekozen):
+     Leerpad      het spel schuift zelf door; de ouder zet begin en eind
+     Zelf kiezen  precies wat de ouder aanvinkt, om de beurt
+   Eerst stond Leerpad | Zelf kiezen onder de thema's in de kaart "Wat oefent
+   ze?", maar het is een hoe, geen wat. Er staat geen uitleg onder de twee:
+   wat ze betekenen, zegt een melding op het moment dat je wisselt (zie
+   set-modus in bindOefenChips). De manier staat niet in oefenGroups, want het
+   maakformulier begint altijd op het leerpad -- wie precies wil kiezen, doet
+   dat als de ster er is.
+   De koppen van deze twee zijn klein en grijs (.kaart-kop.klein): het zijn
+   vragen boven een bediening, geen namen van iets. */
+function themaKaartHtml(s, p, show) {
   const vrij = zelfGekozen(s);
   const tellen = s.track === 'count';
-  const meer = !tellen && themasAan(s).length > 1;
-  return `
-    <div class="set-card oefen-kaart primary modus-kaart" data-kaart="hoe">
-      ${tellen ? '' : `${kaartKop(`Wat oefent ${p ? esc(p.name) : 'ze'}?`)}${themaTegels(s, '')}<div class="thema-naad" aria-hidden="true"></div>`}
-      <div class="oe-seg" id="set-modus" data-instelling="modus">${chip('pad', '🧭 Leerpad', !vrij)}${chip('vrij', '✋ Zelf kiezen', vrij)}</div>
-      <p class="modus-uitleg">${vrij ? 'Alleen wat je aanvinkt.' : meer ? 'Elk thema groeit vanzelf mee.' : 'Groeit vanzelf mee.'}</p>
-    </div>`;
+  const naam = p ? esc(p.name) : 'ze';
+  // breed: een balk met lange woorden (Voorwerpen) zakt op een telefoon onder zijn label
+  const regel = (label, html, breed) => `<div class="oe-regel${breed ? ' breed' : ''}">${label ? `<span class="oe-regel-lbl">${label}</span>` : ''}${html}</div>`;
+  const kleinKop = t => kaartKop(t).replace('class="kaart-kop"', 'class="kaart-kop klein"');
+  const modus = `<div class="oe-seg" id="set-modus" data-instelling="modus">${chip('pad', 'Leerpad', !vrij)}${chip('vrij', 'Zelf kiezen', vrij)}</div>`;
+  return `${tellen ? '' : `
+    <div class="set-card oefen-kaart primary wat-kaart" data-kaart="wat">${kleinKop(`Wat oefent ${naam}?`)}${themaTegels(s, '')}</div>`}
+    <div class="set-card oefen-kaart primary modus-kaart" data-kaart="hoe">${kleinKop(`Hoe oefent ${naam}?`)}${regel('Niveau', modus)}${
+      (show ? show.regels : []).map(([l, h, b]) => regel(l, h, b)).join('')}</div>`;
 }
 
 /* ---- Beheer: alles wat géén oefeninstelling is ----
@@ -1333,8 +1427,8 @@ function opsomming(woorden) {
 }
 /* HET BLAD VAN ÉÉN STER -- een tik op haar naam in de kop (zie renderWie).
    Wie ze is (meisje of jongen, de naam) en, onder een lijn, de twee onomkeerbare
-   dingen. Hier stond eerst een derde tabblad "✏️" naast Voortgang en Oefeningen;
-   maar die twee zeggen hoe het gaat en wat ze oefent, en dit doe je zelden. Haar
+   dingen. Hier stond eerst een derde tabblad "✏️" naast de tabbladen die er toen waren;
+   maar haar pagina zegt hoe het gaat en wat ze oefent, en dit doe je zelden. Haar
    naam aantikken om hem te veranderen is een gebaar dat een ouder al kent.
    "Hoe speelt ze?" (tellen of rekenen) staat hier ook, met dezelfde twee
    helften als op het maakformulier: net als meisje of jongen kies je het één
@@ -1381,8 +1475,8 @@ function openWieBlad() {
   $('confirm-modal').classList.add('open');
   syncBackGuard();
 }
-/* Het overzicht: waar ⚙️ opent. Bovenaan elke ster als één rij, met hoe het
-   gaat met hetzelfde label als het leerpad op Voortgang (vgLabel) -- wie
+/* Het overzicht: waar ⚙️ opent. Bovenaan elke ster als één rij, met wat ze
+   oefent, en een label (vgLabel) alleen bij wie er iets te doen is -- wie
    alleen even wil kijken, ziet het hier al voor alle kinderen tegelijk. Een tik
    opent haar pagina. "Nieuwe ster" is de laatste rij, met dezelfde gestreepte
    cirkel als de "+"-tegel op de sterrenkeuze; bij zes sterren is er geen plek
@@ -1391,28 +1485,22 @@ function openWieBlad() {
 function overzichtHtml() {
   const rij = key => {
     const p = db.profiles[key];
-    /* Onder haar naam: waar ze staat en hoe ver (stapNu, dezelfde regel als op
-       Voortgang); het label staat naast haar naam. Hier stond "Net begonnen · 5
-       shows": het label was vaak voor elk kind hetzelfde, en het aantal shows
-       zegt een ouder weinig. Zo zie je zonder door te tikken hoe het met elk
-       kind gaat. Het label op de eerste regel en niet rechts: op 320 punten
-       hield de stap er dan geen letter meer over. */
-    /* De tweede regel zegt het in woorden: "Over het tiental · Stap 3 van 6".
-       Hier stonden bolletjes achter de stap (de shows met drie sterren), en
-       niemand zag wat die telden. Bij Zelf kiezen: ✋ en het eerste wat er
-       aangevinkt staat, "+2" voor de rest. */
-    let regel;
-    if (zelfGekozen(p.settings)) {
-      const z = zelfRijen(p.settings);
-      regel = `<span>✋ ${z.length ? z[0].naam : ''}</span>${z.length > 1 ? ` <em>+${z.length - 1}</em>` : ''}`;
-    } else {
-      const nu = stapNu(p);
-      regel = `<span>${nu.naam}</span>${nu.waar ? ` <em>· ${nu.waar}</em>` : ''}`;
-    }
+    /* Onder haar naam: wát ze oefent, als de icoontjes van de tegels op haar
+       pagina (bij tellen de 🧸). Hier stond haar stap met "Stap 3 van 5" en
+       een label ("Net begonnen", "Past goed" ...) bij elk kind: het label was
+       meestal grijs en voor iedereen hetzelfde, en "Stap 3 van 5" telde iets
+       wat je hier niet zag. Waar ze staat, en hoe ver, ziet een ouder op haar
+       pagina, in haar rij die volloopt.
+       Het label staat er alleen nog als de ouder iets kan doen ("Klaar voor
+       meer", zie vgStand): dan valt het op, juist omdat het er anders niet
+       staat. */
+    const iconen = p.settings.track === 'count'
+      ? '<span class="kaart-emoji">🧸</span>'
+      : themasAan(p.settings).map(k => themaIcoon(k, 22)).join('');
     return `<button class="ster-rij" type="button" data-key="${key}">`
       + `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
-      + `<span class="sr-tekst"><span class="sr-wie"><b>${esc(p.name)}</b>${vgLabel(vgStand(p))}</span>`
-      + `<small class="sr-stap">${regel}</small></span>`
+      + `<span class="sr-tekst"><span class="sr-wie"><b>${esc(p.name)}</b>${vgStand(p) === 'meer' ? vgLabel() : ''}</span>`
+      + `<span class="sr-themas" aria-label="Oefent ${p.settings.track === 'count' ? 'tellen' : themasAan(p.settings).map(k => THEMA[k].naam.toLowerCase()).join(', ')}">${iconen}</span></span>`
       + `<span class="sr-pijl" aria-hidden="true">›</span></button>`;
   };
   const nieuw = profileKeys().length < MAX_PROFILES
@@ -1468,14 +1556,11 @@ function speelAlsGekozen() {
 function speelAlsKnop(p) {
   const b = $('speel-als');
   if (!b) return;
-  b.hidden = !p;
+  b.hidden = $('cijfers-knop').hidden = !p;   // 📊 staat ernaast, en alleen op haar pagina (zie openCijfers)
   if (!p) return;
   b.setAttribute('aria-label', 'Speel als ' + p.name);
   b.title = 'Speel als ' + p.name;
 }
-// De twee onderdelen van één ster. Waarde = staat, label = wat er staat.
-const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefeningen']];
-
 /* De kop van één ster: haar portret en haar naam, tussen ← en ▶ in. Hier stond
    eerst een scrollende rij met álle sterren plus een "+", om van kind te
    wisselen zonder terug te gaan. Dat wisselen doet nu het overzicht, één ← terug,
@@ -1496,43 +1581,29 @@ function renderWie(p) {
   $('settings-wie').setAttribute('aria-label', p.name + ' aanpassen');
 }
 
-/* Niveau 2 -- wát: Voortgang | Oefeningen, twee even brede helften. Bewust
-   zonder emoji: rustiger, en de iconen staan al op de kaartkoppen, waar ze iets
-   betekenen. Hier stond eerst nog een smal derde vakje (eerst "⋯" met de back-up
-   eronder, daarna "✏️"); wie ze is staat nu achter haar naam in de kop. */
-function renderSectionTabs() {
-  const t = $('settings-subtabs');
-  t.innerHTML = SET_TABS.map(([v, label]) =>
-    `<button class="${setTab === v ? 'on' : ''}" role="tab" aria-selected="${setTab === v}" data-t="${v}">${label}</button>`).join('');
-  t.querySelectorAll('button').forEach(b => b.onclick = () => {
-    if (b.dataset.t === setTab) return;
-    sndClick(); setTab = b.dataset.t; renderSettings(); settingsToTop();
-  });
-}
-
 function renderSettings() {
   // De selectie kan naar een verdwenen ster wijzen (net verwijderd, of een import
   // met andere sleutels): dan terug naar het overzicht.
   if (setKey && !db.profiles[setKey]) setKey = null;
   const p = setKey ? db.profiles[setKey] : null;
-  // Op het overzicht (en zonder sterren) is er geen "wie" en geen "wat daarover";
-  // dan staat de titel er, zonder tabbladen en zonder ▶.
+  // Op het overzicht (en zonder sterren) is er geen "wie"; dan staat de titel
+  // er, zonder ▶.
   $('screen-settings').classList.toggle('met-ster', !!p);
   $('settings-wie').style.display = p ? '' : 'none';
-  $('settings-subtabs').style.display = p ? '' : 'none';
   speelAlsKnop(p);
   if (!p) {
     lastWieHtml = null;
     $('settings-wie').innerHTML = '';
-    $('settings-subtabs').innerHTML = '';
     $('settings-body').innerHTML = profileKeys().length ? overzichtHtml() : beheerEmptyHtml();
     bindSettings(null, null);
     return;
   }
   renderWie(p);
-  renderSectionTabs();
   const s = p.settings;
-  $('settings-body').innerHTML = setTab === 'oefenen' ? oefenenPanelHtml(p, s) : statsPanelHtml(p);
+  $('settings-body').innerHTML = sterPaginaHtml(p, s);
+  // hoe hoog de donkere kop is: daaronder blijft de kop van een open kaart staan (.thema-kaart.open)
+  const kop = $('screen-settings').querySelector('.hub-sticky');
+  if (kop && setOpen) $('screen-settings').style.setProperty('--ouder-kop', kop.offsetHeight + 'px');
   bindSettings(p, s);
 }
 
@@ -1628,17 +1699,23 @@ function bindOefenChips(s, p, pfx, done) {
   bind('set-modus', c => {
     const vrij = c.dataset.v === 'vrij';
     if (vrij === zelfGekozen(s)) return false;
-    if (!vrij) { delete s.modus; return; }
+    if (!vrij) {
+      delete s.modus;
+      showToast(themasAan(s).length > 1 ? '🧭 Elk thema groeit vanzelf mee' : '🧭 Groeit vanzelf mee');
+      return;
+    }
     s.modus = 'vrij';
     s.missNum = s.chain3 = true;   // overslaan was iets van het leerpad
     rijenKiesStart(s, p);
     const count = s.track === 'count';
     const had = count ? kiesFasen(s).length : kiesGekozen(s).length;
-    if (had || !p) return;
-    if (count) s.kiesFasen = [countLiveStage(p)];
-    else s.kies = kiesStart(p);
-    const eerste = zelfRijen(s)[0];
-    if (eerste) showToast(`✓ ${eerste.naam} · daar was ${esc(p.name)}`);
+    let eerste = null;
+    if (!had && p) {
+      if (count) s.kiesFasen = [countLiveStage(p)];
+      else s.kies = kiesStart(p);
+      eerste = zelfRijen(s)[0];
+    }
+    showToast('✋ Alleen wat je aanvinkt', null, eerste ? `✓ ${eerste.naam} · daar was ${esc(p.name)}` : null);
   });
   // Zelf kiezen: een vinkje aan of uit. De laatste blijft aan -- er moet iets te spelen zijn.
   const vink = (lijst, v, geldig) => {
@@ -1789,8 +1866,8 @@ function bindWie(p) {
      dan door de ster te verwijderen -- met al haar voortgang. Haar en kleren gaan
      mee naar de andere figuur, net als in het voorbeeld van het formulier. */
   /* Tellen of rekenen: wisselen tussen de rekenshow en de lees-vrije telmodus
-     (het maakformulier heeft zijn eigen #newstar-track). Oefeningen eronder
-     schakelt mee om, en het blad blijft open. */
+     (het maakformulier heeft zijn eigen #newstar-track). De themakaarten
+     eronder schakelen mee om, en het blad blijft open. */
   const modus = $('set-track');
   if (modus) modus.querySelectorAll('.chip').forEach(c => c.onclick = () => {
     const s = p.settings;
@@ -1847,43 +1924,72 @@ function bindWie(p) {
 function bindSettings(p, s) {
   const bind = (id, fn) => { const el = $(id); if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => fn(c)); };
   const on = (id, ev, fn) => { const el = $(id); if (el) el[ev] = fn; };
-  // de tip in Voortgang (zie grensTip): dezelfde instelling als op Oefeningen, met één tik
-  on('grens-tip-ja', 'onclick', e => {
+  /* "↑ Meer" en "↑ Erbij" in haar rij (zie kaartTip): de stap meteen, en een
+     melding met ↶ Terug (meldMetTerug). Terug zet haar instellingen en haar
+     plek op het pad terug zoals ze vóór de tik waren -- een tik die
+     naarRekenen doet, raakt die allebei. */
+  const metTerug = (melding, doe) => {
     sndClick();
-    const d = e.currentTarget.dataset;
-    if (d.soort === 'mode') s.mode = d.v;
-    else grensOmhoog(s, parseInt(d.v, 10));
-    s.grensTipBasis = grensDrieSterren(p);
+    const voor = JSON.stringify({ settings: p.settings, pad: p.pad, countTrack: p.countTrack });
+    doe();
     save();
     renderSettings();
+    meldMetTerug(melding, () => { Object.assign(p, JSON.parse(voor)); });
+  };
+  // rekenen (zie grensTip): eerst het antwoorden, dan de getallen
+  on('grens-tip-ja', 'onclick', e => {
+    const d = e.currentTarget.dataset;
+    metTerug(d.soort === 'grens' ? `↑ Nu tot ${d.v}` : d.v === 'mix' ? '↑ Nu af en toe zelf typen' : '↑ Nu zelf typen', () => {
+      if (d.soort === 'mode') s.mode = d.v;
+      else grensOmhoog(s, parseInt(d.v, 10));
+      s.grensTipBasis = grensDrieSterren(p);
+    });
   });
-  // en die van de telmodus (zie telTip): de tip weet zelf wat de volgende stap is
+  // tellen (zie telTip): de tip weet zelf wat de volgende stap is
   on('tel-tip-ja', 'onclick', () => {
     const tt = telTip(p);
-    if (!tt) return;
-    sndClick();
-    tt.doe(p);
-    telPlafondOpnieuw(p);
-    save();
-    renderSettings();
+    if (tt) metTerug(`↑ ${tt.knop}`, () => { tt.doe(p); telPlafondOpnieuw(p); });
   });
-  // "Aanpassen ›" op het leerpad: naar dezelfde ladder op Oefeningen, midden in beeld
-  const naarLadder = (...ids) => () => {
+  // Zelf kiezen (zie zelfErbij): de volgende rij erbij
+  on('erbij-ja', 'onclick', () => {
+    const e = zelfErbij(p);
+    if (e) metTerug(`✓ ${e.naam} erbij`, e.doe);
+  });
+  /* ✏️ en ✓ op een themakaart (zie themaKaart). Na het hertekenen staat de kop
+     van die kaart op dezelfde plek op het scherm als vóór de tik: de kaart
+     groeit naar beneden, en ging er boven hem een andere dicht, dan schuift
+     de pagina mee in plaats van onder je duim weg. */
+  document.querySelectorAll('#settings-body .kaart-pen').forEach(b => b.onclick = () => {
     sndClick();
-    setTab = 'oefenen';
+    const k = b.dataset.kaart, voor = b.getBoundingClientRect().top;
+    setOpen = setOpen === k ? null : k;
     renderSettings();
-    const lad = ids.map(id => $(id)).find(Boolean);
-    if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
-  };
-  on('leerpad-aanpas', 'onclick', naarLadder('set-startstap', 'set-fase', 'set-kies', 'set-kiesfasen', 'set-tables', 'set-kiesgeld', 'set-kiesklok', 'set-kieskalender', 'set-kieslijn'));
-  // elke themakaart op Voortgang (themaLadderHtml): per ladder, zodat een nieuw thema er vanzelf bij is
-  Object.keys(LADDERS).forEach(k => on(`${k === 'tafels' ? 'tafel' : k}-aanpas`, 'onclick', naarLadder(LADDERS[k].id)));
+    const na = document.querySelector(`#settings-body .kaart-pen[data-kaart="${k}"]`);
+    if (na) $('screen-settings').scrollTop += na.getBoundingClientRect().top - voor;
+  });
+  // een tik op haar stap: de uitleg van hoe ver ze is aan of uit (zie vgUitleg)
+  document.querySelectorAll('#settings-body [data-uitleg]').forEach(r => {
+    const wissel = e => {
+      if (e.target.closest('.kaart-tip')) return;   // "↑ Meer" in dezelfde rij doet zijn eigen ding
+      sndClick();
+      setUitleg = setUitleg === r.dataset.uitleg ? null : r.dataset.uitleg;
+      renderSettings();
+    };
+    r.onclick = wissel;
+    r.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); wissel(e); } };
+  });
+  // "+3" bij de lastige sommen (zie lastigHtml): de rest erbij, zonder te hertekenen
+  document.querySelectorAll('#settings-body .lastig-meer').forEach(b => b.onclick = () => {
+    sndClick();
+    b.parentNode.querySelectorAll('.verborgen').forEach(c => c.classList.remove('verborgen'));
+    b.remove();
+  });
   // De velden zelf staan óók op het maakformulier; de bediening is gedeeld.
   // Het maakformulier heeft niets op te slaan, dus wat er ná een wijziging
   // gebeurt komt van de aanroeper (hier: opslaan + hertekenen).
   bindOefenChips(s, p, '', () => { save(); renderSettings(); });
   on('set-newstar', 'onclick', () => openNewStar('settings'));
-  // het geluid aan, vanaf de notitie in Voortgang (zie stemNotitie): dezelfde
+  // het geluid aan, vanaf de notitie op haar pagina (zie stemNotitie): dezelfde
   // schakelaar als op het overzicht, en dan staat de notitie er niet meer
   on('stem-aan', 'onclick', () => { if (!db.sound) toggleSound(); renderSettings(); });
   on('set-sound', 'onclick', toggleSound);

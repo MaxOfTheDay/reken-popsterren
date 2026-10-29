@@ -393,6 +393,9 @@
     --paper-warm: #fffaf3;
     --lavender-wash: #f3e9ff; --lavender-wash-2: #f4e9fb; --lavender-wash-3: #efe4f7;
     --lavender-text: #e6d6ff;
+    /* het gevulde deel van haar rij in het ouderdeel (zie .fl-rij.hier): één
+       tint donkerder dan --lavender-wash, net genoeg om de grens te zien */
+    --lavender-vul: #e3cdf5;
 
     /* ---- Danger zone / practice chips (parent settings) ---- */
     --danger-bg: #fff0f0; --danger-border: #f2b2b2; --danger-title: #b71c1c; --danger-desc: #9a4a4a;
@@ -402,9 +405,6 @@
        dat verder het strakst is. Nu: paars = hoeveel er gedaan is, groen = hoe
        goed het ging. --stat-green is de enige die overblijft naast --purple-*. */
     --stat-green: #2e9e4f;
-    /* en als vlak: voor een goede status (.vg-status.goed) en de regel "laatste
-       back-up" in de back-upkaart (zie .backup-stand) */
-    --stat-green-bg: #eaf7ee; --stat-green-rand: #b9e2c6; --stat-green-tekst: #22663a;
 
     /* (Hier stond de --glass-*-familie: eenentwintig tokens van de vorm
        rgba(0,0,0,.35) onder de naam --glass-black-35. Ze zijn weg. Een naam die

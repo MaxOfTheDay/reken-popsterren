@@ -113,7 +113,7 @@ function check(ok, label, detail) {
     await page.click('#btn-gear');
     await page.waitForTimeout(300);
     const naHint = await page.evaluate(() => ({
-      scherm: document.querySelector('.screen.active').id, tab: setTab,
+      scherm: document.querySelector('.screen.active').id, open: setOpen,
       terugzetten: !!document.getElementById('set-import'),
     }));
     check(naHint.scherm === 'screen-settings' && naHint.terugzetten,
@@ -366,7 +366,6 @@ function check(ok, label, detail) {
         importVol: !!document.querySelector('#set-import.purple'),
         hasNewStar: !!document.getElementById('set-newstar'),
         whoHidden: getComputedStyle(document.getElementById('settings-wie')).display === 'none',
-        tabsHidden: getComputedStyle(document.getElementById('settings-subtabs')).display === 'none',
         hasName: !!document.getElementById('set-name'),
         hasReset: !!document.getElementById('set-reset'),
       };
@@ -376,7 +375,7 @@ function check(ok, label, detail) {
     // met nul sterren schreef "Back-up maken" een leeg bestand weg dat eruitzag als een echte back-up
     check(!r.hasExport, 'en er is niets om een back-up van te maken', JSON.stringify(r));
     check(r.hasNewStar, 'een ster maken kan ook vanuit Beheer', 'knop ontbreekt');
-    check(r.whoHidden && r.tabsHidden, 'de twee keuzerijen verdwijnen als er niets te kiezen is', JSON.stringify(r));
+    check(r.whoHidden, 'de sterrenrij verdwijnt als er niets te kiezen is', JSON.stringify(r));
     check(!r.hasName && !r.hasReset, 'zonder ster geen naamveld en geen wisknop', JSON.stringify(r));
     await ctx.close();
   });
@@ -2663,7 +2662,7 @@ function check(ok, label, detail) {
     await makeStar(page, { name: 'Zus' });
     const r = await page.evaluate(async () => {
       const k = Object.keys(db.profiles)[0];
-      openSettings(); setKey = k; setTab = 'oefenen'; renderSettings();
+      openSettings(); setKey = k; setOpen = true; renderSettings();
       await new Promise(r => setTimeout(r, 150));
       openNewStar('settings');
       await new Promise(r => setTimeout(r, 150));
