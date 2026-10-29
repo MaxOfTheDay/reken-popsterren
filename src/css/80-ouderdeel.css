@@ -133,9 +133,10 @@
   .cijfers-knop { font-size: 18px; }
   .cijfers-knop[hidden] { display: none; }
   /* Op een smalle telefoon (320) hield haar naam tussen ← en twee knoppen nog
-     twee letters over: de knoppen rechts krimpen daar naar 38, zoals in de lage kop. */
+     twee letters over: alle drie krimpen daar naar 38, zoals in de lage kop --
+     samen, want ▶ hoort even groot te zijn als ← (zie test/kop). */
   @media (max-width: 359px) {
-    #screen-settings .hub-sticky .cijfers-knop, #screen-settings .speel-als { width: 38px; height: 38px; font-size: 16px; }
+    #screen-settings .hub-sticky .icon-btn, #screen-settings .speel-als { width: 38px; height: 38px; font-size: 16px; }
     #screen-settings .header-right { gap: 6px; }
   }
   /* de getekende ▶ (zie .ico): als teken werd hij op een iPhone een emoji-knopje.
