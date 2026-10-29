@@ -1933,15 +1933,16 @@ zaak('ZG', () => {
 });
 
 /* ================= ZH · Past het niveau? =================
-   Het label op het leerpad (vgStand) zegt hoe de stap van NU past. Twee
+   Het label (vgStand, op het overzicht van de sterren) zegt hoe de stap van NU past. Twee
    valkuilen houdt deze zaak dicht:
      - de shows van de vorige stap tellen niet mee. Het pad schuift door zodra
        ze een rij kan, en dan waren de laatste tien bijna allemaal makkelijker:
        "gaat vlot" boven de stap die ze net lastig vindt.
      - de tellers sinds het begin (p.stats, p.stars) veranderen het label niet;
        die staan in Meer cijfers.
-   En de rij met wat al kan noemt de stappen zoals de ladder op Oefeningen
-   (padRijen, COUNT_STAGE_LABELS), niet "Stap 1–3" of "Fase 1–2". */
+   En de rij met wat al kan noemt de stappen zoals de ladder in de open kaart
+   (padRijen, COUNT_STAGE_LABELS), niet "Stap 1–3" of "Fase 1–2". Op de
+   themakaart zelf staat geen label meer, wel het balkje (vgBalk). */
 zaak('ZH', () => {
   const { app, p } = verseSter('Niveau');
   const stand = () => app.run('vgStand(db.profiles.p1)');
@@ -1964,14 +1965,18 @@ zaak('ZH', () => {
   // de rij met wat al kan: de namen van de ladder
   p.pad = { klaar: ['tot10', 'tot20', 'brug20'], rij: 'zoek', shows: 0, goed: 0 };
   p.settings.max = 20;
-  const html = app.run('leerpadHtml(db.profiles.p1)');
+  const html = app.run('rekenLadderHtml(db.profiles.p1)');
   const namen = app.run('padRijen(db.profiles.p1.settings).rijen.slice(0, 3).map(r => r.naam)');
   check(html.includes(`${namen[0]} … ${namen[2]}`) && !/Stap 1/.test(html),
     'ZH · wat al kan heet zoals op de ladder ("Tot 10 … Over het tiental")', namen.join(', '));
-  check((html.match(/vg-tag/g) || []).length === 1, 'ZH · precies één label op het leerpad', '');
+  check(!/vg-tag/.test(html) && (html.match(/vg-balk/g) || []).length === 1, 'ZH · op de themakaart geen label, wel één balkje onder haar stap', '');
+  // het balkje loopt alleen vol: een mindere show maakt het niet leger (rijDeel leest t.shows, niet de reeks)
+  const deel = t => app.run('rijDeel')(t);
+  check(deel({ shows: 2, goed: 2 }) === deel({ shows: 2, goed: 0 }) && deel({ shows: 3, goed: 0 }) > deel({ shows: 2, goed: 2 }) && deel({ shows: 99 }) === 1,
+    'ZH · het balkje telt de goede shows op deze rij, niet de drie-sterrenreeks', '');
   p.settings.track = 'count';
   p.countTrack = { stage: 4, rung: 0, streak: 0, seen: 0, acc: 0.5 };
-  const tel = app.run('leerpadHtml(db.profiles.p1)');
+  const tel = app.run('rekenLadderHtml(db.profiles.p1)');
   check(tel.includes('Tellen 1–3 … Meer / minder') && !/Fase 1/.test(tel),
     'ZH · ook bij tellen: de namen van de fases', (tel.match(/fl-rij klaar[\s\S]*?<\/div>/) || [''])[0].replace(/<[^>]+>/g, ' '));
 });
@@ -1980,7 +1985,8 @@ zaak('ZH', () => {
    Naast het leerpad (dat zelf doorschuift) kan een ouder zeggen wat er gespeeld
    wordt (s.modus 'vrij', zie zelfGekozen in 55-vragen). Elke vraag komt dan uit
    één aangevinkte rij, met de regels van die rij alleen -- en niets schuift
-   door: geen tip, en bij "gaat vlot" zegt het label "Klaar voor meer". */
+   door: geen tip, en bij "gaat vlot" zegt het label "Klaar voor meer" en staat
+   de volgende rij er op de themakaart bij met "↑ Erbij" (zelfErbij). */
 zaak('ZI', () => {
   const { app, p } = verseSter('Kies');
   const s = p.settings;
@@ -2018,11 +2024,15 @@ zaak('ZI', () => {
   for (let i = 0; i < 6; i++) app.onthoudUitkomst(p, 3, app.run('stapSleutel(db.profiles.p1)'));
   check(app.run('vgStand(db.profiles.p1)') === 'meer' && app.run('grensTip(db.profiles.p1)') === null,
     'ZI · gaat het vlot: "Klaar voor meer", zonder tip die een lijn verzet', app.run('vgStand(db.profiles.p1)'));
-  s.kies = ['tot10', 'tot20'];
-  check(app.run('vgStand(db.profiles.p1)') !== 'meer', 'ZI · iets bijgevinkt: het label begint opnieuw', app.run('vgStand(db.profiles.p1)'));
-  const html = app.run('leerpadHtml(db.profiles.p1)');
-  check(/Zelf gekozen/.test(html) && /Tot 10/.test(html) && /Tot 20/.test(html) && !/niveau-bezig/.test(html),
-    'ZI · Voortgang: wat er aangevinkt staat, zonder "hier"', '');
+  const erbij = app.run('zelfErbij(db.profiles.p1)');
+  check(erbij && erbij.k === 'rekenen' && erbij.naam === 'Tot 20' && /erbij-ja/.test(app.run('zelfLadderHtml(db.profiles.p1, "rekenen")')),
+    'ZI · gaat het vlot: de volgende rij staat erbij, met "↑ Erbij"', erbij && erbij.naam);
+  erbij.doe();
+  check(s.kies.join() === 'tot10,tot20' && app.run('vgStand(db.profiles.p1)') !== 'meer' && !app.run('zelfErbij(db.profiles.p1)'),
+    'ZI · ↑ Erbij vinkt hem aan, en het label begint opnieuw', s.kies.join());
+  const html = app.run('zelfLadderHtml(db.profiles.p1, "rekenen")');
+  check(/Tot 10/.test(html) && /Tot 20/.test(html) && !/niveau-bezig/.test(html),
+    'ZI · de themakaart: wat er aangevinkt staat, zonder "hier"', '');
   // naar Zelf kiezen: de rij waar ze op het leerpad is staat al aan
   delete s.modus; s.max = 20; s.kies = undefined;
   p.pad = { klaar: ['tot10', 'tot20'], rij: 'brug20', shows: 0, goed: 0 };

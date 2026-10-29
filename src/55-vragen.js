@@ -9,9 +9,9 @@
 
 /* ---- Het leerpad: één ladder, in de volgorde van school -----------------
    Wat een rekenkind leert staat in één tabel, LEERPAD, in de volgorde waarin
-   een Vlaamse school het brengt. De instellingen bovenaan Oefeningen (+ − × ÷,
+   een Vlaamse school het brengt. De instellingen op de ouderpagina (+ − × ÷,
    de grens) zeggen welke rijen op háár pad staan; de volgorde zelf
-   verandert nooit. Oefeningen, Voortgang en de vraagmaker lezen alle drie deze
+   verandert nooit. De themakaart (dicht en open) en de vraagmaker lezen allebei deze
    tabel (padRijen), en nergens anders staat een lijst stapnamen.
 
      soort 'bereik'  de getallen groeien (Tot 10, Tot 20, Over het tiental,
@@ -397,7 +397,7 @@ function rijAntwoorden(g, k, nu) {
     .map(i => g.uitslag[i] === 'goed');
 }
 /* ================= = Thema's: wat ze oefent =================
-   Rekenen is niet één ladder meer. Bovenaan Oefeningen kiest de ouder wat ze
+   Rekenen is niet één ladder meer. Bovenaan haar pagina kiest de ouder wat ze
    oefent, en elk thema heeft daaronder zijn eigen kaart, zijn eigen ladder en
    zijn eigen plek erop:
      rekenen   plus en min: LEERPAD, met zijn blokken en zijn grens
@@ -1214,7 +1214,7 @@ function moeilijkheid(perf, s) {
    Nu klimt het plafond in WEN_SHOWS shows van
    WEN_VAN naar 1: van twintig naar vijftig begint dus rond de dertig. s.wennen
    telt af (zie endLevel) en wordt gezet als de grens omhoog gaat, met de tip of
-   op Oefeningen (zie grensOmhoog). Omlaag is meteen: kleiner hoeft niet te wennen. */
+   op de open themakaart (zie grensOmhoog). Omlaag is meteen: kleiner hoeft niet te wennen. */
 const WEN_SHOWS = 8, WEN_VAN = 0.6;
 function wenPlafond(s) {
   const n = (s && s.wennen) || 0;
@@ -1222,7 +1222,7 @@ function wenPlafond(s) {
 }
 /* De grens naar een ander blok. De lijn "tot" gaat mee naar het eind ervan
    (padTot null): wie de grens met de tip verzet, krijgt het hele blok. Op
-   Oefeningen zet padTotOp hem daarna op de rij waar getikt werd. Dezelfde grens
+   de open themakaart zet padTotOp hem daarna op de rij waar getikt werd. Dezelfde grens
    doet niets -- ook het wennen loopt dan gewoon door. */
 function grensOmhoog(s, naar) {
   if (naar === s.max) return;
@@ -2333,9 +2333,9 @@ let M = null;
 // op de knop op de kaart (zie memPayout)
 const MEM_PAIR_GAIN = 2, MEM_DONE_BONUS = 3, MEM_MIN_PAREN = 4;
 /* Wie krijgt de memory-knop op de kaart? Alleen een telkind, en dan alleen als
-   de ouder hem niet uitzette (Oefeningen, de kaart "show"). Een rekenkind
+   de ouder hem niet uitzette (haar pagina, de kaart "show"). Een rekenkind
    speelt voorlopig geen memory: bij rekenen is de show het oefenen, en een
-   schakelaar minder op Oefeningen. De sommenvariant (memSomDeck)
+   schakelaar minder op haar pagina. De sommenvariant (memSomDeck)
    blijft staan; terugbrengen is deze ene regel en de schakelaar in
    OEFEN_INSTELLINGEN.math. */
 function memoryAan(p) { return p.settings.track === 'count' && p.settings.memory !== false; }

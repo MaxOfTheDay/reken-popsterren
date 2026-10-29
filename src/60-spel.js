@@ -1386,14 +1386,14 @@ function bumpPintjeTaps(el) {
 const STER_MARGE = 0.45;
 /* De laatste RECENT_N shows, als getal: de sterren, of 0 voor een mislukte show.
    p.stars onthoudt per show alleen het beste resultaat, en een mislukte show
-   helemaal niet -- daarmee kan Voortgang wel zeggen hoeveel er ooit gehaald is,
+   helemaal niet -- daarmee kan de themakaart wel zeggen hoeveel er ooit gehaald is,
    maar niet hoe het de laatste tijd gaat. Dit is geen voortgang: geen wereld,
    halte of beloning leest het. Alleen het ouderrapport (zie uitdagingStand). */
 const RECENT_N = 10;
 /* Groeien mag gezien worden. Een stap verder op het leerpad kwam er stil bij:
    het kind merkte alleen dat het ineens moeilijker was. Nu staat er op het
    eindscherm één gouden "Nieuw:", met de naam en het voorbeeld van die stap --
-   dezelfde als op de ladder bij Voortgang -- en in de telmodus zegt de stem het.
+   dezelfde als op de ladder van de themakaart -- en in de telmodus zegt de stem het.
    Alleen na een gelukte show, en de eerste vraag die het nieuwe laat zien krijgt
    in de volgende show nog één keer "Nieuw" (nieuwTeTonen, zie vraagIsNieuw).
 
@@ -1454,7 +1454,7 @@ function onthoudUitkomst(p, sterren, stap) {
    zodra ze een rij kan (padNa), en dan waren de laatste tien shows nog bijna
    allemaal van de makkelijkere rij. Dan stond er "gaat vlot" boven de stap die
    ze net moeilijker vindt. Onder de STAND_MIN shows op deze stap zegt het nog
-   niets (null); Voortgang zegt dan "nieuwe stap".
+   niets (null); de themakaart zegt dan "nieuwe stap".
 
    Een save van vóór p.stap weet niet bij welke stap zijn shows horen; die kijkt
    zoals eerst naar de laatste tien, vanaf vier shows. */
@@ -1552,7 +1552,7 @@ function endLevel(success) {
     advanceCountStage(p, success, success && showStars(G) === 3);   // telmodus: fase mee laten klimmen/zakken
     telPlafondTel(p, success ? showStars(G) : 0);
   }
-  onthoudUitkomst(p, success ? showStars(G) : 0, stapVoor);   // voor de stand in Voortgang (beide takken hieronder bewaren)
+  onthoudUitkomst(p, success ? showStars(G) : 0, stapVoor);   // voor de stand op de themakaart (beide takken hieronder bewaren)
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;   // een show verder gewend aan de grens
   if (!G.count && success && !vrij) telGrensDrie(p, showStars(G));   // voor de grenstip (zie grensDrieSterren)
   /* Een show verder op haar rij, op elke ladder die in deze show speelde, elk
