@@ -895,34 +895,63 @@
   .wereld-stof { position: absolute; inset: 0; pointer-events: none; z-index: 0;
     opacity: 0; visibility: hidden; transition: opacity 1.2s ease, visibility 0s linear 1.2s; }
   .wereld-stof.wakker { opacity: 1; visibility: visible; transition: opacity 1.2s ease; }
+  /* ZICHTBAAR OP EEN ECHTE TELEFOON. De eerste maat (13-20px met een hart van
+     4px, 60px reizen in 7-12s met een zachte curve) zag je op een telefoon
+     nauwelijks: een vlekje dat op zijn plek op- en wegdoofde, verdwenen in de
+     drukke tekening. Nu een hart van een derde van het puntje, 25-34px, een
+     donkerder rand eromheen, twaalf in plaats van acht, en een reis van een derde
+     van het scherm met een gelijkmatige snelheid -- zo lees je het als iets
+     dat valt of stijgt, en niet als een lampje. */
   .wereld-stof i {
-    position: absolute; width: min(calc(3.4cqw * var(--s)), 22px); aspect-ratio: 1;
+    position: absolute; width: min(calc(5.6cqw * var(--s)), 34px); aspect-ratio: 1;
     translate: -50% -50%; border-radius: 50%; opacity: 0;
-    background: radial-gradient(circle, var(--c) 0 24%, color-mix(in srgb, var(--c) 50%, transparent) 38%,
-      rgba(40, 8, 60, .16) 50%, transparent 70%);
-    animation: stofStijg 9s ease-in-out infinite; animation-play-state: paused;
+    background: radial-gradient(circle, var(--c) 0 30%, color-mix(in srgb, var(--c) 60%, transparent) 42%,
+      rgba(40, 8, 60, .3) 52%, transparent 70%);
+    animation: stofStijg 13s linear infinite; animation-play-state: paused;
   }
   .wereld-stof.wakker i { animation-play-state: running; }
   .wereld-stof.val i    { animation-name: stofVal; }
-  .wereld-stof.zweef i  { animation-name: stofZweef; }
-  .wereld-stof.fonkel i { animation-name: stofFonkel; }
+  /* een vuurvliegje gloeit: een lichte kring om het hart, anders verdwijnt
+     geelgroen in een groene jungle */
+  .wereld-stof.zweef i  { animation-name: stofZweef; animation-timing-function: ease-in-out;
+    filter: drop-shadow(0 0 4px var(--c)); }
+  /* Fonkelen is een sterretje met vier punten, geen bolletje: een bolletje dat
+     op- en wegdooft leest als een lampje dat hapert. Het draait een kwartslag
+     en drijft een stukje, zodat ook hier iets beweegt. */
+  .wereld-stof.fonkel i { animation-name: stofFonkel; animation-timing-function: ease-in-out;
+    width: min(calc(9cqw * var(--s)), 52px); border-radius: 0;
+    background: radial-gradient(circle, var(--c) 0 12%, transparent 24%),
+      linear-gradient(90deg, transparent 43%, var(--c) 50%, transparent 57%),
+      linear-gradient(0deg, transparent 43%, var(--c) 50%, transparent 57%);
+    -webkit-mask-image: radial-gradient(circle, #000 26%, transparent 66%);
+    mask-image: radial-gradient(circle, #000 26%, transparent 66%);
+    filter: drop-shadow(0 0 1.5px rgba(40, 8, 60, .6)); }
   /* een belletje is een ringetje, geen stip */
-  .wereld-stof.bel i { width: min(calc(4.6cqw * var(--s)), 28px);
-    background: radial-gradient(circle, transparent 0 44%, var(--c) 50% 60%, rgba(20, 40, 70, .14) 66%, transparent 72%); }
+  .wereld-stof.bel i { width: min(calc(6.5cqw * var(--s)), 40px);
+    background: radial-gradient(circle, transparent 0 40%, var(--c) 46% 60%, rgba(20, 40, 70, .3) 66%, transparent 72%); }
   @keyframes stofStijg {
-    0% { opacity: 0; transform: none; } 20%, 80% { opacity: .8; }
-    100% { opacity: 0; transform: translate(calc(var(--dx) * 1cqw), -7cqh); } }
+    0% { opacity: 0; transform: none; } 10%, 82% { opacity: 1; }
+    50% { transform: translate(calc(var(--dx) * 1cqw), -15cqh); }
+    100% { opacity: 0; transform: translate(calc(var(--dx) * -.4cqw), -30cqh); } }
+  /* vallen met een zwiep heen en weer, zoals sneeuw */
   @keyframes stofVal {
-    0% { opacity: 0; transform: none; } 15%, 85% { opacity: .85; }
-    100% { opacity: 0; transform: translate(calc(var(--dx) * 1cqw), 8cqh); } }
+    0% { opacity: 0; transform: none; } 10%, 84% { opacity: 1; }
+    25% { transform: translate(calc(var(--dx) * 1cqw), 8cqh); }
+    50% { transform: translate(calc(var(--dx) * -.6cqw), 16cqh); }
+    75% { transform: translate(calc(var(--dx) * 1cqw), 24cqh); }
+    100% { opacity: 0; transform: translate(0, 32cqh); } }
   @keyframes stofZweef {
     0%, 100% { opacity: 0; transform: none; }
-    30% { opacity: .85; transform: translate(calc(var(--dx) * 1cqw), -1.2cqh); }
-    60% { opacity: .4; transform: translate(calc(var(--dx) * -.6cqw), -2.4cqh); }
-    80% { opacity: .85; } }
+    20% { opacity: .95; transform: translate(calc(var(--dx) * 1.6cqw), -3cqh); }
+    45% { opacity: .5; transform: translate(calc(var(--dx) * -.8cqw), -6cqh); }
+    70% { opacity: .95; transform: translate(calc(var(--dx) * 2cqw), -4cqh); }
+    90% { opacity: .4; transform: translate(calc(var(--dx) * .6cqw), -1cqh); } }
   @keyframes stofFonkel {
-    0%, 70%, 100% { opacity: 0; transform: scale(.4); }
-    80% { opacity: .9; transform: none; } 90% { opacity: .3; } }
+    0%, 100% { opacity: 0; transform: scale(.3) rotate(0); }
+    25% { opacity: 1; transform: translate(calc(var(--dx) * .5cqw), -2cqh) scale(1) rotate(45deg); }
+    45% { opacity: .45; transform: translate(calc(var(--dx) * 1cqw), -4cqh) scale(.65) rotate(70deg); }
+    65% { opacity: 1; transform: translate(calc(var(--dx) * 1.4cqw), -6cqh) scale(.95) rotate(90deg); }
+    85% { opacity: 0; transform: translate(calc(var(--dx) * 1.8cqw), -8cqh) scale(.3) rotate(110deg); } }
   .wereld-stof.bel i { animation-name: stofStijg; }
-  /* Een smal scherm: vijf in plaats van acht, anders is het geen fluistering meer. */
-  @media (max-width: 359px) { .wereld-stof i:nth-child(n+6) { display: none; } }
+  /* Een smal scherm: acht in plaats van twaalf, anders wordt het een zwerm. */
+  @media (max-width: 359px) { .wereld-stof i:nth-child(n+9) { display: none; } }

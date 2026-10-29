@@ -701,8 +701,11 @@ const STOF_WEK = 900;
         const kader = document.querySelector('#tour-map .world-frame');
         const laag = kader.querySelector('.wereld-stof');
         const stops = [...kader.querySelectorAll('.tour-stop .dot, .tour-hero')].map(e => e.getBoundingClientRect());
+        // waar een puntje begint (het reist daarna onder de haltes door, en dat mag:
+        // de laag ligt eronder)
+        const k = kader.getBoundingClientRect();
         const op = [...laag.querySelectorAll('i')].filter(i => {
-          const r = i.getBoundingClientRect(), x = r.x + r.width / 2, y = r.y + r.height / 2;
+          const x = k.left + parseFloat(i.style.left) / 100 * k.width, y = k.top + parseFloat(i.style.top) / 100 * k.height;
           return stops.some(b => x > b.left && x < b.right && y > b.top && y < b.bottom);
         }).length;
         return { eerste: kader.firstElementChild === laag, n: laag.children.length, op };

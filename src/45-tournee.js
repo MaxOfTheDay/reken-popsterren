@@ -1106,7 +1106,7 @@ function tekenWeg(frame, shown, nodes, playable) {
    - EEN DING TEGELIJK. De laag komt pas op als de hele kaart stilstaat -- geen
      grendel dicht en geen eindige animatie meer in #screen-map (haar landing, de
      sterren die landen, de klim). Haar wiegen is oneindig en telt niet mee.
-   - SLAAPT. Twintig tellen zonder tik en het stof dooft uit en staat stil
+   - SLAAPT. Twee minuten zonder tik en het stof dooft uit en staat stil
      (visibility: hidden, gepauzeerd); de volgende tik op de kaart wekt het. Een
      kind dat even wegkijkt houdt zo geen GPU wakker.
    - Wie geen beweging wil, krijgt het niet (stofStart doet dan niets, en het
@@ -1129,7 +1129,10 @@ const WERELD_STOF = {
   dino:       { beweging: 'zweef',  kleur: ['#fff0a0', '#ffe08a'] },
   vuur:       { beweging: 'stijg',  kleur: ['#fff4cc', '#ffe08a'] },
 };
-const STOF = { aantal: 8, wacht: 400, slaap: 20000 };
+/* duur: per beweging, in seconden (gemiddeld; elk puntje wijkt tot 15% af).
+   slaap: zo lang zonder tik blijft het stof aan. Eerst 20 tellen, en dan zag
+   een kind dat gewoon naar de kaart keek het juist verdwijnen. */
+const STOF = { aantal: 12, wacht: 400, slaap: 120000, duur: { stijg: 13, bel: 12, val: 14, zweef: 10, fonkel: 6 } };
 let stofSlaap = 0, stofWacht = 0;
 
 /* Waar de puntjes mogen staan, in procenten van het kader. Altijd dezelfde
@@ -1140,14 +1143,19 @@ let stofSlaap = 0, stofWacht = 0;
    kader. Opzij en in de hoogte binnen ZONE plus een randje: daarbuiten valt de
    tekening op een staande telefoon al van het scherm. Is een vakje helemaal
    bezet door haltes, dan blijft het leeg en worden het er minder. */
-function stofPlekken(idx, nodes) {
+function stofPlekken(idx, nodes, beweging) {
   let z = (idx + 1) * 7919;
   const rnd = () => ((z = (z * 9301 + 49297) % 233280) / 233280);
-  /* Gespreid: het kader in acht vakjes (twee breed, vier hoog) en in elk vakje
+  /* Gespreid: het kader in twaalf vakjes (twee breed, zes hoog) en in elk vakje
      één puntje, als het er vrij kan. Zuiver willekeurig klonterden ze samen in
      het enige grote vrije stuk, en dan is het een zwerm en geen sfeer. */
-  const x0 = ZONE.x0 - 6, bx = (ZONE.x1 - ZONE.x0 + 12) / 2;
-  const y0 = ZONE.y0 - 4, by = (ZONE.y1 - ZONE.y0 + 4) / 4;
+  /* Binnen ZONE en niet erbuiten: daarbuiten valt de tekening op een staande
+     telefoon bijna van het scherm, en een puntje helemaal aan de rand ziet
+     niemand. Wat stijgt begint lager en wat valt hoger, zodat de reis zelf
+     door het midden gaat (zie de keyframes: een derde van het kader). */
+  const schuif = beweging === 'stijg' || beweging === 'bel' ? 12 : beweging === 'val' ? -12 : 0;
+  const x0 = ZONE.x0, bx = (ZONE.x1 - ZONE.x0) / 2;
+  const y0 = ZONE.y0 - 4 + schuif, by = (ZONE.y1 - ZONE.y0 + 4) / (STOF.aantal / 2);
   const uit = [];
   for (let vak = 0; vak < STOF.aantal; vak++) {
     for (let poging = 0; poging < 40; poging++) {
@@ -1162,8 +1170,8 @@ function wereldStof(shown, nodes) {
   const laag = document.createElement('div');
   laag.className = 'wereld-stof ' + stof.beweging;
   laag.setAttribute('aria-hidden', 'true');
-  laag.innerHTML = stofPlekken(shown.index, nodes).map((s, i) => {
-    const duur = 7 + s.r * 5;
+  laag.innerHTML = stofPlekken(shown.index, nodes, stof.beweging).map((s, i) => {
+    const duur = (STOF.duur[stof.beweging] || 10) * (0.85 + s.r * 0.3);
     return `<i style="left:${s.x.toFixed(1)}%;top:${s.y.toFixed(1)}%;--c:${stof.kleur[i % 2]};` +
       `--s:${(0.75 + s.r * 0.5).toFixed(2)};--dx:${((s.r - 0.5) * 8).toFixed(1)};` +
       `animation-duration:${duur.toFixed(1)}s;animation-delay:-${(s.r * duur * 0.9 + i).toFixed(1)}s"></i>`;
