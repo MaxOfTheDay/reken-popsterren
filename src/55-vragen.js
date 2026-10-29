@@ -1978,6 +1978,82 @@ function bindTap(card, q, drawId) {
 // als het kind snel antwoordde.
 let countDrawId = 0;
 // De vraagkaart bovenin: toont de hoeveelheid/opdracht en spreekt haar uit.
+/* ---- Elke vorm van een telvraag ---------------------------------------------
+   Wat genCount kan maken, maar dan allemaal: elke kaart en elke rij tegels die
+   in deze fase kan komen, op de trede van nu en de treden erboven (die klimt
+   in de show). vakMeten zet het vak van de show op de grootste, zodat er
+   tussen twee vragen niets verspringt. Eerst trok die 600 vragen bij toeval,
+   en dan ontbrak de grootste soms: in de CI sprong de kaart 11 tot 34px.
+   Wie in genCount een vraagsoort of een bereik verandert, verandert het hier
+   ook -- schuiven zaak E speelt echte shows en ziet het meteen.
+   Niet groter dan echt: een rij van vier keer de hoogste hoeveelheid brak op
+   320 breed over drie regels, en dan paste het scherm niet meer. */
+function telVormen(p) {
+  const s = p.settings, ct = p.countTrack, was = ct.rung || 0;
+  const fasen = kiesFasen(s).length ? kiesFasen(s) : [countLiveStage(p)];
+  const reprs = s.repr === 'mix' ? ['dots', 'objects'] : [s.repr || 'objects'];
+  const emoji = COUNT_OBJECTS[0], kaarten = [], tegels = [];
+  const reeks = (a, b) => Array.from({ length: Math.max(0, b - a + 1) }, (_, i) => a + i);
+  for (const stage of fasen) for (const r of reeks(was, countStageInfo(stage).rungs - 1)) {
+    ct.rung = r;
+    const d = countDifficulty(p, stage), max = d.effMax, frame = d.structured, cap = max <= 5 ? 5 : 10;
+    const nCh = Math.min(d.tiles, Math.max(2, max));
+    for (const type of countStageTypes(stage)) for (const repr of reprs) {
+      const kaart = c => kaarten.push({ card: { ...c, cap } });
+      // tegels zijn verschillende getallen dicht bij het antwoord (countDistractors):
+      // elk venster van n opeenvolgende, en het hoogste is het grootste
+      const rij = (lo, hi, maak, n = nCh) => {
+        n = Math.min(n, hi - lo + 1);
+        reeks(lo + n - 1, hi).forEach(top => tegels.push({ choices: reeks(top - n + 1, top).map((v, i) => ({ v, cap, ...maak(v, i) })) }));
+      };
+      const groep = v => ({ kind: 'group', n: v, emoji, repr, frame });
+      const cijfer = sup => v => ({ kind: 'numeral', n: v, support: sup });
+      const paren = (hoog, deel) => reeks(1, Math.min(deel, hoog - 1)).flatMap(a => reeks(1, Math.min(deel, hoog - 1)).filter(b => a + b <= hoog).map(b => [a, b]));
+      if (type === 'tap') { kaart({ kind: 'tap', n: max, emoji, pos: tapPlekken(max) }); rij(1, max, groep); }
+      else if (['count', 'along', 'match', 'numeral'].includes(type)) {
+        reeks(1, max).forEach(n => kaart({ kind: 'group', n, emoji, frame, repr }));
+        if (type === 'numeral') rij(1, max, cijfer(d.support));
+        else if (type === 'match') reprs.concat(repr === 'dots' ? 'objects' : 'dots').forEach(tr => rij(1, max, v => ({ kind: 'group', n: v, emoji, repr: tr, frame })));
+        else rij(1, max, groep);
+      } else if (type === 'compare') {
+        ['⬆️ de meeste', '⬇️ de minste'].forEach(text => kaart({ kind: 'label', text }));
+        const k = d.rung >= 1 ? 3 : 2;
+        rij(1, max, groep, k);
+        if (repr === 'objects') rij(1, max, (v, i) => ({ ...groep(v), frame: false, cls: i ? 'klein' : 'groot' }), k);   // de kleinste groot
+      } else if (type === 'listen') { kaart({ kind: 'listen' }); rij(1, max, groep); }
+      else if (type === 'numquant') { reeks(1, max).forEach(n => kaart({ kind: 'bignum', n })); rij(1, max, groep); }
+      else if (type === 'onemore' || type === 'oneless') {
+        reeks(1, max).forEach(base => kaart({ kind: 'delta', base, dir: type === 'onemore' ? 1 : -1, emoji, frame, repr }));
+        rij(type === 'oneless' ? 0 : 1, max, groep);
+      } else if (type === 'combine') { paren(max, max - 1).forEach(([a, b]) => kaart({ kind: 'combine', a, b, emoji, frame, repr })); rij(1, max, groep); }
+      else if (type === 'vriend') {
+        const doel = max >= 10 ? 10 : 5;
+        reeks(1, doel - 1).forEach(n => kaart({ kind: 'vriend', n, doel }));
+        rij(1, doel - 1, cijfer(d.support), Math.min(nCh, doel - 1));
+      } else if (type === 'tiental' || type === 'tienplus') {
+        reeks(11, max).forEach(n => kaart(type === 'tiental' ? { kind: 'tiental', n }
+          : { kind: 'sum', style: 'dots', op: '+', a: 10, b: n - 10, c: n, emoji, repr, support: 'full' }));
+        rij(11, max, cijfer('none'));
+      } else if (type === 'sumsym') {
+        paren(max, 5).forEach(([a, b]) => kaart({ kind: 'sum', style: 'sym', op: '+', a, b, c: a + b, emoji, repr }));
+        paren(Math.min(6, max), Math.min(6, max) - 1).forEach(([x, y]) => kaart({ kind: 'sum', style: 'sym', op: '-', a: x + y, b: x, c: y, emoji, repr }));
+        rij(1, max, groep);
+      } else if (type === 'sumdots' || type === 'sumwritten') {
+        const style = type === 'sumdots' ? 'dots' : 'written', support = style === 'dots' ? 'full' : d.support;
+        paren(max, max - 1).forEach(([a, b]) => {
+          kaart({ kind: 'sum', style, op: '+', a, b, c: a + b, emoji, repr, support });
+          kaart({ kind: 'sum', style, op: '-', a: a + b, b: a, c: b, emoji, repr, support });
+        });
+        rij(1, max, cijfer(support));
+      } else {   // split
+        reeks(3, max).forEach(total => reeks(1, total - 1).forEach(shown => kaart({ kind: 'split', total, shown, emoji, repr })));
+        rij(1, max, groep);
+      }
+    }
+  }
+  ct.rung = was;
+  return { kaarten, tegels };
+}
 // De kaart van een telvraag. Los van het tekenen: vakMeten meet er de grootste van de fase mee.
 function telKaartHTML(q) {
   const cardRepr = q.card.repr || 'objects';

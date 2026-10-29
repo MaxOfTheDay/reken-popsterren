@@ -635,8 +635,12 @@
 
   /* minmax(0, 1fr) i.p.v. 1fr: een kolom mag nooit breder worden dan haar deel
      van de rij, ook niet als de inhoud (een raampje) van zichzelf breder is --
-     anders groeit de rij tegels buiten het scherm. */
-  .count-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: min(88vw, 400px); margin-top: 4px; }
+     anders groeit de rij tegels buiten het scherm.
+     grid-auto-rows: 1fr: elke rij zo hoog als de hoogste tegel. Anders hing de
+     hoogte van de tegels af van welke twee er toevallig naast elkaar vielen
+     (vier en twee boven vijf en drie: 116 of 145px), en dat kan vakMeten niet
+     voorspellen -- het vak sprong of krimpte mee. */
+  .count-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 12px; width: min(88vw, 400px); margin-top: 4px; }
   .count-tiles.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .count-tiles.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .count-tile {

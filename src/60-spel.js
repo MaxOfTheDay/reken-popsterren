@@ -304,6 +304,8 @@ function vakVullen(area) {
        als de andere shows. Maar nooit hoger dan het scherm: zij krimpt hier
        niet (ze staat ernaast), en een scherm dat schuift is erger dan een kaart
        die een vraag lang een paar pixels lager begint. */
+    telPast(tekst.firstElementChild, tekst.offsetHeight - m.tekst);
+    telPast(area.firstElementChild, area.offsetHeight - m.vak);
     const hoog = tekst.offsetHeight;
     let lucht = Math.max(0, m.tekst - hoog);
     if (m.vak > area.offsetHeight) { area.style.minHeight = m.vak + 'px'; area.classList.add('vast'); }
@@ -317,6 +319,7 @@ function vakVullen(area) {
     return;
   }
   const nu = () => kaart.offsetHeight + area.offsetHeight;
+  if (G.count) { telPast(tekst.firstElementChild, nu() - m.samen - rand); telPast(area.firstElementChild, nu() - m.samen - rand); }
   m.samen = Math.max(m.samen + rand, nu()) - rand;   // groter dan gemeten: het vak groeit mee
   const vak = m.samen + rand;
   const knoppen = [...area.querySelectorAll('.choice-btn')];
@@ -382,29 +385,31 @@ function vakProeven() {
   if (G.insts && G.insts.lijn) uit.push(['<span class="kal-rij"><span class="kal-kaart nu gl-zoek">88</span></span>', lijnTikvlak({ bereik: [0, 20, 1, 5] })]);
   return uit;
 }
-/* De telmodus: de vragen van deze fase, ook zoals ze op de hoogste trede van
-   de fase zijn (de trede klimt in de show, en daarmee de aantallen; en op de
-   tweede trede staan er nog stippen onder de cijfers, op de hoogste niet). Geen
-   echte vragen van de show: die worden per stuk gebouwd, en een handvol
-   getrokken vragen miste de grootste soms (4 + 1 in twee raampjes: 22px).
-   Dus veel trekken, en elke kaart en elke rij tegels één keer meten -- apart,
-   want samen zijn er te veel (200ms bij het begin van een show). Welk
-   voorwerp het is en waar het ligt maakt voor de maat niets uit. Het paar
-   van de hoogste kaart en de hoogste tegels komt misschien nooit samen: dan
-   houdt de kaart een paar pixels lucht, en verspringt er niets. */
-const TEL_PROEVEN = 600;
+/* De telmodus. telVormen geeft elke kaart en elke rij tegels die in deze fase
+   kan komen. De tegels allemaal; maar kaarten zijn er in een fase tot
+   tweehonderd, en ze allemaal opmaken kostte op een trage tablet een halve
+   seconde bij het begin van een show. Dus van de kaarten de grootste aantallen
+   (meestal de hoogste kaart), en een greep uit de rest. Is een echte vraag dan toch hoger dan het vak, dan
+   krimpt zijn inhoud een tikje (telPast) in plaats van dat het vak groeit:
+   een kaart die een vraag lang wat kleiner tekent, is beter dan een zaal die
+   verspringt -- dat zag de CI met 600 getrokken vragen nog (11 tot 34px). */
+const TEL_PROEVEN = 24;
 function telProeven() {
-  const p = P(), ct = p.countTrack, was = ct.rung, kaarten = new Map(), tegels = new Map();
-  const vorm = (k, v) => ['emoji', 'pos', 'v'].includes(k) ? undefined : v;
-  for (let i = 0; i < TEL_PROEVEN; i++) {
-    ct.rung = was + i % 5;   // elke trede vanaf die van nu (countDifficulty houdt hem binnen de fase)
-    const q = genCount(p);
-    const k = JSON.stringify(q.card, vorm), t = JSON.stringify(q.choices.map(c => JSON.stringify(c, vorm)).sort());
-    if (!kaarten.has(k)) kaarten.set(k, telKaartHTML(q));
-    if (!tegels.has(t)) tegels.set(t, telTegelsHTML(q));
-  }
-  ct.rung = was;
-  return { kaarten: [...kaarten.values()], tegels: [...tegels.values()] };
+  const v = telVormen(P());
+  const maat = o => (JSON.stringify(o).match(/\d+/g) || []).reduce((n, d) => n + +d, 0);
+  const kaarten = [...new Map(v.kaarten.map(o => [telKaartHTML(o), o])).entries()];
+  const groot = kaarten.slice().sort((a, b) => maat(b[1]) - maat(a[1])).slice(0, TEL_PROEVEN / 2);
+  return {
+    kaarten: [...new Set([...groot, ...shuffle(kaarten).slice(0, TEL_PROEVEN / 2)].map(([h]) => h))],
+    tegels: [...new Set(v.tegels.map(telTegelsHTML))],
+  };
+}
+/* Een telkaart of een rij tegels die teveel px hoger is dan het vak: zijn
+   inhoud krimpt (zoom, dus hij neemt ook minder plaats in), tot TEL_KRIMP. */
+const TEL_KRIMP = 0.75;
+function telPast(el, teveel) {
+  if (!el || teveel <= 0 || !el.offsetHeight) return;
+  el.style.zoom = Math.max(TEL_KRIMP, (el.offsetHeight - teveel) / el.offsetHeight);
 }
 /* ---- Alles past -------------------------------------------------------------
    Steekt de vraag of het antwoord onder het scherm uit, dan krimpt zij (de
