@@ -4625,7 +4625,8 @@
 
 
 
-    .gold-banner { position: absolute; left: 0; top: 100%; width: var(--kaart-w); margin-top: 2px; pointer-events: none; }
+
+    .gold-banner { position: absolute; left: 0; top: 100%; width: var(--kaart-w); margin: 0; pointer-events: none; }
     #answer-area { width: min(30vw, 260px); flex: 0 0 auto; }
     #answer-area.vast { justify-content: center; }
     .choices, .gl-vlak, .count-tiles { width: 100%; box-sizing: border-box; }
@@ -25477,6 +25478,7 @@ function renderQuestion() {
     antwoordOpMaat(area, true);
     renderCountAnswers(q, area);
     zaalPast();
+    goudPlek();
     spotZonderTijd();
     return;
   }
@@ -25509,7 +25511,21 @@ function renderQuestion() {
   antwoordOpMaat(area);
   klokZoekRuim(area);
   zaalPast();
+  goudPlek();
   startSpot();
+}
+
+
+
+
+
+function goudPlek() {
+  const b = $('gold-banner'), kaart = $('question-card');
+  b.style.top = '';
+  if (!b.textContent || getComputedStyle(b).position !== 'absolute') return;
+  const onder = kaart.offsetTop + kaart.offsetHeight + 2;
+  const past = onderkant(kaart) + 2 + b.offsetHeight <= window.innerHeight;
+  b.style.top = (past ? onder : kaart.offsetTop - b.offsetHeight - 2) + 'px';
 }
 
 

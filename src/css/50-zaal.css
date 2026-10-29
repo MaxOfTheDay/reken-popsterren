@@ -846,10 +846,11 @@
     .math-panel { flex-direction: row; align-items: center; gap: 1.6vw; }
     .math-panel { --kaart-w: min(40vw, 340px); position: relative; }
     .question-card { width: var(--kaart-w); min-width: 0; box-sizing: border-box; margin-bottom: 0; padding: 9px 14px 16px; }
-    /* De regel van de gouden vraag staat los onder de kaart. Als stuk van de rij
-       nam hij 70 à 80px breedte in, en die ging van de kaart af: elke gouden vraag
-       werd de kaart smaller, sprong de som en stak een telsom eruit. */
-    .gold-banner { position: absolute; left: 0; top: 100%; width: var(--kaart-w); margin-top: 2px; pointer-events: none; }
+    /* De regel van de gouden vraag staat los, onder of boven de kaart (goudPlek).
+       Als stuk van de rij nam hij 70 à 80px breedte in, en die ging van de kaart
+       af: elke gouden vraag werd de kaart smaller, sprong de som en stak een
+       telsom eruit. */
+    .gold-banner { position: absolute; left: 0; top: 100%; width: var(--kaart-w); margin: 0; pointer-events: none; }
     #answer-area { width: min(30vw, 260px); flex: 0 0 auto; }
     #answer-area.vast { justify-content: center; }   /* naast de kaart: op zijn hoogte, in het midden */
     .choices, .gl-vlak, .count-tiles { width: 100%; box-sizing: border-box; }

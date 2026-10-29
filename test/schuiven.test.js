@@ -320,13 +320,16 @@ async function zaakF(browser, [w, h]) {
           if (Math.max(...tops) - Math.min(...tops) > 8) uit.push(`${naam}: de telsom breekt`);
           if (raam.some(r => r.left < kaart.left - 1 || r.right > kaart.right + 1)) uit.push(`${naam}: een stippenraam steekt uit de kaart`);
         }
-        // de gouden vraag: zijn regel staat in beeld en neemt de kaart geen breedte af
-        // (liggend stond hij mee in de rij, en was de kaart 50px smaller)
-        if (q.gold) {
-          const b = $('gold-banner'), met = $('question-card').offsetWidth, t = b.textContent;
-          b.textContent = ''; const zonder = $('question-card').offsetWidth; b.textContent = t;
+        // elke vraag kan de gouden zijn: zijn regel staat in beeld en neemt de kaart
+        // geen breedte af (liggend stond hij mee in de rij, en was de kaart 50px
+        // smaller). Op elke vraag nagebootst, niet alleen op de ene die het lot koos.
+        {
+          const b = $('gold-banner'), t = b.textContent;
+          b.textContent = ''; goudPlek(); const zonder = $('question-card').offsetWidth;
+          b.textContent = '🌟 3× 💎 🌟'; goudPlek(); const met = $('question-card').offsetWidth;
           if (met !== zonder) uit.push(`${naam}: gouden vraag, kaart ${zonder} -> ${met}`);
           if (!binnen(b)) uit.push(`${naam}: gold-banner`);
+          b.textContent = t; goudPlek();
         }
         // de klok zoeken: echte klokjes
         const klokje = q.kind === 'klok' && q.vorm === 'zoek' && $('answer-area').querySelector('.choice-btn');
