@@ -1115,19 +1115,22 @@ function tekenWeg(frame, shown, nodes, playable) {
 
    Een wereld die hier niet staat (een nieuwe uit de studio) krijgt FONKEL_STOF:
    zachte fonkelingen, die passen op elke tekening. */
+/* maat: hoeveel groter dan gewoon. Op de felste, drukste tekeningen (Muziek,
+   Snoep, Ruimte, Vuur) verdween een puntje van gewone maat in wat er al
+   glinstert; daar 1.3, zodat elke wereld ongeveer even "een beetje levend" is. */
 const FONKEL_STOF = { beweging: 'fonkel', kleur: ['#ffffff', '#fff1c4'] };
 const WERELD_STOF = {
-  muziek:     { beweging: 'stijg',  kleur: ['#ffe9a8', '#ffc4f0'] },
-  snoep:      { beweging: 'stijg',  kleur: ['#ffffff', '#ffe0f0'] },
+  muziek:     { beweging: 'stijg',  kleur: ['#ffe9a8', '#ffc4f0'], maat: 1.3 },
+  snoep:      { beweging: 'stijg',  kleur: ['#ffffff', '#ffe0f0'], maat: 1.3 },
   jungle:     { beweging: 'zweef',  kleur: ['#eaff8f', '#fff3a0'] },
   piraten:    { beweging: 'fonkel', kleur: ['#ffffff', '#fff6d0'] },
   ijs:        { beweging: 'val',    kleur: ['#ffffff', '#eef9ff'] },
   tover:      { beweging: 'zweef',  kleur: ['#ead2ff', '#ffe28a'] },
   circus:     { beweging: 'fonkel', kleur: ['#ffe08a', '#ffffff'] },
   onderwater: { beweging: 'bel',    kleur: ['#e4faff', '#c6f2ff'] },
-  ruimte:     { beweging: 'fonkel', kleur: ['#ffffff', '#d6e9ff'] },
+  ruimte:     { beweging: 'fonkel', kleur: ['#ffffff', '#d6e9ff'], maat: 1.3 },
   dino:       { beweging: 'zweef',  kleur: ['#fff0a0', '#ffe08a'] },
-  vuur:       { beweging: 'stijg',  kleur: ['#fff4cc', '#ffe08a'] },
+  vuur:       { beweging: 'stijg',  kleur: ['#fff4cc', '#ffe08a'], maat: 1.3 },
 };
 /* duur: hoe lang één beurt van een puntje duurt, in seconden (van-tot; elk
    puntje krijgt een eigen duur). Een beurt is een korte reis gevolgd door een
@@ -1173,6 +1176,7 @@ function wereldStof(shown, nodes) {
   const stof = WERELD_STOF[shown.world.id] || FONKEL_STOF;
   const laag = document.createElement('div');
   laag.className = 'wereld-stof ' + stof.beweging;
+  if (stof.maat) laag.style.setProperty('--m', stof.maat);
   laag.setAttribute('aria-hidden', 'true');
   for (let n = 0; n < STOF.aantal; n++) {
     const plek = stofPlek(nodes, stof.beweging, stofBuren(laag));

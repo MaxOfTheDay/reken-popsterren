@@ -902,7 +902,7 @@
      en dan een tijd weg zijn: er zijn er zelden meer dan drie tegelijk te zien,
      en nooit op dezelfde plek of in hetzelfde ritme (zie stofPlek). */
   .wereld-stof i {
-    position: absolute; width: min(calc(4cqw * var(--s)), 24px); aspect-ratio: 1;
+    position: absolute; width: min(calc(4cqw * var(--s) * var(--m, 1)), calc(24px * var(--m, 1))); aspect-ratio: 1;
     translate: -50% -50%; border-radius: 50%; opacity: 0;
     background: radial-gradient(circle, var(--c) 0 26%, color-mix(in srgb, var(--c) 50%, transparent) 40%,
       rgba(40, 8, 60, .2) 50%, transparent 70%);
@@ -916,7 +916,7 @@
   /* Fonkelen is een sterretje met vier punten, geen bolletje: een bolletje dat
      op- en wegdooft leest als een lampje dat hapert. */
   .wereld-stof.fonkel i { animation-name: stofFonkel; animation-timing-function: ease-in-out;
-    width: min(calc(6.5cqw * var(--s)), 38px); border-radius: 0;
+    width: min(calc(6.5cqw * var(--s) * var(--m, 1)), calc(38px * var(--m, 1))); border-radius: 0;
     background: radial-gradient(circle, var(--c) 0 11%, transparent 23%),
       linear-gradient(90deg, transparent 44%, var(--c) 50%, transparent 56%),
       linear-gradient(0deg, transparent 44%, var(--c) 50%, transparent 56%);
@@ -924,7 +924,7 @@
     mask-image: radial-gradient(circle, #000 24%, transparent 64%);
     filter: drop-shadow(0 0 1.5px rgba(40, 8, 60, .5)); }
   /* een belletje is een ringetje, geen stip */
-  .wereld-stof.bel i { width: min(calc(5cqw * var(--s)), 30px);
+  .wereld-stof.bel i { width: min(calc(5cqw * var(--s) * var(--m, 1)), calc(30px * var(--m, 1)));
     background: radial-gradient(circle, transparent 0 42%, var(--c) 48% 60%, rgba(20, 40, 70, .22) 66%, transparent 72%); }
   /* Elke beurt: een reisje in de eerste 60%, dan rust (onzichtbaar). --dx en
      --dy (richting en lengte) en --o (hoe helder) zet stofZet per beurt opnieuw. */
