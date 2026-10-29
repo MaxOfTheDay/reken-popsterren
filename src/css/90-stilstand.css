@@ -11,6 +11,8 @@
      al in het blok bij het trofee-feestje.) */
   @media (prefers-reduced-motion: reduce) {
     .confetti-bit, .vonk-op, .fly-dia, .fly-badge { display: none; }
+    /* het wereldstof op de kaart: alleen beweging, verder niets */
+    .wereld-stof { display: none; }
   }
   /* De kop hoort bij het podium, niet bij het venster. Over de volle breedte
      stond het portretje links en de diamanten rechts ergens in de onscherpe rand,

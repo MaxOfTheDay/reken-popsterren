@@ -21,6 +21,8 @@ const { launch, cacheFonts, APP_URL } = require('./browser');
 const { check, klaar } = require('./meld')('vlucht');
 
 const TELEFOON = { width: 390, height: 844 };
+// ruim de tijd die het stof nodig heeft om na een tik op te komen (STOF.wacht + marge)
+const STOF_WEK = 900;
 
 (async () => {
   const browser = await launch();
@@ -681,6 +683,74 @@ const TELEFOON = { width: 390, height: 844 };
     await page.waitForTimeout(600);
     const terug = await stand();
     check(terug.idx === 1 && terug.loopt && terug.spot > 90, 'N · terug: de volgende som komt, met een vol spotlicht', JSON.stringify(terug));
+    await ctx.close();
+  }
+
+  /* O · Het wereldstof op de kaart is achtergrond, en blijft dat.
+     Elke wereld heeft zijn laag, onder de weg en de haltes, en geen puntje valt
+     op een halte of op haar. Het komt pas op als de kaart stilstaat (na een
+     reis dus pas als ze geland is), slaapt na een tijd zonder tik en staat dan
+     ook echt stil, en de volgende tik wekt het. Wie geen beweging wil, krijgt
+     het nooit. Zie = Wereldstof. */
+  {
+    const { page, ctx } = await fresh();
+    await page.evaluate(() => { __speel(WORLD_AVAIL - 1); selectProfile('p1'); });
+    for (let w = 0; w < await page.evaluate(() => WORLD_AVAIL); w++) {
+      const st = await page.evaluate(w => {
+        reisDoel = w; goMap();
+        const kader = document.querySelector('#tour-map .world-frame');
+        const laag = kader.querySelector('.wereld-stof');
+        const stops = [...kader.querySelectorAll('.tour-stop .dot, .tour-hero')].map(e => e.getBoundingClientRect());
+        const op = [...laag.querySelectorAll('i')].filter(i => {
+          const r = i.getBoundingClientRect(), x = r.x + r.width / 2, y = r.y + r.height / 2;
+          return stops.some(b => x > b.left && x < b.right && y > b.top && y < b.bottom);
+        }).length;
+        return { eerste: kader.firstElementChild === laag, n: laag.children.length, op };
+      }, w);
+      check(st.eerste && st.n >= 4 && st.op === 0, `O · wereld ${w + 1}: stof onder alles, nooit op een halte of op haar`, JSON.stringify(st));
+    }
+    await ctx.close();
+  }
+  {
+    const { page, ctx } = await fresh();
+    await page.evaluate(() => { __speel(1); STOF.slaap = 1500; selectProfile('p1'); });
+    // een reis binnen een wereld: tijdens het lopen geen stof
+    // Op het moment dat het stof opkomt (de klasse erop gaat) mag er niets meer lopen.
+    await page.evaluate(() => {
+      pendingTravel = { from: P().level, to: P().level + 1 }; P().level++;
+      window.__opkomst = null;
+      new MutationObserver(r => r.forEach(m => {
+        if (__opkomst == null && m.target.classList && m.target.classList.contains('wakker'))
+          __opkomst = { rustig: kaartRustig(), lopen: $('screen-map').getAnimations({ subtree: true })
+            .filter(a => a.playState === 'running' && a.effect.getTiming().iterations !== Infinity && !a.effect.target.closest('.wereld-stof')).length };
+      })).observe($('screen-map'), { subtree: true, attributes: true, attributeFilter: ['class'] });
+      goMap();
+    });
+    await page.waitForFunction(() => window.__opkomst, null, { timeout: 10000 }).catch(() => {});
+    const op = await page.evaluate(() => window.__opkomst);
+    check(op && op.rustig && op.lopen === 0, 'O · het stof wacht tot ze geland is en komt dan op', JSON.stringify(op));
+    // ruim na STOF.slaap (1,5 s) plus het uitdoven; wachten óp de stand, niet op een klok
+    await page.waitForFunction(() => getComputedStyle($('screen-map').querySelector('.wereld-stof')).visibility === 'hidden', null, { timeout: 10000 }).catch(() => {});
+    const slaapt = await page.evaluate(() => {
+      const l = $('screen-map').querySelector('.wereld-stof');
+      return { wakker: l.classList.contains('wakker'), zicht: getComputedStyle(l).visibility,
+        lopen: [...l.children].some(i => getComputedStyle(i).animationPlayState === 'running') };
+    });
+    check(!slaapt.wakker && slaapt.zicht === 'hidden' && !slaapt.lopen, 'O · zonder tik slaapt het stof en staat het stil', JSON.stringify(slaapt));
+    await page.mouse.click(30, 420);
+    const wekt = await page.waitForFunction(() => document.querySelector('#screen-map .wereld-stof.wakker'), null, { timeout: 5000 }).then(() => true, () => false);
+    check(wekt, 'O · een tik op de kaart wekt het weer', '');
+    await ctx.close();
+  }
+  {
+    const { page, ctx } = await fresh(TELEFOON, { reducedMotion: 'reduce' });
+    await page.evaluate(() => { selectProfile('p1'); goMap(); });
+    await page.waitForTimeout(1500);
+    await page.mouse.click(30, 420);
+    await page.waitForTimeout(STOF_WEK);
+    const st = await page.evaluate(() => { const l = $('screen-map').querySelector('.wereld-stof');
+      return { wakker: l.classList.contains('wakker'), display: getComputedStyle(l).display }; });
+    check(!st.wakker && st.display === 'none', 'O · wie geen beweging wil, krijgt geen stof', JSON.stringify(st));
     await ctx.close();
   }
 
