@@ -1000,6 +1000,7 @@ function renderTourMap(travelFrom) {
   applyWorldTheme(scherm, shown.world);
   scherm.style.setProperty('--art', randBeeld(shown.world));
 
+  frame.appendChild(wereldStof(shown, nodes));
   tekenWeg(frame, shown, nodes, playable);
 
   const stand = { p, playable, travelling, heroLvl, netAfLvl, reisTot };
@@ -1054,6 +1055,7 @@ function renderTourMap(travelFrom) {
   };
   if (scherm.classList.contains('active')) voltooi();
   else tourMapVoltooi = voltooi;
+  stofStart();
   // schuift de kaart, dan schuift zij onder de plakkende kop door
   map.onscroll = kaartScroll;
 }
@@ -1091,6 +1093,113 @@ function tekenWeg(frame, shown, nodes, playable) {
   bgPath.style.strokeDasharray = heelPatroon;
   fgPath.style.strokeDasharray = roadDashArray(svg, pts, curve, lastOpen + 1);
 }
+/* ================= Wereldstof: de kaart ademt een beetje =====================
+   Een handvol vage lichtpuntjes ín de tekening, per wereld een eigen beweging:
+   sneeuw valt in IJs, belletjes stijgen in Onderwater, vuurvliegjes zweven in de
+   jungle. Geen bestand, geen tekst -- alleen een plek die leeft.
+
+   Het is achtergrond, en daar hangen vier regels aan die het zo houden:
+   - ONDER alles. De laag is het eerste kind van .world-frame, nog onder de weg,
+     en de puntjes vallen nooit op een halte of op de plek waar zij erboven staat
+     (stofPlekken). Kinderen kijken naar wat beweegt; dat mag nooit de knop zijn.
+   - EEN DING TEGELIJK. De laag komt pas op als de hele kaart stilstaat -- geen
+     grendel dicht en geen eindige animatie meer in #screen-map (haar landing, de
+     sterren die landen, de klim). Haar wiegen is oneindig en telt niet mee.
+   - SLAAPT. Twintig tellen zonder tik en het stof dooft uit en staat stil
+     (visibility: hidden, gepauzeerd); de volgende tik op de kaart wekt het. Een
+     kind dat even wegkijkt houdt zo geen GPU wakker.
+   - Wie geen beweging wil, krijgt het niet (stofStart doet dan niets, en het
+     stijlblad verbergt de laag ook nog eens).
+   Een ander scherm is display: none, dus daar loopt sowieso niets.
+
+   Een wereld die hier niet staat (een nieuwe uit de studio) krijgt FONKEL_STOF:
+   zachte fonkelingen, die passen op elke tekening. */
+const FONKEL_STOF = { beweging: 'fonkel', kleur: ['#ffffff', '#fff1c4'] };
+const WERELD_STOF = {
+  muziek:     { beweging: 'stijg',  kleur: ['#ffe9a8', '#ffc4f0'] },
+  snoep:      { beweging: 'stijg',  kleur: ['#ffffff', '#ffe0f0'] },
+  jungle:     { beweging: 'zweef',  kleur: ['#eaff8f', '#fff3a0'] },
+  piraten:    { beweging: 'fonkel', kleur: ['#ffffff', '#fff6d0'] },
+  ijs:        { beweging: 'val',    kleur: ['#ffffff', '#eef9ff'] },
+  tover:      { beweging: 'zweef',  kleur: ['#ead2ff', '#ffe28a'] },
+  circus:     { beweging: 'fonkel', kleur: ['#ffe08a', '#ffffff'] },
+  onderwater: { beweging: 'bel',    kleur: ['#e4faff', '#c6f2ff'] },
+  ruimte:     { beweging: 'fonkel', kleur: ['#ffffff', '#d6e9ff'] },
+  dino:       { beweging: 'zweef',  kleur: ['#fff0a0', '#ffe08a'] },
+  vuur:       { beweging: 'stijg',  kleur: ['#fff4cc', '#ffe08a'] },
+};
+const STOF = { aantal: 8, wacht: 400, slaap: 20000 };
+let stofSlaap = 0, stofWacht = 0;
+
+/* Waar de puntjes mogen staan, in procenten van het kader. Altijd dezelfde
+   plekken voor dezelfde wereld (een vast zaadje), zodat de kaart niet bij elke
+   keer openen anders oogt. Weg van elke halte, en van het vak erboven waar zij
+   staat als ze daar is: 13% opzij en van 24% erboven tot 7% eronder -- haar
+   maat (20cqw breed, ~40cqw hoog) omgerekend naar procenten van een 1215x2160
+   kader. Opzij en in de hoogte binnen ZONE plus een randje: daarbuiten valt de
+   tekening op een staande telefoon al van het scherm. Is een vakje helemaal
+   bezet door haltes, dan blijft het leeg en worden het er minder. */
+function stofPlekken(idx, nodes) {
+  let z = (idx + 1) * 7919;
+  const rnd = () => ((z = (z * 9301 + 49297) % 233280) / 233280);
+  /* Gespreid: het kader in acht vakjes (twee breed, vier hoog) en in elk vakje
+     één puntje, als het er vrij kan. Zuiver willekeurig klonterden ze samen in
+     het enige grote vrije stuk, en dan is het een zwerm en geen sfeer. */
+  const x0 = ZONE.x0 - 6, bx = (ZONE.x1 - ZONE.x0 + 12) / 2;
+  const y0 = ZONE.y0 - 4, by = (ZONE.y1 - ZONE.y0 + 4) / 4;
+  const uit = [];
+  for (let vak = 0; vak < STOF.aantal; vak++) {
+    for (let poging = 0; poging < 40; poging++) {
+      const x = x0 + (vak % 2 + rnd()) * bx, y = y0 + (Math.floor(vak / 2) + rnd()) * by;
+      if (nodes.every(n => Math.abs(n.x - x) > 13 || y < n.y - 24 || y > n.y + 7)) { uit.push({ x, y, r: rnd() }); break; }
+    }
+  }
+  return uit;
+}
+function wereldStof(shown, nodes) {
+  const stof = WERELD_STOF[shown.world.id] || FONKEL_STOF;
+  const laag = document.createElement('div');
+  laag.className = 'wereld-stof ' + stof.beweging;
+  laag.setAttribute('aria-hidden', 'true');
+  laag.innerHTML = stofPlekken(shown.index, nodes).map((s, i) => {
+    const duur = 7 + s.r * 5;
+    return `<i style="left:${s.x.toFixed(1)}%;top:${s.y.toFixed(1)}%;--c:${stof.kleur[i % 2]};` +
+      `--s:${(0.75 + s.r * 0.5).toFixed(2)};--dx:${((s.r - 0.5) * 8).toFixed(1)};` +
+      `animation-duration:${duur.toFixed(1)}s;animation-delay:-${(s.r * duur * 0.9 + i).toFixed(1)}s"></i>`;
+  }).join('');
+  return laag;
+}
+// Staat de kaart helemaal stil? Grendels dicht of een eindige animatie in het
+// scherm (oneindige, zoals haar wiegen, tellen niet; het opkomen van het stof zelf ook niet).
+function kaartRustig() {
+  if (overgangBezig || vluchtOp || wereldReisOp) return false;
+  const scherm = $('screen-map');
+  if (!scherm.getAnimations) return true;
+  return !scherm.getAnimations({ subtree: true }).some(a =>
+    a.playState === 'running' && a.effect && a.effect.getTiming().iterations !== Infinity
+    && !(a.effect.target && a.effect.target.closest && a.effect.target.closest('.wereld-stof')));
+}
+function stofLaag() {
+  const s = $('screen-map');
+  return s.classList.contains('active') ? s.querySelector('.wereld-stof') : null;
+}
+// Wekken: wacht tot de kaart rust, zet het stof aan en begin de slaaptimer.
+function stofWek() {
+  clearTimeout(stofWacht);
+  const laag = stofLaag();
+  if (!laag || motionOff()) return;
+  if (!kaartRustig()) { stofWacht = setTimeout(stofWek, STOF.wacht); return; }
+  laag.classList.add('wakker');
+  clearTimeout(stofSlaap);
+  stofSlaap = setTimeout(() => { const l = stofLaag(); if (l) l.classList.remove('wakker'); }, STOF.slaap);
+}
+function stofStart() {
+  clearTimeout(stofSlaap);
+  stofWacht = setTimeout(stofWek, STOF.wacht);
+}
+// Elke tik op de kaart wekt het stof, of houdt het wakker.
+$('screen-map').addEventListener('pointerdown', stofWek, { passive: true });
+
 /* Eén halte op de kaart, als knop. stand is wat renderTourMap één keer
    uitrekent en voor elke halte hetzelfde is (wie, tot waar open, waar de ster
    staat, welke halte net af is). */

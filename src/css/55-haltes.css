@@ -880,3 +880,49 @@
      maakte de kaartpil op precies 390 een maat kleiner dan op de kleedkamer en de
      kast. Wat smalle schermen nodig hebben staat nu bij de kop zelf, in
      40-kaart.css (onder de 390px) en bij .diamond-badge in 30-onderdelen.css. */
+
+  /* ---- Wereldstof ---------------------------------------------------------
+     De lichtpuntjes in de tekening (zie wereldStof in 45-tournee.js). Onder de
+     weg en de haltes, en alleen opacity en transform, zodat de compositor het
+     alleen af kan. De laag staat standaard uit en verborgen; .wakker zet hem
+     aan, en zonder .wakker staat ook elke animatie erin stil, dus een slapende
+     kaart kost niets.
+
+     Elk puntje is een licht hart met een zacht donker randje erom. Zonder dat
+     randje verdween een licht puntje in de felle tekeningen (Vuur, Snoep): licht
+     op licht is niets. De maat in cqw van het kader, met een plafond, anders
+     werden het op een liggende tablet knikkers. */
+  .wereld-stof { position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    opacity: 0; visibility: hidden; transition: opacity 1.2s ease, visibility 0s linear 1.2s; }
+  .wereld-stof.wakker { opacity: 1; visibility: visible; transition: opacity 1.2s ease; }
+  .wereld-stof i {
+    position: absolute; width: min(calc(3.4cqw * var(--s)), 22px); aspect-ratio: 1;
+    translate: -50% -50%; border-radius: 50%; opacity: 0;
+    background: radial-gradient(circle, var(--c) 0 24%, color-mix(in srgb, var(--c) 50%, transparent) 38%,
+      rgba(40, 8, 60, .16) 50%, transparent 70%);
+    animation: stofStijg 9s ease-in-out infinite; animation-play-state: paused;
+  }
+  .wereld-stof.wakker i { animation-play-state: running; }
+  .wereld-stof.val i    { animation-name: stofVal; }
+  .wereld-stof.zweef i  { animation-name: stofZweef; }
+  .wereld-stof.fonkel i { animation-name: stofFonkel; }
+  /* een belletje is een ringetje, geen stip */
+  .wereld-stof.bel i { width: min(calc(4.6cqw * var(--s)), 28px);
+    background: radial-gradient(circle, transparent 0 44%, var(--c) 50% 60%, rgba(20, 40, 70, .14) 66%, transparent 72%); }
+  @keyframes stofStijg {
+    0% { opacity: 0; transform: none; } 20%, 80% { opacity: .8; }
+    100% { opacity: 0; transform: translate(calc(var(--dx) * 1cqw), -7cqh); } }
+  @keyframes stofVal {
+    0% { opacity: 0; transform: none; } 15%, 85% { opacity: .85; }
+    100% { opacity: 0; transform: translate(calc(var(--dx) * 1cqw), 8cqh); } }
+  @keyframes stofZweef {
+    0%, 100% { opacity: 0; transform: none; }
+    30% { opacity: .85; transform: translate(calc(var(--dx) * 1cqw), -1.2cqh); }
+    60% { opacity: .4; transform: translate(calc(var(--dx) * -.6cqw), -2.4cqh); }
+    80% { opacity: .85; } }
+  @keyframes stofFonkel {
+    0%, 70%, 100% { opacity: 0; transform: scale(.4); }
+    80% { opacity: .9; transform: none; } 90% { opacity: .3; } }
+  .wereld-stof.bel i { animation-name: stofStijg; }
+  /* Een smal scherm: vijf in plaats van acht, anders is het geen fluistering meer. */
+  @media (max-width: 359px) { .wereld-stof i:nth-child(n+6) { display: none; } }
