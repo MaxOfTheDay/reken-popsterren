@@ -25695,7 +25695,17 @@ function vakVullen(area) {
 
 
 
+const telMaten = new Map();
 function vakMeten(area) {
+
+
+  const s = P().settings, sleutel = G.count && [kiesFasen(s).join(',') || countLiveStage(P()), P().countTrack.rung, innerWidth, innerHeight, s.repr, s.numerals, s.qmax].join('|');
+  if (sleutel && telMaten.has(sleutel)) return { ...telMaten.get(sleutel) };
+  const m = vakMetenNu(area);
+  if (sleutel) telMaten.set(sleutel, { ...m });
+  return m;
+}
+function vakMetenNu(area) {
   const tekst = $('question-text');
   const weg = [tekst, area].map(el => {
     const f = document.createDocumentFragment();
@@ -25741,15 +25751,17 @@ function vakProeven() {
 
 
 
-const TEL_PROEVEN = 160;
+
+const TEL_PROEVEN = 600;
 function telProeven() {
   const p = P(), ct = p.countTrack, was = ct.rung, kaarten = new Map(), tegels = new Map();
   const vorm = (k, v) => ['emoji', 'pos', 'v'].includes(k) ? undefined : v;
   for (let i = 0; i < TEL_PROEVEN; i++) {
-    ct.rung = i % 2 ? 99 : was;
+    ct.rung = was + i % 5;
     const q = genCount(p);
-    kaarten.set(JSON.stringify(q.card, vorm), telKaartHTML(q));
-    tegels.set(JSON.stringify(q.choices.map(c => JSON.stringify(c, vorm)).sort()), telTegelsHTML(q));
+    const k = JSON.stringify(q.card, vorm), t = JSON.stringify(q.choices.map(c => JSON.stringify(c, vorm)).sort());
+    if (!kaarten.has(k)) kaarten.set(k, telKaartHTML(q));
+    if (!tegels.has(t)) tegels.set(t, telTegelsHTML(q));
   }
   ct.rung = was;
   return { kaarten: [...kaarten.values()], tegels: [...tegels.values()] };

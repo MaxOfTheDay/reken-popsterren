@@ -335,7 +335,17 @@ function vakVullen(area) {
    daarna terug -- alles in dezelfde taak, er wordt niets getekend.
    tekst: de hoogste vraag, vak: het hoogste antwoordvak, samen: het hoogste
    paar (zonder de rand van de kaart, die is voor elke vraag dezelfde). */
+const telMaten = new Map();
 function vakMeten(area) {
+  /* De telmodus meet honderd kaarten (op een trage tablet een kwart seconde):
+     één keer per fase, trede en schermmaat, en daarna uit het geheugen. */
+  const s = P().settings, sleutel = G.count && [kiesFasen(s).join(',') || countLiveStage(P()), P().countTrack.rung, innerWidth, innerHeight, s.repr, s.numerals, s.qmax].join('|');
+  if (sleutel && telMaten.has(sleutel)) return { ...telMaten.get(sleutel) };
+  const m = vakMetenNu(area);
+  if (sleutel) telMaten.set(sleutel, { ...m });
+  return m;
+}
+function vakMetenNu(area) {
   const tekst = $('question-text');
   const weg = [tekst, area].map(el => {
     const f = document.createDocumentFragment();
@@ -373,7 +383,8 @@ function vakProeven() {
   return uit;
 }
 /* De telmodus: de vragen van deze fase, ook zoals ze op de hoogste trede van
-   de fase zijn (de trede klimt in de show, en daarmee de aantallen). Geen
+   de fase zijn (de trede klimt in de show, en daarmee de aantallen; en op de
+   tweede trede staan er nog stippen onder de cijfers, op de hoogste niet). Geen
    echte vragen van de show: die worden per stuk gebouwd, en een handvol
    getrokken vragen miste de grootste soms (4 + 1 in twee raampjes: 22px).
    Dus veel trekken, en elke kaart en elke rij tegels één keer meten -- apart,
@@ -381,15 +392,16 @@ function vakProeven() {
    voorwerp het is en waar het ligt maakt voor de maat niets uit. Het paar
    van de hoogste kaart en de hoogste tegels komt misschien nooit samen: dan
    houdt de kaart een paar pixels lucht, en verspringt er niets. */
-const TEL_PROEVEN = 160;
+const TEL_PROEVEN = 600;
 function telProeven() {
   const p = P(), ct = p.countTrack, was = ct.rung, kaarten = new Map(), tegels = new Map();
   const vorm = (k, v) => ['emoji', 'pos', 'v'].includes(k) ? undefined : v;
   for (let i = 0; i < TEL_PROEVEN; i++) {
-    ct.rung = i % 2 ? 99 : was;
+    ct.rung = was + i % 5;   // elke trede vanaf die van nu (countDifficulty houdt hem binnen de fase)
     const q = genCount(p);
-    kaarten.set(JSON.stringify(q.card, vorm), telKaartHTML(q));
-    tegels.set(JSON.stringify(q.choices.map(c => JSON.stringify(c, vorm)).sort()), telTegelsHTML(q));
+    const k = JSON.stringify(q.card, vorm), t = JSON.stringify(q.choices.map(c => JSON.stringify(c, vorm)).sort());
+    if (!kaarten.has(k)) kaarten.set(k, telKaartHTML(q));
+    if (!tegels.has(t)) tegels.set(t, telTegelsHTML(q));
   }
   ct.rung = was;
   return { kaarten: [...kaarten.values()], tegels: [...tegels.values()] };
