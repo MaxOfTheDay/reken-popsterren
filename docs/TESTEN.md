@@ -472,6 +472,16 @@ beloftes:
   rekenen, geld, de klok en de kalender door elkaar: de kaart, het antwoordvak en
   zij staan bij elke vraag op dezelfde plek. Het cijferblok en vier knoppen
   wisselden elkaar af, en dan schoof alles tot 86px op (`antwoordOpMaat`).
+  Het antwoordvak telt op zijn onderkant (liggend: zijn midden), want bij de klok
+  zoeken krijgt het de ruimte die de kaart over heeft (`klokZoekRuim`);
+- **elk antwoord past** (zaak F) — elk thema uit `THEMAS` en de telmodus, elke
+  stap, kiezen en typen, op zes maten: de kaart en elke knop staan in beeld. En
+  wat je pas ziet als je echt speelt: een som is even hoog met het antwoord erin
+  als met het vraagteken ("400 + 500 = 900" brak pas als de 900 erin viel), een
+  telsom staat op één regel binnen zijn kaart, en de klokjes bij "zoek de klok"
+  zijn minstens `KLOK_ZOEK_MIN` hoog;
+- **haar gezicht blijft vrij** (zaak Z) — op drie hoge telefoons valt de 🤔 in de
+  telmodus, een klokshow en een kalendershow niet op haar ogen (`zaalPast`).
 
 ### `test/kop.test.js` — de kop van de wereldkaart
 

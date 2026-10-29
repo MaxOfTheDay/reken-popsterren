@@ -557,8 +557,11 @@
   .dframe:not(.mini) .df-cell:nth-child(n+11):nth-child(-n+15) { margin-top: 10px; }
   .dframe.faint .df-dot { opacity: .34; }
   /* kleine steunstipjes ónder een cijfer (antwoordknoppen + som-operanden) */
-  .dframe.mini { column-gap: 2px; row-gap: 2px; }
-  .dframe.mini .df-cell { width: 10px; height: 10px; border-radius: 3px; border-width: 1px; }
+  /* Groot genoeg om ze echt te tellen: op 10px waren het puntjes. Meeschalend met
+     het scherm (15px op een telefoon van 420, 11px op 320), en de operand in een
+     telsom is zo breed als zijn raampje (zie .sum-operand). Liggend 10px: daar is de breedte krap. */
+  .dframe.mini { --df-mini: clamp(10px, 3.6vw, 15px); column-gap: 3px; row-gap: 3px; }
+  .dframe.mini .df-cell { width: var(--df-mini); height: var(--df-mini); border-radius: 30%; border-width: 1px; box-sizing: border-box; }
   /* Stippenraam in een antwoordknop: net als het tienraam hierboven kleiner, en
      meeschalend met de tegel. Zonder deze regel hield het raam zijn volle vakjes
      van 22px: vijf naast elkaar (130px) is breder dan een tegel als er 3 of 4
@@ -595,12 +598,12 @@
   .sum-eq-q { font-size: clamp(34px, 9vw, 50px); font-weight: 700; color: var(--purple-input-bottom); align-self: baseline; }
   /* elke operand krijgt genoeg breedte om zijn eigen stippenraam eronder te dragen,
      zodat de raampjes van 7 en 3 elkaar niet overlappen */
-  .sum-operand { position: relative; display: inline-block; min-width: 62px; padding-bottom: 30px; }
+  .sum-operand { --df-mini: clamp(10px, 3.6vw, 15px); position: relative; display: inline-block; min-width: calc(var(--df-mini) * 5 + 16px); padding-bottom: calc(var(--df-mini) * 2 + 12px); }
   .sum-num { font-size: clamp(30px, 8vw, 46px); font-weight: 700; color: var(--purple-shadow); line-height: 1; }
   .sum-eq .cgroup.big .cg-obj { font-size: clamp(22px, 6vw, 32px); }
   .sum-eq .cgroup.big { max-width: 128px; }   /* alleen de zichtbare voorwerp-groepjes (fase 9) breed */
   /* de cijfer-stippen (fase 10/11) staan als net rijtje ónder het cijfer, gecentreerd */
-  .sum-operand .dframe.mini { position: absolute; top: 100%; left: 50%; transform: translate(-50%, -30px); }
+  .sum-operand .dframe.mini { position: absolute; top: 100%; left: 50%; transform: translate(-50%, calc(var(--df-mini) * -2 - 10px)); }
   /* Wegstrepen bij aftrekken gebeurt per stuk binnen één startgroep (5 dingen,
      laatste 3 weg). Er stond hier ook een .cgroup.crossed dat een hele groep
      doorstreepte; die klasse werd nergens meer gezet. */
@@ -838,16 +841,29 @@
     .math-panel { flex-direction: row; align-items: center; gap: 1.6vw; }
     .question-card { width: min(40vw, 340px); min-width: 0; box-sizing: border-box; margin-bottom: 0; padding: 9px 14px 16px; }
     #answer-area { width: min(30vw, 260px); flex: 0 0 auto; }
+    #answer-area.vast { justify-content: center; }   /* naast de kaart: op zijn hoogte, in het midden */
     .choices, .gl-vlak, .count-tiles { width: 100%; box-sizing: border-box; }
     .choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .choice-btn .klok-tekst { font-size: .56em; }
     /* tellen: twee of drie tegels onder elkaar, vier in een blok */
     .count-tiles.two, .count-tiles.three { grid-template-columns: minmax(0, 1fr); }
     .count-tile { min-height: 0; }
-    #screen-game.telt .question-card { width: min(33vw, 300px); }
-    /* bij tikken op de lijn staat er op de kaart alleen een getal: dan krijgt de lijn de breedte */
-    .math-panel.lijn-tik .question-card { width: min(24vw, 200px); }
-    .math-panel.lijn-tik #answer-area { width: min(46vw, 420px); }
+    /* Een telsom (fase 9 tot 12) blijft één regel: op 33vw viel het vraagteken
+       eronder, los van zijn som. De kaart iets breder en de stukken dichter op
+       elkaar; de plaats komt van haar (de 🔊 staat er nog tussen). Smallere
+       tegels niet: drie onder elkaar worden dan te hoog voor een kleine telefoon. */
+    #screen-game.telt .question-card { width: min(37vw, 320px); }
+    #screen-game.telt .show-stage { width: min(16vw, 130px); height: min(13.4vw, 109px); }
+    .sum-eq { flex-wrap: nowrap; gap: 4px 6px; }
+    .sum-eq > * { flex-shrink: 0; }   /* anders worden vier bloemen een kolom */
+    .dframe.mini, .sum-operand { --df-mini: 10px; }
+    .dframe.mini { column-gap: 2px; }
+    .sum-eq .cgroup.big { max-width: 96px; }
+    .sum-eq .cgroup.big .cg-obj { font-size: clamp(16px, 3.4vw, 24px); }
+    /* bij tikken op de lijn staat er op de kaart alleen een getal, bij de klok
+       zoeken twee woorden: dan krijgt de lijn of krijgen de klokjes de breedte */
+    .math-panel.lijn-tik .question-card, .math-panel.zoek-klok .question-card { width: min(24vw, 200px); }
+    .math-panel.lijn-tik #answer-area, .math-panel.zoek-klok #answer-area { width: min(46vw, 420px); }
     @media (max-height: 340px) { .question-card { padding: 5px 12px 11px; } }
     .question-card .gl { width: 100%; }
     .numpad { grid-template-columns: repeat(3, 1fr); width: 100%; gap: 7px; }
@@ -990,7 +1006,10 @@
   .toast.goud .toast-main { color: var(--gold-light); }
   .toast.blauw, .praise.blauw { border-color: rgba(41,182,246,.8); box-shadow: var(--e-2), 0 0 20px rgba(41,182,246,.3); }
   .praise.blauw .praise-headline { color: var(--c-white); text-shadow: none; }
-  .toast.docked { top: 98px; }
+  /* --dock-top: vlak onder de kop (die is 62px hoog). zaalPast leest hem, om haar
+     gezicht onder de pil te houden: hoe hoger de pil, hoe minder zij moet krimpen. */
+  .toast { --dock-top: 66px; }
+  .toast.docked { top: var(--dock-top); }
   /* Met "↶ Terug" erin (meldMetTerug, na iets onomkeerbaars): onderaan, zodat
      hij niet over de rij of de tabs valt waar je net naar kijkt, en aantikbaar --
      alleen dan, de gewone melding laat elke tik door. Eén regel: de melding en
@@ -1034,6 +1053,7 @@
      ruimte ertussen niet te overschrijden */
   @media (max-height: 700px) {
     .praise.docked, .toast.docked { top: 94px; padding: 5px 13px 6px; gap: 2px; }
+    .toast.docked { top: var(--dock-top); }
     .praise.docked { gap: 8px; padding: 5px 6px 5px 14px; }
     .praise.docked .praise-headline { font-size: var(--tx-klein); }
     .praise.docked .earn-chip { font-size: var(--tx-mini); padding: 2px 7px; }
