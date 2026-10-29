@@ -834,6 +834,10 @@
     cursor: pointer; font: inherit; font-size: 16px; line-height: 1; background: var(--lavender-wash);
   }
   .kaart-pen.aan { background: var(--purple-mid); color: var(--c-white); font-size: 19px; font-weight: 900; box-shadow: 0 0 0 3px var(--lavender-wash-3); }
+  /* + − of × ÷ in de kop van een open kaart (zie themaKaart): dezelfde balk
+     als .oe-ops, op knopmaat. margin-left: auto zet hem tegen de ✓. */
+  .kaart-kop .oe-ops.kop-ops { flex: none; margin-left: auto; padding: 3px; border-radius: 12px; }
+  .kaart-kop .kop-ops .chip, .kaart-kop .kop-ops .chip:hover { width: 36px; height: 30px; border-radius: 9px; font-size: 18px; }
   /* Open: een paarse rand, en de kop blijft bovenaan in beeld als de kaart
      langer is dan het scherm (--ouder-kop: de hoogte van de donkere kop, zie
      renderSettings), zodat de ✓ altijd te raken is. */

@@ -10317,6 +10317,10 @@
   .kaart-pen.aan { background: var(--purple-mid); color: var(--c-white); font-size: 19px; font-weight: 900; box-shadow: 0 0 0 3px var(--lavender-wash-3); }
 
 
+  .kaart-kop .oe-ops.kop-ops { flex: none; margin-left: auto; padding: 3px; border-radius: 12px; }
+  .kaart-kop .kop-ops .chip, .kaart-kop .kop-ops .chip:hover { width: 36px; height: 30px; border-radius: 9px; font-size: 18px; }
+
+
 
   .thema-kaart.open { outline: 3px solid var(--purple-mid); outline-offset: -1px; }
   .thema-kaart.open > .kaart-kop {
@@ -29560,13 +29564,19 @@ function themaKaart(p, k, groepen) {
   const naam = k === 'tellen' ? 'Tellen' : THEMA[k].naam;
   const ico = k === 'tellen' ? '<span class="kaart-emoji" aria-hidden="true">🧸</span>' : themaIcoon(k, 30);
   const pen = `<button class="kaart-pen${open ? ' aan' : ''}" type="button" data-kaart="${k}" aria-expanded="${open}" aria-label="${open ? 'Klaar' : naam + ' aanpassen'}">${open ? '✓' : '✏️'}</button>`;
-  const kop = kaartKop(`${ico}${naam}`, pen);
-  if (!open) return `<div class="set-card vg-kaart thema-kaart niveau-blok${zelfGekozen(p.settings) ? ' zelf-blok' : ''}" data-kaart="${k}">${kop}${leesLadder(p, k)}${lastigHtml(p, k)}</div>`;
+  if (!open) return `<div class="set-card vg-kaart thema-kaart niveau-blok${zelfGekozen(p.settings) ? ' zelf-blok' : ''}" data-kaart="${k}">${kaartKop(`${ico}${naam}`, pen)}${leesLadder(p, k)}${lastigHtml(p, k)}</div>`;
 
   const delen = k === 'tellen'
     ? groepen.filter(g => g.kaart === 'wat' || g.kaart === 'pad').map(g => g.kaart === 'wat' ? oeLbl(g.kop) + g.html : g.html)
     : [groepen.find(g => g.kaart === k).html];
-  return `<div class="set-card oefen-kaart primary thema-kaart open" data-kaart="${k}">${kop}${delen.join('')}</div>`;
+
+
+
+
+
+  let ops = '';
+  delen[0] = delen[0].replace(/<div class="oe-ops"[^>]*>.*?<\/div>/, m => (ops = m.replace('class="oe-ops"', 'class="oe-ops kop-ops"'), ''));
+  return `<div class="set-card oefen-kaart primary thema-kaart open" data-kaart="${k}">${kaartKop(`${ico}${naam}`, ops + pen)}${delen.join('')}</div>`;
 }
 function leesLadder(p, k) {
   if (zelfGekozen(p.settings)) return zelfLadderHtml(p, k);

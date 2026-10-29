@@ -563,13 +563,19 @@ function themaKaart(p, k, groepen) {
   const naam = k === 'tellen' ? 'Tellen' : THEMA[k].naam;
   const ico = k === 'tellen' ? '<span class="kaart-emoji" aria-hidden="true">🧸</span>' : themaIcoon(k, 30);
   const pen = `<button class="kaart-pen${open ? ' aan' : ''}" type="button" data-kaart="${k}" aria-expanded="${open}" aria-label="${open ? 'Klaar' : naam + ' aanpassen'}">${open ? '✓' : '✏️'}</button>`;
-  const kop = kaartKop(`${ico}${naam}`, pen);
-  if (!open) return `<div class="set-card vg-kaart thema-kaart niveau-blok${zelfGekozen(p.settings) ? ' zelf-blok' : ''}" data-kaart="${k}">${kop}${leesLadder(p, k)}${lastigHtml(p, k)}</div>`;
+  if (!open) return `<div class="set-card vg-kaart thema-kaart niveau-blok${zelfGekozen(p.settings) ? ' zelf-blok' : ''}" data-kaart="${k}">${kaartKop(`${ico}${naam}`, pen)}${leesLadder(p, k)}${lastigHtml(p, k)}</div>`;
   // tellen: eerst hoe groot de hoeveelheden zijn, dan het pad
   const delen = k === 'tellen'
     ? groepen.filter(g => g.kaart === 'wat' || g.kaart === 'pad').map(g => g.kaart === 'wat' ? oeLbl(g.kop) + g.html : g.html)
     : [groepen.find(g => g.kaart === k).html];
-  return `<div class="set-card oefen-kaart primary thema-kaart open" data-kaart="${k}">${kop}${delen.join('')}</div>`;
+  /* + − of × ÷ gaan open naar de kop, naast de ✓: klein, want aan of uit
+     zetten is één tik en geen veld. Als volle balk boven de ladder waren het
+     de grootste knoppen van de pagina. De balk zelf blijft dezelfde (id,
+     data-instelling, bindOefenChips), alleen de plek verandert; bij een nieuwe
+     ster staat hij nog gewoon als balk. */
+  let ops = '';
+  delen[0] = delen[0].replace(/<div class="oe-ops"[^>]*>.*?<\/div>/, m => (ops = m.replace('class="oe-ops"', 'class="oe-ops kop-ops"'), ''));
+  return `<div class="set-card oefen-kaart primary thema-kaart open" data-kaart="${k}">${kaartKop(`${ico}${naam}`, ops + pen)}${delen.join('')}</div>`;
 }
 function leesLadder(p, k) {
   if (zelfGekozen(p.settings)) return zelfLadderHtml(p, k);
