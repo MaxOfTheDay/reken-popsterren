@@ -193,6 +193,7 @@ function renderQuestion() {
   showBalk(G.idx);
   drawQuestion();
   vraagKomtIn($('question-card'), G.idx === 0);
+  kijkStraks();
   // antwoorden
   const area = $('answer-area');
   if (G.count) {
@@ -1043,6 +1044,7 @@ function somVluchtWeg() { if (somVlucht) { somVlucht.remove(); somVlucht = null;
 
 function submitAnswer(val, btnEl) {
   if (!G || G.lock) return;
+  kijkStraks();
   if (btnEl && btnEl.getBoundingClientRect) {   // tactiel: ripple vanaf de aangetikte tegel
     const r = btnEl.getBoundingClientRect();
     tapRipple(r.left + r.width / 2, r.top + r.height / 2);
@@ -1289,6 +1291,28 @@ function oepsGezicht() {
     pop.classList.add('oeps');
     oepsTimer = setTimeout(() => pop.classList.remove('oeps'), OEPS_DUUR);
   });
+}
+/* Rondkijken. Blijft het lang stil bij een som, dan kijkt ze één keer naar
+   links, naar rechts en weer naar jou (zie .kijkt): "ben je er nog?". Eén keer
+   per stilte en niet herhalend -- een kind dat nadenkt wordt niet opgejaagd.
+   De klok begint opnieuw bij elke nieuwe som en bij elk antwoord (ook een
+   fout), zodat ze nooit vlak na een "oeps" of een pasje rondkijkt. Een klok die
+   afgaat terwijl de show al verder is (een andere som, een ander scherm, een
+   verborgen tabblad) doet niets. */
+const RONDKIJK = { na: 9000, duur: 1600 };
+document.documentElement.style.setProperty('--t-kijk', RONDKIJK.duur + 'ms');
+let kijkKlok = null;
+function kijkStraks() {
+  clearTimeout(kijkKlok);
+  const g = G, idx = G && G.idx;
+  kijkKlok = setTimeout(() => {
+    const pop = $('game-avatar-inner');
+    if (!pop || G !== g || !G || G.idx !== idx || G.lock || document.hidden || motionOff()
+      || !$('screen-game').classList.contains('active')
+      || pop.classList.contains('dancing') || pop.classList.contains('oeps')) return;
+    pop.classList.add('kijkt');
+    setTimeout(() => pop.classList.remove('kijkt'), RONDKIJK.duur);
+  }, RONDKIJK.na);
 }
 /* De zaal reageert op een goed antwoord: het voetlicht trekt aan en de wereld
    erachter wordt een tel helderder. Eén klasse, twee opacity-overgangen in de CSS
