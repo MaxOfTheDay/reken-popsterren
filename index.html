@@ -431,6 +431,9 @@
     --lavender-text: #e6d6ff;
 
 
+    --lavender-vul: #e3cdf5;
+
+
     --danger-bg: #fff0f0; --danger-border: #f2b2b2; --danger-title: #b71c1c; --danger-desc: #9a4a4a;
     --practice-bg: #fff3e0; --practice-text: #b3560d; --practice-rand: #f3cf86;
 
@@ -9885,7 +9888,9 @@
   .oe-regel-lbl { flex: 0 0 76px; font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
   .oe-regel > :not(.oe-regel-lbl) { flex: 1; min-width: 0; }
   .oe-regel .oe-seg .chip { height: 36px; font-size: var(--tx-klein); padding: 0 2px; }
-  .oe-regel .oe-mix { justify-content: flex-start; margin: 0; padding-left: 4px; }
+
+
+  .oe-regel .oe-mix { justify-content: center; gap: 6px; margin: 0; padding: 8px 4px; border-radius: 14px; background: var(--lavender-wash); }
 
 
 
@@ -10253,11 +10258,10 @@
 
 
 
-  .vg-balk {
-    display: block; width: min(150px, 100%); height: 7px; margin-top: 6px; border-radius: var(--r-pill); overflow: hidden;
-    background: var(--c-white); box-shadow: inset 0 0 0 1.5px var(--lavender-wash-3);
+
+  .fase-ladder .fl-rij.hier[style*="--vul"] {
+    background: linear-gradient(90deg, var(--lavender-vul) var(--vul), var(--lavender-wash) var(--vul));
   }
-  .vg-balk i { display: block; height: 100%; min-width: 7px; border-radius: inherit; background: linear-gradient(90deg, var(--purple-light), var(--purple-mid)); }
 
 
 
@@ -10323,9 +10327,7 @@
 
 
 
-
   .thema-kaart.open .fase-ladder.naad .fl-rij:not(.hier) .fl-n { background: var(--lavender-wash-3); color: var(--purple-mid); }
-  .fase-ladder.naad .fl-rij.hier .vg-balk { position: absolute; left: 44px; bottom: 3px; height: 5px; margin: 0; width: min(150px, calc(100% - 150px)); }
 
 
 
@@ -29441,6 +29443,9 @@ const flVb = vb => (vb || '').replace('▢', '<i class="fl-vak"></i>');
 
 
 
+
+
+
 const kaartKop = (titel, rechts) => `<div class="kaart-kop"><h2>${titel}</h2>${rechts || ''}</div>`;
 
 const oeLbl = (tekst, teken) => `<div class="oe-lbl">${teken ? `<span class="oe-teken">${teken}</span>` : ''}${tekst}</div>`;
@@ -29453,23 +29458,23 @@ function stapNu(p) {
   if (s.track === 'count') {
     const st = countLiveStage(p), top = countTopRung(st);
     const rung = Math.min(top, Math.max(0, (p.countTrack && p.countTrack.rung) || 0));
-    return { naam: COUNT_STAGE_LABELS[st], vb: COUNT_STAGE_VB[st], balk: vgBalk(rung / (top + 1)), waar: `Fase ${st} van ${countMaxStage(s)}` };
+    return { naam: COUNT_STAGE_LABELS[st], vb: COUNT_STAGE_VB[st], deel: rung / (top + 1), waar: `Fase ${st} van ${countMaxStage(s)}` };
   }
   if (!themaAan(s, 'rekenen')) return ladderStap(p, Object.keys(LADDERS).find(k => themaAan(s, k)));
   const nuId = padNu(p);
-  if (nuId === 'alles') return { naam: 'Alles door elkaar', vb: '', balk: '', waar: '' };
+  if (nuId === 'alles') return { naam: 'Alles door elkaar', vb: '', deel: 0, waar: '' };
   const speel = padRijen(s).rijen.filter(r => !r.uit);
   const nu = speel.find(r => r.id === nuId);
-  return { naam: nu.naam, vb: nu.vb, balk: vgBalk(rijDeel(p.pad && p.pad.rij === nuId ? p.pad : null)),
+  return { naam: nu.naam, vb: nu.vb, deel: rijDeel(p.pad && p.pad.rij === nuId ? p.pad : null),
     waar: `Stap ${speel.indexOf(nu) + 1} van ${speel.length}` };
 }
 
 function ladderStap(p, k) {
   const L = LADDERS[k], nuId = ladderNu(p, k);
-  if (nuId === 'alles') return { naam: L.eind, vb: '', balk: '', waar: '' };
+  if (nuId === 'alles') return { naam: L.eind, vb: '', deel: 0, waar: '' };
   const { rijen, lo, hi } = ladderRijen(p.settings, k);
   const nu = rijen[L.idx[nuId]];
-  return { naam: nu.naam, vb: nu.vb, balk: vgBalk(rijDeel(p[L.stand] && p[L.stand].rij === nuId ? p[L.stand] : null)),
+  return { naam: nu.naam, vb: nu.vb, deel: rijDeel(p[L.stand] && p[L.stand].rij === nuId ? p[L.stand] : null),
     waar: `Stap ${L.idx[nuId] - lo + 1} van ${hi - lo + 1}` };
 }
 
@@ -29479,9 +29484,27 @@ function ladderStap(p, k) {
 
 
 
-const rijDeel = t => t ? Math.min(1, (t.shows || 0) / PAD_MAX_SHOWS) : 0;
 
-const vgBalk = deel => `<span class="vg-balk" role="img" aria-label="Op weg naar de volgende stap"><i style="width:${Math.round(100 * Math.min(1, Math.max(0, deel)))}%"></i></span>`;
+
+
+
+const rijDeel = t => {
+  if (!t) return 0;
+  const shows = t.shows || 0, vragen = t.vragen || 0;
+  return Math.min(1, shows / PAD_MAX_SHOWS, Math.max(vragen / PAD_MAX_VRAGEN, shows / (2 * PAD_MAX_SHOWS)));
+};
+
+
+
+function showsNog(t) {
+  const shows = (t && t.shows) || 0, vragen = (t && t.vragen) || 0;
+  const perShow = shows ? vragen / shows : 0;
+  const voorVragen = vragen >= PAD_MAX_VRAGEN ? 0 : perShow ? Math.ceil((PAD_MAX_VRAGEN - vragen) / perShow) : 0;
+  return Math.max(1, PAD_MAX_SHOWS - shows, Math.min(voorVragen, 2 * PAD_MAX_SHOWS - shows));
+}
+
+
+const metVul = (rij, deel) => rij.replace(/class="(chip )?fl-rij/, m => `style="--vul:${Math.round(100 * Math.min(1, Math.max(0, deel || 0)))}%" ${m}`);
 
 
 
@@ -29515,7 +29538,7 @@ function rijenKiesStart(s, p) {
 
 const themaKaarten = s => s.track === 'count' ? ['tellen'] : THEMAS.map(t => t.id).filter(k => themaAan(s, k));
 function sterPaginaHtml(p, s) {
-  const groepen = oefenGroups(s, '', p, { balk: k => k === 'tellen' || k === 'rekenen' ? stapNu(p).balk : ladderStap(p, k).balk });
+  const groepen = oefenGroups(s, '', p, { deel: k => k === 'tellen' || k === 'rekenen' ? stapNu(p).deel : ladderStap(p, k).deel });
   const show = groepen.find(g => g.kaart === 'show');
   return `<div class="settings-panel">${sterCijfersHtml(p)}${stemKaartHtml(p)}${themaKaartHtml(s, p, show)}${themaKaarten(s).map(k => themaKaart(p, k, groepen)).join('')}</div>`;
 }
@@ -29563,7 +29586,7 @@ function rekenLadderHtml(p) {
     const st = countLiveStage(p), hi = countMaxStage(s);
     if (st > 1) rijen.push(flRij(' klaar', '✓', klaarNamen(COUNT_STAGE_LABELS.slice(1, st))));
     const nu = stapNu(p);
-    rijen.push(flRij(' hier niveau-bezig', flAva(p), nu.naam + nu.balk, telTip(p) ? kaartTip('tel-tip-ja') : nu.vb));
+    rijen.push(metVul(flRij(' hier niveau-bezig', flAva(p), nu.naam, telTip(p) ? kaartTip('tel-tip-ja') : nu.vb), nu.deel));
 
     for (let v = st + 1; v <= Math.min(hi, st + 2); v++) rijen.push(flRij(' later', v, COUNT_STAGE_LABELS[v], COUNT_STAGE_VB[v]));
     const tussen = hi - st - 3;
@@ -29582,7 +29605,7 @@ function rekenLadderHtml(p) {
       rijen.push(flRij(' hier niveau-bezig', flAva(p), 'Alles door elkaar', tip));
     } else {
       const nu = stapNu(p);
-      rijen.push(...hierMetUitleg(flRij(' hier niveau-bezig', flAva(p), nu.naam + nu.balk, tip || flVb(nu.vb)), 'rekenen', p.pad && p.pad.rij === nuId ? p.pad : null));
+      rijen.push(...hierMetUitleg(metVul(flRij(' hier niveau-bezig', flAva(p), nu.naam, tip || flVb(nu.vb)), nu.deel), 'rekenen', p.pad && p.pad.rij === nuId ? p.pad : null));
       rijen.push(...vgKort(alle.slice(nr + 1).map((r, i) => flRij(` later${r.uit ? ' overgeslagen' : ''}`, nr + 2 + i, r.naam, flVb(r.vb))), 'stap', 'stappen'));
     }
   }
@@ -29603,7 +29626,7 @@ function themaLadderHtml(p, k) {
   if (nuId === 'alles') uit.push(flRij(' hier niveau-bezig', flAva(p), L.eind, ''));
   else {
     const nu = ladderStap(p, k);
-    uit.push(...hierMetUitleg(flRij(' hier niveau-bezig', flAva(p), nu.naam + nu.balk, flVb(nu.vb)), k, p[L.stand] && p[L.stand].rij === nuId ? p[L.stand] : null));
+    uit.push(...hierMetUitleg(metVul(flRij(' hier niveau-bezig', flAva(p), nu.naam, flVb(nu.vb)), nu.deel), k, p[L.stand] && p[L.stand].rij === nuId ? p[L.stand] : null));
     uit.push(...vgKort(speel.slice(nr + 1).map((r, i) => flRij(' later', nr + 2 + i, r.naam, flVb(r.vb))), 'stap', 'stappen'));
   }
   return `<div class="fase-ladder vg-ladder">${uit.join('')}</div>`;
@@ -29621,13 +29644,13 @@ function themaLadderHtml(p, k) {
 
 function vgUitleg(t) {
   const top = Math.max(0, PAD_GOED - ((t && t.goed) || 0));
-  const shows = Math.max(1, PAD_MAX_SHOWS - ((t && t.shows) || 0));
+  const shows = showsNog(t);
   return `<div class="vg-uitleg">Nog <b>${top} ${mv(top, 'topshow', 'topshows')}</b> ⭐⭐⭐${top > 1 ? ' op rij' : ''} of <b>${shows} ${mv(shows, 'show', 'shows')}</b></div>`;
 }
 
 function hierMetUitleg(rij, k, t) {
   const open = setUitleg === k;
-  return [rij.replace('<div class="fl-rij', `<div role="button" tabindex="0" aria-expanded="${open}" data-uitleg="${k}" class="fl-rij${open ? ' uitleg-open' : ''}`)]
+  return [rij.replace('<div ', `<div role="button" tabindex="0" aria-expanded="${open}" data-uitleg="${k}" `).replace('class="fl-rij', `class="fl-rij${open ? ' uitleg-open' : ''}`)]
     .concat(open ? vgUitleg(t) : []);
 }
 
@@ -29934,17 +29957,18 @@ function oefenGroups(s, pfx, p, opt) {
 
 
 
-  const ladder = (id, instelling, rijen, lo, hi, hier, staart, balk, naTot) => {
+  const ladder = (id, instelling, rijen, lo, hi, hier, staart, deel, naTot) => {
     const uit = rijen.map((r, i) => {
 
       const totWoord = (r.blok && rijen[i + 1] && rijen[i + 1].blok !== r.blok ? `tot ${r.blok}` : 'tot') + (naTot ? ` · ${naTot}` : '');
-      return flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}${r.uit ? ' overgeslagen' : ''}`,
-        r.v === hier && ava ? ava : i + 1, r.v === hier && balk ? r.naam + balk : r.naam, r.vb, r.v,
+      const html = flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}${r.uit ? ' overgeslagen' : ''}`,
+        r.v === hier && ava ? ava : i + 1, r.naam, r.vb, r.v,
         (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn(totWoord, 'onder') : ''));
+      return r.v === hier && deel != null ? metVul(html, deel) : html;
     });
     return `<div class="fase-ladder naad" id="${pfx}${id}" data-instelling="${instelling}">${uit.join('')}${staart || ''}</div>`;
   };
-  const hierBalk = k => opt.balk ? opt.balk(k) : '';
+  const hierDeel = k => opt.deel ? opt.deel(k) : null;
 
 
 
@@ -29987,7 +30011,7 @@ function oefenGroups(s, pfx, p, opt) {
   }, vrij ? {
     kaart: 'pad', kop: `Wat oefent ${p ? esc(p.name) : 'je ster'}?`, html: kiesHtml('set-kiesfasen', 'kiesFasen', fases, kiesFasen(s))
   } : {
-    kaart: 'pad', kop: 'Leerpad', html: `${ladder('set-fase', 'stage', fases, lo, hi, p && countLiveStage(p), '', hierBalk('tellen'))}`
+    kaart: 'pad', kop: 'Leerpad', html: `${ladder('set-fase', 'stage', fases, lo, hi, p && countLiveStage(p), '', hierDeel('tellen'))}`
   }, (() => {
     const repr = balk('set-repr', 'repr', [['objects', 'Voorwerpen'], ['mix', 'Mix'], ['dots', 'Stippen']], s.repr || 'objects');
     const mem = aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false);
@@ -30036,7 +30060,7 @@ function oefenGroups(s, pfx, p, opt) {
     const nu = p && ladderNu(p, k), voorbij = nu === 'alles';
     const staart = voorbij ? flRij(' eind hier', ava || '∞', L.eind) : '';
     return ladder(L.id, L.lijn, lr.rijen.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb) })),
-      lr.lo + 1, lr.hi + 1, p && !voorbij ? L.idx[nu] + 1 : 0, staart, hierBalk(k), 'daarna alles door elkaar');
+      lr.lo + 1, lr.hi + 1, p && !voorbij ? L.idx[nu] + 1 : 0, staart, hierDeel(k), 'daarna alles door elkaar');
   };
 
 
@@ -30053,7 +30077,7 @@ function oefenGroups(s, pfx, p, opt) {
   return [themaAan(s, 'rekenen') && {
     kaart: 'rekenen', kop: 'Rekenen', ico: 'rekenen', html: `${opsBalk('set-ops', 'ops', opDefs.slice(0, 2))}${vrij
       ? kiesHtml('set-kies', 'kies', kiesLijst, (s.kies || []))
-      : ladder('set-startstap', 'padVanaf', padRijenLadder, startPos, padR.length, hierPos, eind, hierBalk('rekenen'), 'daarna alles door elkaar')}`
+      : ladder('set-startstap', 'padVanaf', padRijenLadder, startPos, padR.length, hierPos, eind, hierDeel('rekenen'), 'daarna alles door elkaar')}`
   }, themaAan(s, 'tafels') && {
     kaart: 'tafels', kop: 'Tafels', ico: 'tafels', html: `${opsBalk('set-tafelops', 'tafelOps', opDefs.slice(2))}${vrij ? tafelsVan : themaLadder('tafels')}`
   }, themaAan(s, 'lijn') && {

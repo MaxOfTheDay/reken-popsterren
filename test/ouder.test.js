@@ -827,8 +827,8 @@ function check(ok, label, detail) {
      dat las als een rapportcijfer -- geen uitleg eronder kon daar tegenop. Het
      getal is uit het scherm; p.perf zelf stuurt de moeilijkheid ongewijzigd.
      Deze zaak bewaakt beide kanten: geen percentage in het blok, en p.perf nog
-     wél in de opslag en nog wél in beweging. (Het balkje onder haar stap,
-     .vg-balk, is iets anders: hoe ver ze op weg is naar de volgende stap.) */
+     wél in de opslag en nog wél in beweging. (Haar rij die volloopt, --vul,
+     is iets anders: hoe ver ze op weg is naar de volgende stap.) */
   {
     const { ctx, page } = await fresh();
     await page.evaluate(() => { db.profiles.p1.perf = 0.5; save(); });
@@ -1056,7 +1056,8 @@ function check(ok, label, detail) {
         .map(e => [...e.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim()),
       labels: [...document.querySelectorAll('#settings-body .vg-tag')].map(e => e.dataset.stand),
       onder: document.querySelectorAll('#settings-body .vg-onder').length,
-      balk: document.querySelectorAll('#settings-body .vg-ladder .hier .vg-balk').length,
+      balk: [...document.querySelectorAll('#settings-body .vg-ladder .hier')].filter(e => e.style.getPropertyValue('--vul')).length
+        - document.querySelectorAll('#settings-body .vg-balk').length,
       knop: (document.querySelector('#settings-body .kaart-tip') || {}).id || '',
       cijfers: document.querySelectorAll('#settings-body .ster-cijfers').length,
       meerKaart: document.querySelectorAll('#settings-body .vg-meer').length,
@@ -1081,7 +1082,7 @@ function check(ok, label, detail) {
     check(r.kaarten.join() === 'Rekenen',
       'P · rekenen, zonder lastige sommen: alleen de kaart Rekenen', JSON.stringify(r.kaarten));
     check(r.oud === 0 && !r.labels.length && !r.onder, 'P · geen statuskaart, geen label en geen regel onder haar stap', JSON.stringify(r));
-    check(r.balk === 1, 'P · wel een balkje onder haar stap', String(r.balk));
+    check(r.balk === 1, 'P · haar rij loopt vol, zonder apart balkje', String(r.balk));
     check(r.cijfers === 1 && !r.meerKaart && !r.lastig.length, 'P · haar cijfers in één regel, geen kaart "Meer cijfers", geen regel Lastig', JSON.stringify(r));
     // een tik op haar stap: één regel uitleg eronder, nog een tik en hij is weg
     await page.click('#settings-body [data-uitleg="rekenen"]');
@@ -1125,7 +1126,7 @@ function check(ok, label, detail) {
     r = await met([3, 3, 3, 3], { track: 'count', stage: 1, stageMax: 12, numerals: true });
     check(r.kaarten.length === 1 && !/extra/.test(r.kaarten.join(' ')),
       'P · in de telmodus geen sommenkaart', JSON.stringify(r.kaarten));
-    check(r.nu === 1 && !r.labels.length && r.balk === 1, 'P · ook daar één stap "nu" met een balkje, en geen label', JSON.stringify(r));
+    check(r.nu === 1 && !r.labels.length && r.balk === 1, 'P · ook daar één stap "nu" die volloopt, en geen label', JSON.stringify(r));
     await ctx.close();
   }
 

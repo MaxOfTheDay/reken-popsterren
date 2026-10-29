@@ -407,7 +407,9 @@
   .oe-regel-lbl { flex: 0 0 76px; font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
   .oe-regel > :not(.oe-regel-lbl) { flex: 1; min-width: 0; }
   .oe-regel .oe-seg .chip { height: 36px; font-size: var(--tx-klein); padding: 0 2px; }
-  .oe-regel .oe-mix { justify-content: flex-start; margin: 0; padding-left: 4px; }
+  /* Een show: in hetzelfde lavendel vak als de balken erboven, de iconen in
+     het midden -- zo staat elke regel van de kaart in een vak even breed. */
+  .oe-regel .oe-mix { justify-content: center; gap: 6px; margin: 0; padding: 8px 4px; border-radius: 14px; background: var(--lavender-wash); }
   /* .breed: "Voorwerpen" past niet in een derde van wat naast het label
      overblijft. Is er minder dan 250 over, dan staat de balk onder zijn label,
      over de hele breedte. */
@@ -772,14 +774,13 @@
   .vg-tag.vlot b, .vg-tag.meer b { background: var(--ink-on-gold-card); }
   .vg-tag.pittig { background: var(--practice-bg); color: var(--practice-text); }
   .vg-tag.pittig b { background: var(--practice-text); }
-  /* Het balkje onder haar stap (zie vgBalk, rijDeel): hoe ver ze op weg is naar
-     de volgende stap. Geen tekst en geen getal, en het loopt alleen vol. Leeg
-     staat er een stipje, zodat je ziet dat het een balkje is. */
-  .vg-balk {
-    display: block; width: min(150px, 100%); height: 7px; margin-top: 6px; border-radius: var(--r-pill); overflow: hidden;
-    background: var(--c-white); box-shadow: inset 0 0 0 1.5px var(--lavender-wash-3);
+  /* Haar rij loopt van links vol (zie metVul, rijDeel): hoe ver ze op weg is
+     naar de volgende stap. Geen tekst, geen getal, geen eigen balkje -- en dus
+     ook geen hogere rij. Een harde grens, geen verloop: een verloop las als
+     schaduw en niet als "tot hier". */
+  .fase-ladder .fl-rij.hier[style*="--vul"] {
+    background: linear-gradient(90deg, var(--lavender-vul) var(--vul), var(--lavender-wash) var(--vul));
   }
-  .vg-balk i { display: block; height: 100%; min-width: 7px; border-radius: inherit; background: linear-gradient(90deg, var(--purple-light), var(--purple-mid)); }
   /* "↑ Meer" en "↑ Erbij" (zie kaartTip): de enige knop op een themakaart die
      de ouder iets vraagt. Goud, want het is goed nieuws: ze is klaar voor meer.
      Hij staat ín haar rij, op de plek van het voorbeeld -- daar gaat hij over. */
@@ -840,15 +841,13 @@
     margin: -8px -10px 10px; padding: 8px 10px; border-radius: var(--r-sm); background: var(--c-white);
   }
   /* Open ziet de ladder er zo veel mogelijk uit als dicht: dezelfde lichte
-     nummers, en haar balkje blijft (oefenGroups, balk). Wat erbij komt zijn de
-     lijnen en de balk + −.
-     Het balkje hangt hier onderin haar rij en neemt geen plaats in: een tik
-     verhuist een lijn, en soms haar mee (vanaf tilt haar op), en dan mag geen
-     enkele rij van hoogte veranderen -- dezelfde regel als de naad (zie
-     .fase-ladder.naad hierboven). */
+     nummers, en haar rij blijft even vol (oefenGroups, deel). Wat erbij komt
+     zijn de lijnen en de balk + −. Dat het vullen een achtergrond is en geen
+     balkje, houdt elke rij even hoog: een tik verhuist een lijn, en soms haar
+     mee (vanaf tilt haar op), en dan mag geen enkele rij van hoogte
+     veranderen -- dezelfde regel als de naad (zie .fase-ladder.naad hierboven). */
   .thema-kaart.open .fase-ladder.naad .fl-rij:not(.hier) .fl-n { background: var(--lavender-wash-3); color: var(--purple-mid); }
-  .fase-ladder.naad .fl-rij.hier .vg-balk { position: absolute; left: 44px; bottom: 3px; height: 5px; margin: 0; width: min(150px, calc(100% - 150px)); }
-  /* De uitleg van het balkje (zie vgUitleg): haar rij is een knop, en de regel
+  /* De uitleg van hoe ver ze is (zie vgUitleg): haar rij is een knop, en de regel
      hangt eronder in dezelfde lavendel, zodat het leest als haar rij die
      openklapt. */
   .vg-ladder > .fl-rij.hier[data-uitleg] { cursor: pointer; }

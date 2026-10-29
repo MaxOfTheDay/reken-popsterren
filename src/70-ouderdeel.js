@@ -293,7 +293,7 @@ let setKey = null;
    de bediening van meer thema's achter elkaar aantikken. Wie ze is: zie
    openWieBlad. */
 let setOpen = null;
-/* Onder welke stap staat de uitleg van het balkje open (zie vgUitleg)? null, of
+/* Onder welke stap staat de uitleg van hoe ver ze is open (zie vgUitleg)? null, of
    de sleutel van de themakaart. Een tik op haar stap zet hem aan en uit. */
 let setUitleg = null;
 function openSettings() {
@@ -343,7 +343,7 @@ function openSter(key) {
      HOE OEFENT ZE -- Leerpad of Zelf kiezen, antwoord, vragen per show en hoe
                       een show eruitziet; voor alle thema's samen.
      ÉÉN KAART PER THEMA -- om te lezen: wat al kan (één rij ✓), haar stap met
-                      een balkje, de volgende twee, de rest als "nog N
+                      haar rij die volloopt, de volgende twee, de rest als "nog N
                       stappen", en onderaan de sommen die nog lastig zijn. ✏️
                       rechtsboven zet dezelfde kaart open om aan te passen, en
                       wordt dan ✓ om hem weer dicht te doen.
@@ -354,7 +354,7 @@ function openSter(key) {
 
    GEEN LABEL OP DE KAART. Hier stond rechtsboven "Net begonnen", "Past goed",
    "Even pittig" en zo verder (vgStand). De meeste daarvan zeiden wat het
-   balkje nu laat zien, of wat het spel zelf al doet; alleen "Klaar voor meer"
+   volle rij nu laat zien, of wat het spel zelf al doet; alleen "Klaar voor meer"
    vroeg de ouder iets. Dat staat er nu als knop ín haar rij ("↑ Meer"), en
    doet de stap meteen, met ↶ Terug in de melding. Het overzicht van alle
    sterren houdt het label wel: daar zie je alle kinderen in één oogopslag. */
@@ -427,19 +427,22 @@ const flVb = vb => (vb || '').replace('▢', '<i class="fl-vak"></i>');
    p.perf niet -- het is een meelopende maat waarmee het spel de vragen
    makkelijker of moeilijker maakt, en hij zweeft rond het midden omdat hij
    dáárop stuurt. p.perf stuurt nog precies zoals hiervoor; hij wordt alleen
-   niet getoond. Wat wél onder haar stap staat is hoe ver ze op die stap is, in
-   de maat waarmee het spel zelf doorschuift: bij rekenen de shows met drie
-   sterren op rij (padNa), bij tellen de stapjes binnen een fase
+   niet getoond. Wat wél te zien is, is hoe ver ze op die stap is, in de maat
+   waarmee het spel zelf doorschuift: bij rekenen en de andere thema's de
+   shows en vragen op die rij (rijDeel), bij tellen de stapjes binnen een fase
    (countTrack.rung).
 
-   Dat balkje (vgBalk) is iets anders dan dat percentage: het zegt niet hoe goed
-   ze is, maar hoe ver ze op weg is naar de volgende stap, en het loopt alleen
-   vol -- nooit terug. Zie rijDeel.
+   Dat is iets anders dan dat percentage: het zegt niet hoe goed ze is, maar
+   hoe ver ze op weg is naar de volgende stap, en het loopt alleen vol -- nooit
+   terug. Het staat er als haar rij die van links volloopt (metVul), niet als
+   een eigen balkje: het heeft maar een handvol standen (acht bij rekenen,
+   twee of drie bij tellen), en een balkje onder haar stap maakte de rij hoger
+   en drukker voor zo weinig.
 
    Dezelfde rijen als de ladder om aan te passen (flRij), maar om te lezen: wat
    al kan is één rij met een ✓, met de namen van die ladder (de eerste en de
    laatste, "Tot 10 … Drie getallen"); dan de stap van nu met haar pop in het
-   bolletje en het balkje, dan de volgende twee, en de rest als één rij
+   bolletje en haar rij die volloopt, dan de volgende twee, en de rest als één rij
    "nog N stappen" (vgKort). */
 /* DE KAARTKOP. Elke kaart op de pagina van een ster begint met deze ene kop:
    donkere inkt, even groot, met rechts eventueel iets kleins (de ✏️ van een
@@ -453,42 +456,60 @@ const kaartKop = (titel, rechts) => `<div class="kaart-kop"><h2>${titel}</h2>${r
 const oeLbl = (tekst, teken) => `<div class="oe-lbl">${teken ? `<span class="oe-teken">${teken}</span>` : ''}${tekst}</div>`;
 const klaarNamen = namen => namen.length > 2 ? `${namen[0]} … ${namen[namen.length - 1]}` : namen.join(', ');
 /* Waar ze nu staat, en hoe ver ze op die stap is: { naam, vb, balk, waar }.
-   De themakaart zet het balkje onder haar stap, het overzicht zet "waar" naast
+   De themakaart laat haar rij vollopen (deel), het overzicht zet "waar" naast
    haar naam: één bron, zodat die twee nooit iets anders zeggen. */
 function stapNu(p) {
   const s = p.settings;
   if (s.track === 'count') {
     const st = countLiveStage(p), top = countTopRung(st);
     const rung = Math.min(top, Math.max(0, (p.countTrack && p.countTrack.rung) || 0));
-    return { naam: COUNT_STAGE_LABELS[st], vb: COUNT_STAGE_VB[st], balk: vgBalk(rung / (top + 1)), waar: `Fase ${st} van ${countMaxStage(s)}` };
+    return { naam: COUNT_STAGE_LABELS[st], vb: COUNT_STAGE_VB[st], deel: rung / (top + 1), waar: `Fase ${st} van ${countMaxStage(s)}` };
   }
   if (!themaAan(s, 'rekenen')) return ladderStap(p, Object.keys(LADDERS).find(k => themaAan(s, k)));
   const nuId = padNu(p);
-  if (nuId === 'alles') return { naam: 'Alles door elkaar', vb: '', balk: '', waar: '' };
+  if (nuId === 'alles') return { naam: 'Alles door elkaar', vb: '', deel: 0, waar: '' };
   const speel = padRijen(s).rijen.filter(r => !r.uit);
   const nu = speel.find(r => r.id === nuId);
-  return { naam: nu.naam, vb: nu.vb, balk: vgBalk(rijDeel(p.pad && p.pad.rij === nuId ? p.pad : null)),
+  return { naam: nu.naam, vb: nu.vb, deel: rijDeel(p.pad && p.pad.rij === nuId ? p.pad : null),
     waar: `Stap ${speel.indexOf(nu) + 1} van ${speel.length}` };
 }
 // Hetzelfde voor de ladder van tafels of geld (zie LADDERS): waar ze staat en hoe ver.
 function ladderStap(p, k) {
   const L = LADDERS[k], nuId = ladderNu(p, k);
-  if (nuId === 'alles') return { naam: L.eind, vb: '', balk: '', waar: '' };
+  if (nuId === 'alles') return { naam: L.eind, vb: '', deel: 0, waar: '' };
   const { rijen, lo, hi } = ladderRijen(p.settings, k);
   const nu = rijen[L.idx[nuId]];
-  return { naam: nu.naam, vb: nu.vb, balk: vgBalk(rijDeel(p[L.stand] && p[L.stand].rij === nuId ? p[L.stand] : null)),
+  return { naam: nu.naam, vb: nu.vb, deel: rijDeel(p[L.stand] && p[L.stand].rij === nuId ? p[L.stand] : null),
     waar: `Stap ${L.idx[nuId] - lo + 1} van ${hi - lo + 1}` };
 }
-/* HOE VER OP DEZE RIJ, van 0 tot 1. De goede shows op deze rij (t.shows telt
-   alleen shows met PAD_TELT sterren of meer, zie rijVerder) tegen de
-   PAD_MAX_SHOWS waarna ze hoe dan ook verder gaat. Ze kan eerder verder (drie
-   sterren op rij, zie rijVerder); dan springt het balkje vol. Bewust níet de
-   drie-sterrenreeks (t.goed): die gaat na één mindere show terug naar nul, en
-   een balkje dat leegloopt leest een ouder als achteruitgang. Hier stonden
-   twee bolletjes met "nog 2× ⭐⭐⭐", en die deden precies dat. */
-const rijDeel = t => t ? Math.min(1, (t.shows || 0) / PAD_MAX_SHOWS) : 0;
-// Het balkje onder haar stap (zie rijDeel). Leeg is er een stipje, zodat je ziet dat het een balk is.
-const vgBalk = deel => `<span class="vg-balk" role="img" aria-label="Op weg naar de volgende stap"><i style="width:${Math.round(100 * Math.min(1, Math.max(0, deel)))}%"></i></span>`;
+/* HOE VER OP DEZE RIJ, van 0 tot 1: hoe ver ze is op de weg waarlangs ze hoe
+   dan ook verder gaat ("toch", zie rijVerder). Dat zijn PAD_MAX_SHOWS goede
+   shows (t.shows telt alleen shows met PAD_TELT sterren of meer) én genoeg
+   vragen van die rij: PAD_MAX_VRAGEN, of anders het dubbele aantal shows. Dat
+   tweede telt bij een mix: staan er vier thema's aan, dan krijgt een thema
+   maar een paar vragen per show, en duurt het langer dan acht shows. Zonder
+   die vragen stond het vol terwijl ze nog bleef.
+   Ze kan eerder verder (twee keer drie sterren op rij, zie rijVerder); dan
+   begint ze leeg op de volgende rij. Bewust níet de drie-sterrenreeks (t.goed):
+   die gaat na één mindere show terug naar nul, en iets wat leegloopt leest een
+   ouder als achteruitgang. */
+const rijDeel = t => {
+  if (!t) return 0;
+  const shows = t.shows || 0, vragen = t.vragen || 0;
+  return Math.min(1, shows / PAD_MAX_SHOWS, Math.max(vragen / PAD_MAX_VRAGEN, shows / (2 * PAD_MAX_SHOWS)));
+};
+/* Hoeveel shows nog, langs diezelfde weg: wat er aan shows ontbreekt, of aan
+   vragen in het tempo waarin ze er tot nu toe per show kreeg. Een schatting
+   bij een mix, maar nooit minder dan het echte minimum. */
+function showsNog(t) {
+  const shows = (t && t.shows) || 0, vragen = (t && t.vragen) || 0;
+  const perShow = shows ? vragen / shows : 0;
+  const voorVragen = vragen >= PAD_MAX_VRAGEN ? 0 : perShow ? Math.ceil((PAD_MAX_VRAGEN - vragen) / perShow) : 0;
+  return Math.max(1, PAD_MAX_SHOWS - shows, Math.min(voorVragen, 2 * PAD_MAX_SHOWS - shows));
+}
+/* Haar rij loopt van links vol (zie .fl-rij.hier in het stijlblad): de stand
+   gaat mee als --vul. Eén plek die dat doet, voor de dichte en de open kaart. */
+const metVul = (rij, deel) => rij.replace(/class="(chip )?fl-rij/, m => `style="--vul:${Math.round(100 * Math.min(1, Math.max(0, deel || 0)))}%" ${m}`);
 /* Wat Zelf kiezen aangevinkt heeft, als rijen om te lezen: [{ naam, vb }], per
    thema (zelfRijenVan) of voor alle samen (zelfRijen). Bij rekenen de + −
    rijen, bij tafels × en ÷ met de tafels in de naam, bij tellen de fases. De
@@ -522,7 +543,7 @@ function rijenKiesStart(s, p) {
    één; bij rekenen één per thema dat aan staat, in de volgorde van de tegels. */
 const themaKaarten = s => s.track === 'count' ? ['tellen'] : THEMAS.map(t => t.id).filter(k => themaAan(s, k));
 function sterPaginaHtml(p, s) {
-  const groepen = oefenGroups(s, '', p, { balk: k => k === 'tellen' || k === 'rekenen' ? stapNu(p).balk : ladderStap(p, k).balk });
+  const groepen = oefenGroups(s, '', p, { deel: k => k === 'tellen' || k === 'rekenen' ? stapNu(p).deel : ladderStap(p, k).deel });
   const show = groepen.find(g => g.kaart === 'show');
   return `<div class="settings-panel">${sterCijfersHtml(p)}${stemKaartHtml(p)}${themaKaartHtml(s, p, show)}${themaKaarten(s).map(k => themaKaart(p, k, groepen)).join('')}</div>`;
 }
@@ -533,7 +554,7 @@ function sterPaginaHtml(p, s) {
    wordt meteen bewaard (bindOefenChips), dus de ✓ is "klaar met kijken" en
    wie de pagina verlaat met een kaart open, verliest niets.
    Open ziet de ladder er zo veel mogelijk uit als dicht -- dezelfde rijen,
-   dezelfde lichte nummers, haar balkje blijft -- zodat een tik op ✏️ niet
+   dezelfde lichte nummers, haar rij blijft gevuld -- zodat een tik op ✏️ niet
    voelt als naar een ander scherm gaan (zie .thema-kaart.open in het
    stijlblad). Open staat de hele ladder er: wie aanpast, wil kunnen kiezen
    tot waar ze gaat, en dicht blijft de kaart kort. */
@@ -570,7 +591,7 @@ function rekenLadderHtml(p) {
     const st = countLiveStage(p), hi = countMaxStage(s);
     if (st > 1) rijen.push(flRij(' klaar', '✓', klaarNamen(COUNT_STAGE_LABELS.slice(1, st))));
     const nu = stapNu(p);
-    rijen.push(flRij(' hier niveau-bezig', flAva(p), nu.naam + nu.balk, telTip(p) ? kaartTip('tel-tip-ja') : nu.vb));
+    rijen.push(metVul(flRij(' hier niveau-bezig', flAva(p), nu.naam, telTip(p) ? kaartTip('tel-tip-ja') : nu.vb), nu.deel));
     // de twee volgende fases, en de laatste die de ouder toelaat; wat ertussen zit is één rij "⋮"
     for (let v = st + 1; v <= Math.min(hi, st + 2); v++) rijen.push(flRij(' later', v, COUNT_STAGE_LABELS[v], COUNT_STAGE_VB[v]));
     const tussen = hi - st - 3;
@@ -589,14 +610,14 @@ function rekenLadderHtml(p) {
       rijen.push(flRij(' hier niveau-bezig', flAva(p), 'Alles door elkaar', tip));
     } else {
       const nu = stapNu(p);
-      rijen.push(...hierMetUitleg(flRij(' hier niveau-bezig', flAva(p), nu.naam + nu.balk, tip || flVb(nu.vb)), 'rekenen', p.pad && p.pad.rij === nuId ? p.pad : null));
+      rijen.push(...hierMetUitleg(metVul(flRij(' hier niveau-bezig', flAva(p), nu.naam, tip || flVb(nu.vb)), nu.deel), 'rekenen', p.pad && p.pad.rij === nuId ? p.pad : null));
       rijen.push(...vgKort(alle.slice(nr + 1).map((r, i) => flRij(` later${r.uit ? ' overgeslagen' : ''}`, nr + 2 + i, r.naam, flVb(r.vb))), 'stap', 'stappen'));
     }
   }
   return `<div class="fase-ladder vg-ladder">${rijen.join('')}</div>`;
 }
 /* De ladder van tafels of geld om te lezen: dezelfde vorm als die van rekenen
-   -- wat ze haalde in één ✓-rij, haar rij met de pop en het balkje, de rest
+   -- wat ze haalde in één ✓-rij, haar rij met de pop die volloopt, de rest
    grijs eronder. Een tip is er hier niet: de ladder is kort, en de lijnen
    staan één tik verder, achter de ✏️. */
 function themaLadderHtml(p, k) {
@@ -610,31 +631,31 @@ function themaLadderHtml(p, k) {
   if (nuId === 'alles') uit.push(flRij(' hier niveau-bezig', flAva(p), L.eind, ''));
   else {
     const nu = ladderStap(p, k);
-    uit.push(...hierMetUitleg(flRij(' hier niveau-bezig', flAva(p), nu.naam + nu.balk, flVb(nu.vb)), k, p[L.stand] && p[L.stand].rij === nuId ? p[L.stand] : null));
+    uit.push(...hierMetUitleg(metVul(flRij(' hier niveau-bezig', flAva(p), nu.naam, flVb(nu.vb)), nu.deel), k, p[L.stand] && p[L.stand].rij === nuId ? p[L.stand] : null));
     uit.push(...vgKort(speel.slice(nr + 1).map((r, i) => flRij(' later', nr + 2 + i, r.naam, flVb(r.vb))), 'stap', 'stappen'));
   }
   return `<div class="fase-ladder vg-ladder">${uit.join('')}</div>`;
 }
-/* WAT HET BALKJE ZEGT. Een tik op haar stap zet er één regel onder: hoeveel
+/* WAT HAAR VOLLE RIJ ZEGT. Een tik op haar stap zet er één regel onder: hoeveel
    topshows (drie sterren) op rij ze nog nodig heeft, of hoeveel shows het
-   hoogstens nog duurt -- de twee wegen van rijVerder. Het balkje zelf vult
-   de tweede (zie rijDeel). Bewust één regel: de volgende stap staat er al net
-   onder, en een tweede balkje of een kop herhaalde wat je al zag. Het rekent
+   hoogstens nog duurt (showsNog) -- de twee wegen van rijVerder. Haar rij
+   vult zich langs de tweede (zie rijDeel). Bewust één regel: de volgende stap staat er al net
+   onder, en een balkje of een kop erbij herhaalde wat je al zag. Het rekent
    de eis van PAD_MIN_SHOWS en de reeks losse vragen niet mee; die houden haar
    zelden langer op dan de twee topshows, en een regel die ze allemaal noemt
    leest niemand.
    t: haar stand op deze rij (p.pad of p[L.stand]), of null als ze er net is.
-   Tellen heeft dit niet: daar vult het balkje met de stapjes binnen een fase,
+   Tellen heeft dit niet: daar vult haar rij met de stapjes binnen een fase,
    en die zijn voor een ouder geen eenheid. */
 function vgUitleg(t) {
   const top = Math.max(0, PAD_GOED - ((t && t.goed) || 0));
-  const shows = Math.max(1, PAD_MAX_SHOWS - ((t && t.shows) || 0));
+  const shows = showsNog(t);
   return `<div class="vg-uitleg">Nog <b>${top} ${mv(top, 'topshow', 'topshows')}</b> ⭐⭐⭐${top > 1 ? ' op rij' : ''} of <b>${shows} ${mv(shows, 'show', 'shows')}</b></div>`;
 }
 // Haar rij als knop die de uitleg aan en uit zet, met de uitleg eronder als die open staat.
 function hierMetUitleg(rij, k, t) {
   const open = setUitleg === k;
-  return [rij.replace('<div class="fl-rij', `<div role="button" tabindex="0" aria-expanded="${open}" data-uitleg="${k}" class="fl-rij${open ? ' uitleg-open' : ''}`)]
+  return [rij.replace('<div ', `<div role="button" tabindex="0" aria-expanded="${open}" data-uitleg="${k}" `).replace('class="fl-rij', `class="fl-rij${open ? ' uitleg-open' : ''}`)]
     .concat(open ? vgUitleg(t) : []);
 }
 /* LASTIGE SOMMEN, onderaan het thema waar ze bij horen: + en − bij Rekenen,
@@ -889,7 +910,7 @@ const OEFEN_INSTELLINGEN = {
 };
 function oefenGroups(s, pfx, p, opt) {  // -> [{ kaart, kop, ico?, html }], in de volgorde van OEFEN_INSTELLINGEN
   pfx = pfx || '';                       // p: het kind, als er een is (het maakformulier heeft er nog geen)
-  opt = opt || {};                       // opt.balk(k): alleen op de pagina van een ster (sterPaginaHtml)
+  opt = opt || {};                       // opt.deel(k): alleen op de pagina van een ster (sterPaginaHtml)
   // Het teken alleen, groot: een ouder leest + − × ÷ sneller dan "Plus" of "Delen".
   // Het woord staat er voor een schermlezer nog bij (aria-label).
   const opDefs = [['+', '+', 'Plus'], ['-', '−', 'Min'], ['x', '×', 'Maal'], [':', '÷', 'Delen']];
@@ -941,17 +962,18 @@ function oefenGroups(s, pfx, p, opt) {  // -> [{ kaart, kop, ico?, html }], in d
      las als nog een stap -- terwijl het is wat ze doet als ze aan de lijn is.
      Alleen als ze daar al is, staat die rij er (staart), met haar pop. Tellen
      heeft geen naTot: daar komt na de lijn niets, of rekenen. */
-  const ladder = (id, instelling, rijen, lo, hi, hier, staart, balk, naTot) => {
+  const ladder = (id, instelling, rijen, lo, hi, hier, staart, deel, naTot) => {
     const uit = rijen.map((r, i) => {
       // "tot" aan het eind van een blok zegt welk: "tot 20"
       const totWoord = (r.blok && rijen[i + 1] && rijen[i + 1].blok !== r.blok ? `tot ${r.blok}` : 'tot') + (naTot ? ` · ${naTot}` : '');
-      return flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}${r.uit ? ' overgeslagen' : ''}`,
-        r.v === hier && ava ? ava : i + 1, r.v === hier && balk ? r.naam + balk : r.naam, r.vb, r.v,
+      const html = flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}${r.uit ? ' overgeslagen' : ''}`,
+        r.v === hier && ava ? ava : i + 1, r.naam, r.vb, r.v,
         (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn(totWoord, 'onder') : ''));
+      return r.v === hier && deel != null ? metVul(html, deel) : html;
     });
     return `<div class="fase-ladder naad" id="${pfx}${id}" data-instelling="${instelling}">${uit.join('')}${staart || ''}</div>`;
   };
-  const hierBalk = k => opt.balk ? opt.balk(k) : '';
+  const hierDeel = k => opt.deel ? opt.deel(k) : null;
   /* ZELF KIEZEN (zie zelfGekozen): dezelfde rijen, maar elk met een vinkje in
      het bolletje, zonder nummer -- een nummer zou een volgorde beloven die er
      hier niet is -- en zonder lijnen. Tussen de blokken een dun streepje.
@@ -994,7 +1016,7 @@ function oefenGroups(s, pfx, p, opt) {  // -> [{ kaart, kop, ico?, html }], in d
   }, vrij ? {
     kaart: 'pad', kop: `Wat oefent ${p ? esc(p.name) : 'je ster'}?`, html: kiesHtml('set-kiesfasen', 'kiesFasen', fases, kiesFasen(s))
   } : {
-    kaart: 'pad', kop: 'Leerpad', html: `${ladder('set-fase', 'stage', fases, lo, hi, p && countLiveStage(p), '', hierBalk('tellen'))}`
+    kaart: 'pad', kop: 'Leerpad', html: `${ladder('set-fase', 'stage', fases, lo, hi, p && countLiveStage(p), '', hierDeel('tellen'))}`
   }, (() => {
     const repr = balk('set-repr', 'repr', [['objects', 'Voorwerpen'], ['mix', 'Mix'], ['dots', 'Stippen']], s.repr || 'objects');
     const mem = aanUit('set-memory', 'memory', '🃏', 'Memory', s.memory !== false);
@@ -1043,7 +1065,7 @@ function oefenGroups(s, pfx, p, opt) {  // -> [{ kaart, kop, ico?, html }], in d
     const nu = p && ladderNu(p, k), voorbij = nu === 'alles';
     const staart = voorbij ? flRij(' eind hier', ava || '∞', L.eind) : '';
     return ladder(L.id, L.lijn, lr.rijen.map((r, i) => ({ v: i + 1, naam: r.naam, vb: flVb(r.vb) })),
-      lr.lo + 1, lr.hi + 1, p && !voorbij ? L.idx[nu] + 1 : 0, staart, hierBalk(k), 'daarna alles door elkaar');
+      lr.lo + 1, lr.hi + 1, p && !voorbij ? L.idx[nu] + 1 : 0, staart, hierDeel(k), 'daarna alles door elkaar');
   };
   /* Onder Vragen per show hoe een show eruitziet: één icoontje per vraag, in
      de volgorde van themaPlan -- dan hoeft niemand uit te leggen wat "de helft
@@ -1060,7 +1082,7 @@ function oefenGroups(s, pfx, p, opt) {  // -> [{ kaart, kop, ico?, html }], in d
   return [themaAan(s, 'rekenen') && {
     kaart: 'rekenen', kop: 'Rekenen', ico: 'rekenen', html: `${opsBalk('set-ops', 'ops', opDefs.slice(0, 2))}${vrij
       ? kiesHtml('set-kies', 'kies', kiesLijst, (s.kies || []))
-      : ladder('set-startstap', 'padVanaf', padRijenLadder, startPos, padR.length, hierPos, eind, hierBalk('rekenen'), 'daarna alles door elkaar')}`
+      : ladder('set-startstap', 'padVanaf', padRijenLadder, startPos, padR.length, hierPos, eind, hierDeel('rekenen'), 'daarna alles door elkaar')}`
   }, themaAan(s, 'tafels') && {
     kaart: 'tafels', kop: 'Tafels', ico: 'tafels', html: `${opsBalk('set-tafelops', 'tafelOps', opDefs.slice(2))}${vrij ? tafelsVan : themaLadder('tafels')}`
   }, themaAan(s, 'lijn') && {
@@ -1938,7 +1960,7 @@ function bindSettings(p, s) {
     const na = document.querySelector(`#settings-body .kaart-pen[data-kaart="${k}"]`);
     if (na) $('screen-settings').scrollTop += na.getBoundingClientRect().top - voor;
   });
-  // een tik op haar stap: de uitleg van het balkje aan of uit (zie vgUitleg)
+  // een tik op haar stap: de uitleg van hoe ver ze is aan of uit (zie vgUitleg)
   document.querySelectorAll('#settings-body [data-uitleg]').forEach(r => {
     const wissel = e => {
       if (e.target.closest('.kaart-tip')) return;   // "↑ Meer" in dezelfde rij doet zijn eigen ding

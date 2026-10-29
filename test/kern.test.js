@@ -1942,7 +1942,7 @@ zaak('ZG', () => {
        die staan in Meer cijfers.
    En de rij met wat al kan noemt de stappen zoals de ladder in de open kaart
    (padRijen, COUNT_STAGE_LABELS), niet "Stap 1–3" of "Fase 1–2". Op de
-   themakaart zelf staat geen label meer, wel het balkje (vgBalk). */
+   themakaart zelf staat geen label meer; haar rij loopt vol (metVul, rijDeel). */
 zaak('ZH', () => {
   const { app, p } = verseSter('Niveau');
   const stand = () => app.run('vgStand(db.profiles.p1)');
@@ -1969,11 +1969,25 @@ zaak('ZH', () => {
   const namen = app.run('padRijen(db.profiles.p1.settings).rijen.slice(0, 3).map(r => r.naam)');
   check(html.includes(`${namen[0]} … ${namen[2]}`) && !/Stap 1/.test(html),
     'ZH · wat al kan heet zoals op de ladder ("Tot 10 … Over het tiental")', namen.join(', '));
-  check(!/vg-tag/.test(html) && (html.match(/vg-balk/g) || []).length === 1, 'ZH · op de themakaart geen label, wel één balkje onder haar stap', '');
-  // het balkje loopt alleen vol: een mindere show maakt het niet leger (rijDeel leest t.shows, niet de reeks)
+  check(!/vg-tag/.test(html) && !/vg-balk/.test(html) && (html.match(/--vul:/g) || []).length === 1,
+    'ZH · op de themakaart geen label en geen balkje: alleen haar rij loopt vol', '');
+  // haar rij loopt alleen vol: een mindere show maakt hem niet leger (rijDeel leest shows en vragen, niet de reeks)
   const deel = t => app.run('rijDeel')(t);
-  check(deel({ shows: 2, goed: 2 }) === deel({ shows: 2, goed: 0 }) && deel({ shows: 3, goed: 0 }) > deel({ shows: 2, goed: 2 }) && deel({ shows: 99 }) === 1,
-    'ZH · het balkje telt de goede shows op deze rij, niet de drie-sterrenreeks', '');
+  check(deel({ shows: 2, goed: 2, vragen: 12 }) === deel({ shows: 2, goed: 0, vragen: 12 }) && deel({ shows: 3, goed: 0, vragen: 18 }) > deel({ shows: 2, goed: 2, vragen: 12 })
+    && deel({ shows: 99, vragen: 99 }) === 1,
+    'ZH · de volle rij telt goede shows op deze rij, niet de drie-sterrenreeks', '');
+  /* Bij een mix krijgt een thema maar een paar vragen per show, en gaat ze na
+     acht shows nog niet door (rijVerder: ook PAD_MAX_VRAGEN). Dan mag de rij
+     niet vol staan; en "nog N shows" telt dat mee. Op de grens zelf is hij wél
+     vol, en dan zegt rijVerder ook dat ze verder mag. */
+  check(deel({ shows: 8, vragen: 8 }) < 1 && deel({ shows: 8, vragen: 16 }) === 1 && deel({ shows: 16, vragen: 8 }) === 1,
+    'ZH · bij weinig vragen per show staat de rij na acht shows nog niet vol', JSON.stringify([deel({ shows: 8, vragen: 8 })]));
+  const rv = t => app.run('rijVerder')(Object.assign({ goed: 0, reeks: [1, 0, 1, 0, 1, 0] }, t), 2, []);
+  check(!rv({ shows: 7, vragen: 8 }) && rv({ shows: 7, vragen: 16 }) && rv({ shows: 15, vragen: 8 }),
+    'ZH · (en dat is ook wat rijVerder doet: de rij is vol precies als ze verder mag)', '');
+  const nog = t => app.run('showsNog')(t);
+  check(nog({ shows: 3, vragen: 15 }) === 5 && nog({ shows: 4, vragen: 4 }) === 12 && nog(null) === 8,
+    'ZH · nog N shows: wat er aan shows ontbreekt, of aan vragen in haar tempo', JSON.stringify([nog({ shows: 3, vragen: 15 }), nog({ shows: 4, vragen: 4 }), nog(null)]));
   p.settings.track = 'count';
   p.countTrack = { stage: 4, rung: 0, streak: 0, seen: 0, acc: 0.5 };
   const tel = app.run('rekenLadderHtml(db.profiles.p1)');
