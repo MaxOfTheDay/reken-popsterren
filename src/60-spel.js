@@ -187,6 +187,7 @@ function renderQuestion() {
   // tikken op de lijn: liggend krijgt de lijn de brede plek (zie "NAAST ELKAAR" in 50-zaal).
   // Vóór drawQuestion: de kaart meet zijn maat op de breedte die hij nu krijgt.
   $('answer-area').parentNode.classList.toggle('lijn-tik', !!q.tik);
+  $('answer-area').parentNode.classList.toggle('zoek-klok', klokZoekt(q));
   // voortgang
   showBalk(G.idx);
   drawQuestion();
@@ -227,8 +228,34 @@ function renderQuestion() {
     });
   }
   antwoordOpMaat(area);
+  klokZoekRuim(area);
   zaalPast();
   startSpot();
+}
+/* ---- De klok zoeken: de klokjes krijgen de ruimte ---------------------------
+   Bij "zoek de klok" staan er op de kaart twee woorden (kwart voor 6), en zijn
+   de vier klokjes op de knoppen wat ze echt moet lezen. Die waren 64px, liggend
+   45 -- het moeilijkste stuk van de vraag op de kleinste maat, onder een kaart
+   die verder leeg was. Nu geeft de kaart wat hij over heeft aan de knoppen
+   (kaartOpMaat zet het in G.kaartOver), en is kaart + knoppen samen even hoog
+   als bij elke andere vraag van de show: er verspringt niets. Liggend staan ze
+   naast elkaar: dan worden de knoppen zo hoog als de kaart (en de kaart smaller,
+   zie .zoek-klok in 50-zaal). KLOK_ZOEK_MAX: groter dan dat is een klok op een
+   tablet die over zijn knop heen groeit. */
+const KLOK_ZOEK_MAX = 150;
+const klokZoekt = q => q.kind === 'klok' && q.vorm === 'zoek';
+function klokZoekRuim(area) {
+  area.style.removeProperty('--zoek-h');
+  const q = G.qs[G.idx], rij = area.querySelector('.choices');
+  if (!klokZoekt(q) || !rij) return;
+  const kaart = $('question-card'), naast = getComputedStyle(area.parentNode).flexDirection === 'row';
+  const hoog = naast ? kaart.offsetHeight : (G.antwoordMin || area.offsetHeight) + (G.kaartOver || 0);
+  const cs = getComputedStyle(area), rs = getComputedStyle(rij);
+  const rand = naast ? 0 : parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + parseFloat(rs.paddingTop) + parseFloat(rs.paddingBottom) + parseFloat(rs.marginTop) + parseFloat(rs.marginBottom);
+  const h = Math.min(KLOK_ZOEK_MAX, Math.floor((hoog - rand - (parseFloat(rs.rowGap) || 0)) / 2));
+  if (h <= rij.firstElementChild.offsetHeight) return;
+  if (!naast) area.style.minHeight = hoog + 'px';
+  area.style.setProperty('--zoek-h', h + 'px');
 }
 /* ---- Alles past -------------------------------------------------------------
    Steekt de vraag of het antwoord onder het scherm uit, dan krimpt zij (de
@@ -240,27 +267,67 @@ function renderQuestion() {
    antwoordOpMaat), dus meestal is het bij de eerste vraag meteen goed en
    verspringt er daarna niets meer. Liggend staat zij naast de som (zie
    "NAAST ELKAAR" in 50-zaal); daar helpt krimpen niet, en dan doet het niets.
-   Schuiven zaak F kijkt na dat elk antwoord van elk thema in beeld staat. */
+   Schuiven zaak F kijkt na dat elk antwoord van elk thema in beeld staat.
+
+   HAAR GEZICHT BLIJFT VRIJ. De hint en de 🤔 hangen vlak onder de kop
+   (.toast.docked). Staat zij hoog -- in de telmodus, of in een show met een klok
+   of een kalender, waar de kaart groter is -- dan viel die pil op haar gezicht,
+   en daarmee ook haar "oeps"-gezicht. Dus moeten haar ogen onder de pil
+   staan (haar haar en haar kroon mogen eronder). De zaal staat onderaan vast (align-content: flex-end), dus een
+   kleinere zaal zet haar hoofd lager: zoveel kleiner als daarvoor nodig is
+   (tot GEZICHT_KRIMP). De pil hangt daarvoor in de show zo hoog als het kan,
+   vlak onder de kop (--dock-top).
+   PIL_HOOG is de hoogste pil (de 🤔); schuiven zaak Z kijkt het na. */
 const ZAAL_MIN = 44;   // kleiner wordt ze een stipje; dan liever iets onder de rand (zaak F ziet dat)
+const PIL_HOOG = 72;
+// het bovenste stuk van haar hoofd is haar: daar mag de pil op, op haar ogen niet
+const HAAR = 0.3;
+// voor haar gezicht krimpt ze hoogstens tot zoveel van haar maat: op een kleine
+// telefoon is er geen plaats, en een stipje onder de pil is erger dan een pil op haar ogen
+const GEZICHT_KRIMP = 0.6;
 function zaalPast() {
   const zaal = $('show-stage'), area = $('answer-area');
-  const onder = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y + el.offsetHeight; };
-  if (!zaal.offsetHeight || onder(zaal) > onder($('question-card')) - $('question-card').offsetHeight) return;   // ze staat niet erboven
-  const laatste = [...area.querySelectorAll('button, .gl-vlak')].reduce((m, el) => Math.max(m, onder(el)), onder(area));
+  if (!zaal.offsetHeight || onderkant(zaal) > onderkant($('question-card')) - $('question-card').offsetHeight) return;   // ze staat niet erboven
+  if (G.zaalVol == null) G.zaalVol = zaal.offsetHeight;   // haar maat bij het begin van de show: daar telt GEZICHT_KRIMP van
+  const zet = h => {
+    h = Math.max(ZAAL_MIN, h);
+    if (h >= zaal.offsetHeight) return false;
+    zaal.style.height = h + 'px';
+    zaal.style.width = Math.round(h * 1.19) + 'px';
+    return true;
+  };
+  const laatste = [...area.querySelectorAll('button, .gl-vlak')].reduce((m, el) => Math.max(m, onderkant(el)), onderkant(area));
   /* En de zaal zelf mag niet schuiven: onder de laatste knop houdt de arena
      nog zijn eigen rand (en het scherm de zijne). Telde alleen de knop, dan
      stond die netjes 6px boven de rand maar schoof het scherm nog 24px op
      onder je vinger -- in de telmodus op elke hoge telefoon. Gemeten met
      offsets, niet met scrollHeight: de vraag komt binnen met een transform. */
   const sg = $('screen-game'), arena = zaal.closest('.game-arena');
-  const schermOnder = onder(sg) - sg.offsetHeight + sg.clientHeight;
-  const arenaOver = arena ? onder(arena) + (parseFloat(getComputedStyle(sg).paddingBottom) || 0) - schermOnder : 0;
-  const over = Math.ceil(Math.max(laatste + 6 - window.innerHeight, arenaOver));
-  if (over <= 0) return;
-  const h = Math.max(ZAAL_MIN, zaal.offsetHeight - over);
-  if (h >= zaal.offsetHeight) return;
-  zaal.style.height = h + 'px';
-  zaal.style.width = Math.round(h * 1.19) + 'px';
+  const schermOnder = onderkant(sg) - sg.offsetHeight + sg.clientHeight;
+  const arenaOver = arena ? onderkant(arena) + (parseFloat(getComputedStyle(sg).paddingBottom) || 0) - schermOnder : 0;
+  zet(zaal.offsetHeight - Math.ceil(Math.max(laatste + 6 - window.innerHeight, arenaOver)));
+  /* Het gezicht. Een kleinere zaal zet haar ogen lager, maar de onderkant van
+     de zaal blijft niet altijd staan (de som schuift soms mee omhoog): dus
+     opnieuw meten na elke stap, tot drie keer. Alles in dezelfde taak, vóór
+     er iets getekend is -- er krimpt niets zichtbaar. */
+  for (let i = 0; i < 3 && zet(gezichtVrij(zaal)); i++);
+}
+const onderkant = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y + el.offsetHeight; };
+// Hoe hoog de zaal mag zijn zodat haar ogen onder de pil staan; Infinity als dat al zo is.
+function gezichtVrij(zaal) {
+  const pop = $('game-avatar-inner'), hoofd = zaal.querySelector('.av-hoofd'), svg = hoofd && hoofd.ownerSVGElement, toast = $('toast');
+  if (!pop || !svg || !svg.viewBox.baseVal || !toast) return Infinity;
+  /* Zonder één rechthoek: bij de eerste vraag komen de zaal en zij nog binnen
+     (geschaald, en zij wiegt), en dan meet je een tussenstand. Dus uit de
+     offsets van haar doos, en haar hoofd in de tekening zelf (getBBox, in de
+     maat van de viewBox -- de svg is zo hoog als haar doos). k: hoe ver haar
+     ogen boven de onderkant van de zaal staan, in zaalhoogtes. */
+  const vb = svg.viewBox.baseVal, b = hoofd.getBBox();
+  const ogen = onderkant(pop) - pop.offsetHeight + (b.y + b.height * HAAR - vb.y) / vb.height * pop.offsetHeight;
+  const pil = parseFloat(getComputedStyle(toast).getPropertyValue('--dock-top')) + PIL_HOOG + 4;
+  const bodem = onderkant(zaal), k = (bodem - ogen) / zaal.offsetHeight;
+  if (ogen >= pil || k <= 0) return Infinity;
+  return Math.max(Math.floor(G.zaalVol * GEZICHT_KRIMP), Math.floor((bodem - pil) / k));
 }
 /* ---- Het antwoordvak springt ook niet ---------------------------------------
    Typen geeft het cijferblok, kiezen vier knoppen, en een show kan die
@@ -398,6 +465,8 @@ function renderSegBar(el, total, done, hasNow) {
     el.appendChild(seg);
   }
 }
+// de vragen waar het antwoord in de regel van de som valt (zie het meten in drawQuestion)
+const SOM_SOORTEN = ['classic', 'missing', 'chain', 'bouw', 'geld'];
 function drawQuestion() {
   const q = G.qs[G.idx];
   $('question-card').classList.toggle('golden', !!q.gold);
@@ -413,7 +482,7 @@ function drawQuestion() {
   somVluchtWeg();   // een getal dat nog naar de vorige som vloog, hoort daar niet meer bij
   if (G.count) {
     // de maat van een som uit een vorige show hoort niet bij een telvraag (zie kaartOpMaat)
-    $('question-text').style.paddingTop = $('question-text').style.paddingBottom = '';
+    $('question-text').style.paddingTop = $('question-text').style.paddingBottom = $('question-text').style.fontSize = '';
     drawCountQuestion(q);
     return;
   }
@@ -430,6 +499,7 @@ function drawQuestion() {
      de onderkant van elk stukje, want het vakje is hoger dan de cijfers. */
   const tekst = $('question-text');
   tekst.classList.remove('lang', 'langer');
+  tekst.style.fontSize = '';
   const rij = document.createRange();
   rij.selectNodeContents(tekst.querySelector('.pl-som') || tekst);   // de blokken staan erboven
   const breekt = () => {
@@ -441,8 +511,21 @@ function drawQuestion() {
      zijn stukjes hebben elk een andere onderkant, en dan las breekt() hem als
      twee regels en kromp hij voor niets. */
   const eenRegel = tekst.querySelector('.een-regel');
-  const telt = eenRegel ? () => eenRegel.scrollWidth > eenRegel.clientWidth : breekt;
+  const telt1 = eenRegel ? () => eenRegel.scrollWidth > eenRegel.clientWidth : breekt;
+  /* Gemeten mét het antwoord erin, en niet alleen met het vraagteken: "400 +
+     500 = ?" past op een telefoon van 390 nog net op één regel, "400 + 500 =
+     900" niet meer. Dan brak de som pas als het antwoord erin viel, groeide de
+     kaart 60px en sprong zij omhoog -- bij elk goed antwoord (in Typen kromp
+     de letter halverwege). Nu kiest de som zijn maat voor allebei, en ziet hij
+     er voor en na hetzelfde uit. Alleen bij sommen en geld: bij de klok en de
+     kalender staat het vakje in een kaartje met een eigen vaste maat. */
+  const vak = SOM_SOORTEN.includes(q.kind) ? tekst.querySelector('.q-blank') : null;
+  const proef = vak ? [shown, toonAntwoord(q, q.ans)] : [];
+  const telt = () => !vak ? telt1() : proef.some(t => { vak.textContent = t; return telt1(); });
   for (const maat of ['lang', 'langer']) if (telt()) tekst.classList.add(maat);
+  // en past het dan nog niet (een kleine telefoon liggend: de kaart is 40vw), dan per stapje kleiner
+  if (vak) for (let i = 0, f = parseFloat(getComputedStyle(tekst).fontSize); i < 6 && telt(); i++) tekst.style.fontSize = (f *= .9) + 'px';
+  if (vak) vak.textContent = shown;
   kaartOpMaat(tekst);
   // ⌫ en ✔ slapen tot er iets getypt is: een ✔ die er klaar uitziet maar niets
   // doet, is een knop die liegt (zie .numpad.heeft in het stijlblad)
@@ -464,9 +547,18 @@ function drawQuestion() {
    bouwen met hun blokken, die daar al bij de sommen horen. */
 function kaartOpMaat(tekst) {
   tekst.style.paddingTop = tekst.style.paddingBottom = '';
+  G.kaartOver = 0;
   if (G.kaartMin == null) G.kaartMin = kaartMeten(tekst);
   const over = G.kaartMin - tekst.offsetHeight;
-  if (over > 0) tekst.style.paddingTop = tekst.style.paddingBottom = over / 2 + 'px';
+  if (over <= 0) return;
+  // de klok zoeken, staand: wat de kaart over heeft gaat naar de klokjes (zie klokZoekRuim)
+  const naast = getComputedStyle(tekst.parentNode.parentNode).flexDirection === 'row';
+  tekst.style.paddingTop = tekst.style.paddingBottom = over / 2 + 'px';
+  if (!klokZoekt(G.qs[G.idx]) || naast) return;
+  // gemeten aan de kaart zelf: wat hij krimpt is wat de knoppen erbij krijgen, op de pixel
+  const vol = tekst.parentNode.offsetHeight;
+  tekst.style.paddingTop = tekst.style.paddingBottom = '';
+  G.kaartOver = vol - tekst.parentNode.offsetHeight;
 }
 function kaartMeten(tekst) {
   const proeven = kaartProeven(G.insts || {});
@@ -480,6 +572,10 @@ function kaartMeten(tekst) {
   kopie.removeAttribute('id');
   // liggend staat de kaart naast de antwoorden en heeft hij een vaste breedte (zie "NAAST ELKAAR")
   const naast = getComputedStyle(kaart.parentNode).flexDirection === 'row';
+  /* liggend maakt een tik op de lijn of de klok zoeken de kaart smaller: meet
+     op de gewone breedte, anders houdt een show die daarmee begint een te hoge kaart */
+  const smal = ['lijn-tik', 'zoek-klok'].filter(k => kaart.parentNode.classList.contains(k));
+  kaart.parentNode.classList.remove(...smal);
   Object.assign(kopie.style, { position: 'absolute', display: 'flow-root', visibility: 'hidden', left: '0', top: '0', width: (naast ? kaart.offsetWidth : kaart.parentNode.clientWidth) - rand + 'px' });
   tekst.parentNode.appendChild(kopie);
   const hoogste = Math.max(...proeven.map(html => {
@@ -487,6 +583,7 @@ function kaartMeten(tekst) {
     return kopie.offsetHeight;
   }));
   kopie.remove();
+  kaart.parentNode.classList.add(...smal);
   return hoogste;
 }
 // De grootste vraag per rij: zoveel stukken als er kunnen liggen, van de breedste soort; en de klok lezen én zoeken.
@@ -502,7 +599,7 @@ function kaartProeven(insts) {
   if (insts.lijn) insts.lijn.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genLijn(r, i % 2 ? 'zoek' : 'lees').html); if (r.sprong) uit.push(...lijnHoogste()); });
   return uit;
 }
-addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = null; $('show-stage').style.height = $('show-stage').style.width = ''; });
+addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = G.zaalVol = null; $('show-stage').style.height = $('show-stage').style.width = ''; });
 function numpadPress(n) {
   if (!G || G.lock) return;
   if (n === 'del') { if (G.input === '') return; G.input = G.input.slice(0, -1); sndClick(); }

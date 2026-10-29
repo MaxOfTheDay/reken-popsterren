@@ -39,6 +39,14 @@
  *      de telmodus doet apart mee, en het scherm zelf mag niet schuiven: de
  *      tegels stonden binnen beeld terwijl de zaal op een hoge telefoon nog 24px
  *      opschoof (zie zaalPast).
+ *      En meteen drie dingen die je pas ziet als je de vraag écht speelt: een
+ *      som is even hoog met het vraagteken als met het antwoord erin (vóór
+ *      oktober 2026 brak "400 + 500 = 900" pas als de 900 erin viel, en sprong
+ *      zij omhoog); een telsom staat op één regel en past in zijn kaart; en de
+ *      klokjes bij "zoek de klok" zijn geen postzegels (KLOK_ZOEK_MIN).
+ *   Z  haar gezicht blijft vrij: op een gewone hoge telefoon valt de hint (de
+ *      🤔, "half 3 ↷") niet op haar hoofd, ook niet als zij hoog staat (de
+ *      telmodus, een show met de klok of de kalender). Zie zaalPast.
  *
  * Draaien:  npm run test:schuiven
  */
@@ -235,12 +243,17 @@ async function zaakE(browser, [w, h]) {
       startLevel(P().level);
       // offsetTop en offsetHeight: de vraag komt binnen met een transform, en die telt hier niet
       const plek = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
+      /* Het vak: zijn onderkant, waar de duim is. Bij de klok zoeken krijgt het
+         vak wat de kaart over heeft (klokZoekRuim): dan begint het hoger, maar
+         eindigt het op dezelfde plek. Liggend staat het naast de kaart, in het midden. */
+      const vakPlek = () => { const a = $('answer-area'), naast = getComputedStyle(a.parentNode).flexDirection === 'row';
+        return Math.round(plek(a) + a.offsetHeight / (naast ? 2 : 1)); };
       const uit = [];
       for (let i = 0; i < G.total; i++) {
         G.idx = i; renderQuestion();
         const q = G.qs[i];
         uit.push({ vraag: q.kind + (q.vorm || q.soort ? '/' + (q.vorm || q.soort) : '') + (G.mode === 'typ' ? ' typ' : ' kies'),
-          kaart: plek($('question-card')), vak: plek($('answer-area')), zij: plek($('game-avatar-inner')), zijHoog: $('game-avatar-inner').offsetHeight });
+          kaart: plek($('question-card')), vak: vakPlek(), zij: plek($('game-avatar-inner')), zijHoog: $('game-avatar-inner').offsetHeight });
       }
       return uit;
     }, mode);
@@ -257,6 +270,8 @@ async function zaakE(browser, [w, h]) {
 }
 
 // ---- F · elk antwoord past ----
+// een klokje om te zoeken: kleiner was het 45 à 64px, op een knop onder een lege kaart
+const KLOK_ZOEK_MIN = 84;
 const PAS_MATEN = [[320, 568], [390, 844], [568, 320], [667, 375], [844, 390], [1024, 768]];
 async function zaakF(browser, [w, h]) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true });
@@ -266,7 +281,7 @@ async function zaakF(browser, [w, h]) {
   page.on('pageerror', e => fouten.push(e.message));
   await page.goto(APP_URL + '&demo&star=p1&screen=map');
   await rust(page);
-  const r = await page.evaluate(async () => {
+  const r = await page.evaluate(async KLOK_ZOEK_MIN => {
     await document.fonts.ready;
     const s = P().settings, uit = [];
     // een thema alleen, met al zijn stappen: dan komt elke vorm in één show langs
@@ -302,18 +317,78 @@ async function zaakF(browser, [w, h]) {
       for (let i = 0; i < G.total; i++) {
         G.idx = i; renderQuestion();
         const q = G.qs[i], weg = [$('question-card'), ...$('answer-area').querySelectorAll('button:not(.gl-raak), .gl-vlak')].filter(el => !binnen(el)).concat(schuift());
-        if (weg.length) uit.push(`${k}/${mode}/${q.rij || q.soort || q.kind}${q.tik ? '·tik' : ''}${G.count ? '·fase ' + countLiveStage(P()) + ' ' + (q.type || '') : ''}: ${weg.map(el => el.id || el.className.split(' ')[0]).slice(0, 2).join(',')}`);
+        const naam = `${k}/${mode}/${q.rij || q.soort || q.kind}${q.tik ? '·tik' : ''}${G.count ? '·fase ' + countLiveStage(P()) + ' ' + (q.type || '') : ''}`;
+        if (weg.length) uit.push(`${naam}: ${weg.map(el => el.id || el.className.split(' ')[0]).slice(0, 2).join(',')}`);
+        // met het antwoord erin even hoog (zie drawQuestion)
+        const vak = SOM_SOORTEN.includes(q.kind) && $('question-text').querySelector('.q-blank');
+        if (vak) {
+          const voor = $('question-card').offsetHeight, was = vak.textContent;
+          vak.textContent = toonAntwoord(q, q.ans);
+          const na = $('question-card').offsetHeight;
+          vak.textContent = was;
+          if (na !== voor) uit.push(`${naam} ${q.tmpl || ''}: kaart ${voor} -> ${na} met het antwoord`);
+        }
+        // een telsom: één regel, en binnen zijn kaart
+        const som = $('question-text').querySelector('.sum-eq');
+        if (som) {
+          // gebroken is: een stuk begint pas onder een ander stuk. Niet "de tops
+          // verschillen" -- de stukken staan op hun grondlijn, en een groep van
+          // 70px hoog naast een "=" van 43 begint vanzelf lager (fase 9 tot 12)
+          const kaart = $('question-card').getBoundingClientRect();
+          const raam = [...som.querySelectorAll('.dframe')].map(d => d.getBoundingClientRect());
+          const stukken = [...som.children].filter(c => c.offsetHeight);
+          if (Math.max(...stukken.map(c => c.offsetTop)) >= Math.min(...stukken.map(c => c.offsetTop + c.offsetHeight))) uit.push(`${naam}: de telsom breekt`);
+          if (raam.some(r => r.left < kaart.left - 1 || r.right > kaart.right + 1)) uit.push(`${naam}: een stippenraam steekt uit de kaart`);
+        }
+        // de klok zoeken: echte klokjes
+        const klokje = q.kind === 'klok' && q.vorm === 'zoek' && $('answer-area').querySelector('.choice-btn');
+        if (klokje && klokje.offsetHeight < KLOK_ZOEK_MIN) uit.push(`${naam}: zoek-klokje ${klokje.offsetHeight}px`);
       }
     }
     return [...new Set(uit)];
-  });
+  }, KLOK_ZOEK_MIN);
   check(!r.length, 'F · elk antwoord past', `${w}x${h}: ${r.slice(0, 8).join(' | ')}${r.length > 8 ? ` (+${r.length - 8})` : ''}`);
   check(!fouten.length, 'F · elk antwoord past', `${w}x${h}: ${fouten.join(' | ')}`);
   await ctx.close();
 }
 
+// ---- Z · haar gezicht blijft vrij ----
+// De hoge telefoons: daar is plaats, en daar viel de pil op haar gezicht. Op een
+// kleine telefoon krimpt zij maar tot GEZICHT_KRIMP (zie zaalPast), en is er geen plaats.
+async function zaakZ(browser, [w, h]) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true });
+  await cacheFonts(ctx);
+  const page = await ctx.newPage();
+  const fouten = [];
+  page.on('pageerror', e => fouten.push(e.message));
+  await page.goto(APP_URL + '&demo&star=p1&screen=map');
+  await rust(page);
+  const shows = [
+    ['tellen', () => { const s = P().settings; s.track = 'count'; s.modus = 'pad'; s.numerals = true; s.stage = s.stageMax = 10; P().countTrack.stage = 10; }],
+    ['klok', () => { const s = P().settings; s.track = 'math'; s.modus = 'vrij'; s.ops = []; s.themas = ['klok']; s.kiesKlok = ['kwartier']; s.mode = 'kies'; }],
+    ['kalender', () => { const s = P().settings; s.track = 'math'; s.modus = 'vrij'; s.ops = []; s.themas = ['kalender']; s.kiesKalender = ['blad']; s.mode = 'kies'; }],
+  ];
+  const uit = [];
+  for (const [naam, zet] of shows) {
+    await page.evaluate(zet => { (0, eval)(`(${zet})`)(); P().settings.perLevel = 6; startLevel(P().level); }, zet.toString());
+    await page.waitForTimeout(1500);   // de zaal komt binnen met een transform: wachten tot hij staat
+    // de hoogste pil (de 🤔), zoals eersteMisser hem toont
+    const r = await page.evaluate(() => {
+      showToast('🤔', null, null, 'teken');
+      const t = $('toast').getBoundingClientRect(), hoofd = document.querySelector('#show-stage .av-hoofd').getBoundingClientRect();
+      hideToast();
+      return [Math.round(t.bottom), Math.round(hoofd.top + hoofd.height * HAAR)];   // haar haar mag eronder, haar ogen niet
+    });
+    if (r[0] > r[1] + 2) uit.push(`${naam}: de pil eindigt op ${r[0]}, haar ogen staan op ${r[1]}`);
+  }
+  check(!uit.length, 'Z · haar gezicht blijft vrij', `${w}x${h}: ${uit.join(' | ')}`);
+  check(!fouten.length, 'Z · haar gezicht blijft vrij', `${w}x${h}: ${fouten.join(' | ')}`);
+  await ctx.close();
+}
+
 (async () => {
   const browser = await launch();
+  await Promise.all([[390, 844], [414, 896], [430, 932]].map(m => zaakZ(browser, m)));
   await Promise.all(PAS_MATEN.map(m => zaakF(browser, m)));
   await Promise.all([[390, 844], [320, 568], [844, 390], [1024, 768]].map(m => zaakE(browser, m)));
   const rij = [...MATEN];

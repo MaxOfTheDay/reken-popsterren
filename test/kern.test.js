@@ -2567,6 +2567,22 @@ zaak('RV', () => {
   check(Object.values(plan).filter(x => x.type === 'miss').length === 3, 'RV · op de rij Zoek het getal: drie vragen zoek het getal per show', JSON.stringify(plan));
 });
 
+/* ZW · Bij Zelf kiezen komt een gemiste som alleen terug als hij past bij een
+   aangevinkte rij -- niet "4 − 1" in een show van alleen Over het honderdtal.
+   Op het leerpad blijft het zoals het was: alles tot de grens mag terugkomen. */
+zaak('ZW', () => {
+  const { app, p } = verseSter('Zwak');
+  const s = p.settings;
+  s.max = 1000; s.modus = 'vrij'; s.kies = ['brug100'];
+  const zwak = { '4 − 1 = @': { ans: 3, op: '-', w: 6 }, '47 + 25 = @': { ans: 72, op: '+', w: 6 }, '40 + 30 = @': { ans: 70, op: '+', w: 6 } };
+  const mag = inst => Object.keys(zwak).filter(k => app.pastNog(k, zwak[k], inst)).join();
+  check(mag(app.vraagInst(p)) === '47 + 25 = @', 'ZW · Zelf kiezen, alleen Over het honderdtal: alleen 47 + 25 komt terug, niet 4 − 1 of 40 + 30', mag(app.vraagInst(p)));
+  s.kies = ['tot10', 'tientallen'];
+  check(mag(app.vraagInst(p)) === '4 − 1 = @,40 + 30 = @', 'ZW · met Tot 10 en Tientallen aangevinkt: 4 − 1 en 40 + 30 wel', mag(app.vraagInst(p)));
+  s.modus = 'pad'; s.max = 100; p.pad = { klaar: app.LEERPAD.slice(0, 8).map(r => r.id) };
+  check(mag(app.vraagInst(p)) === Object.keys(zwak).join(), 'ZW · op het leerpad mag alles tot de grens terugkomen, zoals altijd', mag(app.vraagInst(p)));
+});
+
 /* TW · Een toast gaat vanzelf weg. showToast plant dat zelf in (zie DE REGEL in
    10-feestjes.js); de enige die blijven staan wachten op een tik (onTap) of zijn
    de hint bij een misser, die de show bij het volgende antwoord weghaalt. Zo kan

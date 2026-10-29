@@ -3566,6 +3566,10 @@
     font-variant-numeric: tabular-nums; letter-spacing: .04em;
   }
   .choice-btn.klok-zoek { position: relative; }
+
+
+
+  #answer-area[style*="--zoek-h"] .choice-btn.klok-zoek { height: var(--zoek-h); }
   .choice-btn .klok { position: absolute; left: 50%; top: 3px; height: calc(100% - 6px); width: auto; aspect-ratio: 1; transform: translateX(-50%); }
   .choice-btn .klok-digi { font-size: .9em; }
   .choice-btn .klok-tekst { font-size: .7em; white-space: nowrap; }
@@ -3751,7 +3755,10 @@
 
   .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(78vw, 300px); margin-top: 4px; }
 
-  #answer-area.vast { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+
+
+
+  #answer-area.vast { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
   .num-btn {
     font-family: inherit; font-size: 28px; font-weight: 700; color: var(--c-white); border: none; cursor: pointer;
     padding: 13px 0; border-radius: var(--r-md);
@@ -4326,8 +4333,11 @@
   .dframe:not(.mini) .df-cell:nth-child(n+11):nth-child(-n+15) { margin-top: 10px; }
   .dframe.faint .df-dot { opacity: .34; }
 
-  .dframe.mini { column-gap: 2px; row-gap: 2px; }
-  .dframe.mini .df-cell { width: 10px; height: 10px; border-radius: 3px; border-width: 1px; }
+
+
+
+  .dframe.mini { --df-mini: clamp(10px, 3.6vw, 15px); column-gap: 3px; row-gap: 3px; }
+  .dframe.mini .df-cell { width: var(--df-mini); height: var(--df-mini); border-radius: 30%; border-width: 1px; box-sizing: border-box; }
 
 
 
@@ -4364,12 +4374,12 @@
   .sum-eq-q { font-size: clamp(34px, 9vw, 50px); font-weight: 700; color: var(--purple-input-bottom); align-self: baseline; }
 
 
-  .sum-operand { position: relative; display: inline-block; min-width: 62px; padding-bottom: 30px; }
+  .sum-operand { --df-mini: clamp(10px, 3.6vw, 15px); position: relative; display: inline-block; min-width: calc(var(--df-mini) * 5 + 16px); padding-bottom: calc(var(--df-mini) * 2 + 12px); }
   .sum-num { font-size: clamp(30px, 8vw, 46px); font-weight: 700; color: var(--purple-shadow); line-height: 1; }
   .sum-eq .cgroup.big .cg-obj { font-size: clamp(22px, 6vw, 32px); }
   .sum-eq .cgroup.big { max-width: 128px; }
 
-  .sum-operand .dframe.mini { position: absolute; top: 100%; left: 50%; transform: translate(-50%, -30px); }
+  .sum-operand .dframe.mini { position: absolute; top: 100%; left: 50%; transform: translate(-50%, calc(var(--df-mini) * -2 - 10px)); }
 
 
 
@@ -4607,16 +4617,29 @@
     .math-panel { flex-direction: row; align-items: center; gap: 1.6vw; }
     .question-card { width: min(40vw, 340px); min-width: 0; box-sizing: border-box; margin-bottom: 0; padding: 9px 14px 16px; }
     #answer-area { width: min(30vw, 260px); flex: 0 0 auto; }
+    #answer-area.vast { justify-content: center; }
     .choices, .gl-vlak, .count-tiles { width: 100%; box-sizing: border-box; }
     .choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .choice-btn .klok-tekst { font-size: .56em; }
 
     .count-tiles.two, .count-tiles.three { grid-template-columns: minmax(0, 1fr); }
     .count-tile { min-height: 0; }
-    #screen-game.telt .question-card { width: min(33vw, 300px); }
 
-    .math-panel.lijn-tik .question-card { width: min(24vw, 200px); }
-    .math-panel.lijn-tik #answer-area { width: min(46vw, 420px); }
+
+
+
+    #screen-game.telt .question-card { width: min(37vw, 320px); }
+    #screen-game.telt .show-stage { width: min(16vw, 130px); height: min(13.4vw, 109px); }
+    .sum-eq { flex-wrap: nowrap; gap: 4px 6px; }
+    .sum-eq > * { flex-shrink: 0; }
+    .dframe.mini, .sum-operand { --df-mini: 10px; }
+    .dframe.mini { column-gap: 2px; }
+    .sum-eq .cgroup.big { max-width: 96px; }
+    .sum-eq .cgroup.big .cg-obj { font-size: clamp(16px, 3.4vw, 24px); }
+
+
+    .math-panel.lijn-tik .question-card, .math-panel.zoek-klok .question-card { width: min(24vw, 200px); }
+    .math-panel.lijn-tik #answer-area, .math-panel.zoek-klok #answer-area { width: min(46vw, 420px); }
     @media (max-height: 340px) { .question-card { padding: 5px 12px 11px; } }
     .question-card .gl { width: 100%; }
     .numpad { grid-template-columns: repeat(3, 1fr); width: 100%; gap: 7px; }
@@ -4759,7 +4782,10 @@
   .toast.goud .toast-main { color: var(--gold-light); }
   .toast.blauw, .praise.blauw { border-color: rgba(41,182,246,.8); box-shadow: var(--e-2), 0 0 20px rgba(41,182,246,.3); }
   .praise.blauw .praise-headline { color: var(--c-white); text-shadow: none; }
-  .toast.docked { top: 98px; }
+
+
+  .toast { --dock-top: 66px; }
+  .toast.docked { top: var(--dock-top); }
 
 
 
@@ -4803,6 +4829,7 @@
 
   @media (max-height: 700px) {
     .praise.docked, .toast.docked { top: 94px; padding: 5px 13px 6px; gap: 2px; }
+    .toast.docked { top: var(--dock-top); }
     .praise.docked { gap: 8px; padding: 5px 6px 5px 14px; }
     .praise.docked .praise-headline { font-size: var(--tx-klein); }
     .praise.docked .earn-chip { font-size: var(--tx-mini); padding: 2px 7px; }
@@ -24909,9 +24936,35 @@ function pastNog(tmpl, e, s) {
   const ops = s.ops.length ? s.ops : ['+'];
   if (!ops.includes(e.op)) return false;
   const getallen = (tmpl.match(/\d+/g) || []).map(Number);
-  if (e.op === '+' || e.op === '-') return Math.max(e.ans, ...getallen) <= s.max;
+  if (e.op === '+' || e.op === '-') {
+    if (Math.max(e.ans, ...getallen) > s.max) return false;
+
+    return !s.vrij || s.vrij.some(v => v.inst.ops.includes(e.op) && somInRij(getallen, e, LEERPAD[PAD_IDX[v.id]]));
+  }
   const tables = s.tables.length ? s.tables : [2, 5, 10];
   return tables.includes(getallen[1]);
+}
+
+
+
+
+
+
+
+
+
+function somInRij(getallen, e, r) {
+  if (!r || r.soort !== 'bereik' || r.bouwen) return false;
+  const [a, b] = getallen, c = e.ans, top = Math.max(a, b, c);
+  if (top > r.bereik) return false;
+  if (r.tientallen) return a % 10 === 0 && b % 10 === 0;
+  if (r.honderdtallen) return a % 100 === 0 && b % 100 === 0;
+  if (r.brug === 'vaak') {
+    const m = r.bereik > 100 ? 10 : 1;
+    return [a, b, c].every(v => v % m === 0) && overTiental(a / m, b / m, c / m, e.op) && top > r.bereik / 10;
+  }
+  const vorig = LEERPAD.filter(x => x.soort === 'bereik' && x.bereik < r.bereik).reduce((m, x) => Math.max(m, x.bereik), 0);
+  return top > vorig;
 }
 
 
@@ -25451,6 +25504,7 @@ function renderQuestion() {
 
 
   $('answer-area').parentNode.classList.toggle('lijn-tik', !!q.tik);
+  $('answer-area').parentNode.classList.toggle('zoek-klok', klokZoekt(q));
 
   showBalk(G.idx);
   drawQuestion();
@@ -25491,6 +25545,7 @@ function renderQuestion() {
     });
   }
   antwoordOpMaat(area);
+  klokZoekRuim(area);
   zaalPast();
   startSpot();
 }
@@ -25504,27 +25559,92 @@ function renderQuestion() {
 
 
 
+const KLOK_ZOEK_MAX = 150;
+const klokZoekt = q => q.kind === 'klok' && q.vorm === 'zoek';
+function klokZoekRuim(area) {
+  area.style.removeProperty('--zoek-h');
+  const q = G.qs[G.idx], rij = area.querySelector('.choices');
+  if (!klokZoekt(q) || !rij) return;
+  const kaart = $('question-card'), naast = getComputedStyle(area.parentNode).flexDirection === 'row';
+  const hoog = naast ? kaart.offsetHeight : (G.antwoordMin || area.offsetHeight) + (G.kaartOver || 0);
+  const cs = getComputedStyle(area), rs = getComputedStyle(rij);
+  const rand = naast ? 0 : parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + parseFloat(rs.paddingTop) + parseFloat(rs.paddingBottom) + parseFloat(rs.marginTop) + parseFloat(rs.marginBottom);
+  const h = Math.min(KLOK_ZOEK_MAX, Math.floor((hoog - rand - (parseFloat(rs.rowGap) || 0)) / 2));
+  if (h <= rij.firstElementChild.offsetHeight) return;
+  if (!naast) area.style.minHeight = hoog + 'px';
+  area.style.setProperty('--zoek-h', h + 'px');
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const ZAAL_MIN = 44;
+const PIL_HOOG = 72;
+
+const HAAR = 0.3;
+
+
+const GEZICHT_KRIMP = 0.6;
 function zaalPast() {
   const zaal = $('show-stage'), area = $('answer-area');
-  const onder = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y + el.offsetHeight; };
-  if (!zaal.offsetHeight || onder(zaal) > onder($('question-card')) - $('question-card').offsetHeight) return;
-  const laatste = [...area.querySelectorAll('button, .gl-vlak')].reduce((m, el) => Math.max(m, onder(el)), onder(area));
+  if (!zaal.offsetHeight || onderkant(zaal) > onderkant($('question-card')) - $('question-card').offsetHeight) return;
+  if (G.zaalVol == null) G.zaalVol = zaal.offsetHeight;
+  const zet = h => {
+    h = Math.max(ZAAL_MIN, h);
+    if (h >= zaal.offsetHeight) return false;
+    zaal.style.height = h + 'px';
+    zaal.style.width = Math.round(h * 1.19) + 'px';
+    return true;
+  };
+  const laatste = [...area.querySelectorAll('button, .gl-vlak')].reduce((m, el) => Math.max(m, onderkant(el)), onderkant(area));
 
 
 
 
 
   const sg = $('screen-game'), arena = zaal.closest('.game-arena');
-  const schermOnder = onder(sg) - sg.offsetHeight + sg.clientHeight;
-  const arenaOver = arena ? onder(arena) + (parseFloat(getComputedStyle(sg).paddingBottom) || 0) - schermOnder : 0;
-  const over = Math.ceil(Math.max(laatste + 6 - window.innerHeight, arenaOver));
-  if (over <= 0) return;
-  const h = Math.max(ZAAL_MIN, zaal.offsetHeight - over);
-  if (h >= zaal.offsetHeight) return;
-  zaal.style.height = h + 'px';
-  zaal.style.width = Math.round(h * 1.19) + 'px';
+  const schermOnder = onderkant(sg) - sg.offsetHeight + sg.clientHeight;
+  const arenaOver = arena ? onderkant(arena) + (parseFloat(getComputedStyle(sg).paddingBottom) || 0) - schermOnder : 0;
+  zet(zaal.offsetHeight - Math.ceil(Math.max(laatste + 6 - window.innerHeight, arenaOver)));
+
+
+
+
+  for (let i = 0; i < 3 && zet(gezichtVrij(zaal)); i++);
+}
+const onderkant = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y + el.offsetHeight; };
+
+function gezichtVrij(zaal) {
+  const pop = $('game-avatar-inner'), hoofd = zaal.querySelector('.av-hoofd'), svg = hoofd && hoofd.ownerSVGElement, toast = $('toast');
+  if (!pop || !svg || !svg.viewBox.baseVal || !toast) return Infinity;
+
+
+
+
+
+  const vb = svg.viewBox.baseVal, b = hoofd.getBBox();
+  const ogen = onderkant(pop) - pop.offsetHeight + (b.y + b.height * HAAR - vb.y) / vb.height * pop.offsetHeight;
+  const pil = parseFloat(getComputedStyle(toast).getPropertyValue('--dock-top')) + PIL_HOOG + 4;
+  const bodem = onderkant(zaal), k = (bodem - ogen) / zaal.offsetHeight;
+  if (ogen >= pil || k <= 0) return Infinity;
+  return Math.max(Math.floor(G.zaalVol * GEZICHT_KRIMP), Math.floor((bodem - pil) / k));
 }
 
 
@@ -25662,6 +25782,8 @@ function renderSegBar(el, total, done, hasNow) {
     el.appendChild(seg);
   }
 }
+
+const SOM_SOORTEN = ['classic', 'missing', 'chain', 'bouw', 'geld'];
 function drawQuestion() {
   const q = G.qs[G.idx];
   $('question-card').classList.toggle('golden', !!q.gold);
@@ -25677,7 +25799,7 @@ function drawQuestion() {
   somVluchtWeg();
   if (G.count) {
 
-    $('question-text').style.paddingTop = $('question-text').style.paddingBottom = '';
+    $('question-text').style.paddingTop = $('question-text').style.paddingBottom = $('question-text').style.fontSize = '';
     drawCountQuestion(q);
     return;
   }
@@ -25694,6 +25816,7 @@ function drawQuestion() {
 
   const tekst = $('question-text');
   tekst.classList.remove('lang', 'langer');
+  tekst.style.fontSize = '';
   const rij = document.createRange();
   rij.selectNodeContents(tekst.querySelector('.pl-som') || tekst);
   const breekt = () => {
@@ -25705,8 +25828,21 @@ function drawQuestion() {
 
 
   const eenRegel = tekst.querySelector('.een-regel');
-  const telt = eenRegel ? () => eenRegel.scrollWidth > eenRegel.clientWidth : breekt;
+  const telt1 = eenRegel ? () => eenRegel.scrollWidth > eenRegel.clientWidth : breekt;
+
+
+
+
+
+
+
+  const vak = SOM_SOORTEN.includes(q.kind) ? tekst.querySelector('.q-blank') : null;
+  const proef = vak ? [shown, toonAntwoord(q, q.ans)] : [];
+  const telt = () => !vak ? telt1() : proef.some(t => { vak.textContent = t; return telt1(); });
   for (const maat of ['lang', 'langer']) if (telt()) tekst.classList.add(maat);
+
+  if (vak) for (let i = 0, f = parseFloat(getComputedStyle(tekst).fontSize); i < 6 && telt(); i++) tekst.style.fontSize = (f *= .9) + 'px';
+  if (vak) vak.textContent = shown;
   kaartOpMaat(tekst);
 
 
@@ -25728,9 +25864,18 @@ function drawQuestion() {
 
 function kaartOpMaat(tekst) {
   tekst.style.paddingTop = tekst.style.paddingBottom = '';
+  G.kaartOver = 0;
   if (G.kaartMin == null) G.kaartMin = kaartMeten(tekst);
   const over = G.kaartMin - tekst.offsetHeight;
-  if (over > 0) tekst.style.paddingTop = tekst.style.paddingBottom = over / 2 + 'px';
+  if (over <= 0) return;
+
+  const naast = getComputedStyle(tekst.parentNode.parentNode).flexDirection === 'row';
+  tekst.style.paddingTop = tekst.style.paddingBottom = over / 2 + 'px';
+  if (!klokZoekt(G.qs[G.idx]) || naast) return;
+
+  const vol = tekst.parentNode.offsetHeight;
+  tekst.style.paddingTop = tekst.style.paddingBottom = '';
+  G.kaartOver = vol - tekst.parentNode.offsetHeight;
 }
 function kaartMeten(tekst) {
   const proeven = kaartProeven(G.insts || {});
@@ -25744,6 +25889,10 @@ function kaartMeten(tekst) {
   kopie.removeAttribute('id');
 
   const naast = getComputedStyle(kaart.parentNode).flexDirection === 'row';
+
+
+  const smal = ['lijn-tik', 'zoek-klok'].filter(k => kaart.parentNode.classList.contains(k));
+  kaart.parentNode.classList.remove(...smal);
   Object.assign(kopie.style, { position: 'absolute', display: 'flow-root', visibility: 'hidden', left: '0', top: '0', width: (naast ? kaart.offsetWidth : kaart.parentNode.clientWidth) - rand + 'px' });
   tekst.parentNode.appendChild(kopie);
   const hoogste = Math.max(...proeven.map(html => {
@@ -25751,6 +25900,7 @@ function kaartMeten(tekst) {
     return kopie.offsetHeight;
   }));
   kopie.remove();
+  kaart.parentNode.classList.add(...smal);
   return hoogste;
 }
 
@@ -25766,7 +25916,7 @@ function kaartProeven(insts) {
   if (insts.lijn) insts.lijn.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genLijn(r, i % 2 ? 'zoek' : 'lees').html); if (r.sprong) uit.push(...lijnHoogste()); });
   return uit;
 }
-addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = null; $('show-stage').style.height = $('show-stage').style.width = ''; });
+addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = G.zaalVol = null; $('show-stage').style.height = $('show-stage').style.width = ''; });
 function numpadPress(n) {
   if (!G || G.lock) return;
   if (n === 'del') { if (G.input === '') return; G.input = G.input.slice(0, -1); sndClick(); }

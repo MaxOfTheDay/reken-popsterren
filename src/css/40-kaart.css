@@ -677,6 +677,10 @@
     font-variant-numeric: tabular-nums; letter-spacing: .04em;
   }
   .choice-btn.klok-zoek { position: relative; }
+  /* De klok zoeken: op de kaart staan twee woorden, en de klokjes zijn wat ze
+     moet lezen. Dus krijgen de knoppen de ruimte die de kaart dan over heeft
+     (klokZoekRuim), en het klokje groeit mee: het vult de knop. */
+  #answer-area[style*="--zoek-h"] .choice-btn.klok-zoek { height: var(--zoek-h); }
   .choice-btn .klok { position: absolute; left: 50%; top: 3px; height: calc(100% - 6px); width: auto; aspect-ratio: 1; transform: translateX(-50%); }
   .choice-btn .klok-digi { font-size: .9em; }
   .choice-btn .klok-tekst { font-size: .7em; white-space: nowrap; }
@@ -862,7 +866,10 @@
 
   .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(78vw, 300px); margin-top: 4px; }
   /* een show die typen en kiezen afwisselt: het vak is zo hoog als het cijferblok, de knoppen in het midden (zie antwoordOpMaat) */
-  #answer-area.vast { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+  /* Onderaan en niet in het midden: in Typen staat het cijferblok onderaan, en
+     komt er een vraag tussen die je kiest (een dag, een datum), dan staan de
+     knoppen waar de duim al was -- niet halverwege het vak erboven. */
+  #answer-area.vast { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
   .num-btn {
     font-family: inherit; font-size: 28px; font-weight: 700; color: var(--c-white); border: none; cursor: pointer;
     padding: 13px 0; border-radius: var(--r-md);
