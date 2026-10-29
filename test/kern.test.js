@@ -46,6 +46,7 @@
  *   ZG onomkeerbaar                     -> elke rode ja-knop gaat door gevaarVraag, met Weg en Terug
  *   ZH past het niveau                  -> alleen de shows op de stap van nu, en de namen van het pad
  *   TW toasts                           -> elke toast gaat vanzelf weg, behalve wie op een tik of het volgende antwoord wacht
+ *   VS kapotte instellingen             -> een bewerkte back-up laat de app niet bevriezen, de voortgang blijft
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -2603,6 +2604,55 @@ zaak('TW', () => {
   const los = fs.readdirSync(src).filter(f => f.endsWith('.js') && f !== '10-feestjes.js')
     .filter(f => /\btoastWeg\s*\(/.test(fs.readFileSync(path.join(src, f), 'utf8')));
   check(!los.length, 'TW · toastWeg wordt alleen door showToast zelf aangeroepen (geef een duur mee aan showToast)', los.join(', '));
+});
+
+/* VS -- een back-up of overgezette save met kapotte instellingen. Zonder één
+   thema dat aan stond bevroor de app bij de eerste tik op een halte (themaPlan
+   draaide eindeloos rond); daarom kijkt deze zaak eerst of de instellingen
+   hersteld zijn, en speelt hij de show pas als dat zo is -- anders hangt de
+   suite in plaats van dat hij faalt. */
+zaak('VS', () => {
+  const app = laadApp();
+  const kapot = {
+    'geen bewerking':      p => { p.settings.ops = []; },
+    'onbekende bewerking': p => { p.settings.ops = ['^']; },
+    'ops geen lijst':      p => { p.settings.ops = '+'; },
+    'grens als tekst':     p => { p.settings.max = 'veel'; },
+    'onbekende modus':     p => { p.settings.mode = 'zing'; },
+    'geen tafels':         p => { p.settings.tables = []; },
+    'lege zwakke som':     p => { p.weak = { '3 + 4 = @': null }; p.learned = { '5 + 5 = @': 7 }; },
+    'thema\'s geen lijst': p => { p.settings.ops = []; p.settings.themas = 'geld'; },
+  };
+  for (const [naam, maak] of Object.entries(kapot)) {
+    const p = app.defaultProfile('Vs', 'dress_roze');
+    p.stars = { 1: 3, 2: 2 }; p.level = 3; p.diamonds = 77;
+    maak(p);
+    app.migrate(p);
+    const s = p.settings;
+    const heel = app.themasAan(s).length > 0 && s.max > 0 && ['kies', 'mix', 'typ'].includes(s.mode) && s.tables.length > 0;
+    check(heel, `VS · ${naam}: de instellingen zijn weer bruikbaar`, JSON.stringify(s).slice(0, 160));
+    check(p.diamonds === 77 && p.level === 3 && p.stars[1] === 3 && p.stars[2] === 2, `VS · ${naam}: de voortgang blijft staan`, JSON.stringify([p.diamonds, p.level, p.stars]));
+    if (!heel) continue;
+    app.db.profiles.p1 = p; app.zetSpeler('p1');
+    let fout = '';
+    try {
+      const { vragenPlan, insts } = app.showOpzet(p, 3, -1);
+      const g = { idx: 0, qs: [], herhaald: new Set(), themaPlan: vragenPlan, insts };
+      for (let i = 0; i < vragenPlan.length; i++) {
+        g.idx = i; const q = app.buildQuestion(p, 3, g); g.qs[i] = q;
+        if (!Number.isFinite(q.ans) || /NaN|undefined/.test(q.tmpl)) fout = q.tmpl + ' = ' + q.ans;
+      }
+    } catch (e) { fout = e.message; }
+    check(!fout, `VS · ${naam}: een show bouwt gewone vragen`, fout);
+  }
+  // een geldige instelling blijft precies staan
+  const p = app.defaultProfile('Vs', 'dress_roze', { ops: ['x'], max: 1000, mode: 'mix', themas: ['geld'] });
+  p.settings.perLevel = 12;
+  const voor = JSON.stringify(p.settings);
+  app.migrate(p);
+  const na = JSON.parse(JSON.stringify(p.settings));
+  check(['ops', 'max', 'mode', 'themas', 'perLevel', 'tables'].every(k => JSON.stringify(na[k]) === JSON.stringify(JSON.parse(voor)[k])),
+    'VS · een geldige instelling blijft precies staan', JSON.stringify(na).slice(0, 200));
 });
 
 klaar();
