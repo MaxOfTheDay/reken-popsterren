@@ -572,10 +572,19 @@ function hairBackStaartjes(hc, glans) {
 function hairFrontStaartjes(hc) {
   return `<path d="M68 66 A32 32 0 0 1 132 66 Q100 44 68 66 Z" fill="${hc}"/>`;
 }
+/* Elk been is een eigen groep, en zijn schoen ook (die wordt pas ná de kleren
+   getekend, zie avatarSVG): bij het zijpasje schopt het been opzij (.av-been).
+   Het draaipunt ligt net onder de zoom, zodat wat draait altijd onder de stof
+   uitkomt. Bij een jurk is dat de heup; bij de broek de knie, want de pijpen
+   zijn één vorm en schoppen niet mee -- daar zwaait het onderbeen uit de pijp. */
+const KNIE_JURK = [[90, 196], [110, 196]], KNIE_BROEK = [[86, 207], [114, 207]];
+function beenGroep(kant, knie, inhoud) {
+  return `<g class="av-been av-been-${kant}" style="transform-origin:${knie[0]}px ${knie[1]}px">${inhoud}</g>`;
+}
 // benen: vóór de jurk getekend -- de zoom dekt het bovenstuk vanzelf af
 function legsBloot() {
-  return `<line x1="90" y1="192" x2="88" y2="228" stroke="${SKIN}" stroke-width="9" stroke-linecap="round"/>`
-    + `<line x1="110" y1="192" x2="112" y2="228" stroke="${SKIN}" stroke-width="9" stroke-linecap="round"/>`;
+  return beenGroep('l', KNIE_JURK[0], `<line x1="90" y1="192" x2="88" y2="228" stroke="${SKIN}" stroke-width="9" stroke-linecap="round"/>`)
+    + beenGroep('r', KNIE_JURK[1], `<line x1="110" y1="192" x2="112" y2="228" stroke="${SKIN}" stroke-width="9" stroke-linecap="round"/>`);
 }
 // jurk -- zachte ronde schoudertjes i.p.v. scherpe hoeken
 function torsoJurk(dc) {
@@ -618,8 +627,8 @@ function legsBroek(dc) {
   // twee dunne kokers maakten van de ster een stokfiguurtje naast de jurk, die
   // veel meer vlak vult. De zoom ligt net onder de knie -- tot op de schoen las
   // het als een lange broek en werd het onderlijf één blok kleur.
-  return `<line x1="86" y1="200" x2="87" y2="229" stroke="${SKIN}" stroke-width="9" stroke-linecap="round"/>`
-    + `<line x1="114" y1="200" x2="113" y2="229" stroke="${SKIN}" stroke-width="9" stroke-linecap="round"/>`
+  return beenGroep('l', KNIE_BROEK[0], `<line x1="86" y1="200" x2="87" y2="229" stroke="${SKIN}" stroke-width="9" stroke-linecap="round"/>`)
+    + beenGroep('r', KNIE_BROEK[1], `<line x1="114" y1="200" x2="113" y2="229" stroke="${SKIN}" stroke-width="9" stroke-linecap="round"/>`)
     + `<path d="M78 156 L77 208 Q86 213 95 208 L100 188 L105 208 Q114 213 123 208 L122 156 Z" fill="${dc}"/>`;
 }
 function torsoShirt(dc, mic) {
@@ -632,10 +641,14 @@ function torsoShirt(dc, mic) {
   // dwars op de arm: zonder dat is het een dikke streep die in de arm overloopt
   // in plaats van een mouw die ergens ophoudt. De opgeheven micro-arm heeft
   // vanzelfsprekend zijn eigen mouw en zijn eigen zoom.
+  //
+  // De linkermouw is een groep: gaat de vrije arm de lucht in, dan gaat zijn
+  // mouw mee (.av-mouw-l). Anders kwam de arm opzij uit het shirt, onder een
+  // mouw die bleef hangen.
   const mouw = (d, zoom) => `<path d="${d}" stroke="${dc}" stroke-width="13" fill="none" stroke-linecap="round"/>`
     + `<path d="${zoom}" stroke="rgba(0,0,0,.16)" stroke-width="2" fill="none" stroke-linecap="round"/>`;
   return `<path d="M86 103 Q78 105 82 110 L78 165 Q100 171 122 165 L118 110 Q122 105 114 103 Q100 110 86 103 Z" fill="${dc}"/>`
-    + mouw('M84 110 Q77 116 75 124', 'M69 121 L81 127')
+    + `<g class="av-mouw-l">${mouw('M84 110 Q77 116 75 124', 'M69 121 L81 127')}</g>`
     + (mic ? mouw('M116 110 Q123 104 128 100', 'M124 95 L132 105')
            : mouw('M116 110 Q123 116 125 124', 'M119 127 L131 121'))
     // ronde halslijn: een V leest als een overhemd, dit als een T-shirt
@@ -719,8 +732,8 @@ const PAT_SHIRT = {
 // Een basis erbij? Eén regel hier en één patronentabel hierboven -- de rest van
 // de app (winkel, kleedkamer, trofeeën, opslag) hoeft er niets van te weten.
 const BASES = {
-  meisje: { hairBack: hairBackStaartjes, hairFront: hairFrontStaartjes, legs: legsBloot,  torso: torsoJurk,  stof: stofJurk,  pat: PAT_JURK },
-  jongen: { hairBack: hairBackKort,      hairFront: hairFrontKort,      legs: legsBroek,  torso: torsoShirt, stof: stofShirt, pat: PAT_SHIRT },
+  meisje: { hairBack: hairBackStaartjes, hairFront: hairFrontStaartjes, legs: legsBloot,  knie: KNIE_JURK,  torso: torsoJurk,  stof: stofJurk,  pat: PAT_JURK },
+  jongen: { hairBack: hairBackKort,      hairFront: hairFrontKort,      legs: legsBroek,  knie: KNIE_BROEK, torso: torsoShirt, stof: stofShirt, pat: PAT_SHIRT },
 };
 // De keuze bij het maken van een ster. Vaste volgorde, met het woord erbij voor
 // de ouder en de tekening zelf voor het kind dat nog niet leest. Dit hoort bij
@@ -823,9 +836,10 @@ function avatarSVG(p, width, propMaat) {
   s += `<ellipse cx="88" cy="41" rx="15" ry="7" transform="rotate(-18 88 41)" fill="url(#vlek${uid})"/>`;
   /* Ogen: een ovaaltje met een lichtje erin -- dat ene witte stipje maakt van een
      tekening een gezicht. Oog en lichtje zijn één groep, zodat knipperen (en
-     schrikken, zie .oeps) ze samen meeneemt. */
+     schrikken, zie .oeps) ze samen meeneemt. De twee ogen samen zijn nog een
+     groep: daarmee kijkt ze rond als het stil blijft (zie .kijkt). */
   const oog = x => `<g class="av-oog"><ellipse cx="${x}" cy="72" rx="3.7" ry="4.6" fill="#2b2238"/><circle cx="${x + 1.4}" cy="70.2" r="1.45" fill="#fff"/></g>`;
-  s += oog(88) + oog(112);
+  s += `<g class="av-blik">${oog(88) + oog(112)}</g>`;
   s += `<circle cx="79" cy="82" r="7" fill="url(#wang${uid})"/><circle cx="121" cy="82" r="7" fill="url(#wang${uid})"/>`;
   /* Twee monden, en er staat er altijd maar één aan. De lach is de gewone; het
      rondje eronder is "oh!" -- de pop die schrikt van een misser (zie .oeps in
@@ -874,8 +888,22 @@ function avatarSVG(p, width, propMaat) {
   // pas ná de kleren (zie verderop) zodat die zelf nooit erdoor verdwijnt.
   // Elke arm eindigt in een handje (zonder leek het een stompje). De vrije arm is
   // een groep: bij een danspasje gaat hij de lucht in (.av-arm-l).
+  //
+  // EN HIJ VERANDERT DAARBIJ VAN VORM. De bocht van de arm is getekend voor
+  // hangen: naar buiten, langs de jurk. Draai je die arm omhoog, dan bolt hij
+  // naar beneden en hangt hij als een slap sliertje. Dus vervormt hij onderweg
+  // naar dezelfde arm met de bocht de andere kant op -- zelfde schouder, zelfde
+  // hand, zelfde lengte. Een SMIL-animatie op d, en niet in het stijlblad: CSS
+  // kan een pad niet vervormen in Safari. Ze staat op begin="indefinite" en
+  // zetPas start haar, dus deze tekening doet uit zichzelf niets. De duur en de
+  // drie stukken (omhoog, boven, omlaag) lopen gelijk met armOp; zie daar.
+  // Geen elleboog: een knik in een stokje van negen pixels dik las als een
+  // gebroken arm.
   const hand = (x, y) => `<circle cx="${x}" cy="${y}" r="5.6" fill="${SKIN}"/>`;
-  s += `<g class="av-arm-l"><path d="M84 112 Q68 132 64 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>${hand(64, 158)}</g>`;
+  const ARM = 'M84 112 Q68 132 64 157', ARM_OP = 'M84 112 Q77 136 64 157';
+  s += `<g class="av-arm-l"><path d="${ARM}" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round">`
+    + `<animate class="av-arm-vorm" attributeName="d" dur="${PAS}ms" begin="indefinite" values="${ARM};${ARM_OP};${ARM_OP};${ARM}" keyTimes="0;.22;.78;1" calcMode="spline" keySplines=".42 0 .58 1;0 0 1 1;.42 0 .58 1"/>`
+    + `</path>${hand(64, 158)}</g>`;
   s += mic
     ? `<path d="M116 112 Q134 98 145 80" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`
     : `<path d="M116 112 Q132 132 136 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>${hand(136, 158)}`;
@@ -888,10 +916,12 @@ function avatarSVG(p, width, propMaat) {
   // schoenen (schoenkleur is een eigen categorie in de kleedkamer)
   const shoe = eq.shoes ? item(eq.shoes) : null;
   const sc = shoe ? (shoe.color === 'RAINBOW' ? `url(#rb${uid})` : shoe.color) : '#e91e63';
-  s += `<ellipse cx="86" cy="234" rx="11" ry="6" fill="${sc}"/><ellipse cx="114" cy="234" rx="11" ry="6" fill="${sc}"/>`;
-  // een zooltje en een glimlichtje: lak, geen pantoffel
-  s += `<path d="M75.5 236 Q86 241 96.5 236 M103.5 236 Q114 241 124.5 236" stroke="#000" stroke-opacity=".18" stroke-width="2.4" fill="none"/>`
-    + `<ellipse cx="82" cy="231.4" rx="4" ry="1.7" fill="#fff" opacity=".55"/><ellipse cx="110" cy="231.4" rx="4" ry="1.7" fill="#fff" opacity=".55"/>`;
+  // met een zooltje en een glimlichtje: lak, geen pantoffel. Elke schoen zit in
+  // de groep van zijn been (zie beenGroep), zodat hij meeschopt.
+  const schoen = (kant, x, knie) => beenGroep(kant, knie, `<ellipse cx="${x}" cy="234" rx="11" ry="6" fill="${sc}"/>`
+    + `<path d="M${x - 10.5} 236 Q${x} 241 ${x + 10.5} 236" stroke="#000" stroke-opacity=".18" stroke-width="2.4" fill="none"/>`
+    + `<ellipse cx="${x - 4}" cy="231.4" rx="4" ry="1.7" fill="#fff" opacity=".55"/>`);
+  s += schoen('l', 86, B.knie[0]) + schoen('r', 114, B.knie[1]);
   // vastgehouden voorwerp: pas ná de kleren getekend (en na de arm zelf,
   // hierboven), zodat de decoratie nooit onder een schouder verdwijnt. De hand
   // komt over de steel en onder de kop: zo houdt ze hem echt vast.

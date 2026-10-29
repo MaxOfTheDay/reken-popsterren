@@ -84,6 +84,8 @@ const MOVES = [
   { cls: 'move-kick',   label: '🕺 Zijpasje!' },
   { cls: 'move-wave',   label: '👋 Golf!' },
   { cls: 'move-bounce', label: '⭐ Stuiter!' },
+  // op de tenen, hoofd achterover, mond open -- en er stijgen noten op (zie .move-noot)
+  { cls: 'move-noot',   label: '🎵 Hoge noot!' },
 ];
 /* De buiging staat met opzet níét in MOVES: die zit in de gewone rotatie van
    dance() en finaleDance(), en dan zou ze na elk goed antwoord kunnen komen.
@@ -163,14 +165,26 @@ function zetPas(el, move) {
   const pop = el.firstElementChild;
   if (pop) void pop.offsetWidth;
   el.classList.add('dancing', move.cls);
+  armVorm(el, move !== BUIGING);
   return true;
+}
+/* De vrije arm vervormt als hij de lucht in gaat (zie ARM_OP in avatarSVG). Dat
+   is een SMIL-animatie, en die start niet vanzelf mee met een klasse: hier gaat
+   ze aan, op hetzelfde moment als het pasje. Alleen waar de arm ook echt omhoog
+   gaat -- een .levend pop, en niet bij de buiging, die de arm opzij steekt en
+   dus zijn gewone vorm houdt. Bij stilstaan gaat ze uit, zodat een afgebroken
+   pasje geen arm met de verkeerde bocht laat hangen. */
+function armVorm(el, aan) {
+  const v = el.querySelector && el.querySelector('.av-arm-vorm');
+  if (!v || !v.beginElement) return;
+  try { if (aan && el.classList.contains('levend')) v.beginElement(); else v.endElement(); } catch (e) { /* niet actief: niets te stoppen */ }
 }
 /* En weer uit: alleen het pasje eraf. Het wiegen loopt door en stond ook nooit
    stil, dus dat hoeft hier niet meer aangezet te worden -- 'idle' stond er al en
    zetPas haalt hem niet meer weg. Dat scheelt niet alleen een regel: de poppen op
    de sterrenkeuze hébben geen 'idle' (zes wiegende poppen naast elkaar is precies
    wat dit scherm niet wil), en die zouden er hier eentje cadeau krijgen. */
-function stilStaan(el) { if (el) { pasLos(el); el.classList.remove('dancing', ...MOVE_CLASSES); } }
+function stilStaan(el) { if (el) { pasLos(el); el.classList.remove('dancing', ...MOVE_CLASSES); armVorm(el, false); } }
 /* Hoe lang één pasje duurt: de .9s van de danspasjes in 30-onderdelen.css.
 
    AF ALS HIJ UIT IS, NIET ALS DE KLOK HET ZEGT. Het pasje ging er eerst af op

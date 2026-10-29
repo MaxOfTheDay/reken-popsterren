@@ -542,9 +542,12 @@
   .avatar-holder.move-kick   > .pas-laag { animation: mvKick var(--t-pas, .9s) ease-in-out; }
   .avatar-holder.move-wave   > .pas-laag { animation: mvWave var(--t-pas, .9s) ease-in-out; }
   .avatar-holder.move-bounce > .pas-laag { animation: mvBounce var(--t-pas, .9s) ease-in-out; }
-  /* De buiging bij het applaus (zie buiging in de JS): ze helt naar het publiek
-     toe -- naar jou -- en komt weer overeind. Geen gewoon pasje; hij komt alleen
-     als de zaal extra hard klapt. */
+  .avatar-holder.move-noot   > .pas-laag { animation: mvNoot var(--t-pas, .9s) ease-in-out; }
+  /* De buiging bij het applaus (zie buiging in de JS): een reverence. Even door
+     de knieën, hoofd scheef, de vrije arm opzij (zie bij "Wat er ín haar
+     beweegt"). Geen gewoon pasje; hij komt alleen als de zaal extra hard klapt.
+     Hier stond een kanteling naar je toe in 3D: op een platte tekening werd ze
+     daar alleen groter van, en op een telefoon viel haar kroon boven uit beeld. */
   .avatar-holder.move-buig   > .pas-laag { animation: mvBuig var(--t-pas, .9s) ease-in-out; }
   /* De huppel: haar "hier ben ik" op de kaart (zie HUPPEL in de JS). Door de
      knieën, omhoog met een tikje rek, neer met een plof op 62% -- daar raakt ze
@@ -619,7 +622,14 @@
   }
   @keyframes mvBuig {
     0%,100% { transform: none; }
-    35%,62% { transform: perspective(360px) rotateX(-30deg) translateY(5px) scaleY(.94); }
+    35%,62% { transform: translateY(6px); }
+  }
+  /* De hoge noot: door de knieën, dan op de tenen en uitrekken, en daar even
+     houden -- de noot. Het hoofd gaat achterover en de mond open (hieronder). */
+  @keyframes mvNoot {
+    0%,100% { transform: none; }
+    18%     { transform: scale(1.04, .94); }
+    40%,75% { transform: translateY(-6px) scale(.97, 1.05); }
   }
   @keyframes mvBounce {
     0%,100% { transform: translateY(0) scaleY(1); }
@@ -639,11 +649,12 @@
      doet élke pop, ook op de kaart, maar vanuit JS -- zie knipperLus.) Bij een danspasje zwieren de staartjes en gaat de vrije
      arm de lucht in. De draaipunten liggen in de tekening zelf: de hals
      (100|104), de aanzet van elk staartje, de schouder (84|112). */
-  .av-hoofd, .av-staart, .av-arm-l { transform-box: view-box; }
+  .av-hoofd, .av-staart, .av-arm-l, .av-mouw-l, .av-been, .av-blik { transform-box: view-box; }
   .av-hoofd { transform-origin: 100px 104px; }
   .av-staart-l { transform-origin: 68px 80px; }
   .av-staart-r { transform-origin: 132px 80px; }
-  .av-arm-l { transform-origin: 84px 112px; }
+  .av-arm-l, .av-mouw-l { transform-origin: 84px 112px; }
+  .av-blik { transform-origin: 100px 72px; }
   .avatar-holder.knipoog .av-oog { transform: scaleY(.12); }
   .avatar-holder.levend.idle .av-hoofd { animation: knik 2.6s ease-in-out infinite; }
   @keyframes knik { 0%,100% { transform: rotate(3deg); } 50% { transform: rotate(-3deg); } }
@@ -651,13 +662,88 @@
   @keyframes slinger { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
   .avatar-holder.levend.dancing .av-staart { animation: zwier .3s ease-in-out 3 alternate; }
   @keyframes zwier { from { transform: rotate(-14deg); } to { transform: rotate(14deg); } }
-  /* niet bij de buiging: wie buigt, steekt geen arm in de lucht */
+  /* De arm zwaait: in één zwaai omhoog, twee keer heen en weer vanuit de
+     schouder, en weer neer. Onderweg krijgt hij een andere bocht (de SMIL-
+     animatie av-arm-vorm in avatarSVG): die is klaar op 22% en gaat terug vanaf
+     78%, precies de stukken waarin de arm hier omhoog en omlaag gaat. Verschuif
+     je die twee, verschuif ze daar dan ook.
+
+     De mouw van het shirt (.av-mouw-l, alleen bij de jongen) draait mee, maar
+     22 graden minder ver: de opgeheven bocht vertrekt rechter uit de schouder dan
+     de hangende, en de mouw hoort bij dat eerste stukje arm. Dat verschil groeit
+     in hetzelfde tempo als de vorm, dus de mouw blijft om de arm zitten.
+
+     Niet bij de buiging: wie buigt, zwaait niet. */
   .avatar-holder.levend.dancing:not(.move-buig) .av-arm-l { animation: armOp var(--t-pas, .9s) ease-in-out; }
-  @keyframes armOp { 0%,100% { transform: none; } 30%,65% { transform: rotate(100deg); } 48% { transform: rotate(80deg); } }
+  .avatar-holder.levend.dancing:not(.move-buig) .av-mouw-l { animation: mouwOp var(--t-pas, .9s) ease-in-out; }
+  @keyframes armOp {
+    0%,100% { transform: none; }
+    22% { transform: rotate(110deg); }
+    36% { transform: rotate(86deg); }
+    50% { transform: rotate(112deg); }
+    64% { transform: rotate(86deg); }
+    78% { transform: rotate(100deg); }
+  }
+  @keyframes mouwOp {
+    0%,100% { transform: none; }
+    22% { transform: rotate(88deg); }
+    36% { transform: rotate(64deg); }
+    50% { transform: rotate(90deg); }
+    64% { transform: rotate(64deg); }
+    78% { transform: rotate(78deg); }
+  }
+  /* De reverence (.move-buig): het hoofd helt opzij, de ogen gaan dicht, en de
+     vrije arm gaat opzij -- met zijn mouw, en in zijn gewone vorm, want hij gaat
+     niet verder dan schuin naar beneden. */
+  .avatar-holder.levend.move-buig .av-hoofd { animation: buigHoofd var(--t-pas, .9s) ease-in-out; }
+  @keyframes buigHoofd { 0%,100% { transform: none; } 35%,62% { transform: rotate(9deg) translateY(2px); } }
+  .avatar-holder.levend.move-buig .av-arm-l,
+  .avatar-holder.levend.move-buig .av-mouw-l { animation: buigArm var(--t-pas, .9s) ease-in-out; }
+  @keyframes buigArm { 0%,100% { transform: none; } 35%,62% { transform: rotate(45deg); } }
+  .avatar-holder.move-buig .av-oog { animation: ogenDicht var(--t-pas, .9s) linear; }
+  @keyframes ogenDicht { 0%,25%,72%,100% { transform: none; } 32%,65% { transform: scaleY(.12); } }
+  /* Het zijpasje: bij elke kant waar ze naartoe helt, schopt het been aan die
+     kant naar buiten (zie beenGroep voor waar het draaipunt ligt). */
+  .avatar-holder.move-kick .av-been-r { animation: schopR var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-kick .av-been-l { animation: schopL var(--t-pas, .9s) ease-in-out; }
+  @keyframes schopR { 0%,12%,40%,100% { transform: none; } 25% { transform: rotate(-38deg); } }
+  @keyframes schopL { 0%,38%,64%,100% { transform: none; } 50% { transform: rotate(38deg); } }
+  /* De hoge noot: hoofd achterover en het "oh"-mondje van de schrik (zie .oeps),
+     nu als zingen. Twee gouden noten stijgen op uit haar houder -- de houder
+     staat overal al relative (zie .prop-laag). Gewone tekens in goud en geen
+     🎵: die emoji is op de meeste toestellen zwart, en op het donkere podium
+     zag je hem niet. */
+  .avatar-holder.levend.move-noot .av-hoofd { animation: nootHoofd var(--t-pas, .9s) ease-in-out; }
+  @keyframes nootHoofd { 0%,100% { transform: none; } 40%,75% { transform: rotate(-9deg) translateY(-2px); } }
+  .avatar-holder.move-noot .av-mond { opacity: 0; }
+  .avatar-holder.move-noot .av-mond-o { opacity: 1; }
+  .avatar-holder.move-noot::before, .avatar-holder.move-noot::after {
+    position: absolute; z-index: 3; pointer-events: none; line-height: 1;
+    font-size: 34px; font-weight: 900; color: rgb(var(--goud-rgb));
+    text-shadow: 0 0 6px rgba(var(--goud-gloed-rgb), .8), 0 2px 3px rgba(0,0,0,.5);
+    animation: nootOp calc(var(--t-pas, .9s) * .78) ease-out both;
+  }
+  .avatar-holder.move-noot::before { content: "♪"; left: 60%; top: 12%; }
+  .avatar-holder.move-noot::after  { content: "♫"; left: 72%; top: 4%; animation-delay: calc(var(--t-pas, .9s) * .18); }
+  @keyframes nootOp {
+    0%   { opacity: 0; transform: translate(0, 10px) scale(.6); }
+    25%  { opacity: 1; transform: translate(4px, -6px) scale(1.05); }
+    100% { opacity: 0; transform: translate(14px, -44px) scale(.9) rotate(12deg); }
+  }
+  /* Rondkijken (zie rondkijken in de show): blijft het lang stil bij een som,
+     dan kijkt ze één keer naar links, naar rechts en weer naar jou. Alleen de
+     ogen en een klein knikje -- een vraag, geen pasje. */
+  .avatar-holder.levend.kijkt .av-blik { animation: kijkOgen var(--t-kijk, 1.6s) ease-in-out; }
+  .avatar-holder.levend.kijkt .av-hoofd { animation: kijkHoofd var(--t-kijk, 1.6s) ease-in-out; }
+  @keyframes kijkOgen { 0%,100% { transform: none; } 15%,38% { transform: translateX(-3.2px); } 55%,78% { transform: translateX(3.2px); } }
+  @keyframes kijkHoofd { 0%,100% { transform: none; } 15%,38% { transform: rotate(-5deg); } 55%,78% { transform: rotate(5deg); } }
   @media (prefers-reduced-motion: reduce) {
     .avatar-holder.levend .av-hoofd,
     .avatar-holder.levend .av-staart, .avatar-holder.levend .av-arm-l,
+    .avatar-holder.levend .av-mouw-l, .avatar-holder .av-been,
+    .avatar-holder .av-blik, .avatar-holder .av-oog,
     .avatar-holder.levend.idle { animation: none; }
+    .avatar-holder.move-noot::before, .avatar-holder.move-noot::after { content: none; }
   }
   /* Wie geen beweging wil: de lampen ademen niet en er wordt niet gedanst.
      Het licht blijft liggen (het is een kleur op het podium, geen beweging) en
