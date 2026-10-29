@@ -698,7 +698,7 @@ function openReis(alGetikt) {
        vluchtlaag, die er daarna in 80ms op wegdooft. Geen fade erbij dus: de
        tekening is op dat moment identiek, en wat er overvloeit is precies het
        verschil (de naam, de sterren, het zegel, de ster op de kaart). */
-    setTimeout(() => { if (vluchtOp) doel.classList.remove('vlucht-doel'); }, kruis);
+    naVluchtLanding(() => doel.classList.remove('vlucht-doel'));
   });
 }
 // De reis sluiten is dezelfde beweging als een bestemming kiezen: inzoomen op de
@@ -939,12 +939,13 @@ function reisNaarWereld(idx, el, stil, alGetikt) {
     vluchtDoof(terugKnop, false, VLUCHT.detail);
     if (muntKruist) { vluchtDoof(muntV, false, VLUCHT.detail, 60); vluchtDoof(muntN, true, VLUCHT.detail, 150); }
     globeVlucht(kopVan, kaart.querySelector('.wp-cta-ico'), kruis);
-    // de landing: de echte tekening eronder, en Werelden mag weg
-    setTimeout(() => {
-      if (!vluchtOp) return;                 // al opgeruimd -- dan staat de kaart er gewoon
+    /* de landing: de echte tekening eronder, en Werelden mag weg -- op het einde
+       van de beweging, niet op de klok (zie naVluchtLanding). Is de vlucht al
+       opgeruimd, dan staat de kaart er gewoon. */
+    naVluchtLanding(() => {
       kaart.classList.remove('vlucht-weg');
       reis.classList.remove('wegvallend');
-    }, kruis);
+    });
   });
 }
 /* Bouwt de kaart van één wereld. travelFrom > 0 = de tussenstand vlak vóór de
