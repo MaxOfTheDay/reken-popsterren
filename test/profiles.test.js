@@ -1601,6 +1601,10 @@ function check(ok, label, detail) {
       await page.evaluate(() => {
         window.__huppel = [];
         const op = soort => e => { if (e.animationName === 'mvHuppel' && e.target.closest('.tour-hero')) window.__huppel.push(soort); };
+        document.addEventListener('animationstart', op('start'), true);
+        document.addEventListener('animationstart', e => {
+          if (e.animationName === 'schaduwHuppel' && e.target.closest('.tour-hero')) window.__huppel.push('schaduw');
+        }, true);
         document.addEventListener('animationend', op('uit'), true);
         document.addEventListener('animationcancel', op('af'), true);
       });
@@ -1615,14 +1619,25 @@ function check(ok, label, detail) {
       check(een.pas.length === 1 && /^mvHuppel@/.test(een.pas[0]),
         'een tik op de ster geeft één huppel, dezelfde als haar groet', JSON.stringify(een.pas));
       // en haar schaduw huppelt mee (.tour-hero::after), maar de halte geeft geen ring
+      // geteld bij het begin, niet nagekeken op een tijdstip: op een drukke
+      // machine kan de huppel (en dus de schaduw) hier al uit zijn
       const mee = await page.evaluate(() => ({
-        schaduw: document.querySelector('.tour-hero').getAnimations({ subtree: true })
-          .filter(a => a.animationName === 'schaduwHuppel').length,
+        schaduw: window.__huppel.filter(x => x === 'schaduw').length,
         ring: !!document.querySelector('.tour-stop.next.aangekomen'),
       }));
-      check(mee.schaduw === 1 && !mee.ring, 'haar schaduw huppelt mee, en een tik geeft geen ring', JSON.stringify(mee));
-      check(twee.pas.length === 1 && parseInt(twee.pas[0].split('@')[1], 10) > parseInt(een.pas[0].split('@')[1], 10),
-        'een tweede tik meteen erna begint de huppel niet opnieuw', JSON.stringify([een.pas, twee.pas]));
+      check(mee.schaduw >= 1 && mee.schaduw === (await page.evaluate(() => window.__huppel.filter(x => x === 'start').length)) && !mee.ring, 'haar schaduw huppelt mee, en een tik geeft geen ring', JSON.stringify(mee));
+      /* Geteld en niet op de klok: één huppel begonnen, over twee tikken. Hier
+         werd de tijd van de huppel na de tweede tik vergeleken met die na de
+         eerste, en op een drukke machine is "150ms later" soms 400: dan was de
+         eerste huppel al uit en stond er niets meer om te vergelijken. */
+      /* Opnieuw beginnen is: een tweede start vóór de eerste huppel uit is (of een
+         afgebroken huppel). Was de eerste al uitgespeeld toen de tweede tik
+         landde -- een trage machine -- dan is een nieuwe huppel gewoon een nieuwe
+         tik en geen herstart. */
+      const reeks = await page.evaluate(() => window.__huppel.filter(x => x !== 'schaduw'));
+      const herstart = reeks.includes('af') || reeks.some((x, i) => x === 'start' && reeks.slice(0, i).filter(y => y === 'start').length > reeks.slice(0, i).filter(y => y === 'uit').length);
+      check(reeks[0] === 'start' && !herstart,
+        'een tweede tik meteen erna begint de huppel niet opnieuw', JSON.stringify({ reeks, een: een.pas, twee: twee.pas }));
       /* En hij mag uitstuiteren. De stuiter ging er eerst af op de klok van de
          groet (de huppel, korter dan mvBounce): dan stond ze nog ingedeukt op
          haar halte en klikte ze in één beeldje recht -- het schokje na de sprong. */
@@ -1664,7 +1679,12 @@ function check(ok, label, detail) {
       check(kast.zelfde && kast.kleren && kast.na.length === 1 && kast.na[0] >= kast.voor[0],
         'twee stukken snel na elkaar aandoen breekt haar pasje niet', JSON.stringify(kast));
       await page.evaluate(() => goMap());
-      await page.waitForTimeout(1000);
+      /* Eerst haar groet laten uitspelen (de huppel komt na MOTION.totaal en duurt
+         een tel), en daar wachten we óp, niet een vaste tijd: op een drukke
+         machine liep hij na 1000ms nog, en dan zag de controle hieronder die groet
+         aan voor een huppel van de tik. */
+      await page.evaluate(() => new Promise(r => setTimeout(r, MOTION.totaal + 100)));
+      await page.waitForFunction(() => !document.querySelector('.tour-hero .avatar-holder.dancing'), null, { timeout: 5000 }).catch(() => {});
       await page.evaluate(() => { overgangBezig = true; });
       await page.touchscreen.tap(punt.x, punt.y);
       await page.waitForTimeout(150);
