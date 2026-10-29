@@ -39,6 +39,8 @@
  *      afloop
  *   J  op een bureaublad houdt de kleedkamer haar opmaak terwijl ze wegvalt
  *      (het rek klapte terug naar de telefoonopmaak, zie inhoud zaak O)
+ *   K  op een bureaublad heeft geen enkel scherm een schuifbalkgoot, ook niet als
+ *      het schuift (de randen lichtten op bij elke wissel, zie .screen.lijst)
  *
  * De reden voor C: --vh-drift mag nooit onder nul lopen. Zou hij dat wel doen,
  * dan schoof de bediening bij een openschuivend toetsenbord juist eráchter.
@@ -447,6 +449,44 @@ async function zetOnderrandAan(page) {
       'J · en het rek blijft tijdens het wegvallen staan waar het stond',
       `voor ${r.voor.join(',')} · tijdens ${r.na.join(',')}`);
     check(fouten.length === 0, 'J · geen javascript-fouten', fouten.join(' | '));
+    await ctx.close();
+  }
+
+  /* ---- K · geen scherm heeft een schuifbalkgoot ----
+     Een klassieke schuifbalk (elk bureaublad) neemt een strook in die van het
+     scherm zelf is. Zolang een scherm bij een wissel een transform draagt, knipt
+     het zijn vaste lucht af aan de binnenkant van die strook, en stond daar de
+     kale gloed van <body>: bij elke tab-wissel lichtten de randen even op. Zie
+     de regel bij .screen.lijst in 10-basis.css.
+     Gemeten als offsetWidth - clientWidth: precies de breedte van de goot. Elk
+     scherm wordt even aangezet en kunstmatig te lang gemaakt, zodat ook een
+     scherm dat vandaag toevallig past (of nooit schuift) meetelt: de regel moet
+     gelden zodra er meer in staat dan past. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    const fouten = [];
+    page.on('pageerror', e => fouten.push(e.message));
+    await page.goto(APP_URL + '&demo&star=p1&screen=tro');
+    await page.waitForTimeout(700);
+    const r = await page.evaluate(() => [...document.querySelectorAll('.screen')].map(el => {
+      const was = el.classList.contains('active');
+      el.classList.add('active');
+      const lang = document.createElement('div');
+      lang.style.cssText = 'flex: none; width: 1px; height: 5000px';
+      el.appendChild(lang);
+      const uit = { id: el.id, breed: el.offsetWidth, goot: el.offsetWidth - el.clientWidth };
+      lang.remove();
+      if (!was) el.classList.remove('active');
+      return uit;
+    }));
+    check(r.length > 0 && r.every(s => s.breed > 0), 'K · elk scherm is gemeten',
+      r.filter(s => !s.breed).map(s => s.id).join(', '));
+    const mis = r.filter(s => s.goot !== 0);
+    check(mis.length === 0, 'K · geen scherm heeft een schuifbalkgoot (de randen flitsen dan bij een wissel)',
+      mis.map(s => `${s.id} ${s.goot}px`).join(', '));
+    check(fouten.length === 0, 'K · geen javascript-fouten', fouten.join(' | '));
     await ctx.close();
   }
 

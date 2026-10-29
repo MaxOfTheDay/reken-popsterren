@@ -171,39 +171,51 @@
      Dit stond eerder alleen op #screen-dress; de kast en het ouderdeel misten
      hem en rekten daar hun kop wél uit tot de vensterrand. */
   @media (min-width: 740px) {
-    /* Eén ding staat niet in die som en bepaalt hem wél: DE SCHUIFBALK.
-
-       De kop en de inhoud staan met `margin: auto` midden in het scherm-element,
-       en dat element scrollt zelf (overflow-y: auto op .screen). Een klassieke
-       schuifbalk -- elk bureaublad heeft er een, een telefoon niet -- neemt zijn
-       vijftien pixels áf van de binnenkant, dus ligt die middenlijn een halve
-       schuifbalk naar links. De navigatiebalk en de actiebalk van de kleedkamer
-       staan vast
-       (position: fixed) en kénnen die schuifbalk niet: die blijven op het midden
-       van het vénster mikken. Kop en inhoud stonden daardoor zeven en een halve
-       pixel links van hun eigen kader -- op een bureaublad goed te zien als een
-       kop die net naast zijn lijst hangt, en op alle vier de gebruiksschermen.
-
-       `both-edges` reserveert diezelfde strook ook aan de andere kant, zodat de
-       binnenkant weer midden in het venster staat en alle drie weer op één lijn
-       komen. Het kost op een bureaublad vijftien pixels breedte; waar de
-       schuifbalk over de inhoud zweeft (telefoon, tablet) verandert er niets.
-       Meegenomen: de kolom verspringt nu ook niet meer zijwaarts op het moment
-       dat een scherm net lang genoeg wordt om te gaan scrollen. */
-    .screen.gebruik { scrollbar-gutter: stable both-edges; }
+    /* De kop en de inhoud staan met `margin: auto` midden in het scherm-element;
+       de navigatiebalk en de actiebalk van de kleedkamer staan vast en mikken op
+       het midden van het vénster. Die twee middens zijn hetzelfde omdat een
+       scherm geen schuifbalk heeft die ruimte inneemt -- zie de regel bij
+       .screen.lijst hieronder. */
     .screen.gebruik .hub-sticky {
       width: min(100%, calc(var(--kolom) + var(--rand) * 2));
       margin-left: auto; margin-right: auto;
       border-radius: 0 0 var(--r-lg) var(--r-lg);
     }
   }
+  /* EEN SCHERM HEEFT GEEN SCHUIFBALK, ook niet op een bureaublad. Schuiven doe je
+     met je vinger, het wieltje of het touchpad; de kaart en de reis deden het al
+     zo. Het gaat niet om het balkje maar om de GOOT: een klassieke schuifbalk
+     neemt vijftien pixels in die van het scherm-element zelf zijn, en dat valt
+     op twee manieren verkeerd uit.
+
+     1  Het midden schuift. De inhoud centreert in wat er naast de goot over is,
+        maar alles wat vast staat (navigatie, kleedkamerbalk) mikt op het
+        vénster. Kop en lijst hingen daardoor zeven pixels naast hun kader.
+     2  DE RANDEN FLITSEN. Zolang een scherm een transform draagt (de 1.03 -> 1
+        van schermKomtOp, het wegvallen van schermWeg) rekent `fixed` niet op het
+        venster maar op het scherm, en dan knipt het scherm zijn lucht
+        (.app-sfeer::before en ::after) af aan de binnenkant van de goot. In die
+        strook stond dan alleen de achtergrond van het scherm zelf, en die is
+        doorzichtig: de kale, felle gloed van <body>. Bij elke wissel naar de
+        kast, het ouderdeel of de sterrenkeuze lichtten de linker- en de
+        rechterrand een paar beeldjes lang op. Een telefoon kent geen goot (de
+        balk zweeft over de inhoud), dus dit zag je alleen op een bureaublad.
+
+     De vorige oplossing voor 1 was `scrollbar-gutter: stable both-edges`: een
+     goot aan béíde kanten, zodat het midden weer klopte. Dat maakte 2 juist
+     erger -- twee stroken in plaats van één, en ook op een scherm dat niet eens
+     schoof. Geen goot lost ze allebei op. Zet er dus geen scrollbar-gutter meer
+     bij en geef een scherm geen eigen zichtbare schuifbalk: onderrand.test.js
+     zaak K meet op een bureaublad dat geen enkel scherm een goot heeft, en
+     inhoud.test.js zaak O houdt de regel vast. */
+  .screen.lijst { overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: none; }
+  .screen.lijst::-webkit-scrollbar { display: none; }
   /* Schermwissels waren een harde knip. Tussen twee vlakke verlopen valt dat
      niet op; zodra er straks getekende achtergronden staan wel. Een animatie
      (geen transition): het element komt uit display:none, en daar loopt geen
      transition op. Opnieuw hetzelfde scherm tonen herstart hem niet -- show()
      haalt .active weg en zet hem in dezelfde taak terug -- dus nogmaals op
      hetzelfde tabblad tikken geeft geen flits. */
-  .screen.lijst { overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; }
   .screen.active { display: flex; animation: screenIn .18s ease both; }
   @keyframes screenIn { from { opacity: 0; } to { opacity: 1; } }
   /* Wie geen beweging wil krijgt geen harde knip maar een kortere fade: een

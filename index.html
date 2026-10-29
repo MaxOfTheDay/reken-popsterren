@@ -1248,21 +1248,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    .screen.gebruik { scrollbar-gutter: stable both-edges; }
     .screen.gebruik .hub-sticky {
       width: min(100%, calc(var(--kolom) + var(--rand) * 2));
       margin-left: auto; margin-right: auto;
@@ -1275,7 +1260,34 @@
 
 
 
-  .screen.lijst { overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  .screen.lijst { overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: none; }
+  .screen.lijst::-webkit-scrollbar { display: none; }
+
+
+
+
+
+
   .screen.active { display: flex; animation: screenIn .18s ease both; }
   @keyframes screenIn { from { opacity: 0; } to { opacity: 1; } }
 
@@ -5240,7 +5252,6 @@
 
 
 
-    #screen-map::after { transition: opacity 90ms linear; }
 
 
 
@@ -5250,10 +5261,7 @@
 
 
 
-    #screen-map.vlucht-weg::after { transition: none; }
-    @media (prefers-reduced-motion: reduce) {
-      #screen-map::after { transition: none; }
-    }
+
 
 
 
@@ -18515,6 +18523,25 @@ function vluchtKlaar() {
 
 
 
+
+
+function naVluchtLanding(fn) {
+  const v = vluchtOp;
+  if (!v) return;
+  const doe = () => { if (vluchtOp === v) fn(); };
+  if (v.beweging && v.beweging.finished) v.beweging.finished.then(doe, () => {});
+  else setTimeout(doe, VLUCHT.duur);
+}
+
+
+
+
+
+
+
+
+
+
 const BREED_PODIUM = '(min-aspect-ratio: 1/1) and (min-height: 600px)';
 function wereldDoek(soort, wereld) {
   if (!wereld || !window.matchMedia || !matchMedia(BREED_PODIUM).matches) return null;
@@ -18593,7 +18620,7 @@ function wereldVlucht(van, naar, bron, op, hoog) {
 
   const beelden = vluchtBeelden(van, naar);
   const tijd = { duration: VLUCHT.duur, easing: 'linear', fill: 'forwards' };
-  laag.animate(beelden.vorm, tijd);
+  const beweging = laag.animate(beelden.vorm, tijd);
   laag.animate(beelden.rand, tijd);
   kunst.animate(beelden.binnen, tijd);
 
@@ -18611,7 +18638,7 @@ function wereldVlucht(van, naar, bron, op, hoog) {
 
 
 
-  vluchtOp = { laag, doek, op,
+  vluchtOp = { laag, doek, op, beweging,
     timer: setTimeout(vluchtKlaar, VLUCHT.duur + VLUCHT.kruis + MOTION.vangnet),
     grendel: setTimeout(() => { overgangBezig = false; }, VLUCHT.duur) };
   eind.onfinish = vluchtKlaar;
@@ -20396,7 +20423,7 @@ function openReis(alGetikt) {
 
 
 
-    setTimeout(() => { if (vluchtOp) doel.classList.remove('vlucht-doel'); }, kruis);
+    naVluchtLanding(() => doel.classList.remove('vlucht-doel'));
   });
 }
 
@@ -20638,11 +20665,12 @@ function reisNaarWereld(idx, el, stil, alGetikt) {
     if (muntKruist) { vluchtDoof(muntV, false, VLUCHT.detail, 60); vluchtDoof(muntN, true, VLUCHT.detail, 150); }
     globeVlucht(kopVan, kaart.querySelector('.wp-cta-ico'), kruis);
 
-    setTimeout(() => {
-      if (!vluchtOp) return;
+
+
+    naVluchtLanding(() => {
       kaart.classList.remove('vlucht-weg');
       reis.classList.remove('wegvallend');
-    }, kruis);
+    });
   });
 }
 

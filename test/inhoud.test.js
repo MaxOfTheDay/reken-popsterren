@@ -1102,6 +1102,13 @@ zaak('O', () => {
       m ? m[1].slice(0, 80) : 'regel niet gevonden');
   }
   check(!/::(?:before|after)[^{]*\{[^}]*will-change:\s*auto/.test(stijl), 'O · en geen latere regel zet dat weer uit', '');
+  // De derde: een schuifbalkgoot op een scherm liet tijdens de wissel aan beide
+  // randen de kale gloed van <body> zien (zie .screen.lijst in 10-basis). De
+  // browsermeting staat in onderrand zaak K; dit is de regel zelf.
+  check(!/scrollbar-gutter/.test(stijl), 'O · geen scrollbar-gutter in het stijlblad', '');
+  const lijst = stijl.match(/(?:^|})\s*\.screen\.lijst\s*\{([^}]*)\}/);
+  check(!!lijst && /scrollbar-width:\s*none/.test(lijst[1]) && /\.screen\.lijst::-webkit-scrollbar\s*\{\s*display:\s*none/.test(stijl),
+    'O · een scherm dat schuift heeft geen eigen schuifbalk (en dus geen goot)', lijst ? lijst[1].slice(0, 120) : 'regel niet gevonden');
 });
 
 zaak('P', () => {
