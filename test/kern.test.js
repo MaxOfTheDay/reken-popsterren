@@ -47,6 +47,7 @@
  *   ZH past het niveau                  -> alleen de shows op de stap van nu, en de namen van het pad
  *   TW toasts                           -> elke toast gaat vanzelf weg, behalve wie op een tik of het volgende antwoord wacht
  *   VS kapotte instellingen             -> een bewerkte back-up laat de app niet bevriezen, de voortgang blijft
+ *   VV kapotte voortgang                -> diamanten, sterren en level weer getallen binnen de regels
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -2653,6 +2654,28 @@ zaak('VS', () => {
   const na = JSON.parse(JSON.stringify(p.settings));
   check(['ops', 'max', 'mode', 'themas', 'perLevel', 'tables'].every(k => JSON.stringify(na[k]) === JSON.stringify(JSON.parse(voor)[k])),
     'VS · een geldige instelling blijft precies staan', JSON.stringify(na).slice(0, 200));
+});
+
+zaak('VV', () => {
+  const app = laadApp();
+  const geval = (maak) => { const p = app.defaultProfile('Vv', 'dress_roze'); p.stars = { 1: 3, 2: 2 }; p.level = 3; p.diamonds = 77; maak(p); app.migrate(p); return p; };
+  let p = geval(p => { p.diamonds = '50'; });
+  check(p.diamonds === 50, 'VV · diamanten als tekst worden een getal', JSON.stringify(p.diamonds));
+  p.diamonds += 3;
+  check(p.diamonds === 53, 'VV · en verdienen telt op in plaats van te plakken', JSON.stringify(p.diamonds));
+  check(geval(p => { p.diamonds = -20; }).diamonds === 0, 'VV · negatieve diamanten worden 0');
+  check(geval(p => { p.diamonds = null; }).diamonds === 0, 'VV · geen diamanten wordt 0');
+  check(geval(p => { p.diamonds = 12.7; }).diamonds === 12, 'VV · diamanten zijn heel');
+  p = geval(p => { p.stars = { 1: 7, 2: '3', 3: -1, 4: 'veel', 5: null }; });
+  check(JSON.stringify(p.stars) === JSON.stringify({ 1: 3, 2: 3, 3: 0 }), 'VV · sterren 0 t/m 3, onleesbare weg', JSON.stringify(p.stars));
+  check(geval(p => { p.level = 0; }).level === 1, 'VV · level 0 wordt 1');
+  check(geval(p => { p.level = '4'; }).level === 4, 'VV · level als tekst wordt een getal');
+  // geen bovengrens: een oudere app-versie mag voortgang van een nieuwere niet inkorten
+  p = geval(p => { p.tourStars = {}; p.level = 9999; p.stars[9000] = 2; });
+  check(p.level === 9999 && p.stars[9000] === 2, 'VV · geen bovengrens op level of sterren', JSON.stringify([p.level, p.stars[9000]]));
+  // een gezonde voortgang blijft precies staan
+  p = geval(() => {});
+  check(p.diamonds === 77 && p.level === 3 && JSON.stringify(p.stars) === JSON.stringify({ 1: 3, 2: 2 }), 'VV · een gezonde voortgang blijft precies staan');
 });
 
 klaar();

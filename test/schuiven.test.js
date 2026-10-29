@@ -35,7 +35,10 @@
  *      vanzelf mee) en de telmodus, elke stap, kiezen en typen, staan de kaart
  *      en elke knop van het antwoord helemaal in beeld. Vóór oktober 2026 vielen
  *      liggend met een getallenlijn, klok of kalender de antwoorden 85 tot 125px
- *      onder het scherm -- die van de sommen in dezelfde show ook.
+ *      onder het scherm -- die van de sommen in dezelfde show ook. Elke fase van
+ *      de telmodus doet apart mee, en het scherm zelf mag niet schuiven: de
+ *      tegels stonden binnen beeld terwijl de zaal op een hoge telefoon nog 24px
+ *      opschoof (zie zaalPast).
  *
  * Draaien:  npm run test:schuiven
  */
@@ -272,18 +275,33 @@ async function zaakF(browser, [w, h]) {
       s.ops = t.ops ? t.ops.slice() : []; s.themas = t.ops ? [] : [t.id];
       if (t.id === 'rekenen') s.kies = padRijen(s).rijen.map(r => r.id);
       if (LADDERS[t.id] && LADDERS[t.id].kies) s[LADDERS[t.id].kies] = LADDERS[t.id].pad.map(r => r.id);
-    }]).concat([['tellen', () => { s.track = 'count'; s.modus = 'pad'; }]]);
+    }]).concat([['tellen', () => { s.track = 'count'; s.modus = 'pad'; }]])
+      // elke fase van de telmodus apart, met dingen en met stippen: het leerpad
+      // alleen kwam nooit voorbij fase 1, en de tegels van fase 2 schoven het scherm op
+      .concat(Array.from({ length: COUNT_STAGE_MAX }, (_, i) => ['objects', 'dots'].map(repr => [`tellen ${i + 1} ${repr}`, () => {
+        s.track = 'count'; s.modus = 'vrij'; s.kiesFasen = [i + 1]; s.repr = repr;
+      }])).flat());
     // offsetTop en niet getBoundingClientRect: de vraag komt binnen met een transform (zie zaak E)
     const binnen = el => {
       let x = 0, y = 0; for (let e = el; e; e = e.offsetParent) { x += e.offsetLeft; y += e.offsetTop; }
       return el.offsetWidth && x >= -1 && y >= -1 && x + el.offsetWidth <= innerWidth + 1 && y + el.offsetHeight <= innerHeight + 1;
     };
+    /* en het scherm zelf schuift niet: de arena met zijn rand eronder past (zie
+       zaalPast). Een paar pixels mag: op 320 breed is zij met een getallenlijn al
+       zo klein als ze wordt (ZAAL_MIN), en dan schuift het 6px -- dat voel je
+       niet. Wat je wel voelt, de 24px van de telmodus, valt erbuiten. */
+    const sg = $('screen-game'), arena = sg.querySelector('.game-arena');
+    const schuift = () => {
+      let y = 0; for (let e = arena; e; e = e.offsetParent) y += e.offsetTop;
+      return y + arena.offsetHeight + (parseFloat(getComputedStyle(sg).paddingBottom) || 0) > sg.clientHeight + 8 ? [{ id: 'scherm schuift' }] : [];
+    };
     for (const [k, zet] of zetten) for (const mode of ['kies', 'typ']) {
       zet(); s.mode = mode; s.perLevel = 12;
+      if (s.track === 'count' && mode === 'typ') continue;   // tellen kent alleen tegels
       startLevel(P().level);
       for (let i = 0; i < G.total; i++) {
         G.idx = i; renderQuestion();
-        const q = G.qs[i], weg = [$('question-card'), ...$('answer-area').querySelectorAll('button:not(.gl-raak), .gl-vlak')].filter(el => !binnen(el));
+        const q = G.qs[i], weg = [$('question-card'), ...$('answer-area').querySelectorAll('button:not(.gl-raak), .gl-vlak')].filter(el => !binnen(el)).concat(schuift());
         if (weg.length) uit.push(`${k}/${mode}/${q.rij || q.soort || q.kind}${q.tik ? '·tik' : ''}${G.count ? '·fase ' + countLiveStage(P()) + ' ' + (q.type || '') : ''}: ${weg.map(el => el.id || el.className.split(' ')[0]).slice(0, 2).join(',')}`);
       }
     }

@@ -839,7 +839,36 @@ function instellingenHerstel(p) {
     for (const [k, e] of Object.entries(p[lijst])) if (!e || typeof e !== 'object') delete p[lijst][k];
   }
 }
+/* DE VORM VAN DE VOORTGANG -- dezelfde reden als hierboven: een bewerkte of
+   beschadigde back-up. Diamanten als tekst ("50") werden na de eerste show
+   "503", want += plakt dan tekst aan; een ster als "3" telde nergens mee. Dus:
+   een getal dat als tekst staat wordt weer een getal, en wat buiten de regels
+   valt gaat naar de dichtstbijzijnde geldige waarde -- diamanten heel en niet
+   onder nul, een ster 0 t/m 3, level minstens 1. Wat al klopt blijft precies
+   staan.
+   Bewust GEEN bovengrens op p.level en geen sterren weggooien op levels
+   voorbij WORLD_LAST: een oude versie uit de voorraad van de servicewerker kan
+   een save van een nieuwere versie openen, en dan zou ze echte voortgang
+   inkorten. kern.test.js zaak VV. */
+function voortgangHerstel(p) {
+  const d = Number(p.diamonds);
+  p.diamonds = Number.isFinite(d) ? Math.max(0, Math.floor(d)) : 0;
+  for (const veld of ['stars', 'tourStars']) {
+    const m = p[veld];
+    if (m == null) continue;
+    if (typeof m !== 'object' || Array.isArray(m)) { p[veld] = {}; continue; }
+    for (const [k, v] of Object.entries(m)) {
+      const n = Number(v);
+      if (v == null || !Number.isFinite(n)) delete m[k];
+      else m[k] = Math.min(3, Math.max(0, Math.round(n)));
+    }
+  }
+  if (!p.stars) p.stars = {};
+  const l = Number(p.level);
+  p.level = Number.isFinite(l) ? Math.max(1, Math.floor(l)) : 1;
+}
 function migrate(p) {
+  voortgangHerstel(p);
   if (!p.trophies) p.trophies = [];
   // Bestaande spelers: alles wat al behaald is blijft 'behaald' (staat in trophies).
   // readyTrophies begint leeg; alleen echt nog-niet-geclaimde-maar-gehaalde trofeeën

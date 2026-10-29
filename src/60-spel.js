@@ -112,16 +112,15 @@ function askQuit() {
   syncBackGuard();
 }
 function closeQuitModal() {
+  if (!modalDicht('quit-modal')) return;   // een tik op het schild: al dicht
   sndClick();
-  $('quit-modal').classList.remove('open');
-  syncBackGuard();
   if (G && G.spotPauze) {
     G.spotPauze = false;
     if (!G.lock && G.spot > 0) spotLoopt();
   }
 }
 function quitGame() {
-  $('quit-modal').classList.remove('open');
+  modalDicht('quit-modal');
   stopSpot();
   hideToast();
   // de show is van het scherm dat we nu verlaten -- geen woord ervan hoort nog
@@ -248,7 +247,15 @@ function zaalPast() {
   const onder = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y + el.offsetHeight; };
   if (!zaal.offsetHeight || onder(zaal) > onder($('question-card')) - $('question-card').offsetHeight) return;   // ze staat niet erboven
   const laatste = [...area.querySelectorAll('button, .gl-vlak')].reduce((m, el) => Math.max(m, onder(el)), onder(area));
-  const over = Math.ceil(laatste + 6 - window.innerHeight);
+  /* En de zaal zelf mag niet schuiven: onder de laatste knop houdt de arena
+     nog zijn eigen rand (en het scherm de zijne). Telde alleen de knop, dan
+     stond die netjes 6px boven de rand maar schoof het scherm nog 24px op
+     onder je vinger -- in de telmodus op elke hoge telefoon. Gemeten met
+     offsets, niet met scrollHeight: de vraag komt binnen met een transform. */
+  const sg = $('screen-game'), arena = zaal.closest('.game-arena');
+  const schermOnder = onder(sg) - sg.offsetHeight + sg.clientHeight;
+  const arenaOver = arena ? onder(arena) + (parseFloat(getComputedStyle(sg).paddingBottom) || 0) - schermOnder : 0;
+  const over = Math.ceil(Math.max(laatste + 6 - window.innerHeight, arenaOver));
   if (over <= 0) return;
   const h = Math.max(ZAAL_MIN, zaal.offsetHeight - over);
   if (h >= zaal.offsetHeight) return;
