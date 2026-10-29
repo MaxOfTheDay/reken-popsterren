@@ -1144,15 +1144,17 @@ let stofSlaap = 0, stofWacht = 0;
    van het scherm); niet op een halte of op het vak erboven waar zij staat als
    ze daar is (13% opzij en van 24% erboven tot 7% eronder -- haar maat omgerekend
    naar procenten van een 1215x2160 kader); en niet vlak bij een ander puntje,
-   zodat er nooit twee samen reizen. Wat stijgt begint wat lager en wat valt
-   wat hoger. Lukt het niet, dan blijft het puntje waar het was. */
+   zodat er nooit twee samen reizen (op een volle kaart mag dat laatste wijken).
+   Wat stijgt begint wat lager en wat valt wat hoger. Lukt het niet, dan blijft
+   het puntje waar het was. */
 function stofPlek(nodes, beweging, buren) {
   const schuif = beweging === 'stijg' || beweging === 'bel' ? 8 : beweging === 'val' ? -8 : 0;
-  for (let poging = 0; poging < 30; poging++) {
+  // eerst met afstand tot de buren; is de kaart daarvoor te vol, dan zonder
+  for (let poging = 0; poging < 90; poging++) {
     const x = ZONE.x0 + Math.random() * (ZONE.x1 - ZONE.x0);
     const y = ZONE.y0 + schuif + Math.random() * (ZONE.y1 - ZONE.y0);
     if (!nodes.every(n => Math.abs(n.x - x) > 13 || y < n.y - 24 || y > n.y + 7)) continue;
-    if (buren.some(b => Math.abs(b.x - x) < 18 && Math.abs(b.y - y) < 14)) continue;
+    if (poging < 60 && buren.some(b => Math.abs(b.x - x) < 18 && Math.abs(b.y - y) < 14)) continue;
     return { x, y };
   }
   return null;
