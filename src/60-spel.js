@@ -198,6 +198,7 @@ function renderQuestion() {
     antwoordOpMaat(area, true);
     renderCountAnswers(q, area);
     zaalPast();
+    goudPlek();
     spotZonderTijd();
     return;
   }
@@ -230,7 +231,21 @@ function renderQuestion() {
   antwoordOpMaat(area);
   klokZoekRuim(area);
   zaalPast();
+  goudPlek();
   startSpot();
+}
+/* ---- De regel van de gouden vraag, liggend ----------------------------------
+   Staand staat hij gewoon onder de kaart. Liggend staat hij los (zie "NAAST
+   ELKAAR"): als stuk van de rij nam hij de kaart 70 à 80px breedte af. Dan
+   onder de kaart, en als de kaart tot onderaan reikt (een kalenderblad op een
+   kleine telefoon) erboven. Met offsets: de vraag komt binnen met een transform. */
+function goudPlek() {
+  const b = $('gold-banner'), kaart = $('question-card');
+  b.style.top = '';
+  if (!b.textContent || getComputedStyle(b).position !== 'absolute') return;
+  const onder = kaart.offsetTop + kaart.offsetHeight + 2;
+  const past = onderkant(kaart) + 2 + b.offsetHeight <= window.innerHeight;
+  b.style.top = (past ? onder : kaart.offsetTop - b.offsetHeight - 2) + 'px';
 }
 /* ---- De klok zoeken: de klokjes krijgen de ruimte ---------------------------
    Bij "zoek de klok" staan er op de kaart twee woorden (kwart voor 6), en zijn
