@@ -3569,7 +3569,7 @@
 
 
 
-  #answer-area[style*="--zoek-h"] .choice-btn.klok-zoek { height: var(--zoek-h); }
+  #answer-area[style*="--knop-h"] .choice-btn { height: var(--knop-h); }
   .choice-btn .klok { position: absolute; left: 50%; top: 3px; height: calc(100% - 6px); width: auto; aspect-ratio: 1; transform: translateX(-50%); }
   .choice-btn .klok-digi { font-size: .9em; }
   .choice-btn .klok-tekst { font-size: .7em; white-space: nowrap; }
@@ -4644,6 +4644,8 @@
 
 
     .gold-banner { position: absolute; left: 0; top: 100%; width: var(--kaart-w); margin: 0; pointer-events: none; }
+
+    .gold-banner:empty { display: none; }
     #answer-area { width: min(30vw, 260px); flex: 0 0 auto; }
     #answer-area.vast { justify-content: center; }
     .choices, .gl-vlak, .count-tiles { width: 100%; box-sizing: border-box; }
@@ -24385,9 +24387,8 @@ function bindTap(card, q, drawId) {
 
 let countDrawId = 0;
 
-function drawCountQuestion(q) {
-  const myDraw = ++countDrawId;
-  const card = $('question-text');
+
+function telKaartHTML(q) {
   const cardRepr = q.card.repr || 'objects';
   const kind = q.card.kind;
   let body = '';
@@ -24403,7 +24404,13 @@ function drawCountQuestion(q) {
   else if (kind === 'tap') body = tapHTML(q.card);
   else if (kind === 'tiental') body = `<div class="cq-groupwrap">${dotFrameHTML(q.card.n, 10, 'big', 'full')}</div>`;
   else if (kind === 'vriend') body = `<div class="cq-groupwrap">${dotFrameHTML(q.card.n, q.card.doel, 'big', 'full')}</div>`;
-  card.innerHTML = `<div class="count-q">${body}</div>`;
+  return `<div class="count-q">${body}</div>`;
+}
+function drawCountQuestion(q) {
+  const myDraw = ++countDrawId;
+  const card = $('question-text');
+  const kind = q.card.kind;
+  card.innerHTML = telKaartHTML(q);
   if (kind === 'tap') {
     if (q.getikt) card.querySelectorAll('.tap-obj').forEach(b => b.classList.add('geteld'));
     else bindTap(card, q, myDraw);
@@ -24451,7 +24458,8 @@ function animateDelta(card, q, drawId) {
   }, 450);
 }
 
-function renderCountAnswers(q, area) {
+
+function telTegelsHTML(q) {
   const tiles = q.choices.map(c => {
     let inner;
     if (c.kind === 'numeral') {
@@ -24468,7 +24476,10 @@ function renderCountAnswers(q, area) {
   const n = q.choices.length;
 
   const cls = 'count-tiles' + (n <= 2 ? ' two' : n === 3 ? ' three' : '') + (q.tap && !q.getikt ? ' wacht' : '');
-  area.innerHTML = `<div class="${cls}">${tiles}</div>`;
+  return `<div class="${cls}">${tiles}</div>`;
+}
+function renderCountAnswers(q, area) {
+  area.innerHTML = telTegelsHTML(q);
   area.querySelectorAll('.count-tile').forEach(b => {
     b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
   });
@@ -25437,7 +25448,7 @@ function startLevel(lvl, eigenOvergang) {
   bundelAan();
 
 
-  $('screen-game').classList.toggle('met-cijfers', !count && s.mode !== 'kies');
+  $('screen-game').classList.toggle('met-cijfers', !count && kanTypen(s));
   $('screen-game').classList.toggle('telt', !!count);
   if (eigenOvergang) show('screen-game');
   else toonHub('screen-game');
@@ -25529,7 +25540,8 @@ function renderQuestion() {
   }
   const q = G.qs[G.idx];
 
-  G.mode = G.count ? 'count' : q.tik ? 'tik' : q.kiezen ? 'kies' : (s.mode === 'mix' ? pick(['kies', 'typ']) : s.mode);
+
+  G.mode = G.count ? 'count' : q.tik ? 'tik' : q.kiezen || PLAATJE.includes(q.kind) ? 'kies' : (s.mode === 'mix' ? pick(['kies', 'typ']) : s.mode);
   G.input = '';
   G.lock = false;
   G.retried = false;
@@ -25546,6 +25558,7 @@ function renderQuestion() {
   if (G.count) {
     antwoordOpMaat(area, true);
     renderCountAnswers(q, area);
+    vakVullen(area);
     zaalPast();
     goudPlek();
     spotZonderTijd();
@@ -25579,6 +25592,7 @@ function renderQuestion() {
   }
   antwoordOpMaat(area);
   klokZoekRuim(area);
+  vakVullen(area);
   zaalPast();
   goudPlek();
   startSpot();
@@ -25602,24 +25616,143 @@ function goudPlek() {
 
 
 
-
-
-
-
-const KLOK_ZOEK_MAX = 150;
 const klokZoekt = q => q.kind === 'klok' && q.vorm === 'zoek';
 function klokZoekRuim(area) {
-  area.style.removeProperty('--zoek-h');
   const q = G.qs[G.idx], rij = area.querySelector('.choices');
-  if (!klokZoekt(q) || !rij) return;
-  const kaart = $('question-card'), naast = getComputedStyle(area.parentNode).flexDirection === 'row';
-  const hoog = naast ? kaart.offsetHeight : (G.antwoordMin || area.offsetHeight) + (G.kaartOver || 0);
-  const cs = getComputedStyle(area), rs = getComputedStyle(rij);
-  const rand = naast ? 0 : parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + parseFloat(rs.paddingTop) + parseFloat(rs.paddingBottom) + parseFloat(rs.marginTop) + parseFloat(rs.marginBottom);
-  const h = Math.min(KLOK_ZOEK_MAX, Math.floor((hoog - rand - (parseFloat(rs.rowGap) || 0)) / 2));
-  if (h <= rij.firstElementChild.offsetHeight) return;
-  if (!naast) area.style.minHeight = hoog + 'px';
-  area.style.setProperty('--zoek-h', h + 'px');
+  if (!klokZoekt(q) || !rij || !naastElkaar()) return;
+  const h = Math.min(KNOP_MAX, Math.floor(($('question-card').offsetHeight - (parseFloat(getComputedStyle(rij).rowGap) || 0)) / 2));
+  if (h > rij.firstElementChild.offsetHeight) area.style.setProperty('--knop-h', h + 'px');
+}
+const naastElkaar = () => getComputedStyle($('answer-area').parentNode).flexDirection === 'row';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const PLAATJE = ['geld', 'klok', 'kalender', 'lijn'];
+
+const kanTypen = s => s.mode !== 'kies' && themasAan(s).some(k => !PLAATJE.includes(k));
+
+const KNOP_MAX = 150;
+function vakVullen(area) {
+  const kaart = $('question-card'), tekst = $('question-text');
+  const naast = naastElkaar();
+  if (naast && !G.count) return;
+  if (!naast) area.style.removeProperty('--knop-h');
+  tekst.style.paddingTop = tekst.style.paddingBottom = '';
+  area.style.minHeight = '';
+  area.classList.remove('vast');
+  if (G.vakMin == null) G.vakMin = vakMeten(area);
+  const m = G.vakMin, rand = kaart.offsetHeight - tekst.offsetHeight;
+  if (naast) {
+
+
+
+
+    const hoog = tekst.offsetHeight;
+    let lucht = Math.max(0, m.tekst - hoog);
+    if (m.vak > area.offsetHeight) { area.style.minHeight = m.vak + 'px'; area.classList.add('vast'); }
+    if (lucht) tekst.style.paddingTop = tekst.style.paddingBottom = lucht / 2 + 'px';
+    const teHoog = () => Math.ceil(Math.max(arenaOver(), onderkant(area) + 6 - window.innerHeight, onderkant(kaart) + 6 - window.innerHeight));
+    if (teHoog() > 0) {
+      lucht = Math.max(0, lucht - teHoog());
+      tekst.style.paddingTop = tekst.style.paddingBottom = lucht / 2 + 'px';
+      if (teHoog() > 0) { area.style.minHeight = ''; area.classList.remove('vast'); }
+    }
+    return;
+  }
+  const nu = () => kaart.offsetHeight + area.offsetHeight;
+  m.samen = Math.max(m.samen + rand, nu()) - rand;
+  const vak = m.samen + rand;
+  const knoppen = [...area.querySelectorAll('.choice-btn')];
+  if (vak > nu() && knoppen.length) {
+    const rijen = new Set(knoppen.map(b => b.offsetTop)).size, h0 = knoppen[0].offsetHeight;
+    const h = Math.min(KNOP_MAX, h0 + Math.floor((vak - nu()) / rijen));
+    if (h > h0) area.style.setProperty('--knop-h', h + 'px');
+  }
+  if (vak > nu()) tekst.style.paddingTop = tekst.style.paddingBottom = (vak - nu()) / 2 + 'px';
+}
+
+
+
+
+
+
+
+
+function vakMeten(area) {
+  const tekst = $('question-text');
+  const weg = [tekst, area].map(el => {
+    const f = document.createDocumentFragment();
+    while (el.firstChild) f.appendChild(el.firstChild);
+    return { el, f, cls: el.className, font: el.style.fontSize };
+  });
+  tekst.classList.remove('lang', 'langer');
+  tekst.style.fontSize = '';
+
+
+
+
+  const rand = el => { const c = getComputedStyle(el); return ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth'].reduce((n, k) => n + parseFloat(c[k]), 0); };
+  const hoogten = (el, html) => {
+    el.innerHTML = html.map(h => `<div style="display:flow-root">${h}</div>`).join('');
+    const r = rand(el);
+    return [...el.children].map(d => d.offsetHeight + r);
+  };
+  const proeven = vakProeven();
+  const a = hoogten(tekst, proeven.map(([k]) => k.replace('@', '<span class="q-blank">?</span>')));
+  const b = hoogten(area, proeven.map(([, v]) => v));
+  const m = { tekst: Math.max(0, ...a), vak: Math.max(0, ...b), samen: Math.max(0, ...a.map((h, i) => h + b[i])) };
+  for (const { el, f, cls, font } of weg) { el.innerHTML = ''; el.appendChild(f); el.className = cls; el.style.fontSize = font; }
+  if (G.count) m.samen = m.tekst + m.vak;
+  return m;
+}
+function vakProeven() {
+  const knoppen = (k, n) => Array(n).fill(`<button class="${k}">8</button>`).join('');
+  if (G.count) { const t = telProeven(); return [...t.kaarten.map(k => [k, '']), ...t.tegels.map(v => ['', v])]; }
+  const vier = `<div class="choices">${knoppen('choice-btn', 4)}</div>`, s = P().settings;
+
+  const uit = [['88 + 88 = @', kanTypen(s) ? `<div class="numpad">${knoppen('num-btn', 12)}</div>` : vier],
+    ...kaartProeven(G.insts || {}).map(k => [k, vier])];
+  if (G.insts && G.insts.lijn) uit.push(['<span class="kal-rij"><span class="kal-kaart nu gl-zoek">88</span></span>', lijnTikvlak({ bereik: [0, 20, 1, 5] })]);
+  return uit;
+}
+
+
+
+
+
+
+
+
+
+const TEL_PROEVEN = 160;
+function telProeven() {
+  const p = P(), ct = p.countTrack, was = ct.rung, kaarten = new Map(), tegels = new Map();
+  const vorm = (k, v) => ['emoji', 'pos', 'v'].includes(k) ? undefined : v;
+  for (let i = 0; i < TEL_PROEVEN; i++) {
+    ct.rung = i % 2 ? 99 : was;
+    const q = genCount(p);
+    kaarten.set(JSON.stringify(q.card, vorm), telKaartHTML(q));
+    tegels.set(JSON.stringify(q.choices.map(c => JSON.stringify(c, vorm)).sort()), telTegelsHTML(q));
+  }
+  ct.rung = was;
+  return { kaarten: [...kaarten.values()], tegels: [...tegels.values()] };
 }
 
 
@@ -25666,15 +25799,19 @@ function zaalPast() {
 
 
 
-  const sg = $('screen-game'), arena = zaal.closest('.game-arena');
-  const schermOnder = onderkant(sg) - sg.offsetHeight + sg.clientHeight;
-  const arenaOver = arena ? onderkant(arena) + (parseFloat(getComputedStyle(sg).paddingBottom) || 0) - schermOnder : 0;
-  zet(zaal.offsetHeight - Math.ceil(Math.max(laatste + 6 - window.innerHeight, arenaOver)));
+  zet(zaal.offsetHeight - Math.ceil(Math.max(laatste + 6 - window.innerHeight, arenaOver())));
 
 
 
 
   for (let i = 0; i < 3 && zet(gezichtVrij(zaal)); i++);
+}
+
+function arenaOver() {
+  const sg = $('screen-game'), arena = sg.querySelector('.game-arena');
+  if (!arena) return 0;
+  const schermOnder = onderkant(sg) - sg.offsetHeight + sg.clientHeight;
+  return onderkant(arena) + (parseFloat(getComputedStyle(sg).paddingBottom) || 0) - schermOnder;
 }
 const onderkant = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y + el.offsetHeight; };
 
@@ -25707,7 +25844,7 @@ function gezichtVrij(zaal) {
 function antwoordOpMaat(area, los) {
   area.style.minHeight = '';
   area.classList.remove('vast');
-  if (los) return;
+  if (los || !naastElkaar()) return;
   if (G.antwoordMin == null) G.antwoordMin = antwoordMeten(area);
   if (!G.antwoordMin) return;
   area.style.minHeight = G.antwoordMin + 'px';
@@ -25725,7 +25862,7 @@ function antwoordMeten(area) {
 
 
   const vormen = [`<div class="choices">${knop('choice-btn', 4)}</div>`];
-  if (P().settings.mode !== 'kies') vormen.push(`<div class="numpad">${knop('num-btn', 12)}</div>`);
+  if (kanTypen(P().settings)) vormen.push(`<div class="numpad">${knop('num-btn', 12)}</div>`);
   let hoogste = Math.max(...vormen.map(hoog));
   if (G.insts && G.insts.lijn) {
 
@@ -25911,18 +26048,10 @@ function drawQuestion() {
 
 function kaartOpMaat(tekst) {
   tekst.style.paddingTop = tekst.style.paddingBottom = '';
-  G.kaartOver = 0;
+  if (!naastElkaar()) return;
   if (G.kaartMin == null) G.kaartMin = kaartMeten(tekst);
   const over = G.kaartMin - tekst.offsetHeight;
-  if (over <= 0) return;
-
-  const naast = getComputedStyle(tekst.parentNode.parentNode).flexDirection === 'row';
-  tekst.style.paddingTop = tekst.style.paddingBottom = over / 2 + 'px';
-  if (!klokZoekt(G.qs[G.idx]) || naast) return;
-
-  const vol = tekst.parentNode.offsetHeight;
-  tekst.style.paddingTop = tekst.style.paddingBottom = '';
-  G.kaartOver = vol - tekst.parentNode.offsetHeight;
+  if (over > 0) tekst.style.paddingTop = tekst.style.paddingBottom = over / 2 + 'px';
 }
 function kaartMeten(tekst) {
   const proeven = kaartProeven(G.insts || {});
@@ -25963,7 +26092,7 @@ function kaartProeven(insts) {
   if (insts.lijn) insts.lijn.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genLijn(r, i % 2 ? 'zoek' : 'lees').html); if (r.sprong) uit.push(...lijnHoogste()); });
   return uit;
 }
-addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = G.zaalVol = null; $('show-stage').style.height = $('show-stage').style.width = ''; });
+addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = G.vakMin = G.zaalVol = null; $('show-stage').style.height = $('show-stage').style.width = ''; });
 function numpadPress(n) {
   if (!G || G.lock) return;
   if (n === 'del') { if (G.input === '') return; G.input = G.input.slice(0, -1); sndClick(); }

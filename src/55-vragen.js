@@ -1978,9 +1978,8 @@ function bindTap(card, q, drawId) {
 // als het kind snel antwoordde.
 let countDrawId = 0;
 // De vraagkaart bovenin: toont de hoeveelheid/opdracht en spreekt haar uit.
-function drawCountQuestion(q) {
-  const myDraw = ++countDrawId;
-  const card = $('question-text');
+// De kaart van een telvraag. Los van het tekenen: vakMeten meet er de grootste van de fase mee.
+function telKaartHTML(q) {
   const cardRepr = q.card.repr || 'objects';
   const kind = q.card.kind;
   let body = '';
@@ -1996,7 +1995,13 @@ function drawCountQuestion(q) {
   else if (kind === 'tap') body = tapHTML(q.card);
   else if (kind === 'tiental') body = `<div class="cq-groupwrap">${dotFrameHTML(q.card.n, 10, 'big', 'full')}</div>`;
   else if (kind === 'vriend') body = `<div class="cq-groupwrap">${dotFrameHTML(q.card.n, q.card.doel, 'big', 'full')}</div>`;
-  card.innerHTML = `<div class="count-q">${body}</div>`;
+  return `<div class="count-q">${body}</div>`;
+}
+function drawCountQuestion(q) {
+  const myDraw = ++countDrawId;
+  const card = $('question-text');
+  const kind = q.card.kind;
+  card.innerHTML = telKaartHTML(q);
   if (kind === 'tap') {
     if (q.getikt) card.querySelectorAll('.tap-obj').forEach(b => b.classList.add('geteld'));
     else bindTap(card, q, myDraw);
@@ -2044,7 +2049,8 @@ function animateDelta(card, q, drawId) {
   }, 450);
 }
 // Zet de antwoordknoppen (hoeveelheden of cijfers) neer.
-function renderCountAnswers(q, area) {
+// De tegels van een telvraag (hoeveelheden of cijfers); ook voor vakMeten.
+function telTegelsHTML(q) {
   const tiles = q.choices.map(c => {
     let inner;
     if (c.kind === 'numeral') {
@@ -2061,7 +2067,10 @@ function renderCountAnswers(q, area) {
   const n = q.choices.length;
   // tik en tel: de knoppen wachten tot alles geteld is (zie bindTap)
   const cls = 'count-tiles' + (n <= 2 ? ' two' : n === 3 ? ' three' : '') + (q.tap && !q.getikt ? ' wacht' : '');
-  area.innerHTML = `<div class="${cls}">${tiles}</div>`;
+  return `<div class="${cls}">${tiles}</div>`;
+}
+function renderCountAnswers(q, area) {
+  area.innerHTML = telTegelsHTML(q);
   area.querySelectorAll('.count-tile').forEach(b => {
     b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
   });

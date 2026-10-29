@@ -26,11 +26,14 @@
  *      stond een stuk omlaag. Ook voor de balk van de kast.
  *   D  een scherm dat geen lijst is (.lijst, zie .screen in 10-basis) past op
  *      elke maat: zo'n scherm schuift niet, dus wat niet past valt weg
- *   E  een show springt niet: de kaart, het antwoordvak en zij staan bij elke
- *      vraag op dezelfde plek, ook als typen (cijferblok), kiezen (vier of twee
- *      knoppen) en tikken (de getallenlijn) elkaar afwisselen -- een som typ je, een klok of een dag kies
- *      je altijd. Vóór de speeltest van oktober 2026 schoof de kaart op een
- *      telefoon bij elke wissel 86px op, en kromp zij mee (zie antwoordOpMaat).
+ *   E  een show springt niet: zij, de bovenkant van de kaart en de onderkant
+ *      van de knoppen staan bij elke vraag op dezelfde plek, ook als typen
+ *      (cijferblok), kiezen (vier of twee knoppen) en tikken (de getallenlijn)
+ *      elkaar afwisselen, en in elke fase van de telmodus. Vóór de speeltest
+ *      van oktober 2026 schoof de kaart op een telefoon bij elke wissel 86px
+ *      op en kromp zij mee; in de telmodus sprong zij tot eind oktober 2026 nog
+ *      83px. En staand staat er geen lege band in het antwoordvak: wat de
+ *      vraag niet nodig heeft gaat naar de knoppen of de kaart (zie vakVullen).
  *   F  elk antwoord past: voor elk thema (uit THEMAS, dus een nieuw thema doet
  *      vanzelf mee) en de telmodus, elke stap, kiezen en typen, staan de kaart
  *      en elke knop van het antwoord helemaal in beeld. Vóór oktober 2026 vielen
@@ -226,6 +229,8 @@ async function zaakC(browser) {
 
 // ---- E · een show springt niet ----
 const SPRONG = 4;
+// lucht in het antwoordvak, staand, boven de knoppen: meer is een lege band
+const VAK_LUCHT = 12;
 async function zaakE(browser, [w, h]) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true });
   await cacheFonts(ctx);
@@ -234,39 +239,50 @@ async function zaakE(browser, [w, h]) {
   page.on('pageerror', e => fouten.push(e.message));
   await page.goto(APP_URL + '&demo&star=p1&screen=map');
   await rust(page);
-  // alle drie de manieren van antwoorden, en elk thema met al zijn stappen (uit THEMAS en
-  // LADDERS: een nieuw thema doet vanzelf mee). Kiezen stond er eerst niet bij, "want dat
-  // zijn altijd vier knoppen" -- tot de getallenlijn een lijn en Afronden twee knoppen gaf.
-  for (const mode of ['kies', 'typ', 'mix']) {
-    const r = await page.evaluate(async mode => {
+  /* Alle drie de manieren van antwoorden, met elk thema en al zijn stappen (uit THEMAS en
+     LADDERS: een nieuw thema doet vanzelf mee), en elke fase van de telmodus. Kiezen stond
+     er eerst niet bij, "want dat zijn altijd vier knoppen" -- tot de getallenlijn een lijn
+     en Afronden twee knoppen gaf. */
+  const shows = ['kies', 'typ', 'mix'].map(mode => ({ naam: mode, mode }))
+    .concat(Array.from({ length: 12 }, (_, i) => ({ naam: 'tellen fase ' + (i + 1), fase: i + 1 })));
+  for (const show of shows) {
+    const r = await page.evaluate(async show => {
       await document.fonts.ready;
       const s = P().settings;
-      s.ops = ['+', '-']; s.themas = THEMAS.filter(t => !t.ops).map(t => t.id); s.mode = mode; s.modus = 'vrij'; s.perLevel = 12;
-      Object.values(LADDERS).forEach(L => { if (L.kies) s[L.kies] = L.pad.map(r => r.id); });
+      if (show.fase) { s.track = 'count'; s.modus = 'pad'; s.numerals = true; s.stage = s.stageMax = show.fase; P().countTrack.stage = show.fase; }
+      else {
+        s.track = 'math'; s.ops = ['+', '-']; s.themas = THEMAS.filter(t => !t.ops).map(t => t.id); s.mode = show.mode; s.modus = 'vrij';
+        Object.values(LADDERS).forEach(L => { if (L.kies) s[L.kies] = L.pad.map(r => r.id); });
+      }
+      s.perLevel = 12;
       startLevel(P().level);
       // offsetTop en offsetHeight: de vraag komt binnen met een transform, en die telt hier niet
       const plek = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
-      /* Het vak: zijn onderkant, waar de duim is. Bij de klok zoeken krijgt het
-         vak wat de kaart over heeft (klokZoekRuim): dan begint het hoger, maar
-         eindigt het op dezelfde plek. Liggend staat het naast de kaart, in het midden. */
-      const vakPlek = () => { const a = $('answer-area'), naast = getComputedStyle(a.parentNode).flexDirection === 'row';
-        return Math.round(plek(a) + a.offsetHeight / (naast ? 2 : 1)); };
+      const a = $('answer-area'), naast = () => getComputedStyle(a.parentNode).flexDirection === 'row';
+      /* Het vak: zijn onderkant, waar de duim is. Liggend staat het naast de kaart, in het midden. */
+      const vakPlek = () => Math.round(plek(a) + a.offsetHeight / (naast() ? 2 : 1));
       const uit = [];
       for (let i = 0; i < G.total; i++) {
         G.idx = i; renderQuestion();
         const q = G.qs[i];
-        uit.push({ vraag: q.kind + (q.vorm || q.soort ? '/' + (q.vorm || q.soort) : '') + (G.mode === 'typ' ? ' typ' : ' kies'),
-          kaart: plek($('question-card')), vak: vakPlek(), zij: plek($('game-avatar-inner')), zijHoog: $('game-avatar-inner').offsetHeight });
+        const knoppen = [...a.querySelectorAll('button, .gl-vlak')].filter(b => b.offsetHeight);
+        const boven = knoppen.length ? Math.min(...knoppen.map(plek)) - plek(a) : 0;
+        uit.push({ vraag: q.kind + (q.vorm || q.soort || q.ctype ? '/' + (q.vorm || q.soort || q.ctype) : '') + ' ' + G.mode,
+          kaart: plek($('question-card')), vak: vakPlek(), zij: plek($('game-avatar-inner')), zijHoog: $('game-avatar-inner').offsetHeight,
+          lucht: naast() ? 0 : boven });
       }
       return uit;
-    }, mode);
+    }, show);
     for (const k of ['kaart', 'vak', 'zij', 'zijHoog']) {
       const v = r.map(x => x[k]), span = Math.max(...v) - Math.min(...v);
       /* SPRONG: een paar pixels afronding op een drukke machine is geen sprong (liggend
          schoof zij er 2 à 3 onder npm test); de sprong uit de speeltest was 35 tot 86 */
       check(span <= SPRONG, 'E · een show springt niet',
-        `${w}x${h}, ${mode}: ${k} verspringt ${span}px over ${r.map(x => `${x.vraag} ${x[k]}`).join(', ')}`);
+        `${w}x${h}, ${show.naam}: ${k} verspringt ${span}px over ${r.map(x => `${x.vraag} ${x[k]}`).join(', ')}`);
     }
+    const band = r.filter(x => x.lucht > VAK_LUCHT);
+    check(!band.length, 'E · een show springt niet',
+      `${w}x${h}, ${show.naam}: een lege band boven de knoppen: ${band.map(x => `${x.vraag} ${x.lucht}px`).join(', ')}`);
   }
   check(!fouten.length, 'E · een show springt niet', `${w}x${h}: ${fouten.join(' | ')}`);
   await ctx.close();
@@ -420,7 +436,7 @@ async function zaakZ(browser, [w, h]) {
   const browser = await launch();
   await Promise.all([[390, 844], [414, 896], [430, 932]].map(m => zaakZ(browser, m)));
   await Promise.all(PAS_MATEN.map(m => zaakF(browser, m)));
-  await Promise.all([[390, 844], [320, 568], [844, 390], [1024, 768]].map(m => zaakE(browser, m)));
+  await Promise.all([[390, 844], [320, 568], [430, 932], [844, 390], [1024, 768], [820, 1180]].map(m => zaakE(browser, m)));
   const rij = [...MATEN];
   await Promise.all([zaakC(browser), ...Array.from({ length: TEGELIJK }, async () => {
     for (let m; (m = rij.shift());) await perMaat(browser, m);
