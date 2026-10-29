@@ -9887,7 +9887,6 @@
   .oe-regel + .oe-regel { margin-top: 8px; }
   .oe-regel-lbl { flex: 0 0 76px; font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
   .oe-regel > :not(.oe-regel-lbl) { flex: 1; min-width: 0; }
-  .oe-regel .oe-seg .chip { height: 36px; font-size: var(--tx-klein); padding: 0 2px; }
 
 
   .oe-regel .oe-mix { justify-content: center; gap: 6px; margin: 0; padding: 8px 4px; border-radius: 14px; background: var(--lavender-wash); }
@@ -9912,6 +9911,9 @@
     color: var(--purple-mid); font-size: var(--tx-label); font-weight: 700; line-height: 1;
   }
   .oe-seg .chip.on { background: var(--purple-mid); color: var(--c-white); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
+
+
+  .oe-regel .oe-seg .chip, .oe-regel .oe-seg .chip:hover { height: 36px; font-size: var(--tx-klein); padding: 0 2px; }
 
 
   @media (max-width: 360px) { .oe-seg .chip { font-size: var(--tx-klein); } }
