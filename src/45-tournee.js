@@ -1196,10 +1196,26 @@ function stofWek() {
 }
 function stofStart() {
   clearTimeout(stofSlaap);
+  clearTimeout(stofWacht);
   stofWacht = setTimeout(stofWek, STOF.wacht);
 }
 // Elke tik op de kaart wekt het stof, of houdt het wakker.
 $('screen-map').addEventListener('pointerdown', stofWek, { passive: true });
+/* En zodra er iets anders op de kaart gaat bewegen (haar huppel na een tik, de
+   ring van een halte) gaat het stof weer liggen tot dat voorbij is: één ding
+   tegelijk, ook na de opkomst. Het scheelt ook werk. Zonder GPU (een trage
+   tablet, en elke testbrowser) kost elk puntje de compositor per beeldje: acht
+   wakkere puntjes waren daar ruim 100ms per seconde, en precies op het moment
+   dat zij springt hoort die tijd naar haar te gaan. Gemeten in sterren zaak
+   7e-kwart, die er een op de drie keer over viel. */
+$('screen-map').addEventListener('animationstart', e => {
+  const laag = stofLaag();
+  if (!laag || !laag.classList.contains('wakker') || laag.contains(e.target)) return;
+  const a = e.target.getAnimations && e.target.getAnimations().find(x => x.animationName === e.animationName);
+  if (!a || a.effect.getTiming().iterations === Infinity) return;
+  laag.classList.remove('wakker');
+  stofStart();
+});
 
 /* Eén halte op de kaart, als knop. stand is wat renderTourMap één keer
    uitrekent en voor elke halte hetzelfde is (wie, tot waar open, waar de ster

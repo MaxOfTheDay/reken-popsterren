@@ -20925,10 +20925,26 @@ function stofWek() {
 }
 function stofStart() {
   clearTimeout(stofSlaap);
+  clearTimeout(stofWacht);
   stofWacht = setTimeout(stofWek, STOF.wacht);
 }
 
 $('screen-map').addEventListener('pointerdown', stofWek, { passive: true });
+
+
+
+
+
+
+
+$('screen-map').addEventListener('animationstart', e => {
+  const laag = stofLaag();
+  if (!laag || !laag.classList.contains('wakker') || laag.contains(e.target)) return;
+  const a = e.target.getAnimations && e.target.getAnimations().find(x => x.animationName === e.animationName);
+  if (!a || a.effect.getTiming().iterations === Infinity) return;
+  laag.classList.remove('wakker');
+  stofStart();
+});
 
 
 
