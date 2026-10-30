@@ -657,7 +657,9 @@ function check(ok, label, detail) {
         if (!begin.test(meisje)) uit.geenSvg.push(id);
         if (it.price !== undefined) uit.metPrijs.push(id);
         // geen enkele verwijzing naar buiten: geen plaatje, geen url(), geen klasse
-        if (/<image|url\(|class=/.test(meisje + it.thumb('meisje'))) uit.extern.push(id);
+        // url(#…) mag wel: dat is de glans van het miniatuur, die naar zijn eigen
+        // verloop en masker in dezelfde svg wijst (zie beloningThumb)
+        if (/<image|url\((?!#)|class=/.test(meisje + it.thumb('meisje'))) uit.extern.push(id);
         /* Waar staat het ding echt? Niet uit de tekst geraden maar opgemeten:
            het stukje SVG in dezelfde 200x250-ruimte zetten als de pop en de
            browser zijn eigen omhullende laten geven. Dat is meteen de enige

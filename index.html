@@ -9214,6 +9214,10 @@
   .item-card .item-thumb { height: 62px; position: relative; margin-bottom: 8px; }
   .item-card .item-thumb svg { height: 62px; }
   .item-card .item-thumb .thumb-emo { font-size: 46px; }
+
+
+
+  .item-card .item-thumb.thumb-schat svg { width: 64px; height: 48px; max-width: none; }
   .item-card .item-thumb > * { position: relative; z-index: 1; }
   .item-card .item-thumb:not(.thumb-podium):not(.thumb-prijs):not(.thumb-staal)::after {
     content: ''; position: absolute; left: 50%; bottom: -4px; width: 58%; height: 9px;
@@ -12706,8 +12710,33 @@ function artToverhoed() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const SCHAT_RAND_DUN = 0.65;
+let glansUid = 0;
 function beloningThumb(view, art) {
-  return `<svg viewBox="${view}" xmlns="http://www.w3.org/2000/svg">${art}</svg>`;
+  const id = 'glans' + (++glansUid);
+  const [x, y, w, h] = view.split(' ');
+  const dun = art.replace(/stroke-width="([\d.]+)"/g, (_, n) => `stroke-width="${+(n * SCHAT_RAND_DUN).toFixed(2)}"`);
+  const vak = `x="${x}" y="${y}" width="${w}" height="${h}"`;
+  return `<svg viewBox="${view}" xmlns="http://www.w3.org/2000/svg">${dun}`
+    + `<defs><linearGradient id="${id}l" x1="0" y1="0" x2=".35" y2="1">`
+    + `<stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/>`
+    + `<stop offset=".75" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>`
+    + `<mask id="${id}m" maskUnits="userSpaceOnUse" ${vak} style="mask-type:alpha">${dun}</mask></defs>`
+    + `<rect ${vak} fill="url(#${id}l)" mask="url(#${id}m)"/></svg>`;
 }
 
 
@@ -28031,7 +28060,7 @@ function itemThumb(it, base) {
 
 
 
-  if (it.thumb) return zone(it.thumb(base));
+  if (it.thumb) return zone(it.thumb(base), 'thumb-schat');
   if (it.emoji) return zone(`<span class="thumb-emo">${it.emoji}</span>`);
   if (it.cat === 'dress') return zone(dressThumb(it, base), (OUTFIT_THUMBS[base] || OUTFIT_THUMBS[DEFAULT_BASE]).cls);
   if (it.cat === 'hair')  return zone(hairThumb(it, base));
