@@ -93,7 +93,7 @@ function itemThumb(it, base) {
      Let op de volgorde: thumb() gaat vóór emoji. Een item mag dus allebei hebben --
      de emoji blijft dan staan voor de plekken die geen SVG aankunnen (de naam in de
      kleedkamerbalk, de confetti bij het wereldfeest). */
-  if (it.thumb) return zone(it.thumb(base));
+  if (it.thumb) return zone(it.thumb(base), 'thumb-schat');   // een wereldschat: zie beloningThumb
   if (it.emoji) return zone(`<span class="thumb-emo">${it.emoji}</span>`);
   if (it.cat === 'dress') return zone(dressThumb(it, base), (OUTFIT_THUMBS[base] || OUTFIT_THUMBS[DEFAULT_BASE]).cls);
   if (it.cat === 'hair')  return zone(hairThumb(it, base));

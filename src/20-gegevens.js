@@ -251,9 +251,34 @@ function artToverhoed() {
 /* Het miniatuur is elke keer dezelfde tekening, alleen strak uitgesneden:
    itemThumb geeft hem 52 pixels hoogte en de viewBox doet de rest, dus krapper
    uitsnijden is groter in beeld. Eén tekening voor de pop, de kaart én het
-   wereldfeest -- geen tweede versie die uit de pas kan gaan lopen. */
+   wereldfeest -- geen tweede versie die uit de pas kan gaan lopen.
+
+   Wel krijgt het miniatuur twee dingen mee die de pop niet krijgt, omdat het in
+   de kleedkamer tússen de emoji staat en daar anders uit een ander spel leek:
+     - de omtrek wat dunner (SCHAT_RAND_DUN): een dikke donkere rand las als een
+       sticker naast de emoji, die geen rand hebben;
+     - glans: licht van boven, een zweem schaduw onderaan, net als een emoji. Dat
+       is één rechthoek met een verloop, gemaskerd met de tekening zelf (alfa,
+       dus de kleuren doen er niet toe) -- zo valt het licht alleen op de schat
+       en nooit ernaast, wat de vorm ook is. Een studioschat krijgt hem vanzelf.
+   Op de pop blijft de tekening zoals hij is: daar staat hij naast de andere
+   getekende onderdelen van de pop, en die hebben ook een rand en geen glans.
+   Het verloop en het masker hebben een id, en er staan tientallen miniaturen
+   tegelijk op één pagina: vandaar de teller. De maat in het rek (zelfde vak als
+   een emoji) staat in het stijlblad, bij .thumb-schat. */
+const SCHAT_RAND_DUN = 0.65;
+let glansUid = 0;
 function beloningThumb(view, art) {
-  return `<svg viewBox="${view}" xmlns="http://www.w3.org/2000/svg">${art}</svg>`;
+  const id = 'glans' + (++glansUid);
+  const [x, y, w, h] = view.split(' ');
+  const dun = art.replace(/stroke-width="([\d.]+)"/g, (_, n) => `stroke-width="${+(n * SCHAT_RAND_DUN).toFixed(2)}"`);
+  const vak = `x="${x}" y="${y}" width="${w}" height="${h}"`;
+  return `<svg viewBox="${view}" xmlns="http://www.w3.org/2000/svg">${dun}`
+    + `<defs><linearGradient id="${id}l" x1="0" y1="0" x2=".35" y2="1">`
+    + `<stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/>`
+    + `<stop offset=".75" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>`
+    + `<mask id="${id}m" maskUnits="userSpaceOnUse" ${vak} style="mask-type:alpha">${dun}</mask></defs>`
+    + `<rect ${vak} fill="url(#${id}l)" mask="url(#${id}m)"/></svg>`;
 }
 
 /* ---- Een wereldschat uit de studio: een tekening, geen code ---------------

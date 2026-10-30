@@ -791,6 +791,10 @@
   .item-card .item-thumb { height: 62px; position: relative; margin-bottom: 8px; }
   .item-card .item-thumb svg { height: 62px; }
   .item-card .item-thumb .thumb-emo { font-size: 46px; }
+  /* Een wereldschat in hetzelfde vak als een emoji ernaast (± 46 groot), en niet
+     het hele kaartje breed: een brede schat wordt kleiner, niet breder. De svg
+     schaalt binnen dit vak met zijn eigen verhouding (viewBox, "meet"). */
+  .item-card .item-thumb.thumb-schat svg { width: 64px; height: 48px; max-width: none; }
   .item-card .item-thumb > * { position: relative; z-index: 1; }
   .item-card .item-thumb:not(.thumb-podium):not(.thumb-prijs):not(.thumb-staal)::after {
     content: ''; position: absolute; left: 50%; bottom: -4px; width: 58%; height: 9px;
