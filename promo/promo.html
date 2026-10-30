@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rekensterren promo</title>
 <!--
-  Het promofilmpje van Rekensterren: ± 20 seconden, 1920x1080 -- of staand,
+  Het promofilmpje van Rekensterren: ± 25 seconden, 1920x1080 -- of staand,
   1080x1920, met ?staand erachter. Staand is voor de telefoon: de over-pagina op
   een smal scherm, en verhalen/status op sociale media. Het is hetzelfde filmpje
   met dezelfde tijden; alleen waar de dingen staan en hoe groot ze zijn is anders
@@ -18,7 +18,7 @@
   geeft altijd hetzelfde beeld.
 
   Scènes, in ontwerptijd (S3, STAP en EIND in het script zetten de maat; het
-  filmpje speelt dat SNEL = 1,4 keer zo snel af, dus ± 20 echte seconden):
+  filmpje speelt dat SNEL = 1,15 keer zo snel af, dus ± 25 echte seconden):
     0   - 0.8   de ster landt, de R met zijn ster ploft erin
     0.8 - 3.1   het logo bouwt zichzelf op: de R schuift naar zijn plek, de
                 ster springt naar zijn plek boven "sterren", de letters en de
@@ -272,8 +272,10 @@ const DUUR = S3 + N * STAP + EIND;   // in 'ontwerptijd'; zie SNEL
 /* Alles hierboven en hieronder is in ontwerptijd geschreven; het filmpje speelt
    die SNEL keer zo snel af. Op een telefoon voelde de ontwerptijd traag, en zo
    gaat alles even veel sneller -- de verhoudingen blijven staan. Hoe lang het
-   filmpje echt duurt is DUUR / SNEL (window.DUUR, voor render.js). */
-const SNEL = 1.4;
+   filmpje echt duurt is DUUR / SNEL (window.DUUR, voor render.js).
+   Niet hoger dan dit: bij 1,4 stond elk scherm anderhalve seconde en was het
+   filmpje te snel om de koppen te lezen. Nu ± 1,8 s per scherm, ± 25 s in totaal. */
+const SNEL = 1.15;
 /* In de browser speelt het filmpje in een lus, en dan vervaagt de eindkaart in
    de laatste halve seconde zodat het begin er naadloos op volgt. In de opname
    (?opname) niet: een filmpje op een pagina blijft op zijn laatste beeld staan,

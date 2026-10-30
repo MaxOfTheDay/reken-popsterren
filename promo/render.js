@@ -31,6 +31,7 @@
  * Nodig: Playwright (zoals voor de browsertests) en een ffmpeg met libx264.
  * Staat ffmpeg niet op het pad, wijs hem dan aan met FFMPEG=/pad/naar/ffmpeg.
  */
+const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const { launch } = require('../test/browser.js');
@@ -44,7 +45,9 @@ const HOOG = path.join(__dirname, `rekensterren-${naam}-hoog.mp4`);
 const STAAND = /staand/.test(naam);
 const [W, H] = STAAND ? [1080, 1920] : [1920, 1080];
 const FFMPEG = process.env.FFMPEG || 'ffmpeg';
-const WEB_CRF = '27';
+const WEB_CRF = 26;
+// net onder de 4,5 MB van inhoud zaak M
+const WEB_MAX = 4.4e6;
 const HOOG_CRF = '14';
 const X264 = 'aq-mode=3';
 
@@ -84,11 +87,17 @@ const X264 = 'aq-mode=3';
   ff.stdin.end();
   await new Promise(ok => ff.on('close', ok));
   await browser.close();
-  // de webversie: volle maat, sterker samengeperst dan de hoge
-  const web = spawn(FFMPEG, ['-loglevel', 'error', '-y', '-i', HOOG,
-    '-c:v', 'libx264', '-preset', 'veryslow', '-crf', WEB_CRF, '-tune', 'animation', '-x264-params', X264,
-    '-pix_fmt', 'yuv420p', '-movflags', '+faststart', OUT], { stdio: 'inherit' });
-  await new Promise(ok => web.on('close', ok));
-  console.log(`\n${laatste - eerste} beelden -> ${HOOG}\n  webversie -> ${OUT}`);
+  // de webversie: volle maat, zo scherp als binnen WEB_MAX past. Begint bij
+  // WEB_CRF en perst pas harder als het moet; een vaste crf viel buiten de grens
+  // zodra het filmpje een paar seconden langer werd.
+  let crf = WEB_CRF;
+  for (;; crf++) {
+    const web = spawn(FFMPEG, ['-loglevel', 'error', '-y', '-i', HOOG,
+      '-c:v', 'libx264', '-preset', 'veryslow', '-crf', String(crf), '-tune', 'animation', '-x264-params', X264,
+      '-pix_fmt', 'yuv420p', '-movflags', '+faststart', OUT], { stdio: 'inherit' });
+    await new Promise(ok => web.on('close', ok));
+    if (fs.statSync(OUT).size <= WEB_MAX || crf >= 32) break;
+  }
+  console.log(`\n${laatste - eerste} beelden -> ${HOOG}\n  webversie (crf ${crf}, ${(fs.statSync(OUT).size / 1e6).toFixed(1)} MB) -> ${OUT}`);
   if (fouten.length) { console.log('Fouten in de pagina:\n  ' + fouten.join('\n  ')); process.exitCode = 1; }
 })();
