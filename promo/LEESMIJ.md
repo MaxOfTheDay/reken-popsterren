@@ -7,8 +7,8 @@ poster -- staand op een smal scherm, liggend op een breed.
 
 | bestand | wat |
 |---|---|
-| `rekensterren-promo.mp4` | het filmpje, ± 20 s, 60 beelden per seconde, zonder geluid. De webversie: 1920×1080, ± 3,7 MB |
-| `rekensterren-promo-staand.mp4` | hetzelfde filmpje staand, 1080×1920, ± 4,1 MB: wat de over-pagina op een telefoon toont |
+| `rekensterren-promo.mp4` | het filmpje, ± 25 s, 60 beelden per seconde, zonder geluid. De webversie: 1920×1080, ± 4,3 MB |
+| `rekensterren-promo-staand.mp4` | hetzelfde filmpje staand, 1080×1920, ± 4,2 MB: wat de over-pagina op een telefoon toont |
 | `*-hoog.mp4` | de scherpe versies op volle maat (1920×1080 en 1080×1920), om op sociale media te posten. **Niet in git** -- `render.js` maakt ze, bewaar ze zelf |
 | `rekensterren-logo.mp4` | alleen het logo: het merkteken dat het spelogo wordt (de eerste 2,2 s) |
 | `in-app-intro.mp4` | opname van de korte logo-intro zoals hij ín het spel speelt (zie "= Het spelogo komt binnen" in `src/35-schermen.js`); de intro zelf staat in de app, niet hier |
