@@ -356,8 +356,8 @@ function openSter(key) {
    verder (vgStand), op de kaart én in het overzicht. De meeste zeiden wat
    haar volle rij nu laat zien, of wat het spel zelf al doet; alleen "Klaar
    voor meer" vroeg de ouder iets. Op haar pagina is dat een knop ín haar rij
-   ("↑ Meer"), die de stap meteen doet, met ↶ Terug in de melding. In het
-   overzicht van alle sterren is het het enige label dat nog bestaat (vgLabel). */
+   ("Tot 100 ↓", zie kaartTip), die de stap meteen doet, met ↶ Terug in de
+   melding. In het overzicht van alle sterren is het een gouden stip. */
 /* De stand van het label. Een tip (grensTip, telTip) gaat voor: dan is er iets
    voor de ouder te doen, en dat is het eerste wat die moet zien. Anders de
    uitdaging op deze stap; is die er nog niet, dan "nieuwe stap" (ze speelde al,
@@ -366,15 +366,13 @@ function vgStand(p) {
   if (p.settings.track === 'count' ? telTip(p) : grensTip(p)) return 'meer';
   const u = uitdagingStand(p);
   /* Zelf kiezen schuift niet zelf door en kent geen tip: gaat het vlot, dan is
-     dát het moment voor de ouder om iets bij te vinken ("Klaar voor meer", en
-     op de themakaart "↑ Erbij" -- zie zelfErbij). Anders bleef een
+     dát het moment voor de ouder om iets bij te vinken (de stip op het
+     overzicht, en op de themakaart "Erbij" -- zie zelfErbij). Anders bleef een
      kind dat het allang kon eindeloos hetzelfde spelen. */
   if (u && zelfGekozen(p.settings)) return u.stand === 'vlot' ? 'meer' : u.stand;
   if (u) return u.stand;
   return p.stap ? 'stap' : 'nieuw';
 }
-// goud, met een teken ervoor: dan zegt het het ook zonder kleurenzicht
-const vgLabel = () => '<span class="vg-tag meer" data-stand="meer"><b aria-hidden="true">★</b>Klaar voor meer</span>';
 // De notitie over de stem staat los boven het leerpad, en alleen als er iets mis is.
 function stemKaartHtml(p) {
   const stem = stemAan(p) ? stemNotitie(p.name) : '';
@@ -571,16 +569,23 @@ function leesLadder(p, k) {
    er, dan is het haar rij. */
 const vgKort = (rijen, een, meer) => rijen.length <= 3 ? rijen
   : rijen.slice(0, 2).concat(flRij(' later vg-gat', '⋮', `nog ${rijen.length - 2} ${mv(rijen.length - 2, een, meer)}`));
-// "↑ Meer" in haar rij, in plaats van het voorbeeld: er is iets voor de ouder te doen (zie bindSettings)
-const kaartTip = (id, data, woord) => `<button class="kaart-tip" id="${id}" type="button"${data || ''}>↑ ${woord || 'Meer'}</button>`;
+/* De knop in haar rij, in plaats van het voorbeeld: er is iets voor de ouder
+   te doen (zie bindSettings). Hij zegt wát een tik doet -- "Tot 100 ↓", "Fase 4 ↓",
+   "Typen" -- en niet "Meer": meer wat? De ↓ alleen als er stappen onder
+   haar bij komen; de ladder loopt naar beneden. Kort genoeg voor 320 punten:
+   het langste is "Tot 1000 ↓". */
+const kaartTip = (id, data, tekst) => `<button class="kaart-tip" id="${id}" type="button"${data || ''}>${tekst}</button>`;
+// de tekst voor grensTip: een hogere grens opent stappen, kiezen → mix → typen niet
+const grensTipTekst = g => g.soort === 'grens' ? `Tot ${g.naar} ↓` : g.naar === 'mix' ? 'Mix' : 'Typen';
 function rekenLadderHtml(p) {
   const s = p.settings;
   const rijen = [];
   if (s.track === 'count') {
     const st = countLiveStage(p), hi = countMaxStage(s);
     if (st > 1) rijen.push(flRij(' klaar', '✓', klaarNamen(COUNT_STAGE_LABELS.slice(1, st))));
-    const nu = stapNu(p);
-    rijen.push(metVul(flRij(' hier niveau-bezig', flAva(p), nu.naam, telTip(p) ? kaartTip('tel-tip-ja') : nu.vb), nu.deel));
+    const nu = stapNu(p), tt = telTip(p);
+    // met een tip is ze aan het eind van wat mag: dan is haar rij vol, ook als de trede nog niet bovenaan stond
+    rijen.push(metVul(flRij(' hier niveau-bezig', flAva(p), nu.naam, tt ? kaartTip('tel-tip-ja', '', tt.kort) : nu.vb), tt ? 1 : nu.deel));
     // de twee volgende fases, en de laatste die de ouder toelaat; wat ertussen zit is één rij "⋮"
     for (let v = st + 1; v <= Math.min(hi, st + 2); v++) rijen.push(flRij(' later', v, COUNT_STAGE_LABELS[v], COUNT_STAGE_VB[v]));
     const tussen = hi - st - 3;
@@ -594,12 +599,12 @@ function rekenLadderHtml(p) {
     const nr = nuId === 'alles' ? alle.length : alle.findIndex(r => r.id === nuId);   // = hoeveel rijen er al achter liggen
     if (nr) rijen.push(flRij(' klaar', '✓', klaarNamen(alle.slice(0, nr).map(r => r.naam))));
     const grens = grensTip(p);
-    const tip = grens ? kaartTip('grens-tip-ja', ` data-soort="${grens.soort}" data-v="${grens.naar}"`) : '';
+    const tip = grens ? kaartTip('grens-tip-ja', ` data-soort="${grens.soort}" data-v="${grens.naar}"`, grensTipTekst(grens)) : '';
     if (nuId === 'alles') {
       rijen.push(flRij(' hier niveau-bezig', flAva(p), 'Alles door elkaar', tip));
     } else {
       const nu = stapNu(p);
-      rijen.push(...hierMetUitleg(metVul(flRij(' hier niveau-bezig', flAva(p), nu.naam, tip || flVb(nu.vb)), nu.deel), 'rekenen', p.pad && p.pad.rij === nuId ? p.pad : null));
+      rijen.push(...hierMetUitleg(metVul(flRij(' hier niveau-bezig', flAva(p), nu.naam, tip || flVb(nu.vb)), tip ? 1 : nu.deel), 'rekenen', p.pad && p.pad.rij === nuId ? p.pad : null));
       rijen.push(...vgKort(alle.slice(nr + 1).map((r, i) => flRij(` later${r.uit ? ' overgeslagen' : ''}`, nr + 2 + i, r.naam, flVb(r.vb))), 'stap', 'stappen'));
     }
   }
@@ -779,7 +784,7 @@ function stemNotitie(naam) {
    Alleen voor rekenen, alleen als er nog een blok op de ladder is (10, 20,
    100, 1000 -- dezelfde blokken als op de open themakaart Rekenen).
 
-   Zet de ouder de grens om (met "↑ Meer" of op de open themakaart), dan begint het tellen
+   Zet de ouder de grens om (met de knop in haar rij of op de open themakaart), dan begint het tellen
    opnieuw: s.grensTipBasis onthoudt hoeveel drie-sterrenshows er toen al waren,
    en pas GRENS_TIP_SHOWS nieuwe op de nieuwe grens geven de volgende tip. Anders
    stond direct na "tot 20" al de vraag of het niet 100 moest.
@@ -854,16 +859,16 @@ function telTip(p) {
   const hi = countMaxStage(s);
   const qnaar = [6, 8, 10].find(v => v > (s.qmax || 10));
   const qtip = () => ({ soort: 'qmax',
-    tekst: `Tot ${s.qmax} gaat foutloos. Grotere aantallen?`, knop: `Tot ${qnaar}`, doe: p => { p.settings.qmax = qnaar; } });
+    tekst: `Tot ${s.qmax} gaat foutloos. Grotere aantallen?`, knop: `Tot ${qnaar}`, kort: `Tot ${qnaar}`, doe: p => { p.settings.qmax = qnaar; } });
   // onder de tien houdt countMaxStage het bij fase 11: dan zijn het de aantallen
   if (qnaar && hi === COUNT_STAGE_MAX - 1 && (s.stageMax || COUNT_STAGE_MAX) >= COUNT_STAGE_MAX) return qtip();
   if (hi < COUNT_STAGE_MAX) {
     return { soort: 'fase',
-      tekst: `Fase ${hi} gaat foutloos. Verder groeien?`, knop: `Tot fase ${hi + 1}`, doe: p => { p.settings.stageMax = hi + 1; } };
+      tekst: `Fase ${hi} gaat foutloos. Verder groeien?`, knop: `Tot fase ${hi + 1}`, kort: `Fase ${hi + 1} ↓`, doe: p => { p.settings.stageMax = hi + 1; } };
   }
   if (qnaar) return qtip();
   return { soort: 'rekenen',
-    tekst: 'De laatste fase gaat foutloos. Klaar om te rekenen? <span class="tip-klein">Plus en min tot 10, ze leest de sommen zelf.</span>', knop: 'Naar rekenen', doe: naarRekenen };
+    tekst: 'De laatste fase gaat foutloos. Klaar om te rekenen? <span class="tip-klein">Plus en min tot 10, ze leest de sommen zelf.</span>', knop: 'Naar rekenen', kort: 'Rekenen ↓', doe: naarRekenen };
 }
 /* Van tellen naar rekenen, zoals de tip het doet. Sterren, kaart en kleren
    hangen niet aan de modus, dus die blijven gewoon staan. Tot 10 en geen 20:
@@ -1476,7 +1481,7 @@ function openWieBlad() {
   syncBackGuard();
 }
 /* Het overzicht: waar ⚙️ opent. Bovenaan elke ster als één rij, met wat ze
-   oefent, en een label (vgLabel) alleen bij wie er iets te doen is -- wie
+   oefent, en een gouden stip alleen bij wie er iets te doen is -- wie
    alleen even wil kijken, ziet het hier al voor alle kinderen tegelijk. Een tik
    opent haar pagina. "Nieuwe ster" is de laatste rij, met dezelfde gestreepte
    cirkel als de "+"-tegel op de sterrenkeuze; bij zes sterren is er geen plek
@@ -1485,22 +1490,26 @@ function openWieBlad() {
 function overzichtHtml() {
   const rij = key => {
     const p = db.profiles[key];
-    /* Onder haar naam: wát ze oefent, als de icoontjes van de tegels op haar
-       pagina (bij tellen de 🧸). Hier stond haar stap met "Stap 3 van 5" en
+    /* Naast haar naam: wát ze oefent, als kleine grijze icoontjes van de tegels
+       op haar pagina (bij tellen de 🧸), op dezelfde regel -- de naam voorop,
+       zodat de rij laag blijft en de naam leidt. Hier stond haar stap met "Stap 3 van 5" en
        een label ("Net begonnen", "Past goed" ...) bij elk kind: het label was
        meestal grijs en voor iedereen hetzelfde, en "Stap 3 van 5" telde iets
        wat je hier niet zag. Waar ze staat, en hoe ver, ziet een ouder op haar
        pagina, in haar rij die volloopt.
-       Het label staat er alleen nog als de ouder iets kan doen ("Klaar voor
-       meer", zie vgStand): dan valt het op, juist omdat het er anders niet
-       staat. */
+       Als de ouder iets kan doen (vgStand 'meer') staat er een gouden stip
+       rechts, vlak voor de ›: altijd op dezelfde plek, zodat niets in de rij
+       verschuift, en naast de tik die je erheen brengt. Op haar pagina is het
+       dezelfde goudkleur, als knop in haar rij (kaartTip). Een label met
+       tekst was hier te veel: het staat er juist omdat het er anders niet staat. */
     const iconen = p.settings.track === 'count'
       ? '<span class="kaart-emoji">🧸</span>'
-      : themasAan(p.settings).map(k => themaIcoon(k, 22)).join('');
+      : themasAan(p.settings).map(k => themaIcoon(k, 18)).join('');
     return `<button class="ster-rij" type="button" data-key="${key}">`
       + `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
-      + `<span class="sr-tekst"><span class="sr-wie"><b>${esc(p.name)}</b>${vgStand(p) === 'meer' ? vgLabel() : ''}</span>`
+      + `<span class="sr-tekst"><b>${esc(p.name)}</b>`
       + `<span class="sr-themas" aria-label="Oefent ${p.settings.track === 'count' ? 'tellen' : themasAan(p.settings).map(k => THEMA[k].naam.toLowerCase()).join(', ')}">${iconen}</span></span>`
+      + (vgStand(p) === 'meer' ? '<span class="sr-stip" role="img" aria-label="Klaar voor meer"></span>' : '')
       + `<span class="sr-pijl" aria-hidden="true">›</span></button>`;
   };
   const nieuw = profileKeys().length < MAX_PROFILES
@@ -1924,7 +1933,7 @@ function bindWie(p) {
 function bindSettings(p, s) {
   const bind = (id, fn) => { const el = $(id); if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => fn(c)); };
   const on = (id, ev, fn) => { const el = $(id); if (el) el[ev] = fn; };
-  /* "↑ Meer" en "↑ Erbij" in haar rij (zie kaartTip): de stap meteen, en een
+  /* "Tot 100 ↓", "Erbij" en zo in haar rij (zie kaartTip): de stap meteen, en een
      melding met ↶ Terug (meldMetTerug). Terug zet haar instellingen en haar
      plek op het pad terug zoals ze vóór de tik waren -- een tik die
      naarRekenen doet, raakt die allebei. */
@@ -1970,7 +1979,7 @@ function bindSettings(p, s) {
   // een tik op haar stap: de uitleg van hoe ver ze is aan of uit (zie vgUitleg)
   document.querySelectorAll('#settings-body [data-uitleg]').forEach(r => {
     const wissel = e => {
-      if (e.target.closest('.kaart-tip')) return;   // "↑ Meer" in dezelfde rij doet zijn eigen ding
+      if (e.target.closest('.kaart-tip')) return;   // de knop in dezelfde rij doet zijn eigen ding
       sndClick();
       setUitleg = setUitleg === r.dataset.uitleg ? null : r.dataset.uitleg;
       renderSettings();

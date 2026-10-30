@@ -27,7 +27,7 @@
  *   M  de inschatting toont geen percentage, en p.perf draait er ongewijzigd door
  *   N  de drie weergavekeuzes staan op één regel, en wikkelen alleen als het moet
  *   O  op het beginscherm: de uitlegkaart na de back-up, per browser, en weg in de app
- *   P  de pagina van een ster: geen label op de kaart, één stap "nu", "↑ Meer" met ↶ Terug, de oogst dicht
+ *   P  de pagina van een ster: geen label op de kaart, één stap "nu", "Tot 100 ↓" met ↶ Terug, de oogst dicht
  *   Q  opstarten en instellingen: wie net speelde, geluid aan, meisje/jongen, het maakformulier
  *   T  de back-up is één rij met een blad erachter; overzetten met een code, langs
  *      een nagebootste ontvanger: neerleggen, ophalen, één keer, vervangen, annuleren
@@ -244,10 +244,10 @@ function check(ok, label, detail) {
       naam: !!document.getElementById('set-name'),
       // onder haar naam de icoontjes van wat ze oefent; een label alleen als er iets te doen is
       themas: [...document.querySelectorAll('#set-sterren .ster-rij[data-key]')].map(b => b.querySelectorAll('.sr-themas .thema-ico').length),
-      labels: document.querySelectorAll('#set-sterren .vg-tag').length,
+      labels: document.querySelectorAll('#set-sterren .sr-stip').length,
     }));
     check(r.setKey === null && r.rijen.join(',') === 'Anna,Bas,Cato', 'het tandwiel opent het overzicht, met elk kind als rij', JSON.stringify(r));
-    check(r.themas.every(n => n === 1) && r.labels === 0, 'onder elke naam wat ze oefent (rekenen), en geen label zonder iets te doen', JSON.stringify(r));
+    check(r.themas.every(n => n === 1) && r.labels === 0, 'naast elke naam wat ze oefent (rekenen), en geen stip zonder iets te doen', JSON.stringify(r));
     check(r.laatste === 'set-newstar', 'en als laatste rij "Nieuwe ster"', r.laatste);
     check(r.titel && r.speel, 'het overzicht heeft een titel en geen ▶', JSON.stringify(r));
     check(r.alle && !r.naam, 'en daaronder wat voor alle sterren geldt -- niets van één kind', JSON.stringify(r));
@@ -1082,6 +1082,7 @@ function check(ok, label, detail) {
       balk: [...document.querySelectorAll('#settings-body .vg-ladder .hier')].filter(e => e.style.getPropertyValue('--vul')).length
         - document.querySelectorAll('#settings-body .vg-balk').length,
       knop: (document.querySelector('#settings-body .kaart-tip') || {}).id || '',
+      tipTekst: (document.querySelector('#settings-body .kaart-tip') || {}).textContent || '',
       // haar cijfers staan niet op de pagina maar achter 📊 in de kop
       cijfers: !document.querySelector('#settings-body .ster-cijfers') && !document.getElementById('cijfers-knop').hidden,
       meerKaart: document.querySelectorAll('#settings-body .vg-meer').length,
@@ -1124,13 +1125,13 @@ function check(ok, label, detail) {
     // klaar voor meer: voorbij de laatste rij, met genoeg drie-sterrenshows
     await page.evaluate(() => { const p = db.profiles.p1; p.pad = { klaar: LEERPAD.map(x => x.id), rij: 'alles' }; p.grensDrie = 99; p.settings.mode = 'typ'; save(); });
     r = await met([]);
-    check(r.knop === 'grens-tip-ja' && !r.labels.length, 'P · klaar voor meer: "↑ Meer" in haar rij', JSON.stringify(r));
+    check(r.knop === 'grens-tip-ja' && r.tipTekst === 'Tot 100 ↓' && !r.labels.length, 'P · klaar voor meer: "Tot 100 ↓" in haar rij -- wat een tik doet', JSON.stringify(r));
     await page.click('#grens-tip-ja');
     await page.waitForTimeout(200);
     let t = await page.evaluate(() => ({ max: db.profiles.p1.settings.max, toast: document.getElementById('toast').textContent,
       knop: !!document.getElementById('grens-tip-ja') }));
     check(t.max === 100 && /Nu tot 100/.test(t.toast) && /Terug/.test(t.toast) && !t.knop,
-      'P · "↑ Meer" doet de stap meteen, en zegt welke, met ↶ Terug', JSON.stringify(t));
+      'P · "Tot 100 ↓" doet de stap meteen, en zegt welke, met ↶ Terug', JSON.stringify(t));
     await page.click('#toast .toast-terug');
     await page.waitForTimeout(200);
     t = await page.evaluate(() => ({ max: db.profiles.p1.settings.max, knop: !!document.getElementById('grens-tip-ja') }));

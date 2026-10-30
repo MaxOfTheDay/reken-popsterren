@@ -9561,27 +9561,30 @@
   .ster-rij {
     font-family: inherit; color: var(--paper-ink); background: transparent; border: none; cursor: pointer;
     width: 100%; text-align: left; display: flex; align-items: center; gap: 12px;
-    padding: 8px 10px; min-height: 64px; border-radius: var(--r-md);
+    padding: 6px 10px; min-height: 54px; border-radius: var(--r-md);
     transition: background var(--t-tik) ease;
   }
   .ster-rij + .ster-rij { border-top: 1px solid var(--paper-border); border-radius: 0; }
   .ster-rij:hover { background: var(--paper-tint); }
   .ster-rij:active { background: var(--lavender-wash-3); }
-  .ster-rij .who-portrait { width: 46px; height: 46px; flex: none; border-color: var(--lavender-wash-3); }
-  .ster-rij .who-portrait svg { top: -6px; width: 78px; }
-  .sr-tekst { flex: 1; min-width: 0; }
+  .ster-rij .who-portrait { width: 40px; height: 40px; flex: none; border-color: var(--lavender-wash-3); }
+  .ster-rij .who-portrait svg { top: -5px; width: 68px; }
+  .sr-tekst { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
   .sr-tekst b { display: block; font-size: var(--tx-body); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sr-tekst small { display: block; font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); margin-top: 2px; }
+  .sr-tekst b { min-width: 0; flex: 0 1 auto; }
 
 
-  .sr-themas { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
-  .sr-themas .kaart-emoji { font-size: 20px; }
-  .sr-wie { display: flex; align-items: center; gap: 8px; min-width: 0; }
-  .sr-wie b { min-width: 0; }
-  .sr-wie .vg-tag { flex: none; }
+
+
+  .sr-themas { display: flex; flex-wrap: wrap; gap: 4px; opacity: .7; }
+  .sr-themas .kaart-emoji { font-size: 17px; }
+
+
+  .sr-stip { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--gold-cta-top); }
   .sr-pijl { font-size: 24px; font-weight: 700; color: var(--purple-mid); line-height: 1; padding-right: 2px; }
   .sr-plus {
-    width: 46px; height: 46px; flex: none; border-radius: 50%; display: grid; place-items: center;
+    width: 40px; height: 40px; flex: none; border-radius: 50%; display: grid; place-items: center;
     border: 2px dashed var(--purple-light); color: var(--purple-mid); font-size: 20px;
   }
   .sr-nieuw .sr-tekst b { color: var(--purple-mid); }
@@ -10245,18 +10248,6 @@
   .kaart-kop h2 span { color: var(--paper-ink-muted); font-weight: 600; }
 
 
-
-
-  .vg-tag {
-    display: inline-flex; align-items: center; gap: 5px; flex: none; white-space: nowrap; vertical-align: middle;
-    padding: 4px 10px 4px 5px; border-radius: var(--r-pill);
-    font-size: var(--tx-klein); font-weight: 700; line-height: 1.1;
-    background: var(--goud-tint); color: var(--ink-on-gold-card);
-  }
-  .vg-tag b, .sr-tekst .vg-tag b {
-    display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%;
-    font-size: 11px; font-weight: 800; line-height: 1; color: var(--c-white); background: var(--ink-on-gold-card);
-  }
 
 
 
@@ -29402,8 +29393,6 @@ function vgStand(p) {
   return p.stap ? 'stap' : 'nieuw';
 }
 
-const vgLabel = () => '<span class="vg-tag meer" data-stand="meer"><b aria-hidden="true">★</b>Klaar voor meer</span>';
-
 function stemKaartHtml(p) {
   const stem = stemAan(p) ? stemNotitie(p.name) : '';
   return stem ? `<div class="set-card vg-kaart"><div class="note stem-notitie">${stem}${!db.sound
@@ -29600,15 +29589,22 @@ function leesLadder(p, k) {
 const vgKort = (rijen, een, meer) => rijen.length <= 3 ? rijen
   : rijen.slice(0, 2).concat(flRij(' later vg-gat', '⋮', `nog ${rijen.length - 2} ${mv(rijen.length - 2, een, meer)}`));
 
-const kaartTip = (id, data, woord) => `<button class="kaart-tip" id="${id}" type="button"${data || ''}>↑ ${woord || 'Meer'}</button>`;
+
+
+
+
+const kaartTip = (id, data, tekst) => `<button class="kaart-tip" id="${id}" type="button"${data || ''}>${tekst}</button>`;
+
+const grensTipTekst = g => g.soort === 'grens' ? `Tot ${g.naar} ↓` : g.naar === 'mix' ? 'Mix' : 'Typen';
 function rekenLadderHtml(p) {
   const s = p.settings;
   const rijen = [];
   if (s.track === 'count') {
     const st = countLiveStage(p), hi = countMaxStage(s);
     if (st > 1) rijen.push(flRij(' klaar', '✓', klaarNamen(COUNT_STAGE_LABELS.slice(1, st))));
-    const nu = stapNu(p);
-    rijen.push(metVul(flRij(' hier niveau-bezig', flAva(p), nu.naam, telTip(p) ? kaartTip('tel-tip-ja') : nu.vb), nu.deel));
+    const nu = stapNu(p), tt = telTip(p);
+
+    rijen.push(metVul(flRij(' hier niveau-bezig', flAva(p), nu.naam, tt ? kaartTip('tel-tip-ja', '', tt.kort) : nu.vb), tt ? 1 : nu.deel));
 
     for (let v = st + 1; v <= Math.min(hi, st + 2); v++) rijen.push(flRij(' later', v, COUNT_STAGE_LABELS[v], COUNT_STAGE_VB[v]));
     const tussen = hi - st - 3;
@@ -29622,12 +29618,12 @@ function rekenLadderHtml(p) {
     const nr = nuId === 'alles' ? alle.length : alle.findIndex(r => r.id === nuId);
     if (nr) rijen.push(flRij(' klaar', '✓', klaarNamen(alle.slice(0, nr).map(r => r.naam))));
     const grens = grensTip(p);
-    const tip = grens ? kaartTip('grens-tip-ja', ` data-soort="${grens.soort}" data-v="${grens.naar}"`) : '';
+    const tip = grens ? kaartTip('grens-tip-ja', ` data-soort="${grens.soort}" data-v="${grens.naar}"`, grensTipTekst(grens)) : '';
     if (nuId === 'alles') {
       rijen.push(flRij(' hier niveau-bezig', flAva(p), 'Alles door elkaar', tip));
     } else {
       const nu = stapNu(p);
-      rijen.push(...hierMetUitleg(metVul(flRij(' hier niveau-bezig', flAva(p), nu.naam, tip || flVb(nu.vb)), nu.deel), 'rekenen', p.pad && p.pad.rij === nuId ? p.pad : null));
+      rijen.push(...hierMetUitleg(metVul(flRij(' hier niveau-bezig', flAva(p), nu.naam, tip || flVb(nu.vb)), tip ? 1 : nu.deel), 'rekenen', p.pad && p.pad.rij === nuId ? p.pad : null));
       rijen.push(...vgKort(alle.slice(nr + 1).map((r, i) => flRij(` later${r.uit ? ' overgeslagen' : ''}`, nr + 2 + i, r.naam, flVb(r.vb))), 'stap', 'stappen'));
     }
   }
@@ -29882,16 +29878,16 @@ function telTip(p) {
   const hi = countMaxStage(s);
   const qnaar = [6, 8, 10].find(v => v > (s.qmax || 10));
   const qtip = () => ({ soort: 'qmax',
-    tekst: `Tot ${s.qmax} gaat foutloos. Grotere aantallen?`, knop: `Tot ${qnaar}`, doe: p => { p.settings.qmax = qnaar; } });
+    tekst: `Tot ${s.qmax} gaat foutloos. Grotere aantallen?`, knop: `Tot ${qnaar}`, kort: `Tot ${qnaar}`, doe: p => { p.settings.qmax = qnaar; } });
 
   if (qnaar && hi === COUNT_STAGE_MAX - 1 && (s.stageMax || COUNT_STAGE_MAX) >= COUNT_STAGE_MAX) return qtip();
   if (hi < COUNT_STAGE_MAX) {
     return { soort: 'fase',
-      tekst: `Fase ${hi} gaat foutloos. Verder groeien?`, knop: `Tot fase ${hi + 1}`, doe: p => { p.settings.stageMax = hi + 1; } };
+      tekst: `Fase ${hi} gaat foutloos. Verder groeien?`, knop: `Tot fase ${hi + 1}`, kort: `Fase ${hi + 1} ↓`, doe: p => { p.settings.stageMax = hi + 1; } };
   }
   if (qnaar) return qtip();
   return { soort: 'rekenen',
-    tekst: 'De laatste fase gaat foutloos. Klaar om te rekenen? <span class="tip-klein">Plus en min tot 10, ze leest de sommen zelf.</span>', knop: 'Naar rekenen', doe: naarRekenen };
+    tekst: 'De laatste fase gaat foutloos. Klaar om te rekenen? <span class="tip-klein">Plus en min tot 10, ze leest de sommen zelf.</span>', knop: 'Naar rekenen', kort: 'Rekenen ↓', doe: naarRekenen };
 }
 
 
@@ -30522,13 +30518,17 @@ function overzichtHtml() {
 
 
 
+
+
+
     const iconen = p.settings.track === 'count'
       ? '<span class="kaart-emoji">🧸</span>'
-      : themasAan(p.settings).map(k => themaIcoon(k, 22)).join('');
+      : themasAan(p.settings).map(k => themaIcoon(k, 18)).join('');
     return `<button class="ster-rij" type="button" data-key="${key}">`
       + `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
-      + `<span class="sr-tekst"><span class="sr-wie"><b>${esc(p.name)}</b>${vgStand(p) === 'meer' ? vgLabel() : ''}</span>`
+      + `<span class="sr-tekst"><b>${esc(p.name)}</b>`
       + `<span class="sr-themas" aria-label="Oefent ${p.settings.track === 'count' ? 'tellen' : themasAan(p.settings).map(k => THEMA[k].naam.toLowerCase()).join(', ')}">${iconen}</span></span>`
+      + (vgStand(p) === 'meer' ? '<span class="sr-stip" role="img" aria-label="Klaar voor meer"></span>' : '')
       + `<span class="sr-pijl" aria-hidden="true">›</span></button>`;
   };
   const nieuw = profileKeys().length < MAX_PROFILES

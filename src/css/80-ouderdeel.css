@@ -83,27 +83,30 @@
   .ster-rij {
     font-family: inherit; color: var(--paper-ink); background: transparent; border: none; cursor: pointer;
     width: 100%; text-align: left; display: flex; align-items: center; gap: 12px;
-    padding: 8px 10px; min-height: 64px; border-radius: var(--r-md);
+    padding: 6px 10px; min-height: 54px; border-radius: var(--r-md);
     transition: background var(--t-tik) ease;
   }
   .ster-rij + .ster-rij { border-top: 1px solid var(--paper-border); border-radius: 0; }
   .ster-rij:hover { background: var(--paper-tint); }
   .ster-rij:active { background: var(--lavender-wash-3); }
-  .ster-rij .who-portrait { width: 46px; height: 46px; flex: none; border-color: var(--lavender-wash-3); }
-  .ster-rij .who-portrait svg { top: -6px; width: 78px; }
-  .sr-tekst { flex: 1; min-width: 0; }
+  .ster-rij .who-portrait { width: 40px; height: 40px; flex: none; border-color: var(--lavender-wash-3); }
+  .ster-rij .who-portrait svg { top: -5px; width: 68px; }
+  .sr-tekst { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
   .sr-tekst b { display: block; font-size: var(--tx-body); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sr-tekst small { display: block; font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); margin-top: 2px; }
-  /* wat ze oefent: de icoontjes van haar thema's, zoals op de tegels van haar
-     pagina. Zes passen ook op 320 punten. */
-  .sr-themas { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
-  .sr-themas .kaart-emoji { font-size: 20px; }
-  .sr-wie { display: flex; align-items: center; gap: 8px; min-width: 0; }
-  .sr-wie b { min-width: 0; }
-  .sr-wie .vg-tag { flex: none; }
+  .sr-tekst b { min-width: 0; flex: 0 1 auto; }
+  /* wat ze oefent, naast haar naam: de icoontjes van haar thema's, zoals op de
+     tegels van haar pagina, klein en wat lichter -- de naam leidt. Zes passen
+     ook op 320 punten naast een naam van twaalf letters niet, en dan gaan ze
+     eronder (wrap) in plaats van de naam af te knippen. */
+  .sr-themas { display: flex; flex-wrap: wrap; gap: 4px; opacity: .7; }
+  .sr-themas .kaart-emoji { font-size: 17px; }
+  /* de gouden stip (zie overzichtHtml): rechts, vlak voor de ›. Het donkere
+     goud van ▶: het lichte (--gold-accent) viel op wit bijna weg. */
+  .sr-stip { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--gold-cta-top); }
   .sr-pijl { font-size: 24px; font-weight: 700; color: var(--purple-mid); line-height: 1; padding-right: 2px; }
   .sr-plus {
-    width: 46px; height: 46px; flex: none; border-radius: 50%; display: grid; place-items: center;
+    width: 40px; height: 40px; flex: none; border-radius: 50%; display: grid; place-items: center;
     border: 2px dashed var(--purple-light); color: var(--purple-mid); font-size: 20px;
   }
   .sr-nieuw .sr-tekst b { color: var(--purple-mid); }
@@ -767,18 +770,6 @@
   .kaart-kop h2 span { color: var(--paper-ink-muted); font-weight: 600; }
 
   /* ---- De pagina van één ster: haar cijfers, de themakaarten, lastige sommen (zie sterPaginaHtml) ---- */
-  /* Het label (zie vgLabel): "Klaar voor meer", goud met een ★ ervoor. Alleen
-     nog op het overzicht, in de rij van een ster waar de ouder iets kan doen. */
-  .vg-tag {
-    display: inline-flex; align-items: center; gap: 5px; flex: none; white-space: nowrap; vertical-align: middle;
-    padding: 4px 10px 4px 5px; border-radius: var(--r-pill);
-    font-size: var(--tx-klein); font-weight: 700; line-height: 1.1;
-    background: var(--goud-tint); color: var(--ink-on-gold-card);
-  }
-  .vg-tag b, .sr-tekst .vg-tag b {
-    display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%;
-    font-size: 11px; font-weight: 800; line-height: 1; color: var(--c-white); background: var(--ink-on-gold-card);
-  }
   /* Haar rij loopt van links vol (zie metVul, rijDeel): hoe ver ze op weg is
      naar de volgende stap. Geen tekst, geen getal, geen eigen balkje -- en dus
      ook geen hogere rij. Een harde grens, geen verloop: een verloop las als
@@ -786,7 +777,7 @@
   .fase-ladder .fl-rij.hier[style*="--vul"] {
     background: linear-gradient(90deg, var(--lavender-vul) var(--vul), var(--lavender-wash) var(--vul));
   }
-  /* "↑ Meer" en "↑ Erbij" (zie kaartTip): de enige knop op een themakaart die
+  /* "Tot 100 ↓", "Erbij" en zo (zie kaartTip): de enige knop op een themakaart die
      de ouder iets vraagt. Goud, want het is goed nieuws: ze is klaar voor meer.
      Hij staat ín haar rij, op de plek van het voorbeeld -- daar gaat hij over. */
   .kaart-tip {
