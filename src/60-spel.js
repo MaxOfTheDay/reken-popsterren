@@ -306,6 +306,7 @@ function vakVullen(area) {
        niet (ze staat ernaast), en een scherm dat schuift is erger dan een kaart
        die een vraag lang een paar pixels lager begint. */
     telPast(tekst.firstElementChild, tekst.offsetHeight - m.tekst);
+    telBreed(tekst);
     telPast(area.firstElementChild, area.offsetHeight - m.vak);
     const hoog = tekst.offsetHeight;
     let lucht = Math.max(0, m.tekst - hoog);
@@ -320,7 +321,7 @@ function vakVullen(area) {
     return;
   }
   const nu = () => kaart.offsetHeight + area.offsetHeight;
-  if (G.count) { telPast(tekst.firstElementChild, nu() - m.samen - rand); telPast(area.firstElementChild, nu() - m.samen - rand); }
+  if (G.count) { telPast(tekst.firstElementChild, nu() - m.samen - rand); telBreed(tekst); telPast(area.firstElementChild, nu() - m.samen - rand); }
   m.samen = Math.max(m.samen + rand, nu()) - rand;   // groter dan gemeten: het vak groeit mee
   const vak = m.samen + rand;
   const knoppen = [...area.querySelectorAll('.choice-btn')];
@@ -411,6 +412,25 @@ const TEL_KRIMP = 0.75;
 function telPast(el, teveel) {
   if (!el || teveel <= 0 || !el.offsetHeight) return;
   el.style.zoom = Math.max(TEL_KRIMP, (el.offsetHeight - teveel) / el.offsetHeight);
+}
+/* En op de breedte. Een telsom (twee getallen met elk een vijfvak eronder, en
+   het ? erachter) staat op één regel die niet breekt. Op een kleine telefoon
+   liggend is de kaart smaller dan die regel, en de kaart knipt wat erbuiten
+   valt (overflow: hidden, voor de ronde hoeken): het eerste vijfvak en het ?
+   vielen er half af. Gemeten op wat er echt staat, want een regel die in het
+   midden staat steekt aan béide kanten uit, en dat ziet scrollWidth niet.
+   Schuiven zaak G kijkt na dat er nergens iets afgeknipt wordt. */
+function telBreed(tekst) {
+  const el = tekst.firstElementChild;
+  if (!el) return;
+  const t = tekst.getBoundingClientRect(), cs = getComputedStyle(tekst);
+  const ruimte = t.width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const vakken = [...el.querySelectorAll('*')].map(x => x.getBoundingClientRect()).filter(r => r.width);
+  if (!vakken.length || !ruimte) return;
+  const breed = Math.max(...vakken.map(r => r.right)) - Math.min(...vakken.map(r => r.left));
+  if (breed <= ruimte + 0.5) return;
+  const zoom = parseFloat(el.style.zoom) || 1;
+  el.style.zoom = Math.max(TEL_KRIMP, zoom * ruimte / breed);
 }
 /* ---- Alles past -------------------------------------------------------------
    Steekt de vraag of het antwoord onder het scherm uit, dan krimpt zij (de

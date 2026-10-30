@@ -50,6 +50,16 @@
  *      telsom (vorm, teken, paar) loopt het apart af, niet alleen wat het lot
  *      trekt. Bij een gouden vraag houdt de kaart zijn breedte (liggend nam de gouden regel
  *      er 50px van af, en stak een telsom eruit).
+ *   G  niets wordt afgeknipt: in dezelfde ronde als F (elk thema, elke stap,
+ *      elke telfase en elke telsom, op de maten van F) valt geen vorm van een
+ *      tekening op de kaart of een knop buiten zijn viewBox, en steekt niets
+ *      op de kaart of in het antwoordvak buiten een kader dat knipt (de kaart
+ *      heeft overflow: hidden voor zijn ronde hoeken, een svg knipt altijd).
+ *      Twee kaders die stil knippen, en geen andere zaak die meet of er iets
+ *      in past: tot eind oktober 2026 was de top van de klok overal recht
+ *      afgesneden (het lichte randje stak 2px boven de tekening), en vielen
+ *      op een kleine telefoon liggend het eerste vijfvak en het ? van een
+ *      telsom half van de kaart.
  *   Z  haar gezicht blijft vrij: op een gewone hoge telefoon valt de hint (de
  *      🤔, "half 3 ↷") niet op haar hoofd, ook niet als zij hoog staat (de
  *      telmodus, een show met de klok of de kalender). Zie zaalPast.
@@ -300,7 +310,7 @@ async function zaakF(browser, [w, h]) {
   page.on('pageerror', e => fouten.push(e.message));
   await page.goto(APP_URL + '&demo&star=p1&screen=map');
   await rust(page);
-  const r = await page.evaluate(async KLOK_ZOEK_MIN => {
+  const rg = await page.evaluate(async KLOK_ZOEK_MIN => {
     await document.fonts.ready;
     const s = P().settings, uit = [];
     // een thema alleen, met al zijn stappen: dan komt elke vorm in één show langs
@@ -329,8 +339,46 @@ async function zaakF(browser, [w, h]) {
       let y = 0; for (let e = arena; e; e = e.offsetParent) y += e.offsetTop;
       return y + arena.offsetHeight + (parseFloat(getComputedStyle(sg).paddingBottom) || 0) > sg.clientHeight + 8 ? [{ id: 'scherm schuift' }] : [];
     };
+    /* G: wat er afgeknipt wordt. Een vorm in een svg tegen de viewBox (getBBox
+       met de halve streep erbij, via getScreenCTM naar het scherm), en elk
+       element tegen het eerste kader erboven dat knipt. getBoundingClientRect
+       mag hier: de transform van de binnenkomende vraag zit op beide. */
+    const geknipt = [];
+    const afgeknipt = naam => {
+      const wortels = [$('question-card'), $('answer-area')];
+      const pas = 1;
+      for (const svg of wortels.flatMap(w => [...w.querySelectorAll('svg')])) {
+        const vp = svg.getBoundingClientRect();
+        if (!vp.width || getComputedStyle(svg).overflow === 'visible') continue;
+        for (const el of svg.querySelectorAll('circle, ellipse, line, path, polygon, polyline, rect, text')) {
+          if (el.closest('defs, clipPath, mask, symbol, pattern')) continue;
+          const cs = getComputedStyle(el), m = el.getScreenCTM();
+          if (cs.display === 'none' || !m) continue;
+          const b = el.getBBox(), sw = cs.stroke !== 'none' ? parseFloat(cs.strokeWidth) / 2 : 0;
+          const hoek = [[b.x - sw, b.y - sw], [b.x + b.width + sw, b.y - sw], [b.x - sw, b.y + b.height + sw], [b.x + b.width + sw, b.y + b.height + sw]]
+            .map(([x, y]) => [m.a * x + m.c * y + m.e, m.b * x + m.d * y + m.f]);
+          const xs = hoek.map(h => h[0]), ys = hoek.map(h => h[1]);
+          if (Math.min(...xs) < vp.left - pas || Math.min(...ys) < vp.top - pas || Math.max(...xs) > vp.right + pas || Math.max(...ys) > vp.bottom + pas)
+            geknipt.push(`${naam}: svg.${svg.getAttribute('class') || svg.parentNode.className} <${el.tagName}> buiten zijn viewBox`);
+        }
+      }
+      for (const el of wortels.flatMap(w => [...w.querySelectorAll('*')])) {
+        if (el.closest('svg') && el.tagName !== 'svg') continue;
+        const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+        if (!r.width || !r.height || cs.visibility === 'hidden' || cs.opacity === '0' || el.closest('.spot-rail')) continue;
+        for (let a = el.parentElement; a && a !== sg; a = a.parentElement) {
+          const acs = getComputedStyle(a);
+          if (acs.overflowX === 'visible' && acs.overflowY === 'visible') continue;
+          const k = a.getBoundingClientRect();
+          if (r.left < k.left - pas || r.top < k.top - pas || r.right > k.right + pas || r.bottom > k.bottom + pas)
+            geknipt.push(`${naam}: ${el.id || el.className || el.tagName} geknipt door ${a.id || a.className.split(' ')[0]}`);
+          break;
+        }
+      }
+    };
     // een telsom: één regel, en binnen zijn kaart
     const telsomNa = naam => {
+      afgeknipt(naam);
       const som = $('question-text').querySelector('.sum-eq');
       if (!som) return;
       // gebroken is: een stuk begint pas onder een ander stuk. Niet "de tops
@@ -391,9 +439,11 @@ async function zaakF(browser, [w, h]) {
         G.idx = 0; renderQuestion();
         telsomNa(`telsom ${style}/${repr} ${a} ${op} ${b}`);
       }
-    return [...new Set(uit)];
+    return [[...new Set(uit)], [...new Set(geknipt)]];
   }, KLOK_ZOEK_MIN);
+  const [r, g] = rg;
   check(!r.length, 'F · elk antwoord past', `${w}x${h}: ${r.slice(0, 8).join(' | ')}${r.length > 8 ? ` (+${r.length - 8})` : ''}`);
+  check(!g.length, 'G · niets wordt afgeknipt', `${w}x${h}: ${g.slice(0, 8).join(' | ')}${g.length > 8 ? ` (+${g.length - 8})` : ''}`);
   check(!fouten.length, 'F · elk antwoord past', `${w}x${h}: ${fouten.join(' | ')}`);
   await ctx.close();
 }
