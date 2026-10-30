@@ -615,7 +615,12 @@ function klokDigitaal(t) { return `${Math.floor(t / 60) % 24}:${String(t % 60).p
    Een klein klokje (een knop, de hint, de ladder) toont alleen 12, 3, 6 en 9,
    groot; de andere uren zijn een stip. Twaalf cijfers op 70 pixels stonden
    tegen elkaar aan en lazen als een vlek -- dat was wat een kind in de
-   speeltest niet kon lezen. kaal: geen cijfers (het themaplaatje). */
+   speeltest niet kon lezen. kaal: geen cijfers (het themaplaatje).
+   ALLES BLIJFT BINNEN 0..100. Een svg knipt wat buiten zijn viewBox valt, en
+   dat zie je niet aan de code: het lichte randje was een boog om een punt
+   boven het midden, en de top ervan werd overal recht afgesneden. Het randje
+   is daarom een boog om het midden zelf, binnen de paarse rand (r 49).
+   Kern zaak KS rekent het na. */
 function klokSvg(t, maat, kaal) {
   const P = (graden, r) => [50 + r * Math.sin(graden * Math.PI / 180), 50 - r * Math.cos(graden * Math.PI / 180)].map(v => v.toFixed(1));
   const klein = maat <= 90;
@@ -632,7 +637,7 @@ function klokSvg(t, maat, kaal) {
     return `<circle cx="${x}" cy="${y}" r=".8"/>`;
   }).join('');
   return `<svg class="klok" viewBox="0 0 100 100" width="${maat}" height="${maat}" aria-hidden="true">`
-    + '<circle cx="50" cy="50" r="49" fill="#8e3fc8"/><path d="M4 46 A46 46 0 0 1 96 46" fill="none" stroke="#b678ec" stroke-width="4" stroke-linecap="round"/>'
+    + '<circle cx="50" cy="50" r="49" fill="#8e3fc8"/><path d="M2.5 50 A47.5 47.5 0 0 1 97.5 50" fill="none" stroke="#b678ec" stroke-width="3" stroke-linecap="round"/>'
     + '<circle cx="50" cy="51.8" r="45" fill="#3d1a6e" opacity=".4"/><circle cx="50" cy="50" r="45" fill="#fffaf3"/>'
     + `<g fill="#cdb6e6">${minuten}</g>`
     + `<g fill="#2b2238" font-size="${klein ? 22 : 15}" font-weight="900" text-anchor="middle" dominant-baseline="central">${uren}</g>`

@@ -482,6 +482,13 @@ beloftes:
   telsom staat op één regel binnen zijn kaart, en de klokjes bij "zoek de klok"
   zijn minstens `KLOK_ZOEK_MIN` hoog. Een gouden vraag maakt de kaart niet smaller
   (liggend stond de gouden regel mee in de rij);
+- **niets wordt afgeknipt** (zaak G) — in dezelfde ronde als F: geen vorm van een
+  tekening op de kaart of een knop valt buiten zijn viewBox, en niets op de kaart
+  of in het antwoordvak steekt buiten een kader dat knipt (de kaart heeft
+  `overflow: hidden`, een svg knipt altijd). De top van de klok was overal recht
+  afgesneden, en liggend op een kleine telefoon vielen het eerste vijfvak en het ?
+  van een telsom half van de kaart. Voor de klok rekent `kern` zaak KS het al
+  zonder browser na;
 - **haar gezicht blijft vrij** (zaak Z) — op drie hoge telefoons valt de 🤔 in de
   telmodus, een klokshow en een kalendershow niet op haar ogen (`zaalPast`).
 
