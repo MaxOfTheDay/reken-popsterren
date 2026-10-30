@@ -565,7 +565,10 @@ function themaKaart(p, k, groepen) {
   const naam = k === 'tellen' ? 'Tellen' : THEMA[k].naam;
   const ico = k === 'tellen' ? '<span class="kaart-emoji" aria-hidden="true">🧸</span>' : themaIcoon(k, 30);
   const pen = `<button class="kaart-pen${open ? ' aan' : ''}" type="button" data-kaart="${k}" aria-expanded="${open}" aria-label="${open ? 'Klaar' : naam + ' aanpassen'}">${open ? '✓' : '✏️'}</button>`;
-  if (!open) return `<div class="set-card vg-kaart thema-kaart niveau-blok${zelfGekozen(p.settings) ? ' zelf-blok' : ''}" data-kaart="${k}">${kaartKop(`${ico}${naam}`, pen)}${leesLadder(p, k)}${lastigHtml(p, k)}</div>`;
+  if (!open) {
+    const grens = kaartGrens(p, k);
+    return `<div class="set-card vg-kaart thema-kaart niveau-blok${zelfGekozen(p.settings) ? ' zelf-blok' : ''}" data-kaart="${k}">${kaartKop(`${ico}${naam}`, (grens ? `<span class="kop-grens">${grens}</span>` : '') + pen)}${leesLadder(p, k)}${lastigHtml(p, k)}</div>`;
+  }
   const delen = [groepen.find(g => g.kaart === (k === 'tellen' ? 'pad' : k)).html];
   /* + − of × ÷ gaan open naar de kop, naast de ✓: klein, want aan of uit
      zetten is één tik en geen veld. Als volle balk boven de ladder waren het
@@ -582,6 +585,20 @@ function themaKaart(p, k, groepen) {
   }
   delen[0] = delen[0].replace(/<div class="oe-ops"[^>]*>.*?<\/div>/, m => (ops = m.replace('class="oe-ops"', 'class="oe-ops kop-ops"'), ''));
   return `<div class="set-card oefen-kaart primary thema-kaart open" data-kaart="${k}">${kaartKop(`${ico}${naam}`, ops + pen)}${delen.join('')}</div>`;
+}
+/* Dicht staat naast de ✏️ alleen iets als ze niet alles krijgt: "alleen +",
+   "alleen ×", "tot 8". Staat alles aan, dan zegt het icoon het al (+−, ×÷) en
+   is tot 10 gewoon; dan zou het een herhaling zijn. Grijze tekst en geen chips:
+   dicht is lezen, en chips lijken knoppen die niets doen. Het staat op de plek
+   waar open de balk staat. Juist een beperking vergeet een ouder dat hij ze zette,
+   en de ladder verraadt ze niet (de voorbeelden zijn toch al +). */
+const OP_TEKEN = { '+': '+', '-': '−', x: '×', ':': '÷' };
+function kaartGrens(p, k) {
+  const s = p.settings;
+  if (k === 'tellen') return (s.qmax || 10) < 10 ? `tot ${s.qmax}` : '';
+  const ops = LASTIG_OPS[k];
+  const aan = ops ? ops.filter(o => s.ops.includes(o)) : [];
+  return aan.length && aan.length < ops.length ? `alleen ${aan.map(o => OP_TEKEN[o]).join(' ')}` : '';
 }
 function leesLadder(p, k) {
   if (zelfGekozen(p.settings)) return zelfLadderHtml(p, k);
@@ -687,8 +704,9 @@ function hierMetUitleg(rij, k, t) {
    de ladder van dat thema hoort. */
 const LASTIG_OPS = { rekenen: ['+', '-'], tafels: ['x', ':'] };
 function lastigHtml(p, k) {
-  const ops = LASTIG_OPS[k];
-  if (!ops || p.settings.track === 'count') return '';
+  // alleen de tekens die aan staan: een − die uit staat, oefent ze nu niet
+  const ops = (LASTIG_OPS[k] || []).filter(o => p.settings.ops.includes(o));
+  if (!ops.length || p.settings.track === 'count') return '';
   // p.weak wordt op sjabloon gesleuteld ("7 × 8 = @"), met @ als de lege plek.
   // Staat die achteraan, dan de som zonder uitkomst ("7 × 8"): korter, en de
   // uitkomst weet een ouder. Staat hij ertussen ("7 + @ = 12"), dan het getal erin.
