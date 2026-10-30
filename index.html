@@ -10313,6 +10313,13 @@
   .kaart-kop .oe-ops.kop-ops { flex: none; margin-left: auto; padding: 3px; border-radius: 12px; }
   .kaart-kop .kop-ops .chip, .kaart-kop .kop-ops .chip:hover { width: 36px; height: 30px; border-radius: 9px; font-size: 18px; }
 
+  .kop-tot { display: flex; align-items: center; gap: 6px; flex: none; margin-left: auto; }
+  .kop-tot-w { font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
+  .kaart-kop .oe-seg.kop-ops { padding: 3px; border-radius: 12px; }
+  .kaart-kop .oe-seg.kop-ops .chip { flex: none; font-size: 15px; }
+
+  @media (max-width: 359px) { .kop-tot-w { display: none; } }
+
 
 
   .thema-kaart.open { outline: 3px solid var(--purple-mid); outline-offset: -1px; }
@@ -29607,16 +29614,20 @@ function themaKaart(p, k, groepen) {
   const ico = k === 'tellen' ? '<span class="kaart-emoji" aria-hidden="true">🧸</span>' : themaIcoon(k, 30);
   const pen = `<button class="kaart-pen${open ? ' aan' : ''}" type="button" data-kaart="${k}" aria-expanded="${open}" aria-label="${open ? 'Klaar' : naam + ' aanpassen'}">${open ? '✓' : '✏️'}</button>`;
   if (!open) return `<div class="set-card vg-kaart thema-kaart niveau-blok${zelfGekozen(p.settings) ? ' zelf-blok' : ''}" data-kaart="${k}">${kaartKop(`${ico}${naam}`, pen)}${leesLadder(p, k)}${lastigHtml(p, k)}</div>`;
+  const delen = [groepen.find(g => g.kaart === (k === 'tellen' ? 'pad' : k)).html];
 
-  const delen = k === 'tellen'
-    ? groepen.filter(g => g.kaart === 'wat' || g.kaart === 'pad').map(g => g.kaart === 'wat' ? oeLbl(g.kop) + g.html : g.html)
-    : [groepen.find(g => g.kaart === k).html];
+
+
 
 
 
 
 
   let ops = '';
+  if (k === 'tellen') {
+    const wat = groepen.find(g => g.kaart === 'wat');
+    ops = `<span class="kop-tot"><span class="kop-tot-w" aria-hidden="true">tot</span>${wat.html.replace('class="oe-seg"', `class="oe-seg kop-ops" aria-label="${wat.kop}"`)}</span>`;
+  }
   delen[0] = delen[0].replace(/<div class="oe-ops"[^>]*>.*?<\/div>/, m => (ops = m.replace('class="oe-ops"', 'class="oe-ops kop-ops"'), ''));
   return `<div class="set-card oefen-kaart primary thema-kaart open" data-kaart="${k}">${kaartKop(`${ico}${naam}`, ops + pen)}${delen.join('')}</div>`;
 }
