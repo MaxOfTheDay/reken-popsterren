@@ -310,6 +310,22 @@ function openSettings() {
   $('screen-settings').onscroll = ouderScroll;
   settingsToTop();
 }
+/* "Voor ouders" in Show stoppen? (zie de markup): de show uit, en meteen op
+   haar pagina in plaats van het overzicht -- wie hier tikt, kijkt naar haar.
+   Hetzelfde pad als ?debug&screen=ouder (zie 80-start): eerst de kaart, zodat
+   ← en ▶ daarna gewoon terugkomen waar ze speelde. */
+function stopNaarOuders() {
+  const wie = cur;
+  stopNu();
+  openSettings();   // zet setOpen en setUitleg al op null
+  setKey = wie;
+  renderSettings();
+}
+// de tweede regel van die rij, met haar naam (askQuit en vraagMemoryStop)
+function quitOudersZet() {
+  const p = P();
+  $('quit-ouders-wie').textContent = p ? `Wat ${p.name} oefent` : '';
+}
 function closeSettings() {
   save();
   goProfiles();
@@ -2370,7 +2386,7 @@ function openCodeBlad(vanStart) {
   ozToon(ozIco('code') + ' Code invullen',
     `<div class="oz-invoer">${ozCodeHtml('', '', 0)}
        <input id="oz-veld" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" aria-label="Code van zes cijfers"></div>
-     <div class="oz-onder" id="oz-onder"><div class="oz-waar">Andere toestel: <span class="ab-kbd">⚙️ › Back-up › Overzetten</span></div></div>`,
+     <div class="oz-onder" id="oz-onder"><div class="oz-waar">Andere toestel: <span class="ab-kbd">⚙️ Ouders › Back-up › Overzetten</span></div></div>`,
     '<button class="btn small paper" id="oz-dicht">Annuleer</button>');
   $('oz-blad').dataset.nr = nr;
   $('oz-dicht').onclick = closeConfirmModal;
@@ -2705,7 +2721,7 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
     const meenemen = hasStars && overzetMag();
     if (hasStars) html += meenemen
       ? '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Neem je sterren mee met een code.</div>'
-      : '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ › Back-up, en zet hem in de app terug.</div>';
+      : '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › Back-up, en zet hem in de app terug.</div>';
     return { html, installeer: false, meenemen };
   }
   if (soort === 'android' && kanInstalleren) {
