@@ -9,11 +9,17 @@
  *   rekensterren-<naam>-hoog.mp4   volle maat (1920x1080 of 1080x1920), scherp: om
  *                                  te posten op sociale media. Staat NIET in git
  *                                  (.gitignore) -- bewaar hem zelf.
- *   rekensterren-<naam>.mp4        de webversie voor de over-pagina: 720p, zodat
- *                                  hij op een telefoon met mobiele data vlot laadt.
+ *   rekensterren-<naam>.mp4        de webversie voor de over-pagina: dezelfde maat,
+ *                                  sterker samengeperst, onder de 4,5 MB die
+ *                                  inhoud zaak M toelaat (telefoondata van een
+ *                                  ouder). Volle maat bij een hogere crf is
+ *                                  scherper dan 720p bij een lage: op een telefoon
+ *                                  (3x zo veel pixels per punt) was 720p wazig.
  *                                  Deze staat wel in git en wordt uitgeleverd.
- * Allebei 60 beelden per seconde: bij 30 hakte de draaiende ster zichtbaar, dus
- * de webversie wint zijn kilobytes op de maat en niet op het aantal beelden.
+ * Allebei 60 beelden per seconde: bij 30 hakte de draaiende ster zichtbaar.
+ * De beelden gaan als png naar ffmpeg, niet als jpeg: anders werd elk beeld twee
+ * keer samengeperst, en dat zag je als blokjes in het donkere paars. aq-mode=3
+ * geeft de donkere verlopen meer bits, tegen strepen in de lucht.
  *
  * Een naam met "staand" erin geeft het staande filmpje: promo.html?staand, voor
  * telefoons en verhalen/status op sociale media.
@@ -38,7 +44,9 @@ const HOOG = path.join(__dirname, `rekensterren-${naam}-hoog.mp4`);
 const STAAND = /staand/.test(naam);
 const [W, H] = STAAND ? [1080, 1920] : [1920, 1080];
 const FFMPEG = process.env.FFMPEG || 'ffmpeg';
-const WEB_CRF = '23';
+const WEB_CRF = '27';
+const HOOG_CRF = '14';
+const X264 = 'aq-mode=3';
 
 (async () => {
   const browser = await launch();
@@ -59,7 +67,7 @@ const WEB_CRF = '23';
   });
 
   const ff = spawn(FFMPEG, ['-loglevel', 'error', '-y', '-f', 'image2pipe', '-framerate', String(FPS),
-    '-c:v', 'mjpeg', '-i', '-', '-c:v', 'libx264', '-preset', 'slow', '-crf', '21', '-tune', 'animation',
+    '-c:v', 'png', '-i', '-', '-c:v', 'libx264', '-preset', 'slow', '-crf', HOOG_CRF, '-tune', 'animation', '-x264-params', X264,
     '-pix_fmt', 'yuv420p', '-movflags', '+faststart', HOOG], { stdio: ['pipe', 'inherit', 'inherit'] });
 
   const tot = totArg != null ? +totArg : await page.evaluate(() => window.DUUR);
@@ -69,16 +77,16 @@ const WEB_CRF = '23';
       render(t);
       await Promise.all([...document.images].map(i => i.complete ? 0 : i.decode().catch(() => 0)));
     }, f / FPS);
-    const beeld = await page.screenshot({ type: 'jpeg', quality: 95 });
+    const beeld = await page.screenshot({ type: 'png' });
     if (!ff.stdin.write(beeld)) await new Promise(ok => ff.stdin.once('drain', ok));
     if (f % FPS === 0) process.stdout.write('.');
   }
   ff.stdin.end();
   await new Promise(ok => ff.on('close', ok));
   await browser.close();
-  // de webversie: twee derde van de maat (1280x720 of 720x1280)
-  const web = spawn(FFMPEG, ['-loglevel', 'error', '-y', '-i', HOOG, '-vf', `scale=${W * 2 / 3}:${H * 2 / 3}:flags=lanczos`,
-    '-c:v', 'libx264', '-preset', 'slow', '-crf', WEB_CRF, '-tune', 'animation',
+  // de webversie: volle maat, sterker samengeperst dan de hoge
+  const web = spawn(FFMPEG, ['-loglevel', 'error', '-y', '-i', HOOG,
+    '-c:v', 'libx264', '-preset', 'veryslow', '-crf', WEB_CRF, '-tune', 'animation', '-x264-params', X264,
     '-pix_fmt', 'yuv420p', '-movflags', '+faststart', OUT], { stdio: 'inherit' });
   await new Promise(ok => web.on('close', ok));
   console.log(`\n${laatste - eerste} beelden -> ${HOOG}\n  webversie -> ${OUT}`);

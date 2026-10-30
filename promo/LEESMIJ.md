@@ -7,8 +7,8 @@ poster -- staand op een smal scherm, liggend op een breed.
 
 | bestand | wat |
 |---|---|
-| `rekensterren-promo.mp4` | het filmpje, ± 20 s, 60 beelden per seconde, zonder geluid. De webversie: 1280×720, ± 3,3 MB |
-| `rekensterren-promo-staand.mp4` | hetzelfde filmpje staand, 720×1280, ± 3,6 MB: wat de over-pagina op een telefoon toont |
+| `rekensterren-promo.mp4` | het filmpje, ± 20 s, 60 beelden per seconde, zonder geluid. De webversie: 1920×1080, ± 3,7 MB |
+| `rekensterren-promo-staand.mp4` | hetzelfde filmpje staand, 1080×1920, ± 4,1 MB: wat de over-pagina op een telefoon toont |
 | `*-hoog.mp4` | de scherpe versies op volle maat (1920×1080 en 1080×1920), om op sociale media te posten. **Niet in git** -- `render.js` maakt ze, bewaar ze zelf |
 | `rekensterren-logo.mp4` | alleen het logo: het merkteken dat het spelogo wordt (de eerste 2,2 s) |
 | `in-app-intro.mp4` | opname van de korte logo-intro zoals hij ín het spel speelt (zie "= Het spelogo komt binnen" in `src/35-schermen.js`); de intro zelf staat in de app, niet hier |
@@ -31,8 +31,9 @@ De posters zijn het laatste beeld: de eindkaart, die in de opname blijft staan
 `ffmpeg -sseof -0.1 -i rekensterren-promo-staand-hoog.mp4 -frames:v 1 -q:v 4 poster-staand.jpg`.
 
 Wat het filmpje over het rekenen zegt, moet kloppen met het spel (zie SCHERMEN
-in `promo.html`). De twee schermen uit het ouderdeel neemt `opname.js` op met
-een Marie die plus, min en maal tot 20 oefent en een paar lastige sommen heeft.
+in `promo.html`). De twee schermen uit Voor ouders neemt `opname.js` op met
+een Marie die rekent, de tafels doet en ook geld en de klok, met een paar
+lastige sommen: bovenaan de pagina (de thema's) en lager (de leerpaden).
 
 Nodig: Playwright (zoals voor `npm test`) en een ffmpeg met libx264; staat die
 niet op het pad, zet dan `FFMPEG=/pad/naar/ffmpeg`.
@@ -44,8 +45,12 @@ losse lagen op volle maat staan in `assets/branding/source/lagen/`.
 Het spel veranderd, of een wereld erbij? Eerst opnieuw opnemen, dan renderen:
 
 ```sh
-node promo/opname.js               # -> beelden/*.jpg en beelden/werelden.js
+node promo/opname.js               # -> beelden/*.jpg, beelden/werelden.js en over/beelden/*.webp
 ```
+
+`opname.js` schrijft ook de schermen van de over-pagina (`over/beelden/`): welke,
+dat leest hij uit `over/index.html`. Pagina en filmpje komen zo uit één opname
+en kunnen niet apart verouderen.
 
 Het filmpje noemt nergens een aantal werelden. De achtergronden lopen de lijst
 in `werelden.js` af, dus een nieuwe wereld komt vanzelf mee.
