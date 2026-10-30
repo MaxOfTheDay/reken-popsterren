@@ -644,7 +644,7 @@ function themaLadderHtml(p, k) {
 function vgUitleg(t) {
   const top = Math.max(0, PAD_GOED - ((t && t.goed) || 0));
   const shows = showsNog(t);
-  return `<div class="vg-uitleg">Nog <b>${top} ${mv(top, 'topshow', 'topshows')}</b> ⭐⭐⭐${top > 1 ? ' op rij' : ''} of <b>${shows} ${mv(shows, 'show', 'shows')}</b></div>`;
+  return `<div class="vg-uitleg">Door na ${top} ${mv(top, 'show', 'shows')} foutloos${top > 1 ? ' op rij' : ''} · uiterlijk na ${shows}</div>`;
 }
 // Haar rij als knop die de uitleg aan en uit zet, met de uitleg eronder als die open staat.
 function hierMetUitleg(rij, k, t) {
@@ -710,41 +710,57 @@ function zelfErbij(p) {
   }
   return null;
 }
-/* HAAR CIJFERS, in een eigen blad achter 📊 in de kop (openCijfers): shows,
-   % goed, sterren en trofeeën sinds het begin, en daaronder hoe goed het gaat
-   per thema. Kijken en aanpassen zijn zo twee plekken: de pagina zelf is om
-   te zetten wat ze oefent, en wie wil weten hoe het gaat, tikt op 📊. Hier
-   stond eerst een kaart "Meer cijfers" onderaan (daar keek niemand in), en
-   daarna een regel onder haar naam die op de pagina een plek innam voor iets
-   wat je zelden nodig hebt.
-   De trofeeteller is een breuk; de noemer komt uit activeTrophies() -- dezelfde
-   bron als de kop van de kast, zodat er nooit twee verschillende totalen in de
-   app staan. */
+/* HAAR CIJFERS, in een eigen blad achter 📊 in de kop (openCijfers). Kijken
+   en aanpassen zijn zo twee plekken: de pagina zelf is om te zetten wat ze
+   oefent, en wie wil weten hoe het gaat, tikt op 📊. Van boven naar onder:
+     LAATSTE SHOWS  -- p.recent als bolletjes, van eerder naar nu: donker is
+                       drie sterren, licht één of twee, een rode ring mislukt.
+                       Alleen de totalen zeiden niet of het de laatste tijd
+                       beter of slechter ging; een rij bolletjes wel, in één blik.
+     DRIE TEGELS    -- shows, % goed en hoeveel sommen ze geleerd heeft (in
+                       onderhoud, p.learned): dat laatste is iets om blij om te
+                       zijn, waar een percentage alleen een cijfer is.
+     PER THEMA      -- stats.thema (zie telThema). Met te weinig vragen
+                       (CIJFER_MIN) staat het thema er bleek en met "–": drie
+                       vragen geven een percentage dat niets zegt.
+     ⭐ EN 🏆        -- haar beloningen in het spel, één stille regel onderaan:
+                       ze ziet ze zelf al, voor de ouder zijn ze bijzaak. De
+                       trofeeën als getal en niet als "3/38", wat las als een
+                       onvoldoende. Het getal komt uit earnedActiveCount, de
+                       bron van de kast.
+   Nog niets gespeeld: één regel, in plaats van een blad vol nullen. */
 const procent = (goed, fout) => Math.round(100 * goed / (goed + fout));
+const CIJFER_MIN = 10;   // vragen per thema voor er een percentage staat
 function cijfersBladHtml(p) {
   const shows = playedCount(p);
+  if (!shows) return '<div class="cijfer-leeg">🎬 Nog geen shows gespeeld.</div>';
   const answered = p.stats.correct + p.stats.wrong;
-  const delen = [`<b>${shows}</b> ${mv(shows, 'show', 'shows')}`];
-  if (answered) delen.push(`<b>${procent(p.stats.correct, p.stats.wrong)}%</b> goed`);
-  delen.push(`<b>${totalStarCount(p)}</b> ⭐ sterren`, `<b>${earnedActiveCount(p)}/${activeTrophies().length}</b> 🏆 trofeeën`);
-  /* Per thema (stats.thema, zie telThema), in de volgorde van de tegels en
-     alleen wat ze al speelde -- ook een thema dat nu uit staat, want wat ze
-     deed blijft waar. Het balkje is het percentage; bij minder dan twee
-     thema's staat het er niet, want dan zegt het niets meer dan het totaal. */
+  const recent = p.recent || [];
+  const bolletjes = recent.length ? `<div class="oe-lbl cijfer-kop">Laatste ${recent.length} ${mv(recent.length, 'show', 'shows')}</div>`
+    + `<div class="cijfer-reeks" role="img" aria-label="${recent.map(s => s ? s + ' sterren' : 'mislukt').join(', ')}">`
+    + recent.map(s => `<i class="${s === 3 ? 'drie' : s ? 'een' : 'mis'}"></i>`).join('') + '</div><div class="cijfer-pijl">eerder → nu</div>' : '';
+  const tegels = [`<b>${shows}</b> ${mv(shows, 'show', 'shows')}`];
+  if (answered) tegels.push(`<b>${procent(p.stats.correct, p.stats.wrong)}%</b> goed`);
+  tegels.push(`<b>${Object.keys(p.learned || {}).length}</b> geleerd`);
+  /* Per thema in de volgorde van de tegels, en alleen wat ze al speelde --
+     ook een thema dat nu uit staat, want wat ze deed blijft waar. Bij minder
+     dan twee thema's niet: dan zegt het niets meer dan het totaal. */
   const t = p.stats.thema || {};
   const rijen = THEMAS.filter(th => t[th.id] && t[th.id][0] + t[th.id][1] > 0).map(th => {
-    const pct = procent(t[th.id][0], t[th.id][1]);
-    return `<div class="cijfer-thema"><span>${th.naam}</span><i style="--pct:${pct}%"></i><b>${pct}%</b></div>`;
+    const [goed, fout] = t[th.id], weinig = goed + fout < CIJFER_MIN, pct = weinig ? 0 : procent(goed, fout);
+    return `<div class="cijfer-thema${weinig ? ' weinig' : ''}"><span>${th.naam}</span><i style="--pct:${pct}%"></i><b>${weinig ? '–' : pct + '%'}</b></div>`;
   });
-  return `<div class="ster-cijfers">${delen.map(d => `<span>${d}</span>`).join('')}</div>`
-    + (rijen.length > 1 ? `<div class="oe-lbl cijfer-kop">Goed per thema</div>${rijen.join('')}` : '');
+  return bolletjes + `<div class="ster-cijfers">${tegels.map(d => `<span>${d}</span>`).join('')}</div>`
+    + (rijen.length > 1 ? `<div class="oe-lbl cijfer-kop">Goed per thema</div>${rijen.join('')}` : '')
+    + `<div class="cijfer-voet"><span><b>${totalStarCount(p)}</b> ⭐</span><span><b>${earnedActiveCount(p)}</b> 🏆</span></div>`;
 }
 function openCijfers() {
   const p = setKey && db.profiles[setKey];
   if (!p) return;
   $('confirm-title').textContent = `${p.name} in cijfers`;
   $('confirm-body').innerHTML = cijfersBladHtml(p);
-  $('confirm-actions').innerHTML = '<button class="btn small purple" id="cijfers-klaar">Klaar</button>';
+  // een kleine Klaar: het blad is om te kijken, er valt niets te bevestigen
+  $('confirm-actions').innerHTML = '<button class="btn small purple klaar-klein" id="cijfers-klaar">Klaar</button>';
   $('cijfers-klaar').onclick = closeConfirmModal;
   $('confirm-modal').classList.add('open');
   syncBackGuard();

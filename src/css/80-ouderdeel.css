@@ -858,16 +858,22 @@
     margin: 0 0 4px; padding: 0 12px 9px 44px; border-radius: 0 0 12px 12px; background: var(--lavender-wash);
     font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted);
   }
-  .vg-uitleg b { color: var(--paper-ink); }
   /* Lastige sommen, onderaan hun thema (zie lastigHtml) */
   .vg-lastig { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 2px 0; padding-top: 10px; border-top: 1px solid var(--lavender-wash); }
   .vg-lastig > span:first-child { margin-right: 2px; font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
   .vg-lastig .practice-chip { padding: 3px 10px; font-size: var(--tx-klein); }
   .vg-lastig .practice-chip.verborgen { display: none; }
   .vg-lastig .lastig-meer { cursor: pointer; font-family: inherit; background: var(--lavender-wash); border-color: transparent; color: var(--paper-ink-muted); }
-  /* Haar cijfers, in het blad achter 📊 (zie cijfersBladHtml): vier tegels,
-     het getal groot en het woord eronder, en per thema een balkje. */
-  .ster-cijfers { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  /* Haar cijfers, in het blad achter 📊 (zie cijfersBladHtml): de laatste
+     shows als bolletjes, drie tegels met het getal groot en het woord eronder,
+     per thema een balkje, en de beloningen stil onderaan. */
+  .cijfer-reeks { display: flex; justify-content: center; gap: 6px; }
+  .cijfer-reeks i { width: 18px; height: 18px; border-radius: 50%; background: var(--purple-mid); }
+  .cijfer-reeks i.een { background: var(--lavender-vul); }
+  .cijfer-reeks i.mis { background: var(--c-white); box-shadow: inset 0 0 0 2px var(--danger-border); }
+  .cijfer-pijl { margin: 4px 0 14px; text-align: center; font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); }
+  .ster-cijfers { display: flex; gap: 6px; }
+  .ster-cijfers span { flex: 1 1 0; }   /* twee of drie tegels, altijd even breed (zonder antwoorden geen % goed) */
   .ster-cijfers span {
     display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 6px;
     border-radius: var(--r-md); background: var(--lavender-wash);
@@ -875,6 +881,7 @@
   }
   .ster-cijfers b { font-size: 26px; font-weight: 700; color: var(--paper-ink); line-height: 1.1; }
   .cijfer-kop { justify-content: center; margin-top: 18px; }
+  .cijfer-kop:first-child { margin-top: 0; }
   .cijfer-thema { display: flex; align-items: center; gap: 10px; margin: 6px 0; font-size: var(--tx-klein); }
   .cijfer-thema span { flex: 0 0 92px; font-weight: 700; color: var(--paper-ink-muted); }
   .cijfer-thema i {
@@ -882,6 +889,15 @@
     background: linear-gradient(90deg, var(--purple-mid) var(--pct), var(--lavender-wash) var(--pct));
   }
   .cijfer-thema b { flex: 0 0 42px; text-align: right; color: var(--paper-ink); }
+  .cijfer-thema.weinig { opacity: .5; }
+  .cijfer-voet {
+    display: flex; justify-content: center; gap: 18px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--lavender-wash);
+    font-size: var(--tx-klein); font-weight: 600;
+  }
+  .cijfer-leeg { padding: 4px 0 2px; text-align: center; font-size: var(--tx-label); font-weight: 600; color: var(--paper-ink-muted); }
+  /* Klaar in het cijferblad: klein en in het midden, ook op een smalle telefoon
+     (daar maakt .modal-actions elke knop anders zo breed als het blad). */
+  .modal-actions > .klaar-klein { width: auto; align-self: center; padding-left: 28px; padding-right: 28px; }
   /* Zelf gekozen: losse keuzes, geen pad -- dus ook geen padlijn tussen de bolletjes */
   .vg-zelf > .fl-rij::before, .vg-zelf > .fl-rij::after { display: none; }
   .vg-kaart > .note { margin-top: 8px; }

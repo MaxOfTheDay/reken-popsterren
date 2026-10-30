@@ -762,15 +762,15 @@ function check(ok, label, detail) {
     const regel = async () => {
       await page.click('#cijfers-knop');
       await page.waitForTimeout(150);
-      const r = await page.evaluate(() => [...document.querySelectorAll('#confirm-body .ster-cijfers span')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
+      const r = await page.evaluate(() => [...document.querySelectorAll('#confirm-body .ster-cijfers span, #confirm-body .cijfer-voet span, #confirm-body .cijfer-leeg')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
       await page.click('#cijfers-klaar');
       return r;
     };
-    // niets gespeeld: nul is meervoud, en nog geen % goed
+    // niets gespeeld: één regel in plaats van een blad vol nullen
     await open(page, 'p1', 'voortgang');
     await page.waitForTimeout(200);
     let r = await regel();
-    check(r[0] === '0 shows' && !r.some(t => /goed/.test(t)), 'nul is meervoud (0 shows), en zonder antwoorden geen % goed', JSON.stringify(r));
+    check(r.join() === '🎬 Nog geen shows gespeeld.', 'nog niets gespeeld: één regel, geen nullen', JSON.stringify(r));
     // precies één
     await page.evaluate(() => {
       const p = db.profiles.p1;
@@ -781,13 +781,13 @@ function check(ok, label, detail) {
     await open(page, 'p1', 'voortgang');
     await page.waitForTimeout(200);
     r = await regel();
-    check(r[0] === '1 show' && r[1] === '100% goed', 'één show is enkelvoud', JSON.stringify(r));
+    check(r[0] === '1 show' && r[1] === '100% goed' && r[2] === '0 geleerd', 'één show is enkelvoud', JSON.stringify(r));
     // twee: weer meervoud
     await page.evaluate(() => { const p = db.profiles.p1; p.stars[1] = 3; p.stars[2] = 3; save(); });
     await open(page, 'p1', 'voortgang');
     await page.waitForTimeout(200);
     r = await regel();
-    check(r[0] === '2 shows' && /^6 ⭐ sterren$/.test(r[2]), 'twee is weer meervoud', JSON.stringify(r));
+    check(r[0] === '2 shows' && r.includes('6 ⭐'), 'twee is weer meervoud, en de sterren stil onderaan', JSON.stringify(r));
     // per thema (stats.thema, zie telThema): pas vanaf twee thema's, met het percentage erbij
     const perThema = async th => page.evaluate(th => {
       db.profiles.p1.stats.thema = th; save(); openCijfers();
@@ -797,13 +797,13 @@ function check(ok, label, detail) {
     }, th);
     let t = await perThema({ rekenen: [9, 1] });
     check(!t.length, 'cijfers: met één thema geen "Goed per thema" (dat zegt het totaal al)', JSON.stringify(t));
-    t = await perThema({ geld: [3, 1], rekenen: [9, 1], klok: [0, 0] });
-    check(JSON.stringify(t) === '["Rekenen90%","Geld75%"]', 'cijfers: per thema in de volgorde van de tegels, zonder wat ze niet speelde', JSON.stringify(t));
+    t = await perThema({ geld: [9, 3], rekenen: [9, 1], klok: [2, 1], tafels: [0, 0] });
+    check(JSON.stringify(t) === '["Rekenen90%","Geld75%","Klok–"]', 'cijfers: per thema in de volgorde van de tegels, zonder wat ze niet speelde, en "–" met te weinig vragen', JSON.stringify(t));
     await ctx.close();
   }
 
   /* ================= L · De trofeeteller heeft één bron ================= */
-  /* Het verdiende aantal op Voortgang ("3/18 trofeeën") en in de kop van de kast
+  /* Het verdiende aantal in haar cijfers ("3 🏆") en in de kop van de kast
      ("3 verzameld") moeten hetzelfde getal zijn, en dat getal hoort uit
      activeTrophies() te komen -- niet uit een tweede lijstje. Zet iemand er een
      trofee bij (of komt er een wereld bij, wat rebuildWorldBadges doet), dan
@@ -813,16 +813,17 @@ function check(ok, label, detail) {
     const r = await page.evaluate(() => {
       const p = db.profiles.p1;
       p.trophies.push('first', 'sums25');
+      p.stars[1] = 3;   // met een show, anders is het blad één regel
       save();
       openSettings(); setKey = 'p1'; renderSettings();
       openCijfers();
-      const oogst = [...document.querySelectorAll('#confirm-body .ster-cijfers span')].map(e => e.textContent.trim());
+      const oogst = [...document.querySelectorAll('#confirm-body .cijfer-voet span')].map(e => e.textContent.trim());
       closeConfirmModal();
       cur = 'p1';        // de kast leest P(), en die heeft een gekozen ster nodig
       openTrophies();
       return {
         teller: oogst.find(t => /🏆/.test(t)) || '',
-        bron: `${earnedActiveCount(p)}/${activeTrophies().length}`,
+        bron: `${earnedActiveCount(p)} 🏆`,
         kast: document.getElementById('trophy-count').getAttribute('aria-label'),
         actief: activeTrophies().length,
         tabel: TROPHIES.length,
@@ -832,12 +833,12 @@ function check(ok, label, detail) {
     });
     // Hier stond /2\/18/: twaalf vaste plus zes werelden. Met een wereld erbij
     // is de teller gewoon 2/19, en dat is geen fout maar het hele punt.
-    check(r.teller.indexOf('2/' + r.verwacht) >= 0 && r.actief === r.verwacht,
-      'de teller toont het verdiende aantal en het totaal', r.teller + ' (verwacht 2/' + r.verwacht + ')');
-    check(r.teller.indexOf(r.bron) >= 0, 'en die komen rechtstreeks uit activeTrophies()', `${r.teller} vs ${r.bron}`);
+    check(r.teller === '2 🏆' && r.actief === r.verwacht,
+      'de teller toont het verdiende aantal, zonder totaal (3/38 las als een onvoldoende)', r.teller + ' (verwacht 2, actief ' + r.verwacht + ')');
+    check(r.teller === r.bron, 'en dat komt rechtstreeks uit earnedActiveCount()', `${r.teller} vs ${r.bron}`);
     /* De kast zelf noemt alleen wat er verzameld is, zonder totaal (zie
        .kast-chip; de woorden staan in de aria-label): dat totaal groeit met elke wereld, en voor een kind leest
-       dat als een kast die leegloopt. De ouder ziet het totaal hierboven wél. */
+       dat als een kast die leegloopt. Ook de ouder ziet geen totaal meer (zie cijfersBladHtml). */
     check(/^\s*2\s+verzameld\s*$/.test(r.kast),
       'de kast noemt hetzelfde verdiende aantal, zonder totaal', r.kast);
     check(r.actief === r.tabel, 'er staat geen tweede trofeelijst naast de tabel',
@@ -1113,7 +1114,7 @@ function check(ok, label, detail) {
     await page.click('#settings-body [data-uitleg="rekenen"]');
     await page.waitForTimeout(150);
     t0 = await page.evaluate(() => ({ uitleg: (document.querySelector('.vg-uitleg') || {}).textContent || '', open: document.querySelector('[data-uitleg="rekenen"]').getAttribute('aria-expanded') }));
-    check(/Nog 2 topshows.*op rij of 8 shows/.test(t0.uitleg) && t0.open === 'true', 'P · tik op haar stap: hoeveel topshows of shows nog', JSON.stringify(t0));
+    check(t0.uitleg === 'Door na 2 shows foutloos op rij · uiterlijk na 8' && t0.open === 'true', 'P · tik op haar stap: hoeveel shows foutloos, of uiterlijk', JSON.stringify(t0));
     await page.click('#settings-body [data-uitleg="rekenen"]');
     await page.waitForTimeout(150);
     check(!(await page.$('.vg-uitleg')), 'P · nog een tik: de uitleg is weg', '');
