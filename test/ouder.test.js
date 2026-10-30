@@ -159,6 +159,15 @@ function check(ok, label, detail) {
     check(r.g === true && r.tekst === 'Aan',
       'daar omzetten zet het geluid om', JSON.stringify(r));
     check(r.open && r.show, 'en de show loopt gewoon door', JSON.stringify(r));
+    // en "Voor ouders" in hetzelfde venster: de show uit, meteen op háár pagina
+    r = await page.evaluate(() => document.getElementById('quit-ouders-wie').textContent);
+    check(r === 'Wat ' + (await page.evaluate(() => P().name)) + ' oefent', 'het stopvenster zegt wiens pagina "Voor ouders" opent', r);
+    await page.click('#quit-ouders');
+    await page.waitForTimeout(1500);
+    r = await page.evaluate(() => ({ scherm: document.querySelector('.screen.active').id, setKey, cur, G: !!G,
+      venster: document.getElementById('quit-modal').classList.contains('open') }));
+    check(r.scherm === 'screen-settings' && r.setKey === r.cur && !r.G && !r.venster,
+      '"Voor ouders" stopt de show en opent haar pagina', JSON.stringify(r));
     await ctx.close();
   }
 
@@ -1038,7 +1047,7 @@ function check(ok, label, detail) {
       await page.waitForTimeout(200);
       const tekst = await page.evaluate(() => document.getElementById('app-blad').textContent.replace(/\s+/g, ' '));
       check(/Zet op beginscherm/.test(tekst), `O · ${naam}: Deel → Zet op beginscherm`, tekst);
-      check(/Al gespeeld in Safari\? .*back-up via ⚙️ › Back-up/.test(tekst), `O · ${naam}: met de back-upwaarschuwing`, tekst);
+      check(/Al gespeeld in Safari\? .*back-up via ⚙️ Ouders › Back-up/.test(tekst), `O · ${naam}: met de back-upwaarschuwing`, tekst);
       await ctx.close();
     }
 

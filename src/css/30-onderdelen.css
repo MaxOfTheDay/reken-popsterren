@@ -394,6 +394,14 @@
   }
   /* het vierkantje is een vlak en geen pijl: een tikje dunner dan .ico */
   .app-knop .ico { stroke-width: 2.4; }
+  /* ⚙️ Ouders: dezelfde pil als "Als app", aan de andere kant. Met de id, zodat
+     hij ook de ronde maat van .corner-btns .icon-btn op een tablet wint (40-kaart);
+     de hoogte groeit daar gewoon mee. */
+  #btn-gear {
+    width: auto; padding: 0 16px 0 12px; gap: 7px; border-radius: var(--r-pill);
+    font: inherit; font-size: var(--tx-label); font-weight: 700; color: var(--c-white); white-space: nowrap;
+  }
+  #btn-gear .gear-ico { font-size: 20px; }
   /* Het knopje en het tandwiel staan buiten #app, en dus boven elk venster dat
      daarin opengaat (#app is zijn eigen stapel; z-index 100 binnenin wint het niet
      van 50 erbuiten). Op een telefoon van 320 lagen ze zo over de kop van het

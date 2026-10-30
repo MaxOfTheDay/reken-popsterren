@@ -2424,6 +2424,14 @@
 
 
 
+  #btn-gear {
+    width: auto; padding: 0 16px 0 12px; gap: 7px; border-radius: var(--r-pill);
+    font: inherit; font-size: var(--tx-label); font-weight: 700; color: var(--c-white); white-space: nowrap;
+  }
+  #btn-gear .gear-ico { font-size: 20px; }
+
+
+
 
 
   body:has(.modal-bg.open) .app-knop,
@@ -10483,6 +10491,8 @@
 
 
   .modal .quit-geluid { margin-top: 16px; border-top: 1px solid var(--paper-border); border-radius: 0 0 var(--r-md) var(--r-md); padding-top: 4px; }
+  .modal .quit-ouders { border-top: 1px solid var(--paper-border); border-radius: 0 0 var(--r-md) var(--r-md); }
+  .modal .quit-geluid:has(+ .quit-ouders) { border-radius: 0; }
   .modal input {
     font-family: inherit; font-size: var(--tx-groot); text-align: center; width: 110px;
     border: 3px solid var(--purple-light); border-radius: var(--r-sm); padding: 6px; margin: 10px 0;
@@ -11041,6 +11051,13 @@
       <button class="gear-item quit-geluid" id="quit-sound" onclick="toggleSound()" role="switch" aria-checked="true">
         <span class="gi-ico" aria-hidden="true">🔊</span><span class="gi-label">Geluid</span><span class="gi-state" id="quit-sound-state">Aan</span>
       </button>
+      <!-- En de weg naar haar pagina in Voor ouders (stopNaarOuders): een ouder die
+           naast haar zit, ziet hier dat iets te makkelijk of te moeilijk gaat, en
+           het tandwiel staat alleen op de sterrenkeuze. De show stopt dan, net als
+           met Stoppen -- het staat niet voor niets in dit venster. -->
+      <button class="gear-item quit-ouders" id="quit-ouders" onclick="stopNaarOuders()">
+        <span class="gi-ico" aria-hidden="true">👨‍👩‍👧</span><span class="gi-label">Voor ouders<span class="gi-sub" id="quit-ouders-wie"></span></span><span class="gi-pijl" aria-hidden="true">›</span>
+      </button>
     </div>
   </div>
 
@@ -11244,9 +11261,11 @@
 <!-- Het tandwiel is de deur naar Voor ouders, zonder menu ertussen. Daar stond
      eerst een menuutje met Geluid en Voor ouders: één tik extra, voor een
      schakelaar die ook in het ouderdeel staat (het overzicht, "Voor alle sterren") en in
-     "Show stoppen?" -- daar waar het geluid echt stoort. -->
+     "Show stoppen?" -- daar waar het geluid echt stoort.
+     Er staat "Ouders" bij: een kaal ⚙️ las voor een ouder niet als de plek waar
+     je instelt wat je kind oefent. Het is het spiegelbeeld van "Als app" links. -->
 <div class="corner-btns" id="corner-btns">
-  <button class="btn icon-btn" id="btn-gear" onclick="sndClick(); naTik(openSettings)" aria-label="Voor ouders" title="Voor ouders"><span class="gear-ico">⚙️</span><span class="nav-dot"></span></button>
+  <button class="btn icon-btn" id="btn-gear" onclick="sndClick(); naTik(openSettings)" aria-label="Voor ouders" title="Voor ouders"><span class="gear-ico" aria-hidden="true">⚙️</span><span class="gear-woord" aria-hidden="true">Ouders</span><span class="nav-dot"></span></button>
 </div>
 
 <div class="praise" id="praise"></div>
@@ -25345,6 +25364,7 @@ function vraagMemoryStop() {
   if (!M || !M.gedraaid || $('mem-done').style.display === 'flex') { exitMemory(); return; }
   sndClick();
   renderGeluid();
+  quitOudersZet();
   $('quit-titel').textContent = '🎤 Memory stoppen?';
   $('quit-zin').textContent = 'Je 💎 mag je houden.';
   $('quit-modal').classList.add('open');
@@ -26002,6 +26022,7 @@ function askQuit() {
   $('quit-titel').textContent = '🎭 Show stoppen?';
   $('quit-zin').textContent = 'Dan stopt dit optreden en ga je terug naar de kaart.';
   renderGeluid();
+  quitOudersZet();
 
 
   if (G && G.timer) { stopSpot(); G.spotPauze = true; }
@@ -29502,6 +29523,22 @@ function openSettings() {
   $('screen-settings').onscroll = ouderScroll;
   settingsToTop();
 }
+
+
+
+
+function stopNaarOuders() {
+  const wie = cur;
+  stopNu();
+  openSettings();
+  setKey = wie;
+  renderSettings();
+}
+
+function quitOudersZet() {
+  const p = P();
+  $('quit-ouders-wie').textContent = p ? `Wat ${p.name} oefent` : '';
+}
 function closeSettings() {
   save();
   goProfiles();
@@ -31562,7 +31599,7 @@ function openCodeBlad(vanStart) {
   ozToon(ozIco('code') + ' Code invullen',
     `<div class="oz-invoer">${ozCodeHtml('', '', 0)}
        <input id="oz-veld" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" aria-label="Code van zes cijfers"></div>
-     <div class="oz-onder" id="oz-onder"><div class="oz-waar">Andere toestel: <span class="ab-kbd">⚙️ › Back-up › Overzetten</span></div></div>`,
+     <div class="oz-onder" id="oz-onder"><div class="oz-waar">Andere toestel: <span class="ab-kbd">⚙️ Ouders › Back-up › Overzetten</span></div></div>`,
     '<button class="btn small paper" id="oz-dicht">Annuleer</button>');
   $('oz-blad').dataset.nr = nr;
   $('oz-dicht').onclick = closeConfirmModal;
@@ -31897,7 +31934,7 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
     const meenemen = hasStars && overzetMag();
     if (hasStars) html += meenemen
       ? '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Neem je sterren mee met een code.</div>'
-      : '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ › Back-up, en zet hem in de app terug.</div>';
+      : '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › Back-up, en zet hem in de app terug.</div>';
     return { html, installeer: false, meenemen };
   }
   if (soort === 'android' && kanInstalleren) {

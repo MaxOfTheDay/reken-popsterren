@@ -105,6 +105,7 @@ function askQuit() {
   $('quit-titel').textContent = '🎭 Show stoppen?';
   $('quit-zin').textContent = 'Dan stopt dit optreden en ga je terug naar de kaart.';
   renderGeluid();   // de geluidsrij in dit venster toont de stand van nu
+  quitOudersZet();
   // het spotlicht wacht zolang de vraag achter dit venster staat, net als
   // wanneer de app wegvalt -- anders is hij leeg of verder als je terugkomt
   if (G && G.timer) { stopSpot(); G.spotPauze = true; }

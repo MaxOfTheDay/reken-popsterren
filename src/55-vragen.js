@@ -2559,6 +2559,7 @@ function vraagMemoryStop() {
   if (!M || !M.gedraaid || $('mem-done').style.display === 'flex') { exitMemory(); return; }
   sndClick();
   renderGeluid();
+  quitOudersZet();
   $('quit-titel').textContent = '🎤 Memory stoppen?';
   $('quit-zin').textContent = 'Je 💎 mag je houden.';
   $('quit-modal').classList.add('open');

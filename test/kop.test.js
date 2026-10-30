@@ -155,7 +155,8 @@ async function zetKaart(page, { wereld, diamanten, wens }) {
     // het ouderdeel heeft op een laag scherm zijn eigen compacte kop (38)
     check(rond(ouderTerug, speel), `D · ${w}x${h} in het ouderdeel is de ▶ even groot als de ←`,
       JSON.stringify({ ouderTerug, speel }));
-    check(rond(tandwiel, hud[0]), `D · ${w}x${h} het ⚙️ is zo groot als de knoppen in de kop`,
+    // ⚙️ Ouders is een pil: even hoog als de knoppen in de kop, en breder
+    check(tandwiel[1] === hud[0][1] && tandwiel[0] > tandwiel[1], `D · ${w}x${h} ⚙️ Ouders is zo hoog als de knoppen in de kop`,
       JSON.stringify({ tandwiel, hud: hud[0] }));
     await ctx.close();
   }
