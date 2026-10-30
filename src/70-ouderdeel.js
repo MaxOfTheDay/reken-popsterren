@@ -536,7 +536,7 @@ function zelfRijen(s) {
    bij rekenen -- de lijst staat nooit leeg terwijl er wél iets gespeeld wordt. */
 function rijenKiesStart(s, p) {
   if (!zelfGekozen(s)) return;
-  THEMA_ERBIJ.filter(k => themaAan(s, k) && !(s[LADDERS[k].kies] || []).length).forEach(k => {
+  PLAATJE.filter(k => themaAan(s, k) && !(s[LADDERS[k].kies] || []).length).forEach(k => {
     const L = LADDERS[k], nu = p ? ladderNu(p, k) : L.pad[0].id;
     s[L.kies] = [nu === 'alles' ? L.pad[ladderRijen(s, k).hi].id : nu];
   });
@@ -953,6 +953,7 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
    voor de show, in beide modi in dezelfde volgorde:
      rekenen  + en −, en het leerpad of de vinkjes (alleen als het thema aan staat)
      tafels   × en ÷, en de tafelladder of "Tafels van" (idem; zie THEMAS)
+     plaatjes elk zijn ladder of zijn vinkjes, in de volgorde van de tegels
      show     hoe een show speelt (antwoorden, hoeveel vragen)
    Bij tellen is het nog altijd wat · pad · show: wat het kind oefent en hoe
    groot, het leerpad, en hoe een show speelt (met het memory-spel).
@@ -966,7 +967,7 @@ const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 ·
    instelling met twee bedieningen, of een bediening in de verkeerde kaart, valt
    daar om. Komt er een instelling bij, dan kiest hij hier eerst zijn kaart. */
 const OEFEN_INSTELLINGEN = {
-  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], geld: ['geldLijn', 'kiesGeld'], klok: ['klokLijn', 'kiesKlok'], kalender: ['kalLijn', 'kiesKalender'], lijn: ['lijnLijn', 'kiesLijn'], show: ['mode', 'perLevel'] },
+  math:  { rekenen: ['ops', 'padVanaf', 'kies'], tafels: ['tafelOps', 'tafelLijn', 'tables'], ...Object.fromEntries(PLAATJE.map(k => [k, [LADDERS[k].lijn, LADDERS[k].kies]])), show: ['mode', 'perLevel'] },
   count: { wat: ['qmax'], pad: ['stage', 'kiesFasen'], show: ['repr', 'perLevel', 'memory'] },
 };
 function oefenGroups(s, pfx, p, opt) {  // -> [{ kaart, kop, ico?, html }], in de volgorde van OEFEN_INSTELLINGEN
@@ -1132,7 +1133,7 @@ function oefenGroups(s, pfx, p, opt) {  // -> [{ kaart, kop, ico?, html }], in d
      de volgorde van themaPlan -- dan hoeft niemand uit te leggen wat "de helft
      sommen" betekent. Alleen als er meer dan één thema aan staat; anders is
      elke vraag hetzelfde. Onder Kiezen/Mix/Typen staat bewust niets: dat een
-     vraag met een plaatje (geld, klok, kalender, lijn) altijd kiest, ziet een ouder in de show
+     vraag met een plaatje (PLAATJE) altijd kiest, ziet een ouder in de show
      zelf, en een regel uitleg erbij was er een te veel. */
   const showMix = themasAan(s).length > 1
     ? `<div class="oe-mix" role="img" aria-label="Een show: ${themaPlan(s, s.perLevel).map(k => THEMA[k].naam.toLowerCase()).join(', ')}">${themaPlan(s, s.perLevel).map(k => themaIcoon(k, 20)).join('')}</div>` : '';
@@ -1146,15 +1147,9 @@ function oefenGroups(s, pfx, p, opt) {  // -> [{ kaart, kop, ico?, html }], in d
       : ladder('set-startstap', 'padVanaf', padRijenLadder, startPos, padR.length, hierPos, eind, hierDeel('rekenen'), 'daarna alles door elkaar')}`
   }, themaAan(s, 'tafels') && {
     kaart: 'tafels', kop: 'Tafels', ico: 'tafels', html: `${opsBalk('set-tafelops', 'tafelOps', opDefs.slice(2))}${vrij ? tafelsVan : themaLadder('tafels')}`
-  }, themaAan(s, 'lijn') && {
-    kaart: 'lijn', kop: 'Getallenlijn', ico: 'lijn', html: vrij ? rijenKies('lijn') : themaLadder('lijn')
-  }, themaAan(s, 'geld') && {
-    kaart: 'geld', kop: 'Geld', ico: 'geld', html: vrij ? rijenKies('geld') : themaLadder('geld')
-  }, themaAan(s, 'klok') && {
-    kaart: 'klok', kop: 'Klok', ico: 'klok', html: vrij ? rijenKies('klok') : themaLadder('klok')
-  }, themaAan(s, 'kalender') && {
-    kaart: 'kalender', kop: 'Kalender', ico: 'kalender', html: vrij ? rijenKies('kalender') : themaLadder('kalender')
-  }, (() => {
+  }, ...PLAATJE.filter(k => themaAan(s, k)).map(k => ({
+    kaart: k, kop: THEMA[k].naam, ico: k, html: vrij ? rijenKies(k) : themaLadder(k)
+  })), (() => {
     const mode = balk('set-mode', 'mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode);
     return { kaart: 'show', kop: 'Antwoord', html: `${mode}${perShow}${showMix}`,
       regels: [['Antwoord', mode], ['Per show', perLevelBalk]].concat(showMix ? [['Een show', showMix]] : []) };
@@ -1178,7 +1173,7 @@ function oefenSamenvatting(s) {
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
   const rijen = padRijen(s).rijen.filter(r => !r.uit);
   const start = s.padVanaf && rijen.length && padVanafRij(s, rijen) !== rijen[0] && padVanafRij(s, rijen);
-  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}${themaAan(s, 'geld') ? ' · €' : ''}${themaAan(s, 'klok') ? ' · 🕐' : ''}${themaAan(s, 'kalender') ? ' · 📅' : ''}${themaAan(s, 'lijn') ? ' · 📏' : ''}`
+  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}${PLAATJE.filter(k => themaAan(s, k)).map(k => ' · ' + THEMA[k].teken).join('')}`
        + ` · ${modes[s.mode] || s.mode}${start ? ` · vanaf ${start.naam.toLowerCase()}` : ''}`
        + ` · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
 }
@@ -1780,7 +1775,7 @@ function bindOefenChips(s, p, pfx, done) {
     if (!nu) return blockedMinOne(c), false;
     s.kies = nu;
   });
-  THEMA_ERBIJ.forEach(k => bind(`set-kies${k}`, c => {
+  PLAATJE.forEach(k => bind(`set-kies${k}`, c => {
     const L = LADDERS[k], nu = vink(s[L.kies] || [], c.dataset.v, L.pad.map(r => r.id));
     if (!nu) return blockedMinOne(c), false;
     s[L.kies] = nu;

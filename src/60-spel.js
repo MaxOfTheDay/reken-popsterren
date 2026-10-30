@@ -17,8 +17,8 @@ let G = null;
    sommen: staat er geen rekenen en geen tafels aan -- alleen geld, alleen de
    klok, of die twee -- dan zijn er geen. Hier las planSpecials toen s.ops van
    de geldvraagmaker, en die heeft geen; de show startte dan niet, en een tik
-   op een halte deed niets. kern zaak SO start daarom elke combinatie van
-   thema's, op het leerpad en bij Zelf kiezen. */
+   op een halte deed niets. kern zaak SO start daarom elk thema alleen, elk
+   paar en alles aan, op het leerpad en bij Zelf kiezen. */
 function showOpzet(p, lvl, goldIdx) {
   const s = p.settings;
   const vragenPlan = themaPlan(s, s.perLevel);
@@ -216,7 +216,7 @@ function renderQuestion() {
   } else if (G.mode === 'kies') {
     const choices = makeChoices(q, keuzeGrens(q, G.inst, G.lvl));
     area.innerHTML = '<div class="choices">' +
-      choices.map(c => `<button class="choice-btn${q.knop ? ' ' + q.knop : ''}" data-v="${c}"${q.kind === 'klok' ? ` aria-label="${klokTekst(q, c)}"` : q.kind === 'kalender' ? ` aria-label="${toonAntwoord(q, c)}"` : ''}>${toonKeuze(q, c)}</button>`).join('') + '</div>';
+      choices.map(c => `<button class="choice-btn${q.knop ? ' ' + q.knop : ''}" data-v="${c}"${vraagThema(q).aria ? ` aria-label="${vraagThema(q).aria(q, c)}"` : ''}>${toonKeuze(q, c)}</button>`).join('') + '</div>';
     area.querySelectorAll('.choice-btn').forEach(b => {
       b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
     });
@@ -284,8 +284,6 @@ const naastElkaar = () => getComputedStyle($('answer-area').parentNode).flexDire
    de rand. Liggend staan kaart en knoppen naast elkaar en houden ze elk hun
    eigen maat (kaartOpMaat, antwoordOpMaat); alleen de telmodus meet daar hier.
    Schuiven zaak E kijkt het na, voor elk thema en elke telfase. */
-// geld, klok, kalender en de getallenlijn: een plaatje op de kaart, dus vier knoppen eronder
-const PLAATJE = ['geld', 'klok', 'kalender', 'lijn'];
 // kan er in deze show een cijferblok komen? alleen bij een som (rekenen of tafels)
 const kanTypen = s => s.mode !== 'kies' && themasAan(s).some(k => !PLAATJE.includes(k));
 // hoger dan dit wordt een knop een plank; een klokje erin blijft dan nog op zijn knop
@@ -757,18 +755,9 @@ function kaartMeten(tekst) {
   kaart.parentNode.classList.add(...smal);
   return hoogste;
 }
-// De grootste vraag per rij: zoveel stukken als er kunnen liggen, van de breedste soort; en de klok lezen én zoeken.
+// De grootste kaarten die in deze show kunnen komen: elk plaatje zegt het zelf (proeven in het themaregister).
 function kaartProeven(insts) {
-  const uit = [];
-  if (insts.geld) insts.geld.rijen.forEach(r => uit.push(r.terug ? genGeld(r).html
-    : `<span class="geld-rij">${Array(r.stuks).fill(r.briefje ? 1000 : 200).map(geldStuk).join('')}</span><span class="pl-som">€ @</span>`));
-  // en een paar echte: briefjes en munten door elkaar lopen op een smalle kaart (liggend) anders af
-  if (insts.geld) insts.geld.rijen.forEach(r => { if (!r.terug) for (let i = 0; i < 20; i++) uit.push(genGeld(r).html); });
-  if (insts.klok) insts.klok.rijen.forEach(r => uit.push(genKlok(r, 'lees').html, genKlok(r, 'zoek').html));
-  // de kalender: elke vorm een paar keer, want een maand met zes weken is een rij hoger
-  if (insts.kalender) insts.kalender.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genKalender(r, i % 2 ? 'zoek' : 'lees').html); });
-  if (insts.lijn) insts.lijn.rijen.forEach(r => { for (let i = 0; i < 8; i++) uit.push(genLijn(r, i % 2 ? 'zoek' : 'lees').html); if (r.sprong) uit.push(...lijnHoogste()); });
-  return uit;
+  return Object.keys(insts).flatMap(k => THEMA[k] && THEMA[k].proeven ? THEMA[k].proeven(insts[k]) : []);
 }
 addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = G.vakMin = G.zaalVol = null; $('show-stage').style.height = $('show-stage').style.width = ''; });
 function numpadPress(n) {

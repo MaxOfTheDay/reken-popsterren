@@ -1760,8 +1760,9 @@ zaak('ZD', () => {
 zaak('ZE', () => {
   const app = laadApp();
   const kaarten = app.run('OEFEN_INSTELLINGEN');
+  // alles wat kan staat er, in de volgorde van de tegels (een nieuw thema doet vanzelf mee)
   const gevallen = [
-    ['math', { ops: ['+', '-', 'x', ':'], max: 20, themas: ['geld', 'klok', 'kalender', 'lijn'] }, '["rekenen","tafels","lijn","geld","klok","kalender","show"]'],   // alles wat kan staat er
+    ['math', { ops: ['+', '-', 'x', ':'], max: 20, themas: app.PLAATJE.slice() }, JSON.stringify(app.THEMAS.map(t => t.id).concat('show'))],
     ['math', { ops: ['+', '-', 'x', ':'], max: 20 }, '["rekenen","tafels","show"]'],   // geld staat standaard uit
     ['math', { ops: ['+', '-'], max: 10, missNum: false }, '["rekenen","show"]'],      // en met minder
     ['math', { ops: [':'] }, '["tafels","show"]'],
@@ -1796,7 +1797,7 @@ zaak('ZE', () => {
         check(/data-instelling="tafelLijn"/.test(t) && !/data-instelling="tables"/.test(t)
           && /data-instelling="tables"/.test(tv) && !/data-instelling="tafelLijn"/.test(tv),
           'ZE · tafels: op het leerpad de tafelladder, bij Zelf kiezen "Tafels van", nooit allebei', '');
-        for (const [k, lijn, kies] of [['geld', 'geldLijn', 'kiesGeld'], ['klok', 'klokLijn', 'kiesKlok'], ['kalender', 'kalLijn', 'kiesKalender'], ['lijn', 'lijnLijn', 'kiesLijn']]) {
+        for (const [k, { lijn, kies }] of app.PLAATJE.map(k => [k, app.LADDERS[k]])) {
           const l = groepen.find(g => g.kaart === k).html, v = vrij.find(g => g.kaart === k).html;
           check(l.includes(`data-instelling="${lijn}"`) && !l.includes(`data-instelling="${kies}"`)
             && v.includes(`data-instelling="${kies}"`) && !v.includes(`data-instelling="${lijn}"`),
@@ -2456,14 +2457,25 @@ zaak('GL', () => {
 
 /* ================= SO · Elke combinatie van thema's start een show =================
    Een show met alleen geld of alleen de klok startte niet: de speciale vragen
-   lazen s.ops van de geldvraagmaker (zie showOpzet). Hier wordt elke
-   combinatie van thema's opgezet en uitgespeeld tot de laatste vraag, op het
-   leerpad en bij Zelf kiezen, in een lange en een korte show -- een thema dat
-   er straks bij komt, valt hier meteen mee. */
+   lazen s.ops van de geldvraagmaker (zie showOpzet). Hier wordt een show
+   opgezet en uitgespeeld tot de laatste vraag, op het leerpad en bij Zelf
+   kiezen, in een lange en een korte show, met elk thema alleen, elk paar, en
+   alles aan -- een thema dat er straks bij komt, valt hier meteen mee. Elke
+   vraag hoort bij het thema dat themaPlan haar gaf: een plaatje maakt zijn
+   eigen soort (q.kind = zijn id), een som-thema een som.
+   Niet elke combinatie: dat waren er 2^n, en met zes thema's al 3,5 seconde
+   van de keuring, die bij elk thema verdubbelde. Wat misging zat telkens in
+   één thema alleen (geen som om speciale vragen op te zetten) of in twee die
+   elkaar raakten; drie of meer voegen niets toe dat alles-aan niet al ziet. */
+function themaCombinaties(ids) {
+  const uit = ids.map(k => [k]);
+  ids.forEach((a, i) => ids.slice(i + 1).forEach(b => uit.push([a, b])));
+  if (ids.length > 2) uit.push(ids.slice());
+  return uit;
+}
 zaak('SO', () => {
   const ids = laadApp().THEMAS.map(t => t.id), kapot = [];
-  for (let m = 1; m < 1 << ids.length; m++) for (const modus of ['pad', 'vrij']) for (const perLevel of [8, 5]) {
-    const aan = ids.filter((k, i) => m & (1 << i));
+  for (const aan of themaCombinaties(ids)) for (const modus of ['pad', 'vrij']) for (const perLevel of [8, 5]) {
     const { app, p } = verseSter('Combi');
     const s = p.settings;
     s.modus = modus; s.perLevel = perLevel;
@@ -2478,13 +2490,81 @@ zaak('SO', () => {
         const sp = o.plan[g.idx];
         const q = sp ? (sp.type === 'miss' ? app.genMissing(o.inst, 1, p.perf, sp.op) : app.genChain(o.inst, 1, p.perf)) : app.buildQuestion(p, 1, g);
         if (!q || q.ans == null || !q.tmpl) throw new Error('vraag ' + g.idx + ' leeg');
-        const thema = o.vragenPlan[g.idx], soort = q.kind === 'geld' || q.kind === 'klok' ? q.kind : 'som';
-        if ((thema === 'geld' || thema === 'klok' ? thema : 'som') !== soort) throw new Error(`vraag ${g.idx}: ${thema} gaf ${q.tmpl}`);
+        const thema = o.vragenPlan[g.idx], wil = app.PLAATJE.includes(thema) ? thema : 'som';
+        if ((app.PLAATJE.includes(q.kind) ? q.kind : 'som') !== wil) throw new Error(`vraag ${g.idx}: ${thema} gaf ${q.tmpl}`);
         g.qs.push(q);
       }
     } catch (e) { kapot.push(naam + ': ' + e.message); }
   }
-  check(!kapot.length, 'SO · elke combinatie van thema\'s (leerpad en Zelf kiezen, 8 en 5 vragen) zet een show op en speelt hem uit', kapot.slice(0, 4).join('; '));
+  check(!kapot.length, 'SO · elk thema alleen, elk paar en alles aan (leerpad en Zelf kiezen, 8 en 5 vragen) zet een show op en speelt hem uit', kapot.slice(0, 4).join('; '));
+});
+
+/* ================= TR · Het themaregister =================
+   Elk thema is één object in THEMAS (zie "= Het themaregister" in
+   55-vragen.js), en de rest van de code leest het daar. Wat hier wordt
+   nagekeken, ging vroeger stil mis als iemand een van de vijftien plekken
+   vergat: een nieuw thema kreeg geldvragen (rijenVraag viel terug op genGeld),
+   een cijferblok onder zijn plaatje, of een kaart die versprong omdat het vak
+   zijn plaatjes niet kende. Een thema erbij hoort hier vanzelf bij, en wat het
+   mist staat in de uitslag. */
+zaak('TR', () => {
+  const { app, p } = verseSter('Register');
+  const mis = [], ids = new Set(), sleutels = {}, rijIds = new Set(app.LEERPAD.map(r => r.id)), ops = new Set();
+  const nodig = (t, veld, ok) => { if (!ok) mis.push(`${t.id}: ${veld}`); };
+  const uniek = (soort, v, t) => { const k = soort + ':' + v; if (sleutels[k]) mis.push(`${t.id}: ${soort} ${v} ook bij ${sleutels[k]}`); sleutels[k] = t.id; };
+  for (const t of app.THEMAS) {
+    nodig(t, 'id', typeof t.id === 'string' && /^[a-z]+$/.test(t.id) && !ids.has(t.id));
+    ids.add(t.id);
+    nodig(t, 'naam', typeof t.naam === 'string' && t.naam.length > 0);
+    nodig(t, 'icoon', typeof t.icoon === 'function' && /^<svg[^>]*thema-ico/.test(t.icoon(30)) && t.icoon(30).includes('width="30"'));
+    nodig(t, 'ops of plaatje (precies een van de twee)', !!t.ops !== !!t.plaatje);
+    if (t.ops) {
+      nodig(t, 'ops', Array.isArray(t.ops) && t.ops.length && t.ops.every(o => ['+', '-', 'x', ':'].includes(o) && !ops.has(o)));
+      t.ops.forEach(o => ops.add(o));
+    }
+    const L = t.ladder;
+    if (L) {
+      nodig(t, 'ladder.pad', Array.isArray(L.pad) && L.pad.length && L.pad.every(r => r.id && r.naam));
+      for (const r of L.pad || []) { if (rijIds.has(r.id)) mis.push(`${t.id}: rij-id ${r.id} bestaat al (de ladders zoeken een rij op zijn id)`); rijIds.add(r.id); }
+      nodig(t, 'ladder.lijn/stand/id/eind', ['lijn', 'stand', 'id', 'eind'].every(k => typeof L[k] === 'string' && L[k]));
+      nodig(t, 'ladder.vb', typeof L.vb === 'function' && L.pad.every(r => typeof L.vb(r, p.settings) === 'string'));
+      nodig(t, 'ladder.lijn in een verse ster', p.settings[L.lijn] && typeof p.settings[L.lijn] === 'object');
+      uniek('lijn', L.lijn, t); uniek('stand', L.stand, t); uniek('id', L.id, t);
+      if (L.kies) uniek('kies', L.kies, t);
+    }
+    if (!t.plaatje) continue;
+    nodig(t, 'een ladder met kies', L && typeof L.kies === 'string');
+    nodig(t, 'gen', typeof t.gen === 'function');
+    nodig(t, 'proeven', typeof t.proeven === 'function');
+    nodig(t, 'teken', typeof t.teken === 'string' && t.teken.length > 0);
+    nodig(t, 'een id dat geen soort som is', !['classic', 'missing', 'chain', 'bouw'].includes(t.id));
+    nodig(t, 'staat uit bij een verse ster', !app.themaAan(p.settings, t.id));
+    for (const k of ['toonAntwoord', 'toonKeuze', 'aria', 'hint', 'hintTeken']) if (k in t) nodig(t, k, typeof t[k] === 'function');
+    if (!L || typeof t.gen !== 'function') continue;
+    for (const r of L.pad) for (const vorm of ['lees', 'zoek']) for (let i = 0; i < 20; i++) {
+      const q = t.gen(r, vorm), naam = `${t.id} ${r.id} ${vorm}`;
+      if (!q || q.kind !== t.id || q.rij !== r.id) { mis.push(`${naam}: q.kind ${q && q.kind}, q.rij ${q && q.rij} (moet ${t.id}, ${r.id})`); break; }
+      if (!Number.isInteger(q.ans) || typeof q.tmpl !== 'string' || typeof q.html !== 'string') { mis.push(`${naam}: ans, tmpl of html ontbreekt (${q.tmpl})`); break; }
+      if (!q.tik) {
+        const k = app.makeChoices(q, app.keuzeGrens(q, p.settings, 1));
+        if (!k.includes(q.ans)) { mis.push(`${naam}: het antwoord staat niet bij de knoppen (${k})`); break; }
+        const fout = k.find(v => v !== q.ans), h = app.hintVoor(q, fout);
+        if (h !== null && !(h && h.pijl && h.woorden)) { mis.push(`${naam}: hint ${JSON.stringify(h)}`); break; }
+        if (k.some(v => !String(app.toonKeuze(q, v)).length || !String(app.toonAntwoord(q, v)).length)) { mis.push(`${naam}: een knop zonder tekst`); break; }
+      }
+    }
+    // het vaste vak: elke rij geeft zijn proeven, en het zijn kaarten (html)
+    const pr = typeof t.proeven === 'function' ? t.proeven({ rijen: L.pad }) : [];
+    nodig(t, 'proeven: minstens een kaart per rij', typeof t.proeven !== 'function' || Array.isArray(pr) && pr.length >= L.pad.length && pr.every(h => typeof h === 'string' && h.length));
+    // aan: dan staat hij in de show, als plaatje (altijd kiezen), en krijgt hij vragen
+    const s = verseSter('Aan').p.settings;
+    app.themaZet(s, t.id, true);
+    nodig(t, 'komt in een show van acht', app.themaPlan(s, 8).includes(t.id) && app.PLAATJE.includes(t.id));
+  }
+  check(!mis.length, 'TR · elk thema in het register is compleet, maakt zijn eigen soort vraag met het antwoord bij de knoppen, en komt in een show', mis.slice(0, 6).join(' | '));
+  check(Object.keys(app.LADDERS).join() === app.THEMAS.filter(t => t.ladder).map(t => t.id).join()
+    && app.PLAATJE.join() === app.THEMAS.filter(t => t.plaatje).map(t => t.id).join(),
+  'TR · LADDERS en PLAATJE komen uit het register, in de volgorde van de tegels', Object.keys(app.LADDERS).join() + ' / ' + app.PLAATJE.join());
 });
 
 /* KZ · De knoppen van élke rij van élk thema, zoals het spel ze legt
@@ -2534,12 +2614,12 @@ zaak('KZ', () => {
     const s = app.themaInst(t, 'tafels');
     meet(`tafels ${ops} ${r.id}`, () => ({ s, q: app.buildQuestion(t, 1, { idx: 3, qs: [], herhaald: new Set(), themaPlan: Array(8).fill('tafels'), insts: { tafels: s } }) }), true, false);
   }
-  // geld, de klok, de kalender en de getallenlijn: elke rij, elke vorm
-  const maker = { geld: app.genGeld, klok: app.genKlok, kalender: app.genKalender, lijn: app.genLijn };
-  for (const k of Object.keys(maker)) for (const r of app.LADDERS[k].pad) for (const v of ['lees', 'zoek']) {
-    const q0 = maker[k](r, v);
-    const getallen = k === 'geld' || k === 'lijn' || q0.soort === 'getal';
-    meet(`${k} ${r.id} ${v}`, () => ({ s: p.settings, q: maker[k](r, v) }), getallen && q0.knop !== 'twee', false);
+  // elk plaatje (geld, de klok, ...): elke rij, elke vorm. Getallen zijn de knoppen als
+  // het thema ze niet zelf toont (toonKeuze), of als de vraag zegt dat het een getal is
+  for (const k of app.PLAATJE) for (const r of app.LADDERS[k].pad) for (const v of ['lees', 'zoek']) {
+    const gen = app.THEMA[k].gen, q0 = gen(r, v);
+    const getallen = !q0.keuzes && (k === 'geld' || !app.THEMA[k].toonKeuze || q0.soort === 'getal');
+    meet(`${k} ${r.id} ${v}`, () => ({ s: p.settings, q: gen(r, v) }), getallen && q0.knop !== 'twee', false);
   }
   check(!mis.length, 'KZ · elke rij van elk thema: vier verschillende knoppen met het antwoord, op een gelote plek, geen antwoord dat overheerst, en bij de tafels niet het enige uit de tafel', mis.slice(0, 5).join(' | '));
   // B4: in welk seizoen valt deze maand -- nooit een maand waarin het seizoen wisselt

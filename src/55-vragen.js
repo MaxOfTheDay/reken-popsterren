@@ -372,7 +372,7 @@ function padNa(p, sterren, eigen) {
 function vraagIsNieuw(q, id) {
   if (id === 'fase') return true;
   if (id in LADDERS.tafels.idx) return (q.op === 'x' || q.op === ':') && TAFELPAD[LADDERS.tafels.idx[id]].tafels.includes(Number((q.tmpl.match(/\d+/g) || [])[1]));
-  if (THEMA_ERBIJ.some(k => id in LADDERS[k].idx)) return q.rij === id;
+  if (PLAATJE.some(k => id in LADDERS[k].idx)) return q.rij === id;
   const r = LEERPAD[PAD_IDX[id]];
   if (!r) return false;
   if (r.bouwen) return q.kind === 'bouw' && (q.grens || 99) >= r.bereik - 1;   // tot 1000: met honderdtallen
@@ -414,19 +414,9 @@ function rijAntwoorden(g, k, nu) {
    uit, dan gaan zijn bewerkingen opzij in s.opsRust, en komen ze zo terug als
    hij weer aan gaat. Een thema zonder bewerkingen (geld) staat in s.themas, en
    staat standaard uit: een ster van vóór dat thema merkt er niets van. Het
-   laatste thema kan niet uit. */
-/* De volgorde is die van de tegels, drie per rij: bovenaan de getallen
-   (rekenen, de tafels, de getallenlijn), eronder wat ze buiten het schrift
-   tegenkomt (geld, de klok, de kalender). */
-const THEMAS = [
-  { id: 'rekenen', naam: 'Rekenen', ops: ['+', '-'] },
-  { id: 'tafels',  naam: 'Tafels',  ops: ['x', ':'] },
-  { id: 'lijn',    naam: 'Getallenlijn' },
-  { id: 'geld',    naam: 'Geld' },
-  { id: 'klok',    naam: 'Klok' },
-  { id: 'kalender', naam: 'Kalender' },
-];
-const THEMA = Object.fromEntries(THEMAS.map(t => [t.id, t]));
+   laatste thema kan niet uit.
+   Wat elk thema is en kan, staat in zijn object in "= Het themaregister",
+   verderop: na de ladders, want het wijst naar hun rijen. */
 function themaAan(s, k) { return THEMA[k].ops ? THEMA[k].ops.some(o => s.ops.includes(o)) : (s.themas || []).includes(k); }
 const themasAan = s => THEMAS.filter(t => themaAan(s, t.id)).map(t => t.id);
 // Zet een thema aan of uit; false als het het laatste is (dan blijft het aan).
@@ -445,25 +435,18 @@ function themaZet(s, k, aan) {
   return true;
 }
 /* Het ICOONTJE van een thema: getekend, geen emoji -- 🧮 en 💶 zien er op elk
-   toestel anders uit, en op een oude Android klein en vaag. Twee tekens op een
-   lichtpaars tegeltje, of voor geld een munt van twee euro. aria-hidden: het
-   woord staat er altijd naast. */
-function themaIcoon(k, maat) {
-  const svg = binnen => `<svg class="thema-ico" viewBox="0 0 40 40" width="${maat}" height="${maat}" aria-hidden="true">${binnen}</svg>`;
-  if (k === 'geld') return svg('<circle cx="20" cy="20" r="18" fill="#c9ccd1" stroke="#9aa0a8" stroke-width="1.5"/>'
-    + '<circle cx="20" cy="20" r="12.5" fill="#e8c45a"/>'
-    + '<text x="20" y="21" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="900" fill="#5d3f00">€</text>');
-  if (k === 'kalender') return svg('<rect x="5" y="7" width="30" height="29" rx="5" fill="#fff" stroke="#9aa0a8" stroke-width="1.5"/>'
-    + '<path d="M5 12a5 5 0 0 1 5-5h20a5 5 0 0 1 5 5v4H5z" fill="#e5397a"/><rect x="11" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/><rect x="26" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/>'
-    + '<text x="20" y="27" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="900" fill="#2b2238">7</text>');
-  if (k === 'lijn') return svg('<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>'
-    + '<g stroke="#4a2a7a" stroke-linecap="round"><line x1="6" x2="34" y1="25" y2="25" stroke="#8e3fc8" stroke-width="4"/><line x1="9" x2="9" y1="20" y2="30" stroke-width="2.5"/><line x1="20" x2="20" y1="20" y2="30" stroke-width="2.5"/><line x1="31" x2="31" y1="20" y2="30" stroke-width="2.5"/></g>'
-    + '<path d="M25.5 18 l-4 -7 h8z" fill="#e5397a"/>');
-  if (k === 'klok') return klokSvg(130, maat, true).replace('class="klok"', 'class="klok thema-ico"');
-  const teken = { rekenen: ['+', '−'], tafels: ['×', '÷'] }[k];
-  return svg('<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>'
-    + '<g fill="#8e24aa" font-weight="900" font-size="21" text-anchor="middle" dominant-baseline="central">'
-    + `<text x="13.5" y="14">${teken[0]}</text><text x="26.5" y="26">${teken[1]}</text></g>`);
+   toestel anders uit, en op een oude Android klein en vaag. Elk thema tekent
+   het zijn (icoon in het themaregister); hier staat het lijstje eromheen.
+   aria-hidden: het woord staat er altijd naast. */
+function themaIcoon(k, maat) { return THEMA[k].icoon(maat); }
+function icoonSvg(maat, binnen) {
+  return `<svg class="thema-ico" viewBox="0 0 40 40" width="${maat}" height="${maat}" aria-hidden="true">${binnen}</svg>`;
+}
+const ICOON_TEGEL = '<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>';
+// twee tekens op het lichtpaarse tegeltje: de icoontjes van rekenen en de tafels
+function tekenIcoon(a, b) {
+  return maat => icoonSvg(maat, ICOON_TEGEL + '<g fill="#8e24aa" font-weight="900" font-size="21" text-anchor="middle" dominant-baseline="central">'
+    + `<text x="13.5" y="14">${a}</text><text x="26.5" y="26">${b}</text></g>`);
 }
 
 /* ---- De tafels -----------------------------------------------------------
@@ -1038,39 +1021,128 @@ function lijnRaak(q, x, b) {
   return Math.min(tot, Math.max(van, v));
 }
 
+/* ================= = Het themaregister =================
+   ÉÉN OBJECT PER THEMA. Alles wat de show, het ouderdeel en de tests van een
+   thema moeten weten, staat hieronder bij dat thema; de rest van de code leest
+   het hier en noemt geen thema bij naam. Een thema erbij is dus: zijn object,
+   zijn vraagmaker, en zijn tekening in het stijlblad -- zie "Een thema erbij"
+   in docs/UITBREIDEN.md. kern.test.js zaak TR kijkt elk object na: een veld
+   dat ontbreekt, of een vraagmaker die een andere soort vraag maakt, valt daar
+   om. Noem een thema dus nergens anders bij naam: een lijstje elders dat je
+   vergeet bij te werken, valt niet op -- een nieuw thema krijgt dan stil
+   geldvragen, een cijferblok onder zijn plaatje, of een kaart die verspringt.
+
+   De volgorde is die van de tegels, drie per rij: bovenaan de getallen
+   (rekenen, de tafels, de getallenlijn), eronder wat ze buiten het schrift
+   tegenkomt (geld, de klok, de kalender). Ook de kaarten in het ouderdeel en
+   de tekentjes in de samenvatting volgen haar.
+
+   Elk thema
+     id, naam      de sleutel en het woord op de tegel. id staat in saves
+                   (s.themas, p.stats.thema): verander het nooit.
+     icoon(maat)   het icoontje, getekend (zie themaIcoon)
+   Een som-thema (rekenen, tafels)
+     ops           staat aan als een van zijn bewerkingen aan staat (themaAan);
+                   zijn vragen komen uit vraagInst of tafelInst (themaInst)
+   Een ladder (de tafels en elk plaatje), zie "Een ladder per thema":
+     ladder.pad    de rijen, elk met een id en een naam
+     ladder.lijn   de sleutel in s met de lijnen vanaf en tot, en
+     ladder.stand  de sleutel in p met haar plek. Allebei in saves: nooit
+                   hernoemen, ook niet als de naam scheef staat (kalLijn).
+     ladder.kies   bij Zelf kiezen de sleutel in s met de aangevinkte rijen
+     ladder.id, .eind, .vb   in het ouderdeel: het element, de rij na de
+                   laatste ("alles door elkaar"), een voorbeeld per rij
+   Een plaatje (plaatje: true): geld, de klok, de kalender, de getallenlijn
+     gen(r, vorm)  de vraagmaker: een vraag van rij r, vorm 'lees' of 'zoek'
+                   (ze wisselen af, zie rijenVraag). q.kind = het id.
+     proeven(inst) de grootste kaarten die deze show kan krijgen, zodat het
+                   vak vast staat (zie kaartProeven). Eén te weinig en de
+                   kaart verspringt, of het plaatje wordt afgeknipt.
+     teken         zijn tekentje in de samenvatting van het maakformulier
+   Een plaatje kiest altijd (PLAATJE: nooit het cijferblok onder een
+   plaatje), komt in een show erbij tussen de sommen (themaPlan), en staat
+   voor een ster standaard uit.
+   Is het antwoord geen gewoon getal, dan zegt het thema ook (alles optioneel,
+   zonder is het het getal zelf, en de hint meer of minder):
+     toonAntwoord(q, v)  het antwoord in het vakje (en in de woorden van een hint)
+     toonKeuze(q, v)     het antwoord op een knop
+     aria(q, v)          wat een schermlezer van een knop zegt
+     hint(q, v)          de hint na een fout; undefined = gewoon meer of minder
+     hintTeken(q, v)     wat ze tikte, zoals het in de hint staat */
+const THEMAS = [
+  { id: 'rekenen', naam: 'Rekenen', ops: ['+', '-'], icoon: tekenIcoon('+', '−') },
+  { id: 'tafels',  naam: 'Tafels',  ops: ['x', ':'], icoon: tekenIcoon('×', '÷'),
+    ladder: { pad: TAFELPAD, lijn: 'tafelLijn', stand: 'tafels', id: 'set-tafelpad', eind: 'Alle tafels door elkaar', vb: tafelVoorbeeld } },
+  { id: 'lijn', naam: 'Getallenlijn', plaatje: true, teken: '📏',
+    icoon: maat => icoonSvg(maat, ICOON_TEGEL
+      + '<g stroke="#4a2a7a" stroke-linecap="round"><line x1="6" x2="34" y1="25" y2="25" stroke="#8e3fc8" stroke-width="4"/><line x1="9" x2="9" y1="20" y2="30" stroke-width="2.5"/><line x1="20" x2="20" y1="20" y2="30" stroke-width="2.5"/><line x1="31" x2="31" y1="20" y2="30" stroke-width="2.5"/></g>'
+      + '<path d="M25.5 18 l-4 -7 h8z" fill="#e5397a"/>'),
+    ladder: { pad: LIJNPAD, lijn: 'lijnLijn', stand: 'lijn', id: 'set-lijnpad', eind: 'Alle lijnen door elkaar', vb: lijnVoorbeeld, kies: 'kiesLijn' },
+    gen: genLijn,
+    // elke vorm een paar keer; bij de sprongen ook de hoogste boog
+    proeven: inst => inst.rijen.flatMap(r => [...Array.from({ length: 8 }, (_, i) => genLijn(r, i % 2 ? 'zoek' : 'lees').html), ...(r.sprong ? lijnHoogste() : [])]) },
+  { id: 'geld', naam: 'Geld', plaatje: true, teken: '€',
+    icoon: maat => icoonSvg(maat, '<circle cx="20" cy="20" r="18" fill="#c9ccd1" stroke="#9aa0a8" stroke-width="1.5"/>'
+      + '<circle cx="20" cy="20" r="12.5" fill="#e8c45a"/>'
+      + '<text x="20" y="21" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="900" fill="#5d3f00">€</text>'),
+    ladder: { pad: GELDPAD, lijn: 'geldLijn', stand: 'geld', id: 'set-geldpad', eind: 'Alles met geld door elkaar', vb: geldVoorbeeld, kies: 'kiesGeld' },
+    gen: genGeld,
+    /* zoveel stukken als er kunnen liggen, van de breedste soort; en een paar
+       echte: briefjes en munten door elkaar lopen op een smalle kaart (liggend) anders af */
+    proeven: inst => inst.rijen.flatMap(r => r.terug ? [genGeld(r).html]
+      : [`<span class="geld-rij">${Array(r.stuks).fill(r.briefje ? 1000 : 200).map(geldStuk).join('')}</span><span class="pl-som">€ @</span>`,
+        ...Array.from({ length: 20 }, () => genGeld(r).html)]),
+    toonAntwoord: (q, v) => q.centen ? euro(v).slice(1) : String(v),
+    toonKeuze: (q, v) => q.centen ? euro(v) : `€${v}` },
+  { id: 'klok', naam: 'Klok', plaatje: true, teken: '🕐',
+    icoon: maat => klokSvg(130, maat, true).replace('class="klok"', 'class="klok thema-ico"'),
+    ladder: { pad: KLOKPAD, lijn: 'klokLijn', stand: 'klok', id: 'set-klokpad', eind: 'Alle tijden door elkaar', vb: klokVoorbeeld, kies: 'kiesKlok' },
+    gen: genKlok,
+    proeven: inst => inst.rijen.flatMap(r => [genKlok(r, 'lees').html, genKlok(r, 'zoek').html]),
+    toonAntwoord: klokTekst,
+    // zoeken: een lege regel tekst houdt de knop op zijn gewone hoogte, het klokje vult hem (zie .klok-zoek)
+    toonKeuze: (q, v) => q.vorm === 'zoek' ? '&#8203;' + klokSvg(v, 64)
+      : q.uur24 ? `<span class="klok-digi">${klokDigitaal(v)}</span>` : `<span class="klok-tekst">${klokWoorden(v)}</span>`,
+    aria: klokTekst,
+    hint: klokHint,
+    hintTeken: klokHintTeken },
+  { id: 'kalender', naam: 'Kalender', plaatje: true, teken: '📅',
+    icoon: maat => icoonSvg(maat, '<rect x="5" y="7" width="30" height="29" rx="5" fill="#fff" stroke="#9aa0a8" stroke-width="1.5"/>'
+      + '<path d="M5 12a5 5 0 0 1 5-5h20a5 5 0 0 1 5 5v4H5z" fill="#e5397a"/><rect x="11" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/><rect x="26" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/>'
+      + '<text x="20" y="27" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="900" fill="#2b2238">7</text>'),
+    ladder: { pad: KALENDERPAD, lijn: 'kalLijn', stand: 'kalender', id: 'set-kalenderpad', eind: 'Alles met de kalender door elkaar', vb: kalenderVoorbeeld, kies: 'kiesKalender' },
+    gen: genKalender,
+    // elke vorm een paar keer, want een maand met zes weken is een rij hoger
+    proeven: inst => inst.rijen.flatMap(r => Array.from({ length: 8 }, (_, i) => genKalender(r, i % 2 ? 'zoek' : 'lees').html)),
+    toonAntwoord: (q, v) => q.soort === 'dag' ? DAGEN[v] : q.soort === 'maand' ? MAANDEN[v] : q.soort === 'seizoen' ? SEIZOENEN[v].naam
+      : q.soort === 'notatie' ? `${Math.floor(v / 100)}/${v % 100}` : String(v),
+    toonKeuze: (q, v) => q.soort === 'getal' || q.soort === 'notatie' ? toonAntwoord(q, v)
+      : `<span class="klok-tekst">${q.soort === 'seizoen' ? SEIZOENEN[v].teken + ' ' : ''}${toonAntwoord(q, v)}</span>`,
+    aria: toonAntwoord,
+    // een aantal (dagen, weken) is gewoon meer of minder
+    hint: (q, v) => q.soort === 'getal' ? undefined : kalHint(q, v) },
+];
+const THEMA = Object.fromEntries(THEMAS.map(t => [t.id, t]));
+// de thema's met een plaatje (zie hierboven), in de volgorde van de tegels
+const PLAATJE = THEMAS.filter(t => t.plaatje).map(t => t.id);
+// Het thema van een vraag met een plaatje (q.kind is zijn id); {} bij een som.
+const vraagThema = q => (THEMA[q.kind] && THEMA[q.kind].plaatje && THEMA[q.kind]) || {};
+
 // Het antwoord van een vraag zoals het in het vakje staat (toonAntwoord) en op een knop (toonKeuze).
-function toonAntwoord(q, v) {
-  if (q.kind === 'klok') return klokTekst(q, v);
-  if (q.kind === 'kalender') return q.soort === 'dag' ? DAGEN[v] : q.soort === 'maand' ? MAANDEN[v] : q.soort === 'seizoen' ? SEIZOENEN[v].naam
-    : q.soort === 'notatie' ? `${Math.floor(v / 100)}/${v % 100}` : String(v);
-  if (q.kind !== 'geld') return String(v);
-  return q.centen ? euro(v).slice(1) : String(v);
-}
-function toonKeuze(q, v) {
-  // zoeken: een lege regel tekst houdt de knop op zijn gewone hoogte, het klokje vult hem (zie .klok-zoek)
-  if (q.kind === 'klok') return q.vorm === 'zoek' ? '&#8203;' + klokSvg(v, 64)
-    : q.uur24 ? `<span class="klok-digi">${klokDigitaal(v)}</span>` : `<span class="klok-tekst">${klokWoorden(v)}</span>`;
-  if (q.kind === 'kalender') return q.soort === 'getal' || q.soort === 'notatie' ? toonAntwoord(q, v)
-    : `<span class="klok-tekst">${q.soort === 'seizoen' ? SEIZOENEN[v].teken + ' ' : ''}${toonAntwoord(q, v)}</span>`;
-  return q.kind === 'geld' ? (q.centen ? euro(v) : `€${v}`) : String(v);
-}
+function toonAntwoord(q, v) { const t = vraagThema(q); return t.toonAntwoord ? t.toonAntwoord(q, v) : String(v); }
+function toonKeuze(q, v) { const t = vraagThema(q); return t.toonKeuze ? t.toonKeuze(q, v) : String(v); }
 
 /* ---- Een ladder per thema ---------------------------------------------------
-   Tafels en geld hebben elk een ladder, en die werkt voor allebei hetzelfde --
-   net als het leerpad van rekenen, maar zonder blokken en grens:
+   De tafels en elk plaatje hebben een ladder (ladder in het themaregister), en
+   die werkt voor allemaal hetzelfde -- net als het leerpad van rekenen, maar
+   zonder blokken en grens:
      s[lijn]   = { vanaf, tot }: rij-ids, null = het begin of het eind
      p[stand]  = { rij, shows, goed, klaar }, net als p.pad
    Ze staat op de eerste rij tussen de lijnen die nog niet klaar is (ladderNu),
    en schuift door met dezelfde regel als padNa (ladderNa). Voorbij de laatste
    rij is het alles door elkaar, tot de lijn "tot". Bij Zelf kiezen telt de
-   ladder niet: dan is het s[kies] (geld, klok) of s.tables (tafels). */
-const LADDERS = {
-  tafels: { pad: TAFELPAD, lijn: 'tafelLijn', stand: 'tafels', id: 'set-tafelpad', eind: 'Alle tafels door elkaar', vb: tafelVoorbeeld },
-  geld:   { pad: GELDPAD,  lijn: 'geldLijn',  stand: 'geld',   id: 'set-geldpad',  eind: 'Alles met geld door elkaar', vb: geldVoorbeeld, kies: 'kiesGeld' },
-  klok:   { pad: KLOKPAD,  lijn: 'klokLijn',  stand: 'klok',   id: 'set-klokpad',  eind: 'Alle tijden door elkaar', vb: klokVoorbeeld, kies: 'kiesKlok' },
-  kalender: { pad: KALENDERPAD, lijn: 'kalLijn', stand: 'kalender', id: 'set-kalenderpad', eind: 'Alles met de kalender door elkaar', vb: kalenderVoorbeeld, kies: 'kiesKalender' },
-  lijn:   { pad: LIJNPAD,  lijn: 'lijnLijn',  stand: 'lijn',   id: 'set-lijnpad',  eind: 'Alle lijnen door elkaar', vb: lijnVoorbeeld, kies: 'kiesLijn' },
-};
+   ladder niet: dan is het s[kies] (de plaatjes) of s.tables (tafels). */
+const LADDERS = Object.fromEntries(THEMAS.filter(t => t.ladder).map(t => [t.id, t.ladder]));
 Object.values(LADDERS).forEach(L => { L.idx = Object.fromEntries(L.pad.map((r, i) => [r.id, i])); });
 // De rijen met voorbeeld, en waar de twee lijnen staan (indexen, 0 = de eerste rij).
 function ladderRijen(s, k) {
@@ -1140,7 +1212,7 @@ function rijenVraag(s, net) {
     const r = s.nu && Math.random() < RIJ_NU_VAAK ? s.nu : s.stapel ? beurt(s, 'stapel', s.rijen)
       : s.laatste && Math.random() < RIJ_LAATST_VAAK ? pick(s.laatste) : pick(s.rijen);
     const vorm = s.lees ? 'lees' : 'zoek';
-    q = s.thema === 'klok' ? genKlok(r, vorm) : s.thema === 'kalender' ? genKalender(r, vorm) : s.thema === 'lijn' ? genLijn(r, vorm) : genGeld(r);
+    q = THEMA[s.thema].gen(r, vorm);
   } while (net.includes(q.tmpl) && ++poging < 8);
   s.lees = !s.lees;
   return q;
@@ -1173,10 +1245,9 @@ function themaInst(p, k) { return k === 'tafels' ? tafelInst(p) : k === 'rekenen
    Afwisselen en niet per toeval: twee tafelvragen na elkaar en dan vijf sommen
    leest als een ander spel, niet als één show. Staat er geen som aan, dan
    delen de andere de show gelijk. */
-const THEMA_ERBIJ = ['geld', 'klok', 'kalender', 'lijn'];
 function themaPlan(s, total) {
   const aan = themasAan(s);
-  const sommen = aan.filter(k => !THEMA_ERBIJ.includes(k)), erbij = aan.filter(k => THEMA_ERBIJ.includes(k));
+  const sommen = aan.filter(k => !PLAATJE.includes(k)), erbij = aan.filter(k => PLAATJE.includes(k));
   const verdeel = (ks, n) => {
     const tel = Object.fromEntries(ks.map((k, i) => [k, Math.floor(n / ks.length) + (i < n % ks.length ? 1 : 0)]));
     const uit = [];
@@ -2740,7 +2811,7 @@ function buildQuestion(p, lvl, g) {
   const k = g && g.themaPlan ? g.themaPlan[g.idx] : themasAan(p.settings)[0];
   const s = (g && g.insts && g.insts[k]) || themaInst(p, k);
   // geld komt niet uit de zwakke sommen: dat zijn sommen, en een bedrag is elke keer andere munten
-  if (THEMA_ERBIJ.includes(s.thema)) return rijenVraag(s, net);
+  if (PLAATJE.includes(s.thema)) return rijenVraag(s, net);
   if (Math.random() < 0.35) {
     const wq = pickWeak(p, s, mag);
     if (wq) { if (al) al.add(wq.tmpl); return wq; }
@@ -2973,8 +3044,8 @@ function planSpecials(p, s, total, accent, goldIdx, bezet, rijNu) {
 const HINT_DICHTBIJ = 2;
 function hintVoor(q, val) {
   if (typeof val !== 'number' || isNaN(val) || val === q.ans) return null;
-  if (q.kind === 'klok') return klokHint(q, val);
-  if (q.kind === 'kalender' && q.soort !== 'getal') return kalHint(q, val);
+  const eigen = vraagThema(q).hint ? vraagThema(q).hint(q, val) : undefined;   // de klok, de kalender: later of vroeger
+  if (eigen !== undefined) return eigen;
   const meer = q.ans > val;
   // op de getallenlijn is meer naar rechts: de pijl wijst over de lijn, niet omhoog
   if (q.tik) return { pijl: meer ? 'rechts' : 'links', woorden: `${meer ? 'Meer' : 'Minder'} dan ${val}: verder naar ${meer ? 'rechts' : 'links'}` };
@@ -3006,9 +3077,10 @@ function kalHint(q, val) {
   const d = ((q.ans - val) % n + n + Math.floor(n / 2)) % n - Math.floor(n / 2), later = d > 0;
   return { pijl: later ? 'later' : 'vroeger', woorden: (later ? 'Later dan ' : 'Vroeger dan ') + toonAntwoord(q, val) };
 }
-// Wat ze tikte, in de andere vorm (zie klokHint); bij getallen gewoon de keuze zelf.
-function hintTeken(q, val) {
-  if (q.kind !== 'klok') return toonKeuze(q, val);
+// Wat ze tikte, zoals het in de hint staat: bij de klok in de andere vorm, anders gewoon de keuze zelf.
+function hintTeken(q, val) { return vraagThema(q).hintTeken ? vraagThema(q).hintTeken(q, val) : toonKeuze(q, val); }
+// zie klokHint
+function klokHintTeken(q, val) {
   if (q.uur24) return `<span class="klok-digi">${klokDigitaal(q.vorm === 'lees' ? val : val + 720)}</span>`;
   return q.vorm === 'zoek' ? klokWoorden(val) : klokSvg(val, 46);
 }
