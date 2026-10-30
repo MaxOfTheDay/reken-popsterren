@@ -17,9 +17,15 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('child_process');
 const { launch, cacheFonts, APP_URL } = require('../test/browser.js');
 
 const OUT = path.join(__dirname, 'beelden');
+/* De over-pagina toont een paar van dezelfde schermen, kleiner en als webp.
+   Welke, dat leest hij uit de pagina zelf (beelden/<naam>.webp), zodat de
+   pagina en het filmpje uit één opname komen en niet apart kunnen verouderen. */
+const OVER = path.join(__dirname, '..', 'over');
+const FFMPEG = process.env.FFMPEG || 'ffmpeg';
 
 // Marie is de ver gevorderde ster (de demoster p1), Anna telt nog (p2),
 // Clara komt er als derde bij, zodat de sterrenkeuze vol staat.
@@ -55,6 +61,26 @@ function marieRekent() {
   p.recent = [3, 2, 3, 3, 2, 3, 2, 3, 3, 2];
 }
 
+/* Voor ouders is één pagina: bovenaan "Wat oefent Marie?" met de thema's, en
+   daaronder per thema een kaart met zijn leerpad. Marie doet naast het rekenen
+   ook geld en de klok, zodat je ziet dat er meer is dan sommen. Alleen voor de
+   twee schermen uit het ouderdeel: een show met thema's zou ook klokvragen
+   tussen de tafelsommen van 04 zetten. */
+function marieThemas() {
+  const s = db.profiles.p1.settings;
+  s.themas = ['geld', 'klok'];
+}
+// het tweede scherm: zo ver naar beneden dat de leerpaden bovenaan staan, net
+// onder de kop. Er zijn dan vier kaarten en het scherm zelf scrolt.
+function naarLeerpad() {
+  const kaart = document.querySelector('.screen.active .thema-kaart.niveau-blok');
+  let bak = kaart.parentElement;
+  while (bak && bak.scrollHeight <= bak.clientHeight + 1) bak = bak.parentElement;
+  const kop = document.querySelector('#screen-settings .hub-sticky');
+  const onder = kop ? kop.getBoundingClientRect().bottom : 0;
+  bak.scrollTop += kaart.getBoundingClientRect().top - onder - 14;
+}
+
 const SCHERMEN = [
   { key: '01-profielkeuze', go: () => { cur = null; goProfiles(); } },
   { key: '02-kaart', go: () => selectProfile('p1') },
@@ -71,9 +97,10 @@ const SCHERMEN = [
   { key: '05-einde', wacht: 3200, go: () => { selectProfile('p1'); startLevel(6); G.stars = 3; endLevel(true); } },
   { key: '06-kleedkamer', go: () => { selectProfile('p1'); openKleedkamer(); } },
   { key: '09-trofeeen', go: () => { selectProfile('p1'); openTrophies(); } },
-  // het rekenen, voor de ouder: zo stel je het in, en zo zie je hoe het gaat
-  { key: '07-ouder-oefenen', go: () => { marieRekent(); openSettings(); setKey = 'p1'; setTab = 'oefenen'; renderSettings(); } },
-  { key: '08-ouder-voortgang', go: () => { marieRekent(); openSettings(); setKey = 'p1'; setTab = 'voortgang'; renderSettings(); } },
+  // het rekenen, voor de ouder: zo stel je het in (de thema's bovenaan Voor
+  // ouders), en zo zie je hoe het gaat (elk thema zijn eigen leerpad, eronder)
+  { key: '07-ouder-oefenen', go: () => { marieRekent(); marieThemas(); openSettings(); setKey = 'p1'; renderSettings(); } },
+  { key: '08-ouder-voortgang', go: () => { marieRekent(); marieThemas(); openSettings(); setKey = 'p1'; renderSettings(); }, na: () => naarLeerpad() },
   // Anna telt: een cijfer op de kaart, en dan kies je het groepje dat zo veel is
   // (fase 6). Een vraag waaraan je ziet dat er geteld wordt, niet "de meeste".
   // (Twee groepjes samen, fase 8, breekt op een telefoon over twee regels.)
@@ -103,10 +130,12 @@ const SCHERMEN = [
     await page.goto(APP_URL + '&demo&star=p1');
     await page.waitForFunction(() => typeof selectProfile === 'function');
     await page.evaluate('(' + zetSterren + ')()');
-    await page.evaluate('window.marieRekent = ' + marieRekent);
+    for (const f of [marieRekent, marieThemas, naarLeerpad]) await page.evaluate(`window.${f.name} = ${f}`);
     await page.evaluate('(' + s.go + ')()');
     await page.waitForTimeout(s.wacht || 1500);
-    await page.screenshot({ path: path.join(OUT, s.key + '.jpg'), type: 'jpeg', quality: 88 });
+    // pas als het scherm staat: tijdens het binnenkomen zet het zijn scroll nog terug
+    if (s.na) { await page.evaluate('(' + s.na + ')()'); await page.waitForTimeout(400); }
+    await page.screenshot({ path: path.join(OUT, s.key + '.jpg'), type: 'jpeg', quality: 95 });
     process.stdout.write('.');
   }
 
@@ -116,6 +145,14 @@ const SCHERMEN = [
     'window.WERELDEN = ' + JSON.stringify(werelden, null, 2) + ';\n');
   await browser.close();
 
-  console.log(`\n${SCHERMEN.length} schermen en ${werelden.length} werelden -> ${OUT}`);
+  const overHtml = fs.readFileSync(path.join(OVER, 'index.html'), 'utf8');
+  const voorOver = [...new Set([...overHtml.matchAll(/beelden\/([\w-]+)\.webp/g)].map(m => m[1]))];
+  for (const k of voorOver) {
+    if (!SCHERMEN.some(s => s.key === k)) { console.log(`over/index.html vraagt ${k}, dat hier niet opgenomen wordt`); process.exitCode = 1; continue; }
+    execFileSync(FFMPEG, ['-loglevel', 'error', '-y', '-i', path.join(OUT, k + '.jpg'),
+      '-vf', 'scale=360:-1:flags=lanczos', '-c:v', 'libwebp', '-quality', '82', path.join(OVER, 'beelden', k + '.webp')]);
+  }
+
+  console.log(`\n${SCHERMEN.length} schermen en ${werelden.length} werelden -> ${OUT}, ${voorOver.length} ervan ook naar over/beelden`);
   if (fouten.length) { console.log('Fouten in de pagina:\n  ' + [...new Set(fouten)].join('\n  ')); process.exitCode = 1; }
 })();

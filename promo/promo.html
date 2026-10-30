@@ -155,7 +155,7 @@
     <div id="bijschrift" class="kop"></div>
     <div id="onder"></div>
   </div>
-  <div id="tel2"><img alt=""></div>
+  <div id="tel2"><img id="achter" alt=""><img id="achterStraks" alt=""></div>
   <div id="tel"><div id="scherm"><img id="nu" alt=""><img id="straks" alt=""></div></div>
 
   <div id="logo" role="img" aria-label="Rekensterren"></div>
@@ -259,7 +259,7 @@ const SCHERMEN = [
   { img: '02-kaart',           kop: 'Reis langs <span class="licht">nieuwe werelden</span>', onder: '' },
   { img: '03-show-tellen',     kop: 'Eerst <span class="licht">leren tellen</span>', onder: '' },
   { img: '04-show-rekenen',    kop: 'Plussen, minnen, <span class="licht">maal en delen</span>', onder: 'Tot 10 of tot 100: jij kiest.' },
-  { img: '07-ouder-oefenen',   kop: '<span class="licht">Jij</span> stelt het in', onder: '' },
+  { img: '07-ouder-oefenen',   kop: '<span class="licht">Jij</span> stelt het in', onder: 'Ook de klok, geld en de kalender.' },
   { img: '08-ouder-voortgang', kop: 'Het <span class="licht">groeit mee</span>', onder: 'Lastige sommen komen terug.' },
   { img: '05-einde',           kop: 'Verdien <span class="licht">sterren</span>', onder: '' },
   { img: '09-trofeeen',        kop: 'Verzamel <span class="licht">trofeeën</span>', onder: '' },
@@ -561,7 +561,10 @@ function render(t) {
       $('teller').innerHTML = `<b>${i + 1}</b>/ ${N}`;
       $('nu').src = `beelden/${sch.img}.jpg`;
       $('straks').src = `beelden/${volgend.img}.jpg`;
-      $('tel2').firstChild.src = `beelden/${i < LAATSTE ? volgend.img : '02-kaart'}.jpg`;
+      // de achterste telefoon toont wat er straks komt; daarna wat er dán komt
+      const achter = k => k <= LAATSTE ? SCHERMEN[k].img : '02-kaart';
+      $('achter').src = `beelden/${achter(i + 1)}.jpg`;
+      $('achterStraks').src = `beelden/${achter(i + 2)}.jpg`;
       laatsteKop = i;
     }
     const kIn = uitTerug(tussen(lt, .05, .5)), kUit = inUit(tussen(lt, STAP - .35, STAP));
@@ -578,6 +581,9 @@ function render(t) {
     $('nu').style.transform = `translateX(${-schuif * 390}px)`;
     $('straks').style.transform = `translateX(${(1 - schuif) * 390}px)`;
     const binnen2 = uitTerug(tussen(t, S3 + .35, S3 + 1.2), 1.2);
+    // ...en vloeit daarin over terwijl het voorste scherm schuift. Wisselde hij
+    // gewoon van plaatje bij de scènegrens, dan sprong hij met een harde knip.
+    $('achterStraks').style.opacity = schuif;
     zet($('tel2'), demoZicht * .9, `translate(${(1 - binnen2) * 700}px, ${-bob * .7}px) rotate(${mix(20, 7, binnen2)}deg) scale(${.96 * (STAAND ? 1.25 : 1)})`);
   } else {
     zet($('wereld2'), 0);

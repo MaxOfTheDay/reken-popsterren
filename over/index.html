@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rekensterren — rekenen en tellen als een show</title>
-<meta name="description" content="Een reken- en telspel voor kinderen van 5 tot 8, met sommen die meegroeien. Werkt ook zonder internet.">
+<meta name="description" content="Rekenen, tellen, de klok en geld, als een show. Voor kinderen van 5 tot 8, met oefeningen die meegroeien. Werkt ook zonder internet.">
 <!-- Hoe de link eruitziet als hij gedeeld wordt (WhatsApp, Messenger, mail).
      Een voorbeeldbeeld moet een vol adres hebben, dus hier staat het echte domein. -->
 <meta property="og:type" content="website">
 <meta property="og:locale" content="nl_BE">
 <meta property="og:site_name" content="Rekensterren">
 <meta property="og:title" content="Rekensterren — rekenen en tellen als een show">
-<meta property="og:description" content="Voor kinderen van 5 tot 8, met sommen die meegroeien. Werkt ook zonder internet.">
+<meta property="og:description" content="Rekenen, tellen, de klok en geld, als een show. Voor kinderen van 5 tot 8. Werkt ook zonder internet.">
 <meta property="og:url" content="https://www.rekensterren.be/over/">
 <meta property="og:image" content="https://www.rekensterren.be/over/deel.jpg">
 <meta property="og:image:width" content="1200">
@@ -26,7 +26,8 @@
   ook werkt als voorbeeld van een tak en vanaf file://.
 
   Wat hier beloofd wordt, moet kloppen met het spel. Verandert er iets aan
-  waar de voortgang staat of aan spelen zonder internet, pas dan ook deze pagina
+  waar de voortgang staat, aan spelen zonder internet, aan de thema's (THEMAS in
+  src/55-vragen.js) of aan het pad naar Overzetten, pas dan ook deze pagina
   aan. Er staat met opzet geen aantal werelden in: dat groeit.
 
   Het filmpje staat in promo/ en wordt pas opgehaald als iemand op spelen tikt
@@ -87,6 +88,8 @@
   .chips { list-style: none; padding: 0; margin: 18px 0 0; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
   .chips li { padding: 8px 14px; border-radius: 999px; background: var(--vlak); border: 1px solid var(--vlak-rand); font-weight: 600; font-size: 15px; }
   .chips li span { margin-right: 6px; }
+  /* de thema's: dezelfde pilletjes, in het goud van de koppen, zodat ze als één rij lezen */
+  .chips.themas li { background: rgba(255,215,64,.10); border-color: rgba(255,215,64,.35); }
   .kbd { display: inline-block; padding: 1px 10px; border-radius: 8px; background: rgba(255,255,255,.14); color: #fff; white-space: nowrap; }
   .kort { text-align: center; margin: 18px 0 0; }
 
@@ -135,18 +138,29 @@
 
   <!-- Wat hier over het rekenen staat, moet kloppen met het spel: zie "= Vragen
        maken" en "= Extra uitdagingen" in src/55-vragen.js, de telmodus, de stem die
-       voorleest (stemAan), en "Oefent extra op" in Voortgang. -->
+       voorleest (stemAan), de thema's (THEMAS) en de lastige sommen per leerpad
+     in Voor ouders. De schermen schrijft promo/opname.js, samen met die van het
+     filmpje. -->
   <section aria-labelledby="kop-jou">
     <h2 id="kop-jou">Voor jou</h2>
     <ul class="schermen twee">
-      <li><img src="beelden/07-ouder-oefenen.webp" alt="Oefenen in het ouderdeel: plus, min, maal en delen, tot hoever, en welke tafels" loading="lazy" width="360" height="779"><span>Jij kiest wat</span></li>
-      <li><img src="beelden/08-ouder-voortgang.webp" alt="Voortgang in het ouderdeel: hoe het gaat, het leerpad en de sommen die nog lastig zijn" loading="lazy" width="360" height="779"><span>Je ziet hoe het groeit</span></li>
+      <li><img src="beelden/07-ouder-oefenen.webp" alt="Voor ouders: wat je kind oefent, met zes thema's om aan te zetten, en hoe" loading="lazy" width="360" height="779"><span>Jij kiest wat</span></li>
+      <li><img src="beelden/08-ouder-voortgang.webp" alt="Voor ouders: per thema een leerpad, met de sommen die nog lastig zijn" loading="lazy" width="360" height="779"><span>Je ziet hoe het groeit</span></li>
+    </ul>
+    <ul class="chips themas" aria-label="Thema's">
+      <li><span aria-hidden="true">➕</span>Rekenen</li>
+      <li><span aria-hidden="true">✖️</span>Tafels</li>
+      <li><span aria-hidden="true">📏</span>Getallenlijn</li>
+      <li><span aria-hidden="true">💶</span>Geld</li>
+      <li><span aria-hidden="true">🕐</span>Klok</li>
+      <li><span aria-hidden="true">📅</span>Kalender</li>
     </ul>
     <ul class="chips">
       <li><span aria-hidden="true">🧸</span>Eerst leren tellen</li>
       <li><span aria-hidden="true">🔁</span>Lastige sommen komen terug</li>
       <li><span aria-hidden="true">🔊</span>Leest voor</li>
     </ul>
+    <p class="kort">Tik in het spel op <b class="kbd">⚙️ Ouders</b>.</p>
   </section>
 
   <!-- Geen stappen per browser meer: die verouderen (Safari 26 verstopte Deel
@@ -161,6 +175,21 @@
       <li><span aria-hidden="true">📶</span>Zonder internet</li>
     </ul>
     <p class="kort">Tik in het spel op <b class="kbd">⊞ Als app</b>.<br><span class="klein">Je krijgt de stappen voor jouw toestel.</span></p>
+  </section>
+
+  <!-- Wat een ouder wil weten vóór ze beginnen. Moet kloppen met het spel: de
+       sterren staan alleen op het toestel (= Opslag in src/25-kern.js), en het
+       pad is letterlijk wat het spel bij Overzetten zelf toont (oz-waar in
+       src/70-ouderdeel.js). Overzetten praat alleen met zijn Worker als een
+       ouder erop tikt; zie docs/OVERZETTEN.md. -->
+  <section aria-labelledby="kop-sterren">
+    <h2 id="kop-sterren">Je sterren</h2>
+    <ul class="chips">
+      <li><span aria-hidden="true">👤</span>Geen account</li>
+      <li><span aria-hidden="true">🚫</span>Geen reclame</li>
+      <li><span aria-hidden="true">🔁</span>Mee naar een ander toestel</li>
+    </ul>
+    <p class="kort">Nieuw toestel? <b class="kbd">⚙️ Ouders › Back-up › Overzetten</b><br><span class="klein">Op het oude toestel krijg je een code, die tik je op het nieuwe in.</span></p>
   </section>
 
   <section aria-labelledby="kop-deel">
