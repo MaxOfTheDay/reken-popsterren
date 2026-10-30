@@ -97,7 +97,7 @@ check` zegt het als de twee uit elkaar zijn gelopen.
 | als je... | lees dan |
 |---|---|
 | de studio wilt starten of een PR wilt testen | `DEV-STUDIO.md` |
-| een wereld, spulletje of trofee wilt toevoegen | `docs/UITBREIDEN.md` |
+| een wereld, spulletje, trofee of thema wilt toevoegen | `docs/UITBREIDEN.md` |
 | tests wilt draaien of begrijpen | `docs/TESTEN.md` |
 | aan het laden, de cache of het bijwerken komt | `docs/LADEN.md` |
 | wilt weten welke fouten kinderen tegenkomen | `docs/FOUTEN.md` |

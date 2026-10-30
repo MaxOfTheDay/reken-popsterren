@@ -389,20 +389,59 @@ ze gaat verder als ze hem kan (`padNa`). `npm run test:kern` zaak ZF meet bij
 elke rij na of het voorbeeld en de vragen kloppen met wat de rij belooft, en
 zaak Q2 of een oude save nergens makkelijker wordt.
 
-Iets wat geen plus of min is, is geen rij maar een **thema**: een eigen tegel
-bovenaan Oefeningen, een eigen kaart met een eigen ladder, en een eigen plek
-op die ladder. De tafels, geld en de klok zijn er zo een (`THEMAS`, `TAFELPAD`,
-`GELDPAD` en `KLOKPAD` in `src/55-vragen.js`, onder `= Thema's`). Een thema met een ladder
-zet die in `LADDERS`: daarmee werken waar ze staat (`ladderNu`), hoe ze
-doorschuift (`ladderNa`), de ladder op Oefeningen en op Voortgang, en het
-verzetten van de lijnen vanzelf. Verder heeft het een vraagmaker nodig
-(`tafelInst`, `rijenInst`, via `themaInst`) en zijn kaart in `oefenGroups`.
-Een show mengt de thema's die aan staan: de sommen om de beurt, en een thema
-in `THEMA_ERBIJ` (geld, klok) twee keer per show ertussen (`themaPlan`). Elk thema
-schuift door op zijn eigen vragen
-(`themaSterren`). `npm run test:kern` zaken TH, GE en KL houden dat vast. Een vraag die
-zijn eigen keuzes meebrengt (de klok) zet ze in `q.keuzes`, en toont ze met
-`toonKeuze`.
+Iets wat geen plus of min is, is geen rij maar een **thema**: zie hieronder.
+
+---
+
+## Een thema erbij
+
+Een thema is een eigen tegel bovenaan Voor ouders, een eigen kaart met een
+eigen ladder, en een eigen plek op die ladder. Geld, de klok, de kalender en de
+getallenlijn zijn **plaatjes**: hun vraag is een tekening, ze kiezen altijd uit
+knoppen, en ze komen in een show tussen de sommen. Een nieuw thema is bijna
+altijd zo een.
+
+Alles wat de code van een thema weet, staat in één object in `THEMAS`, onder
+`= Het themaregister` in `src/55-vragen.js`. Daar staat ook wat elk veld
+betekent. De show, het ouderdeel en de tests lezen het daar; nergens anders
+wordt een thema bij naam genoemd. Een thema erbij is dus:
+
+1. **De rijen van zijn ladder** — een `…PAD` met per rij een `id` en een `naam`,
+   in de volgorde van school. Een rij-id is uniek over álle ladders.
+2. **Zijn vraagmaker** — `gen(r, vorm)`: een vraag van rij `r`, met
+   `kind` = het id van het thema, `rij` = `r.id`, en een geheel getal als
+   `ans`. Is het antwoord een woord (een dag, een maand), dan is `ans` zijn
+   nummer en zegt het thema met `toonAntwoord` en `toonKeuze` hoe het eruitziet.
+   Wil je eigen knoppen, zet ze dan in `q.keuzes` (de klok doet dat).
+3. **Zijn object in `THEMAS`** — `plaatje: true`, `naam`, `icoon`, `teken`, de
+   `ladder` (met nieuwe sleutels voor `lijn`, `stand` en `kies`), `gen`, en
+   `proeven`: de grootste kaarten die het kan maken. Daarop zet de show het vak
+   vast; mist er een, dan verspringt de kaart of wordt het plaatje afgeknipt.
+   Waar het in de rij van de tegels staat, is waar het overal staat.
+4. **Zijn tekening** — een stuk in het stijlblad, naast dat van geld, de klok en
+   de kalender in `src/css/40-kaart.css`.
+
+Dan nog `npm run bouw` en `npm run check`. Kern zaak **TR** kijkt het object na:
+een veld dat ontbreekt, een vraagmaker die een andere soort vraag maakt, een
+antwoord dat niet bij de knoppen staat. Zaak **SO** speelt een show met het
+thema alleen, met elk ander thema, en met alles aan; **KZ** kijkt de knoppen
+van elke rij na. Kijk het daarna met je ogen na: `npm run test:schuiven` (past
+het op elke schermmaat, ook liggend en op 320) en `npm run shots`.
+
+Wat je **niet** hoeft te doen: de ladder, het doorschuiven, de kaart op Voor
+ouders, Zelf kiezen, de cijfers per thema en het mengen in een show komen
+vanzelf. Een nieuw thema staat voor elke ster uit tot een ouder het aanzet, dus
+een oude save heeft geen migratie nodig.
+
+En let op: de sleutels `id`, `ladder.lijn`, `ladder.stand` en `ladder.kies`
+staan in saves. Kies ze één keer goed; hernoemen is een migratie.
+
+Een **som-thema** (rekenen, de tafels) heeft `ops` in plaats van `plaatje`: het
+staat aan als een van zijn bewerkingen aan staat, en zijn vragen komen uit
+`vraagInst` of `tafelInst` (`themaInst`). Er een bij maken is meer werk en
+gebeurt zelden. Een show mengt de thema's die aan staan: de sommen om de beurt,
+elk plaatje twee keer per show ertussen (`themaPlan`), en elk thema schuift
+door op zijn eigen vragen (`themaSterren`). Zaken TH, GE en KL houden dat vast.
 
 ---
 

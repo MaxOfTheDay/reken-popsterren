@@ -775,17 +775,11 @@ function defaultProfile(name, dress, opts) {
       memory: opts.memory !== false,                // memory-spelletje op de kaart (standaard aan)
       padVanaf: opts.padVanaf || null,              // rekenmodus: de rij van het leerpad waar het spel minstens begint (zie padNu)
       padTot: null,                                 // en de rij waar de lijn "tot" onder staat; null = het eind van het blok (zie padRijen)
-      tafelLijn: { ...opts.tafelLijn },             // de lijnen "vanaf" en "tot" op de tafelladder (zie TAFELPAD)
-      geldLijn: { ...opts.geldLijn },
-      klokLijn: { ...opts.klokLijn },               // en op de klokladder (zie KLOKPAD)               // hetzelfde op de geldladder (zie GELDPAD); geld zelf staat uit tot s.themas het noemt
-      kalLijn: { ...opts.kalLijn },                 // en op de kalenderladder (zie KALENDERPAD)
-      lijnLijn: { ...opts.lijnLijn },               // en op de getallenlijn (zie LIJNPAD)
+      // per ladder de lijnen "vanaf" en "tot" (zie LADDERS: tafelLijn, geldLijn, ...)
+      ...Object.fromEntries(Object.values(LADDERS).map(L => [L.lijn, { ...opts[L.lijn] }])),
       // de thema's zonder bewerkingen (zie THEMAS) en wat er bij Zelf kiezen aanstaat; alleen als ze er zijn
       ...(opts.themas ? { themas: opts.themas.slice() } : {}),
-      ...(opts.kiesGeld ? { kiesGeld: opts.kiesGeld.slice() } : {}),
-      ...(opts.kiesKlok ? { kiesKlok: opts.kiesKlok.slice() } : {}),
-      ...(opts.kiesKalender ? { kiesKalender: opts.kiesKalender.slice() } : {}),
-      ...(opts.kiesLijn ? { kiesLijn: opts.kiesLijn.slice() } : {}),
+      ...Object.fromEntries(Object.values(LADDERS).filter(L => L.kies && opts[L.kies]).map(L => [L.kies, opts[L.kies].slice()])),
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
     // FASE 4A. tourStars blijft bij een verse ster voorgoed leeg -- het is de
