@@ -1462,17 +1462,51 @@ const nieuwTeTonen = {};   // per ster: de rij-id (of 'fase') die in de volgende
 function groeiPil(naam, vb) {
   return `✨ Nieuw: ${naam}${vb ? ` <span class="groei-vb">${vb}</span>` : ''}`;
 }
-function groeiMoment(p, g, voor, rij) {
+/* ÉÉN PER SHOW, EN ER GAAT ER GEEN VERLOREN. Er is één pil op het eindscherm,
+   maar met een paar thema's aan gaan er soms twee ladders tegelijk omhoog. Hier
+   werd dan alleen de eerste gevierd, en de andere nooit: in de speeltest met
+   rekenen, tafels, geld en de klok kregen 5 van de 14 stappen geen pil en geen
+   "Nieuw" (Tafels van 3 en 4, Halve uren, Kwartier ...). Nu zoekt dit de eerste
+   die nog niet gevierd is (p.gezien), in deze volgorde: wat deze show omhoog
+   ging, dan een nieuwe manier van antwoorden (antwoordStap), dan een rij
+   waar ze eerder op kwam zonder pil (wachtendeRijen). Die laatste komt zo
+   gewoon een show later.
+   rij: de rij waar ze deze show op kwam, of null; antwoord: 'mix' | 'typ' als
+   het spel net zelf de antwoordstap zette (zie endLevel), anders null. */
+const ANTWOORD_PIL = {
+  mix: { naam: 'Af en toe typen', vb: '12 + 5 = <span class="typ-vak">17</span>' },
+  typ: { naam: 'Zelf typen', vb: '12 + 5 = <span class="typ-vak">17</span>' },
+};
+function groeiMoment(p, g, voor, rij, antwoord) {
   if (g.count) {
     const st = p.countTrack.stage;
     return st > voor ? { id: 'fase', pil: groeiPil(COUNT_STAGE_LABELS[st], COUNT_STAGE_VB[st]),
       zin: 'Je bent gegroeid! Er is een nieuw spel.' } : null;
   }
   const z = p.gezien || (p.gezien = {});
-  const r = rij && padRijen(p.settings).rijen.concat(...Object.keys(LADDERS).map(k => ladderRijen(p.settings, k).rijen)).find(x => x.id === rij);
-  if (!r || z[rij]) return null;
-  z[rij] = 1;
-  return { id: rij, pil: groeiPil(r.naam, r.vb) };
+  const alle = padRijen(p.settings).rijen.concat(...Object.keys(LADDERS).map(k => ladderRijen(p.settings, k).rijen));
+  const kandidaten = [rij, antwoord && 'antwoord-' + antwoord, ...wachtendeRijen(p)];
+  for (const id of kandidaten) {
+    if (!id || z[id]) continue;
+    const a = id.startsWith('antwoord-') && ANTWOORD_PIL[id.slice(9)];
+    const r = a || alle.find(x => x.id === id);
+    if (!r) continue;
+    z[id] = 1;
+    return { id, pil: groeiPil(r.naam, r.vb), rij: !a };
+  }
+  return null;
+}
+/* De rijen waar ze nu op staat nadat ze er zelf op kwam (er is al iets
+   klaar), en waar ze nog maar net is: hoogstens één show erop. Daarna is hij
+   niet nieuw meer, en een pil voor iets wat ze al tien shows speelt zegt
+   niets. Een rij die de ouder verzette (t.rij is dan nog de oude) telt niet:
+   dat is geen groei van haar. */
+function wachtendeRijen(p) {
+  const s = p.settings, uit = [];
+  const net = (t, nu) => nu !== 'alles' && t && t.rij === nu && (t.klaar || []).length > 0 && (t.shows || 0) < 2;
+  if (themaAan(s, 'rekenen') && net(p.pad, padNu(p))) uit.push(padNu(p));
+  Object.keys(LADDERS).forEach(k => { if (themaAan(s, k) && net(p[LADDERS[k].stand], ladderNu(p, k))) uit.push(ladderNu(p, k)); });
+  return uit;
 }
 /* Welke stap van het leerpad speelt ze nu? Rekenen: de rij (padNu), tellen: de
    fase. Een andere modus is ook een andere stap. Alleen voor het ouderrapport:
@@ -1601,8 +1635,26 @@ function endLevel(success) {
     telPlafondTel(p, success ? showStars(G) : 0);
   }
   onthoudUitkomst(p, success ? showStars(G) : 0, stapVoor);   // voor de stand op de themakaart (beide takken hieronder bewaren)
+  // Zelf kiezen: ging het eens vlot, dan blijft "Klaar voor meer" staan tot de ouder iets aanvinkt (zie klaarVoorMeer)
+  if (vrij && p.stap && (uitdagingStand(p) || {}).stand === 'vlot') p.stap.meer = 1;
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;   // een show verder gewend aan de grens
   if (!G.count && success && !vrij) telGrensDrie(p, showStars(G));   // voor de grenstip (zie grensDrieSterren)
+  /* DE ANTWOORDSTAP ZET HET LEERPAD ZELF. Kiezen → af en toe typen → zelf
+     typen: dezelfde getallen, een andere manier van antwoorden. Dat was een tip
+     voor de ouder (grensTip), en tot die er tikte bleef ze kiezen uit vier --
+     in de speeltest 27 shows lang dezelfde sommen na het eind van het leerpad.
+     Nu doet het spel die stap zelf, op hetzelfde moment (GRENS_TIP_SHOWS
+     topshows) en met een pil op het eindscherm. Grotere getallen blijven aan
+     de ouder: dat is de lijn "tot", en die is van hem. Zelf kiezen kent geen
+     tip (grensTip geeft daar null), dus daar gebeurt dit ook niet. */
+  let antwoordStap = null;
+  if (!G.count && success && !vrij) {
+    const tip = grensTip(p);
+    if (tip && tip.soort === 'mode') {
+      p.settings.mode = antwoordStap = tip.naar;
+      p.settings.grensTipBasis = grensDrieSterren(p);   // de volgende stap telt opnieuw
+    }
+  }
   /* Een show verder op haar rij, op elke ladder die in deze show speelde, elk
      op zijn eigen vragen (themaSterren), en met de antwoorden op het nieuwe
      van die rij (rijAntwoorden, zie rijVerder). Schoof ze door, dan is dit haar nieuwe
@@ -1689,9 +1741,10 @@ function endLevel(success) {
     mile.innerHTML = '';
     /* Gegroeid gaat vóór een trofee: de trofee blijft klaarliggen in de kast
        (met zijn stipje op het tabblad), dit moment is er maar één keer. */
-    const groei = groeiMoment(p, G, faseVoor, nieuweRij);
+    const groei = groeiMoment(p, G, faseVoor, nieuweRij, antwoordStap);
     if (groei) {
-      nieuwTeTonen[cur] = groei.id;
+      // een rij krijgt in de volgende show nog zijn "Nieuw"; een antwoordstap heeft geen vraag om te taggen
+      if (groei.rij !== false) nieuwTeTonen[cur] = groei.id;
       mile.innerHTML = `<span class="groei-pil">${groei.pil}</span>`;
       if (groei.zin) zin += ' ' + groei.zin;
     } else if (nieuwKlaar) {

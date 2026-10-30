@@ -2335,12 +2335,19 @@ function advanceCountStage(p, success, foutloos) {
 /* Tegen het plafond aan: hoeveel shows met drie sterren het kind al speelde op
    de hoogste fase die het mag spelen, op de hoogste trap ervan. Hier groeit het
    spel niet meer vanzelf verder -- dat is aan de ouder (zie telTip). Telt pas ná
-   advanceCountStage, zodat een show die nét een fase hoger zet niet meetelt. */
+   advanceCountStage, zodat een show die nét een fase hoger zet niet meetelt.
+   EEN MINDERE SHOW ZET HEM NIET OP NUL. Een show met twee sterren zet haar een
+   trapje terug (countTrack.rung); die show telt niet mee, maar wat ze al had
+   blijft staan. Hier ging de teller bij elk trapje terug naar nul, en dan
+   verdween "Klaar voor meer" weer na één mindere show -- in de speeltest kwam
+   en ging hij drie keer, en een kind op de laatste fase wachtte er 25 shows op.
+   Opnieuw tellen doet alleen een andere grens (telPlafondOpnieuw) of een fase
+   terug (advanceCountStage). Zie ook klaarVoorMeer: de tip blijft staan. */
 function telPlafondTel(p, stars) {
   const ct = p.countTrack;
   const st = countLiveStage(p);
-  if (st < countMaxStage(p.settings) || (ct.rung || 0) < countTopRung(st)) { ct.plafond = 0; return; }
-  if (stars >= 3) ct.plafond = (ct.plafond || 0) + 1;
+  if (st < countMaxStage(p.settings)) { ct.plafond = 0; return; }
+  if (stars >= 3 && (ct.rung || 0) >= countTopRung(st)) ct.plafond = (ct.plafond || 0) + 1;
 }
 // Een andere grens gekozen (fase, cijfers, hoeveelheid of modus): opnieuw tellen.
 function telPlafondOpnieuw(p) { if (p && p.countTrack) p.countTrack.plafond = 0; }

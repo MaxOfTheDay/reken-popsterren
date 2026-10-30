@@ -236,13 +236,16 @@
   }
   /* geel/goud stipje op het Trofeeën-tabblad zolang er iets nieuws in de kast ligt —
      zelfde kleurtaal als de rest van de trofee-elementen (banner, ready-kaart) */
-  .nav-item { position: relative; }
-  .nav-item .nav-dot {
+  /* Hetzelfde stipje op ⚙️ op het beginscherm, zolang er een ster "Klaar voor
+     meer" is (zie ouderStip): één stip, één betekenis -- er ligt iets klaar. */
+  .nav-item, #btn-gear { position: relative; }
+  .nav-dot {
     position: absolute; top: 3px; right: calc(50% - 22px); width: 12px; height: 12px;
     border-radius: 50%; background: var(--gold-accent); border: 2px solid var(--c-white); display: none;
     box-shadow: 0 1px 4px rgba(0,0,0,.4);
   }
-  .nav-item.has-new .nav-dot { display: block; }
+  #btn-gear .nav-dot { top: -1px; right: -1px; }
+  .has-new > .nav-dot { display: block; }
   @media (max-width: 520px) {
     /* gelijke flexibele zijkolommen: de titel blijft écht in het schermmidden,
        ook nu de linkercel leeg is (met auto|1fr|auto hing hij ~47px naar links) */
@@ -367,6 +370,8 @@
   .groei-vb { display: inline-flex; align-items: center; gap: 6px; color: var(--c-white); white-space: nowrap; }
   .groei-vb .klok { width: 1.6em; height: 1.6em; }
   .groei-vb .klok-vb { display: none; }
+  /* de antwoordstap (zie ANTWOORD_PIL): het getal staat op een streepje, zoals ze het straks zelf intikt */
+  .groei-vb .typ-vak { display: inline-block; min-width: 1.4em; text-align: center; border-bottom: 3px solid currentColor; line-height: 1.1; }
   .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; }
   /* tot ze opkomen tellen tikken niet mee (zie eindWacht) */
   .end-actions.wacht { pointer-events: none; }

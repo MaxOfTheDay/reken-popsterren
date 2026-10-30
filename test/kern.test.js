@@ -2854,4 +2854,50 @@ zaak('KS', () => {
   check(!uit.size, 'KS · elke vorm van de klok blijft binnen zijn tekening', [...uit].slice(0, 4).join(' | '));
 });
 
+/* KM · KLAAR VOOR MEER BLIJFT, EN ELKE STAP KRIJGT ZIJN PIL. In de speeltest
+   (270 shows) verdween "Klaar voor meer" bij tellen en Zelf kiezen na één
+   mindere show, en kregen stappen die samen met een andere omhoog gingen nooit
+   een pil. Zie klaarVoorMeer (70-ouderdeel) en groeiMoment (60-spel). */
+zaak('KM', () => {
+  const { app, p } = verseSter('Meer');
+  const klaar = q => app.run('klaarVoorMeer')(q);
+  // tellen: zes topshows op de laatste fase, dan één mindere -- de tip blijft
+  const t = app.db.profiles.p2 = app.defaultProfile('Tel', 'dress_roze', app.COUNT_OPTS);
+  app.normalizeProfiles();
+  const top = app.countMaxStage(t.settings);
+  Object.assign(t.countTrack, { stage: top, rung: app.countTopRung(top) });
+  for (let i = 0; i < app.run('GRENS_TIP_SHOWS'); i++) app.telPlafondTel(t, 3);
+  check(klaar(t), 'KM · tellen: zes topshows op het plafond geven "Klaar voor meer"', JSON.stringify(t.countTrack));
+  t.countTrack.rung = 0; app.telPlafondTel(t, 2);
+  check(klaar(t), 'KM · tellen: na een mindere show (een trapje terug) blijft hij staan', JSON.stringify(t.countTrack));
+  app.telPlafondTel(t, 3);
+  check(t.countTrack.plafond === app.run('GRENS_TIP_SHOWS'), 'KM · tellen: een topshow lager op de trap telt niet mee', String(t.countTrack.plafond));
+  // Zelf kiezen: eens vlot, blijft vlot -- tot er iets bij komt
+  const s = p.settings; s.modus = 'vrij'; s.kies = ['tot10'];
+  p.stap = { id: app.run('stapSleutel')(p), n: 6, meer: 1 }; p.recent = [3, 3, 2, 2, 2, 3];
+  check(klaar(p), 'KM · Zelf kiezen: na een vlotte reeks blijft "Klaar voor meer" ook na mindere shows', JSON.stringify(p.stap));
+  s.kies = ['tot10', 'tot20'];
+  check(!klaar(p), 'KM · Zelf kiezen: een vinkje erbij is een nieuwe stap, dan is hij weg', app.run('stapSleutel')(p));
+  // twee ladders tegelijk omhoog: de tweede krijgt zijn pil een show later
+  const r = app.db.profiles.p3 = app.defaultProfile('Twee', 'dress_roze', {});
+  app.normalizeProfiles();
+  app.themaZet(r.settings, 'geld', true);
+  r.pad = { klaar: ['tot10'], rij: 'tot20', shows: 0, goed: 0, vragen: 0, reeks: [] };
+  r.geld = { klaar: ['munten10'], rij: 'briefjes20', shows: 0, goed: 0, vragen: 0, reeks: [] };
+  const een = app.groeiMoment(r, {}, 0, 'tot20'), twee = app.groeiMoment(r, {}, 0, null), drie = app.groeiMoment(r, {}, 0, null);
+  check(een && een.id === 'tot20' && twee && twee.id === 'briefjes20' && /Briefjes/.test(twee.pil) && drie === null,
+    'KM · twee stappen in één show: de eerste nu, de tweede de show erna, en dan niets meer', JSON.stringify([een, twee, drie].map(g => g && g.id)));
+  r.klok = { klaar: ['uren'], rij: app.ladderNu(r, 'klok'), shows: 3 };
+  app.themaZet(r.settings, 'klok', true);
+  check(app.groeiMoment(r, {}, 0, null) === null, 'KM · een rij waar ze al shows op speelde, is geen nieuws meer', JSON.stringify(r.gezien));
+  // de antwoordstap die het leerpad zelf zet
+  const typ = app.groeiMoment(r, {}, 0, null, 'typ');
+  check(typ && typ.id === 'antwoord-typ' && /Zelf typen/.test(typ.pil) && typ.rij === false, 'KM · de antwoordstap krijgt zijn eigen pil', JSON.stringify(typ));
+  check(app.groeiMoment(r, {}, 0, null, 'typ') === null, 'KM · en die maar één keer', '');
+  // een verse ster op haar eerste rij: niets
+  const vers = app.defaultProfile('Vers', 'dress_roze', {});
+  app.themaZet(vers.settings, 'tafels', true);
+  check(app.groeiMoment(vers, {}, 0, null) === null, 'KM · de eerste rij van een thema is geen groei', JSON.stringify(vers.gezien));
+});
+
 klaar();
