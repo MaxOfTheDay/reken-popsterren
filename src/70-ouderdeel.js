@@ -369,9 +369,30 @@ function vgStand(p) {
      dát het moment voor de ouder om iets bij te vinken (de stip op het
      overzicht, en op de themakaart "Erbij" -- zie zelfErbij). Anders bleef een
      kind dat het allang kon eindeloos hetzelfde spelen. */
-  if (u && zelfGekozen(p.settings)) return u.stand === 'vlot' ? 'meer' : u.stand;
+  if (zelfGekozen(p.settings)) {
+    // eens vlot blijft vlot, tot er iets bij komt (p.stap.meer, zie endLevel; een vinkje erbij maakt een nieuwe stap)
+    if ((p.stap && p.stap.meer && p.stap.id === stapSleutel(p)) || (u && u.stand === 'vlot')) return 'meer';
+    if (u) return u.stand;
+  }
   if (u) return u.stand;
   return p.stap ? 'stap' : 'nieuw';
+}
+/* KLAAR VOOR MEER: de ene vraag die een ouder iets te doen geeft, op één plek
+   uitgerekend, voor het overzicht, haar themakaart en het stipje op ⚙️ op het
+   beginscherm. Met dezelfde regel in elke modus: is hij er, dan BLIJFT hij tot
+   de ouder iets verandert. Rekenen telt daarvoor topshows op (grensDrie, en
+   grensTipBasis zet opnieuw), tellen ook (countTrack.plafond, een mindere show
+   zet hem niet meer op nul) en Zelf kiezen onthoudt het op de stap (p.stap.meer).
+   Een label dat na één mindere show weer verdween, was er voor een ouder die
+   maar af en toe kijkt meestal net niet. kern zaak KM loopt de drie na. */
+const klaarVoorMeer = p => !!p && vgStand(p) === 'meer';
+// Het gouden stipje op ⚙️: zolang er een ster klaar is voor meer (zie renderProfiles)
+function ouderStip() {
+  const knop = $('btn-gear');
+  if (!knop) return;
+  const ja = profileKeys().some(k => klaarVoorMeer(db.profiles[k]));
+  knop.classList.toggle('has-new', ja);
+  knop.setAttribute('aria-label', ja ? 'Voor ouders, er is iets nieuws' : 'Voor ouders');
 }
 // De notitie over de stem staat los boven het leerpad, en alleen als er iets mis is.
 function stemKaartHtml(p) {
@@ -693,7 +714,7 @@ function zelfLadderHtml(p, k) {
    ouder kiest ze los, "Tafels van"). */
 function zelfErbij(p) {
   const s = p.settings;
-  if (!zelfGekozen(s) || vgStand(p) !== 'meer') return null;
+  if (!zelfGekozen(s) || !klaarVoorMeer(p)) return null;
   const volgende = (alle, aan) => alle.slice(Math.max(-1, ...aan.map(v => alle.indexOf(v))) + 1).find(v => !aan.includes(v));
   if (s.track === 'count') {
     const v = volgende(Array.from({ length: COUNT_STAGE_MAX }, (_, i) => i + 1), kiesFasen(s));
@@ -808,9 +829,11 @@ function stemNotitie(naam) {
    EERST HET ANTWOORDEN, DAN DE GETALLEN. Bij "kiezen uit 4" is een gok goedkoop
    (er is een hint en een tweede kans), en zelf typen is de grootste stap in
    uitdaging mét dezelfde getallen -- voor een kind van zes of zeven een
-   vriendelijker stap dan ineens tot vijftig. Dus stelt de tip eerst Afwisselen
-   voor, dan Zelf typen, en pas daarna een hogere grens. Elke stap telt opnieuw
-   (grensTipBasis), net als bij de grens. Geeft { soort: 'mode' | 'grens', naar }. */
+   vriendelijker stap dan ineens tot vijftig. Dus komt eerst Afwisselen, dan
+   Zelf typen, en pas daarna een hogere grens. Elke stap telt opnieuw
+   (grensTipBasis), net als bij de grens. Geeft { soort: 'mode' | 'grens', naar }.
+   De antwoordstap ('mode') zet het leerpad zelf, aan het eind van de show
+   (zie DE ANTWOORDSTAP in endLevel); wat de ouder als tip ziet, is dus de grens. */
 const GRENS_LADDER = [10, 20, 100, 1000];
 const GRENS_TIP_SHOWS = 6;
 /* GESPEELDE SHOWS, NIET HALTES. Hier stond: hoeveel haltes vanaf wereld 6 drie
@@ -1525,7 +1548,7 @@ function overzichtHtml() {
       + `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
       + `<span class="sr-tekst"><b>${esc(p.name)}</b>`
       + `<span class="sr-themas" aria-label="Oefent ${p.settings.track === 'count' ? 'tellen' : themasAan(p.settings).map(k => THEMA[k].naam.toLowerCase()).join(', ')}">${iconen}</span></span>`
-      + (vgStand(p) === 'meer' ? '<span class="sr-stip" role="img" aria-label="Klaar voor meer"></span>' : '')
+      + (klaarVoorMeer(p) ? '<span class="sr-stip" role="img" aria-label="Klaar voor meer"></span>' : '')
       + `<span class="sr-pijl" aria-hidden="true">›</span></button>`;
   };
   const nieuw = profileKeys().length < MAX_PROFILES

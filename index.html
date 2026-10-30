@@ -8235,13 +8235,16 @@
   }
 
 
-  .nav-item { position: relative; }
-  .nav-item .nav-dot {
+
+
+  .nav-item, #btn-gear { position: relative; }
+  .nav-dot {
     position: absolute; top: 3px; right: calc(50% - 22px); width: 12px; height: 12px;
     border-radius: 50%; background: var(--gold-accent); border: 2px solid var(--c-white); display: none;
     box-shadow: 0 1px 4px rgba(0,0,0,.4);
   }
-  .nav-item.has-new .nav-dot { display: block; }
+  #btn-gear .nav-dot { top: -1px; right: -1px; }
+  .has-new > .nav-dot { display: block; }
   @media (max-width: 520px) {
 
 
@@ -8366,6 +8369,8 @@
   .groei-vb { display: inline-flex; align-items: center; gap: 6px; color: var(--c-white); white-space: nowrap; }
   .groei-vb .klok { width: 1.6em; height: 1.6em; }
   .groei-vb .klok-vb { display: none; }
+
+  .groei-vb .typ-vak { display: inline-block; min-width: 1.4em; text-align: center; border-bottom: 3px solid currentColor; line-height: 1.1; }
   .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; }
 
   .end-actions.wacht { pointer-events: none; }
@@ -11232,7 +11237,7 @@
      schakelaar die ook in het ouderdeel staat (het overzicht, "Voor alle sterren") en in
      "Show stoppen?" -- daar waar het geluid echt stoort. -->
 <div class="corner-btns" id="corner-btns">
-  <button class="btn icon-btn" id="btn-gear" onclick="sndClick(); naTik(openSettings)" aria-label="Voor ouders" title="Voor ouders"><span class="gear-ico">⚙️</span></button>
+  <button class="btn icon-btn" id="btn-gear" onclick="sndClick(); naTik(openSettings)" aria-label="Voor ouders" title="Voor ouders"><span class="gear-ico">⚙️</span><span class="nav-dot"></span></button>
 </div>
 
 <div class="praise" id="praise"></div>
@@ -17473,6 +17478,7 @@ function renderProfiles() {
 
   const hint = $('over-hint');
   if (hint) hint.style.display = n ? 'none' : 'flex';
+  ouderStip();
 
   const codeHint = $('code-hint');
   if (codeHint) codeHint.style.display = !n && overzetMag() ? 'flex' : 'none';
@@ -25042,11 +25048,18 @@ function advanceCountStage(p, success, foutloos) {
 
 
 
+
+
+
+
+
+
+
 function telPlafondTel(p, stars) {
   const ct = p.countTrack;
   const st = countLiveStage(p);
-  if (st < countMaxStage(p.settings) || (ct.rung || 0) < countTopRung(st)) { ct.plafond = 0; return; }
-  if (stars >= 3) ct.plafond = (ct.plafond || 0) + 1;
+  if (st < countMaxStage(p.settings)) { ct.plafond = 0; return; }
+  if (stars >= 3 && (ct.rung || 0) >= countTopRung(st)) ct.plafond = (ct.plafond || 0) + 1;
 }
 
 function telPlafondOpnieuw(p) { if (p && p.countTrack) p.countTrack.plafond = 0; }
@@ -27282,17 +27295,51 @@ const nieuwTeTonen = {};
 function groeiPil(naam, vb) {
   return `✨ Nieuw: ${naam}${vb ? ` <span class="groei-vb">${vb}</span>` : ''}`;
 }
-function groeiMoment(p, g, voor, rij) {
+
+
+
+
+
+
+
+
+
+
+
+const ANTWOORD_PIL = {
+  mix: { naam: 'Af en toe typen', vb: '12 + 5 = <span class="typ-vak">17</span>' },
+  typ: { naam: 'Zelf typen', vb: '12 + 5 = <span class="typ-vak">17</span>' },
+};
+function groeiMoment(p, g, voor, rij, antwoord) {
   if (g.count) {
     const st = p.countTrack.stage;
     return st > voor ? { id: 'fase', pil: groeiPil(COUNT_STAGE_LABELS[st], COUNT_STAGE_VB[st]),
       zin: 'Je bent gegroeid! Er is een nieuw spel.' } : null;
   }
   const z = p.gezien || (p.gezien = {});
-  const r = rij && padRijen(p.settings).rijen.concat(...Object.keys(LADDERS).map(k => ladderRijen(p.settings, k).rijen)).find(x => x.id === rij);
-  if (!r || z[rij]) return null;
-  z[rij] = 1;
-  return { id: rij, pil: groeiPil(r.naam, r.vb) };
+  const alle = padRijen(p.settings).rijen.concat(...Object.keys(LADDERS).map(k => ladderRijen(p.settings, k).rijen));
+  const kandidaten = [rij, antwoord && 'antwoord-' + antwoord, ...wachtendeRijen(p)];
+  for (const id of kandidaten) {
+    if (!id || z[id]) continue;
+    const a = id.startsWith('antwoord-') && ANTWOORD_PIL[id.slice(9)];
+    const r = a || alle.find(x => x.id === id);
+    if (!r) continue;
+    z[id] = 1;
+    return { id, pil: groeiPil(r.naam, r.vb), rij: !a };
+  }
+  return null;
+}
+
+
+
+
+
+function wachtendeRijen(p) {
+  const s = p.settings, uit = [];
+  const net = (t, nu) => nu !== 'alles' && t && t.rij === nu && (t.klaar || []).length > 0 && (t.shows || 0) < 2;
+  if (themaAan(s, 'rekenen') && net(p.pad, padNu(p))) uit.push(padNu(p));
+  Object.keys(LADDERS).forEach(k => { if (themaAan(s, k) && net(p[LADDERS[k].stand], ladderNu(p, k))) uit.push(ladderNu(p, k)); });
+  return uit;
 }
 
 
@@ -27421,8 +27468,26 @@ function endLevel(success) {
     telPlafondTel(p, success ? showStars(G) : 0);
   }
   onthoudUitkomst(p, success ? showStars(G) : 0, stapVoor);
+
+  if (vrij && p.stap && (uitdagingStand(p) || {}).stand === 'vlot') p.stap.meer = 1;
   if (!G.count && p.settings.wennen > 0) p.settings.wennen--;
   if (!G.count && success && !vrij) telGrensDrie(p, showStars(G));
+
+
+
+
+
+
+
+
+  let antwoordStap = null;
+  if (!G.count && success && !vrij) {
+    const tip = grensTip(p);
+    if (tip && tip.soort === 'mode') {
+      p.settings.mode = antwoordStap = tip.naar;
+      p.settings.grensTipBasis = grensDrieSterren(p);
+    }
+  }
 
 
 
@@ -27509,9 +27574,10 @@ function endLevel(success) {
     mile.innerHTML = '';
 
 
-    const groei = groeiMoment(p, G, faseVoor, nieuweRij);
+    const groei = groeiMoment(p, G, faseVoor, nieuweRij, antwoordStap);
     if (groei) {
-      nieuwTeTonen[cur] = groei.id;
+
+      if (groei.rij !== false) nieuwTeTonen[cur] = groei.id;
       mile.innerHTML = `<span class="groei-pil">${groei.pil}</span>`;
       if (groei.zin) zin += ' ' + groei.zin;
     } else if (nieuwKlaar) {
@@ -29431,9 +29497,30 @@ function vgStand(p) {
 
 
 
-  if (u && zelfGekozen(p.settings)) return u.stand === 'vlot' ? 'meer' : u.stand;
+  if (zelfGekozen(p.settings)) {
+
+    if ((p.stap && p.stap.meer && p.stap.id === stapSleutel(p)) || (u && u.stand === 'vlot')) return 'meer';
+    if (u) return u.stand;
+  }
   if (u) return u.stand;
   return p.stap ? 'stap' : 'nieuw';
+}
+
+
+
+
+
+
+
+
+const klaarVoorMeer = p => !!p && vgStand(p) === 'meer';
+
+function ouderStip() {
+  const knop = $('btn-gear');
+  if (!knop) return;
+  const ja = profileKeys().some(k => klaarVoorMeer(db.profiles[k]));
+  knop.classList.toggle('has-new', ja);
+  knop.setAttribute('aria-label', ja ? 'Voor ouders, er is iets nieuws' : 'Voor ouders');
 }
 
 function stemKaartHtml(p) {
@@ -29755,7 +29842,7 @@ function zelfLadderHtml(p, k) {
 
 function zelfErbij(p) {
   const s = p.settings;
-  if (!zelfGekozen(s) || vgStand(p) !== 'meer') return null;
+  if (!zelfGekozen(s) || !klaarVoorMeer(p)) return null;
   const volgende = (alle, aan) => alle.slice(Math.max(-1, ...aan.map(v => alle.indexOf(v))) + 1).find(v => !aan.includes(v));
   if (s.track === 'count') {
     const v = volgende(Array.from({ length: COUNT_STAGE_MAX }, (_, i) => i + 1), kiesFasen(s));
@@ -29847,6 +29934,8 @@ function stemNotitie(naam) {
     + ' (tekst-naar-spraak). Zonder klinkt het voorlezen met een vreemde uitspraak, en valt de luisteroefening (fase 5) weg.</details>';
   return '';
 }
+
+
 
 
 
@@ -30587,7 +30676,7 @@ function overzichtHtml() {
       + `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
       + `<span class="sr-tekst"><b>${esc(p.name)}</b>`
       + `<span class="sr-themas" aria-label="Oefent ${p.settings.track === 'count' ? 'tellen' : themasAan(p.settings).map(k => THEMA[k].naam.toLowerCase()).join(', ')}">${iconen}</span></span>`
-      + (vgStand(p) === 'meer' ? '<span class="sr-stip" role="img" aria-label="Klaar voor meer"></span>' : '')
+      + (klaarVoorMeer(p) ? '<span class="sr-stip" role="img" aria-label="Klaar voor meer"></span>' : '')
       + `<span class="sr-pijl" aria-hidden="true">›</span></button>`;
   };
   const nieuw = profileKeys().length < MAX_PROFILES
