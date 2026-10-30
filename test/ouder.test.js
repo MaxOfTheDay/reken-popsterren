@@ -1415,6 +1415,22 @@ function check(ok, label, detail) {
     let tk = await page.evaluate(() => ({ qmax: db.profiles.p1.settings.qmax, inKop: !!document.querySelector('.thema-kaart.open .kaart-kop #set-qmax'),
       lbl: [...document.querySelectorAll('.thema-kaart.open .oe-lbl')].map(e => e.textContent) }));
     check(tk.qmax === 8 && tk.inKop && !tk.lbl.includes('Hoeveelheden tot'), 'U · tellen: "tot 6 8 10" in de kop van de open kaart, en een tik zet het', JSON.stringify(tk));
+    // dicht staat een beperking naast de ✏️ ("tot 8", "alleen +"), en alles aan zegt niets
+    const grenzen = async () => { await open(page, 'p1', 'voortgang'); await page.waitForTimeout(150);
+      return page.evaluate(() => Object.fromEntries([...document.querySelectorAll('.thema-kaart:not(.open)')].map(k => {
+        const g = k.querySelector('.kaart-kop .kop-grens');
+        return [k.dataset.kaart, (g ? g.textContent : '') + (k.querySelector('.vg-lastig') ? ' | ' + k.querySelector('.vg-lastig').textContent : '')];
+      }))); };
+    let gr = await grenzen();
+    check(gr.tellen === 'tot 8', 'U · tellen dicht: "tot 8" in de kop', JSON.stringify(gr));
+    await page.evaluate(() => { const s = db.profiles.p1.settings; s.track = 'math'; s.qmax = 10; s.ops = ['+', '-', 'x', ':'];
+      db.profiles.p1.weak = { '13 - 6 = @': { ans: 7, op: '-', w: 3 }, '7 × 8 = @': { ans: 56, op: 'x', w: 2 } }; save(); });
+    gr = await grenzen();
+    check(gr.rekenen === ' | Lastig13 − 6' && gr.tafels === ' | Lastig7 × 8', 'U · alles aan: niets in de kop dicht', JSON.stringify(gr));
+    await page.evaluate(() => { db.profiles.p1.settings.ops = ['+', 'x']; save(); });
+    gr = await grenzen();
+    check(gr.rekenen === 'alleen +' && gr.tafels === 'alleen × | Lastig7 × 8', 'U · alleen + en ×: dat staat dicht in de kop, en de lastige − valt weg', JSON.stringify(gr));
+    await page.evaluate(() => { const p = db.profiles.p1; p.settings.ops = ['+', '-']; p.weak = {}; save(); });
     // het pad: om te lezen wel, in de open kaart niet
     await page.evaluate(() => { db.profiles.p1.settings.track = 'math'; save(); });
     await open(page, 'p1', 'voortgang');

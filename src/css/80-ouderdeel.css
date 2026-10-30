@@ -825,6 +825,8 @@
   .thema-kaart .kaart-kop h2 { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .thema-kaart .kaart-kop h2 .thema-ico { flex: none; margin: 0; }
   .kaart-emoji { flex: none; font-size: 26px; line-height: 1; }
+  /* dicht: "alleen +" of "tot 8" naast de ✏️ (zie kaartGrens), om te lezen */
+  .kop-grens { flex: none; margin-left: auto; margin-right: 2px; white-space: nowrap; font-size: var(--tx-label); font-weight: 800; color: var(--paper-ink-muted); }
   .kaart-pen {
     flex: none; width: 36px; height: 36px; border: none; border-radius: 50%; display: grid; place-items: center;
     cursor: pointer; font: inherit; font-size: 16px; line-height: 1; background: var(--lavender-wash);
