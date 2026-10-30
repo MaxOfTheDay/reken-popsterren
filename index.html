@@ -23384,6 +23384,11 @@ function klokDigitaal(t) { return `${Math.floor(t / 60) % 24}:${String(t % 60).p
 
 
 
+
+
+
+
+
 function klokSvg(t, maat, kaal) {
   const P = (graden, r) => [50 + r * Math.sin(graden * Math.PI / 180), 50 - r * Math.cos(graden * Math.PI / 180)].map(v => v.toFixed(1));
   const klein = maat <= 90;
@@ -23400,7 +23405,7 @@ function klokSvg(t, maat, kaal) {
     return `<circle cx="${x}" cy="${y}" r=".8"/>`;
   }).join('');
   return `<svg class="klok" viewBox="0 0 100 100" width="${maat}" height="${maat}" aria-hidden="true">`
-    + '<circle cx="50" cy="50" r="49" fill="#8e3fc8"/><path d="M4 46 A46 46 0 0 1 96 46" fill="none" stroke="#b678ec" stroke-width="4" stroke-linecap="round"/>'
+    + '<circle cx="50" cy="50" r="49" fill="#8e3fc8"/><path d="M2.5 50 A47.5 47.5 0 0 1 97.5 50" fill="none" stroke="#b678ec" stroke-width="3" stroke-linecap="round"/>'
     + '<circle cx="50" cy="51.8" r="45" fill="#3d1a6e" opacity=".4"/><circle cx="50" cy="50" r="45" fill="#fffaf3"/>'
     + `<g fill="#cdb6e6">${minuten}</g>`
     + `<g fill="#2b2238" font-size="${klein ? 22 : 15}" font-weight="900" text-anchor="middle" dominant-baseline="central">${uren}</g>`
@@ -26101,6 +26106,7 @@ function vakVullen(area) {
 
 
     telPast(tekst.firstElementChild, tekst.offsetHeight - m.tekst);
+    telBreed(tekst);
     telPast(area.firstElementChild, area.offsetHeight - m.vak);
     const hoog = tekst.offsetHeight;
     let lucht = Math.max(0, m.tekst - hoog);
@@ -26115,7 +26121,7 @@ function vakVullen(area) {
     return;
   }
   const nu = () => kaart.offsetHeight + area.offsetHeight;
-  if (G.count) { telPast(tekst.firstElementChild, nu() - m.samen - rand); telPast(area.firstElementChild, nu() - m.samen - rand); }
+  if (G.count) { telPast(tekst.firstElementChild, nu() - m.samen - rand); telBreed(tekst); telPast(area.firstElementChild, nu() - m.samen - rand); }
   m.samen = Math.max(m.samen + rand, nu()) - rand;
   const vak = m.samen + rand;
   const knoppen = [...area.querySelectorAll('.choice-btn')];
@@ -26206,6 +26212,25 @@ const TEL_KRIMP = 0.75;
 function telPast(el, teveel) {
   if (!el || teveel <= 0 || !el.offsetHeight) return;
   el.style.zoom = Math.max(TEL_KRIMP, (el.offsetHeight - teveel) / el.offsetHeight);
+}
+
+
+
+
+
+
+
+function telBreed(tekst) {
+  const el = tekst.firstElementChild;
+  if (!el) return;
+  const t = tekst.getBoundingClientRect(), cs = getComputedStyle(tekst);
+  const ruimte = t.width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const vakken = [...el.querySelectorAll('*')].map(x => x.getBoundingClientRect()).filter(r => r.width);
+  if (!vakken.length || !ruimte) return;
+  const breed = Math.max(...vakken.map(r => r.right)) - Math.min(...vakken.map(r => r.left));
+  if (breed <= ruimte + 0.5) return;
+  const zoom = parseFloat(el.style.zoom) || 1;
+  el.style.zoom = Math.max(TEL_KRIMP, zoom * ruimte / breed);
 }
 
 

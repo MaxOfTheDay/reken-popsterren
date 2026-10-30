@@ -2734,4 +2734,44 @@ zaak('PT', () => {
   check(JSON.stringify(p.stats.thema) === '{"rekenen":[2,1],"klok":[1,1]}', 'PT · tellen telt niet, zonder plan is het rekenen', JSON.stringify(p.stats.thema));
 });
 
+/* ================= KS · De klok blijft heel =================
+   Een svg knipt alles wat buiten zijn viewBox valt, en zonder iets te zeggen:
+   het lichte randje van de klok was een boog om een punt boven het midden, en
+   zijn top werd op elk scherm recht afgesneden. Hier elke vorm van elke klok
+   nagerekend, met de halve streepdikte erbij: een cirkel, een lijn of een boog
+   (de hele cirkel waar hij op ligt -- ruim, maar een randje dat daarbuiten wil
+   hoort niet op een klok) blijft binnen 0..100. Wat er op het scherm toch nog
+   geknipt wordt, ziet schuiven zaak G. */
+zaak('KS', () => {
+  const { app } = verseSter('Klokrand');
+  const getal = (tag, n) => { const m = tag.match(new RegExp(`\\s${n}="([-\\d.]+)"`)); return m ? +m[1] : 0; };
+  const uit = new Set();
+  for (const maat of [26, 70, 90, 132]) for (const kaal of [false, true]) for (let t = 0; t < 720; t += 5) {
+    const svg = app.klokSvg(t, maat, kaal);
+    if (!/viewBox="0 0 100 100"/.test(svg)) uit.add('geen viewBox 0 0 100 100: ' + svg.slice(0, 80));
+    for (const [tag] of svg.matchAll(/<(circle|line|path)\b[^>]*>/g)) {
+      const sw = /stroke="/.test(tag) ? getal(tag, 'stroke-width') / 2 : 0;
+      let vak;
+      if (tag.startsWith('<circle')) {
+        const cx = getal(tag, 'cx'), cy = getal(tag, 'cy'), r = getal(tag, 'r') + sw;
+        vak = [cx - r, cy - r, cx + r, cy + r];
+      } else if (tag.startsWith('<line')) {
+        const x = [getal(tag, 'x1'), getal(tag, 'x2')], y = [getal(tag, 'y1'), getal(tag, 'y2')];
+        vak = [Math.min(...x) - sw, Math.min(...y) - sw, Math.max(...x) + sw, Math.max(...y) + sw];
+      } else {
+        // M x1 y1 A r r 0 groot zin x2 y2: het middelpunt uit de twee eindpunten
+        const m = tag.match(/d="M\s*([-\d.]+)[\s,]+([-\d.]+)\s*A\s*([-\d.]+)[\s,]+[-\d.]+[\s,]+[-\d.]+[\s,]+([01])[\s,]*([01])[\s,]*([-\d.]+)[\s,]+([-\d.]+)\s*"/);
+        if (!m) { uit.add('een pad dat KS niet kan narekenen: ' + tag.slice(0, 90)); continue; }
+        const [x1, y1, r, groot, zin, x2, y2] = m.slice(1).map(Number);
+        const half = Math.hypot(x2 - x1, y2 - y1) / 2, h = Math.sqrt(Math.max(0, r * r - half * half));
+        const ux = -(y2 - y1) / (2 * half), uy = (x2 - x1) / (2 * half), kant = groot === zin ? -1 : 1;
+        const cx = (x1 + x2) / 2 + kant * h * ux, cy = (y1 + y2) / 2 + kant * h * uy, R = r + sw;
+        vak = [cx - R, cy - R, cx + R, cy + R];
+      }
+      if (vak[0] < -0.01 || vak[1] < -0.01 || vak[2] > 100.01 || vak[3] > 100.01) uit.add(`${maat}px${kaal ? ' kaal' : ''}: ${tag.slice(0, 90)} reikt tot ${vak.map(v => v.toFixed(1)).join(',')}`);
+    }
+  }
+  check(!uit.size, 'KS · elke vorm van de klok blijft binnen zijn tekening', [...uit].slice(0, 4).join(' | '));
+});
+
 klaar();
