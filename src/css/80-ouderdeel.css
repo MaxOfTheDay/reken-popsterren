@@ -136,11 +136,13 @@
   .cijfers-knop { font-size: 18px; }
   .cijfers-knop[hidden] { display: none; }
   /* Op een smalle telefoon (320) hield haar naam tussen ← en twee knoppen nog
-     twee letters over: alle drie krimpen daar naar 38, zoals in de lage kop --
-     samen, want ▶ hoort even groot te zijn als ← (zie test/kop). */
+     twee letters over. ← en ▶ blijven 44 (elke terugknop is 44 om te raken, zie
+     test/rondgang, en ▶ is even groot als ←, zie test/kop); dus krimpt alleen
+     📊, en valt de ✏️ in haar pil weg -- de pil blijft de knop naar haar blad. */
   @media (max-width: 359px) {
-    #screen-settings .hub-sticky .icon-btn, #screen-settings .speel-als { width: 38px; height: 38px; font-size: 16px; }
+    #screen-settings .hub-sticky .cijfers-knop { width: 36px; height: 36px; font-size: 15px; }
     #screen-settings .header-right { gap: 6px; }
+    .ouder-wie .wie-pen { display: none; }
   }
   /* de getekende ▶ (zie .ico): als teken werd hij op een iPhone een emoji-knopje.
      Een tikje naar rechts, want een driehoek met zijn punt naar rechts staat
