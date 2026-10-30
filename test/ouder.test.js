@@ -1406,6 +1406,15 @@ function check(ok, label, detail) {
       r.stijl.forEach(x => stijlen.add(x));
     }
     check(stijlen.size === 1, 'U · en die kop ziet er overal hetzelfde uit', JSON.stringify([...stijlen]));
+    // tellen open: "tot 6 8 10" staat in de kop, niet als balk boven de ladder, en een tik zet het
+    await page.evaluate(() => { db.profiles.p1.settings.track = 'count'; db.profiles.p1.settings.qmax = 10; save(); });
+    await open(page, 'p1', 'oefenen');
+    await page.waitForTimeout(150);
+    await page.click('.thema-kaart.open .kaart-kop #set-qmax .chip[data-v="8"]');
+    await page.waitForTimeout(150);
+    let tk = await page.evaluate(() => ({ qmax: db.profiles.p1.settings.qmax, inKop: !!document.querySelector('.thema-kaart.open .kaart-kop #set-qmax'),
+      lbl: [...document.querySelectorAll('.thema-kaart.open .oe-lbl')].map(e => e.textContent) }));
+    check(tk.qmax === 8 && tk.inKop && !tk.lbl.includes('Hoeveelheden tot'), 'U · tellen: "tot 6 8 10" in de kop van de open kaart, en een tik zet het', JSON.stringify(tk));
     // het pad: om te lezen wel, in de open kaart niet
     await page.evaluate(() => { db.profiles.p1.settings.track = 'math'; save(); });
     await open(page, 'p1', 'voortgang');

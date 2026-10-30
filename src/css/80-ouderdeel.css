@@ -834,6 +834,13 @@
      als .oe-ops, op knopmaat. margin-left: auto zet hem tegen de ✓. */
   .kaart-kop .oe-ops.kop-ops { flex: none; margin-left: auto; padding: 3px; border-radius: 12px; }
   .kaart-kop .kop-ops .chip, .kaart-kop .kop-ops .chip:hover { width: 36px; height: 30px; border-radius: 9px; font-size: 18px; }
+  /* tellen: "tot 6 8 10" (zie themaKaart), een keuze uit drie in plaats van aan/uit */
+  .kop-tot { display: flex; align-items: center; gap: 6px; flex: none; margin-left: auto; }
+  .kop-tot-w { font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
+  .kaart-kop .oe-seg.kop-ops { padding: 3px; border-radius: 12px; }
+  .kaart-kop .oe-seg.kop-ops .chip { flex: none; font-size: 15px; }
+  /* op 320 botste "tot" met de naam van de kaart; de getallen alleen passen wel */
+  @media (max-width: 359px) { .kop-tot-w { display: none; } }
   /* Open: een paarse rand, en de kop blijft bovenaan in beeld als de kaart
      langer is dan het scherm (--ouder-kop: de hoogte van de donkere kop, zie
      renderSettings), zodat de ✓ altijd te raken is. */
