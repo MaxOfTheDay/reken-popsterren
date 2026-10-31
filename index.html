@@ -9948,6 +9948,30 @@
   @media (max-width: 360px) { .oe-seg .chip { font-size: var(--tx-klein); } }
 
 
+
+
+
+
+
+
+
+
+  #settings-body .wat-kaart, #settings-body .modus-kaart {
+    background: var(--vlak); box-shadow: var(--vlak-top); border: 1.5px solid var(--paneel-rand); color: var(--c-white);
+  }
+  #settings-body .wat-kaart + .modus-kaart { margin-top: -14px; border-top: 1px solid var(--paneel-rand); border-radius: 0 0 var(--r-lg) var(--r-lg); }
+  #settings-body .wat-kaart:has(+ .modus-kaart) { border-bottom: none; border-radius: var(--r-lg) var(--r-lg) 0 0; }
+  #settings-body .modus-kaart { margin-bottom: 18px; }
+  #settings-body .wat-kaart .kaart-kop.klein h2, #settings-body .modus-kaart .kaart-kop.klein h2,
+  #settings-body .modus-kaart .oe-regel-lbl { color: var(--c-white); opacity: .75; }
+  #settings-body .wat-kaart .chip.thema:not(.on) { background: var(--vlak-hover); color: var(--c-white); }
+  #settings-body .modus-kaart .oe-seg, #settings-body .modus-kaart .oe-mix { background: var(--vlak-hover); }
+  #settings-body .modus-kaart .oe-seg .chip:not(.on) { color: var(--c-white); }
+
+  #settings-body .modus-kaart .oe-rij, #settings-body .modus-kaart .oe-rij .oe-w { color: var(--c-white); border-top-color: var(--paneel-rand); }
+  #settings-body .modus-kaart .oe-rij:not(.on) .oe-stand { background: var(--vlak-hover); }
+
+
   .oe-rij, .oe-rij.chip, .oe-rij.chip.on, .oe-rij.chip:hover {
     display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 8px 2px;
     border: none; border-radius: 0; background: none; box-shadow: none;

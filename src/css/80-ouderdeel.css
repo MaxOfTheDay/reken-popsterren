@@ -451,6 +451,30 @@
   /* "Voorwerpen" is het langste woord in een balk; op 320 raakte het de randen
      van zijn vak. Een maat kleiner op een smalle telefoon. */
   @media (max-width: 360px) { .oe-seg .chip { font-size: var(--tx-klein); } }
+  /* WAT EN HOE ZIJN DE BEDIENING, DE THEMAKAARTEN ZIJN DE INHOUD. Op haar
+     pagina staan ze onder elkaar, en als vijf gelijke witte kaarten las de
+     instelling even zwaar als haar niveaus. Daarom zijn Wat en Hoe geen papier
+     maar glas: één paneel in de donkere band (--vlak, zoals de plankjes van de
+     kleedkamer), met de rand van het zwevende paneel. Wat en Hoe blijven twee
+     elementen (de tests en bindOefenChips zoeken ze apart), maar plakken tegen
+     elkaar: de gap van .settings-panel wordt teruggenomen en er staat een
+     haarlijn tussen. Erna een groter gat, zodat de niveaus als groep beginnen.
+     Bij tellen is er alleen Hoe; dan is dat het hele paneel.
+     Alleen in #settings-body: het maakformulier staat op wit en blijft wit. */
+  #settings-body .wat-kaart, #settings-body .modus-kaart {
+    background: var(--vlak); box-shadow: var(--vlak-top); border: 1.5px solid var(--paneel-rand); color: var(--c-white);
+  }
+  #settings-body .wat-kaart + .modus-kaart { margin-top: -14px; border-top: 1px solid var(--paneel-rand); border-radius: 0 0 var(--r-lg) var(--r-lg); }
+  #settings-body .wat-kaart:has(+ .modus-kaart) { border-bottom: none; border-radius: var(--r-lg) var(--r-lg) 0 0; }
+  #settings-body .modus-kaart { margin-bottom: 18px; }
+  #settings-body .wat-kaart .kaart-kop.klein h2, #settings-body .modus-kaart .kaart-kop.klein h2,
+  #settings-body .modus-kaart .oe-regel-lbl { color: var(--c-white); opacity: .75; }
+  #settings-body .wat-kaart .chip.thema:not(.on) { background: var(--vlak-hover); color: var(--c-white); }
+  #settings-body .modus-kaart .oe-seg, #settings-body .modus-kaart .oe-mix { background: var(--vlak-hover); }
+  #settings-body .modus-kaart .oe-seg .chip:not(.on) { color: var(--c-white); }
+  /* tellen: Memory is een rij met een schakelaar (.oe-rij, verderop) */
+  #settings-body .modus-kaart .oe-rij, #settings-body .modus-kaart .oe-rij .oe-w { color: var(--c-white); border-top-color: var(--paneel-rand); }
+  #settings-body .modus-kaart .oe-rij:not(.on) .oe-stand { background: var(--vlak-hover); }
   /* De rijen. De hele rij is de knop (role=switch); de stand rechts is het
      enige dat kleurt. Een rij met een keuzerijtje (.vast) is zelf geen knop. */
   .oe-rij, .oe-rij.chip, .oe-rij.chip.on, .oe-rij.chip:hover {
