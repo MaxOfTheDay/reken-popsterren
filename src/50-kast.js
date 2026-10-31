@@ -321,12 +321,7 @@ function ladderCard(ladder, p) {
     /* De boog telt vanaf de trap die je al hebt, niet vanaf nul: een net
        behaalde zilveren medaille staat met een lege rand op weg naar goud, en
        niet al voor een vijfde vol (100 van de 500 sommen). */
-    let boog = 0;
-    if (volgende) {
-      const pr = volgende.progress(p), vorig = niveau ? trappen[niveau - 1].progress(p).target : 0;
-      const doel = trapDoel(volgende, p);
-      boog = doel > vorig ? Math.max(0, Math.min(100, Math.round(100 * (pr.now - vorig) / (doel - vorig)))) : 0;
-    }
+    const boog = ladderBoog(ladder, p);
     const stijl = `--p:${boog}` + (volgende ? `;--straks:var(--m-${volgende.trap})` : '');
     card.innerHTML = `<div class="temoji" style="${stijl}">${nu === 3 ? DIAMANT_VONKJES : ''}<span class="tico">${ladder.emoji}</span></div>`
       + `<div class="tname">${ladder.name}</div>`;
@@ -334,6 +329,40 @@ function ladderCard(ladder, p) {
   }
   card.onclick = () => tapLadder(ladder, card);
   return card;
+}
+function ladderBoog(ladder, p) {
+  const { trappen, niveau, volgende } = ladderStand(ladder, p);
+  if (!volgende) return 0;
+  const pr = volgende.progress(p), vorig = niveau ? trappen[niveau - 1].progress(p).target : 0;
+  const doel = trapDoel(volgende, p);
+  return doel > vorig ? Math.max(0, Math.min(100, Math.round(100 * (pr.now - vorig) / (doel - vorig)))) : 0;
+}
+/* De trappen van een medaille als rijtje munten: brons, zilver, goud, diamant.
+   Het metaal van de medaille zegt hoe ver je bent, maar niet dát er nog meer
+   komt: een bronzen medaille zag er voor een kind af uit, en dat er nog drie
+   trappen op haar wachtten zag ze nergens (Max, oktober 2026). Dit rijtje staat
+   op de twee plekken waar een kind er al naar kijkt -- de balk als je tikt
+   (kastBalk) en het openen van een nieuwe trap (celebrateTrophy) -- en níét op
+   de plank: daar stond eerst een stipje per trap, en twee signalen naast elkaar
+   was te veel.
+     behaald   een volle munt in zijn metaal
+     volgende  een leeg vakje met de boog erom, in het metaal waar je naartoe gaat
+     daarna    een leeg vakje met een rand in zijn metaal: je ziet wélk metaal er
+               nog komt, en dat het nog leeg is
+   `tot`: tot en met welke trap de munten vol staan (anders: wat je nu hebt), en
+   `nieuw`: die munt springt erin. Bij het openen staat er geen boog (`boog:
+   false`) -- dat is het moment van wat je kreeg, niet van wat nog moet. */
+function trapRij(ladder, p, opts = {}) {
+  const { trappen, niveau } = ladderStand(ladder, p);
+  const tot = opts.tot != null ? opts.tot : niveau - 1;
+  const boog = opts.boog === false ? null : ladderBoog(ladder, p);
+  return '<span class="trap-rij" aria-hidden="true">' + trappen.map((t, i) => {
+    let k = `trap-munt m-${t.trap}`;
+    if (i <= tot) k += i === opts.nieuw ? ' vol nieuw' : ' vol';
+    else if (i === tot + 1 && boog != null) k += ' volgende';
+    const stijl = i === tot + 1 && boog != null ? ` style="--p:${boog}"` : '';
+    return `<i class="${k}"${stijl}></i>`;
+  }).join('') + '</span>';
 }
 /* Het doel van een trap voor de boog. De laatste trap van de Wereldreiziger telt
    alle werelden, en dat totaal verbergt de horizon (zie trophyBoog): zolang er
@@ -354,16 +383,21 @@ function tapLadder(ladder, card) {
   // een medaille met al een metaal klinkt in dat metaal; nog geen metaal zegt "tok"
   if (niveau) kastKlink(card, trappen[niveau - 1].trap); else kastDof(card);
   if (card.classList.contains('kies')) return;   // nog eens: alleen spelen, de balk staat er al
+  /* In de balk staan de munten (trapRij) waar eerst het woord "Zilver" stond:
+     het rijtje zegt welk metaal je hebt én wat er nog komt. De stem zegt het
+     metaal nog wel (het vierde argument van kastBalk), voor wie niet leest. */
   const kop = { emoji: ladder.emoji, name: ladder.name, naar: ladder.naar };
   const metaal = niveau ? TRAP_NAMEN[trappen[niveau - 1].trap] : '';
-  if (!volgende) { kastBalk(kop, card, metaal + '!'); return; }
+  const rij = trapRij(ladder, p);
+  if (!volgende) { kastBalk(kop, card, metaal + '!', null, rij); return; }
   const pr = volgende.progress(p), rem = Math.max(0, pr.target - pr.now);
+  const zeg = tekst => metaal ? `${metaal} · ${tekst}` : tekst;
   // achter de horizon geen "nog 5 werelden": dat verklapt het totaal (zie tapTrophy)
   if (volgende.telWerelden && meerWereldenVooruit(p)) {
-    kastBalk(kop, card, `${metaal} · ${pr.now} ${pr.label}`, pr.now); return;
+    kastBalk(kop, card, `${pr.now} ${pr.label}`, pr.now, rij, zeg(`${pr.now} ${pr.label}`)); return;
   }
   const nog = rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!';
-  kastBalk(kop, card, metaal ? `${metaal} · ${nog}` : nog, rem > 0 ? rem : null);
+  kastBalk(kop, card, nog, rem > 0 ? rem : null, rij, zeg(nog));
 }
 /* Medaille, naam en de voet, in die volgorde. De voet is er alleen als er iets
    in staat: 🔒, of het balkje op de perfecte plank. */
@@ -581,7 +615,10 @@ function opnieuw(el, klasse) {
    (toonHub en renderShelves zetten hem uit). Het getal in de tekst staat in goud
    (getal), net als "Nog 12 💎" in de kleedkamer. De stem leest hem voor, zoals
    de pil deed. kastBalk(null) zet hem uit. */
-function kastBalk(t, card, tekst, getal) {
+/* `rij` (een medaille die meegroeit): de munten van trapRij, op een eigen regel
+   onder de naam, met de tekst erachter. `stem`: wat er hardop gezegd wordt, als
+   dat meer is dan er staat -- de munten zelf kun je niet voorlezen. */
+function kastBalk(t, card, tekst, getal, rij, stem) {
   const bar = $('kast-bar');
   document.querySelectorAll('#trophy-shelves .trophy-card.kies').forEach(k => k.classList.remove('kies'));
   const kast = $('screen-trophies');
@@ -593,15 +630,19 @@ function kastBalk(t, card, tekst, getal) {
      kleedkamer. Alleen het icoon van waar je heen gaat, geen woord. */
   const naarKaart = t.naar === 'kaart';
   const knop = t.naar ? `<button class="btn small" id="kast-naar" type="button" aria-label="${naarKaart ? 'Naar de wereld' : 'Naar de kleedkamer'}">${naarKaart ? '🗺️' : t.naar === 'stage' ? '🎪' : '👕'}</button>` : '';
-  bar.innerHTML = `<div class="db-info"><span class="db-name">${t.perfect ? '' : t.emoji + ' '}${esc(t.name)}</span>`
-    + `<span class="db-sub">· ${sub}</span></div>` + knop;
+  bar.classList.toggle('met-trappen', !!rij);
+  bar.innerHTML = rij
+    ? `<div class="db-info"><span class="db-name">${t.emoji} ${esc(t.name)}</span>`
+      + `<span class="db-trappen">${rij}<span class="db-sub">${sub}</span></span></div>` + knop
+    : `<div class="db-info"><span class="db-name">${t.perfect ? '' : t.emoji + ' '}${esc(t.name)}</span>`
+      + `<span class="db-sub">· ${sub}</span></div>` + knop;
   if (knop) $('kast-naar').onclick = () => {
     sndClick(); kastBalk(null);
     if (naarKaart) naarWereldKaart(t.wereldIdx); else openKleedkamerCat(t.naar);
   };
   bar.style.display = 'flex';
   onderVrijMeet();   // ruimte onderin, zodat ook de onderste plank boven de balk kan -- vóór de scroll hieronder
-  speak(tekst);
+  speak(stem || tekst);
   /* Viel de getikte trofee achter de balk (een tik vlak boven de navigatie), dan
      schuift de kast hem erboven -- hetzelfde als zichtbaarBovenBalk in de
      kleedkamer. */
@@ -634,6 +675,16 @@ function openTrophy(id) {
 // op het scherm getikt wordt (geen auto-sluit-timer meer) -- de overlay
 // beslaat het hele scherm (position:fixed; inset:0), dus "ergens tikken"
 // werkt overal, niet alleen op het kaartje zelf.
+/* Een nieuwe trap van een medaille die meegroeit: onder de naam het rijtje
+   munten (zie trapRij), en de nieuwe munt springt erin. Dít is het moment dat
+   een kind leert dat er trappen zijn -- "ik heb zilver, en er is nog goud". */
+function tpTrappen(t) {
+  if (t.trap == null) return '';
+  const ladder = TROPHY_LADDERS.find(l => l.ids.includes(t.id));
+  if (!ladder) return '';
+  const i = ladder.ids.indexOf(t.id);
+  return `<div class="tp-trappen">${trapRij(ladder, P(), { tot: i, nieuw: i, boog: false })}</div>`;
+}
 function celebrateTrophy(t) {
   const reduce = motionOff();
   sndClick();          // 'optil'-tik op het moment van openen
@@ -647,6 +698,7 @@ function celebrateTrophy(t) {
     +   `<div class="tp-emoji"${t.trap != null ? ` style="--tp-vlak:var(--m-vlak-${t.trap});--tp-rand:var(--m-rand-${t.trap})"` : ''}>${t.emoji}</div>`
     + '</div>'
     + `<div class="tp-name">${t.name}</div>`
+    + tpTrappen(t)
     /* Waarvoor: "6 werelden uitgespeeld". Er stond alleen de naam, en een kind
        wist bij het openen niet wát ze gedaan had. Bij een trap zegt het metaal
        van de grote medaille hierboven welke trap het is. */

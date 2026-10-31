@@ -204,6 +204,16 @@
   @keyframes ringOut { 0% { opacity: .9; transform: scale(.4); } 100% { opacity: 0; transform: scale(3.4); } }
   .trophy-pop.burst .tp-name { animation: rankTextRise .45s ease .25s both; }
   .trophy-pop.burst .tp-waarom { animation: rankTextRise .45s ease .32s both; }
+  /* De trappen onder de naam (zie tpTrappen): het rijtje komt op met de naam,
+     en daarna springt de nieuwe munt erin. Groter dan in de balk -- dit is het
+     moment om het te zien. */
+  .tp-trappen { display: flex; justify-content: center; margin: 8px 0 2px; }
+  .tp-trappen .trap-munt { --s: 30px; }
+  .tp-trappen .trap-munt.nieuw { --s: 40px; }
+  .trophy-pop .tp-trappen { opacity: 0; }
+  .trophy-pop.burst .tp-trappen { animation: rankTextRise .45s ease .28s both; }
+  .trophy-pop.burst .tp-trappen .trap-munt.nieuw { animation: trapMuntIn .55s var(--ease-plop) .7s both; }
+  @keyframes trapMuntIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
   .trophy-pop.burst .tp-joepie { animation: rankTextRise .45s ease .42s both; }
 
   /* Confetti-kanon: stukjes vliegen vanuit één punt naar buiten (met lichte zwaartekracht) */
@@ -233,6 +243,7 @@
 
     .tp-chest, .tp-rays, .tp-ring, .burst-bit, .tap-ripple { display: none; }
     .trophy-pop .tp-name, .trophy-pop .tp-waarom, .trophy-pop .tp-joepie, .trophy-pop.burst .tp-emoji { opacity: 1; transform: none; animation: none; }
+    .trophy-pop .tp-trappen, .trophy-pop.burst .tp-trappen .trap-munt.nieuw { opacity: 1; transform: none; animation: none; }
   }
   /* geel/goud stipje op het Trofeeën-tabblad zolang er iets nieuws in de kast ligt —
      zelfde kleurtaal als de rest van de trofee-elementen (banner, ready-kaart) */
