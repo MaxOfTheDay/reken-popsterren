@@ -126,15 +126,75 @@ function pasLaag(svg) {
    breken. De hele houder opnieuw vullen gooit ook de pas-laag weg, en een nieuwe
    pas-laag begint zijn animatie van voren af aan: ze klikte dan midden in een
    sprong terug naar de grond. Hier krijgt alleen de tekening ín de laag de
-   nieuwe kleren, en het pasje loopt gewoon door. */
+   nieuwe kleren, en het pasje loopt gewoon door.
+
+   DE TEKENING ZELF LEEFT OOK. Het hoofd knikt en de staartjes slingeren
+   (.levend.idle), en dat zijn animaties ín de tekening -- een nieuwe tekening
+   begint ze dus van nul, terwijl het wiegen op de houder gewoon doorloopt. Dan
+   schiet het hoofd een tel uit de maat met het lijf: dat was het sprongetje bij
+   elke ladewissel in de kleedkamer. Daarom twee dingen:
+   - zelfde kleren, niets doen. paintShop roept dit bij élke tik aan, ook als
+     alleen de lade wisselt; de laatste tekening staat op de laag (laag.svg).
+   - andere kleren: elke animatie in de nieuwe tekening neemt de klok over van
+     dezelfde animatie op hetzelfde onderdeel in de oude. Dat geldt voor het
+     knikken, maar net zo goed voor een staartje dat midden in een pasje zwiert.
+   Dit is dé manier om een pop die al in beeld staat iets anders aan te doen: wie
+   de houder zelf opnieuw vult, laat haar elke keer opnieuw beginnen. Moet de
+   houder toch nieuw (het maakformulier bouwt zijn hele paneel opnieuw), neem dan
+   de klok mee: animatieKlok vóór, klokTerug ná. test:sterren kijkt het na. */
 function popKleren(el, svg) {
   const laag = el.firstElementChild;
   if (laag && laag.classList.contains('pas-laag')) {
+    if (laag.svg === kledingSleutel(svg)) return;
+    const klok = animatieKlok(el);
     laag.innerHTML = svg.replace(PROPS_RE, '');
+    laag.svg = kledingSleutel(svg);
     const oud = laag.nextElementSibling;
     if (oud && oud.classList.contains('prop-laag')) oud.remove();
     laag.insertAdjacentHTML('afterend', propLaag(svg));
-  } else el.innerHTML = pasLaag(svg);
+    klokTerug(el, klok);
+  } else {
+    el.innerHTML = pasLaag(svg);
+    if (el.firstElementChild) el.firstElementChild.svg = kledingSleutel(svg);   // het nagebootste scherm van de Node-keuring heeft er geen
+  }
+}
+/* Twee tekeningen van dezelfde kleren zijn nooit letterlijk gelijk: avatarSVG
+   nummert zijn verlopen en knipvormen (rb12, huid12, ...), zodat twee poppen op
+   één scherm elkaars kleur niet lenen. Zonder dat nummer zijn ze het wel. */
+function kledingSleutel(svg) { return svg.replace(/(id="|url\(#)([a-z]+)\d+/g, '$1$2'); }
+/* Waar elke lopende animatie in de pop nu staat, per naam en onderdeel. Het
+   onderdeel is zijn klasse (av-hoofd, av-staart av-staart-l, ...): die is in de
+   nieuwe tekening dezelfde, en meer is er niet om ze aan elkaar te herkennen.
+   Zonder getAnimations (een oude browser) is er niets te bewaren; dan begint ze
+   opnieuw, zoals eerst. */
+function animatieKlok(el) {
+  const klok = new Map();
+  if (!el.getAnimations) return klok;
+  el.getAnimations({ subtree: true }).forEach(a => {
+    const doel = a.effect && a.effect.target;
+    /* Het beginmoment zelf, en niet de animatie: die van een weggehaald onderdeel
+       wordt afgebroken en weet daarna niet meer wanneer hij begon. En het
+       beginmoment, niet hoe ver hij is: een verse animatie wacht nog op zijn
+       eerste beeldje, en een gezette currentTime blijft dan dat beeldje lang
+       staan terwijl het lijf al verder wiegt. */
+    if (a.animationName && doel && a.startTime != null) klok.set(a.animationName + '|' + doel.getAttribute('class'), a.startTime);
+  });
+  return klok;
+}
+/* Een onderdeel dat er eerst niet was (staartjes bij een nieuw kapsel) heeft
+   geen eigen klok om over te nemen. Loopt hij eindeloos, dan is hij een deel van
+   haar rustbeweging, en die staat op de maat van het wiegen van de houder zelf
+   (zie .levend.idle in het stijlblad): dan neemt hij dát beginmoment. */
+function klokTerug(el, klok) {
+  if (!klok.size) return;
+  const wieg = [...klok.entries()].find(([k]) => k.endsWith('|' + el.getAttribute('class')));
+  el.getAnimations({ subtree: true }).forEach(a => {
+    const doel = a.effect && a.effect.target;
+    if (!doel) return;
+    let begin = klok.get(a.animationName + '|' + doel.getAttribute('class'));
+    if (begin == null && wieg && a.effect.getTiming().iterations === Infinity) begin = wieg[1];
+    if (begin != null) a.startTime = begin;
+  });
 }
 /* Een pasje aanzetten -- of, bij beperkte beweging, niet.
 

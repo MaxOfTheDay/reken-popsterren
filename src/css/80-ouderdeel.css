@@ -44,7 +44,7 @@
   }
   .ouder-wie:hover { background: rgba(255,255,255,.18); }
   .ouder-wie:active { background: rgba(255,255,255,.24); }
-  .ouder-wie .wie-pen { font-size: 15px; opacity: .9; flex: none; }
+  .ouder-wie .wie-pen { font-size: 15px; opacity: .9; flex: none; } /* teken */
   .ouder-wie .who-portrait { width: 40px; height: 40px; flex: none; }
   .ouder-wie .who-portrait svg { top: -5px; width: 68px; }
   .ouder-wie .wie-naam { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -63,7 +63,7 @@
     #screen-settings .hub-sticky .screen-header { margin-bottom: 0; }
     #screen-settings .header-title { font-size: var(--tx-body); }
     #screen-settings .hub-sticky .icon-btn,
-    #screen-settings .speel-als { width: 38px; height: 38px; font-size: 16px; }
+    #screen-settings .speel-als { width: 38px; height: 38px; font-size: 16px; } /* teken */
     .ouder-wie { font-size: var(--tx-body); }
     .ouder-wie .who-portrait { width: 32px; height: 32px; }
     .ouder-wie .who-portrait svg { top: -4px; width: 54px; }
@@ -88,8 +88,8 @@
   }
   .ster-rij + .ster-rij { border-top: 1px solid var(--paper-border); border-radius: 0; }
   .ster-rij:hover { background: var(--paper-tint); }
-  .ster-rij:active { background: var(--lavender-wash-3); }
-  .ster-rij .who-portrait { width: 40px; height: 40px; flex: none; border-color: var(--lavender-wash-3); }
+  .ster-rij:active { background: var(--paper-border); }
+  .ster-rij .who-portrait { width: 40px; height: 40px; flex: none; border-color: var(--paper-border); }
   .ster-rij .who-portrait svg { top: -5px; width: 68px; }
   .sr-tekst { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
   .sr-tekst b { display: block; font-size: var(--tx-body); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -140,7 +140,7 @@
      test/rondgang, en ▶ is even groot als ←, zie test/kop); dus krimpt alleen
      📊, en valt de ✏️ in haar pil weg -- de pil blijft de knop naar haar blad. */
   @media (max-width: 359px) {
-    #screen-settings .hub-sticky .cijfers-knop { width: 36px; height: 36px; font-size: 15px; }
+    #screen-settings .hub-sticky .cijfers-knop { width: 36px; height: 36px; font-size: 15px; } /* teken */
     #screen-settings .header-right { gap: 6px; }
     .ouder-wie .wie-pen { display: none; }
   }
@@ -181,7 +181,7 @@
   .set-card.secundair { padding: 14px 18px; }
   .set-card.secundair .set-card-head { margin-bottom: 10px; }
   .set-card.secundair .set-card-head h2 { font-size: var(--tx-body); color: var(--paper-ink); }
-  .set-card.secundair .set-card-head .ico { font-size: 16px; width: 30px; height: 30px; }
+  .set-card.secundair .set-card-head .ico { font-size: 16px; width: 30px; height: 30px; } /* teken */
   /* de tweede, vervangende actie in de back-upkaart: een streepje erboven, zodat
      "maken" en "terugzetten" niet als twee knoppen van hetzelfde soort lezen */
   /* De onderregel van de rij Back-up (zie backupStandHtml): grijs zoals elke
@@ -259,15 +259,15 @@
     color: var(--paper-ink); font-size: var(--tx-label); font-weight: 500; text-align: left;
   }
   .fase-ladder .fl-rij.hier { background: var(--lavender-wash); font-weight: 700; }
-  .fase-ladder .chip.fl-rij:hover { background: var(--lavender-wash-2); }
+  .fase-ladder .chip.fl-rij:hover { background: var(--lavender-wash); }
   .fl-n {
     width: 26px; height: 26px; border-radius: 50%; flex: none; display: grid; place-items: center; overflow: hidden;
-    background: var(--purple-mid); color: var(--c-white); font-size: 13px; font-weight: 700;
+    background: var(--purple-mid); color: var(--c-white); font-size: var(--tx-klein); font-weight: 700;
   }
   .fl-rij.hier .fl-n { background: var(--c-white); box-shadow: 0 0 0 2px var(--purple-mid); }
   .fl-ava { display: block; width: 26px; height: 26px; margin-top: 3px; }
   .fl-ava svg { display: block; width: 100%; height: 100%; }
-  .fl-rij.voor .fl-n, .fl-rij.uit .fl-n { background: var(--lavender-wash-3); color: var(--purple-mid); }
+  .fl-rij.voor .fl-n, .fl-rij.uit .fl-n { background: var(--paper-border); color: var(--purple-mid); }
   .fl-rij.voor, .fl-rij.uit { opacity: .5; }
   .fl-naam { flex: 1; min-width: 0; }
   /* Overgeslagen (zie leerpadStappen): de stap blijft op zijn plek en houdt
@@ -277,17 +277,17 @@
   .fl-rij.overgeslagen .fl-naam { text-decoration: line-through; text-decoration-thickness: 2px; }
   .fl-vb { flex: none; min-width: 92px; text-align: right; font-weight: 700; letter-spacing: .3px; white-space: nowrap; }
   /* munten en briefjes (zie .geld-stuk): hier op een vaste kleine maat, net groot genoeg om de waarde te lezen */
-  .fl-vb .geld-stuk, .fl-vb .geld-prijs { font-size: 10px; }
+  .fl-vb .geld-stuk, .fl-vb .geld-prijs { font-size: var(--tx-mini); }
   .fl-vb .geld-stuk + .geld-stuk { margin-left: 3px; }
   /* het klokje (zie klokVoorbeeld): klein, met de tijd in woorden ernaast */
   .fl-vb .klok { vertical-align: middle; margin-right: 6px; }
-  .fl-vb .klok-digi { font-size: 13px; }
+  .fl-vb .klok-digi { font-size: var(--tx-klein); }
   .fl-vak {
     display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 4px; opacity: .55;
     vertical-align: -2px; box-sizing: border-box;
   }
   .fl-lijn {
-    display: flex; align-items: center; gap: 8px; margin: 2px 0; font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px; margin: 2px 0; font-size: var(--tx-klein); font-weight: 700;
     letter-spacing: .3px; color: var(--purple-mid);
   }
   .fl-lijn::before, .fl-lijn::after { content: ""; flex: 1; height: 2px; border-radius: 2px; background: var(--purple-mid); }
@@ -310,7 +310,7 @@
      een wit ✓. Uit: een lege ring, en de naam en het voorbeeld wat stiller --
      uit, maar wel te kiezen, dus niet zo vaag als .uit op het leerpad. Tussen
      de blokken (tot 20, tot 100) een dun streepje in plaats van een kop. */
-  .fl-rij.kies .fl-n { background: var(--c-white); color: transparent; box-shadow: inset 0 0 0 2px var(--lavender-wash-3); transition: background var(--t-tik) ease; }
+  .fl-rij.kies .fl-n { background: var(--c-white); color: transparent; box-shadow: inset 0 0 0 2px var(--paper-border); transition: background var(--t-tik) ease; }
   .fl-rij.kies.aan .fl-n { background: var(--purple-mid); color: var(--c-white); box-shadow: none; }
   .fl-rij.kies:not(.aan) .fl-naam, .fl-rij.kies:not(.aan) .fl-vb { opacity: .55; }
   .kies-lijst { padding: 2px 0; }
@@ -319,7 +319,7 @@
   /* De rijen om te lezen (zie flRij zonder v): geen knop, dus ook geen hover.
      "Alles door elkaar" achteraan het leerpad op Oefenen, en het hele leerpad in
      Voortgang: daar is gehad stil met een ✓, en wat nog komt licht. */
-  .fl-rij.eind .fl-n, .vg-ladder .fl-rij.later .fl-n { background: var(--lavender-wash-3); color: var(--purple-mid); }
+  .fl-rij.eind .fl-n, .vg-ladder .fl-rij.later .fl-n { background: var(--paper-border); color: var(--purple-mid); }
   .fl-rij.eind:not(.hier) { color: var(--paper-ink-muted); }
   .vg-ladder .fl-rij.klaar, .vg-ladder .fl-rij.later { color: var(--paper-ink-muted); }
   .vg-ladder .fl-rij.later .fl-vb { opacity: .7; }
@@ -451,6 +451,42 @@
   /* "Voorwerpen" is het langste woord in een balk; op 320 raakte het de randen
      van zijn vak. Een maat kleiner op een smalle telefoon. */
   @media (max-width: 360px) { .oe-seg .chip { font-size: var(--tx-klein); } }
+  /* WAT EN HOE ZIJN DE BEDIENING, DE THEMAKAARTEN ZIJN DE INHOUD. Op haar
+     pagina staan ze onder elkaar, en als vijf gelijke witte kaarten las de
+     instelling even zwaar als haar niveaus. Daarom zijn Wat en Hoe geen papier
+     maar glas: één paneel in de donkere band (--vlak, zoals de plankjes van de
+     kleedkamer), met de rand van het zwevende paneel. Wat en Hoe blijven twee
+     elementen (de tests en bindOefenChips zoeken ze apart), maar plakken tegen
+     elkaar: de gap van .settings-panel wordt teruggenomen en er staat een
+     haarlijn tussen. Erna een groter gat, zodat de niveaus als groep beginnen.
+     Bij tellen is er alleen Hoe; dan is dat het hele paneel.
+     Alleen in #settings-body: het maakformulier staat op wit en blijft wit. */
+  #settings-body .wat-kaart, #settings-body .modus-kaart {
+    background: var(--vlak); box-shadow: var(--vlak-top); border: 1.5px solid var(--paneel-rand); color: var(--c-white);
+  }
+  #settings-body .wat-kaart + .modus-kaart { margin-top: -14px; border-top: 1px solid var(--paneel-rand); border-radius: 0 0 var(--r-lg) var(--r-lg); }
+  #settings-body .wat-kaart:has(+ .modus-kaart) { border-bottom: none; border-radius: var(--r-lg) var(--r-lg) 0 0; }
+  #settings-body .modus-kaart { margin-bottom: 18px; }
+  #settings-body .wat-kaart .kaart-kop.klein h2, #settings-body .modus-kaart .kaart-kop.klein h2,
+  #settings-body .modus-kaart .oe-regel-lbl { color: var(--c-white); opacity: .75; }
+  #settings-body .wat-kaart .chip.thema:not(.on) { background: var(--vlak-hover); color: var(--c-white); }
+  #settings-body .modus-kaart .oe-seg, #settings-body .modus-kaart .oe-mix { background: var(--vlak-hover); }
+  #settings-body .modus-kaart .oe-seg .chip:not(.on) { color: var(--c-white); }
+  /* Wat er gekozen is, in dit donkere glas: een witte chip met violette letter,
+     zoals een segmentknop op een telefoon. Een violette chip (zoals op wit
+     papier) zakte hier weg in het violet van het glas -- donker op donker,
+     en hij viel alleen op omdat de buren lichter waren. De rest staat een
+     tikje gedimd, zodat de keuze twee kanten op verschilt: licht tegen glas,
+     vol tegen gedempt. Alleen in dit paneel; het maakformulier en de niveaus
+     staan op wit en houden de violette chip. */
+  #settings-body :is(.wat-kaart, .modus-kaart) .chip.on:not(.oe-rij) {
+    background: var(--c-white); color: var(--purple-mid); box-shadow: 0 2px 6px rgba(0,0,0,.3);
+  }
+  #settings-body :is(.wat-kaart, .modus-kaart) .chip.on .thema-ico { filter: none; opacity: 1; }
+  #settings-body :is(.wat-kaart, .modus-kaart) .chip:not(.on, .oe-rij) { color: rgba(255,255,255,.72); }
+  /* tellen: Memory is een rij met een schakelaar (.oe-rij, verderop) */
+  #settings-body .modus-kaart .oe-rij, #settings-body .modus-kaart .oe-rij .oe-w { color: var(--c-white); border-top-color: var(--paneel-rand); }
+  #settings-body .modus-kaart .oe-rij:not(.on) .oe-stand { background: var(--vlak-hover); }
   /* De rijen. De hele rij is de knop (role=switch); de stand rechts is het
      enige dat kleurt. Een rij met een keuzerijtje (.vast) is zelf geen knop. */
   .oe-rij, .oe-rij.chip, .oe-rij.chip.on, .oe-rij.chip:hover {
@@ -468,7 +504,7 @@
      dat was naast de balken en de vinkjes nog een vierde vorm voor een keuze. */
   .oe-stand {
     flex: none; position: relative; width: 40px; height: 24px; border-radius: 12px;
-    background: var(--lavender-wash-3); transition: background var(--t-tik) ease;
+    background: var(--paper-border); transition: background var(--t-tik) ease;
   }
   .oe-stand::after {
     content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
@@ -513,7 +549,7 @@
   .newstar-preview .stage {
     width: 124px; aspect-ratio: 10 / 11;
     border: 0; border-radius: var(--r-md);
-    box-shadow: 0 0 0 1.25px rgba(255,255,255,.15), 0 0 0 2.5px rgba(16,5,34,.45),
+    box-shadow: 0 0 0 1.25px rgba(255,255,255,.15), 0 0 0 2.5px rgba(var(--nacht-1-rgb),.45),
                 0 0 22px rgba(var(--goud-gloed-rgb),.2), var(--e-2);
   }
   .newstar-preview .stage::after { animation: none; opacity: .85; }
@@ -646,7 +682,7 @@
   #screen-newstar .oe-tafels .chip, #screen-newstar .oe-tafels .chip:hover,
   #screen-newstar .oe-rij.chip, #screen-newstar .oe-rij.chip:hover, #screen-newstar .oe-rij.chip.on,
   #screen-newstar .fase-ladder .chip.fl-rij { background: none; border: none; }
-  #screen-newstar .fase-ladder .chip.fl-rij:hover { background: var(--lavender-wash-2); }
+  #screen-newstar .fase-ladder .chip.fl-rij:hover { background: var(--lavender-wash); }
   #screen-newstar .oe-seg .chip.on,
   #screen-newstar .oe-ops .chip.on, #screen-newstar .oe-tafels .chip.on { background: var(--purple-mid); }
 
@@ -686,7 +722,7 @@
     /* .07 was afgeregeld op vol wit; op het warme papier is dat niet meer te zien,
        en dan lijkt de rij die er half onder verdwijnt afgeknipt in plaats van
        doorlopend. .11 is precies genoeg om te zeggen "hier gaat het verder". */
-    box-shadow: 0 -9px 16px rgba(40,10,70,.11);
+    box-shadow: 0 -9px 16px rgba(var(--nacht-3-rgb),.11);
   }
   /* De knop is goud, en dat is geen smaakkwestie maar §2: goud is de hoofdknop en
      "spelen". Deze tik maakt de ster én stapt er meteen mee de eerste wereld in
@@ -745,7 +781,7 @@
   .name-edit-wrap { position: relative; max-width: 220px; }
   .name-edit-wrap .name-edit-ico {
     position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
-    font-size: 15px; opacity: .5; pointer-events: none;
+    font-size: 15px; opacity: .5; pointer-events: none; /* teken */
   }
   .settings-sheet input[type=text] {
     font-family: inherit; font-size: var(--tx-body); font-weight: 600; color: var(--paper-ink);
@@ -784,7 +820,7 @@
      Hij staat ín haar rij, op de plek van het voorbeeld -- daar gaat hij over. */
   .kaart-tip {
     flex: none; height: 32px; padding: 0 12px; border: none; border-radius: var(--r-pill); cursor: pointer;
-    font: inherit; font-size: var(--tx-klein); font-weight: 800; white-space: nowrap; color: var(--ink-on-gold);
+    font: inherit; font-size: var(--tx-klein); font-weight: 700; white-space: nowrap; color: var(--ink-on-gold);
     background: linear-gradient(var(--gold-light), var(--gold-accent)); box-shadow: 0 2px 0 rgba(var(--goud-gloed-rgb), .7);
   }
   .fl-vb:has(.kaart-tip) { min-width: 0; }
@@ -806,7 +842,7 @@
   .vg-ladder > .fl-rij { position: relative; min-height: 42px; }
   .vg-ladder > .fl-rij::before, .vg-ladder > .fl-rij::after {
     content: ""; position: absolute; left: 20px; width: 2px; pointer-events: none;   /* 8px rand + het midden van een bolletje van 26 */
-    background: var(--lavender-wash-3); border-radius: 1px;
+    background: var(--paper-border); border-radius: 1px;
   }
   .vg-ladder > .fl-rij::before { top: 0; height: calc(50% - 13px); }
   .vg-ladder > .fl-rij::after { bottom: 0; height: calc(50% - 13px); }
@@ -826,12 +862,12 @@
   .thema-kaart .kaart-kop h2 .thema-ico { flex: none; margin: 0; }
   .kaart-emoji { flex: none; font-size: 26px; line-height: 1; }
   /* dicht: "alleen +" of "tot 8" naast de ✏️ (zie kaartGrens), om te lezen */
-  .kop-grens { flex: none; margin-left: auto; margin-right: 2px; white-space: nowrap; font-size: var(--tx-label); font-weight: 800; color: var(--paper-ink-muted); }
+  .kop-grens { flex: none; margin-left: auto; margin-right: 2px; white-space: nowrap; font-size: var(--tx-label); font-weight: 700; color: var(--paper-ink-muted); }
   .kaart-pen {
     flex: none; width: 36px; height: 36px; border: none; border-radius: 50%; display: grid; place-items: center;
-    cursor: pointer; font: inherit; font-size: 16px; line-height: 1; background: var(--lavender-wash);
+    cursor: pointer; font: inherit; font-size: 16px; line-height: 1; background: var(--lavender-wash); /* teken */
   }
-  .kaart-pen.aan { background: var(--purple-mid); color: var(--c-white); font-size: 19px; font-weight: 900; box-shadow: 0 0 0 3px var(--lavender-wash-3); }
+  .kaart-pen.aan { background: var(--purple-mid); color: var(--c-white); font-size: 19px; font-weight: 700; box-shadow: 0 0 0 3px var(--paper-border); }
   /* + − of × ÷ in de kop van een open kaart (zie themaKaart): dezelfde balk
      als .oe-ops, op knopmaat. margin-left: auto zet hem tegen de ✓. */
   .kaart-kop .oe-ops.kop-ops { flex: none; margin-left: auto; padding: 3px; border-radius: 12px; }
@@ -840,7 +876,7 @@
   .kop-tot { display: flex; align-items: center; gap: 6px; flex: none; margin-left: auto; }
   .kop-tot-w { font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
   .kaart-kop .oe-seg.kop-ops { padding: 3px; border-radius: 12px; }
-  .kaart-kop .oe-seg.kop-ops .chip { flex: none; font-size: 15px; }
+  .kaart-kop .oe-seg.kop-ops .chip { flex: none; font-size: var(--tx-label); }
   /* op 320 botste "tot" met de naam van de kaart; de getallen alleen passen wel */
   @media (max-width: 359px) { .kop-tot-w { display: none; } }
   /* Open: een paarse rand, en de kop blijft bovenaan in beeld als de kaart
@@ -857,7 +893,7 @@
      balkje, houdt elke rij even hoog: een tik verhuist een lijn, en soms haar
      mee (vanaf tilt haar op), en dan mag geen enkele rij van hoogte
      veranderen -- dezelfde regel als de naad (zie .fase-ladder.naad hierboven). */
-  .thema-kaart.open .fase-ladder.naad .fl-rij:not(.hier) .fl-n { background: var(--lavender-wash-3); color: var(--purple-mid); }
+  .thema-kaart.open .fase-ladder.naad .fl-rij:not(.hier) .fl-n { background: var(--paper-border); color: var(--purple-mid); }
   /* De uitleg van hoe ver ze is (zie vgUitleg): haar rij is een knop, en de regel
      hangt eronder in dezelfde lavendel, zodat het leest als haar rij die
      openklapt. */
@@ -1052,7 +1088,7 @@
   }
   .bb-tegel .oz-i { width: 28px; height: 28px; color: var(--purple-light); }
   .bb-tegel:hover { background: var(--lavender-wash); }
-  .bb-tegel:active { background: var(--lavender-wash-3); }
+  .bb-tegel:active { background: var(--paper-border); }
 
   .oz-blad { text-align: center; }
   /* op het lege beginscherm vlak onder "Wat is Rekensterren?": één paar regels */
@@ -1079,19 +1115,19 @@
   .oz-code.laden .oz-c:nth-child(2) { animation-delay: .1s; } .oz-code.laden .oz-c:nth-child(3) { animation-delay: .2s; }
   .oz-code.laden .oz-c:nth-child(5) { animation-delay: .3s; } .oz-code.laden .oz-c:nth-child(6) { animation-delay: .4s; }
   .oz-code.laden .oz-c:nth-child(7) { animation-delay: .5s; }
-  @keyframes oz-wacht { 50% { background: var(--lavender-wash-3); } }
+  @keyframes oz-wacht { 50% { background: var(--paper-border); } }
   .oz-code.fout .oz-c { border-color: var(--red-500); background: var(--danger-bg); color: var(--red-answer-600); animation: oz-schud .3s; }
   @keyframes oz-schud { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
   /* het echte invoerveld ligt onzichtbaar over de vakjes heen; 16px, anders
      zoomt iOS in zodra hij focus krijgt */
   .oz-invoer { position: relative; }
   .oz-invoer input {
-    position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px;
+    position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; /* teken */
     border: 0; background: transparent; color: transparent; caret-color: transparent;
   }
   /* de tijd die de code nog geldt: een balk die leegloopt (de duur staat op het
      element zelf, zie ozToonCode) */
-  .oz-tijd { height: 6px; margin: 0 18px 14px; border-radius: 3px; background: var(--lavender-wash-3); overflow: hidden; }
+  .oz-tijd { height: 6px; margin: 0 18px 14px; border-radius: 3px; background: var(--paper-border); overflow: hidden; }
   .oz-tijd i {
     display: block; height: 100%; border-radius: 3px; transform-origin: left;
     background: linear-gradient(90deg, var(--purple-deep), var(--purple-light));
@@ -1119,7 +1155,7 @@
   .oz-vink {
     position: absolute; top: 6px; right: 6px; display: flex; align-items: center; justify-content: center;
     width: 24px; height: 24px; border-radius: 50%; background: var(--stat-green); color: var(--c-white);
-    font-size: 14px; font-weight: 700; box-shadow: 0 0 0 3px var(--paper-surface);
+    font-size: 14px; font-weight: 700; box-shadow: 0 0 0 3px var(--paper-surface); /* teken */
   }
   .oz-vervang {
     display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; padding: 8px;

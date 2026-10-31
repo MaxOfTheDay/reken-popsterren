@@ -94,19 +94,19 @@
        (applyWorldTheme zet --w-glow-rgb op de tegel). Dat is het hele
        "wereldaccent": geen band, geen tweede vlak, geen extra regel per wereld --
        dezelfde schaduw in een andere kleur. */
-    box-shadow: 0 0 0 1.25px rgba(255,255,255,.15), 0 0 0 2.5px rgba(16,5,34,.45),
+    box-shadow: 0 0 0 1.25px rgba(255,255,255,.15), 0 0 0 2.5px rgba(var(--nacht-1-rgb),.45),
                 0 0 20px rgba(var(--w-glow-rgb), .26), var(--e-2);
     transition: transform var(--t-tik), box-shadow .14s;
   }
   .ster-tegel:hover, .leeg-tegel:hover { transform: translateY(-4px);
-    box-shadow: 0 0 0 1.25px rgba(255,255,255,.24), 0 0 0 2.5px rgba(16,5,34,.45),
+    box-shadow: 0 0 0 1.25px rgba(255,255,255,.24), 0 0 0 2.5px rgba(var(--nacht-1-rgb),.45),
                 0 0 24px rgba(var(--w-glow-rgb), .36), var(--e-3); }
   .ster-tegel:active, .leeg-tegel:active { transform: scale(.97); }
   /* De tik zelf: even indrukken en oplichten, en dán pas het spel in (zie
      kiesSter). Kort genoeg om antwoord te zijn en niet om een animatie te zijn. */
   .ster-tegel.kiest {
     transform: scale(.965);
-    box-shadow: 0 0 0 2.5px rgba(255,255,255,.62), 0 0 0 4px rgba(16,5,34,.45),
+    box-shadow: 0 0 0 2.5px rgba(255,255,255,.62), 0 0 0 4px rgba(var(--nacht-1-rgb),.45),
                 0 0 26px rgba(var(--goud-glans-rgb),.5), var(--e-2);
   }
   @media (prefers-reduced-motion: reduce) { .ster-tegel { transition: none; } }
@@ -179,7 +179,7 @@
      gespeelde halte op de wereldkaart (--halte-rand). */
   .st-baan {
     height: 5px; border-radius: var(--r-pill); overflow: hidden;
-    background: rgba(255,255,255,.17); box-shadow: inset 0 1px 2px rgba(8,2,20,.45);
+    background: rgba(255,255,255,.17); box-shadow: inset 0 1px 2px rgba(var(--nacht-0-rgb),.45);
   }
   .st-baan i {
     display: block; height: 100%; border-radius: var(--r-pill);
@@ -334,7 +334,7 @@
   /* Niet krimpen maar oplichten: een rij van 48px die 2% kleiner wordt zie je
      niet, een rij die even paars oplicht wél -- en dat is precies wat een tik op
      een schakelaar moet bevestigen. */
-  .gear-item:active { background: var(--lavender-wash-3); }
+  .gear-item:active { background: var(--paper-border); }
   .gear-item .gi-ico { font-size: 20px; width: 26px; text-align: center; flex-shrink: 0; }
   /* Uit: het icoon een stap terug, zodat de rij in één blik "staat stil" zegt --
      zonder een ander, feller plaatje (zie renderGeluid). */
@@ -430,7 +430,7 @@
   #app-blad .ab-stap { display: flex; gap: 10px; align-items: flex-start; margin: 9px 0; line-height: 1.4; }
   #app-blad .ab-nr {
     flex: 0 0 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
-    background: var(--purple-mid); color: var(--c-white); font-size: 13px; font-weight: 700;
+    background: var(--purple-mid); color: var(--c-white); font-size: var(--tx-klein); font-weight: 700;
   }
   #app-blad .ab-kbd {
     display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 8px;
@@ -477,7 +477,7 @@
      voorbehouden aan geselecteerd/primaire acties. */
   .stage-frame {
     border-width: 2px; border-color: rgba(255,255,255,.35);
-    box-shadow: var(--e-2), 0 0 20px rgba(123,47,247,.28);
+    box-shadow: var(--e-2), 0 0 20px rgba(var(--bg-2-rgb),.28);
   }
   /* avatar schaalt altijd mee met de podiumhoogte (fix voor afgesneden avatar op mobiel) */
   .stage .avatar-holder { height: 92%; }
@@ -487,7 +487,7 @@
     background:
       radial-gradient(circle 60px at 20% 15%, rgba(255,255,120,.35), transparent 70%),
       radial-gradient(circle 60px at 80% 20%, rgba(120,220,255,.35), transparent 70%),
-      radial-gradient(circle 70px at 55% 8%, rgba(255,120,220,.30), transparent 70%);
+      radial-gradient(circle 70px at 55% 8%, var(--bg-glow-pink), transparent 70%);
     animation: lights 3.5s ease-in-out infinite alternate;
   }
   /* Ademen, niet verkleuren. Hier draaide de tint in 3,5 seconden 120 graden
@@ -727,7 +727,7 @@
   .avatar-holder.move-noot .av-mond-o { opacity: 1; }
   .avatar-holder.move-noot::before, .avatar-holder.move-noot::after {
     position: absolute; z-index: 3; pointer-events: none; line-height: 1;
-    font-size: 34px; font-weight: 900; color: rgb(var(--goud-rgb));
+    font-size: 34px; font-weight: 700; color: rgb(var(--goud-rgb));
     text-shadow: 0 0 6px rgba(var(--goud-gloed-rgb), .8), 0 2px 3px rgba(0,0,0,.5);
     animation: nootOp calc(var(--t-pas, .9s) * .78) ease-out both;
   }
@@ -861,7 +861,7 @@
      later in het stijlblad. */
   :is(#screen-map, #screen-journey, #screen-trophies, #screen-dress) .diamond-badge.wens-klaar {
     background: rgba(var(--goud-rgb), .9); color: var(--ink-on-gold); text-shadow: none;
-    box-shadow: 0 0 14px rgba(var(--goud-rgb), .45), 0 3px 10px rgba(8,1,20,.35);
+    box-shadow: 0 0 14px rgba(var(--goud-rgb), .45), 0 3px 10px rgba(var(--nacht-0-rgb),.35);
     animation: beloningKlop 2.4s ease-in-out infinite;
   }
   .diamond-badge.wens-klaar::after { display: none; }
@@ -899,7 +899,7 @@
     background: radial-gradient(60% 55% at 50% 38%, var(--pt), var(--pm) 72%);
     border: 2px solid var(--pr);
     box-shadow: 0 var(--pod-dik) 0 var(--ps), 0 var(--pod-dik) 0 2px var(--pr),
-                0 calc(var(--pod-dik) + 6px) 18px rgba(8,1,20,.38);
+                0 calc(var(--pod-dik) + 6px) 18px rgba(var(--nacht-0-rgb),.38);
   }
   .podium::before { content: ''; position: absolute; inset: 8% 6%; border-radius: 50%; pointer-events: none; }
   /* De patronen. Elk is één laag (een tweede laag kreeg een eigen
@@ -918,7 +918,7 @@
   .pod-sneeuw::before   { background: radial-gradient(circle, #fff 1.3px, transparent 2.2px) 0 0 / 11px 8px; }
   .pod-zand::before     { background: radial-gradient(circle, rgba(140,90,0,.45) 1.1px, transparent 1.9px) 0 0 / 7px 5px; }
   .pod-ruit::before     { background: repeating-linear-gradient(45deg, transparent 0 6px, rgba(255,255,255,.28) 6px 7.5px); }
-  .pod-regenboog::before { background: repeating-radial-gradient(ellipse at 50% 120%, #ff9a9e 0 4px, #fad0c4 4px 8px, #a1ffce 8px 12px, #a18cd1 12px 16px); opacity: .55; }
+  .pod-regenboog::before { background: repeating-radial-gradient(ellipse at 50% 120%, #ff9a9e 0 4px, #fad0c4 4px 8px, #a1ffce 8px 12px, #a18cd1 12px 16px); opacity: .55; } /* kunst */
   .pod-circus::before   { background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,.55) 0 15deg, transparent 15deg 30deg); }
   .pod-vlek::before     { background: radial-gradient(ellipse, rgba(60,40,10,.38) 2.4px, transparent 4.5px) 0 0 / 20px 12px; }
   .pod-gras::before     { background: repeating-linear-gradient(90deg, transparent 0 8px, rgba(255,255,255,.18) 8px 16px); }

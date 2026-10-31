@@ -66,6 +66,8 @@ function renderNewStar() {
   // bij élke tik naar boven (n.open doet hetzelfde voor de openklapper zelf).
   const scr = $('screen-newstar');
   const keep = scr ? scr.scrollTop : 0;
+  const pop = $('newstar-body').querySelector('#newstar-stage .avatar-holder');
+  const klok = pop ? animatieKlok(pop) : null;
   /* De twee zwaarste keuzes ("wie ben je?" en "hoe speel je?") als twee volle
      helften met het icoon boven het woord: exact het onderdeel dat het ouderdeel
      voor dezelfde vragen gebruikt (zie de moduskeuze in themaKaartHtml). Ze stonden
@@ -77,7 +79,7 @@ function renderNewStar() {
      papier, erbuiten is het dezelfde pop op dezelfde poort als op de
      sterrenkeuze, en het vel eronder is er een schermhoogte korter van. */
   $('newstar-body').innerHTML = `<div class="settings-panel">
-    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage"><div class="avatar-holder idle levend">${avatarSVG(preview, 132)}</div>${wacht ? '<span class="ns-vraag" aria-hidden="true">?</span>' : ''}</div></div>
+    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage"><div class="avatar-holder idle levend">${pasLaag(avatarSVG(preview, 132))}</div>${wacht ? '<span class="ns-vraag" aria-hidden="true">?</span>' : ''}</div></div>
     <div class="set-card newstar-vel">
       <div class="ns-groep">
         <div class="set-field"><label class="lbl">Wie ben je?</label>
@@ -124,6 +126,12 @@ function renderNewStar() {
     </div>
   </div>`;
   applyStage($('newstar-stage'), preview);
+  /* Het paneel hierboven wordt bij elke tik opnieuw opgebouwd, en een nieuwe pop
+     begint haar wiegen en knikken van voren af aan: dan schoot ze bij elke keuze
+     terug in haar beginhouding. De nieuwe pop neemt dus de klok van de oude over
+     (zie popKleren). De oude houder bewaren helpt niet: wie hem even uit de
+     pagina haalt, breekt zijn animaties net zo goed af. */
+  if (klok) klokTerug($('newstar-stage').querySelector('.avatar-holder'), klok);
   // bindChips en niet chip: de sjabloon hierboven gebruikt de globale chip(v, label, on)
   // uit het ouderdeel, en een gelijknamige const hier zou die in dit hele bereik
   // afdekken (ReferenceError, nog vóór de eerste regel van de sjabloon).

@@ -1124,4 +1124,64 @@ zaak('P', () => {
   check(/\.modal-bg\.schild:not\(\.open\)\s*\{[^}]*display:\s*block/.test(stijl), 'P · het schild ligt er echt (.modal-bg.schild in het stijlblad)', '');
 });
 
+/* Q · DE KLEURWACHT. Paars kwam er telkens bij met een nieuw scherm: een
+   tweede, rodere paarse familie in het ouderdeel, de plaatjesthema's met hun
+   eigen inkt, en tientallen bijna-zwarten die niemand uit elkaar kon houden.
+   Dat is opgeruimd naar de tokens in
+   00-afspraak.css (de violetfamilie, --nacht-*-rgb, --plaatje-*), en deze zaak
+   houdt het zo: buiten 00-afspraak.css staat geen paarse waarde meer, alleen
+   var(). Een tekening die echt zijn eigen tinten nodig heeft (een podiumpatroon,
+   een geschilderde lucht) zet het commentaar kunst op dezelfde regel.
+   En: geen font-weight boven 700. Fredoka houdt op bij 700 en een 900 tekent er
+   pixel voor pixel hetzelfde als -- de regel zegt dan iets wat niet gebeurt.
+   En de letterladder (§5 van de afspraak): kleine tekst, onder de 17px, krijgt
+   een --tx-token en geen eigen getal. Daar liepen losse 10, 12 en 14px-labels
+   naast de ladder. Een maat die geen tekst is -- een emoji, een vinkje in een
+   rondje, een invoerveld dat op 16px moet blijven tegen de iOS-zoom -- zet het
+   commentaar teken op dezelfde regel. Vanaf 17px is het vrij: de spelletters en
+   de tekens staan per breekpunt afgeregeld. */
+zaak('Q', () => {
+  const map = path.join(WORTEL, 'src', 'css');
+  const re = /#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b|rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/g;
+  const paars = (r, g, b) => {
+    r /= 255; g /= 255; b /= 255;
+    const M = Math.max(r, g, b), m = Math.min(r, g, b), l = (M + m) / 2;
+    if (M === m) return false;
+    const d = M - m, s = l > .5 ? d / (2 - M - m) : d / (M + m);
+    let h = M === r ? (g - b) / d + (g < b ? 6 : 0) : M === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h *= 60;
+    return s > .15 && h >= 255 && h <= 320 && l > .03 && l < .97;
+  };
+  const kleur = [], zwaar = [], klein = [];
+  let bestanden = 0;
+  for (const f of fs.readdirSync(map).filter(f => f.endsWith('.css')).sort()) {
+    bestanden++;
+    let inC = false;
+    fs.readFileSync(path.join(map, f), 'utf8').split('\n').forEach((regel, i) => {
+      let code = '', j = 0;
+      while (j < regel.length) {
+        if (inC) { const e = regel.indexOf('*/', j); if (e < 0) j = regel.length; else { inC = false; j = e + 2; } }
+        else { const b = regel.indexOf('/*', j); if (b < 0) { code += regel.slice(j); j = regel.length; } else { code += regel.slice(j, b); inC = true; j = b + 2; } }
+      }
+      const waar = `${f}:${i + 1}`;
+      if (/font-weight:\s*[89]00\b/.test(code)) zwaar.push(waar);
+      if (f !== '00-afspraak.css' && !/\/\*\s*teken\s*\*\//.test(regel)) {
+        for (const k of code.matchAll(/font-size:\s*(\d+(?:\.\d+)?)px/g)) if (+k[1] < 17) klein.push(`${waar} ${k[1]}px`);
+      }
+      if (f === '00-afspraak.css' || /\/\*\s*kunst\s*\*\//.test(regel)) return;
+      let m; re.lastIndex = 0;
+      while ((m = re.exec(code))) {
+        let r, g, b;
+        if (m[1]) { let h = m[1]; if (h.length === 3) h = [...h].map(c => c + c).join(''); [r, g, b] = [0, 2, 4].map(k => parseInt(h.slice(k, k + 2), 16)); }
+        else [r, g, b] = [+m[2], +m[3], +m[4]];
+        if (paars(r, g, b)) kleur.push(`${waar} ${m[0]}`);
+      }
+    });
+  }
+  check(bestanden > 5, 'Q · de stijlbladen in src/css gevonden', String(bestanden));
+  check(!kleur.length, 'Q · geen paarse waarde buiten 00-afspraak.css (gebruik een token, of /* kunst */ op een tekening)', kleur.slice(0, 8).join(' | '));
+  check(!zwaar.length, 'Q · geen font-weight 800 of 900 (Fredoka houdt op bij 700)', zwaar.join(' | '));
+  check(!klein.length, 'Q · kleine tekst staat op de letterladder (--tx-*), of de regel is een teken (/* teken */)', klein.join(' | '));
+});
+
 klaar();

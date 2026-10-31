@@ -445,7 +445,7 @@ function icoonSvg(maat, binnen) {
 const ICOON_TEGEL = '<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>';
 // twee tekens op het lichtpaarse tegeltje: de icoontjes van rekenen en de tafels
 function tekenIcoon(a, b) {
-  return maat => icoonSvg(maat, ICOON_TEGEL + '<g fill="#8e24aa" font-weight="900" font-size="21" text-anchor="middle" dominant-baseline="central">'
+  return maat => icoonSvg(maat, ICOON_TEGEL + '<g style="fill:var(--purple-mid)" font-weight="700" font-size="21" text-anchor="middle" dominant-baseline="central">'
     + `<text x="13.5" y="14">${a}</text><text x="26.5" y="26">${b}</text></g>`);
 }
 
@@ -623,10 +623,10 @@ function klokSvg(t, maat, kaal) {
     + '<circle cx="50" cy="50" r="49" fill="#8e3fc8"/><path d="M2.5 50 A47.5 47.5 0 0 1 97.5 50" fill="none" stroke="#b678ec" stroke-width="3" stroke-linecap="round"/>'
     + '<circle cx="50" cy="51.8" r="45" fill="#3d1a6e" opacity=".4"/><circle cx="50" cy="50" r="45" fill="#fffaf3"/>'
     + `<g fill="#cdb6e6">${minuten}</g>`
-    + `<g fill="#2b2238" font-size="${klein ? 22 : 15}" font-weight="900" text-anchor="middle" dominant-baseline="central">${uren}</g>`
-    + `<line x1="50" y1="50" x2="${ux}" y2="${uy}" stroke="#3d2466" stroke-width="${klein ? 11 : 9}" stroke-linecap="round"/>`
+    + `<g style="fill:var(--plaatje-inkt)" font-size="${klein ? 22 : 15}" font-weight="700" text-anchor="middle" dominant-baseline="central">${uren}</g>`
+    + `<line x1="50" y1="50" x2="${ux}" y2="${uy}" style="stroke:var(--plaatje-inkt)" stroke-width="${klein ? 11 : 9}" stroke-linecap="round"/>`
     + `<line x1="50" y1="50" x2="${mx}" y2="${my}" stroke="#e5397a" stroke-width="${klein ? 6.5 : 5}" stroke-linecap="round"/>`
-    + `<circle cx="50" cy="50" r="${klein ? 6.5 : 5.5}" fill="#ffc83d" stroke="#3d2466" stroke-width="2"/></svg>`;
+    + `<circle cx="50" cy="50" r="${klein ? 6.5 : 5.5}" fill="#ffc83d" style="stroke:var(--plaatje-inkt)" stroke-width="2"/></svg>`;
 }
 function klokVoorbeeld(r) {
   const t = { uren: 180, halfuur: 210, kwartier: 165, vijfmin: 310, uur24: 155 }[r.id];
@@ -1084,7 +1084,7 @@ const THEMAS = [
   { id: 'geld', naam: 'Geld', plaatje: true, teken: '€',
     icoon: maat => icoonSvg(maat, '<circle cx="20" cy="20" r="18" fill="#c9ccd1" stroke="#9aa0a8" stroke-width="1.5"/>'
       + '<circle cx="20" cy="20" r="12.5" fill="#e8c45a"/>'
-      + '<text x="20" y="21" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="900" fill="#5d3f00">€</text>'),
+      + '<text x="20" y="21" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="700" fill="#5d3f00">€</text>'),
     ladder: { pad: GELDPAD, lijn: 'geldLijn', stand: 'geld', id: 'set-geldpad', eind: 'Alles met geld door elkaar', vb: geldVoorbeeld, kies: 'kiesGeld' },
     gen: genGeld,
     /* zoveel stukken als er kunnen liggen, van de breedste soort; en een paar
@@ -1109,7 +1109,7 @@ const THEMAS = [
   { id: 'kalender', naam: 'Kalender', plaatje: true, teken: '📅',
     icoon: maat => icoonSvg(maat, '<rect x="5" y="7" width="30" height="29" rx="5" fill="#fff" stroke="#9aa0a8" stroke-width="1.5"/>'
       + '<path d="M5 12a5 5 0 0 1 5-5h20a5 5 0 0 1 5 5v4H5z" fill="#e5397a"/><rect x="11" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/><rect x="26" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/>'
-      + '<text x="20" y="27" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="900" fill="#2b2238">7</text>'),
+      + '<text x="20" y="27" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="700" style="fill:var(--plaatje-inkt)">7</text>'),
     ladder: { pad: KALENDERPAD, lijn: 'kalLijn', stand: 'kalender', id: 'set-kalenderpad', eind: 'Alles met de kalender door elkaar', vb: kalenderVoorbeeld, kies: 'kiesKalender' },
     gen: genKalender,
     // elke vorm een paar keer, want een maand met zes weken is een rij hoger

@@ -3203,6 +3203,56 @@ function check(ok, label, detail) {
     await c2.close();
   });
 
+  /* ---- De pop blijft in de maat --------------------------------------
+     Het lijf wiegt op de houder, het hoofd knikt en de staartjes slingeren ín
+     de tekening. Wordt de tekening vervangen, dan mogen die twee niet opnieuw
+     beginnen terwijl het lijf doorwiegt: dan schiet het hoofd uit de maat (zie
+     popKleren). Drie wegen waarop dat gebeurde: een andere lade in de
+     kleedkamer, een spulletje passen, en een keuze in het maakformulier --
+     dat laatste bouwt zelfs de hele pop opnieuw. Gemeten wordt het verschil in
+     beginmoment tussen het wiegen en elke animatie in de pop: dat hoort nul te
+     zijn, en na zo'n tik ook. */
+  zaak(async () => {
+    const { ctx, page } = await fresh();
+    await makeStar(page, { name: 'Maat', base: 'meisje', hair: 'hair_blond' });
+    const uitDeMaat = (sel) => page.evaluate((sel) => {
+      const h = document.querySelector(sel);
+      const alle = h.getAnimations({ subtree: true });
+      const wieg = alle.find(a => a.effect.target === h);
+      if (!wieg) return 'geen wiegen';
+      const binnen = alle.filter(a => a !== wieg && a.effect.target.closest('.pas-laag'));
+      if (!binnen.length) return 'geen animatie in de pop';
+      return Math.max(...binnen.map(a => Math.abs(a.startTime - wieg.startTime)));
+    }, sel);
+    const goed = v => typeof v === 'number' && v < 1;
+    await page.evaluate(() => openKleedkamer());
+    await page.waitForTimeout(700);
+    const voor = await uitDeMaat('#shop-avatar');
+    const tekening = await page.evaluate(() => (window.__oud = document.querySelector('#shop-avatar .pas-laag svg'), 1));
+    await page.evaluate(() => document.querySelector('#shop-tabs .tab-btn:not(.active)').click());
+    await page.waitForTimeout(250);
+    const lade = await uitDeMaat('#shop-avatar');
+    const zelfde = await page.evaluate(() => window.__oud === document.querySelector('#shop-avatar .pas-laag svg'));
+    check(goed(voor) && goed(lade) && zelfde && tekening,
+      'pop in de maat: een andere lade tekent haar niet opnieuw', JSON.stringify({ voor, lade, zelfde }));
+    await page.evaluate(() => [...document.querySelectorAll('#item-grid .item-card')].find(c => !P().owned.includes(c.dataset.item)).click());
+    await page.waitForTimeout(250);
+    const passen = await uitDeMaat('#shop-avatar');
+    check(goed(passen), 'pop in de maat: passen houdt hoofd en lijf samen', JSON.stringify({ passen }));
+    await page.evaluate(() => goProfiles());
+    await page.waitForTimeout(150);
+    await page.click('#btn-newstar');
+    await page.waitForTimeout(300);
+    await page.evaluate(() => document.querySelector('#newstar-base .chip').click());
+    await page.waitForTimeout(700);
+    await page.evaluate(() => document.querySelectorAll('#newstar-hair .chip')[1].click());
+    await page.waitForTimeout(250);
+    const maak = await uitDeMaat('#newstar-stage .avatar-holder');
+    const wieg = await page.evaluate(() => document.querySelector('#newstar-stage .avatar-holder').getAnimations()[0].currentTime);
+    check(goed(maak) && wieg > 600, 'pop in de maat: een keuze in het maakformulier laat haar doorwiegen', JSON.stringify({ maak, wieg }));
+    await ctx.close();
+  });
+
   const wachtrij = [...zaken];
   await Promise.all(Array.from({ length: TEGELIJK }, async () => {
     for (let z; (z = wachtrij.shift());) await z();
