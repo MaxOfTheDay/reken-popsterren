@@ -1935,7 +1935,9 @@ function startMapEdit() {
     const vak = F('st-ongebruikt');
     if (!vak) return;
     const gebruikt = {};
-    WORLDS.forEach(w => { if (w.art) gebruikt[w.art] = true; });
+    // de kaart én zijn kleine broertje voor de reis (wereldKleinPad): dat pad staat
+    // nergens in WORLDS, het spel leidt het af -- en dus leek het hier ongebruikt
+    WORLDS.forEach(w => { if (w.art) { gebruikt[w.art] = true; const k = wereldKleinPad(w.art); if (k) gebruikt[k] = true; } });
     Object.keys(SLOTS).forEach(k => { const d = SLOTS[k]; if (d.pad && !d.perWereld) gebruikt[d.pad] = true; });
     const los = Object.keys(OP_SCHIJF)
       .filter(f => /^assets\/world\//.test(f) && !gebruikt[f]).sort();
