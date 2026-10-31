@@ -2795,7 +2795,7 @@ function check(ok, label, detail) {
       // avatarSVG stempelt per aanroep een uniek id op elk verloop en de
       // halsuitsnede (rb1, bol1, nek1, ...); zonder dat weg te halen verschilt
       // élke twee tekeningen en zegt de vergelijking niets over de vorm
-      const kaal = t => t.replace(/\b(rb|bol|huid|stof|wang|vlek|nek)\d+/g, '$1');
+      const kaal = t => kledingSleutel(t);   // elke tekening nummert haar verlopen; zie kledingSleutel
       const meisje = kaal(avatarSVG({ ...p, base: 'meisje' }, 132));
       const jongen = kaal(avatarSVG(p, 132));
       return {
@@ -2833,7 +2833,7 @@ function check(ok, label, detail) {
     await page.waitForTimeout(250);
     const r = await page.evaluate(() => {
       const p = db.profiles.p1;
-      const kaal = t => t.replace(/\b(rb|bol|huid|stof|wang|vlek|nek)\d+/g, '$1');   // zie 11b: uniek id per aanroep
+      const kaal = t => kledingSleutel(t);   // zie 11b: uniek id per aanroep
       return { base: p.base, zelfde: kaal(avatarSVG(p, 132)) === kaal(avatarSVG({ ...p, base: 'meisje' }, 132)) };
     });
     check(r.base === 'meisje', 'een save zonder basis wordt een meisje', String(r.base));
