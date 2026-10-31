@@ -23,6 +23,9 @@
  *   J  een beeld vervangen werkt, ook zonder wereld; en "niet gebruikt" is alleen
  *      wat het spel echt nergens laadt
  *   Q  in de Dev Studio laat het paneel weg wat de studio eromheen al heeft
+ *   R  een nieuwe wereld maken gaat in de volgorde waarin je het doet: haltes
+ *      aantikken, de schat van idee tot naam, en begin en einde spelen bij
+ *      Publiceren; een melding is één zin
  *
  * Draaien:
  *   npm run test:studio        (of: npm test voor alle suites)
@@ -814,6 +817,95 @@ function check(ok, label, detail) {
       check(st.bewaard === false, 'I · "' + g.naam + '" schrijft niets weg', String(st.bewaard));
       await page.close();
     }
+    await ctx.close();
+  }
+
+  // ---- R: een nieuwe wereld, in de volgorde waarin je hem maakt ---------------
+  {
+    const { ctx, page } = await studio();
+    await page.evaluate(() => { document.getElementById('st-meer').click(); });
+    await page.click('#st-new');
+    await page.fill('#st-nieuwnaam', 'Proefwereld');
+    await page.click('#st-nieuwmaak');
+    await page.waitForTimeout(300);
+    // E: een melding is één zin; de rest klapt open
+    const melding = await page.evaluate(() => {
+      const v = document.getElementById('st-out');
+      const kop = v.querySelector('.kop'), rest = v.querySelector('.rest');
+      const dicht = rest ? getComputedStyle(rest).display : null;
+      v.click();
+      return { kop: kop && kop.textContent, title: v.title, dicht,
+               open: rest ? getComputedStyle(rest).display : null };
+    });
+    check(/Proefwereld erbij/.test(melding.kop || '') && !/Volgende stap/.test(melding.kop || ''),
+      'R · een melding is één zin', JSON.stringify(melding));
+    check(/Volgende stap/.test(melding.title) && melding.dicht === 'none' && melding.open !== 'none',
+      'R · de rest staat in de tooltip en klapt open met een tik', JSON.stringify(melding));
+
+    // A: tik de haltes aan, van onder naar boven
+    await page.evaluate(() => document.querySelector('.st-stappen button[data-stap="2"]').click());
+    await page.click('#st-tik');
+    const r = await page.$eval('.world-frame', e => { const b = e.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height }; });
+    const plekken = [[30, 85], [65, 76], [35, 66], [62, 56], [38, 47], [64, 38], [40, 29], [55, 20]];
+    const tussen = [];
+    for (const [px, py] of plekken) {
+      await page.mouse.click(r.x + r.w * px / 100, r.y + r.h * py / 100);
+      await page.waitForTimeout(60);
+      tussen.push(await page.evaluate(() => document.querySelectorAll('.tour-stop.me-wacht').length));
+    }
+    const na = await page.evaluate(() => {
+      const w = WORLDS[WORLDS.length - 1];
+      return { nodes: w.nodes, curve: w.curve || null, tikt: document.body.classList.contains('st-tikken'),
+               scherm: (document.querySelector('.screen.active') || {}).id };
+    });
+    const raak = na.nodes && na.nodes.length === 8 && na.nodes.every((n, i) =>
+      Math.abs(n.x - plekken[i][0]) < 0.6 && Math.abs(n.y - plekken[i][1]) < 0.6);
+    check(raak, 'R · acht tikken zetten de acht haltes, in volgorde', JSON.stringify(na.nodes));
+    check(na.curve === null, 'R · en de weg buigt vanzelf (geen oude ruitjes)', JSON.stringify(na.curve));
+    check(!na.tikt && na.scherm === 'screen-map', 'R · daarna is het gewoon slepen weer, en geen show geopend', JSON.stringify(na));
+    check(tussen.join(',') === '7,6,5,4,3,2,1,0', 'R · wat nog geen plek heeft staat flauw', tussen.join(','));
+    await page.keyboard.press('Control+z');
+    const terug = await page.evaluate(() => JSON.stringify(WORLDS[WORLDS.length - 1].nodes || null));
+    check(terug !== JSON.stringify(na.nodes), 'R · Ctrl+Z neemt het hele aantikken terug', terug);
+    // Esc stopt halverwege, en wat getikt is blijft
+    await page.click('#st-tik');
+    await page.mouse.click(r.x + r.w * 0.5, r.y + r.h * 0.8);
+    await page.keyboard.press('Escape');
+    const esc = await page.evaluate(() => ({ tikt: document.body.classList.contains('st-tikken'),
+      n1: WORLDS[WORLDS.length - 1].nodes[0] }));
+    check(!esc.tikt && Math.abs(esc.n1.x - 50) < 0.6, 'R · Esc stopt, wat al getikt is blijft staan', JSON.stringify(esc));
+
+    // C: de schat in de volgorde idee, plakken, naam -- en geen leeg kaartje erboven
+    await page.evaluate(() => document.querySelector('.st-stappen button[data-stap="3"]').click());
+    const schat = await page.evaluate(() => {
+      const voor = (a, b) => !!(document.getElementById(a).compareDocumentPosition(document.getElementById(b)) & Node.DOCUMENT_POSITION_FOLLOWING);
+      return { volgorde: voor('sc-idee', 'sc-svg') && voor('sc-svg', 'sc-naam'),
+               leeg: document.getElementById('st-bel').hidden,
+               emoji: document.getElementById('sc-emoji').value };
+    });
+    check(schat.volgorde, 'R · de schat: eerst het idee, dan plakken, dan de naam', JSON.stringify(schat));
+    check(schat.leeg, 'R · geen leeg "nog geen wereldschat"-kaartje', JSON.stringify(schat));
+    check(schat.emoji === '✨', 'R · de emoji is die van de wereld', schat.emoji);
+    await page.fill('#sc-idee', 'een regenboogkroontje');
+    const naam = await page.inputValue('#sc-naam');
+    check(naam === 'Regenboogkroontje', 'R · het idee wordt de naam', naam);
+    await page.fill('#sc-naam', 'Kroon');
+    await page.fill('#sc-idee', 'een ster');
+    check(await page.inputValue('#sc-naam') === 'Kroon', 'R · een zelf gekozen naam blijft staan', await page.inputValue('#sc-naam'));
+
+    // B: begin en einde spelen vanuit Publiceren
+    await page.evaluate(() => {
+      window.__geopend = [];
+      window.open = u => { window.__geopend.push(u); return {}; };
+      document.querySelector('.st-stappen button[data-stap="4"]').click();
+      document.getElementById('st-speel-eerst').click();
+      document.getElementById('st-speel-laatst').click();
+    });
+    const urls = await page.evaluate(() => window.__geopend);
+    const nr = await page.evaluate(() => WORLDS.length);
+    check(urls.length === 2 && /screen=game/.test(urls[0]) && /stand=vers/.test(urls[0])
+      && /stand=bijna/.test(urls[1]) && urls.every(u => u.indexOf('wereld=' + nr + '&') >= 0 && /onuitgebracht/.test(u)),
+      'R · eerste en laatste show openen deze wereld', JSON.stringify(urls));
     await ctx.close();
   }
 
