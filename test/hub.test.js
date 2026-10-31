@@ -708,5 +708,52 @@ zaak('F · de snelkoppeling', () => {
   }
   const mis = await versie.wissel('tak-die-niet-bestaat-xyz');
   check(mis.ok === false, 'C · een bron die niet bestaat is een nette weigering', JSON.stringify(mis));
+
+  /* Uit de pas: GitHub kreeg een herschreven geschiedenis, en deze kopie staat nog
+     op de oude. Nagebootst in een wegwerpmap met een eigen "GitHub" (een kale
+     repo), en versie.js daarin, want die werkt op de map waar hij staat. Nieuwste
+     versie hoort dan een zin te geven in plaats van git-tekst, en gelijkzetten
+     moet main gelijk zetten zónder iets kwijt te raken. */
+  {
+    const { execFileSync } = require('child_process');
+    const os = require('os');
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'rp-uitdepas-'));
+    const g = (cwd, ...a) => execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a],
+      { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    const daar = path.join(tmp, 'daar.git'), hier = path.join(tmp, 'hier'), ander = path.join(tmp, 'ander');
+    g(tmp, 'init', '-q', '--bare', '-b', 'main', daar);
+    g(tmp, 'clone', '-q', daar, hier);
+    g(hier, 'checkout', '-q', '-b', 'main');
+    fs.writeFileSync(path.join(hier, 'a.txt'), 'oud\n');
+    g(hier, 'add', '.'); g(hier, 'commit', '-q', '-m', 'oud');
+    g(hier, 'push', '-q', 'origin', 'main');
+    // de herschreven geschiedenis: een andere kopie zet main er geforceerd overheen
+    g(tmp, 'clone', '-q', daar, ander);
+    g(ander, 'checkout', '-q', '--orphan', 'nieuw');
+    fs.writeFileSync(path.join(ander, 'a.txt'), 'nieuw\n');
+    g(ander, 'add', '.'); g(ander, 'commit', '-q', '-m', 'nieuw');
+    g(ander, 'push', '-q', '-f', 'origin', 'nieuw:main');
+    fs.mkdirSync(path.join(hier, 'test'));
+    fs.copyFileSync(path.join(__dirname, 'versie.js'), path.join(hier, 'test', 'versie.js'));
+    fs.writeFileSync(path.join(hier, '.git', 'info', 'exclude'), 'test/\n');
+    fs.writeFileSync(path.join(hier, 'los.txt'), 'open werk\n');
+    const v2 = require(path.join(hier, 'test', 'versie.js'));
+    g(hier, 'fetch', '-q', 'origin');
+    const oudSha = g(hier, 'rev-parse', 'HEAD');
+    check(v2.uitDePas(v2.feiten()), 'C · uit de pas: herkend', JSON.stringify(v2.feiten().vanMain));
+    fs.renameSync(path.join(hier, 'los.txt'), path.join(tmp, 'los.txt'));
+    const n = await v2.nieuwste();
+    check(n.uitDePas && !/hint|fast-forward/i.test(n.tekst), 'C · uit de pas: Nieuwste versie zegt het in een zin', JSON.stringify(n));
+    fs.renameSync(path.join(tmp, 'los.txt'), path.join(hier, 'los.txt'));
+    const r = await v2.gelijkZetten();
+    check(r.ok && g(hier, 'rev-parse', 'HEAD') === g(hier, 'rev-parse', 'origin/main'),
+      'C · gelijkzetten: main staat op GitHub', JSON.stringify(r));
+    check(g(hier, 'rev-parse', r.tak || 'x') === oudSha, 'C · gelijkzetten: de oude main staat op een tak', String(r.tak));
+    check(r.gestasht && !fs.existsSync(path.join(hier, 'los.txt'))
+      && /los\.txt/.test(g(hier, 'stash', 'show', '--include-untracked', '--name-only', 'stash@{0}')),
+      'C · gelijkzetten: open werk staat in de stash', JSON.stringify(r));
+    check(!v2.uitDePas(v2.feiten()), 'C · gelijkzetten: daarna niet meer uit de pas', JSON.stringify(v2.feiten().vanMain));
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
   klaar();
 })();

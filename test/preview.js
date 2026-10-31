@@ -950,6 +950,7 @@ async function api(req, res, url) {
     if (url === '/api/publiceer' && req.method !== 'POST') return json(res, PUBLICEER);
     if (req.method !== 'POST') return json(res, { ok: false, tekst: 'onbekende poort' }, 404);
     if (url === '/api/nieuwste') return json(res, await versie.nieuwste());
+    if (url === '/api/gelijk') return json(res, await versie.gelijkZetten());
     if (url === '/api/publiceer') return json(res, await publiceerAlles(await lees(req, 600000)));
     if (url === '/api/haalop') return json(res, await versie.haalOp());
     if (url === '/api/bijwerken') return json(res, await versie.bijwerken());
