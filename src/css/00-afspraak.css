@@ -895,38 +895,26 @@
        een bovengrens erbij: mobiel eerst, dan twee gedeelde maten, en daarboven
        niets meer per scherm.
 
-         --stage-spel   BELEVING: kaart, werelden, zaal. Hier ís de tekening het
+         --stage-spel   BELEVING: de wereldkaart. Hier ís de tekening het
                         scherm, dus die houdt op een breed venster zijn staande
-                        compositie en groeit tot deze maat -- daarna niet meer.
-                        Zonder die grens werd het podium zo breed als de hoogte
-                        toeliet: 592 op 1920x1080, en op een hoog venster van
-                        1400 zelfs 771 -- een wereldkaart van driekwart meter met
-                        een balk van 430 eronder, en dan valt het toestel uit
-                        elkaar in een plaatje met een balkje.
-                        560 en niet 480 of 520, en dat wás opgemeten -- maar
-                        waaraan het getal gemeten is, geldt niet meer. De
-                        redenering luidde: zodra het podium smáller wordt dan de
-                        hoogte toelaat blijft er lucht boven en onder over, en
-                        dáár staan de kop en de balk, dus die komen náást de
-                        wereld te hangen in plaats van erop; 560 was precies de
-                        breedte waarop een gewoon 16:9-venster (1920x1080) nog
-                        vol liep. Twee dingen hebben dat achterhaald.
-                        --podium-lucht (onderaan het blad) rekent die lucht
-                        tegenwoordig uit en schuift de kop en de balk mee naar
-                        binnen, dus "náást de wereld" gebeurt niet meer. En
-                        --podium-groei hieronder laat het kader een slag hoger
-                        worden dan het vak: een venster van 1080 hoog wíl nu 646
-                        breed en krijgt 560, dus die 1920x1080 loopt niet meer
-                        vol.
-                        WAT DE GRENS VANDAAG DOET: hij begint te binden vanaf
-                        ongeveer 940px vensterhoogte, en je ziet hem vanaf ~1015
-                        -- daar past het kader ook in de hoogte, dus staat het
-                        podium er compleet, met ronde hoek en schaduw, en zakken
-                        de kop en de balk mee naar binnen. Opgemeten op
-                        1920x1080: 560 breed, met 32px lucht boven en onder.
-                        Daaronder doet hij niets en is de hoogte de grens.
-                        Of 560 voor grote en hoge schermen nog het juiste getal
-                        is, is een aparte afweging; die staat bewust open.
+                        compositie en groeit met de hóógte mee -- tot de
+                        tekening op ware grootte staat (--art-w, 1215 punten),
+                        en daarna niet meer: verder groeien is alleen nog
+                        uitvergroten, en dan wordt de kaart wazig.
+                        Hier stond 560. Dat hield de kaart op een groot scherm
+                        zo smal als een telefoon: op 2560x1440 een strook van
+                        560 met aan elke kant een meter onscherpe omgeving, en
+                        de kop en de balk die er via --podium-lucht 212 pixels
+                        naar binnen moesten schuiven. De reden voor die 560 was
+                        een balk van 430 breed onder een kaart van 771 -- "een
+                        plaatje met een balkje". De balk is sinds de iconen
+                        alleen nog 296 breed, en een kaart die het scherm in
+                        de hoogte vult leest juist wél als één toestel.
+                        WAT DE GRENS VANDAAG DOET: tot zo'n 2180 punten
+                        vensterhoogte niets -- daar is de hoogte de grens en is
+                        --podium-lucht nul (ook op 4K, 3840x2160). Pas op een
+                        nog hoger venster staat de tekening op ware grootte,
+                        blijft er lucht over en zakken de kop en de balk mee.
                         Wat er buiten het podium overblijft is geen leegte maar
                         omgeving: de kaart zet daar zijn eigen wereld onscherp
                         neer (zie de liggende stand bij .world-frame).
@@ -946,7 +934,7 @@
        Waarom vaste pixels en geen vw: dit zijn bovengrenzen op een venster dat
        breder is dan de app ooit nodig heeft. Onder die grens doet --kolom al het
        werk via max-width, en dan is 100% de maat -- precies zoals op een telefoon. */
-    --stage-spel: 560px;
+    --stage-spel: calc(var(--art-w) * 1px);
     --stage-breed: 820px;
     /* ---- En hoe groot het podium in liggende stand werkelijk wordt ---------
        --stage-spel hierboven is de bovengrens, maar op een gewoon bureaublad

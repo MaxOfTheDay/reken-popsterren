@@ -496,12 +496,14 @@ async function zetOnderrandAan(page) {
   /* ---- L · de balk staat stil bij een tabwissel, ook op een groot scherm ----
      Op een venster dat hoger is dan het podium nodig heeft (--podium-lucht)
      zakt de balk mee het podium op. Deed hij dat alleen op de kaart, dan sprong
-     hij bij elke tik tussen 🗺️ en 👕/🏆 op en neer -- 32px op 1920x1080, 212px
-     op 2560x1440 -- en dat zie je op een telefoon of een gewone laptop nooit.
+     hij bij elke tik tussen 🗺️ en 👕/🏆 op en neer -- en dat zie je op een
+     telefoon of een gewone laptop nooit. 3840x2400 is een maat waarop die lucht
+     er echt is (de tekening staat daar op ware grootte); op de andere drie is
+     ze nul en hoort de balk gewoon stil te blijven.
      Daarom elk beeldje van de wissel meten, op drie bureaubladmaten, en ook de
      veeg eronder: die mag van gedaante wisselen, maar alleen door over te
      vloeien (opacity), niet door op de tik van breedte te knippen. */
-  for (const [w, h] of [[1440, 900], [1920, 1080], [2560, 1440]]) {
+  for (const [w, h] of [[1440, 900], [1920, 1080], [2560, 1440], [3840, 2400]]) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h } });
     await cacheFonts(ctx);
     const page = await ctx.newPage();
@@ -518,6 +520,12 @@ async function zetOnderrandAan(page) {
         const v = getComputedStyle(nav, '::before'), a = getComputedStyle(nav, '::after');
         return v.width + ' ' + v.bottom + ' / ' + a.width + ' ' + a.bottom;
       };
+      const kader = Math.round(document.querySelector('#screen-map .world-frame').getBoundingClientRect().width);
+      // een variabele met calc() erin komt als tekst terug; een maat op een proefblokje rekent hem uit
+      const proef = document.createElement('div');
+      proef.style.cssText = 'position:absolute;width:0;height:var(--podium-lucht, 0px)';
+      document.body.appendChild(proef);
+      const lucht = proef.offsetHeight; proef.remove();
       const plekken = new Set([plek()]), veegen = new Set([veeg()]);
       for (const t of ['dress', 'tro', 'map', 'tro', 'dress', 'map']) {
         navTik(t);
@@ -529,7 +537,7 @@ async function zetOnderrandAan(page) {
       const cs = getComputedStyle(nav), duren = cs.transitionDuration.split(',');
       const overgang = cs.transitionProperty.split(',').map((p, i) => [p.trim(), parseFloat(duren[i % duren.length])])
         .filter(([, d]) => d > 0).map(([p]) => p).join(',');
-      return { plekken: [...plekken], veegen: [...veegen], overgang };
+      return { plekken: [...plekken], veegen: [...veegen], overgang, kader, lucht };
     });
     check(r.plekken.length === 1, `L · ${w}x${h} · de balk staat op elk tabblad en in elk beeldje op dezelfde plek`,
       r.plekken.join(' | '));
@@ -537,6 +545,13 @@ async function zetOnderrandAan(page) {
       r.veegen.join(' | '));
     check(!/\b(bottom|top|margin|all)\b/.test(r.overgang), `L · ${w}x${h} · geen overgang op de plek van de balk`,
       r.overgang);
+    /* De kaart groeit met de hoogte mee tot de tekening op ware grootte staat
+       (--stage-spel = --art-w): op een gewoon groot scherm vult ze dus de
+       hoogte, en pas op een venster hoger dan 4K houdt ze op 1215 op. */
+    if (h <= 1440) check(r.lucht === 0 && (h < 1000 || r.kader > 560), `L · ${w}x${h} · de kaart vult de hoogte (geen grens van 560)`,
+      `kader ${r.kader}px, lucht ${r.lucht}`);
+    else check(Math.abs(r.kader - 1215) <= 1 && r.lucht > 0, `L · ${w}x${h} · de kaart stopt op ware grootte en de balk zakt mee`,
+      `kader ${r.kader}px, lucht ${r.lucht}`);
     check(fouten.length === 0, `L · ${w}x${h} · geen javascript-fouten`, fouten.join(' | '));
     await ctx.close();
   }
