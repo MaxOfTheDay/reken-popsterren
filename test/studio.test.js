@@ -22,6 +22,7 @@
  *      echt -- en schrijven niets weg
  *   J  een beeld vervangen werkt, ook zonder wereld; en "niet gebruikt" is alleen
  *      wat het spel echt nergens laadt
+ *   Q  in de Dev Studio laat het paneel weg wat de studio eromheen al heeft
  *
  * Draaien:
  *   npm run test:studio        (of: npm test voor alle suites)
@@ -516,6 +517,56 @@ function check(ok, label, detail) {
     check(terug.ok && terug.naam.length > 0, 'J · en de wereldstudio werkt daarna gewoon door',
       JSON.stringify(terug));
     check(!fout.length, 'J · nog steeds geen fouten', fout.slice(0, 3).join(' | '));
+
+    /* Q: in de Dev Studio (een kijkvak in /studio) laat het paneel weg wat de
+       studio eromheen al heeft -- de kop met de naam, en onder ⋯ Meer het kijkvak,
+       de wereldlijst, de beelden van de app en de losse git-stappen. Wat over
+       déze wereld gaat blijft, en de ? staat naast de stappen. Los geopend (alles
+       hierboven) blijft alles staan. */
+    const opzich = await page.evaluate(() => ({
+      kop: getComputedStyle(document.querySelector('#studio .st-top')).display !== 'none',
+      blokken: document.querySelectorAll('#studio .los').length,
+    }));
+    check(opzich.kop && opzich.blokken === 3, 'Q · los geopend: kop en alle blokken onder Meer', JSON.stringify(opzich));
+    // een eigen omhulsel van dezelfde herkomst, zoals /studio dat is
+    const omhulsel = await ctx.newPage();
+    omhulsel.on('pageerror', e => fout.push('PAGEERROR ' + e.message));
+    await omhulsel.goto(basis + '/manifest.json');
+    await omhulsel.setContent('<iframe id="kv" style="width:1280px;height:900px;border:0" src="'
+      + basis + '/?debug&demo&star=p1&screen=map&mapedit"></iframe>');
+    const kv = await (await omhulsel.waitForSelector('#kv')).contentFrame();
+    await kv.waitForSelector('#studio');
+    await kv.waitForTimeout(500);
+    const ingebed = await kv.evaluate(() => {
+      const zie = el => !!el && el.getClientRects().length > 0;
+      document.getElementById('st-meer').click();
+      return {
+        kop: zie(document.querySelector('#studio .st-top')),
+        lijst: zie(document.getElementById('st-list')),
+        kijk: zie(document.querySelector('#studio .st-kijk')),
+        beelden: zie(document.getElementById('st-schermen')),
+        git: zie(document.getElementById('st-commit')),
+        id: zie(document.getElementById('mf-id')),
+        terug: zie(document.getElementById('st-revert')),
+        diff: zie(document.getElementById('st-diff')),
+        vraag: !!document.querySelector('#studio .st-stappen #st-uitleg') && zie(document.getElementById('st-uitleg')),
+        stappen: document.querySelectorAll('#studio .st-stappen button[data-stap]').length,
+      };
+    });
+    check(!ingebed.kop && !ingebed.lijst && !ingebed.kijk && !ingebed.beelden && !ingebed.git,
+      'Q · in de Dev Studio: geen eigen kop, lijst, kijkvak, beelden of git-stappen', JSON.stringify(ingebed));
+    check(ingebed.id && ingebed.terug && ingebed.diff,
+      'Q · wat over deze wereld gaat blijft onder Meer', JSON.stringify(ingebed));
+    check(ingebed.vraag && ingebed.stappen === 4, 'Q · de ? staat naast de vier stappen', JSON.stringify(ingebed));
+    // de ? is geen stap: hem aantikken zet de uitleg aan en laat de stap staan
+    const na = await kv.evaluate(() => {
+      document.querySelector('#studio .st-stappen [data-stap="2"]').click();
+      document.getElementById('st-uitleg').click();
+      return { uitleg: document.getElementById('studio').classList.contains('uitleg'),
+               stap: (document.querySelector('#studio .st-stappen button.on[data-stap]') || {}).dataset };
+    });
+    check(na.uitleg && na.stap && na.stap.stap === '2', 'Q · en de ? is geen stap', JSON.stringify(na));
+    check(!fout.length, 'Q · geen fouten', fout.slice(0, 3).join(' | '));
 
     await ctx.close();
     await new Promise(ok => server.close(ok));
