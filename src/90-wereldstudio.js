@@ -179,6 +179,11 @@ function startMapEdit() {
       border-top: 1px solid rgba(255,255,255,.14); }
     #studio .st-nav #st-verder { margin-left: auto; }
     #studio.dicht .st-stappen, #studio.dicht .st-nav { display: none; }
+    #studio.in-dev .st-top, #studio.in-dev .los { display: none; }
+    #studio.in-dev .st-stappen { grid-template-columns: repeat(4, 1fr) 28px; align-items: center; }
+    #studio.in-dev .st-stappen #st-uitleg { padding: 3px 0; margin-bottom: 4px; border-radius: 7px; }
+    #studio.in-dev .st-stappen [data-stap="4"].vuil::after { content: ''; display: inline-block;
+      width: 6px; height: 6px; border-radius: 50%; background: #ffd98a; margin-left: 4px; vertical-align: 2px; }
     #studio button.groot { padding: 10px 16px; font-size: 14px; }
     #studio .st-top b#st-wnaam { text-transform: none; letter-spacing: 0; font-size: 14px;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -191,7 +196,6 @@ function startMapEdit() {
       background: rgba(255,255,255,.05); border: 1px solid transparent;
       transition: background .12s, border-color .12s; }
     #studio .st-slot.over { background: rgba(120,255,180,.14); border-color: rgba(120,255,180,.8); }
-    #studio .st-slot.kan { opacity: .72; }
     #studio .st-slot b { font-size: 12.5px; }
     #studio .st-slot small { grid-column: 1 / -1; color: #9c86bd; font-size: 11px;
       font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
@@ -377,7 +381,7 @@ function startMapEdit() {
     #studio .ct-let { color: #ffd98a; font-weight: 700; }
     #studio .ct-goed { color: #b6ffd6; font-weight: 700; }
     #studio.uitleg .st-hint { display: block; }
-    #studio .st-top button.on { background: rgba(120,255,180,.24); border-color: rgba(120,255,180,.6); }
+    #studio .st-top button.on, #studio .st-stappen #st-uitleg.on { background: rgba(120,255,180,.24); border-color: rgba(120,255,180,.6); }
     /* De uitvoer staat buiten de tabbladen: wat er misging moet je kunnen lezen
        terwijl je al ergens anders kijkt. */
     #studio .st-uit { flex: none; padding: 7px 12px 9px; font: 11.5px/1.5 ui-monospace, monospace;
@@ -587,6 +591,7 @@ function startMapEdit() {
       </section>
 
       <section data-stap="meer" hidden>
+        <div class="los">
         <h6>Bekijken</h6>
         <div class="st-kijk">
           <div class="kr">
@@ -625,14 +630,13 @@ function startMapEdit() {
         <div class="st-list" id="st-list"></div>
         <div class="st-btns" style="margin-top:6px">
           <button class="prim" id="st-new">＋ wereld</button>
-          <button class="stil" id="st-revert" title="Deze wereld terug naar wat er in het spel staat">↶ deze terug</button>
-          <button class="stil" id="st-weg" title="Alleen voor een wereld die nog niet in het spel staat">✕ weg</button>
         </div>
         <div class="st-nieuwrij" id="st-nieuwrij" hidden>
           <input id="st-nieuwnaam" placeholder="naam, bv. Regenboogwereld">
           <button class="prim" id="st-nieuwmaak">Maak</button>
         </div>
         <p class="st-noot" id="st-nieuwid" hidden></p>
+        </div>
 
         <h6>Gegevens</h6>
         <label class="st-vink"><input type="checkbox" id="mf-released">
@@ -646,7 +650,12 @@ function startMapEdit() {
           <button id="st-copy">Kopieer blok</button>
           <button id="st-paste">Plak blok</button>
         </div>
+        <div class="st-btns" style="margin-top:6px">
+          <button class="stil" id="st-revert" title="Deze wereld terug naar wat er in het spel staat">↶ deze terug</button>
+          <button class="stil" id="st-weg" title="Alleen voor een wereld die nog niet in het spel staat">✕ weg</button>
+        </div>
 
+        <div class="los">
         <h6>Beelden van de app</h6>
         <div class="st-row" style="margin-top:8px"><label>kwaliteit</label><select id="st-kwal">
           <option value="0.9">0.90 — ruim</option>
@@ -656,6 +665,7 @@ function startMapEdit() {
         <div id="st-schermen"></div>
         <div id="st-ongebruikt"></div>
         <div id="st-merk"></div>
+        </div>
         <input type="file" accept="image/*" hidden id="me-file">
 
         <h6>Wat verandert er</h6>
@@ -663,6 +673,7 @@ function startMapEdit() {
         <div class="st-btns" style="margin-top:6px"><button id="st-check-knop">✓ kijk alle werelden na</button></div>
         <div class="st-check" id="st-check" hidden></div>
 
+        <div class="los">
         <h6>Losse stappen</h6>
         <div class="st-btns">
           <button id="st-push">⇪ Opslaan in het project</button>
@@ -677,6 +688,7 @@ function startMapEdit() {
         </div>
         <p class="st-let" id="st-pw" hidden>Publiceren draait ook de browsertests, en daarvoor
           ontbreekt playwright. Draai één keer <code>npm install</code> in de projectmap.</p>
+        </div>
       </section>
 
     </div>
@@ -687,6 +699,19 @@ function startMapEdit() {
     </div>
     <div class="st-uit" id="st-out"></div>`;
   document.body.appendChild(panel);
+  /* In de Dev Studio (een kijkvak in /studio) staat er al een balk boven met de
+     naam van de wereld, een lijst met alle werelden, een toestelkiezer, Testen,
+     App & merk en de losse git-stappen. Dan laat dit paneel zijn eigen versie
+     daarvan weg: de kop, en de blokken .los onder ⋯ Meer. Wat overblijft is wat
+     alleen over déze wereld gaat. De ? schuift naast de stappen, en dat er iets
+     niet gepubliceerd is zegt een stip op Publiceren. Los geopend (/ts op een
+     telefoon, of ?debug&mapedit zonder studio) blijft alles staan. */
+  const inDev = window.parent !== window;
+  if (inDev) {
+    panel.classList.add('in-dev');
+    panel.querySelector('.st-stappen').appendChild(F('st-uitleg'));
+    F('st-meer').title = 'het id, het bestand en wat er verandert';
+  }
   const dump = document.createElement('pre');
   dump.id = 'me-dump';
   dump.onclick = () => { dump.style.display = 'none'; };
@@ -780,7 +805,8 @@ function startMapEdit() {
        4 Publiceren  nog één keer kijken, en dan helemaal naar buiten
      Alles wat je zelden nodig hebt staat onder ⋯ Meer: bekijken in een andere
      stand of maat, een andere wereld kiezen, het id, de beelden van de app en de
-     losse stappen naar main. Zo staat er bij het maken van een wereld alleen wat
+     losse stappen naar main (in de Dev Studio alleen het id en wat er verandert;
+     de rest heeft die zelf, zie inDev). Zo staat er bij het maken van een wereld alleen wat
      bij die stap hoort -- de rest bestaat nog, maar staat niet in de weg.
 
      De Dev Studio opent dit paneel met &stap=<n> (Publiceren in de lijst opent
@@ -792,7 +818,7 @@ function startMapEdit() {
     if (stap !== 'meer' && STAPPEN.indexOf(stap) < 0) stap = '1';
     if (stap === 'meer' && stapNu !== 'meer') stapVoorMeer = stapNu;
     stapNu = stap;
-    panel.querySelectorAll('.st-stappen button').forEach(b => b.classList.toggle('on', b.dataset.stap === stap));
+    panel.querySelectorAll('.st-stappen button[data-stap]').forEach(b => b.classList.toggle('on', b.dataset.stap === stap));
     panel.querySelectorAll('.st-body > section').forEach(sec => { sec.hidden = sec.dataset.stap !== stap; });
     const i = STAPPEN.indexOf(stap);
     F('st-terug').hidden = stap !== 'meer' && i <= 0;
@@ -812,7 +838,7 @@ function startMapEdit() {
     document.body.classList.toggle('st-kijken', stap === '4');
     if (stap === '4' && typeof tekenPubliceer === 'function') tekenPubliceer(true);
   }
-  panel.querySelectorAll('.st-stappen button').forEach(b => { b.onclick = () => toonStap(b.dataset.stap); });
+  panel.querySelectorAll('.st-stappen button[data-stap]').forEach(b => { b.onclick = () => toonStap(b.dataset.stap); });
   F('st-verder').onclick = () => toonStap(STAPPEN[Math.min(STAPPEN.length - 1, STAPPEN.indexOf(stapNu) + 1)]);
   F('st-terug').onclick = () => toonStap(stapNu === 'meer' ? stapVoorMeer
     : STAPPEN[Math.max(0, STAPPEN.indexOf(stapNu) - 1)]);
@@ -898,6 +924,10 @@ function startMapEdit() {
     chip.title = totaal ? totaal + ' ding' + (totaal === 1 ? '' : 'en') + ' anders dan in het project' : '';
     chip.hidden = !totaal;
     chip.className = 'st-chip ' + (totaal ? 'vuil' : 'schoon');
+    // in de Dev Studio is er geen kop: daar zegt een stip op Publiceren hetzelfde
+    const vier = panel.querySelector('.st-stappen [data-stap="4"]');
+    vier.classList.toggle('vuil', !!totaal);
+    vier.title = chip.title;
   }
   function refreshList() {
     const list = F('st-list');
@@ -1799,56 +1829,47 @@ function startMapEdit() {
     const w = wereldNu();
     return w ? d.pad.replace('{wereld}', w.world.id) : '';
   }
-  /* Vier van de zes plekken uit scene.js leest het spel nog niet: die zijn voorstel
-     en leven alleen in incoming/. Dat hoort de studio te zéggen in plaats van een
-     knop aan te bieden die niets doet. */
+  /* Elke plek uit scene.js heeft een pad dat het spel leest; de wereldkaart staat
+     niet hier maar in stap 1. */
   function tekenSchermen() {
     tekenWereldbeeld();
     const vak = F('st-schermen');
     if (!vak) return;
     vak.innerHTML = '';
     SCHERMEN.forEach(sc => {
-      // alleen plekken die het spel écht leest: de vier voorstellen uit scene.js
-      // (zaal, landschap, wolken, slotscherm) hebben nog geen doelpad, en een rij
-      // die niets doet is een rij die je elke keer opnieuw moet wegdenken
-      const keys = Object.keys(SLOTS).filter(k =>
-        SLOTS[k].screen === sc.id && !SLOTS[k].perWereld && SLOTS[k].pad);
+      const keys = Object.keys(SLOTS).filter(k => SLOTS[k].screen === sc.id && !SLOTS[k].perWereld);
       if (!keys.length) return;
       const groep = document.createElement('div');
       groep.className = 'st-scherm';
       groep.innerHTML = '<h6>' + esc(sc.label) + '</h6>';
       keys.forEach(k => {
-        const d = SLOTS[k], pad = slotPad(k), kan = !pad;
+        const d = SLOTS[k], pad = slotPad(k);
         const kb = OP_SCHIJF[pad];
         const rij = document.createElement('div');
-        rij.className = 'st-slot' + (kan ? ' kan' : '');
+        rij.className = 'st-slot';
         rij.dataset.slot = k;
-        rij.title = kan ? 'nog niet in het spel — alleen via incoming/'
-          : 'sleep een beeld hierheen, of tik om te kiezen';
+        rij.title = 'sleep een beeld hierheen, of tik om te kiezen';
         rij.innerHTML = '<b>' + esc(d.label) + '</b>'
-          + '<span class="st-dot ' + (kan ? '' : kb ? 'er' : 'weg') + '"></span>'
+          + '<span class="st-dot ' + (kb ? 'er' : 'weg') + '"></span>'
           + '<small>' + d.lever[0] + ' × ' + d.lever[1] + ' — '
-          + (kan ? 'nog niet in het spel; leg hem in incoming/ als ' + esc(d.canoniek || k)
-             : esc(pad) + (kb ? '  · ' + kb + ' kB' : '  · ontbreekt nog')) + '</small>';
-        if (!kan) {
-          rij.onclick = () => { bezigSlot = k; F('me-file').click(); };
-          ['dragenter', 'dragover'].forEach(n => rij.addEventListener(n, e => {
-            e.preventDefault(); rij.classList.add('over');
-          }));
-          ['dragleave', 'dragend'].forEach(n => rij.addEventListener(n, () => rij.classList.remove('over')));
-          rij.addEventListener('drop', e => {
-            e.preventDefault();
-            rij.classList.remove('over');
-            const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-            if (!f) return setOut('daar zat geen bestand bij');
-            if (!/^image\//.test(f.type)) return setOut('dat is geen afbeelding: ' + f.name);
-            verwerkBeeld(f, k);
-          });
-        }
+          + esc(pad) + (kb ? '  · ' + kb + ' kB' : '  · ontbreekt nog') + '</small>';
+        rij.onclick = () => { bezigSlot = k; F('me-file').click(); };
+        ['dragenter', 'dragover'].forEach(n => rij.addEventListener(n, e => {
+          e.preventDefault(); rij.classList.add('over');
+        }));
+        ['dragleave', 'dragend'].forEach(n => rij.addEventListener(n, () => rij.classList.remove('over')));
+        rij.addEventListener('drop', e => {
+          e.preventDefault();
+          rij.classList.remove('over');
+          const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+          if (!f) return setOut('daar zat geen bestand bij');
+          if (!/^image\//.test(f.type)) return setOut('dat is geen afbeelding: ' + f.name);
+          verwerkBeeld(f, k);
+        });
         /* Ligt er een kandidaat voor deze plek in incoming/? Dan is de vraag niet
            "welk bestand is dit" maar "wordt hij het". Eén knop, naast de huidige. */
         const k2 = kandidaatVoor(k);
-        if (k2 && !kan) {
+        if (k2) {
           const nieuw = document.createElement('div');
           nieuw.className = 'st-nieuw';
           nieuw.innerHTML = '<div class="paar">'

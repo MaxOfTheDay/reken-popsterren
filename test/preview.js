@@ -281,10 +281,8 @@ function page(state) {
   const styles =
     '<style id="k-scene-vol">' + scene.css(state.urls, { scrim: true }) + '</style>' +
     '<style id="k-scene-kaal" disabled>' + scene.css(state.urls, { scrim: false }) + '</style>';
-  // de parallax-aandrijving uit test/scene.js
-  const para = '<script>' + scene.parallaxJs() + '<\/script>';
   return html.replace('</head>', styles + studioData(state) + '</head>')
-             .replace('</body>', panel(state) + para + '</body>');
+             .replace('</body>', panel(state) + '</body>');
 }
 
 /* Opslaan: het concept van de wereldstudio wordt het WORLDS-blok in src/.
