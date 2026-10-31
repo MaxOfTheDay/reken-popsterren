@@ -1758,12 +1758,16 @@ function init() {
     if (d.wereldstudio !== 'wereld' || !d.nr) return;
     const was = S.wereld;
     S.wereld = d.nr;
-    if (S.bewerken) {
-      S.url = bladUrl(); $('#nu').textContent = S.url;
+    /* De naam in de balk: pas als de lijst deze wereld kent. Een nieuwe wereld
+       staat er bij het eerste berichtje nog niet in, en dan bleef de balk de naam
+       houden van de wereld die het paneel vóór &nieuw even liet zien. */
+    const zetNaam = () => {
       const w = huidigeWereld();
-      if (w && w.nr === d.nr) $('#bewerknaam').textContent = (w.icoon || '') + ' ' + w.naam;
-    }
-    if (was !== d.nr || !huidigeWereld() || huidigeWereld().nr !== d.nr) haalWerelden();
+      if (S.bewerken && S.wereld === d.nr && w && w.nr === d.nr) $('#bewerknaam').textContent = (w.icoon || '') + ' ' + w.naam;
+    };
+    if (S.bewerken) { S.url = bladUrl(); $('#nu').textContent = S.url; }
+    zetNaam();
+    if (was !== d.nr || !huidigeWereld() || huidigeWereld().nr !== d.nr) Promise.resolve(haalWerelden()).then(zetNaam, () => {});
   });
 
   $('#kiesbestand').onchange = e => {
