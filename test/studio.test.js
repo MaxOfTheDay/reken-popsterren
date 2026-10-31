@@ -20,6 +20,8 @@
  *      nooit bij een kind terechtkomen
  *   I  de standen en schermen waar de Dev Studio knoppen voor heeft, openen ook
  *      echt -- en schrijven niets weg
+ *   J  een beeld vervangen werkt, ook zonder wereld; en "niet gebruikt" is alleen
+ *      wat het spel echt nergens laadt
  *
  * Draaien:
  *   npm run test:studio        (of: npm test voor alle suites)
@@ -423,7 +425,8 @@ function check(ok, label, detail) {
         const data = '<script>window.__SLOTS=' + JSON.stringify(scene.SLOTS, (k, v) =>
             v instanceof RegExp ? undefined : v)
           + ';window.__SCHERMEN=' + JSON.stringify(scene.SCHERMEN)
-          + ';window.__INCOMING=[];window.__ASSETS={"assets/bg/landing.webp":76};'
+          + ';window.__INCOMING=[];window.__ASSETS={"assets/bg/landing.webp":76,'
+          + '"assets/world/muziek-map.webp":337,"assets/world/muziek-klein.webp":76,"assets/world/wees-map.webp":9};'
           + 'window.__MERK=[];window.__GEWIJZIGD=[];<\/script>';
         res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
         return res.end(html.replace('</head>', data + '</head>'));
@@ -467,6 +470,13 @@ function check(ok, label, detail) {
     });
     const erIs = await page.$('.st-slot[data-slot="landing"]');
     check(!!erIs, 'J · het startscherm staat in Beelden', String(!!erIs));
+    /* Niet gebruikt: alleen wat werkelijk nergens bij hoort. Het kleine broertje
+       van een kaart (wereldKleinPad) staat niet in WORLDS maar de reis laadt hem
+       wél -- wie hem op dit lijstje weggooit, laat de reis de grote tekeningen
+       laden. */
+    const los = await page.evaluate(() => document.getElementById('st-ongebruikt').textContent);
+    check(/wees-map/.test(los) && !/muziek-klein/.test(los) && !/muziek-map/.test(los),
+      'J · niet gebruikt: een wees wel, de kaart en zijn kleine broertje niet', los);
 
     await page.evaluate(() => goProfiles());
     await page.waitForTimeout(250);

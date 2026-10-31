@@ -11751,14 +11751,74 @@ function pasLaag(svg) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function popKleren(el, svg) {
   const laag = el.firstElementChild;
   if (laag && laag.classList.contains('pas-laag')) {
+    if (laag.svg === kledingSleutel(svg)) return;
+    const klok = animatieKlok(el);
     laag.innerHTML = svg.replace(PROPS_RE, '');
+    laag.svg = kledingSleutel(svg);
     const oud = laag.nextElementSibling;
     if (oud && oud.classList.contains('prop-laag')) oud.remove();
     laag.insertAdjacentHTML('afterend', propLaag(svg));
-  } else el.innerHTML = pasLaag(svg);
+    klokTerug(el, klok);
+  } else {
+    el.innerHTML = pasLaag(svg);
+    if (el.firstElementChild) el.firstElementChild.svg = kledingSleutel(svg);
+  }
+}
+
+
+
+function kledingSleutel(svg) { return svg.replace(/(id="|url\(#)([a-z]+)\d+/g, '$1$2'); }
+
+
+
+
+
+function animatieKlok(el) {
+  const klok = new Map();
+  if (!el.getAnimations) return klok;
+  el.getAnimations({ subtree: true }).forEach(a => {
+    const doel = a.effect && a.effect.target;
+
+
+
+
+
+    if (a.animationName && doel && a.startTime != null) klok.set(a.animationName + '|' + doel.getAttribute('class'), a.startTime);
+  });
+  return klok;
+}
+
+
+
+
+function klokTerug(el, klok) {
+  if (!klok.size) return;
+  const wieg = [...klok.entries()].find(([k]) => k.endsWith('|' + el.getAttribute('class')));
+  el.getAnimations({ subtree: true }).forEach(a => {
+    const doel = a.effect && a.effect.target;
+    if (!doel) return;
+    let begin = klok.get(a.animationName + '|' + doel.getAttribute('class'));
+    if (begin == null && wieg && a.effect.getTiming().iterations === Infinity) begin = wieg[1];
+    if (begin != null) a.startTime = begin;
+  });
 }
 
 
@@ -29434,6 +29494,8 @@ function renderNewStar() {
 
   const scr = $('screen-newstar');
   const keep = scr ? scr.scrollTop : 0;
+  const pop = $('newstar-body').querySelector('#newstar-stage .avatar-holder');
+  const klok = pop ? animatieKlok(pop) : null;
 
 
 
@@ -29445,7 +29507,7 @@ function renderNewStar() {
 
 
   $('newstar-body').innerHTML = `<div class="settings-panel">
-    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage"><div class="avatar-holder idle levend">${avatarSVG(preview, 132)}</div>${wacht ? '<span class="ns-vraag" aria-hidden="true">?</span>' : ''}</div></div>
+    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage"><div class="avatar-holder idle levend">${pasLaag(avatarSVG(preview, 132))}</div>${wacht ? '<span class="ns-vraag" aria-hidden="true">?</span>' : ''}</div></div>
     <div class="set-card newstar-vel">
       <div class="ns-groep">
         <div class="set-field"><label class="lbl">Wie ben je?</label>
@@ -29492,6 +29554,12 @@ function renderNewStar() {
     </div>
   </div>`;
   applyStage($('newstar-stage'), preview);
+
+
+
+
+
+  if (klok) klokTerug($('newstar-stage').querySelector('.avatar-holder'), klok);
 
 
 
