@@ -10033,6 +10033,18 @@
   #settings-body .modus-kaart .oe-seg, #settings-body .modus-kaart .oe-mix { background: var(--vlak-hover); }
   #settings-body .modus-kaart .oe-seg .chip:not(.on) { color: var(--c-white); }
 
+
+
+
+
+
+
+  #settings-body :is(.wat-kaart, .modus-kaart) .chip.on:not(.oe-rij) {
+    background: var(--c-white); color: var(--purple-mid); box-shadow: 0 2px 6px rgba(0,0,0,.3);
+  }
+  #settings-body :is(.wat-kaart, .modus-kaart) .chip.on .thema-ico { filter: none; opacity: 1; }
+  #settings-body :is(.wat-kaart, .modus-kaart) .chip:not(.on, .oe-rij) { color: rgba(255,255,255,.72); }
+
   #settings-body .modus-kaart .oe-rij, #settings-body .modus-kaart .oe-rij .oe-w { color: var(--c-white); border-top-color: var(--paneel-rand); }
   #settings-body .modus-kaart .oe-rij:not(.on) .oe-stand { background: var(--vlak-hover); }
 
