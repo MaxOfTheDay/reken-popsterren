@@ -43,9 +43,13 @@ const SLOTS = {
              lever: [1215, 2160], anker: 'midden', canoniek: 'ijs-map.webp', budget: 125,
              pad: 'assets/world/{wereld}-map.webp', perWereld: true,
              hint: '<wereld>-map.webp, bv. muziek-map.webp of snoep-map.webp' },
+  /* Het startscherm is staand 9:16, precies de maat van de tekening die er ligt:
+     de MAX-ster (MAXSTER in src/35-schermen.js) rekent in delen van 941x1672. Een
+     nieuwe tekening wordt dus op die maat gesneden -- en de ster op de plaquette
+     moet daarna opnieuw opgemeten worden, anders tikt een kind ernaast. */
   landing: { match: /^landing|^start|^titel|^home/i,                 screen: 'profile',
              label: 'Startscherm', waar: 'wie speelt er vandaag',
-             lever: [1024, 1536], anker: 'midden', canoniek: 'landing.webp', budget: 125,
+             lever: [941, 1672], anker: 'midden', canoniek: 'landing.webp', budget: 125,
              pad: 'assets/bg/landing.webp',
              hint: 'landing.webp' },
   finale:  { match: /^finale|^einde|^end[-_]/i,                      screen: 'end',
@@ -54,8 +58,8 @@ const SLOTS = {
              hint: 'finale.webp' },
   /* De kleedkamer en de trofeeenkast. Ze lenen vandaag de gedeelde schil; het pad
      hieronder wordt pas gelezen als SCHERMKUNST in index.html hem noemt (zie
-     zetSchermkunst daar). Staand 2:3, net als het startscherm: dezelfde ::before,
-     dezelfde sluier, hetzelfde masker.
+     zetSchermkunst daar). Staand 2:3, met dezelfde soort ::before, sluier en
+     masker als het startscherm.
 
      Let op waar je ze op beoordeelt. De winkeltegels en de trofeekaartjes zijn
      licht-op-donker en doorschijnend -- een drukke of lichte tekening maakt de
