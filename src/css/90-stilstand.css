@@ -39,8 +39,9 @@
        Zodra --stage-spel bindt is het podium smaller dan de hoogte toelaat, en
        dan blijft er lucht boven en onder over. De kop plakt aan de bovenrand van
        het schérm en de balk zweeft boven de onderrand ervan, dus die twee bleven
-       daar achter: op 2560x1440 stond de kop 240 pixels boven de wereldkaart en
-       de balk er 240 onder, alle drie los van elkaar in het onscherpe.
+       daar achter, los van de wereldkaart in het onscherpe. Sinds --stage-spel
+       de tekening op ware grootte is gebeurt dat pas op een venster van ruim
+       2180 punten hoog (hoger dan 4K); daaronder is de lucht nul.
 
        Dat is precies de gelaagdheid die dit scherm juist goed had (omgeving --
        podium -- bediening), alleen viel de bediening van het podium af. Dus
@@ -81,15 +82,15 @@
        kaart (--balk-op, zie de margin-bottom bij .main-nav). Hij hoort onderaan
        het podium, en de kaart is het enige scherm waar je dat podium ziet --
        maar zat hij alleen dáár hoger, dan sprong hij bij elke tik tussen Kaart
-       en Kleedkamer of Trofeeën een stuk op en neer: 32px op 1920x1080 en 212px
-       op 2560x1440. Een overgang op bottom maakte er een glijden van, maar die
+       en Kleedkamer of Trofeeën een stuk op en neer -- toen de grens nog 560 was
+       al vanaf 1920x1080, en tot 212px ver. Een overgang op bottom maakte er een glijden van, maar die
        liep op de hoofddraad, precies terwijl die het nieuwe scherm opbouwt, en
        haperde dus (en meetChroom mat de balk halverwege). Eén hoogte voor alle
        tabbladen: de balk is het enige dat bij een tabwissel blíjft staan.
        Daarom staat er hier ook geen transition meer op de balk. */
     /* En de veeg ónder de balk hoort bij dezelfde wereld. Hij is 100vw breed --
        op een telefoon klopt dat, want daar ís de wereld het scherm -- maar op een
-       podium van 560 in een venster van 2560 trok hij een donkere streep dwars
+       podium dat smaller is dan het venster trok hij een donkere streep dwars
        over de onscherpe omgeving, met een kaarsrechte rand op precies de hoogte
        waar de kaart ophoudt. Dat is het tegenovergestelde van wat hij moet doen:
        hij hoort de ónderste band van de wereld te dempen zodat "Kleedkamer" er
