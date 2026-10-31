@@ -472,6 +472,18 @@
   #settings-body .wat-kaart .chip.thema:not(.on) { background: var(--vlak-hover); color: var(--c-white); }
   #settings-body .modus-kaart .oe-seg, #settings-body .modus-kaart .oe-mix { background: var(--vlak-hover); }
   #settings-body .modus-kaart .oe-seg .chip:not(.on) { color: var(--c-white); }
+  /* Wat er gekozen is, in dit donkere glas: een witte chip met violette letter,
+     zoals een segmentknop op een telefoon. Een violette chip (zoals op wit
+     papier) zakte hier weg in het violet van het glas -- donker op donker,
+     en hij viel alleen op omdat de buren lichter waren. De rest staat een
+     tikje gedimd, zodat de keuze twee kanten op verschilt: licht tegen glas,
+     vol tegen gedempt. Alleen in dit paneel; het maakformulier en de niveaus
+     staan op wit en houden de violette chip. */
+  #settings-body :is(.wat-kaart, .modus-kaart) .chip.on:not(.oe-rij) {
+    background: var(--c-white); color: var(--purple-mid); box-shadow: 0 2px 6px rgba(0,0,0,.3);
+  }
+  #settings-body :is(.wat-kaart, .modus-kaart) .chip.on .thema-ico { filter: none; opacity: 1; }
+  #settings-body :is(.wat-kaart, .modus-kaart) .chip:not(.on, .oe-rij) { color: rgba(255,255,255,.72); }
   /* tellen: Memory is een rij met een schakelaar (.oe-rij, verderop) */
   #settings-body .modus-kaart .oe-rij, #settings-body .modus-kaart .oe-rij .oe-w { color: var(--c-white); border-top-color: var(--paneel-rand); }
   #settings-body .modus-kaart .oe-rij:not(.on) .oe-stand { background: var(--vlak-hover); }
