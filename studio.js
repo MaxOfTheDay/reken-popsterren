@@ -181,7 +181,8 @@ function startMapEdit() {
     #studio .st-nav #st-verder { margin-left: auto; }
     #studio.dicht .st-stappen, #studio.dicht .st-nav { display: none; }
     #studio.in-dev .st-top, #studio.in-dev .los { display: none; }
-    #studio.in-dev .st-stappen { grid-template-columns: repeat(4, 1fr) 28px; align-items: center; }
+    #studio.in-dev .st-stappen { grid-template-columns: repeat(4, auto) 24px; justify-content: space-between; align-items: center; }
+    #studio.in-dev .st-stappen button[data-stap] { white-space: nowrap; padding-inline: 6px; }
     #studio.in-dev .st-stappen #st-uitleg { padding: 3px 0; margin-bottom: 4px; border-radius: 7px; }
     #studio.in-dev .st-stappen [data-stap="4"].vuil::after { content: ''; display: inline-block;
       width: 6px; height: 6px; border-radius: 50%; background: #ffd98a; margin-left: 4px; vertical-align: 2px; }
@@ -1255,6 +1256,7 @@ function startMapEdit() {
     const p = schatProef;
     vb.hidden = !p || !!p.fout;
     knop.disabled = true;
+    knop.textContent = w.schat ? '✓ Vervang de schat' : '✓ Maak dit de schat';
     if (!p) { let_.hidden = true; return; }
     if (p.fout) { let_.hidden = false; let_.className = 'st-check'; let_.innerHTML = '<span class="ct-fout">⚠</span> ' + esc(p.fout); return; }
 
@@ -1293,7 +1295,6 @@ function startMapEdit() {
     let_.innerHTML = rood.map(t => '<span class="ct-fout">⚠</span> ' + esc(t)).concat(
       geel.map(t => '<span class="ct-let">·</span> ' + esc(t))).join('<br>');
     knop.disabled = rood.length > 0 || !!p.opgeslagen;
-    knop.textContent = w.schat ? '✓ Vervang de schat' : '✓ Maak dit de schat';
   }
   let schatKlok = null;
   F('sc-svg').addEventListener('input', () => { clearTimeout(schatKlok); schatKlok = setTimeout(() => tekenSchatProef(true), 250); });
