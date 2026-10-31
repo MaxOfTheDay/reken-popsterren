@@ -280,6 +280,18 @@ zaak('G · de werkbladen en de woorden', () => {
    beschreven (scene.js, merk.js, de wortel). De studio hoort ze te tónen zonder
    er een vierde lijst bij te verzinnen -- dat is precies het soort kopie dat op
    een dag iets anders zegt dan de rest. */
+/* De maat van een .webp uit zijn kop: VP8X (uitgebreid), VP8 (verliesgevend) of
+   VP8L (verliesvrij). Genoeg voor de tekeningen hier; null als het iets anders is. */
+function webpMaat(bestand) {
+  const b = fs.readFileSync(bestand);
+  if (b.toString('ascii', 0, 4) !== 'RIFF' || b.toString('ascii', 8, 12) !== 'WEBP') return null;
+  const soort = b.toString('ascii', 12, 16);
+  if (soort === 'VP8X') return [1 + b.readUIntLE(24, 3), 1 + b.readUIntLE(27, 3)];
+  if (soort === 'VP8 ') return [b.readUInt16LE(26) & 0x3fff, b.readUInt16LE(28) & 0x3fff];
+  if (soort === 'VP8L') { const n = b.readUInt32LE(21); return [1 + (n & 0x3fff), 1 + ((n >> 14) & 0x3fff)]; }
+  return null;
+}
+
 zaak('H · de globale beelden', () => {
   const beelden = require('./beelden');
   const o = beelden.overzicht();
@@ -332,8 +344,8 @@ zaak('I · de schermtekeningen', () => {
     check(d.pad && /^assets\/bg\/[a-z]+\.webp$/.test(d.pad),
       'I · met een pad volgens de afspraak', String(d.pad));
     check(d.schermkunst === sleutel, 'I · en hij wijst naar zijn sleutel in SCHERMKUNST', String(d.schermkunst));
-    check(d.lever[0] / d.lever[1] === scene.SLOTS.landing.lever[0] / scene.SLOTS.landing.lever[1],
-      'I · staand, dezelfde verhouding als het startscherm', d.lever.join('×'));
+    // staand, zoals het scherm; de maat zelf is die van een beeldgenerator (2:3)
+    check(d.lever[1] > d.lever[0], 'I · staand', d.lever.join('×'));
     check(beelden.magSchrijven(d.pad), 'I · de studio mag hem schrijven', d.pad);
     // de naam van het bestand moet ook herkend worden als hij in incoming/ ligt
     check(scene.classify(d.canoniek) === sleutel,
@@ -368,6 +380,17 @@ zaak('I · de schermtekeningen', () => {
   check(/background-size:cover,cover/.test(kand.replace(/\s/g, '')),
     'I · en snijdt bij als cover, net als de app', kand.slice(0, 200));
   check(/mask-image/.test(kand), 'I · met hetzelfde masker', 'geen masker');
+
+  /* Het startscherm wordt op de maat van de tekening die er ligt gesneden, en de
+     MAX-ster rekent in delen van diezelfde maat. Liep een van de drie uit de pas,
+     dan sneed de studio een nieuwe tekening anders bij dan het spel hem meet (dat
+     gebeurde: 2:3 gevraagd en gewaarschuwd, terwijl het spel 9:16 is). */
+  const ms = /kunstB:\s*(\d+),\s*kunstH:\s*(\d+)/.exec(fs.readFileSync(path.join(__dirname, '..', 'src', '35-schermen.js'), 'utf8'));
+  const echt = webpMaat(path.join(__dirname, '..', 'assets', 'bg', 'landing.webp'));
+  check(ms && scene.SLOTS.landing.lever.join('x') === ms[1] + 'x' + ms[2],
+    'I · het startscherm vraagt de maat waarin de MAX-ster rekent', scene.SLOTS.landing.lever.join('x') + ' tegen ' + (ms && ms.slice(1).join('x')));
+  check(echt && scene.SLOTS.landing.lever.join('x') === echt.join('x'),
+    'I · en dat is de maat van de tekening die er ligt', scene.SLOTS.landing.lever.join('x') + ' tegen ' + (echt && echt.join('x')));
 
   // cssJs() moet in een pagina te draaien zijn; anders staat de studio met lege handen
   const fn = new Function(scene.cssJs() + '; return css;')();

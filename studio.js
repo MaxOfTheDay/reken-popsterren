@@ -243,6 +243,8 @@ function startMapEdit() {
     #studio .st-bel .vb { width: 46px; height: 46px; border-radius: 8px;
       background: rgba(0,0,0,.28); display: grid; place-items: center; padding: 3px; }
     #studio .st-bel .vb svg { width: 100%; height: 100%; }
+    /* een schat in de verhouding van zijn vak in het rek (64 x 48, zie .thumb-schat) */
+    #studio .st-bel .vb.schat svg { height: 75%; }
     #studio .st-bel b { display: block; font-size: 12.5px; }
     #studio .st-bel small { display: block; color: #9c86bd; font-size: 11px; margin-top: 2px; }
     #studio .st-bel button { padding: 3px 9px; font-size: 11px; }
@@ -295,14 +297,19 @@ function startMapEdit() {
       font: 11px/1.4 ui-monospace, monospace; color: #fff; background: rgba(255,255,255,.08);
       border: 1px solid rgba(255,255,255,.22); border-radius: 7px; padding: 6px 8px; margin-bottom: 6px; }
     #studio textarea.over { border-color: rgba(120,255,180,.85); background: rgba(120,255,180,.12); }
-    /* Het voorbeeld: de schat op allebei de paspoppen, en het miniatuur zoals de
-       kleedkamer het toont -- de drie plekken waar een kind hem ziet. */
-    #studio .st-sc-vb { display: grid; grid-template-columns: 1fr 1fr 58px; gap: 6px; align-items: end;
+    /* Het voorbeeld: de schat op allebei de paspoppen, en in het rek zoals de
+       kleedkamer hem toont -- de plekken waar een kind hem ziet. Het rek is geen
+       nagemaakt plaatje maar het echte kaartje (.item-card met itemThumb, dus het
+       vak van een emoji, de dunnere rand en de glans), tussen twee emoji uit de
+       winkel: naast die buren zie je of hij erbij past, en daar ging het mis. */
+    #studio .st-sc-vb { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: end;
       margin-bottom: 6px; }
     #studio .st-sc-vb > div { border-radius: 8px; background: rgba(0,0,0,.28); text-align: center;
       font-size: 10px; color: #9c86bd; padding: 3px 2px 2px; }
-    #studio .st-sc-vb svg { display: block; width: 100%; height: auto; }
-    #studio .st-sc-vb .mini svg { height: 52px; }
+    #studio .st-sc-vb > div > svg { display: block; width: 100%; height: auto; }
+    #studio .st-sc-vb .st-rek { grid-column: 1 / -1; padding: 8px 6px 4px; }
+    #studio .st-sc-vb .st-rek > span { display: flex; gap: 6px; justify-content: center; margin-bottom: 3px; }
+    #studio .st-sc-vb .st-rek .item-card { flex: 0 0 76px; max-width: 76px; padding: 7px 4px 8px; cursor: default; }
     /* Geavanceerd: de dingen die je bijna nooit nodig hebt, en die de gewone
        werkwijze in de weg staan zodra ze bovenaan meedoen. Dicht, tenzij je ze
        zoekt. */
@@ -1020,6 +1027,7 @@ function startMapEdit() {
     const stuk = !!w.beloning && (!it || it.price != null);
     vak.className = 'st-bel' + (stuk ? ' stuk' : it ? '' : ' leeg');
     F('st-bel-vb').innerHTML = it ? (it.thumb ? it.thumb(curBase()) : (it.emoji || '·')) : '·';
+    F('st-bel-vb').classList.toggle('schat', !!(it && it.thumb));
     F('st-bel-naam').textContent = !it && w.beloning ? 'onbekend spulletje' : it ? (it.full || it.name) : 'nog geen wereldschat';
     F('st-bel-uit').textContent = !it && w.beloning
       ? w.beloning + ' staat niet in ITEMS — deze wereld deelt niets uit'
@@ -1228,8 +1236,11 @@ function startMapEdit() {
     try {
       const pop = base => ster
         ? avatarSVG({ ...ster, base, equipped: { ...ster.equipped, acc: proef.id } }, 110) : '';
+      const kaart = it => '<div class="item-card">' + itemThumb(it) + '</div>';
+      const buren = ITEMS.filter(it => it.cat === 'acc' && it.emoji && !it.thumb && it.price != null).slice(0, 2);
       vb.innerHTML = '<div>' + pop('meisje') + 'meisje</div><div>' + pop('jongen') + 'jongen</div>'
-        + '<div class="mini">' + proef.thumb() + 'kast</div>';
+        + '<div class="st-rek"><span>' + (buren[0] ? kaart(buren[0]) : '') + kaart(proef)
+        + (buren[1] ? kaart(buren[1]) : '') + '</span>in het rek, tussen de emoji</div>';
     } finally { ITEMS.splice(ITEMS.indexOf(proef), 1); }
 
     const rood = schatFouten({ naam: F('sc-naam').value, emoji: F('sc-emoji').value, view: p.view, svg: p.svg });
@@ -1925,7 +1936,9 @@ function startMapEdit() {
     const vak = F('st-ongebruikt');
     if (!vak) return;
     const gebruikt = {};
-    WORLDS.forEach(w => { if (w.art) gebruikt[w.art] = true; });
+
+
+    WORLDS.forEach(w => { if (w.art) { gebruikt[w.art] = true; const k = wereldKleinPad(w.art); if (k) gebruikt[k] = true; } });
     Object.keys(SLOTS).forEach(k => { const d = SLOTS[k]; if (d.pad && !d.perWereld) gebruikt[d.pad] = true; });
     const los = Object.keys(OP_SCHIJF)
       .filter(f => /^assets\/world\//.test(f) && !gebruikt[f]).sort();
@@ -2492,8 +2505,12 @@ function startMapEdit() {
       const v = getComputedStyle(frame).getPropertyValue(naam).trim();
       return naarRgb(v || '#fff');
     };
-    const goud = kleur('--gold-cta-bottom'), paars = kleur('--purple-shadow');
-    const grijs = kleur('--gray-bottom');
+
+
+
+
+    const vullingen = ['--halte-vulling', '--gold-cta-bottom', '--slot-vulling'].map(kleur);
+    const ring = kleur('--slot-sticker');
     const wegKleur = naarRgb(getComputedStyle(frame).getPropertyValue('--w-road').trim() || 'rgba(255,255,255,.42)');
 
     const randKleur = naarRgb(getComputedStyle(frame).getPropertyValue('--route-onder').trim() || 'rgba(30,8,52,.45)');
@@ -2515,17 +2532,12 @@ function startMapEdit() {
 
 
     const uit = { haltes: [], weg: [], fout: null };
-
-
-
-    const ring = naarRgb('rgba(255,255,255,.3)');
-
     leesNodes().forEach((n, i) => {
       const bg = schijf(data, br, ho, n.x, n.y, dotStraal);
       if (!bg) return;
       const L = lum(bg);
 
-      const vulling = Math.max(verhouding(L, lum(paars)), verhouding(L, lum(goud)), verhouding(L, lum(grijs)));
+      const vulling = Math.max.apply(null, vullingen.map(v => verhouding(L, lum(v))));
       const opRing = ring.a < 1 ? meng(ring, bg) : ring;
       const beste = Math.max(vulling, verhouding(L, lum(opRing)));
       uit.haltes.push({ nr: i + 1, licht: Math.round(L * 100), v: beste });
