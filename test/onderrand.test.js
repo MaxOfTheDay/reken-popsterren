@@ -41,6 +41,9 @@
  *      (het rek klapte terug naar de telefoonopmaak, zie inhoud zaak O)
  *   K  op een bureaublad heeft geen enkel scherm een schuifbalkgoot, ook niet als
  *      het schuift (de randen lichtten op bij elke wissel, zie .screen.lijst)
+ *   L  op een bureaublad staat de balk bij een tabwissel stil, ook op een hoog
+ *      venster waar hij mee het podium op zakt, en knipt de veeg eronder niet
+ *      van maat (zie --balk-op)
  *
  * De reden voor C: --vh-drift mag nooit onder nul lopen. Zou hij dat wel doen,
  * dan schoof de bediening bij een openschuivend toetsenbord juist eráchter.
@@ -487,6 +490,54 @@ async function zetOnderrandAan(page) {
     check(mis.length === 0, 'K · geen scherm heeft een schuifbalkgoot (de randen flitsen dan bij een wissel)',
       mis.map(s => `${s.id} ${s.goot}px`).join(', '));
     check(fouten.length === 0, 'K · geen javascript-fouten', fouten.join(' | '));
+    await ctx.close();
+  }
+
+  /* ---- L · de balk staat stil bij een tabwissel, ook op een groot scherm ----
+     Op een venster dat hoger is dan het podium nodig heeft (--podium-lucht)
+     zakt de balk mee het podium op. Deed hij dat alleen op de kaart, dan sprong
+     hij bij elke tik tussen 🗺️ en 👕/🏆 op en neer -- 32px op 1920x1080, 212px
+     op 2560x1440 -- en dat zie je op een telefoon of een gewone laptop nooit.
+     Daarom elk beeldje van de wissel meten, op drie bureaubladmaten, en ook de
+     veeg eronder: die mag van gedaante wisselen, maar alleen door over te
+     vloeien (opacity), niet door op de tik van breedte te knippen. */
+  for (const [w, h] of [[1440, 900], [1920, 1080], [2560, 1440]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    const fouten = [];
+    page.on('pageerror', e => fouten.push(e.message));
+    await page.goto(APP_URL + '&demo&star=p1');
+    await page.waitForTimeout(700);
+    const r = await page.evaluate(async () => {
+      const wacht = ms => new Promise(res => setTimeout(res, ms));
+      goMap(); await wacht(900);
+      const nav = $('main-nav');
+      const plek = () => { const b = nav.getBoundingClientRect(); return Math.round(b.left * 2) / 2 + ',' + Math.round(b.top * 2) / 2; };
+      const veeg = () => {
+        const v = getComputedStyle(nav, '::before'), a = getComputedStyle(nav, '::after');
+        return v.width + ' ' + v.bottom + ' / ' + a.width + ' ' + a.bottom;
+      };
+      const plekken = new Set([plek()]), veegen = new Set([veeg()]);
+      for (const t of ['dress', 'tro', 'map', 'tro', 'dress', 'map']) {
+        navTik(t);
+        for (const t0 = performance.now(); performance.now() - t0 < 700;) {
+          await new Promise(res => requestAnimationFrame(res));
+          plekken.add(plek()); veegen.add(veeg());
+        }
+      }
+      const cs = getComputedStyle(nav), duren = cs.transitionDuration.split(',');
+      const overgang = cs.transitionProperty.split(',').map((p, i) => [p.trim(), parseFloat(duren[i % duren.length])])
+        .filter(([, d]) => d > 0).map(([p]) => p).join(',');
+      return { plekken: [...plekken], veegen: [...veegen], overgang };
+    });
+    check(r.plekken.length === 1, `L · ${w}x${h} · de balk staat op elk tabblad en in elk beeldje op dezelfde plek`,
+      r.plekken.join(' | '));
+    check(r.veegen.length === 1, `L · ${w}x${h} · de veeg onder de balk knipt niet van maat bij een wissel`,
+      r.veegen.join(' | '));
+    check(!/\b(bottom|top|margin|all)\b/.test(r.overgang), `L · ${w}x${h} · geen overgang op de plek van de balk`,
+      r.overgang);
+    check(fouten.length === 0, `L · ${w}x${h} · geen javascript-fouten`, fouten.join(' | '));
     await ctx.close();
   }
 
