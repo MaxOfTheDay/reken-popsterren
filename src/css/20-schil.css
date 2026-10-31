@@ -107,8 +107,8 @@
       radial-gradient(64% 54% at -12% -10%, transparent 57%, rgba(var(--warm-licht-rgb),.34) 64%, transparent 72%),
       radial-gradient(58% 50% at 112% -4%, transparent 59%, rgba(128,226,255,.26) 66%, transparent 74%),
       radial-gradient(74% 60% at 110% 108%, transparent 58%, rgba(var(--voetlicht-rgb),.26) 65%, transparent 73%),
-      radial-gradient(68% 54% at -10% 110%, transparent 59%, rgba(198,146,255,.22) 66%, transparent 74%),
-      radial-gradient(80% 48% at 50% 50%, rgba(18,4,38,.5), rgba(18,4,38,.2) 58%, transparent 78%),
+      radial-gradient(68% 54% at -10% 110%, transparent 59%, rgba(var(--lila-gloed-rgb),.22) 66%, transparent 74%),
+      radial-gradient(80% 48% at 50% 50%, rgba(var(--nacht-1-rgb),.5), rgba(var(--nacht-1-rgb),.2) 58%, transparent 78%),
       /* Het voetlicht. FASE 5E: <body> zet onder élk scherm een warme gloed laag in
          beeld -- dat is de lichtrichting van de hele app (warm van onderen, koel in
          de lucht) en je ziet hem op de wereldkaart, in de zaal en onderaan de reis.
@@ -122,8 +122,8 @@
          anders staat er violet licht waar nacht hoort te staan. Deze laag ligt
          onderop, dus de warme gloed onderin en de vegen hierboven komen er
          gewoon doorheen. */
-      linear-gradient(176deg, rgba(17,5,40,.62) 0%, rgba(22,7,48,.46) 34%,
-                              rgba(26,9,50,.5) 68%, rgba(18,5,38,.64) 100%);
+      linear-gradient(176deg, rgba(var(--nacht-1-rgb),.62) 0%, rgba(var(--nacht-2-rgb),.46) 34%,
+                              rgba(var(--nacht-2-rgb),.5) 68%, rgba(var(--nacht-1-rgb),.64) 100%);
     background-repeat: no-repeat;
   }
   /* De zwevende wolk-emoji horen bij de wereldkaart, niet hier: de schil heeft
@@ -143,7 +143,7 @@
      Wat overblijft is één laag met één taak: de onderrand een tikje dieper, zodat
      de lade en de navigatiebalk gedragen worden door de kamer in plaats van door
      hun eigen vulling. Daardoor mág die vulling lichter (zie .dress-bar). */
-  .app-sfeer.kleedkamer { --sfeer-vloer: radial-gradient(124% 30% at 50% 106%, rgba(10,2,24,.36), transparent 74%); }
+  .app-sfeer.kleedkamer { --sfeer-vloer: radial-gradient(124% 30% at 50% 106%, rgba(var(--nacht-0-rgb),.36), transparent 74%); }
   /* ---- De schil, maar dan in een vitrine ----------------------------------
      FASE 5E. Zelfde soort variant als de kleedkamer hierboven, en met opzet in
      dezelfde vorm geschreven: één licht van boven, één schaduw langs de onderrand.
@@ -155,7 +155,7 @@
     --sfeer-vloer:
       radial-gradient(64% 26% at 50% 2%, rgba(var(--warm-licht-rgb),.10), transparent 74%),
       radial-gradient(46% 34% at 50% 20%, rgba(190,170,255,.06), transparent 76%),
-      radial-gradient(90% 46% at 50% 108%, rgba(96,52,168,.2), transparent 70%);
+      radial-gradient(90% 46% at 50% 108%, rgba(var(--purple-mid-rgb),.2), transparent 70%);
   }
   /* ---- DE DERDE LAAG: het licht van een gebruiksscherm ------------------
      De kleedkamer en de kast zetten elk hun eigen licht over de schil
@@ -204,11 +204,11 @@
       radial-gradient(72% 48% at 4% 2%, rgba(var(--warm-licht-rgb),.11), transparent 70%),
       radial-gradient(66% 44% at 98% 6%, rgba(128,226,255,.08), transparent 72%),
       radial-gradient(84% 50% at 96% 104%, rgba(var(--voetlicht-rgb),.09), transparent 72%),
-      radial-gradient(78% 48% at 2% 102%, rgba(198,146,255,.07), transparent 74%),
-      radial-gradient(86% 52% at 50% 48%, rgba(18,4,38,.46), rgba(18,4,38,.18) 60%, transparent 80%),
+      radial-gradient(78% 48% at 2% 102%, rgba(var(--lila-gloed-rgb),.07), transparent 74%),
+      radial-gradient(86% 52% at 50% 48%, rgba(var(--nacht-1-rgb),.46), rgba(var(--nacht-1-rgb),.18) 60%, transparent 80%),
       radial-gradient(146% 28% at 50% 103%, rgba(var(--voetlicht-rgb),.3), transparent 72%),
-      linear-gradient(176deg, rgba(17,5,40,.62) 0%, rgba(22,7,48,.46) 34%,
-                              rgba(26,9,50,.5) 68%, rgba(18,5,38,.64) 100%);
+      linear-gradient(176deg, rgba(var(--nacht-1-rgb),.62) 0%, rgba(var(--nacht-2-rgb),.46) 34%,
+                              rgba(var(--nacht-2-rgb),.5) 68%, rgba(var(--nacht-1-rgb),.64) 100%);
   }
 
   /* ---- De schil, maar dan achter het toneel: het ouderdeel ---------------
@@ -230,8 +230,8 @@
      daarom heeft het met opzet de tekening van dat scherm onder zich. */
   #screen-settings.app-sfeer::before {
     background-image:
-      radial-gradient(120% 60% at 50% 0%, rgba(160,120,255,.22), transparent 70%),
-      linear-gradient(180deg, #2c1558 0%, #21104a 55%, #1b0c3e 100%);
+      radial-gradient(120% 60% at 50% 0%, rgba(var(--lila-gloed-rgb),.22), transparent 70%),
+      linear-gradient(180deg, #2c1558 0%, #21104a 55%, #1b0c3e 100%); /* kunst */
   }
 
   /* ---- Waar de tekening van een schilscherm komt --------------------------
@@ -260,7 +260,7 @@
      zit meestal de sfeer waarvoor je hem liet maken. Wie hem sterker nodig heeft
      dan dit heeft geen sluier nodig maar een andere tekening. */
   :root { --kunst-sluier: radial-gradient(120% 70% at 50% 62%,
-            rgba(20,4,40,.62), rgba(20,4,40,.24) 58%, transparent 84%); }
+            rgba(var(--nacht-1-rgb),.62), rgba(var(--nacht-1-rgb),.24) 58%, transparent 84%); }
   /* De sterrenkeuze is het enige schilscherm dat vandaag een tekening heeft
      (assets/bg/landing.webp). Het masker laat de rand van de tekening zacht in de
      schil overlopen in plaats van een harde snede. */
@@ -317,7 +317,7 @@
   #screen-newstar.app-sfeer::before {
     content: ''; position: fixed; inset: var(--schuif, 0px) 0 calc(0px - var(--schuif, 0px)) 0; z-index: -1; pointer-events: none;
     background-image:
-      radial-gradient(130% 78% at 50% 50%, rgba(18,4,38,.56), rgba(18,4,38,.34) 62%, rgba(18,4,38,.2)),
+      radial-gradient(130% 78% at 50% 50%, rgba(var(--nacht-1-rgb),.56), rgba(var(--nacht-1-rgb),.34) 62%, rgba(var(--nacht-1-rgb),.2)),
       var(--kunst-sluier),
       url("assets/bg/landing.webp");
     background-size: cover, cover, cover;

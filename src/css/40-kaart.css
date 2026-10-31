@@ -59,7 +59,7 @@
      kleiner oogt dan een pil. Het raakvlak is 48px, met de padding hierboven. */
   #screen-map .map-portrait {
     width: var(--hud-h); height: var(--hud-h); border: 2px solid rgba(255,255,255,.78);
-    box-shadow: 0 2px 6px rgba(10,2,24,.4), 0 0 0 2px var(--hud-bg);
+    box-shadow: 0 2px 6px rgba(var(--nacht-0-rgb),.4), 0 0 0 2px var(--hud-bg);
   }
   /* avatarSVG tekent op een vaste 80px, en .map-portrait svg hieronder hangt hem
      op top: -6px. Bij een kleiner kader is dat geen kleiner beeld maar een
@@ -298,9 +298,9 @@
       radial-gradient(50% 34% at 78% 101%, rgba(255,255,255,.055), transparent 72%),
       /* vignet: pas doordat de hoeken dimmen wórdt het midden licht. Zonder dit
          verdwijnt een warme gloed in de toch al felroze onderkant van de app. */
-      radial-gradient(115% 86% at 50% 104%, transparent 34%, rgba(30,4,54,.40) 100%),
+      radial-gradient(115% 86% at 50% 104%, transparent 34%, rgba(var(--nacht-2-rgb),.40) 100%),
       /* de vloer: het beeld zakt naar onderen toe weg in het donker */
-      linear-gradient(180deg, transparent 0, rgba(42,6,72,.16) 64%, rgba(32,4,56,.30) 100%);
+      linear-gradient(180deg, transparent 0, rgba(var(--nacht-3-rgb),.16) 64%, rgba(var(--nacht-2-rgb),.30) 100%);
     /* de laag zelf dooft naar boven uit: zonder dit tekent het vignet een harde
        horizontale rand dwars over het scherm waar het element begint */
     -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 52%);
@@ -406,11 +406,11 @@
     height: calc(var(--balk-ruimte) + 44px + var(--vh-drift, 0px));
     background:
       linear-gradient(180deg,
-        rgba(14,7,30,0) 0%,
-        rgba(14,7,30,.05) 34%,
-        rgba(14,7,30,.44) 70%,
-        rgba(14,7,30,.62) 100%) top / 100% calc(var(--balk-ruimte) + 44px) no-repeat,
-      linear-gradient(rgba(14,7,30,.62), rgba(14,7,30,.62))
+        rgba(var(--nacht-1-rgb),0) 0%,
+        rgba(var(--nacht-1-rgb),.05) 34%,
+        rgba(var(--nacht-1-rgb),.44) 70%,
+        rgba(var(--nacht-1-rgb),.62) 100%) top / 100% calc(var(--balk-ruimte) + 44px) no-repeat,
+      linear-gradient(rgba(var(--nacht-1-rgb),.62), rgba(var(--nacht-1-rgb),.62))
         bottom / 100% var(--vh-drift, 0px) no-repeat;
   }
   /* Op de kleedkamer en de trofeeënkast schuift er tekst ónder de balk door --
@@ -429,12 +429,12 @@
   body:has(#screen-dress.active, #screen-trophies.active) .main-nav::before {
     background:
       linear-gradient(180deg,
-        rgba(14,7,30,0) 0%,
-        rgba(14,7,30,.08) 30%,
-        rgba(14,7,30,.6) 44%,
-        rgba(14,7,30,.86) 62%,
-        rgba(14,7,30,.92) 100%) top / 100% calc(var(--balk-ruimte) + 44px) no-repeat,
-      linear-gradient(rgba(14,7,30,.92), rgba(14,7,30,.92))
+        rgba(var(--nacht-1-rgb),0) 0%,
+        rgba(var(--nacht-1-rgb),.08) 30%,
+        rgba(var(--nacht-1-rgb),.6) 44%,
+        rgba(var(--nacht-1-rgb),.86) 62%,
+        rgba(var(--nacht-1-rgb),.92) 100%) top / 100% calc(var(--balk-ruimte) + 44px) no-repeat,
+      linear-gradient(rgba(var(--nacht-1-rgb),.92), rgba(var(--nacht-1-rgb),.92))
         bottom / 100% var(--vh-drift, 0px) no-repeat;
   }
   /* ---- De balk hangt aan hetzelfde slot als de rest van de app -------------
@@ -579,7 +579,7 @@
      er gevraagd wordt, en visueel gelijk voor beide vraagsoorten. */
   .q-blank {
     display: inline-block; min-width: .72em; padding: 0 .12em; border-radius: var(--r-sm); line-height: 1.02;
-    border: 3px dashed rgba(126,87,194,.55); background: rgba(126,87,194,.08); color: var(--purple-shadow);
+    border: 3px dashed rgba(var(--purple-light-rgb),.55); background: rgba(var(--purple-light-rgb),.08); color: var(--purple-shadow);
   }
   /* Getallen bouwen (zie genBouwen): elk cijfer in de kleur van zijn plaats, en
      de blokken van school -- een staaf van tien, een blokje van één. De T en E
@@ -618,7 +618,7 @@
   .geld-rij { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: .12em; margin: 2px 0 .2em; }
   .geld-stuk {
     display: inline-flex; align-items: center; justify-content: center; flex: none;
-    font-weight: 800; line-height: 1; vertical-align: middle; font-variant-numeric: tabular-nums;
+    font-weight: 700; line-height: 1; vertical-align: middle; font-variant-numeric: tabular-nums;
   }
   .geld-stuk.munt {
     font-size: .48em; width: 2.75em; height: 2.75em; border-radius: 50%;
@@ -645,7 +645,7 @@
   .geld-prijs {
     position: relative; display: inline-flex; align-items: center; flex: none;
     padding: .25em .55em .25em .95em; border-radius: .25em .6em .6em .25em;
-    background: #fff3c4; color: #7a4f00; font-size: .56em; font-weight: 800; line-height: 1;
+    background: #fff3c4; color: #7a4f00; font-size: .56em; font-weight: 700; line-height: 1;
     box-shadow: inset 0 0 0 .1em #e6c46a;
   }
   .geld-prijs::before {
@@ -673,7 +673,7 @@
   .klok-dagdeel { position: absolute; left: calc(50% + .95em); top: -.12em; font-size: .62em; line-height: 1; }
   .klok-woord { font-size: .8em; padding: .2em 0; }
   .klok-digi {
-    display: inline-block; padding: .08em .35em; border-radius: .2em; background: #2b2238; color: #fff;
+    display: inline-block; padding: .08em .35em; border-radius: .2em; background: var(--plaatje-inkt); color: #fff;
     font-variant-numeric: tabular-nums; letter-spacing: .04em;
   }
   .choice-btn.klok-zoek { position: relative; }
@@ -697,57 +697,57 @@
   .kal-kaart {
     position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .25em;
     width: 5.7em; height: 2.5em; box-sizing: border-box; border-radius: .6em; padding: 0 .2em;
-    background: #f3e5f5; color: #3a2a55; font-weight: 900; white-space: nowrap;
+    background: var(--plaatje-vak); color: var(--plaatje-inkt); font-weight: 700; white-space: nowrap;
   }
   .kal-kaart i { font-style: normal; }
-  .kal-kaart.nu { background: #e5397a; color: #fff; }
+  .kal-kaart.nu { background: var(--plaatje-wijs); color: #fff; }
   .kal-teken { position: absolute; top: -.8em; left: 50%; transform: translateX(-50%); font-size: 1.1em; line-height: 1; }
   .kal-kaart.winter { background: #bfe0fb; } .kal-kaart.lente { background: #c8ecc8; }
   .kal-kaart.zomer { background: #ffe79a; } .kal-kaart.herfst { background: #ffd2a8; }
-  .kal-kaart.ding { font-size: 1.5em; width: 4em; height: 1.733em; letter-spacing: .1em; background: #f3e5f5; }
+  .kal-kaart.ding { font-size: 1.5em; width: 4em; height: 1.733em; letter-spacing: .1em; background: var(--plaatje-vak); }
   .kal-kaart.vraag { background: none; }
   /* een datum van het blad: wit met de roze ring, zoals op het blad zelf */
-  .kal-kaart.datum { background: #fff; color: #e5397a; box-shadow: inset 0 0 0 .16em #e5397a; font-size: 1.1em; width: 5.18em; height: 2.27em; }
+  .kal-kaart.datum { background: #fff; color: var(--plaatje-wijs); box-shadow: inset 0 0 0 .16em var(--plaatje-wijs); font-size: 1.1em; width: 5.18em; height: 2.27em; }
   .kal-kaart.vraag .pl-som, .kal-kaart.vraag .q-blank { display: flex; width: 100%; height: 100%; }
   .kal-kaart.vraag .q-blank { box-sizing: border-box; align-items: center; justify-content: center; margin: 0; border-radius: .6em; font-size: 1.7em; min-width: 0; }
   .kal-kaart.vraag .q-blank.done { font-size: 1em; }
   /* de brug: één woord erboven, eronder de pijl; bij dagen de tel erboven (zie kalBrug).
      Minstens even breed als altijd, zodat de kaartjes niet verspringen; vier rondjes mogen hem breder maken. */
   .kal-brug { display: inline-flex; flex-direction: column; align-items: center; min-width: 3.8em; padding-bottom: .5em; }
-  .kal-brug b { font-size: .9em; font-weight: 900; color: #e5397a; white-space: nowrap; margin-bottom: .15em; }
-  .kal-brug svg { width: 3.8em; height: auto; margin-top: -.2em; stroke: #e5397a; stroke-width: 2.6; stroke-linecap: round; }
+  .kal-brug b { font-size: .9em; font-weight: 700; color: var(--plaatje-wijs); white-space: nowrap; margin-bottom: .15em; }
+  .kal-brug svg { width: 3.8em; height: auto; margin-top: -.2em; stroke: var(--plaatje-wijs); stroke-width: 2.6; stroke-linecap: round; }
   /* de tel: rondjes langs de pijl, en de laatste op het vakje (.kal-tel, op de plek van een teken) */
   .kal-tel-rij { display: flex; gap: .16em; }
   .kal-tel-rij i, .kal-tel {
     display: inline-flex; align-items: center; justify-content: center; width: 1.15em; height: 1.15em; border-radius: 50%;
-    font-style: normal; font-size: .8em; font-weight: 900; line-height: 1; color: #fff; background: #e5397a;
+    font-style: normal; font-size: .8em; font-weight: 700; line-height: 1; color: #fff; background: var(--plaatje-wijs);
   }
   .kal-tel { top: -.6em; z-index: 1; box-shadow: 0 0 0 .15em #fff; }
-  .kal-brug .punt { fill: #e5397a; stroke: none; }
+  .kal-brug .punt { fill: var(--plaatje-wijs); stroke: none; }
   .kal-vraag { display: flex; justify-content: center; margin: 2px 0 .08em; }
   /* het kalenderblad: op de volle breedte van de kaart, de kop in de kleur van zijn seizoen */
   .kal-blad {
     display: inline-block; font-size: clamp(28px, .88em, 50px); width: 6.6em; max-width: calc(100vw - 80px); border-radius: .22em; overflow: hidden;
-    background: #fff; box-shadow: 0 0 0 .04em #c9b6dc, 0 .06em .16em rgba(74,42,122,.18); line-height: 1;
+    background: #fff; box-shadow: 0 0 0 .04em var(--plaatje-zacht), 0 .06em .16em var(--plaatje-schaduw); line-height: 1;
   }
-  .kal-blad b { display: block; padding: .22em 0; color: #3a2a55; font-size: .4em; font-weight: 900; }
+  .kal-blad b { display: block; padding: .22em 0; color: var(--plaatje-inkt); font-size: .4em; font-weight: 700; }
   .kal-blad.winter b { background: #bfe0fb; } .kal-blad.lente b { background: #c8ecc8; }
   .kal-blad.zomer b { background: #ffe79a; } .kal-blad.herfst b { background: #ffd2a8; }
   /* een kleine telefoon (568 hoog) met het cijferblok eronder: een kleiner blad, anders
      valt de onderste rij cijfers weg, ook als zij al zo klein is als ze kan (zie zaalPast) */
   @media (orientation: portrait) and (max-height: 600px) { .kal-blad { font-size: clamp(24px, .74em, 40px); } }
   .kal-kop, .kal-raster { display: grid; grid-template-columns: repeat(7, 1fr); }
-  .kal-kop i, .kal-raster i { font-style: normal; font-size: .34em; padding: .17em 0; color: #2b2238; font-weight: 800; }
-  .kal-kop i { color: #8e3fc8; font-weight: 900; border-bottom: .06em solid #eadff3; }
-  .kal-raster i.wk { color: #9b8aa9; background: #faf7fc; }
-  .kal-raster i.rond { background: radial-gradient(circle, #fff 50%, #e5397a 53%, #e5397a 66%, transparent 69%); color: #e5397a; font-weight: 900; }
-  .kal-raster i.vraag { color: #e5397a; font-weight: 900; background: radial-gradient(circle, #fff3f8 62%, transparent 65%); }
+  .kal-kop i, .kal-raster i { font-style: normal; font-size: .34em; padding: .17em 0; color: var(--plaatje-inkt); font-weight: 700; }
+  .kal-kop i { color: var(--plaatje-rand); font-weight: 700; border-bottom: .06em solid var(--plaatje-vak); }
+  .kal-raster i.wk { color: var(--plaatje-stil); background: #faf7fc; }
+  .kal-raster i.rond { background: radial-gradient(circle, #fff 50%, var(--plaatje-wijs) 53%, var(--plaatje-wijs) 66%, transparent 69%); color: var(--plaatje-wijs); font-weight: 700; }
+  .kal-raster i.vraag { color: var(--plaatje-wijs); font-weight: 700; background: radial-gradient(circle, #fff3f8 62%, transparent 65%); }
   /* weken: een leeg blad, elke rij een week van zeven vakjes */
   .kal-weken { width: 5.4em; }
   .kal-som { flex-wrap: nowrap; }
   .kal-weken .kal-raster { gap: .06em; padding: .08em; }
-  .kal-weken .kal-raster i { font-size: inherit; height: .36em; padding: 0; border-radius: .06em; background: #d9c3ec; }
-  .kal-weken .kal-raster i.wk { background: #efe6f7; }
+  .kal-weken .kal-raster i { font-size: inherit; height: .36em; padding: 0; border-radius: .06em; background: var(--plaatje-vol); }
+  .kal-weken .kal-raster i.wk { background: var(--plaatje-vak); }
   /* De getallenlijn (zie genLijn): de lijn op de volle breedte van de kaart, een paarse balk
      zoals de rand van de klok. Wat erboven hangt staat op zijn streepje (left in procenten),
      met het puntje op de balk; de doos is zo hoog als de tekening, dus top 56% is de balk (46/82). */
@@ -758,29 +758,29 @@
   /* laag: een kaartje naast het tiental zakt onder zijn getal (zie genLijn) */
   .gl.hoog.laag { padding-bottom: 2.1em; }
   .gl.laag .gl-merk.onder { transform: translate(-50%, 1.75em); }
-  .gl-merk.onder::after { bottom: auto; top: -.6em; border-top: .3em solid transparent; border-bottom: .32em solid #e5397a; }
-  .gl-merk.vraag.onder::after { border-bottom-color: #b79ad8; border-top-color: transparent; }
+  .gl-merk.onder::after { bottom: auto; top: -.6em; border-top: .3em solid transparent; border-bottom: .32em solid var(--plaatje-wijs); }
+  .gl-merk.vraag.onder::after { border-bottom-color: var(--plaatje-lijn); border-top-color: transparent; }
   .gl-doos { position: relative; display: block; }
   .gl svg { display: block; width: 100%; height: auto; overflow: visible; }
-  .gl .balk { stroke: #8e3fc8; stroke-width: 6; stroke-linecap: round; }
-  .gl .streep { stroke: #3d2466; stroke-linecap: round; }
-  .gl .lbl text { font-size: 22px; font-weight: 900; fill: #2b2238; text-anchor: middle; }
-  .gl .boog { fill: none; stroke: #e5397a; stroke-width: 3; stroke-linecap: round; }
-  .gl .punt { fill: #e5397a; }
-  .gl text.sprong { font-size: 22px; font-weight: 900; fill: #e5397a; text-anchor: middle; }
+  .gl .balk { stroke: var(--plaatje-rand); stroke-width: 6; stroke-linecap: round; }
+  .gl .streep { stroke: var(--plaatje-inkt); stroke-linecap: round; }
+  .gl .lbl text { font-size: 22px; font-weight: 700; fill: var(--plaatje-inkt); text-anchor: middle; }
+  .gl .boog { fill: none; stroke: var(--plaatje-wijs); stroke-width: 3; stroke-linecap: round; }
+  .gl .punt { fill: var(--plaatje-wijs); }
+  .gl text.sprong { font-size: 22px; font-weight: 700; fill: var(--plaatje-wijs); text-anchor: middle; }
   .gl-merk {
     position: absolute; top: 56%; transform: translate(-50%, calc(-100% - .55em)); display: inline-flex; align-items: center; justify-content: center;
-    min-width: 2.2em; height: 1.75em; box-sizing: border-box; padding: 0 .3em; border-radius: .5em; font-weight: 900; white-space: nowrap;
+    min-width: 2.2em; height: 1.75em; box-sizing: border-box; padding: 0 .3em; border-radius: .5em; font-weight: 700; white-space: nowrap;
   }
-  .gl-merk::after { content: ''; position: absolute; left: 50%; bottom: -.5em; transform: translateX(-50%); border: .3em solid transparent; border-top: .32em solid #e5397a; }
-  .gl-merk.nu { background: #e5397a; color: #fff; }
-  .gl-merk.vraag::after { border-top-color: #b79ad8; }
+  .gl-merk::after { content: ''; position: absolute; left: 50%; bottom: -.5em; transform: translateX(-50%); border: .3em solid transparent; border-top: .32em solid var(--plaatje-wijs); }
+  .gl-merk.nu { background: var(--plaatje-wijs); color: #fff; }
+  .gl-merk.vraag::after { border-top-color: var(--plaatje-lijn); }
   .gl-merk.vraag .pl-som, .gl-merk.vraag .q-blank { display: flex; align-items: center; justify-content: center; }
   .gl-merk.vraag .q-blank { box-sizing: border-box; min-width: 2.2em; height: 1.75em; margin: 0; border-radius: .5em; font-size: 1em; background: #fff; }
-  .gl-pijl { position: absolute; top: 56%; transform: translate(-50%, calc(-100% - .3em)); border: .45em solid transparent; border-top: .7em solid #e5397a; }
+  .gl-pijl { position: absolute; top: 56%; transform: translate(-50%, calc(-100% - .3em)); border: .45em solid transparent; border-top: .7em solid var(--plaatje-wijs); }
   .gl-zin { display: flex; align-items: center; justify-content: center; gap: .2em; font-size: .62em; margin-top: .1em; }
   /* zoeken: de lijn is het antwoordvak, elk streepje een knop zo breed als de ruimte ernaast */
-  .gl-vlak { position: relative; display: flex; flex-direction: column; align-items: center; width: min(92vw, 420px); padding: 2px 10px 6px; border-radius: 22px; background: #fffaf3; box-shadow: 0 5px 0 #c9b6dc; }
+  .gl-vlak { position: relative; display: flex; flex-direction: column; align-items: center; width: min(92vw, 420px); padding: 2px 10px 6px; border-radius: 22px; background: #fffaf3; box-shadow: 0 5px 0 var(--plaatje-zacht); }
   /* boven de lijn plaats voor het getal dat landt (lijnLand): vooraf, anders groeit het vak */
   .gl-vlak .gl { font-size: 20px; width: 100%; padding-top: 1.9em; }
   /* het getal om te zoeken: groot, roze, alleen */
@@ -813,7 +813,7 @@
   @keyframes somTikt { 0% { transform: none; } 40% { transform: scale(1.08); } 100% { transform: none; } }
   @keyframes somKlikt { 0% { transform: none; } 35% { transform: scale(1.14); } 100% { transform: none; } }
   .q-blank.done.rustig {
-    border-color: rgba(126,87,194,.55); background: rgba(126,87,194,.08); color: var(--purple-shadow);
+    border-color: rgba(var(--purple-light-rgb),.55); background: rgba(var(--purple-light-rgb),.08); color: var(--purple-shadow);
     animation: somRustig 320ms ease-out;
   }
   @keyframes somRustig { from { opacity: 0; } to { opacity: 1; } }
@@ -828,7 +828,7 @@
      telmodus is hij er niet (.zonder-tijd, zie spotZonderTijd). */
   .spot-rail {
     position: absolute; left: 16px; right: 16px; bottom: 10px; height: 5px;
-    border-radius: var(--r-pill); background: rgba(74, 20, 140, .10);
+    border-radius: var(--r-pill); background: rgba(var(--purple-shadow-rgb), .10);
     overflow: hidden;
   }
   /* Altijd de volle breedte van de rail; wat er verstreken is schuift er links
@@ -840,7 +840,7 @@
   .spotlight-bar { height: 100%; width: 100%; border-radius: var(--r-pill); background: var(--gold-light); }
   .question-card.zonder-tijd .spot-rail { display: none; }
   /* gouden vraag: gele balk op gele kaart is onzichtbaar → donkere baan + paarse balk */
-  .question-card.golden .spot-rail { background: rgba(74, 20, 140, .28); }
+  .question-card.golden .spot-rail { background: rgba(var(--purple-shadow-rgb), .28); }
   .question-card.golden .spotlight-bar { background: linear-gradient(90deg, var(--purple-light), var(--purple-golden-accent)); }
 
   .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: min(88vw, 400px); margin-top: 4px; }

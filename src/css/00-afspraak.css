@@ -87,7 +87,7 @@
 
      ---- §2 BETEKENIS: één kleur per begrip ----------------------------------
        hoofdknop / spelen      --gold-cta-top/-bottom/-shadow (+ --btn-lip)
-       tweede knop             --purple-mid/--purple-light/--purple-shadow
+       tweede knop (ouderdeel) --purple-mid/--purple-light/--purple-shadow
        antwoordknop in het spel --purple-input-*  (bewust een eigen paars: dit is
                                de enige knop die een kind honderd keer per show
                                indrukt, en hij hoort niet op "hoofdknop" te lijken)
@@ -159,7 +159,8 @@
      pijltje, de ster op een halte) is geen letter maar een afmeting, en staat
      daarom als getal in de regel zelf.
      Gewichten: 700 draagt, 600 licht toe, 500 is lopende tekst in het ouderdeel.
-     Er is geen 800 of 900 -- die bestaan niet in dit lettertype.
+     Er is geen 800 of 900 -- die bestaan niet in dit lettertype (een 900 tekent
+     precies als 700). De kleurwacht in test/inhoud.test.js houdt ze tegen.
 
      ---- §6 WAT EEN WERELD MAG -----------------------------------------------
      Precies vier kanalen, gezet in WORLDS.theme en nergens anders:
@@ -187,6 +188,7 @@
     --bg-2: #7b2ff7;   /* violet, het midden    */
     --bg-3: #6d2a80;   /* waar het licht van onderen begint */
     --bg-4: #3a0f48;   /* de vloer, het donkerst */
+    --bg-2-rgb: 123,47,247;
     --bg-glow-pink: rgba(255,120,220,.30); --bg-glow-blue: rgba(80,200,255,.24);
     --bg-glow-warm: rgba(var(--voetlicht-rgb),.58);
 
@@ -209,12 +211,29 @@
     --gold-accent: #ffd740; --gold-light: #ffe082;
     --ink-on-gold: #5d2a00; --ink-on-gold-card: #7a4f00;
 
-    /* ---- Purple: brand / secondary actions ---- */
-    --purple-light: #ab47bc; --purple-mid: #8e24aa; --purple-mid-rgb: 142,36,170; --purple-shadow: #4a148c;
+    /* ---- Violet: één familie, van de antwoordknop tot het ouderdeel ----
+       Hier stond "Material Purple" (#ab47bc/#8e24aa/#7b1fa2/#6a1b9a, tint 287-291):
+       een rodere paars dan de rest van de app (de grond, de antwoordknop, de
+       haltes en de inkt van een som staan op 259-270). Hij leefde alleen nog in
+       het ouderdeel, het maakformulier en een paar kleine plekken, en naast
+       elkaar lazen die als een tweede merk. Nu wijzen de vier namen in dezelfde
+       violet als de antwoordknop. Zet hier geen tweede paars meer neer: een
+       nieuwe rol krijgt een stap uit deze familie (inhoud.test.js, de kleurwacht,
+       houdt paarse waarden buiten dit bestand tegen).
+         light  #7c4dcc  bovenkant van een gekozen chip / .btn.purple (wit erop 5,5:1)
+         mid    #5e35b1  het accent op papier, gekozen chip (wit erop 8:1) --
+                         dezelfde als de onderkant van de antwoordknop
+         deep   = mid    koppen en tekst-accent op papier
+         shadow #4a148c  inkt: de som, de tekst op de gouden knop, de lip */
+    --purple-light: #7c4dcc; --purple-mid: #5e35b1; --purple-shadow: #4a148c;
+    --purple-light-rgb: 124,77,204; --purple-mid-rgb: 94,53,177; --purple-shadow-rgb: 74,20,140;
+    /* een lichte lila gloed in de lucht van de schil en de reis (de koele tegenhanger
+       van --bg-glow-pink) */
+    --lila-gloed-rgb: 198,146,255;
     /* ---- Purple: answer-input controls (choice-btn / num-btn), kept distinct ---- */
     --purple-input-top: #8e5fd6; --purple-input-bottom: #5e35b1; --purple-input-shadow: #311b92;
     /* ---- Purple: misc singles, kept distinct ---- */
-    --purple-deep: #7b1fa2; --purple-golden-accent: #6a1b9a;
+    --purple-deep: var(--purple-mid); --purple-golden-accent: var(--purple-shadow);
 
     /* ---- De speellaag op de wereldkaart -------------------------------------
        Eén set waarden voor álle werelden. De tekening eronder is per wereld
@@ -310,6 +329,23 @@
     --ster-vol: #ffd740;
     --ster-vol-rand: rgba(146,84,0,.55);
 
+    /* ---- De nacht: vier diepten voor sluiers, schaduwen en glas ------------
+       Bijna-zwart paars stond tientallen keren net anders in het blad (8,1,20 /
+       10,2,24 / 14,7,30 / 18,4,38 ...): verschillen die niemand ziet, en elk
+       nieuw scherm koos er weer een bij. Nu vier stappen, als "r,g,b" zodat elke regel zijn
+       eigen doorzichtigheid houdt: rgba(var(--nacht-1-rgb), .6).
+         0  het diepst: sluiers over een scherm, slagschaduwen
+         1  de vloer onder een scherm, de sluier achter een feestje
+         2  glas en panelen (= de kleur van --paneel)
+         3  het lichtste donker: een lade, de kern van een gloed
+       Een tekening (een verloop dat een lucht of vloer schildert) mag zijn eigen
+       tinten houden; die regel draagt dan het commentaar kunst, zie de kleurwacht
+       in test/inhoud.test.js. */
+    --nacht-0-rgb: 10,2,24;
+    --nacht-1-rgb: 18,6,36;
+    --nacht-2-rgb: 32,8,54;
+    --nacht-3-rgb: 42,12,72;
+
     /* ---- De vier wereldkanalen, en wat een wereld zónder kleur doet ---------
        Zie §6 van de afspraak bovenaan: dit is álles wat een wereld mag zetten.
        applyWorldTheme schrijft ze op het element van het wereldscherm; hieronder
@@ -370,16 +406,41 @@
     --plaats-h: #8e3fc8; --plaats-t: #1f7fd6; --plaats-e: #b86f00;
     --plaats-h-blok: #b46ee6; --plaats-t-blok: #3fa4ff; --plaats-e-blok: #ffb627;
 
+    /* ---- Het plaatje in de vraagkaart: klok, kalender, getallenlijn --------
+       Een plaatje staat op wit in de vraagkaart en heeft daarom een eigen,
+       lichte set -- maar wel uit de familie van de app. Ze stonden als losse
+       waarden in het blad en in de tekeningen in 55-vragen.js, met een eigen
+       bijna-zwarte inkt: de cijfers op de klok hadden een andere kleur dan de
+       cijfers van een som eronder. Een nieuw plaatjesthema (Meten) begint hier.
+         inkt     cijfers, wijzers, streepjes: dezelfde inkt als een som
+         wijs     "hier begin je / dit is het": de grote wijzer, de sprong, de
+                  startdatum. Roze, en alléén binnen een plaatje -- buiten de
+                  vraagkaart is roze feest (--pink-*), nooit een stand
+         rand     de rand van de klok, de balk van de getallenlijn
+         lijn     zachte streepjes en de pijl naar het vraagvak
+         zacht    de omlijning en de schaduw van een kaartje
+         vak/vol  de lichte en de iets vollere vulling van een vakje
+         stil     een cijfer dat meedoet maar niet telt (een weeknummer) */
+    --plaatje-inkt: var(--purple-shadow);
+    --plaatje-wijs: #e5397a;
+    --plaatje-rand: #8e3fc8;
+    --plaatje-lijn: #b79ad8;
+    --plaatje-zacht: #c9b6dc;
+    --plaatje-vak: #f3e5f5;
+    --plaatje-vol: #d9c3ec;
+    --plaatje-stil: #9b8aa9;
+    --plaatje-schaduw: rgba(74,42,122,.18);
+
     /* ---- Pink accents (kast bar / stat bar / trophy pop) ---- */
-    --pink-hot: #ff4081; --pink-light: #ffd6f4;
+    --pink-hot: #ff4081; --pink-light: #ffd6f4; --pink-light-rgb: 255,214,244;
 
     /* ---- "Paper" theme: parent-facing screens (settings / modal) ---- */
-    --paper-ink: #3a0f56; --paper-ink-muted: #6b5b7a; --paper-border: #ecdcf6; --paper-tint: #faf6ff;
+    --paper-ink: #2e1257; --paper-ink-muted: #635a7f; --paper-border: #e6dcf8; --paper-tint: #faf6ff;
     --paper-muted-bg: #eceaef; --paper-muted-text: #9a90a6;
     /* Het vel zelf, zwevend boven de schil: bijna wit, maar met een zweem van de
        paarse achtergrond erdoorheen, plus de fijne ring die er altijd omheen
        hoort. */
-    --paper-surface: rgba(255,255,255,.96); --paper-ring: rgba(142,36,170,.14);
+    --paper-surface: rgba(255,255,255,.96); --paper-ring: rgba(var(--purple-mid-rgb),.14);
     /* Hetzelfde papier, maar dan mét de warme kant van de app erin. Voor het ene
        vel dat NIET in het ouderdeel staat: het maakformulier, dat een kind ziet
        en dat op de sterrenpoort ligt. Vol wit (#fff) is daar een gat in de
@@ -391,11 +452,15 @@
        De ouderschermen blijven vol wit -- daar ligt het vel op een scherm en
        niet op een tekening, en daar is koel papier juist goed. */
     --paper-warm: #fffaf3;
-    --lavender-wash: #f3e9ff; --lavender-wash-2: #f4e9fb; --lavender-wash-3: #efe4f7;
+    /* Lila op papier: drie stappen, meer niet. Er stonden er zeven, waarvan twee
+       paren niet van elkaar te onderscheiden waren (#f3e9ff/#f4e9fb, #efe4f7/#ecdcf6).
+         wash   een vulling, een hover          border  een lijn, een ring, een vakje
+         vul    het gevulde stuk van haar rij   (en --paper-tint: bijna wit, het vel zelf) */
+    --lavender-wash: #f3e9ff;
     --lavender-text: #e6d6ff;
     /* het gevulde deel van haar rij in het ouderdeel (zie .fl-rij.hier): één
        tint donkerder dan --lavender-wash, net genoeg om de grens te zien */
-    --lavender-vul: #e3cdf5;
+    --lavender-vul: #ddd0f5;
 
     /* ---- Danger zone / practice chips (parent settings) ---- */
     --danger-bg: #fff0f0; --danger-border: #f2b2b2; --danger-title: #b71c1c; --danger-desc: #9a4a4a;

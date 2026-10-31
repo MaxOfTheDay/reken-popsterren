@@ -310,7 +310,7 @@
      keer: leesbaar hoeft niet even luid te zijn. */
   .tour-stop.locked {
     --stop-schaal: .86;
-    --dot-drop: 0 0.5cqw 1cqw rgba(12,2,26,.26); }
+    --dot-drop: 0 0.5cqw 1cqw rgba(var(--nacht-0-rgb),.26); }
   .tour-stop.locked .dot {
     background: linear-gradient(180deg, var(--slot-vulling-top), var(--slot-vulling));
     color: rgba(255,255,255,.82); }
@@ -459,13 +459,13 @@
      element, en hij drukt mee in met de indrukveer van .stop-body. Daaronder
      een zachte contactschaduw, zodat de knop op de tekening staat. Het cijfer
      krijgt een donker lipje mee, zoals de titel op het beginscherm. */
-  .tour-stop .dot { text-shadow: 0 0.3cqw 0 rgba(40,6,70,.45); }
+  .tour-stop .dot { text-shadow: 0 0.3cqw 0 rgba(var(--nacht-3-rgb),.45); }
   .tour-stop.done .dot {
     background: linear-gradient(180deg, var(--halte-vulling-top), var(--halte-vulling));
-    box-shadow: 0 0.9cqw 0 var(--halte-lip), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
+    box-shadow: 0 0.9cqw 0 var(--halte-lip), 0 1.6cqw 1.6cqw rgba(var(--nacht-0-rgb),.35); }
   .tour-stop.done.perfect .dot {
     background: linear-gradient(180deg, var(--halte-vulling-top), var(--halte-vulling));
-    box-shadow: 0 0.9cqw 0 var(--halte-lip), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
+    box-shadow: 0 0.9cqw 0 var(--halte-lip), 0 1.6cqw 1.6cqw rgba(var(--nacht-0-rgb),.35); }
   /* Drie sterren = áf, en dat zegt nu ook het cijfer: goud, met hetzelfde
      donkere lipje. In een afgemaakte wereld stonden er anders acht dezelfde
      paarse knoppen en moest je 24 sterretjes aflezen om te zien waar er nog één
@@ -477,9 +477,9 @@
      hierboven), geen vulling, geen beweging. */
   .tour-stop.done.perfect .dot { color: var(--gold-accent); text-shadow: 0 0.3cqw 0 var(--halte-lip); }
   .tour-stop.next .dot { text-shadow: none;
-    box-shadow: 0 0.9cqw 0 var(--gold-cta-shadow), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
+    box-shadow: 0 0.9cqw 0 var(--gold-cta-shadow), 0 1.6cqw 1.6cqw rgba(var(--nacht-0-rgb),.35); }
   .tour-stop.locked .dot {
-    box-shadow: 0 0.8cqw 0 var(--slot-lip), 0 1.2cqw 1.2cqw rgba(12,2,26,.25); }
+    box-shadow: 0 0.8cqw 0 var(--slot-lip), 0 1.2cqw 1.2cqw rgba(var(--nacht-0-rgb),.25); }
 
   /* ===== De stickerrand =====================================================
      Eén regel voor de hele speellaag: alles wat je op de kaart ziet liggen is
@@ -899,7 +899,7 @@
     position: absolute; width: min(calc(3.4cqw * var(--s)), 22px); aspect-ratio: 1;
     translate: -50% -50%; border-radius: 50%; opacity: 0;
     background: radial-gradient(circle, var(--c) 0 24%, color-mix(in srgb, var(--c) 50%, transparent) 38%,
-      rgba(40, 8, 60, .16) 50%, transparent 70%);
+      rgba(var(--nacht-2-rgb), .16) 50%, transparent 70%);
     animation: stofStijg 9s ease-in-out infinite; animation-play-state: paused;
   }
   .wereld-stof.wakker i { animation-play-state: running; }

@@ -148,7 +148,7 @@
      horen de kaartjes in de lade te zijn, niet de gloed eromheen. Een echte
      schermtekening (.kunst) heeft zijn eigen sluier en blijft zoals hij is. */
   #screen-trophies:not(.kunst).app-sfeer::before { filter: brightness(.6) saturate(.85); }
-  #screen-trophies { --lade: rgb(40,12,68); --lade-onder: var(--onder-vrij, calc(var(--balk-ruimte) + 14px)); }
+  #screen-trophies { --lade: rgb(var(--nacht-3-rgb)); --lade-onder: var(--onder-vrij, calc(var(--balk-ruimte) + 14px)); }
   #trophy-shelves {
     width: min(100% + var(--rand, 12px) * 2, var(--kolom) + 24px); max-width: none; flex-shrink: 0;
     contain: layout style;
@@ -170,7 +170,7 @@
   @media (min-width: 1000px) and (orientation: landscape) and (min-height: 501px) {
     #trophy-shelves {
       border-radius: 26px; padding-bottom: 14px; margin-bottom: 0;
-      box-shadow: inset 0 1.5px 0 rgba(255,255,255,.14), 0 18px 40px rgba(8,1,20,.35);
+      box-shadow: inset 0 1.5px 0 rgba(255,255,255,.14), 0 18px 40px rgba(var(--nacht-0-rgb),.35);
     }
   }
   /* ---- Een plank is een kopregel geworden, geen doos ---------------------
@@ -479,8 +479,8 @@
     position: relative; flex: none; width: 68px; height: 68px;
     border-radius: 50%; display: grid; place-items: center;
     background:
-      radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%),
-      linear-gradient(180deg, var(--pw-sky, #3a1f6e), rgba(0,0,0,.42));
+      radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%), /* kunst */
+      linear-gradient(180deg, var(--pw-sky, #3a1f6e), rgba(0,0,0,.42)); /* kunst */
     border: 2px solid rgba(255,255,255,.3);
     box-shadow: inset 0 2px 0 rgba(255,255,255,.18), 0 3px 10px rgba(0,0,0,.3);
   }
