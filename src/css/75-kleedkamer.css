@@ -67,8 +67,8 @@
   #screen-dress {
     --kleed-veeg:
       radial-gradient(78% 86% at 50% 0%, rgba(var(--goud-glans-rgb),.13), transparent 70%),
-      linear-gradient(180deg, rgba(30,8,54,.18) 0%, rgba(30,8,54,.22) 36%,
-                              rgba(32,9,56,.58) 68%, rgba(32,9,56,.72) 100%);
+      linear-gradient(180deg, rgba(var(--nacht-2-rgb),.18) 0%, rgba(var(--nacht-2-rgb),.22) 36%,
+                              rgba(var(--nacht-2-rgb),.58) 68%, rgba(var(--nacht-2-rgb),.72) 100%);
   }
   /* ---- De kamer achter de kop, en geen rek --------------------------------
      De veeg hierboven is bovenin bijna doorzichtig (.18), met 8px waas eronder.
@@ -101,7 +101,7 @@
      niet bij te houden. Daar blijft het waas van hiervoor. */
   #screen-dress:not(.kunst) .hub-sticky {
     isolation: isolate;
-    background: rgb(58,20,80);
+    background: rgb(var(--nacht-3-rgb));
     backdrop-filter: none; -webkit-backdrop-filter: none;
   }
   #screen-dress:not(.kunst) .hub-sticky::before {
@@ -166,10 +166,10 @@
        bóven een afgeronde witte kaart leest als twee blokken op elkaar. Recht is
        hier een rand waar de inhoud onderdoor schuift. */
     border-radius: 0;
-    background: rgba(30,8,56,.74);
+    background: rgba(var(--nacht-2-rgb),.74);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255,255,255,.14);
-    box-shadow: 0 6px 18px rgba(10,2,24,.28);
+    box-shadow: 0 6px 18px rgba(var(--nacht-0-rgb),.28);
   }
   .hub-sticky.sub .screen-header { margin-bottom: 0; }
   .hub-sticky.sub .header-title { font-size: var(--tx-sub); }
@@ -440,7 +440,7 @@
      komt; dit zegt dat ze ergens op staat. Eén korte donkere zet onder de
      tekening en verder niets -- geen halo, geen gloed: een pop met licht om zich
      heen is uitgeknipt, een pop met een schaduw eronder staat in de kamer. */
-  .spiegel .avatar-holder { filter: drop-shadow(0 6px 7px rgba(8,1,20,.42)); }
+  .spiegel .avatar-holder { filter: drop-shadow(0 6px 7px rgba(var(--nacht-0-rgb),.42)); }
   /* 🎲 verras me: trekt een willekeurige outfit uit wat ze al bezit. Hoort bij
      háár, dus staat hij als merkje op de rand van het podiumkader. Eén rand, geen
      extra ringen: dát was de klacht, niet de plek. (Op de sterrenkeuze stond
@@ -481,9 +481,9 @@
     position: absolute; right: -12px; bottom: 6px; width: 38px; height: 38px;
     border-radius: 50%; display: grid; place-items: center; cursor: pointer;
     font-size: 18px; line-height: 1; font-family: inherit; border: 0;
-    background: rgba(38,12,70,.82);
+    background: rgba(var(--nacht-3-rgb),.82);
     backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
-    box-shadow: 0 4px 14px rgba(8,1,20,.42), inset 0 0 0 1.5px rgba(255,255,255,.26);
+    box-shadow: 0 4px 14px rgba(var(--nacht-0-rgb),.42), inset 0 0 0 1.5px rgba(255,255,255,.26);
     transition: transform var(--t-tik), box-shadow .15s;
   }
   /* 38px is wat je ziet; het raakvlak is 50, zoals elke knop van een kinderspel
@@ -494,7 +494,7 @@
      dit ging een tik midden op de dobbelsteen naar de spiegel -- ze danste, en er
      kwam geen outfit; alleen de rechterrand deed het. */
   .shuffle-btn { z-index: 2; }
-  .shuffle-btn:hover { transform: scale(1.06); box-shadow: 0 4px 16px rgba(8,1,20,.5), inset 0 0 0 1.5px rgba(255,255,255,.4); }
+  .shuffle-btn:hover { transform: scale(1.06); box-shadow: 0 4px 16px rgba(var(--nacht-0-rgb),.5), inset 0 0 0 1.5px rgba(255,255,255,.4); }
   .shuffle-btn:active { transform: scale(.92); }
   /* DE BALK MET DE LADEN (renderShop). Acht knoppen in één stuk, zonder scrollen
      en zonder woorden: de zeven kledingsoorten en 🎪 Podia. Hetzelfde materiaal
@@ -513,7 +513,7 @@
   .shop-tabs {
     position: relative; display: grid; grid-template-columns: repeat(var(--n, 8), minmax(0, 1fr));
     gap: 3px; padding: 4px; border-radius: var(--r-lg);
-    background: rgba(20,6,40,.55); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.14);
+    background: rgba(var(--nacht-1-rgb),.55); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.14);
   }
   /* het licht: één stuk dat onder de knoppen door schuift, zoals .nav-sel. Zijn
      breedte is die van één kolom, dus 100% van zichzelf plus de kier is precies
@@ -612,12 +612,12 @@
      want die zou een korte lade scrollbaar maken.
      Liggend en breed staat de balk niet in de kop maar bovenop het rek, in de
      rechterkolom (ladenPlaatsen); daar is de lade één paneel naast haar. */
-  #screen-dress { --lade: rgb(40,12,68); --lade-onder: var(--onder-vrij, calc(var(--balk-ruimte) + 14px)); }
+  #screen-dress { --lade: rgb(var(--nacht-3-rgb)); --lade-onder: var(--onder-vrij, calc(var(--balk-ruimte) + 14px)); }
   #screen-dress .shop-tabs-wrap {
     width: min(100% + 24px, var(--kolom) + 24px); max-width: none; margin-top: 6px;
     padding: 12px 12px 6px;
     background: var(--lade); border-radius: 26px 26px 0 0;
-    box-shadow: inset 0 1.5px 0 rgba(255,255,255,.14), 0 -8px 20px rgba(8,1,20,.25);
+    box-shadow: inset 0 1.5px 0 rgba(255,255,255,.14), 0 -8px 20px rgba(var(--nacht-0-rgb),.25);
   }
   #screen-dress .shop-tabs { background: rgba(0,0,0,.22); }
   /* Vanaf 740 staat de kop niet meer met een overbloeding van de rand maar in
@@ -805,8 +805,8 @@
      stille vlak van de knoppen eromheen. De kaartjes zelf hebben geen naam meer. */
   .naam-bordje { position: absolute; left: 50%; top: 10px; z-index: 5; transform: translate(-50%, -6px); opacity: 0;
     width: max-content; max-width: calc(100% - 16px); text-align: center; pointer-events: none; font-size: var(--tx-klein); font-weight: 700; color: #fff;
-    padding: 8px 14px; border-radius: 99px; background: rgba(38,12,70,.86);
-    box-shadow: 0 4px 14px rgba(8,1,20,.42), inset 0 0 0 1.5px rgba(255,255,255,.26);
+    padding: 8px 14px; border-radius: 99px; background: rgba(var(--nacht-3-rgb),.86);
+    box-shadow: 0 4px 14px rgba(var(--nacht-0-rgb),.42), inset 0 0 0 1.5px rgba(255,255,255,.26);
     transition: opacity var(--t-snel) ease, transform var(--t-snel) ease; }
   .naam-bordje.aan { opacity: 1; transform: translate(-50%, 0); }
   /* DE TAG -- één pilletje per kaartje, op de plek van het prijskaartje, en dus
@@ -834,7 +834,7 @@
      zodra je erop tikt. */
   .item-status.need { color: rgba(255,255,255,.5); background: rgba(0,0,0,.28); }
   .item-status.owned { color: rgba(255,255,255,.6); }
-  .item-status.on { color: var(--gold-accent); font-weight: 900; }
+  .item-status.on { color: var(--gold-accent); font-weight: 700; }
   .item-status.slot { opacity: .85; }
   /* De verzamelkaart (zetSetRij): een podium dat nog niet af is, toont zijn drie
      stukken in plaats van een bedrag. Hebben = de tekening in kleur met een groene
@@ -924,9 +924,9 @@
   }
   .item-card.equipped:not(.just-bought)::after {
     content: '✓'; position: absolute; top: -7px; right: -7px; z-index: 3; width: 24px; height: 24px;
-    border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 900; line-height: 1;
+    border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 700; line-height: 1;
     color: var(--ink-on-gold); background: var(--gold-accent);
-    box-shadow: 0 2px 6px rgba(8,1,20,.5), 0 0 0 2px rgba(38,12,70,.9); pointer-events: none;
+    box-shadow: 0 2px 6px rgba(var(--nacht-0-rgb),.5), 0 0 0 2px rgba(var(--nacht-3-rgb),.9); pointer-events: none;
   }
 
   /* De Aandoen-knop op het wereldfeest: de enige knop op die laag. Het is de
@@ -962,7 +962,7 @@
     position: fixed; left: 50%; transform: translateX(-50%);
     bottom: calc(var(--balk-rand) + var(--balk-h) + 16px + var(--veilig-onder)); z-index: 39;
     display: none; align-items: center; gap: 9px; width: var(--balk-w); min-height: 46px;
-    background: rgba(26, 6, 48, .76);
+    background: rgba(var(--nacht-2-rgb), .76);
     backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
     -webkit-backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
     border: 0; border-radius: var(--r-md);
@@ -970,7 +970,7 @@
        komt hij onderin op 5px van de rand uit. Minder, en hij lijkt uit het
        laatje te barsten. */
     padding: 8px 13px;
-    box-shadow: 0 6px 20px rgba(8, 1, 20, .3), inset 0 0 0 1px rgba(255, 255, 255, .1);
+    box-shadow: 0 6px 20px rgba(var(--nacht-0-rgb), .3), inset 0 0 0 1px rgba(255, 255, 255, .1);
     text-shadow: var(--nav-ink);
   }
   .dress-bar .db-info { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 6px; text-align: left; white-space: nowrap; overflow: hidden; }
@@ -1032,7 +1032,7 @@
      en daaronder de ene knop. Zelfde balk, alleen hoger en in twee rijen. */
   .dress-bar.podium-bar { flex-direction: column; gap: 8px; padding: 10px 10px 11px; }
   .pb-stukken { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
-  .pb-plus { opacity: .5; font-weight: 800; font-size: var(--tx-body); }
+  .pb-plus { opacity: .5; font-weight: 700; font-size: var(--tx-body); }
   .pb-knop { display: flex; align-items: center; justify-content: center; gap: 9px; }
   .pb-knop .db-sub { font-size: var(--tx-klein); font-weight: 600; opacity: .92; }
   .mini-kaart {
@@ -1060,8 +1060,8 @@
   .slot-bel {
     position: fixed; z-index: 60; transform: translate(-50%, -100%);
     padding: 8px 14px; border: 0; border-radius: var(--r-md); cursor: pointer;
-    background: var(--c-white); color: #2a1650; font-family: inherit; font-size: var(--tx-body); font-weight: 700;
-    box-shadow: 0 6px 18px rgba(8,1,20,.4); white-space: nowrap;
+    background: var(--c-white); color: var(--paper-ink); font-family: inherit; font-size: var(--tx-body); font-weight: 700;
+    box-shadow: 0 6px 18px rgba(var(--nacht-0-rgb),.4); white-space: nowrap;
     animation: slotBelIn var(--t-snel) var(--ease-plop);
   }
   .slot-bel::after {

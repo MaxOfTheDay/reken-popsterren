@@ -41,7 +41,7 @@
     position: absolute; inset: 0;
     background:
       radial-gradient(124% 56% at 50% 0%, rgba(var(--w-glow-rgb), .34), transparent 70%),
-      linear-gradient(180deg, transparent 35%, rgba(10,2,22,.45) 100%),
+      linear-gradient(180deg, transparent 35%, rgba(var(--nacht-0-rgb),.45) 100%),
       linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 40%, var(--w-deep) 100%);
   }
 
@@ -265,7 +265,7 @@
   /* zonder kader mag ze groter -- ze is nu zelf het onderwerp en niet de inhoud
      van een vakje. Een zachte schaduw onder haar houdt haar op de richel. */
   .venue-aan .show-stage .avatar-holder, .venue-aan .end-stage .avatar-holder {
-    height: 104%; filter: drop-shadow(0 6px 10px rgba(14,2,30,.55));
+    height: 104%; filter: drop-shadow(0 6px 10px rgba(var(--nacht-0-rgb),.55));
   }
   /* Een zachte schaduw áchter haar, in het spelscherm: de tekening erachter is nu
      scherp genoeg om lampjes en sterren te tonen, en die mogen niet precies om
@@ -515,9 +515,9 @@
 
   /* Tienraam: 2 rijen van 5 vakjes — 6–10 in één oogopslag herkenbaar (subitiseren) */
   .cframe { display: inline-grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
-  .tf-cell { width: 28px; height: 28px; border-radius: var(--r-sm); border: 2px solid rgba(74,20,140,.22); display: flex; align-items: center; justify-content: center; }
-  .tf-cell.on { border-color: rgba(74,20,140,.38); background: rgba(142,36,170,.08); }
-  .tf-cell.hidden { background: rgba(74,20,140,.14); font-size: var(--tx-label); }
+  .tf-cell { width: 28px; height: 28px; border-radius: var(--r-sm); border: 2px solid rgba(var(--purple-shadow-rgb),.22); display: flex; align-items: center; justify-content: center; }
+  .tf-cell.on { border-color: rgba(var(--purple-shadow-rgb),.38); background: rgba(var(--purple-mid-rgb),.08); }
+  .tf-cell.hidden { background: rgba(var(--purple-shadow-rgb),.14); font-size: var(--tx-label); }
   .cframe.big .tf-cell { width: 34px; height: 34px; }
   .cframe .cg-obj { font-size: 20px; }
   .cframe.big .cg-obj { font-size: 24px; }
@@ -548,9 +548,9 @@
      de rijen staan iets uit elkaar (5-anker), zodat je "5 en nog wat" en "hoeveel
      nog tot 10" in één oogopslag ziet, zonder elke stip te hertellen. */
   .dframe { display: inline-grid; grid-template-columns: repeat(5, auto); column-gap: 5px; row-gap: 8px; }
-  .df-cell { width: 22px; height: 22px; border-radius: var(--r-sm); border: 1.5px solid rgba(74,20,140,.16); box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
-  .df-cell.on { border-color: rgba(74,20,140,.30); }
-  .df-dot { width: 64%; height: 64%; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #b98be6, var(--purple-input-bottom) 78%); }
+  .df-cell { width: 22px; height: 22px; border-radius: var(--r-sm); border: 1.5px solid rgba(var(--purple-shadow-rgb),.16); box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
+  .df-cell.on { border-color: rgba(var(--purple-shadow-rgb),.30); }
+  .df-dot { width: 64%; height: 64%; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #b98be6, var(--purple-input-bottom) 78%); } /* kunst */
   .dframe.big .df-cell { width: 27px; height: 27px; }
   /* In een telsom (fase 9, met stippen) staan twee raampjes naast elkaar, en
      met vakjes van 27px is dat 2 × 155px: breder dan een telefoon, en dan brak
@@ -717,7 +717,7 @@
     font-family: inherit; font-size: 21px; font-weight: 700; color: var(--c-white);
     cursor: pointer; padding: 8px 11px 7px; border-radius: var(--r-md);
     border: 1px solid rgba(255,255,255,.2);
-    background: rgba(32,12,58,.6);
+    background: rgba(var(--nacht-2-rgb),.6);
     backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: 0 4px 14px rgba(0,0,0,.32);
   }
@@ -804,7 +804,7 @@
   .mem-face .cframe .cg-obj { font-size: 10cqw; }
   .mem-face .dframe { column-gap: 2cqw; row-gap: 2cqw; }
   .mem-face .dframe .df-cell { width: 10px; height: 10px; width: 15cqw; height: 15cqw; border-width: 1px; border-radius: 4px; }
-  .mem-done { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(24,6,44,.55); z-index: 40; }
+  .mem-done { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(var(--nacht-1-rgb),.55); z-index: 40; }
   /* Hetzelfde zwevende glas als de eindkaart van de show (--paneel, zie .pop-panel
      in 40-kaart): het was wit papier met een lichtblauw vakje, de taal van Voor
      ouders midden in het spel. */
@@ -985,7 +985,7 @@
     top: 38%; transform: translateY(-50%) scale(.7);
     z-index: 60; opacity: 0; pointer-events: none;
     display: flex; flex-direction: column; align-items: center; gap: 6px;
-    background: rgba(48,10,80,.94);
+    background: rgba(var(--nacht-3-rgb),.94);
     border: 1.5px solid rgba(var(--warm-licht-rgb),.5); border-radius: var(--r-md); padding: 12px 22px 14px;
     box-shadow: var(--e-2), 0 0 22px rgba(var(--goud-gloed-rgb),.25);
     max-width: min(84vw, 320px);
@@ -1031,7 +1031,7 @@
     top: 12%; transform: translateY(-8px);
     z-index: 60; display: none; opacity: 0;
     flex-direction: column; align-items: center; gap: 2px; text-align: center;
-    background: rgba(48,10,80,.94);
+    background: rgba(var(--nacht-3-rgb),.94);
     border: 1.5px solid rgba(255,255,255,.16); border-radius: var(--r-pill); padding: 9px 18px 10px;
     box-shadow: var(--e-2);
     max-width: min(92vw, 420px);
@@ -1198,7 +1198,7 @@
   .nieuw-lint span {
     position: absolute; top: 14px; left: -26px; width: 110px; padding: 3px 0; transform: rotate(-45deg);
     text-align: center; background: linear-gradient(180deg, var(--gold-accent), var(--gold-cta-top)); color: var(--ink-on-gold);
-    font-size: 12px; font-weight: 900; letter-spacing: .08em; line-height: 1.2; box-shadow: 0 1px 2px rgba(0,0,0,.18);
+    font-size: 12px; font-weight: 700; letter-spacing: .08em; line-height: 1.2; box-shadow: 0 1px 2px rgba(0,0,0,.18);
   }
   .gold-banner { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); text-shadow: var(--goud-ink); margin-top: 6px; height: 22px; }
 
@@ -1803,8 +1803,8 @@
   .bundel-titel {
     position: absolute; left: 0; right: 0; height: 70px;
     bottom: calc(27.27% + var(--titel-lucht, 24px) - 6px);
-    background: linear-gradient(180deg, rgba(32,8,54,0), rgba(32,8,54,.62) 35%,
-                                rgba(32,8,54,.62) 65%, rgba(32,8,54,0));
+    background: linear-gradient(180deg, rgba(var(--nacht-2-rgb),0), rgba(var(--nacht-2-rgb),.62) 35%,
+                                rgba(var(--nacht-2-rgb),.62) 65%, rgba(var(--nacht-2-rgb),0));
   }
   @media (max-height: 740px) { .bundel-titel { --titel-lucht: 12px; height: 56px; } }
   @media (max-height: 600px) { .bundel-titel { --titel-lucht: 4px; } }
