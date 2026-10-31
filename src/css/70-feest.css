@@ -80,7 +80,7 @@
   .wf-som .mini-kaart .item-thumb { height: 30px; }
   .wf-som .mini-kaart .item-thumb svg { height: 30px; }
   .wf-som .mini-kaart .item-thumb .thumb-emo { font-size: 24px; }
-  .wf-som .mini-kaart .item-status { font-size: 11px; padding: 1px 6px; min-height: 16px; }
+  .wf-som .mini-kaart .item-status { font-size: var(--tx-mini); padding: 1px 6px; min-height: 16px; }
   /* Een gouden regel en geen pil: een plat geel vlak leest als een knop, en de
      knop ("Doe aan") staat er vlak onder. De gouden rand van het podium zegt het al. */
   .wf-goud { margin-top: 4px; font-size: var(--tx-klein); font-weight: 700; color: var(--gold-light); }

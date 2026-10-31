@@ -430,7 +430,7 @@
   #app-blad .ab-stap { display: flex; gap: 10px; align-items: flex-start; margin: 9px 0; line-height: 1.4; }
   #app-blad .ab-nr {
     flex: 0 0 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
-    background: var(--purple-mid); color: var(--c-white); font-size: 13px; font-weight: 700;
+    background: var(--purple-mid); color: var(--c-white); font-size: var(--tx-klein); font-weight: 700;
   }
   #app-blad .ab-kbd {
     display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 8px;

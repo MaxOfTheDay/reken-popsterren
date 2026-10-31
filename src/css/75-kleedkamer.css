@@ -924,7 +924,7 @@
   }
   .item-card.equipped:not(.just-bought)::after {
     content: '✓'; position: absolute; top: -7px; right: -7px; z-index: 3; width: 24px; height: 24px;
-    border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 700; line-height: 1;
+    border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 700; line-height: 1; /* teken */
     color: var(--ink-on-gold); background: var(--gold-accent);
     box-shadow: 0 2px 6px rgba(var(--nacht-0-rgb),.5), 0 0 0 2px rgba(var(--nacht-3-rgb),.9); pointer-events: none;
   }
@@ -996,7 +996,7 @@
      het rek terugvindt. */
   .item-card.gewenst::before {
     content: '💖'; position: absolute; top: 4px; left: 5px; z-index: 2;
-    font-size: 14px; line-height: 1; pointer-events: none;
+    font-size: 14px; line-height: 1; pointer-events: none; /* teken */
   }
   /* wegvliegende diamant bij een aankoop */
   .fly-dia { position: fixed; z-index: 95; font-size: 22px; pointer-events: none; }
@@ -1051,7 +1051,7 @@
   .mini-kaart .item-thumb svg { height: 36px; }
   .mini-kaart .item-thumb .thumb-emo { font-size: 28px; }
   .mini-kaart .item-thumb .thumb-swatch { width: 30px; height: 30px; }
-  .mini-kaart .item-status { margin-top: 4px; min-height: 18px; padding: 2px 8px; font-size: 12px; }
+  .mini-kaart .item-status { margin-top: 4px; min-height: 18px; padding: 2px 8px; font-size: var(--tx-klein); }
   /* De schat die je nog moet verdienen: zijn silhouet, niet zijn tekening. Je ziet
      wélke vorm het wordt, niet hoe hij eruitziet -- dat is voor het feestje. */
   .mini-kaart.op-slot .item-thumb svg,
