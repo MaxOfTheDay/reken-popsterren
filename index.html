@@ -2671,6 +2671,82 @@
     30% { transform: rotate(-9deg); }
     62% { transform: rotate(6deg); }
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+  .prop-laag .av-sch { visibility: visible; transform-box: fill-box; transform-origin: 50% 50%; }
+  .avatar-holder.move-jump   > .prop-laag .av-sch-pop { animation: schJump   var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-bounce > .prop-laag .av-sch-pop { animation: schBounce var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-spin   > .prop-laag .av-sch-pop { animation: schSpin   var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-wave   > .prop-laag .av-sch-pop { animation: schWave   var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-noot   > .prop-laag .av-sch-pop { animation: schNoot   var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-buig   > .prop-laag .av-sch-pop { animation: schBuig   var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-sway   > .prop-laag .av-sch-pop { animation: schSway   var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-kick   > .prop-laag .av-sch-pop { animation: schKick   var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-kick   > .prop-laag .av-sch-r   { animation: schKick var(--t-pas, .9s) ease-in-out, schSchopR var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-kick   > .prop-laag .av-sch-l   { animation: schKick var(--t-pas, .9s) ease-in-out, schSchopL var(--t-pas, .9s) ease-in-out; }
+
+  .avatar-holder.dancing > .prop-laag .av-sch-dier { animation: schDier calc(var(--t-pas, .9s) - 120ms) 120ms ease-out; }
+  @keyframes schJump {
+    0%,100% { transform: none; opacity: 1; }
+    30% { transform: scale(.66); opacity: .4; }
+    55% { transform: scale(1.06, 1); opacity: 1; }
+    75% { transform: scale(.86); opacity: .75; }
+  }
+  @keyframes schBounce {
+    0%,100% { transform: none; opacity: 1; }
+    20% { transform: scale(1.1, 1); opacity: 1; }
+    45% { transform: scale(.7); opacity: .45; }
+    70% { transform: scale(1.06, 1); opacity: 1; }
+  }
+  @keyframes schSpin {
+    0%,100% { transform: none; opacity: 1; }
+    50% { transform: scale(.86); opacity: .75; }
+  }
+  @keyframes schWave {
+    0%,40%,80%,100% { transform: none; opacity: 1; }
+    20%,60% { transform: scale(.9); opacity: .82; }
+  }
+  @keyframes schNoot {
+    0%,100% { transform: none; opacity: 1; }
+    18% { transform: scale(1.04, 1); }
+    40%,75% { transform: scale(.93); opacity: .88; }
+  }
+  @keyframes schBuig {
+    0%,100% { transform: none; opacity: 1; }
+    35%,62% { transform: scale(1.04, 1); }
+  }
+  @keyframes schSway {
+    0%,100% { transform: none; }
+    20% { transform: translateX(-10px); }
+    50% { transform: translateX(10px); }
+    80% { transform: translateX(-5px); }
+  }
+  @keyframes schKick {
+    0%,100% { transform: none; }
+    25% { transform: translateX(-12px); }
+    50% { transform: translateX(14px); }
+    70% { transform: translateX(-7px); }
+  }
+
+  @keyframes schSchopR { 0%,12%,40%,100% { opacity: 1; } 25% { opacity: .35; } }
+  @keyframes schSchopL { 0%,38%,64%,100% { opacity: 1; } 50% { opacity: .35; } }
+  @keyframes schDier {
+    0%,54%,100% { transform: none; opacity: 1; }
+    16% { transform: scale(1.06, 1); }
+    36% { transform: scale(.8); opacity: .65; }
+    70% { transform: scale(.9); opacity: .82; }
+  }
   @keyframes mvJump {
     0%,100% { transform: translateY(0) scale(1); }
     30% { transform: translateY(-38px) scale(1.06); }
@@ -2847,6 +2923,7 @@
     .avatar-holder.dancing, .avatar-holder[class*="move-"],
     .avatar-holder.dancing > .pas-laag,
     .avatar-holder[class*="move-"] > .pas-laag { animation: none; transform: none; }
+    .prop-laag .av-sch { animation: none; }
   }
 
 
@@ -16486,7 +16563,8 @@ function lichtDefs(uid) {
       <stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/>
       <stop offset=".62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>
     <radialGradient id="wang${uid}"><stop offset="0" stop-color="#ff8fa3" stop-opacity=".75"/><stop offset="1" stop-color="#ff8fa3" stop-opacity="0"/></radialGradient>
-    <radialGradient id="vlek${uid}"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>`;
+    <radialGradient id="vlek${uid}"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="grond${uid}"><stop offset="0" stop-color="#1a0628" stop-opacity=".6"/><stop offset=".5" stop-color="#1a0628" stop-opacity=".28"/><stop offset="1" stop-color="#1a0628" stop-opacity="0"/></radialGradient>`;
 }
 function avatarSVG(p, width, propMaat) {
 
@@ -16510,8 +16588,29 @@ function avatarSVG(p, width, propMaat) {
     <stop offset="1" stop-color="#b06ab3"/></linearGradient>${lichtDefs(uid)}</defs>`;
 
 
-  if (pet || instr) {
+
+
+
+
+
+
+
+
+
+
+
+
+  if (!kaart) {
+    const vlek = (cls, cx, cy, rx, ry, sterk) =>
+      `<ellipse class="av-sch ${cls}" cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#grond${uid})" fill-opacity="${sterk}" visibility="hidden"/>`;
+
+    const onder = (cls, [x, y, m]) => vlek(cls + ' av-sch-wijd', +(x + m * .52).toFixed(1), +(y + m * .18).toFixed(1), +(m * .44).toFixed(1), +(m * .1).toFixed(1), .6)
+      + vlek(cls, +(x + m * .52).toFixed(1), +(y + m * .18).toFixed(1), +(m * .26).toFixed(1), +(m * .055).toFixed(1), 1);
     s += '<g class="av-props">';
+    s += vlek('av-sch-pop av-sch-wijd', 100, 239, 40, 8, .55)
+      + vlek('av-sch-pop av-sch-l', 86, 238.6, 14, 4, 1) + vlek('av-sch-pop av-sch-r', 114, 238.6, 14, 4, 1);
+    if (pet) s += onder('av-sch-dier', pm.pet);
+    if (instr) s += onder('av-sch-instr', pm.instr);
     if (pet) s += `<text class="av-dier" x="${pm.pet[0]}" y="${pm.pet[1]}" font-size="${pm.pet[2]}">${pet.emoji}</text>`;
     if (instr) s += `<text class="av-instr" x="${pm.instr[0]}" y="${pm.instr[1]}" font-size="${pm.instr[2]}">${instr.emoji}</text>`;
     s += '</g>';
