@@ -161,6 +161,9 @@
      Gewichten: 700 draagt, 600 licht toe, 500 is lopende tekst in het ouderdeel.
      Er is geen 800 of 900 -- die bestaan niet in dit lettertype (een 900 tekent
      precies als 700). De kleurwacht in test/inhoud.test.js houdt ze tegen.
+     Diezelfde wacht (zaak Q) houdt ook een losse kleine maat tegen: tekst onder
+     de 17px gebruikt een --tx-token; een teken van die maat krijgt het
+     commentaar "teken" op zijn regel.
 
      ---- §6 WAT EEN WERELD MAG -----------------------------------------------
      Precies vier kanalen, gezet in WORLDS.theme en nergens anders:
