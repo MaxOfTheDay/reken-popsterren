@@ -7904,6 +7904,46 @@
 
 
 
+  .trap-rij { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .trap-munt {
+    --s: 22px; position: relative; display: block; flex: 0 0 auto;
+    width: var(--s); height: var(--s); border-radius: 50%; border: 2px solid transparent;
+    background: var(--medaille-vul) padding-box, var(--rk) border-box;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,.5);
+  }
+  .trap-munt.m-0 { --rk: var(--m-rand-0); --vk: var(--m-vlak-0); --mk: var(--m-0); }
+  .trap-munt.m-1 { --rk: var(--m-rand-1); --vk: var(--m-vlak-1); --mk: var(--m-1); }
+  .trap-munt.m-2 { --rk: var(--m-rand-2); --vk: var(--m-vlak-2); --mk: var(--m-2); }
+  .trap-munt.m-3 { --rk: var(--m-rand-3); --vk: var(--m-vlak-3); --mk: var(--m-3); }
+
+  .trap-munt:not(.vol):not(.volgende) { opacity: .6; }
+  .trap-munt.vol { background: var(--vk) padding-box, var(--rk) border-box; box-shadow: 0 1px 3px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.35); }
+  .trap-munt.vol.m-2 { box-shadow: 0 0 8px rgba(255,190,60,.6), inset 0 1px 0 rgba(255,255,255,.35); }
+  .trap-munt.vol.m-3 {
+    background: conic-gradient(from 20deg, rgba(255,255,255,.4) 0 40deg, transparent 40deg 90deg, rgba(255,255,255,.3) 90deg 140deg, transparent 140deg 200deg, rgba(255,255,255,.35) 200deg 250deg, transparent 250deg) padding-box, var(--vk) padding-box, var(--rk) border-box;
+    box-shadow: 0 0 8px rgba(80,210,255,.6), inset 0 1px 0 rgba(255,255,255,.5);
+  }
+
+
+
+  .trap-munt.volgende::after {
+    content: ''; position: absolute; inset: -6px; border-radius: 50%; pointer-events: none;
+    background: conic-gradient(var(--mk) calc(var(--p, 0) * 1%), rgba(255,255,255,.15) 0);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+  }
+
+
+  .dress-bar.met-trappen .db-info { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .dress-bar.met-trappen .db-trappen { display: flex; align-items: center; gap: 10px; min-width: 0; max-width: 100%; padding: 6px; margin: 0 -6px; }
+
+
+
+
+
+
+
+
 
   .trophy-card .temoji, .trophy-card .pw-medal { transition: transform var(--t-snel) var(--ease-plop); }
   .trophy-card.kies .temoji, .trophy-card.kies .pw-medal { transform: translateY(-3px) scale(1.08); }
@@ -8376,6 +8416,16 @@
   @keyframes ringOut { 0% { opacity: .9; transform: scale(.4); } 100% { opacity: 0; transform: scale(3.4); } }
   .trophy-pop.burst .tp-name { animation: rankTextRise .45s ease .25s both; }
   .trophy-pop.burst .tp-waarom { animation: rankTextRise .45s ease .32s both; }
+
+
+
+  .tp-trappen { display: flex; justify-content: center; margin: 8px 0 2px; }
+  .tp-trappen .trap-munt { --s: 30px; }
+  .tp-trappen .trap-munt.nieuw { --s: 40px; }
+  .trophy-pop .tp-trappen { opacity: 0; }
+  .trophy-pop.burst .tp-trappen { animation: rankTextRise .45s ease .28s both; }
+  .trophy-pop.burst .tp-trappen .trap-munt.nieuw { animation: trapMuntIn .55s var(--ease-plop) .7s both; }
+  @keyframes trapMuntIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
   .trophy-pop.burst .tp-joepie { animation: rankTextRise .45s ease .42s both; }
 
 
@@ -8405,6 +8455,7 @@
 
     .tp-chest, .tp-rays, .tp-ring, .burst-bit, .tap-ripple { display: none; }
     .trophy-pop .tp-name, .trophy-pop .tp-waarom, .trophy-pop .tp-joepie, .trophy-pop.burst .tp-emoji { opacity: 1; transform: none; animation: none; }
+    .trophy-pop .tp-trappen, .trophy-pop.burst .tp-trappen .trap-munt.nieuw { opacity: 1; transform: none; animation: none; }
   }
 
 
@@ -22608,12 +22659,7 @@ function ladderCard(ladder, p) {
 
 
 
-    let boog = 0;
-    if (volgende) {
-      const pr = volgende.progress(p), vorig = niveau ? trappen[niveau - 1].progress(p).target : 0;
-      const doel = trapDoel(volgende, p);
-      boog = doel > vorig ? Math.max(0, Math.min(100, Math.round(100 * (pr.now - vorig) / (doel - vorig)))) : 0;
-    }
+    const boog = ladderBoog(ladder, p);
     const stijl = `--p:${boog}` + (volgende ? `;--straks:var(--m-${volgende.trap})` : '');
     card.innerHTML = `<div class="temoji" style="${stijl}">${nu === 3 ? DIAMANT_VONKJES : ''}<span class="tico">${ladder.emoji}</span></div>`
       + `<div class="tname">${ladder.name}</div>`;
@@ -22621,6 +22667,40 @@ function ladderCard(ladder, p) {
   }
   card.onclick = () => tapLadder(ladder, card);
   return card;
+}
+function ladderBoog(ladder, p) {
+  const { trappen, niveau, volgende } = ladderStand(ladder, p);
+  if (!volgende) return 0;
+  const pr = volgende.progress(p), vorig = niveau ? trappen[niveau - 1].progress(p).target : 0;
+  const doel = trapDoel(volgende, p);
+  return doel > vorig ? Math.max(0, Math.min(100, Math.round(100 * (pr.now - vorig) / (doel - vorig)))) : 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function trapRij(ladder, p, opts = {}) {
+  const { trappen, niveau } = ladderStand(ladder, p);
+  const tot = opts.tot != null ? opts.tot : niveau - 1;
+  const boog = opts.boog === false ? null : ladderBoog(ladder, p);
+  return '<span class="trap-rij" aria-hidden="true">' + trappen.map((t, i) => {
+    let k = `trap-munt m-${t.trap}`;
+    if (i <= tot) k += i === opts.nieuw ? ' vol nieuw' : ' vol';
+    else if (i === tot + 1 && boog != null) k += ' volgende';
+    const stijl = i === tot + 1 && boog != null ? ` style="--p:${boog}"` : '';
+    return `<i class="${k}"${stijl}></i>`;
+  }).join('') + '</span>';
 }
 
 
@@ -22641,16 +22721,21 @@ function tapLadder(ladder, card) {
 
   if (niveau) kastKlink(card, trappen[niveau - 1].trap); else kastDof(card);
   if (card.classList.contains('kies')) return;
+
+
+
   const kop = { emoji: ladder.emoji, name: ladder.name, naar: ladder.naar };
   const metaal = niveau ? TRAP_NAMEN[trappen[niveau - 1].trap] : '';
-  if (!volgende) { kastBalk(kop, card, metaal + '!'); return; }
+  const rij = trapRij(ladder, p);
+  if (!volgende) { kastBalk(kop, card, metaal + '!', null, rij); return; }
   const pr = volgende.progress(p), rem = Math.max(0, pr.target - pr.now);
+  const zeg = tekst => metaal ? `${metaal} · ${tekst}` : tekst;
 
   if (volgende.telWerelden && meerWereldenVooruit(p)) {
-    kastBalk(kop, card, `${metaal} · ${pr.now} ${pr.label}`, pr.now); return;
+    kastBalk(kop, card, `${pr.now} ${pr.label}`, pr.now, rij, zeg(`${pr.now} ${pr.label}`)); return;
   }
   const nog = rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!';
-  kastBalk(kop, card, metaal ? `${metaal} · ${nog}` : nog, rem > 0 ? rem : null);
+  kastBalk(kop, card, nog, rem > 0 ? rem : null, rij, zeg(nog));
 }
 
 
@@ -22868,7 +22953,10 @@ function opnieuw(el, klasse) {
 
 
 
-function kastBalk(t, card, tekst, getal) {
+
+
+
+function kastBalk(t, card, tekst, getal, rij, stem) {
   const bar = $('kast-bar');
   document.querySelectorAll('#trophy-shelves .trophy-card.kies').forEach(k => k.classList.remove('kies'));
   const kast = $('screen-trophies');
@@ -22880,15 +22968,19 @@ function kastBalk(t, card, tekst, getal) {
 
   const naarKaart = t.naar === 'kaart';
   const knop = t.naar ? `<button class="btn small" id="kast-naar" type="button" aria-label="${naarKaart ? 'Naar de wereld' : 'Naar de kleedkamer'}">${naarKaart ? '🗺️' : t.naar === 'stage' ? '🎪' : '👕'}</button>` : '';
-  bar.innerHTML = `<div class="db-info"><span class="db-name">${t.perfect ? '' : t.emoji + ' '}${esc(t.name)}</span>`
-    + `<span class="db-sub">· ${sub}</span></div>` + knop;
+  bar.classList.toggle('met-trappen', !!rij);
+  bar.innerHTML = rij
+    ? `<div class="db-info"><span class="db-name">${t.emoji} ${esc(t.name)}</span>`
+      + `<span class="db-trappen">${rij}<span class="db-sub">${sub}</span></span></div>` + knop
+    : `<div class="db-info"><span class="db-name">${t.perfect ? '' : t.emoji + ' '}${esc(t.name)}</span>`
+      + `<span class="db-sub">· ${sub}</span></div>` + knop;
   if (knop) $('kast-naar').onclick = () => {
     sndClick(); kastBalk(null);
     if (naarKaart) naarWereldKaart(t.wereldIdx); else openKleedkamerCat(t.naar);
   };
   bar.style.display = 'flex';
   onderVrijMeet();
-  speak(tekst);
+  speak(stem || tekst);
 
 
 
@@ -22921,6 +23013,16 @@ function openTrophy(id) {
 
 
 
+
+
+
+function tpTrappen(t) {
+  if (t.trap == null) return '';
+  const ladder = TROPHY_LADDERS.find(l => l.ids.includes(t.id));
+  if (!ladder) return '';
+  const i = ladder.ids.indexOf(t.id);
+  return `<div class="tp-trappen">${trapRij(ladder, P(), { tot: i, nieuw: i, boog: false })}</div>`;
+}
 function celebrateTrophy(t) {
   const reduce = motionOff();
   sndClick();
@@ -22934,6 +23036,7 @@ function celebrateTrophy(t) {
     +   `<div class="tp-emoji"${t.trap != null ? ` style="--tp-vlak:var(--m-vlak-${t.trap});--tp-rand:var(--m-rand-${t.trap})"` : ''}>${t.emoji}</div>`
     + '</div>'
     + `<div class="tp-name">${t.name}</div>`
+    + tpTrappen(t)
 
 
 
