@@ -1100,6 +1100,9 @@ function check(ok, label, detail) {
       q.level = worldForIndex(2).first + 1;
       grantHistoricRewards(q);
       (q.readyTrophies || []).slice().forEach(id => awardTrophy(q, id)); q.readyTrophies = [];
+      // het podium van wereld 1 is van haar: dat diploma is helemaal perfect
+      const pod0 = wereldPodium(WORLDS[0]);
+      if (pod0 && !q.owned.includes(pod0.id)) q.owned.push(pod0.id);
       save(); openTrophies();
       await new Promise(k => setTimeout(k, 400));
       const groepen = [...document.querySelectorAll('#trophy-shelves .groep-naam')].map(e => e.textContent);
@@ -1108,22 +1111,26 @@ function check(ok, label, detail) {
       const open = async i => { document.querySelectorAll('.rp-overlay').forEach(o => o.remove()); kaart(i).click(); await new Promise(k => setTimeout(k, 300)); return document.querySelector('.diploma-laag:not(.closing)'); };
       const d0 = await open(0);
       const perfect = d0 && d0.querySelector('.dip-stempel.ster.heb') !== null;
+      const top0 = d0 && d0.querySelector('.diploma.top .dip-bundel') !== null
+        && d0.querySelector('.dip-label').textContent === 'Perfect diploma';
       const terugSluit = backTarget() === d0._close;
       d0._close();
       const d1 = await open(1);
       const nogNiet = d1 && d1.querySelector('.dip-stempel.ster.mist') !== null;
+      const top1 = d1 && d1.querySelector('.diploma.top, .dip-bundel') !== null;
       const speel = d1 && d1.querySelector('.dip-plek[data-dip="ster"] .dip-actie.doe');
       const d2 = await open(2);
       const balk = document.getElementById('kast-bar').style.display;
       if (speel) speel.closest('.dip-plek').click();
       await new Promise(k => setTimeout(k, 900));
-      return { groepen, stempelsKast, d0: !!d0, perfect, terugSluit, nogNiet, speel: !!speel,
+      return { groepen, stempelsKast, d0: !!d0, perfect, top0, top1, terugSluit, nogNiet, speel: !!speel,
         d2: !!d2, balk, scherm: document.querySelector('.screen.active').id, wereld: viewWorldIdx };
     });
     check(r.groepen[0] === 'Werelden', 'Q · de plank heet Werelden en staat bovenaan', r.groepen.join(','));
     check(r.stempelsKast[0] === 2 && r.stempelsKast[1] === 2 && r.stempelsKast[2] === 0,
       'Q · een uitgespeelde wereld heeft twee stempels in de kast, een lopende geen', r.stempelsKast.join(','));
     check(r.d0 && r.perfect, 'Q · een perfecte wereld opent zijn diploma met een gouden ster', JSON.stringify(r));
+    check(r.top0 && !r.top1, 'Q · perfect mét podium: gouden lijst en zaallicht; niet perfect: gewoon', JSON.stringify({ top0: r.top0, top1: r.top1 }));
     check(r.terugSluit, 'Q · terug sluit het diploma', String(r.terugSluit));
     check(r.nogNiet && r.speel, 'Q · niet perfect: de ster ontbreekt, met Speel eronder', JSON.stringify(r));
     check(!r.d2 && r.balk === 'flex', 'Q · een wereld die nog niet uit is houdt de balk', JSON.stringify(r));

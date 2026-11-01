@@ -562,19 +562,32 @@ function diplomaPop(p, d) {
   q.equipped.stage = d.heeftPodium ? d.podium.id : 'stage_disco';
   return q;
 }
+/* HET PERFECTE DIPLOMA: alles van de wereld is van haar -- elke show drie
+   sterren, en het podium (als de wereld er een heeft). Dan krijgt het diploma
+   wat de show haar gaf toen ze het verdiende: een gouden lijst, de bundel van
+   het zaallicht op haar en een gloeiend podium, en een paar vonkjes. Alleen
+   dan, zodat een gewoon diploma rustig blijft en goud iets betekent. Er komt
+   bewust geen zegel bij: met de sterstempel en de medaille in de kast zou dat
+   een derde ster-in-een-rondje op dezelfde kaart zijn. */
+function diplomaTop(d) { return d.perfect && (d.heeftPodium || !d.podium); }
+// de vonkjes rond haar: links/boven in % van het beeld, en hun maat
+const DIP_VONKEN = [[18, 32, 16], [76, 26, 13], [27, 62, 10], [70, 58, 18], [50, 12, 11]];
 function openDiploma(i) {
   const p = P();
   const d = diplomaStand(p, i);
   const th = d.w.theme || {};
   const q = diplomaPop(p, d);
+  const top = diplomaTop(d);
   const ov = openOverlay('diploma-laag',
-    `<div class="diploma" role="dialog" aria-label="Diploma ${esc(d.w.name)}" style="--dip-a:${th.sky || '#3a1f6e'};--dip-b:${th.glow || '#7a2f63'}">`
+    `<div class="diploma${top ? ' top' : ''}" role="dialog" aria-label="${top ? 'Perfect diploma' : 'Diploma'} ${esc(d.w.name)}" style="--dip-a:${th.sky || '#3a1f6e'};--dip-b:${th.glow || '#7a2f63'}">`
     + '<button class="dip-x" type="button" aria-label="Sluiten">✕</button>'
     + '<div class="dip-binnen">'
     +   `<div class="dip-beeld"><img class="dip-kunst" src="${d.w.art || ''}" alt="" draggable="false">`
+    +     (top ? '<div class="dip-bundel"></div>' + DIP_VONKEN.map(([x, y, m], n) =>
+             `<span class="dip-vonk" style="left:${x}%;top:${y}%;--m:${m}px;--n:${n}">✦</span>`).join('') : '')
     +     `<div class="dip-pop"><div class="dip-podium">${podiumHTML(item(q.equipped.stage))}</div>`
     +       `<div class="dip-av">${avatarSVG(q, 124)}</div></div></div>`
-    +   '<div class="dip-label">Diploma</div>'
+    +   `<div class="dip-label">${top ? 'Perfect diploma' : 'Diploma'}</div>`
     +   `<div class="dip-naam">${esc(p.name)}</div>`
     +   `<div class="dip-wereld">${esc(d.w.name)}</div>`
     +   `<div class="dip-stempels">${diplomaStempels(p, i, false)}</div>`
@@ -626,9 +639,12 @@ async function diplomaBeeld(i) {
   const cv = document.createElement('canvas');
   cv.width = DIP_B; cv.height = DIP_H;
   const c = cv.getContext('2d');
-  // de lijst in de wereldkleuren, en het donkere vlak erin
+  // de lijst in de wereldkleuren (perfect: in goud), en het donkere vlak erin
+  const top = diplomaTop(d);
   const lijst = c.createLinearGradient(0, 0, DIP_B, DIP_H);
-  lijst.addColorStop(0, a); lijst.addColorStop(1, b);
+  if (top) [[0, '#fff3c4'], [0.22, '#ffd740'], [0.48, '#c98a12'], [0.62, '#ffe58a'], [0.82, '#b9780c'], [1, '#ffd740']]
+    .forEach(([o, k]) => lijst.addColorStop(o, k));
+  else { lijst.addColorStop(0, a); lijst.addColorStop(1, b); }
   diplomaRond(c, 0, 0, DIP_B, DIP_H, 56); c.fillStyle = lijst; c.fill();
   const vlak = c.createLinearGradient(0, 0, 0, DIP_H);
   vlak.addColorStop(0, '#2a1958'); vlak.addColorStop(1, '#1a0e3b');
@@ -642,23 +658,35 @@ async function diplomaBeeld(i) {
   const waas = c.createLinearGradient(0, 6 + BH * 0.4, 0, 6 + BH);
   waas.addColorStop(0, 'rgba(31,18,71,0)'); waas.addColorStop(1, '#1f1247');
   c.fillStyle = waas; c.fillRect(6, 6, DIP_B - 12, BH);
+  const px = DIP_B / 2, py = 6 + BH - 52, rx = 160, ry = 26;
+  // perfect: de bundel van boven op haar podium (zie .dip-bundel)
+  if (top) {
+    const bl = c.createLinearGradient(0, 0, 0, py + 20);
+    bl.addColorStop(0, 'rgba(255,236,168,0)'); bl.addColorStop(0.4, 'rgba(255,236,168,.42)');
+    bl.addColorStop(0.85, 'rgba(255,216,128,.3)'); bl.addColorStop(1, 'rgba(255,216,128,0)');
+    c.fillStyle = bl; c.beginPath();
+    c.moveTo(px - 30, 0); c.lineTo(px + 30, 0); c.lineTo(px + 210, py + 20); c.lineTo(px - 210, py + 20); c.fill();
+  }
   c.restore();
   // het podium: zijband, dan de bovenkant (de kleuren van podiumHTML)
   const v = st.vloer || item('stage_disco').vloer;
-  const px = DIP_B / 2, py = 6 + BH - 52, rx = 160, ry = 26;
+  if (top) { c.save(); c.shadowColor = 'rgba(255,193,7,.8)'; c.shadowBlur = 24; }
   c.fillStyle = v[2]; c.beginPath(); c.ellipse(px, py + 16, rx, ry, 0, 0, Math.PI * 2); c.fill();
   const boven = c.createRadialGradient(px, py - 6, 10, px, py, rx);
   boven.addColorStop(0, v[0]); boven.addColorStop(0.72, v[1]);
   c.fillStyle = boven; c.beginPath(); c.ellipse(px, py, rx, ry, 0, 0, Math.PI * 2); c.fill();
   c.lineWidth = 4; c.strokeStyle = v[3]; c.stroke();
+  if (top) c.restore();
   // haar pop, met de voeten midden op het podium: de schoenen staan op 239 van
   // de 250 hoog, dus +16 zet ze vlak onder het midden van de bovenkant
   const ph = 248 * pop.height / pop.width;
   c.drawImage(pop, px - 124, py - ph + 16, 248, ph);
   // de tekst
   c.textAlign = 'center'; c.fillStyle = '#fff';
-  c.globalAlpha = 0.7; c.font = '600 24px Fredoka, sans-serif';
-  c.fillText('D I P L O M A', px, BH + 70);
+  c.globalAlpha = top ? 1 : 0.7; c.font = '600 24px Fredoka, sans-serif';
+  if (top) c.fillStyle = '#ffd740';
+  c.fillText(top ? 'P E R F E C T   D I P L O M A' : 'D I P L O M A', px, BH + 70);
+  c.fillStyle = '#fff';
   c.globalAlpha = 1; c.font = '700 64px Fredoka, sans-serif';
   c.fillText(p.name, px, BH + 140);
   c.globalAlpha = 0.85; c.font = '500 32px Fredoka, sans-serif';

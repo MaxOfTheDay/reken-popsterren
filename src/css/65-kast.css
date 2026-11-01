@@ -752,8 +752,43 @@
   .dip-stempels.klein .dip-stempel.ster.heb { box-shadow: 0 0 0 1.5px var(--gold-light), 0 0 8px rgba(var(--goud-gloed-rgb), .6); }
   .dip-stempels.klein .dip-stempel.ster.mist::after { inset: -3px; border-width: 2px; }
   .dip-stempels.klein .dip-mini .podium { --pod-dik: 2px; border-width: 1px; }
+  /* HET PERFECTE DIPLOMA (zie diplomaTop): een lijst van gepoetst goud met een
+     gloed, het woord in goud, de bundel van het zaallicht op haar (dezelfde
+     als .venue-bundel in de show), haar podium dat gloeit en een paar vonkjes.
+     Eén keer bij het openen glijdt er een glans over. */
+  .diploma.top {
+    padding: 4px;
+    background: linear-gradient(150deg, rgb(var(--goud-glans-rgb)) 0%, var(--gold-accent) 22%, var(--gold-cta-shadow) 48%,
+                                var(--gold-light) 62%, var(--gold-cta-shadow) 82%, var(--gold-accent) 100%);
+    box-shadow: 0 20px 44px rgba(var(--nacht-0-rgb), .55), 0 0 26px rgba(var(--goud-gloed-rgb), .45);
+  }
+  .diploma.top .dip-label { color: var(--gold-accent); opacity: 1; }
+  .diploma.top .dip-binnen { position: relative; }
+  .diploma.top .dip-binnen::after {
+    content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+    background: linear-gradient(110deg, transparent 35%, rgba(var(--goud-glans-rgb), .35) 50%, transparent 65%) no-repeat;
+    background-size: 250% 100%; background-position: 150% 0; opacity: 0;
+    animation: dipGlans 1.4s .35s var(--ease-uit) both;
+  }
+  @keyframes dipGlans { 0% { opacity: 1; background-position: 150% 0; } 100% { opacity: 1; background-position: -60% 0; } }
+  .dip-bundel {
+    position: absolute; left: 50%; top: -10px; width: 230px; height: 225px; transform: translateX(-50%); z-index: 1; pointer-events: none;
+    background: linear-gradient(180deg, rgba(var(--goud-glans-rgb), 0) 0%, rgba(var(--goud-glans-rgb), .42) 40%,
+                                rgba(var(--warm-licht-rgb), .3) 85%, rgba(var(--warm-licht-rgb), 0));
+    -webkit-clip-path: polygon(43% 0, 57% 0, 100% 100%, 0 100%);
+    clip-path: polygon(43% 0, 57% 0, 100% 100%, 0 100%);
+  }
+  .diploma.top .dip-podium .podium { filter: drop-shadow(0 0 8px rgba(var(--goud-gloed-rgb), .75)); }
+  .dip-vonk {
+    position: absolute; z-index: 2; pointer-events: none; font-size: var(--m); line-height: 1; /* teken */
+    color: rgb(var(--goud-glans-rgb)); text-shadow: 0 0 8px rgba(var(--goud-gloed-rgb), .9);
+    animation: dipVonk 2.4s calc(var(--n) * -.5s) ease-in-out infinite;
+  }
+  @keyframes dipVonk { 0%, 100% { opacity: .35; transform: scale(.7); } 50% { opacity: 1; transform: scale(1.1); } }
   @media (prefers-reduced-motion: reduce) {
     .diploma-laag, .diploma-laag.closing, .diploma { animation: none; }
+    .diploma.top .dip-binnen::after { animation: none; }
+    .dip-vonk { animation: none; }
   }
   .dip-ster { width: 56%; height: 56%; fill: var(--c-white); filter: drop-shadow(0 1px 0 rgba(150,90,0,.6)); }
   .dip-stempel.mist .dip-ster { filter: none; }
