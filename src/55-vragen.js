@@ -803,7 +803,7 @@ const kalGetal = (rij, ans, extra) => ({ kind: 'kalender', op: 'kalender', rij, 
 
 /* Een vraag van rij r. Elke rij heeft twee vormen, om de beurt (vorm 'lees'
    of 'zoek', zoals de klok). */
-function genKalender(r, vorm) {
+function genKalender(r, vorm, maand) {
   const tweede = vorm === 'zoek';
   if (r.id === 'morgen') {
     // donderdag ─morgen➜ ?, of ? ⬅overmorgen─ donderdag: de dagen tel je langs de pijl (zie kalBrug)
@@ -849,7 +849,7 @@ function genKalender(r, vorm) {
       html: `<span class="kal-vraag">${kalWeken(w)}</span>${omgekeerd
         ? kalVan(kalKaart('kaal', `${7 * w} dagen`), 'weken') : kalVan(kalKaart('kaal', `${w} ${week(w)}`), 'dagen')}` });
   }
-  const m = rnd(0, 11), n = dagenIn(m);
+  const m = maand == null ? rnd(0, 11) : maand, n = dagenIn(m);
   if (r.id === 'blad') {
     if (tweede) {   // een week later: één rij naar beneden, in dezelfde kolom
       const dag = rnd(1, n - 7);
@@ -1112,8 +1112,11 @@ const THEMAS = [
       + '<text x="20" y="27" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="700" style="fill:var(--plaatje-inkt)">7</text>'),
     ladder: { pad: KALENDERPAD, lijn: 'kalLijn', stand: 'kalender', id: 'set-kalenderpad', eind: 'Alles met de kalender door elkaar', vb: kalenderVoorbeeld, kies: 'kiesKalender' },
     gen: genKalender,
-    // elke vorm een paar keer, want een maand met zes weken is een rij hoger
-    proeven: inst => inst.rijen.flatMap(r => Array.from({ length: 8 }, (_, i) => genKalender(r, i % 2 ? 'zoek' : 'lees').html)),
+    /* Elke vorm met elke maand, want een maand met zes weken is een rij hoger.
+       Eerst waren het acht getrokken proeven: dan zat er soms geen zesweekse
+       maand bij, en groeide de kaart pas bij die vraag -- zij kromp 21px en
+       de kaart schoof op (schuiven zaak E, af en toe rood op GitHub). */
+    proeven: inst => inst.rijen.flatMap(r => Array.from({ length: 24 }, (_, i) => genKalender(r, i % 2 ? 'zoek' : 'lees', i >> 1).html)),
     toonAntwoord: (q, v) => q.soort === 'dag' ? DAGEN[v] : q.soort === 'maand' ? MAANDEN[v] : q.soort === 'seizoen' ? SEIZOENEN[v].naam
       : q.soort === 'notatie' ? `${Math.floor(v / 100)}/${v % 100}` : String(v),
     toonKeuze: (q, v) => q.soort === 'getal' || q.soort === 'notatie' ? toonAntwoord(q, v)
