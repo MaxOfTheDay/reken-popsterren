@@ -343,6 +343,46 @@
     animation: shineSweep 3.6s ease-in-out 1s infinite;
   }
   .trophy-card.ladder .tico { filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+  /* ---- De trappen als munten (trapRij) ----
+     Brons, zilver, goud, diamant op een rij: in de balk als je tikt, en bij het
+     openen van een nieuwe trap (.tp-trappen in het feest). Niet op de plank --
+     zie trapRij. Een munt is dezelfde medaille in het klein: het vlak in het
+     metaal (--m-vlak-*), de rand in het metaal (--m-rand-*). Nog niet behaald is
+     het donkere vlak van een lege medaille (--medaille-vul) met de rand nog wél
+     in zijn metaal, zodat je ziet wát er nog komt. De volgende krijgt de boog,
+     net als de grote medaille. */
+  .trap-rij { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .trap-munt {
+    --s: 22px; position: relative; display: block; flex: 0 0 auto;
+    width: var(--s); height: var(--s); border-radius: 50%; border: 2px solid transparent;
+    background: var(--medaille-vul) padding-box, var(--rk) border-box;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,.5);
+  }
+  .trap-munt.m-0 { --rk: var(--m-rand-0); --vk: var(--m-vlak-0); --mk: var(--m-0); }
+  .trap-munt.m-1 { --rk: var(--m-rand-1); --vk: var(--m-vlak-1); --mk: var(--m-1); }
+  .trap-munt.m-2 { --rk: var(--m-rand-2); --vk: var(--m-vlak-2); --mk: var(--m-2); }
+  .trap-munt.m-3 { --rk: var(--m-rand-3); --vk: var(--m-vlak-3); --mk: var(--m-3); }
+  /* leeg en nog niet aan de beurt: stiller dan de volgende */
+  .trap-munt:not(.vol):not(.volgende) { opacity: .6; }
+  .trap-munt.vol { background: var(--vk) padding-box, var(--rk) border-box; box-shadow: 0 1px 3px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.35); }
+  .trap-munt.vol.m-2 { box-shadow: 0 0 8px rgba(255,190,60,.6), inset 0 1px 0 rgba(255,255,255,.35); }
+  .trap-munt.vol.m-3 {
+    background: conic-gradient(from 20deg, rgba(255,255,255,.4) 0 40deg, transparent 40deg 90deg, rgba(255,255,255,.3) 90deg 140deg, transparent 140deg 200deg, rgba(255,255,255,.35) 200deg 250deg, transparent 250deg) padding-box, var(--vk) padding-box, var(--rk) border-box;
+    box-shadow: 0 0 8px rgba(80,210,255,.6), inset 0 1px 0 rgba(255,255,255,.5);
+  }
+  /* de boog: een dunne ring om het vakje, die vol loopt in het metaal van die trap.
+     In de effen kleur (--m-*) en niet de rand (--m-rand-*): dat is zelf een
+     verloop, en een verloop als kleur in een conic-gradient maakt hem ongeldig. */
+  .trap-munt.volgende::after {
+    content: ''; position: absolute; inset: -6px; border-radius: 50%; pointer-events: none;
+    background: conic-gradient(var(--mk) calc(var(--p, 0) * 1%), rgba(255,255,255,.15) 0);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+  }
+  /* In de balk: naam bovenaan, eronder de munten met "nog 320 sommen" erachter.
+     Ruimte rondom het rijtje, anders knipt overflow:hidden van .db-info de boog af. */
+  .dress-bar.met-trappen .db-info { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .dress-bar.met-trappen .db-trappen { display: flex; align-items: center; gap: 10px; min-width: 0; max-width: 100%; padding: 6px; margin: 0 -6px; }
   /* Ligt er een trap klaar, dan is het gewoon het cadeautje (zie giftMedaille):
      daarom staat er overal :not(.ready), anders won dit van de gouden rand. */
   /* (Hier stonden de stipjes onder de naam, één per trap. Weg: het metaal zegt
