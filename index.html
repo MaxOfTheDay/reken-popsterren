@@ -8305,8 +8305,43 @@
   .dip-stempels.klein .dip-stempel.ster.heb { box-shadow: 0 0 0 1.5px var(--gold-light), 0 0 8px rgba(var(--goud-gloed-rgb), .6); }
   .dip-stempels.klein .dip-stempel.ster.mist::after { inset: -3px; border-width: 2px; }
   .dip-stempels.klein .dip-mini .podium { --pod-dik: 2px; border-width: 1px; }
+
+
+
+
+  .diploma.top {
+    padding: 4px;
+    background: linear-gradient(150deg, rgb(var(--goud-glans-rgb)) 0%, var(--gold-accent) 22%, var(--gold-cta-shadow) 48%,
+                                var(--gold-light) 62%, var(--gold-cta-shadow) 82%, var(--gold-accent) 100%);
+    box-shadow: 0 20px 44px rgba(var(--nacht-0-rgb), .55), 0 0 26px rgba(var(--goud-gloed-rgb), .45);
+  }
+  .diploma.top .dip-label { color: var(--gold-accent); opacity: 1; }
+  .diploma.top .dip-binnen { position: relative; }
+  .diploma.top .dip-binnen::after {
+    content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+    background: linear-gradient(110deg, transparent 35%, rgba(var(--goud-glans-rgb), .35) 50%, transparent 65%) no-repeat;
+    background-size: 250% 100%; background-position: 150% 0; opacity: 0;
+    animation: dipGlans 1.4s .35s var(--ease-uit) both;
+  }
+  @keyframes dipGlans { 0% { opacity: 1; background-position: 150% 0; } 100% { opacity: 1; background-position: -60% 0; } }
+  .dip-bundel {
+    position: absolute; left: 50%; top: -10px; width: 230px; height: 225px; transform: translateX(-50%); z-index: 1; pointer-events: none;
+    background: linear-gradient(180deg, rgba(var(--goud-glans-rgb), 0) 0%, rgba(var(--goud-glans-rgb), .42) 40%,
+                                rgba(var(--warm-licht-rgb), .3) 85%, rgba(var(--warm-licht-rgb), 0));
+    -webkit-clip-path: polygon(43% 0, 57% 0, 100% 100%, 0 100%);
+    clip-path: polygon(43% 0, 57% 0, 100% 100%, 0 100%);
+  }
+  .diploma.top .dip-podium .podium { filter: drop-shadow(0 0 8px rgba(var(--goud-gloed-rgb), .75)); }
+  .dip-vonk {
+    position: absolute; z-index: 2; pointer-events: none; font-size: var(--m); line-height: 1;
+    color: rgb(var(--goud-glans-rgb)); text-shadow: 0 0 8px rgba(var(--goud-gloed-rgb), .9);
+    animation: dipVonk 2.4s calc(var(--n) * -.5s) ease-in-out infinite;
+  }
+  @keyframes dipVonk { 0%, 100% { opacity: .35; transform: scale(.7); } 50% { opacity: 1; transform: scale(1.1); } }
   @media (prefers-reduced-motion: reduce) {
     .diploma-laag, .diploma-laag.closing, .diploma { animation: none; }
+    .diploma.top .dip-binnen::after { animation: none; }
+    .dip-vonk { animation: none; }
   }
   .dip-ster { width: 56%; height: 56%; fill: var(--c-white); filter: drop-shadow(0 1px 0 rgba(150,90,0,.6)); }
   .dip-stempel.mist .dip-ster { filter: none; }
@@ -23007,19 +23042,32 @@ function diplomaPop(p, d) {
   q.equipped.stage = d.heeftPodium ? d.podium.id : 'stage_disco';
   return q;
 }
+
+
+
+
+
+
+
+function diplomaTop(d) { return d.perfect && (d.heeftPodium || !d.podium); }
+
+const DIP_VONKEN = [[18, 32, 16], [76, 26, 13], [27, 62, 10], [70, 58, 18], [50, 12, 11]];
 function openDiploma(i) {
   const p = P();
   const d = diplomaStand(p, i);
   const th = d.w.theme || {};
   const q = diplomaPop(p, d);
+  const top = diplomaTop(d);
   const ov = openOverlay('diploma-laag',
-    `<div class="diploma" role="dialog" aria-label="Diploma ${esc(d.w.name)}" style="--dip-a:${th.sky || '#3a1f6e'};--dip-b:${th.glow || '#7a2f63'}">`
+    `<div class="diploma${top ? ' top' : ''}" role="dialog" aria-label="${top ? 'Perfect diploma' : 'Diploma'} ${esc(d.w.name)}" style="--dip-a:${th.sky || '#3a1f6e'};--dip-b:${th.glow || '#7a2f63'}">`
     + '<button class="dip-x" type="button" aria-label="Sluiten">✕</button>'
     + '<div class="dip-binnen">'
     +   `<div class="dip-beeld"><img class="dip-kunst" src="${d.w.art || ''}" alt="" draggable="false">`
+    +     (top ? '<div class="dip-bundel"></div>' + DIP_VONKEN.map(([x, y, m], n) =>
+             `<span class="dip-vonk" style="left:${x}%;top:${y}%;--m:${m}px;--n:${n}">✦</span>`).join('') : '')
     +     `<div class="dip-pop"><div class="dip-podium">${podiumHTML(item(q.equipped.stage))}</div>`
     +       `<div class="dip-av">${avatarSVG(q, 124)}</div></div></div>`
-    +   '<div class="dip-label">Diploma</div>'
+    +   `<div class="dip-label">${top ? 'Perfect diploma' : 'Diploma'}</div>`
     +   `<div class="dip-naam">${esc(p.name)}</div>`
     +   `<div class="dip-wereld">${esc(d.w.name)}</div>`
     +   `<div class="dip-stempels">${diplomaStempels(p, i, false)}</div>`
@@ -23072,8 +23120,11 @@ async function diplomaBeeld(i) {
   cv.width = DIP_B; cv.height = DIP_H;
   const c = cv.getContext('2d');
 
+  const top = diplomaTop(d);
   const lijst = c.createLinearGradient(0, 0, DIP_B, DIP_H);
-  lijst.addColorStop(0, a); lijst.addColorStop(1, b);
+  if (top) [[0, '#fff3c4'], [0.22, '#ffd740'], [0.48, '#c98a12'], [0.62, '#ffe58a'], [0.82, '#b9780c'], [1, '#ffd740']]
+    .forEach(([o, k]) => lijst.addColorStop(o, k));
+  else { lijst.addColorStop(0, a); lijst.addColorStop(1, b); }
   diplomaRond(c, 0, 0, DIP_B, DIP_H, 56); c.fillStyle = lijst; c.fill();
   const vlak = c.createLinearGradient(0, 0, 0, DIP_H);
   vlak.addColorStop(0, '#2a1958'); vlak.addColorStop(1, '#1a0e3b');
@@ -23087,23 +23138,35 @@ async function diplomaBeeld(i) {
   const waas = c.createLinearGradient(0, 6 + BH * 0.4, 0, 6 + BH);
   waas.addColorStop(0, 'rgba(31,18,71,0)'); waas.addColorStop(1, '#1f1247');
   c.fillStyle = waas; c.fillRect(6, 6, DIP_B - 12, BH);
+  const px = DIP_B / 2, py = 6 + BH - 52, rx = 160, ry = 26;
+
+  if (top) {
+    const bl = c.createLinearGradient(0, 0, 0, py + 20);
+    bl.addColorStop(0, 'rgba(255,236,168,0)'); bl.addColorStop(0.4, 'rgba(255,236,168,.42)');
+    bl.addColorStop(0.85, 'rgba(255,216,128,.3)'); bl.addColorStop(1, 'rgba(255,216,128,0)');
+    c.fillStyle = bl; c.beginPath();
+    c.moveTo(px - 30, 0); c.lineTo(px + 30, 0); c.lineTo(px + 210, py + 20); c.lineTo(px - 210, py + 20); c.fill();
+  }
   c.restore();
 
   const v = st.vloer || item('stage_disco').vloer;
-  const px = DIP_B / 2, py = 6 + BH - 52, rx = 160, ry = 26;
+  if (top) { c.save(); c.shadowColor = 'rgba(255,193,7,.8)'; c.shadowBlur = 24; }
   c.fillStyle = v[2]; c.beginPath(); c.ellipse(px, py + 16, rx, ry, 0, 0, Math.PI * 2); c.fill();
   const boven = c.createRadialGradient(px, py - 6, 10, px, py, rx);
   boven.addColorStop(0, v[0]); boven.addColorStop(0.72, v[1]);
   c.fillStyle = boven; c.beginPath(); c.ellipse(px, py, rx, ry, 0, 0, Math.PI * 2); c.fill();
   c.lineWidth = 4; c.strokeStyle = v[3]; c.stroke();
+  if (top) c.restore();
 
 
   const ph = 248 * pop.height / pop.width;
   c.drawImage(pop, px - 124, py - ph + 16, 248, ph);
 
   c.textAlign = 'center'; c.fillStyle = '#fff';
-  c.globalAlpha = 0.7; c.font = '600 24px Fredoka, sans-serif';
-  c.fillText('D I P L O M A', px, BH + 70);
+  c.globalAlpha = top ? 1 : 0.7; c.font = '600 24px Fredoka, sans-serif';
+  if (top) c.fillStyle = '#ffd740';
+  c.fillText(top ? 'P E R F E C T   D I P L O M A' : 'D I P L O M A', px, BH + 70);
+  c.fillStyle = '#fff';
   c.globalAlpha = 1; c.font = '700 64px Fredoka, sans-serif';
   c.fillText(p.name, px, BH + 140);
   c.globalAlpha = 0.85; c.font = '500 32px Fredoka, sans-serif';
