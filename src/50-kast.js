@@ -616,7 +616,8 @@ async function diplomaBeeld(i) {
   const a = th.sky || '#3a1f6e', b = th.glow || '#7a2f63';
   const q = diplomaPop(p, d);
   const st = item(q.equipped.stage);
-  const svg = avatarSVG(q, 248);
+  // met haar schaduw aan (in de show doet .prop-laag dat, zie .av-sch)
+  const svg = avatarSVG(q, 248).replace(/visibility="hidden"/g, '');
   const [kunst, pop] = await Promise.all([
     diplomaLaad(d.w.art),
     diplomaLaad('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)),
@@ -650,9 +651,10 @@ async function diplomaBeeld(i) {
   boven.addColorStop(0, v[0]); boven.addColorStop(0.72, v[1]);
   c.fillStyle = boven; c.beginPath(); c.ellipse(px, py, rx, ry, 0, 0, Math.PI * 2); c.fill();
   c.lineWidth = 4; c.strokeStyle = v[3]; c.stroke();
-  // haar pop, met de voeten midden op het podium
+  // haar pop, met de voeten midden op het podium: de schoenen staan op 239 van
+  // de 250 hoog, dus +16 zet ze vlak onder het midden van de bovenkant
   const ph = 248 * pop.height / pop.width;
-  c.drawImage(pop, px - 124, py - ph + 34, 248, ph);
+  c.drawImage(pop, px - 124, py - ph + 16, 248, ph);
   // de tekst
   c.textAlign = 'center'; c.fillStyle = '#fff';
   c.globalAlpha = 0.7; c.font = '600 24px Fredoka, sans-serif';

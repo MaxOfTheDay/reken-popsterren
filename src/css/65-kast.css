@@ -687,8 +687,14 @@
   .dip-pop { position: absolute; left: 50%; bottom: 10px; width: 124px; transform: translateX(-50%); z-index: 1; }
   .dip-podium { position: absolute; left: 50%; bottom: 0; width: 160px; aspect-ratio: 100 / 16; transform: translateX(-50%); }
   .dip-podium .podium { width: 100%; height: 100%; --pod-dik: 8px; }
-  .dip-av { position: relative; width: 124px; margin-bottom: 17px; }
+  /* Haar voeten op 45% van de bovenkant van de schijf, zoals overal (zie EÉN
+     REGEL OVERAL in 50-zaal.css): de schijf is hier 25,6 hoog met een zijband
+     van 8, dus de voeten 8px onder de bovenrand. Hoger en ze staat op de
+     achterrand, en dan lijkt ze erboven te zweven. */
+  .dip-av { position: relative; width: 124px; margin-bottom: 10px; }
   .dip-av svg { display: block; width: 100%; height: auto; }
+  /* haar schaduw op het podium; in de show zet .prop-laag hem aan, hier staat ze stil */
+  .dip-av .av-sch { visibility: visible; }
   .dip-label { margin-top: 12px; font-size: var(--tx-klein); font-weight: 600; letter-spacing: .22em; text-transform: uppercase; opacity: .7; }
   .dip-naam { margin-top: 3px; font-size: var(--tx-groot); font-weight: 700; line-height: 1.05; overflow-wrap: anywhere; padding: 0 12px; }
   .dip-wereld { margin-top: 2px; font-size: var(--tx-body); opacity: .8; }
