@@ -1041,6 +1041,10 @@ function lijnRaak(q, x, b) {
      id, naam      de sleutel en het woord op de tegel. id staat in saves
                    (s.themas, p.stats.thema): verander het nooit.
      icoon(maat)   het icoontje, getekend (zie themaIcoon)
+     trofee        zijn trofee op de plank Nieuw geleerd (zie bouwThemaTrofeeen):
+                   naam, emoji (voor de confetti en de balk) en eenheid
+                   [enkelvoud, meervoud] voor "nog 3 klokvragen". Elk thema
+                   behalve rekenen heeft er een; kern zaak TR kijkt het na
    Een som-thema (rekenen, tafels)
      ops           staat aan als een van zijn bewerkingen aan staat (themaAan);
                    zijn vragen komen uit vraagInst of tafelInst (themaInst)
@@ -1072,8 +1076,10 @@ function lijnRaak(q, x, b) {
 const THEMAS = [
   { id: 'rekenen', naam: 'Rekenen', ops: ['+', '-'], icoon: tekenIcoon('+', '−') },
   { id: 'tafels',  naam: 'Tafels',  ops: ['x', ':'], icoon: tekenIcoon('×', '÷'),
+    trofee: { naam: 'Tafelkenner', emoji: '✖️', eenheid: ['tafelsom', 'tafelsommen'] },
     ladder: { pad: TAFELPAD, lijn: 'tafelLijn', stand: 'tafels', id: 'set-tafelpad', eind: 'Alle tafels door elkaar', vb: tafelVoorbeeld } },
   { id: 'lijn', naam: 'Getallenlijn', plaatje: true, teken: '📏',
+    trofee: { naam: 'Lijnloper', emoji: '📏', eenheid: ['lijnvraag', 'lijnvragen'] },
     icoon: maat => icoonSvg(maat, ICOON_TEGEL
       + '<g stroke="#4a2a7a" stroke-linecap="round"><line x1="6" x2="34" y1="25" y2="25" stroke="#8e3fc8" stroke-width="4"/><line x1="9" x2="9" y1="20" y2="30" stroke-width="2.5"/><line x1="20" x2="20" y1="20" y2="30" stroke-width="2.5"/><line x1="31" x2="31" y1="20" y2="30" stroke-width="2.5"/></g>'
       + '<path d="M25.5 18 l-4 -7 h8z" fill="#e5397a"/>'),
@@ -1082,6 +1088,7 @@ const THEMAS = [
     // elke vorm een paar keer; bij de sprongen ook de hoogste boog
     proeven: inst => inst.rijen.flatMap(r => [...Array.from({ length: 8 }, (_, i) => genLijn(r, i % 2 ? 'zoek' : 'lees').html), ...(r.sprong ? lijnHoogste() : [])]) },
   { id: 'geld', naam: 'Geld', plaatje: true, teken: '€',
+    trofee: { naam: 'Geldwijs', emoji: '💶', eenheid: ['geldvraag', 'geldvragen'] },
     icoon: maat => icoonSvg(maat, '<circle cx="20" cy="20" r="18" fill="#c9ccd1" stroke="#9aa0a8" stroke-width="1.5"/>'
       + '<circle cx="20" cy="20" r="12.5" fill="#e8c45a"/>'
       + '<text x="20" y="21" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="700" fill="#5d3f00">€</text>'),
@@ -1095,6 +1102,7 @@ const THEMAS = [
     toonAntwoord: (q, v) => q.centen ? euro(v).slice(1) : String(v),
     toonKeuze: (q, v) => q.centen ? euro(v) : `€${v}` },
   { id: 'klok', naam: 'Klok', plaatje: true, teken: '🕐',
+    trofee: { naam: 'Klokkijker', emoji: '🕐', eenheid: ['klokvraag', 'klokvragen'] },
     icoon: maat => klokSvg(130, maat, true).replace('class="klok"', 'class="klok thema-ico"'),
     ladder: { pad: KLOKPAD, lijn: 'klokLijn', stand: 'klok', id: 'set-klokpad', eind: 'Alle tijden door elkaar', vb: klokVoorbeeld, kies: 'kiesKlok' },
     gen: genKlok,
@@ -1107,6 +1115,7 @@ const THEMAS = [
     hint: klokHint,
     hintTeken: klokHintTeken },
   { id: 'kalender', naam: 'Kalender', plaatje: true, teken: '📅',
+    trofee: { naam: 'Kalenderkind', emoji: '📅', eenheid: ['kalendervraag', 'kalendervragen'] },
     icoon: maat => icoonSvg(maat, '<rect x="5" y="7" width="30" height="29" rx="5" fill="#fff" stroke="#9aa0a8" stroke-width="1.5"/>'
       + '<path d="M5 12a5 5 0 0 1 5-5h20a5 5 0 0 1 5 5v4H5z" fill="#e5397a"/><rect x="11" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/><rect x="26" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/>'
       + '<text x="20" y="27" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="700" style="fill:var(--plaatje-inkt)">7</text>'),
@@ -1126,6 +1135,7 @@ const THEMAS = [
     hint: (q, v) => q.soort === 'getal' ? undefined : kalHint(q, v) },
 ];
 const THEMA = Object.fromEntries(THEMAS.map(t => [t.id, t]));
+bouwThemaTrofeeen();   // hun trofeeën in de kast, nu het register er staat (zie 25-kern.js)
 // de thema's met een plaatje (zie hierboven), in de volgorde van de tegels
 const PLAATJE = THEMAS.filter(t => t.plaatje).map(t => t.id);
 // Het thema van een vraag met een plaatje (q.kind is zijn id); {} bij een som.

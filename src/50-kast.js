@@ -162,7 +162,7 @@ function renderShelves() {
     const perfectPlank = shelf.key === 'perfect';
     const vanJou = id => p.trophies.includes(id) || (p.readyTrophies || []).includes(id);
     /* Op de andere planken valt alleen weg wat dit kind niet kán halen (t.voor,
-       zie Nieuwe sommen) -- en ook dat alleen zolang ze hem niet heeft. Blijft
+       zie Nieuw geleerd) -- en ook dat alleen zolang ze hem niet heeft. Blijft
        er niets over, dan staat de plank er niet. */
     const ids = perfectPlank ? alle.filter(id => {
       const t = TROPHIES.find(x => x.id === id);
@@ -236,9 +236,8 @@ const TROPHY_UNIT_SINGULAR = {
   'spulletjes': 'spulletje',
   'sommen over de tien': 'som over de tien', 'zoeksommen': 'zoeksom',
   'sommen met drie getallen': 'som met drie getallen',
-  // 'uit' is geen telwoord-achtervoegsel maar hoort bij het label ("werelden uit"),
-  // dus unitText() knipt het er niet af en staat de hele zin hier.
-  'werelden uit': 'wereld uit'
+  'betere shows': 'betere show',
+  // de thema's zetten hun eigen eenheid erbij (zie bouwThemaTrofeeen)
 };
 // Maakt van een voortgangslabel ("sommen goed") een kaal zelfstandig
 // naamwoord ("sommen") voor de "Nog X ..."-tekst; enkelvoud bij precies 1.
@@ -257,19 +256,6 @@ function unitText(label, remaining) {
    op nul is er nog geen boog, en buiten 'onderweg' ook niet. */
 function trophyBoog(t, p, status) {
   if (status !== 'busy' || !t.progress) return 0;
-  /* De Wereldtournee telt werelden, en zijn totaal is precies wat de horizon
-     verbergt (zie binnenHorizon): een boog die halfvol staat verklapt net zo goed
-     hoeveel werelden er nog komen als "2 / 11" deed. Ligt er nog mist, dan geen
-     boog -- een tik zegt hoeveel je er al hebt. */
-  if (t.telWerelden && meerWereldenVooruit(p)) {
-    /* Eerst stond hier 0: geen boog zolang er mist ligt, want een halfvolle boog
-       verklapt hoeveel werelden er nog komen. Maar dan bleef de rand bijna het
-       hele spel leeg, en leek de tournee niet begonnen. Nu telt hij tegen de
-       werelden die ze kán zien (tot en met de horizon): de boog loopt vol, en
-       zakt een stukje terug als er een wereld uit de mist komt. Het totaal
-       blijft geheim. */
-    return Math.max(0, Math.min(100, Math.round(100 * doneWorldCount(p) / (laatsteZichtbareWereld(p) + 1))));
-  }
   const pr = t.progress(p);
   return Math.max(0, Math.min(100, Math.round(100 * pr.now / pr.target)));
 }
@@ -334,7 +320,7 @@ function ladderBoog(ladder, p) {
   const { trappen, niveau, volgende } = ladderStand(ladder, p);
   if (!volgende) return 0;
   const pr = volgende.progress(p), vorig = niveau ? trappen[niveau - 1].progress(p).target : 0;
-  const doel = trapDoel(volgende, p);
+  const doel = pr.target;
   return doel > vorig ? Math.max(0, Math.min(100, Math.round(100 * (pr.now - vorig) / (doel - vorig)))) : 0;
 }
 /* De trappen van een medaille als rijtje munten: brons, zilver, goud, diamant.
@@ -364,13 +350,6 @@ function trapRij(ladder, p, opts = {}) {
     return `<i class="${k}"${stijl}></i>`;
   }).join('') + '</span>';
 }
-/* Het doel van een trap voor de boog. De laatste trap van de Wereldreiziger telt
-   alle werelden, en dat totaal verbergt de horizon (zie trophyBoog): zolang er
-   mist ligt, telt hij tegen de werelden die ze kan zien. */
-function trapDoel(t, p) {
-  const doel = t.progress(p).target;
-  return t.telWerelden && meerWereldenVooruit(p) ? Math.min(doel, laatsteZichtbareWereld(p) + 1) : doel;
-}
 /* Diamant is de top, en dat moet je zien zonder te tikken: twee witte vonkjes op
    het ijsblauw, bij de facetten in het stijlblad (.nu-3). Getekend en niet als
    teken, net als het nootje (zie KAST_NOOT). */
@@ -392,10 +371,6 @@ function tapLadder(ladder, card) {
   if (!volgende) { kastBalk(kop, card, metaal + '!', null, rij); return; }
   const pr = volgende.progress(p), rem = Math.max(0, pr.target - pr.now);
   const zeg = tekst => metaal ? `${metaal} · ${tekst}` : tekst;
-  // achter de horizon geen "nog 5 werelden": dat verklapt het totaal (zie tapTrophy)
-  if (volgende.telWerelden && meerWereldenVooruit(p)) {
-    kastBalk(kop, card, `${pr.now} ${pr.label}`, pr.now, rij, zeg(`${pr.now} ${pr.label}`)); return;
-  }
   const nog = rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!';
   kastBalk(kop, card, nog, rem > 0 ? rem : null, rij, zeg(nog));
 }
@@ -412,6 +387,13 @@ function giftMedaille(t) {
   return '<div class="temoji"><span class="tico">🎁</span></div>'
     + `<div class="tname">${t.name}</div>`;
 }
+/* Wat er in de medaille staat: de emoji, of de eigen tekening van de trofee als
+   hij die heeft (de thema's op Nieuw geleerd, zie bouwThemaTrofeeen: het
+   icoontje dat de ouder ook op de themakaart ziet). De emoji blijft daarnaast
+   bestaan, voor de confetti en de balk, waar een plaatje niet past. De maat
+   van de tekening komt uit het stijlblad (.tico .thema-ico): 1em, dus net zo
+   groot als een emoji op dezelfde plek. */
+function trofeeTeken(t) { return t.tekening ? t.tekening(40) : t.emoji; }
 /* Medaille en naam -- meer niet. De beschrijving ("500 sommen goed") stond eerst
    op elk kaartje, en een kast vol zinnen leest als een takenlijst. Wat een trofee
    vraagt, zie je als je erop tikt, in de balk onderin (zie kastBalk).
@@ -422,7 +404,7 @@ function giftMedaille(t) {
 function normalCardHTML(t, p, status) {
   if (status === 'ready') return giftMedaille(t);
   const boog = trophyBoog(t, p, status);
-  return `<div class="temoji"${boog ? ` style="--p:${boog}"` : ''}><span class="tico">${t.emoji}</span></div>`
+  return `<div class="temoji"${boog ? ` style="--p:${boog}"` : ''}><span class="tico">${trofeeTeken(t)}</span></div>`
     + `<div class="tname">${t.name}</div>`
     + cardVoet(status === 'locked' ? '<div class="tstand">🔒</div>' : '');
 }
@@ -794,8 +776,6 @@ function tapTrophy(t, card) {
     kastBalk(kop, card, `nog ${rem} ${rem === 1 ? 'show' : 'shows'} met ⭐⭐⭐`, rem);
     return;
   }
-  // achter de horizon geen "nog 9 werelden": dat is hetzelfde totaal, anders gezegd
-  if (t.telWerelden && meerWereldenVooruit(p)) { kastBalk(t, card, `${pr.now} ${pr.label}`, pr.now); return; }
   kastBalk(t, card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!', rem > 0 ? rem : null);
 }
 /* De tikken in de kast (oktober 2026). Max miste hoe speels het aantikken eerst
@@ -963,7 +943,7 @@ function celebrateTrophy(t) {
     +   '<div class="tp-ring" aria-hidden="true"></div>'
     +   '<div class="tp-chest" aria-hidden="true">🎁</div>'
     // een trap van een medaille die meegroeit: de rand in zijn eigen metaal
-    +   `<div class="tp-emoji"${t.trap != null ? ` style="--tp-vlak:var(--m-vlak-${t.trap});--tp-rand:var(--m-rand-${t.trap})"` : ''}>${t.emoji}</div>`
+    +   `<div class="tp-emoji"${t.trap != null ? ` style="--tp-vlak:var(--m-vlak-${t.trap});--tp-rand:var(--m-rand-${t.trap})"` : ''}>${trofeeTeken(t)}</div>`
     + '</div>'
     + `<div class="tp-name">${t.name}</div>`
     + tpTrappen(t)

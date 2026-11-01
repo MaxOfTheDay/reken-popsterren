@@ -7837,6 +7837,9 @@
     box-shadow: 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.1);
   }
   .trophy-card .tico { filter: var(--emoji-schaduw); }
+
+
+  .trophy-card .tico .thema-ico, .tp-emoji .thema-ico { display: block; width: 1em; height: 1em; }
   .trophy-card.done .temoji, .trophy-card.ready .temoji {
     background: var(--medaille-vul-goud) padding-box, var(--medaille-goud) border-box;
     box-shadow: 0 0 16px rgba(var(--goud-rgb),.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18);
@@ -8034,6 +8037,7 @@
     font-size: var(--tx-klein); font-weight: 700; margin-top: 9px; line-height: 1.2;
     overflow-wrap: break-word; max-width: 100%;
   }
+
 
 
 
@@ -15100,16 +15104,22 @@ const TROPHIES = [
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
   { id: 'perfect1',   emoji: '⭐', name: 'Sterrenhit · Brons',   trap: 0, desc: 'Je eerste show met 3 sterren', has: p => perfectCount(p) >= 1, progress: p => trophyProgress(perfectCount(p), 1, 'perfecte shows') },
-  { id: 'perfect10',  emoji: '⭐', name: 'Sterrenhit · Zilver',  trap: 1, desc: '10 shows met 3 sterren', has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
-  { id: 'perfect25',  emoji: '⭐', name: 'Sterrenhit · Goud',    trap: 2, desc: '25 shows met 3 sterren', has: p => perfectCount(p) >= 25, progress: p => trophyProgress(perfectCount(p), 25, 'perfecte shows') },
-  { id: 'perfect50',  emoji: '⭐', name: 'Sterrenhit · Diamant', trap: 3, desc: '50 shows met 3 sterren', has: p => perfectCount(p) >= 50, progress: p => trophyProgress(perfectCount(p), 50, 'perfecte shows') },
-
-
-
-  { id: 'worlds3', emoji: '🌍', name: 'Wereldreiziger · Brons',  trap: 0, desc: '3 werelden uitgespeeld', has: p => doneWorldCount(p) >= Math.min(3, WORLD_AVAIL), progress: p => trophyProgress(doneWorldCount(p), Math.min(3, WORLD_AVAIL), 'werelden uit') },
-  { id: 'worlds6', emoji: '🌍', name: 'Wereldreiziger · Zilver', trap: 1, desc: '6 werelden uitgespeeld', has: p => doneWorldCount(p) >= Math.min(6, WORLD_AVAIL), progress: p => trophyProgress(doneWorldCount(p), Math.min(6, WORLD_AVAIL), 'werelden uit') },
-  { id: 'worlds9', emoji: '🌍', name: 'Wereldreiziger · Goud',   trap: 2, desc: '9 werelden uitgespeeld', has: p => doneWorldCount(p) >= Math.min(9, WORLD_AVAIL), progress: p => trophyProgress(doneWorldCount(p), Math.min(9, WORLD_AVAIL), 'werelden uit') },
+  { id: 'perfect10',  emoji: '⭐', name: 'Sterrenhit · Zilver',  trap: 1, desc: '5 shows met 3 sterren', has: p => perfectCount(p) >= 5, progress: p => trophyProgress(perfectCount(p), 5, 'perfecte shows') },
+  { id: 'perfect25',  emoji: '⭐', name: 'Sterrenhit · Goud',    trap: 2, desc: '15 shows met 3 sterren', has: p => perfectCount(p) >= 15, progress: p => trophyProgress(perfectCount(p), 15, 'perfecte shows') },
+  { id: 'perfect50',  emoji: '⭐', name: 'Sterrenhit · Diamant', trap: 3, desc: '35 shows met 3 sterren', has: p => perfectCount(p) >= 35, progress: p => trophyProgress(perfectCount(p), 35, 'perfecte shows') },
 
 
 
@@ -15118,9 +15128,10 @@ const TROPHIES = [
 
 
 
-
-
-  { id: 'worldtour',  emoji: '🌍', name: 'Wereldreiziger · Diamant', trap: 3, desc: 'Alle werelden uitgespeeld', telWerelden: true, has: p => allWorldsDone(p), progress: p => trophyProgress(doneWorldCount(p), WORLD_AVAIL, 'werelden uit') },
+  { id: 'beter1',  emoji: '💪', name: 'Doorzetter · Brons',   trap: 0, desc: 'Een show opnieuw gespeeld en beter gedaan', has: p => beterTel(p) >= 1, progress: p => trophyProgress(beterTel(p), 1, 'betere shows') },
+  { id: 'beter5',  emoji: '💪', name: 'Doorzetter · Zilver',  trap: 1, desc: '5 keer een show beter gedaan',  has: p => beterTel(p) >= 5, progress: p => trophyProgress(beterTel(p), 5, 'betere shows') },
+  { id: 'beter15', emoji: '💪', name: 'Doorzetter · Goud',    trap: 2, desc: '15 keer een show beter gedaan', has: p => beterTel(p) >= 15, progress: p => trophyProgress(beterTel(p), 15, 'betere shows') },
+  { id: 'beter30', emoji: '💪', name: 'Doorzetter · Diamant', trap: 3, desc: '30 keer een show beter gedaan', has: p => beterTel(p) >= 30, progress: p => trophyProgress(beterTel(p), 30, 'betere shows') },
 
 
 
@@ -15129,15 +15140,15 @@ const TROPHIES = [
 
   { id: 'sums25',   emoji: '🧮', name: 'Rekenmedaille · Brons',   trap: 0, desc: '25 sommen goed',   has: p => p.stats.correct >= 25, progress: p => trophyProgress(p.stats.correct, 25, 'sommen goed') },
   { id: 'sums100',  emoji: '🧮', name: 'Rekenmedaille · Zilver',  trap: 1, desc: '100 sommen goed',  has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
-  { id: 'sums500',  emoji: '🧮', name: 'Rekenmedaille · Goud',    trap: 2, desc: '500 sommen goed',  has: p => p.stats.correct >= 500, progress: p => trophyProgress(p.stats.correct, 500, 'sommen goed') },
-  { id: 'sums1000', emoji: '🧮', name: 'Rekenmedaille · Diamant', trap: 3, desc: '1000 sommen goed', has: p => p.stats.correct >= 1000, progress: p => trophyProgress(p.stats.correct, 1000, 'sommen goed') },
-  { id: 'gold5',    emoji: '🌟', name: 'Goudzoeker · Brons',  trap: 0, desc: '5 gouden vragen',  has: p => p.goldHits >= 5, progress: p => trophyProgress(p.goldHits, 5, 'gouden vragen goed') },
-  { id: 'gold20',   emoji: '🌟', name: 'Goudzoeker · Zilver', trap: 1, desc: '20 gouden vragen', has: p => p.goldHits >= 20, progress: p => trophyProgress(p.goldHits, 20, 'gouden vragen goed') },
+  { id: 'sums500',  emoji: '🧮', name: 'Rekenmedaille · Goud',    trap: 2, desc: '300 sommen goed',  has: p => p.stats.correct >= 300, progress: p => trophyProgress(p.stats.correct, 300, 'sommen goed') },
+  { id: 'sums1000', emoji: '🧮', name: 'Rekenmedaille · Diamant', trap: 3, desc: '600 sommen goed', has: p => p.stats.correct >= 600, progress: p => trophyProgress(p.stats.correct, 600, 'sommen goed') },
+  { id: 'gold5',    emoji: '🌟', name: 'Goudzoeker · Brons',  trap: 0, desc: '3 gouden vragen',  has: p => p.goldHits >= 3, progress: p => trophyProgress(p.goldHits, 3, 'gouden vragen goed') },
+  { id: 'gold20',   emoji: '🌟', name: 'Goudzoeker · Zilver', trap: 1, desc: '10 gouden vragen', has: p => p.goldHits >= 10, progress: p => trophyProgress(p.goldHits, 10, 'gouden vragen goed') },
 
 
-  { id: 'gold50',   emoji: '🌟', name: 'Goudzoeker · Goud',   trap: 2, desc: '50 gouden vragen', has: p => p.goldHits >= 50, progress: p => trophyProgress(p.goldHits, 50, 'gouden vragen goed') },
+  { id: 'gold50',   emoji: '🌟', name: 'Goudzoeker · Goud',   trap: 2, desc: '20 gouden vragen', has: p => p.goldHits >= 20, progress: p => trophyProgress(p.goldHits, 20, 'gouden vragen goed') },
 
-  { id: 'gold100',  emoji: '🌟', name: 'Goudzoeker · Diamant', trap: 3, desc: '100 gouden vragen', has: p => p.goldHits >= 100, progress: p => trophyProgress(p.goldHits, 100, 'gouden vragen goed') },
+  { id: 'gold100',  emoji: '🌟', name: 'Goudzoeker · Diamant', trap: 3, desc: '35 gouden vragen', has: p => p.goldHits >= 35, progress: p => trophyProgress(p.goldHits, 35, 'gouden vragen goed') },
 
 
 
@@ -15172,14 +15183,22 @@ const TROPHIES = [
 
 
 
+
+
   { id: 'shopper',    emoji: '🛍️', name: 'Verzamelaar · Brons',   trap: 0, desc: '10 spulletjes gekocht',  naar: 'dress',
     has: p => boughtCount(p) >= 10, progress: p => trophyProgress(boughtCount(p), 10, 'spulletjes gekocht') },
   { id: 'shop25',     emoji: '🛍️', name: 'Verzamelaar · Zilver',  trap: 1, desc: '25 spulletjes gekocht',  naar: 'dress',
     has: p => boughtCount(p) >= 25, progress: p => trophyProgress(boughtCount(p), 25, 'spulletjes gekocht') },
   { id: 'shop50',     emoji: '🛍️', name: 'Verzamelaar · Goud',    trap: 2, desc: '50 spulletjes gekocht',  naar: 'dress',
     has: p => boughtCount(p) >= 50, progress: p => trophyProgress(boughtCount(p), 50, 'spulletjes gekocht') },
-  { id: 'shop100',    emoji: '🛍️', name: 'Verzamelaar · Diamant', trap: 3, desc: '100 spulletjes gekocht', naar: 'dress',
-    has: p => boughtCount(p) >= 100, progress: p => trophyProgress(boughtCount(p), 100, 'spulletjes gekocht') },
+  { id: 'shop100',    emoji: '🛍️', name: 'Verzamelaar · Diamant', trap: 3, desc: '75 spulletjes gekocht', naar: 'dress',
+    has: p => boughtCount(p) >= 75, progress: p => trophyProgress(boughtCount(p), 75, 'spulletjes gekocht') },
+
+
+
+
+  { id: 'wens', emoji: '💖', name: 'Wens vervuld', desc: 'Je wens gekocht', naar: 'dress',
+    has: p => !!p.wensUit },
 
 
   { id: 'eigenpodium', emoji: '🎪', name: 'Eigen podium', desc: 'Je eerste eigen podium', naar: 'stage',
@@ -15200,7 +15219,7 @@ const TRAP_NAMEN = ['Brons', 'Zilver', 'Goud', 'Diamant'];
 
 const TROPHY_LADDERS = [
   { key: 'hit',   emoji: '⭐', name: 'Sterrenhit',     ids: ['perfect1', 'perfect10', 'perfect25', 'perfect50'] },
-  { key: 'reis',  emoji: '🌍', name: 'Wereldreiziger', ids: ['worlds3', 'worlds6', 'worlds9', 'worldtour'] },
+  { key: 'beter', emoji: '💪', name: 'Doorzetter',     ids: ['beter1', 'beter5', 'beter15', 'beter30'] },
   { key: 'reken', emoji: '🧮', name: 'Rekenmedaille',  ids: ['sums25', 'sums100', 'sums500', 'sums1000'] },
   { key: 'goud',  emoji: '🌟', name: 'Goudzoeker',     ids: ['gold5', 'gold20', 'gold50', 'gold100'] },
   { key: 'kast',  emoji: '🛍️', name: 'Verzamelaar',    ids: ['shopper', 'shop25', 'shop50', 'shop100'], naar: 'dress' },
@@ -15236,12 +15255,15 @@ const TROPHY_SHELVES = [
   { key: 'perfect',  ico: '📜', name: 'Werelden',          note: 'Een diploma voor elke wereld die je uitspeelt; perfect in goud',
     ids: [] },
   { key: 'medailles', ico: '🎖️', name: 'Medailles',      note: 'Medailles die meegroeien: brons, zilver, goud, diamant',
-    ids: ['perfect1', 'perfect10', 'perfect25', 'perfect50', 'worlds3', 'worlds6', 'worlds9', 'worldtour',
+    ids: ['perfect1', 'perfect10', 'perfect25', 'perfect50', 'beter1', 'beter5', 'beter15', 'beter30',
           'sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20', 'gold50', 'gold100',
           'shopper', 'shop25', 'shop50', 'shop100'] },
   { key: 'eerst',    ico: '🎤', name: 'Eerste keer',       note: 'De momenten die je je blijft herinneren',
-    ids: ['first', 'eigenpodium'] },
-  { key: 'leren',    ico: '💡', name: 'Nieuwe sommen',     note: 'Wat je nieuw geleerd hebt',
+    ids: ['first', 'wens', 'eigenpodium'] },
+
+
+
+  { key: 'leren',    ico: '💡', name: 'Nieuw geleerd',     note: 'Wat je nieuw geleerd hebt',
     ids: ['leer-brug', 'leer-zoek', 'leer-drie', 'leer-cijfers', 'leer-telsom'] },
 ];
 
@@ -15273,6 +15295,10 @@ const RETIRED_TROPHIES = new Set([
   'collector',
 
   'toegift',
+
+
+
+  'worlds3', 'worlds6', 'worlds9', 'worldtour',
 
   'modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'dierenkoning',
 
@@ -15314,6 +15340,9 @@ function totalStarCount(p) { return allStarValues(p).reduce((a, b) => a + (Numbe
 function doneWorldCount(p) { let n = 0; for (let i = 0; i < WORLD_AVAIL; i++) if (worldDone(p, i)) n++; return n; }
 
 
+function beterTel(p) { return Number(p.beter) || 0; }
+
+
 
 function boughtCount(p) {
   return Math.max(0, p.owned.filter(id => !isBeloning(id)).length - (p.freebies || 5));
@@ -15330,6 +15359,42 @@ function telLeer(p, q) {
   if (!p.leer) p.leer = { brug: 0, zoek: 0, drie: 0 };
   const soort = q.kind === 'missing' ? 'zoek' : q.kind === 'chain' ? 'drie' : q.brug ? 'brug' : null;
   if (soort) p.leer[soort] = (p.leer[soort] || 0) + 1;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const THEMA_TROFEE = 'thema-';
+function bouwThemaTrofeeen() {
+  for (let i = TROPHIES.length - 1; i >= 0; i--) if (TROPHIES[i].id.indexOf(THEMA_TROFEE) === 0) TROPHIES.splice(i, 1);
+  const plank = TROPHY_SHELVES.filter(sh => sh.key === 'leren')[0];
+  if (plank) plank.ids = plank.ids.filter(id => id.indexOf(THEMA_TROFEE) !== 0);
+  THEMAS.forEach(th => {
+    if (!th.trofee) return;
+    const k = th.id, tr = th.trofee, goed = p => ((p.stats && p.stats.thema && p.stats.thema[k]) || [0])[0] || 0;
+    TROPHIES.push({
+      id: THEMA_TROFEE + k, emoji: tr.emoji, name: tr.naam, desc: `10 ${tr.eenheid[1]} goed`,
+      tekening: maat => themaIcoon(k, maat),
+      voor: p => !telModus(p) && themaAan(p.settings, k),
+      has: p => goed(p) >= 10, progress: p => trophyProgress(goed(p), 10, tr.eenheid[1] + ' goed'),
+    });
+    TROPHY_UNIT_SINGULAR[tr.eenheid[1]] = tr.eenheid[0];
+    if (plank) plank.ids.push(THEMA_TROFEE + k);
+  });
 }
 function telModus(p) { return !!p.settings && p.settings.track === 'count'; }
 
@@ -15463,6 +15528,7 @@ function defaultProfile(name, dress, opts) {
     countTrack: { stage: opts.stage || 1, rung: 0, streak: 0, seen: 0, acc: 0.5 },
     stats: { correct: 0, wrong: 0 },
     leer: { brug: 0, zoek: 0, drie: 0 },
+    beter: 0,
     recent: [],
     pad: null,
     gezien: {}
@@ -15540,6 +15606,7 @@ function migrate(p) {
   if (p.goldHits == null) p.goldHits = 0;
   if (p.encores == null) p.encores = 0;
   if (!p.leer) p.leer = { brug: 0, zoek: 0, drie: 0 };
+  if (p.beter == null) p.beter = 0;
 
 
 
@@ -15748,17 +15815,6 @@ function migrate(p) {
 
   if (p.owned) p.owned = p.owned.filter(id => id !== 'acc_tovenaarshoed');
   if (p.equipped && p.equipped.acc === 'acc_tovenaarshoed') p.equipped.acc = null;
-
-
-
-
-
-
-
-  p.readyTrophies = p.readyTrophies.filter(id => {
-    const t = TROPHIES.find(x => x.id === id);
-    return !(t && t.telWerelden) || t.has(p);
-  });
 }
 
 
@@ -22716,9 +22772,8 @@ const TROPHY_UNIT_SINGULAR = {
   'spulletjes': 'spulletje',
   'sommen over de tien': 'som over de tien', 'zoeksommen': 'zoeksom',
   'sommen met drie getallen': 'som met drie getallen',
+  'betere shows': 'betere show',
 
-
-  'werelden uit': 'wereld uit'
 };
 
 
@@ -22737,19 +22792,6 @@ function unitText(label, remaining) {
 
 function trophyBoog(t, p, status) {
   if (status !== 'busy' || !t.progress) return 0;
-
-
-
-
-  if (t.telWerelden && meerWereldenVooruit(p)) {
-
-
-
-
-
-
-    return Math.max(0, Math.min(100, Math.round(100 * doneWorldCount(p) / (laatsteZichtbareWereld(p) + 1))));
-  }
   const pr = t.progress(p);
   return Math.max(0, Math.min(100, Math.round(100 * pr.now / pr.target)));
 }
@@ -22814,7 +22856,7 @@ function ladderBoog(ladder, p) {
   const { trappen, niveau, volgende } = ladderStand(ladder, p);
   if (!volgende) return 0;
   const pr = volgende.progress(p), vorig = niveau ? trappen[niveau - 1].progress(p).target : 0;
-  const doel = trapDoel(volgende, p);
+  const doel = pr.target;
   return doel > vorig ? Math.max(0, Math.min(100, Math.round(100 * (pr.now - vorig) / (doel - vorig)))) : 0;
 }
 
@@ -22847,13 +22889,6 @@ function trapRij(ladder, p, opts = {}) {
 
 
 
-function trapDoel(t, p) {
-  const doel = t.progress(p).target;
-  return t.telWerelden && meerWereldenVooruit(p) ? Math.min(doel, laatsteZichtbareWereld(p) + 1) : doel;
-}
-
-
-
 const DIAMANT_VONK = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0 6 4 10 5 6 6 5 10 4 6 0 5 4 4Z"/></svg>';
 const DIAMANT_VONKJES = `<i class="vonkje">${DIAMANT_VONK}</i><i class="vonkje">${DIAMANT_VONK}</i>`;
 function tapLadder(ladder, card) {
@@ -22872,10 +22907,6 @@ function tapLadder(ladder, card) {
   if (!volgende) { kastBalk(kop, card, metaal + '!', null, rij); return; }
   const pr = volgende.progress(p), rem = Math.max(0, pr.target - pr.now);
   const zeg = tekst => metaal ? `${metaal} · ${tekst}` : tekst;
-
-  if (volgende.telWerelden && meerWereldenVooruit(p)) {
-    kastBalk(kop, card, `${pr.now} ${pr.label}`, pr.now, rij, zeg(`${pr.now} ${pr.label}`)); return;
-  }
   const nog = rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!';
   kastBalk(kop, card, nog, rem > 0 ? rem : null, rij, zeg(nog));
 }
@@ -22898,11 +22929,18 @@ function giftMedaille(t) {
 
 
 
+function trofeeTeken(t) { return t.tekening ? t.tekening(40) : t.emoji; }
+
+
+
+
+
+
 
 function normalCardHTML(t, p, status) {
   if (status === 'ready') return giftMedaille(t);
   const boog = trophyBoog(t, p, status);
-  return `<div class="temoji"${boog ? ` style="--p:${boog}"` : ''}><span class="tico">${t.emoji}</span></div>`
+  return `<div class="temoji"${boog ? ` style="--p:${boog}"` : ''}><span class="tico">${trofeeTeken(t)}</span></div>`
     + `<div class="tname">${t.name}</div>`
     + cardVoet(status === 'locked' ? '<div class="tstand">🔒</div>' : '');
 }
@@ -23274,8 +23312,6 @@ function tapTrophy(t, card) {
     kastBalk(kop, card, `nog ${rem} ${rem === 1 ? 'show' : 'shows'} met ⭐⭐⭐`, rem);
     return;
   }
-
-  if (t.telWerelden && meerWereldenVooruit(p)) { kastBalk(t, card, `${pr.now} ${pr.label}`, pr.now); return; }
   kastBalk(t, card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!', rem > 0 ? rem : null);
 }
 
@@ -23443,7 +23479,7 @@ function celebrateTrophy(t) {
     +   '<div class="tp-ring" aria-hidden="true"></div>'
     +   '<div class="tp-chest" aria-hidden="true">🎁</div>'
 
-    +   `<div class="tp-emoji"${t.trap != null ? ` style="--tp-vlak:var(--m-vlak-${t.trap});--tp-rand:var(--m-rand-${t.trap})"` : ''}>${t.emoji}</div>`
+    +   `<div class="tp-emoji"${t.trap != null ? ` style="--tp-vlak:var(--m-vlak-${t.trap});--tp-rand:var(--m-rand-${t.trap})"` : ''}>${trofeeTeken(t)}</div>`
     + '</div>'
     + `<div class="tp-name">${t.name}</div>`
     + tpTrappen(t)
@@ -24705,11 +24741,17 @@ function lijnRaak(q, x, b) {
 
 
 
+
+
+
+
 const THEMAS = [
   { id: 'rekenen', naam: 'Rekenen', ops: ['+', '-'], icoon: tekenIcoon('+', '−') },
   { id: 'tafels',  naam: 'Tafels',  ops: ['x', ':'], icoon: tekenIcoon('×', '÷'),
+    trofee: { naam: 'Tafelkenner', emoji: '✖️', eenheid: ['tafelsom', 'tafelsommen'] },
     ladder: { pad: TAFELPAD, lijn: 'tafelLijn', stand: 'tafels', id: 'set-tafelpad', eind: 'Alle tafels door elkaar', vb: tafelVoorbeeld } },
   { id: 'lijn', naam: 'Getallenlijn', plaatje: true, teken: '📏',
+    trofee: { naam: 'Lijnloper', emoji: '📏', eenheid: ['lijnvraag', 'lijnvragen'] },
     icoon: maat => icoonSvg(maat, ICOON_TEGEL
       + '<g stroke="#4a2a7a" stroke-linecap="round"><line x1="6" x2="34" y1="25" y2="25" stroke="#8e3fc8" stroke-width="4"/><line x1="9" x2="9" y1="20" y2="30" stroke-width="2.5"/><line x1="20" x2="20" y1="20" y2="30" stroke-width="2.5"/><line x1="31" x2="31" y1="20" y2="30" stroke-width="2.5"/></g>'
       + '<path d="M25.5 18 l-4 -7 h8z" fill="#e5397a"/>'),
@@ -24718,6 +24760,7 @@ const THEMAS = [
 
     proeven: inst => inst.rijen.flatMap(r => [...Array.from({ length: 8 }, (_, i) => genLijn(r, i % 2 ? 'zoek' : 'lees').html), ...(r.sprong ? lijnHoogste() : [])]) },
   { id: 'geld', naam: 'Geld', plaatje: true, teken: '€',
+    trofee: { naam: 'Geldwijs', emoji: '💶', eenheid: ['geldvraag', 'geldvragen'] },
     icoon: maat => icoonSvg(maat, '<circle cx="20" cy="20" r="18" fill="#c9ccd1" stroke="#9aa0a8" stroke-width="1.5"/>'
       + '<circle cx="20" cy="20" r="12.5" fill="#e8c45a"/>'
       + '<text x="20" y="21" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="700" fill="#5d3f00">€</text>'),
@@ -24731,6 +24774,7 @@ const THEMAS = [
     toonAntwoord: (q, v) => q.centen ? euro(v).slice(1) : String(v),
     toonKeuze: (q, v) => q.centen ? euro(v) : `€${v}` },
   { id: 'klok', naam: 'Klok', plaatje: true, teken: '🕐',
+    trofee: { naam: 'Klokkijker', emoji: '🕐', eenheid: ['klokvraag', 'klokvragen'] },
     icoon: maat => klokSvg(130, maat, true).replace('class="klok"', 'class="klok thema-ico"'),
     ladder: { pad: KLOKPAD, lijn: 'klokLijn', stand: 'klok', id: 'set-klokpad', eind: 'Alle tijden door elkaar', vb: klokVoorbeeld, kies: 'kiesKlok' },
     gen: genKlok,
@@ -24743,6 +24787,7 @@ const THEMAS = [
     hint: klokHint,
     hintTeken: klokHintTeken },
   { id: 'kalender', naam: 'Kalender', plaatje: true, teken: '📅',
+    trofee: { naam: 'Kalenderkind', emoji: '📅', eenheid: ['kalendervraag', 'kalendervragen'] },
     icoon: maat => icoonSvg(maat, '<rect x="5" y="7" width="30" height="29" rx="5" fill="#fff" stroke="#9aa0a8" stroke-width="1.5"/>'
       + '<path d="M5 12a5 5 0 0 1 5-5h20a5 5 0 0 1 5 5v4H5z" fill="#e5397a"/><rect x="11" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/><rect x="26" y="3" width="3" height="8" rx="1.5" fill="#6b4a86"/>'
       + '<text x="20" y="27" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="700" style="fill:var(--plaatje-inkt)">7</text>'),
@@ -24762,6 +24807,7 @@ const THEMAS = [
     hint: (q, v) => q.soort === 'getal' ? undefined : kalHint(q, v) },
 ];
 const THEMA = Object.fromEntries(THEMAS.map(t => [t.id, t]));
+bouwThemaTrofeeen();
 
 const PLAATJE = THEMAS.filter(t => t.plaatje).map(t => t.id);
 
@@ -28351,6 +28397,7 @@ function applyShowResult(p, lvl, wl, stars) {
   const wasUit = worldDone(p, wl.index);
   const wasVol = worldProgress(p, worldForIndex(wl.index)).vol;
   p.stars[lvl] = Math.max(vorige, stars);
+  if (beter) p.beter = beterTel(p) + 1;
 
 
 
@@ -29868,7 +29915,8 @@ function confirmShopBuy(id, blijf) {
   }
   p.diamonds -= prijs;
   erbij.forEach(id2 => { if (!p.owned.includes(id2)) p.owned.push(id2); });
-  if (erbij.includes(p.wens)) delete p.wens;
+
+  if (erbij.includes(p.wens)) { delete p.wens; p.wensUit = true; }
   p.equipped[it.cat] = it.id;
 
 

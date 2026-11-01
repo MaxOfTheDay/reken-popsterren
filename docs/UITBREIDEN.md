@@ -338,8 +338,8 @@ Moet het toch:
    `progress: p => trophyProgress(nu, doel, 'label')` als het getal zélf iets
    zegt ("82 / 100 sommen"). Voor iets wat één keer gebeurt géén `progress` —
    "0 / 1" is geen voortgang.
-2. Het id bij een plank in `TROPHY_SHELVES`. Er zijn er vier (Medailles,
-   Eerste keer, Nieuwe sommen, Perfecte werelden); een plank met
+2. Het id bij een plank in `TROPHY_SHELVES`. Er zijn er vier (Werelden,
+   Medailles, Eerste keer, Nieuw geleerd); een plank met
    één kaartje is geen plank. Is de trofee niet voor elk kind te halen (hangt
    hij af van wat de ouder instelde), geef hem dan `voor: p => …`: dan staat hij
    er alleen bij wie hem kán halen.
@@ -348,7 +348,9 @@ Moet het toch:
    `TROPHY_LADDERS`, met `trap` = zijn plek (0 brons, 1 zilver, 2 goud,
    3 diamant). De kast tekent een ladder als één medaille die meegroeit. Elke
    ladder heeft vier trappen, zodat diamant overal de top is: het metaal is het
-   enige dat zegt hoe ver je bent.
+   enige dat zegt hoe ver je bent. Kies de drempels zo dat een gemiddeld kind
+   de top binnen de tournee haalt: kern zaak **TD** rekent het na, en een
+   nieuwe ladder heeft daar een regel nodig.
 3. Is het label van `progress` nieuw, dan één regel in
    `TROPHY_UNIT_SINGULAR` — anders staat er "Nog 1 sommen". `inhoud.test.js`
    valt om als dat vergeten wordt.
@@ -418,6 +420,9 @@ wordt een thema bij naam genoemd. Een thema erbij is dus:
    `proeven`: de grootste kaarten die het kan maken. Daarop zet de show het vak
    vast; mist er een, dan verspringt de kaart of wordt het plaatje afgeknipt.
    Waar het in de rij van de tegels staat, is waar het overal staat.
+   En `trofee: { naam, emoji, eenheid: [enkelvoud, meervoud] }`: daar maakt
+   `bouwThemaTrofeeen()` zijn trofee op de plank Nieuw geleerd van (tien keer
+   goed in dit thema). Met de hand in `TROPHIES` zetten hoeft niet.
 4. **Zijn tekening** — een stuk in het stijlblad, naast dat van geld, de klok en
    de kalender in `src/css/40-kaart.css`.
 

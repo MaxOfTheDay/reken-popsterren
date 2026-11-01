@@ -300,6 +300,17 @@ zaak('I · mijn wens', () => {
   check(proef('pet_bestaatniet') === undefined, 'I · een wens die niet bestaat gaat eruit', '');
   check(proef('pet_trex', true) === undefined, 'I · een wens die al van jou is gaat eruit', '');
   check(proef('acc_wereld_muziek') === undefined, 'I · een wereldschat kan geen wens zijn', '');
+  /* De wens kopen: hij gaat eruit, en dat hij uitkwam blijft staan voor 💖 Wens
+     vervuld. Iets anders kopen terwijl er een wens staat, telt niet. */
+  {
+    const { app: a, p: q } = verseSter();
+    q.diamonds = 1000; q.wens = 'pet_trex';
+    a.run('confirmShopBuy("pet_draak")');
+    check(q.wens === 'pet_trex' && !q.wensUit, 'I · iets anders kopen vervult de wens niet', JSON.stringify({ w: q.wens, uit: q.wensUit }));
+    a.run('confirmShopBuy("pet_trex")');
+    check(q.wens === undefined && q.wensUit === true && a.TROPHIES.find(t => t.id === 'wens').has(q),
+      'I · de wens kopen: weg uit de pil, en Wens vervuld is gehaald', JSON.stringify({ w: q.wens, uit: q.wensUit }));
+  }
 });
 
 klaar();
