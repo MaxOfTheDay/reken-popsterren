@@ -780,16 +780,25 @@ function zelfErbij(p) {
 /* HAAR CIJFERS, in een eigen blad achter 📊 in de kop (openCijfers). Kijken
    en aanpassen zijn zo twee plekken: de pagina zelf is om te zetten wat ze
    oefent, en wie wil weten hoe het gaat, tikt op 📊. Van boven naar onder:
-     LAATSTE SHOWS  -- p.recent als bolletjes, van eerder naar nu: donker is
-                       drie sterren, licht één of twee, een rode ring mislukt.
-                       Alleen de totalen zeiden niet of het de laatste tijd
-                       beter of slechter ging; een rij bolletjes wel, in één blik.
-     DRIE TEGELS    -- shows, % goed en hoeveel sommen ze geleerd heeft (in
+     LAATSTE SHOWS  -- p.recent als staafjes, van eerder naar nu: hoe hoger,
+                       hoe beter. Drie sterren is een volle paarse staaf, één
+                       of twee een lagere lichte, een mislukte show een rood
+                       stompje. Alleen de totalen zeiden niet of het de laatste
+                       tijd beter of slechter ging, en een mislukte show stond
+                       nergens anders. Eerst waren het bolletjes in drie tinten;
+                       die moest een ouder ontcijferen, een hoogte niet -- en
+                       "hoog = ⭐⭐⭐" is de ene sleutel die nog nodig is.
+     DRIE TEGELS    -- vragen, % goed en hoeveel sommen ze geleerd heeft (in
                        onderhoud, p.learned): dat laatste is iets om blij om te
-                       zijn, waar een percentage alleen een cijfer is.
-     PER THEMA      -- stats.thema (zie telThema). Met te weinig vragen
-                       (CIJFER_MIN) staat het thema er bleek en met "–": drie
-                       vragen geven een percentage dat niets zegt.
+                       zijn, waar een percentage alleen een cijfer is. Geen
+                       "shows": playedCount telt verschillende gehaalde shows,
+                       zonder herhalingen of mislukte, en las dan als een fout
+                       onder "Laatste 10 shows". Vragen hoort bij "% goed".
+                       Nog niets geleerd: die tegel weg, geen "0" die treurig staat.
+     PER THEMA      -- stats.thema (zie telThema), met het icoon van de tegel.
+                       Met te weinig vragen (CIJFER_MIN) staat het thema er
+                       bleek en met "–": drie vragen geven een percentage dat
+                       niets zegt.
      ⭐ EN 🏆        -- haar beloningen in het spel, één stille regel onderaan:
                        ze ziet ze zelf al, voor de ouder zijn ze bijzaak. De
                        trofeeën als getal en niet als "3/38", wat las als een
@@ -803,21 +812,22 @@ function cijfersBladHtml(p) {
   if (!shows) return '<div class="cijfer-leeg">🎬 Nog geen shows gespeeld.</div>';
   const answered = p.stats.correct + p.stats.wrong;
   const recent = p.recent || [];
-  const bolletjes = recent.length ? `<div class="oe-lbl cijfer-kop">Laatste ${recent.length} ${mv(recent.length, 'show', 'shows')}</div>`
-    + `<div class="cijfer-reeks" role="img" aria-label="${recent.map(s => s ? s + ' sterren' : 'mislukt').join(', ')}">`
-    + recent.map(s => `<i class="${s === 3 ? 'drie' : s ? 'een' : 'mis'}"></i>`).join('') + '</div><div class="cijfer-pijl">eerder → nu</div>' : '';
-  const tegels = [`<b>${shows}</b> ${mv(shows, 'show', 'shows')}`];
-  if (answered) tegels.push(`<b>${procent(p.stats.correct, p.stats.wrong)}%</b> goed`);
-  tegels.push(`<b>${Object.keys(p.learned || {}).length}</b> geleerd`);
+  const staafjes = recent.length ? `<div class="cijfer-kop2"><span>Laatste ${recent.length} ${mv(recent.length, 'show', 'shows')}</span><span class="sleutel">hoog = ⭐⭐⭐</span></div>`
+    + `<div class="cijfer-staaf" role="img" aria-label="${recent.map(s => s ? s + ' sterren' : 'mislukt').join(', ')}">`
+    + recent.map(s => `<i class="s${Math.max(0, Math.min(3, Number(s) || 0))}"></i>`).join('') + '</div><div class="cijfer-pijl"><span>eerder</span><span>nu</span></div>' : '';
+  const tegels = [];
+  if (answered) tegels.push(`<b>${answered}</b> ${mv(answered, 'vraag', 'vragen')}`, `<b>${procent(p.stats.correct, p.stats.wrong)}%</b> goed`);
+  const geleerd = Object.keys(p.learned || {}).length;
+  if (geleerd) tegels.push(`<b>${geleerd}</b> <small>${mv(geleerd, 'som', 'sommen')} geleerd</small>`);
   /* Per thema in de volgorde van de tegels, en alleen wat ze al speelde --
      ook een thema dat nu uit staat, want wat ze deed blijft waar. Bij minder
      dan twee thema's niet: dan zegt het niets meer dan het totaal. */
   const t = p.stats.thema || {};
   const rijen = THEMAS.filter(th => t[th.id] && t[th.id][0] + t[th.id][1] > 0).map(th => {
     const [goed, fout] = t[th.id], weinig = goed + fout < CIJFER_MIN, pct = weinig ? 0 : procent(goed, fout);
-    return `<div class="cijfer-thema${weinig ? ' weinig' : ''}"><span>${th.naam}</span><i style="--pct:${pct}%"></i><b>${weinig ? '–' : pct + '%'}</b></div>`;
+    return `<div class="cijfer-thema${weinig ? ' weinig' : ''}">${th.icoon ? th.icoon(22) : ''}<span>${th.naam}</span><i style="--pct:${pct}%"></i><b>${weinig ? '–' : pct + '%'}</b></div>`;
   });
-  return bolletjes + `<div class="ster-cijfers">${tegels.map(d => `<span>${d}</span>`).join('')}</div>`
+  return staafjes + (tegels.length ? `<div class="ster-cijfers">${tegels.map(d => `<span>${d}</span>`).join('')}</div>` : '')
     + (rijen.length > 1 ? `<div class="oe-lbl cijfer-kop">Goed per thema</div>${rijen.join('')}` : '')
     + `<div class="cijfer-voet"><span><b>${totalStarCount(p)}</b> ⭐</span><span><b>${earnedActiveCount(p)}</b> 🏆</span></div>`;
 }

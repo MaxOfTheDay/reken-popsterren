@@ -790,17 +790,30 @@ function check(ok, label, detail) {
     await open(page, 'p1', 'voortgang');
     await page.waitForTimeout(200);
     r = await regel();
-    check(r[0] === '1 show' && r[1] === '100% goed' && r[2] === '0 geleerd', 'één show is enkelvoud', JSON.stringify(r));
+    check(r[0] === '1 vraag' && r[1] === '100% goed' && !r.some(x => /geleerd/.test(x)), 'één vraag is enkelvoud, en zonder geleerde sommen geen "0 geleerd"', JSON.stringify(r));
     // twee: weer meervoud
-    await page.evaluate(() => { const p = db.profiles.p1; p.stars[1] = 3; p.stars[2] = 3; save(); });
+    await page.evaluate(() => {
+      const p = db.profiles.p1; p.stars[1] = 3; p.stars[2] = 3; p.stats.correct = 2;
+      p.learned = { a: { ans: 3, op: '+', iv: 18, due: 20 } }; save();
+    });
     await open(page, 'p1', 'voortgang');
     await page.waitForTimeout(200);
     r = await regel();
-    check(r[0] === '2 shows' && r.includes('6 ⭐'), 'twee is weer meervoud, en de sterren stil onderaan', JSON.stringify(r));
+    check(r[0] === '2 vragen' && r[2] === '1 som geleerd' && r.includes('6 ⭐'), 'twee is weer meervoud, één geleerde som enkelvoud, en de sterren stil onderaan', JSON.stringify(r));
+    // de laatste shows als staafjes: hoe hoger hoe beter, mislukt een stompje (s0)
+    const staaf = await page.evaluate(() => {
+      db.profiles.p1.recent = [3, 0, 2, 1]; save(); openCijfers();
+      const r = { kop: document.querySelector('#confirm-body .cijfer-kop2 span').textContent,
+        s: [...document.querySelectorAll('#confirm-body .cijfer-staaf i')].map(i => i.className) };
+      closeConfirmModal();
+      return r;
+    });
+    check(staaf.kop === 'Laatste 4 shows' && staaf.s.join() === 's3,s0,s2,s1', 'cijfers: de laatste shows als staafjes, van eerder naar nu', JSON.stringify(staaf));
     // per thema (stats.thema, zie telThema): pas vanaf twee thema's, met het percentage erbij
     const perThema = async th => page.evaluate(th => {
       db.profiles.p1.stats.thema = th; save(); openCijfers();
-      const r = [...document.querySelectorAll('#confirm-body .cijfer-thema')].map(e => e.textContent.trim());
+      // zonder het icoon: rekenen en de tafels tekenen hun tekens als tekst
+      const r = [...document.querySelectorAll('#confirm-body .cijfer-thema')].map(e => e.querySelector('span').textContent + e.querySelector('b').textContent);
       closeConfirmModal();
       return r;
     }, th);
