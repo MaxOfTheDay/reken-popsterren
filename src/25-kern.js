@@ -559,14 +559,26 @@ const TROPHY_LADDERS = [
    alle vijf medailles samen (één rij metaal, één manier van lezen), en de twee
    eerste keren -- je eerste show, je eerste eigen podium -- samen eronder.
 
-   De volgorde: eerst wat je verzamelt en meemaakt, dan wat je leert, en
-   onderaan de grote prijzen. */
+   De volgorde: bovenaan de werelden, de grootste prijs van het spel en sinds
+   het diploma (zie "= Het diploma van een wereld") ook de plank waar élke
+   uitgespeelde wereld iets laat zien, niet alleen een perfecte. Dan wat je
+   verzamelt en meemaakt, en wat je leert.
+
+   Samenvoegen doen we niet, met reden: elke plank heeft zijn eigen regel. Eén
+   per wereld; trappen in metaal; leerstappen (die de ouder ook leest); en
+   eenmalige momenten. Eerste keer (twee stuks) onder Medailles zetten zou
+   trofeeën met en zonder trappen weer door elkaar halen. */
 /* `ico` staat los van `name` sinds de kopregel van een groep uit drie cellen
    bestaat (icoon | naam + regeltje | stand). Stond het emoji nog vóór de naam in
    dezelfde string, dan zou het meeschuiven met de tekst en niet op één lijn staan
    met de iconen van de andere groepen -- en dat is nu juist wat de kolom rustig
    maakt. Een groep erbij heeft dus één veld meer, en verder niets. */
 const TROPHY_SHELVES = [
+  /* De grote prijzen. De lijst wordt gevuld door rebuildWorldBadges() -- de werelden
+     staan in WORLDS en kunnen in de studio veranderen, dus hier hardcoderen zou
+     meteen uit de pas lopen. De `key` is waar die functie deze plank aan herkent. */
+  { key: 'perfect',  ico: '📜', name: 'Werelden',          note: 'Een diploma voor elke wereld die je uitspeelt; perfect in goud',
+    ids: [] },
   { key: 'medailles', ico: '🎖️', name: 'Medailles',      note: 'Medailles die meegroeien: brons, zilver, goud, diamant',
     ids: ['perfect1', 'perfect10', 'perfect25', 'perfect50', 'worlds3', 'worlds6', 'worlds9', 'worldtour',
           'sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20', 'gold50', 'gold100',
@@ -575,11 +587,6 @@ const TROPHY_SHELVES = [
     ids: ['first', 'eigenpodium'] },
   { key: 'leren',    ico: '💡', name: 'Nieuwe sommen',     note: 'Wat je nieuw geleerd hebt',
     ids: ['leer-brug', 'leer-zoek', 'leer-drie', 'leer-cijfers', 'leer-telsom'] },
-  /* De grote prijzen. De lijst wordt gevuld door rebuildWorldBadges() -- de werelden
-     staan in WORLDS en kunnen in de studio veranderen, dus hier hardcoderen zou
-     meteen uit de pas lopen. De `key` is waar die functie deze plank aan herkent. */
-  { key: 'perfect',  ico: '🥇', name: 'Perfecte werelden', note: 'Overal drie sterren: de grootste prijs van het spel',
-    ids: [] },
 ];
 /* Trofeeën met pensioen.
    Een kind dat zo'n trofee ooit behaald heeft, heeft die id nog in p.trophies

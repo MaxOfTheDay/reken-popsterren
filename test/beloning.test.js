@@ -19,6 +19,7 @@
  *   K  de onthulling                  -> één keer, met een knop om 'm aan te doen
  *   L  het teken op de kaart          -> één fonkeling, en alleen zolang er iets ligt
  *   M  beperkte beweging             -> hetzelfde eindscherm, zonder de vertoning
+ *   Q  het diploma                   -> een uitgespeelde wereld opent zijn diploma
  *
  * Draaien:
  *   npm run test:beloning     (of: npm test voor alle suites)
@@ -1075,6 +1076,58 @@ function check(ok, label, detail) {
       check(n.flitsen === n.sterren && n.sterren === sterren,
         `P · ${sterren} ${sterren === 1 ? 'ster' : 'sterren'}, ${sterren} keer licht`, JSON.stringify(n));
     }
+    await ctx.close();
+  }
+
+  /* ---- Q · Het diploma van een wereld ----
+   * Een wereld die uit is opent in de kast zijn diploma; een wereld die nog
+   * niet uit is houdt de balk. De twee stempels zeggen elk één ding (podium,
+   * perfect), en een ontbrekende stempel brengt je waar je hem haalt. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await page.goto(APP_URL + '&demo&star=p1');
+    await page.waitForFunction(() => typeof selectProfile === 'function');
+    const r = await page.evaluate(async () => {
+      selectProfile('p1');
+      const q = P();
+      // wereld 1 perfect, wereld 2 uit met een halte op twee sterren, wereld 3 bezig
+      const zet = (i, n) => { const w = worldForIndex(i); for (let l = w.first; l < w.first + w.levels; l++) q.stars[l] = n; };
+      zet(0, 3); zet(1, 3); q.stars[worldForIndex(1).first + 2] = 2;
+      q.stars[worldForIndex(2).first] = 3;
+      q.level = worldForIndex(2).first + 1;
+      grantHistoricRewards(q);
+      (q.readyTrophies || []).slice().forEach(id => awardTrophy(q, id)); q.readyTrophies = [];
+      save(); openTrophies();
+      await new Promise(k => setTimeout(k, 400));
+      const groepen = [...document.querySelectorAll('#trophy-shelves .groep-naam')].map(e => e.textContent);
+      const kaart = i => [...document.querySelectorAll('.pw-card')].find(c => c.getAttribute('aria-label').startsWith(WORLDS[i].name));
+      const stempelsKast = [0, 1, 2].map(i => kaart(i).querySelectorAll('.dip-stempels.klein .dip-stempel').length);
+      const open = async i => { document.querySelectorAll('.rp-overlay').forEach(o => o.remove()); kaart(i).click(); await new Promise(k => setTimeout(k, 300)); return document.querySelector('.diploma-laag:not(.closing)'); };
+      const d0 = await open(0);
+      const perfect = d0 && d0.querySelector('.dip-stempel.ster.heb') !== null;
+      const terugSluit = backTarget() === d0._close;
+      d0._close();
+      const d1 = await open(1);
+      const nogNiet = d1 && d1.querySelector('.dip-stempel.ster.mist') !== null;
+      const speel = d1 && d1.querySelector('.dip-plek[data-dip="ster"] .dip-actie.doe');
+      const d2 = await open(2);
+      const balk = document.getElementById('kast-bar').style.display;
+      if (speel) speel.closest('.dip-plek').click();
+      await new Promise(k => setTimeout(k, 900));
+      return { groepen, stempelsKast, d0: !!d0, perfect, terugSluit, nogNiet, speel: !!speel,
+        d2: !!d2, balk, scherm: document.querySelector('.screen.active').id, wereld: viewWorldIdx };
+    });
+    check(r.groepen[0] === 'Werelden', 'Q · de plank heet Werelden en staat bovenaan', r.groepen.join(','));
+    check(r.stempelsKast[0] === 2 && r.stempelsKast[1] === 2 && r.stempelsKast[2] === 0,
+      'Q · een uitgespeelde wereld heeft twee stempels in de kast, een lopende geen', r.stempelsKast.join(','));
+    check(r.d0 && r.perfect, 'Q · een perfecte wereld opent zijn diploma met een gouden ster', JSON.stringify(r));
+    check(r.terugSluit, 'Q · terug sluit het diploma', String(r.terugSluit));
+    check(r.nogNiet && r.speel, 'Q · niet perfect: de ster ontbreekt, met Speel eronder', JSON.stringify(r));
+    check(!r.d2 && r.balk === 'flex', 'Q · een wereld die nog niet uit is houdt de balk', JSON.stringify(r));
+    check(r.scherm === 'screen-map' && r.wereld === 1, 'Q · Speel brengt je naar die wereld op de kaart', r.scherm + ' ' + r.wereld);
     await ctx.close();
   }
 

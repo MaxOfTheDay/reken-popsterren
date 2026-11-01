@@ -657,3 +657,97 @@
     margin-top: 8px; font-size: var(--tx-klein); font-weight: 700;
     color: rgba(255,255,255,.62); overflow-wrap: break-word;
   }
+  /* ===== Het diploma van een wereld =====
+     Zie "= Het diploma van een wereld" in 50-kast.js: drie dingen, drie tekens.
+     Het diploma zelf = de wereld is uit; waar ze op staat + de 🎪-stempel = het
+     podium; de ⭐-stempel in goud = perfect. De lijst blijft altijd in de kleuren
+     van de wereld (--dip-a/--dip-b), zodat goud alleen op de ster staat. */
+  .diploma-laag {
+    position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px;
+    background: rgba(var(--nacht-0-rgb), .8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    animation: popFade .25s ease;
+  }
+  .diploma-laag.closing { animation: popFade .25s ease reverse forwards; }
+  .diploma {
+    position: relative; width: min(300px, 100%); border-radius: 28px; padding: 3px; text-align: center; color: var(--c-white);
+    background: linear-gradient(160deg, color-mix(in srgb, var(--dip-a) 70%, #fff), var(--dip-b));
+    box-shadow: 0 20px 44px rgba(var(--nacht-0-rgb), .55);
+    animation: popIn .35s var(--ease-plop) both;
+  }
+  .dip-binnen {
+    border-radius: 25px; overflow: hidden; padding-bottom: 18px;
+    background: linear-gradient(180deg, rgb(var(--nacht-3-rgb)), rgb(var(--nacht-1-rgb)));
+  }
+  .dip-beeld { position: relative; height: 200px; overflow: hidden; }
+  .dip-kunst { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 70%; }
+  .dip-beeld::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, transparent 40%, rgb(var(--nacht-3-rgb)) 100%);
+  }
+  .dip-pop { position: absolute; left: 50%; bottom: 10px; width: 124px; transform: translateX(-50%); z-index: 1; }
+  .dip-podium { position: absolute; left: 50%; bottom: 0; width: 160px; aspect-ratio: 100 / 16; transform: translateX(-50%); }
+  .dip-podium .podium { width: 100%; height: 100%; --pod-dik: 8px; }
+  .dip-av { position: relative; width: 124px; margin-bottom: 17px; }
+  .dip-av svg { display: block; width: 100%; height: auto; }
+  .dip-label { margin-top: 12px; font-size: var(--tx-klein); font-weight: 600; letter-spacing: .22em; text-transform: uppercase; opacity: .7; }
+  .dip-naam { margin-top: 3px; font-size: var(--tx-groot); font-weight: 700; line-height: 1.05; overflow-wrap: anywhere; padding: 0 12px; }
+  .dip-wereld { margin-top: 2px; font-size: var(--tx-body); opacity: .8; }
+  .dip-deel { margin-top: 14px; }
+  .dip-x {
+    position: absolute; top: -14px; right: -14px; z-index: 2; width: 42px; height: 42px; border-radius: 50%; border: 0;
+    display: grid; place-items: center; font: inherit; font-size: var(--tx-sub); font-weight: 700; cursor: pointer;
+    background: var(--c-white); color: var(--purple-shadow); box-shadow: 0 3px 8px rgba(var(--nacht-0-rgb), .4);
+  }
+  /* De stempels. Groot op het diploma (met eronder wat je ervoor doet), klein
+     onder de wereld in de kast (alleen de rondjes). */
+  .dip-stempels { display: flex; justify-content: center; margin-top: 14px; }
+  .dip-rij { display: inline-flex; gap: 26px; }
+  .dip-plek {
+    display: grid; justify-items: center; gap: 6px; padding: 0; border: 0; background: none; color: inherit; font: inherit;
+    cursor: pointer;
+  }
+  .dip-plek[tabindex="-1"] { cursor: default; }
+  .dip-stempel {
+    --s: 58px; position: relative; width: var(--s); height: var(--s); border-radius: 50%;
+    display: grid; place-items: center; font-size: calc(var(--s) * .45); line-height: 1;
+  }
+  .dip-stempel.heb { transform: rotate(-8deg); }
+  .dip-stempel.pod.heb {
+    background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--dip-a) 45%, #fff), var(--dip-a) 65%, var(--dip-b));
+    box-shadow: 0 0 0 3px rgb(var(--nacht-1-rgb)), 0 0 0 5px color-mix(in srgb, var(--dip-a) 55%, #fff);
+  }
+  .dip-stempel.ster.heb {
+    background: radial-gradient(circle at 35% 30%, rgb(var(--goud-glans-rgb)), var(--gold-accent) 55%, var(--gold-cta-shadow));
+    box-shadow: 0 0 0 3px rgb(var(--nacht-1-rgb)), 0 0 0 5px var(--gold-light), 0 0 16px rgba(var(--goud-gloed-rgb), .6);
+  }
+  .dip-stempel.mist { border: 2px dashed rgba(255,255,255,.35); }
+  .dip-stempel.mist > * { opacity: .4; filter: grayscale(1); }
+  /* onderweg naar perfect: de witte rand die volloopt, net als op de perfecte plank */
+  .dip-stempel.ster.mist::after {
+    content: ''; position: absolute; inset: -5px; border-radius: 50%; border: 3px solid transparent;
+    background: conic-gradient(rgba(255,255,255,.9) calc(var(--p, 0) * 1%), rgba(255,255,255,.12) 0) border-box;
+    -webkit-mask: linear-gradient(#000 0 0) border-box, linear-gradient(#000 0 0) padding-box;
+    -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  .dip-mini { display: block; width: 70%; aspect-ratio: 100 / 30; }
+  .dip-mini .podium { width: 100%; height: 100%; --pod-dik: 4px; border-width: 1.5px; }
+  .dip-actie {
+    min-height: 22px; padding: 1px 9px; border-radius: var(--r-pill); font-size: var(--tx-klein); font-weight: 600;
+    background: rgba(255,255,255,.12); white-space: nowrap;
+  }
+  .dip-actie.doe { background: var(--gold-accent); color: var(--purple-shadow); }
+  .dip-actie.leeg { visibility: hidden; }
+  /* Klein, in de kast: onder de naam van de wereld, twee rondjes. */
+  .dip-stempels.klein { margin-top: 4px; }
+  .dip-stempels.klein .dip-rij { gap: 6px; }
+  .dip-stempels.klein .dip-stempel { --s: 22px; border-width: 1.5px; }
+  .dip-stempels.klein .dip-stempel.heb { transform: none; }
+  .dip-stempels.klein .dip-stempel.pod.heb { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--dip-a) 55%, #fff); }
+  .dip-stempels.klein .dip-stempel.ster.heb { box-shadow: 0 0 0 1.5px var(--gold-light), 0 0 8px rgba(var(--goud-gloed-rgb), .6); }
+  .dip-stempels.klein .dip-stempel.ster.mist::after { inset: -3px; border-width: 2px; }
+  .dip-stempels.klein .dip-mini .podium { --pod-dik: 2px; border-width: 1px; }
+  @media (prefers-reduced-motion: reduce) {
+    .diploma-laag, .diploma-laag.closing, .diploma { animation: none; }
+  }
+  .dip-ster { width: 56%; height: 56%; fill: var(--c-white); filter: drop-shadow(0 1px 0 rgba(150,90,0,.6)); }
+  .dip-stempel.mist .dip-ster { filter: none; }
