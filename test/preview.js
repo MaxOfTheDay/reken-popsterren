@@ -281,10 +281,8 @@ function page(state) {
   const styles =
     '<style id="k-scene-vol">' + scene.css(state.urls, { scrim: true }) + '</style>' +
     '<style id="k-scene-kaal" disabled>' + scene.css(state.urls, { scrim: false }) + '</style>';
-  // de parallax-aandrijving uit test/scene.js
-  const para = '<script>' + scene.parallaxJs() + '<\/script>';
   return html.replace('</head>', styles + studioData(state) + '</head>')
-             .replace('</body>', panel(state) + para + '</body>');
+             .replace('</body>', panel(state) + '</body>');
 }
 
 /* Opslaan: het concept van de wereldstudio wordt het WORLDS-blok in src/.
@@ -952,6 +950,7 @@ async function api(req, res, url) {
     if (url === '/api/publiceer' && req.method !== 'POST') return json(res, PUBLICEER);
     if (req.method !== 'POST') return json(res, { ok: false, tekst: 'onbekende poort' }, 404);
     if (url === '/api/nieuwste') return json(res, await versie.nieuwste());
+    if (url === '/api/gelijk') return json(res, await versie.gelijkZetten());
     if (url === '/api/publiceer') return json(res, await publiceerAlles(await lees(req, 600000)));
     if (url === '/api/haalop') return json(res, await versie.haalOp());
     if (url === '/api/bijwerken') return json(res, await versie.bijwerken());

@@ -1501,8 +1501,8 @@
     .tour-map { align-items: center; padding: var(--podium-rand) 0; overflow-y: hidden; }
     /* Het podium houdt twee grenzen, en ze doen om beurten hun werk.
 
-       --stage-spel is de bovengrens (zie het skelet bovenaan, waar ook staat
-       waarom die op 560 ligt en niet lager). De min() zit ín de clamp en niet
+       --stage-spel is de bovengrens (zie het skelet bovenaan: de tekening op
+       ware grootte, en niet groter). De min() zit ín de clamp en niet
        eromheen: de ondergrens van 340 -- waaronder een halte kleiner wordt dan
        een vingertop -- moet ook daarna nog de ondergrens zijn.
 
@@ -1515,9 +1515,10 @@
 
        Dat betekent wel dat op zo'n venster de bovenste en onderste rand van het
        kader búiten beeld liggen, en de ronde hoeken dus ook: het podium leest
-       daar als een staande baan tussen twee onscherpe marges. Zodra --stage-spel
-       bindt (vanaf zo'n 1020px vensterhoogte) past het kader weer helemaal in
-       het vak en staat het toestel er compleet, met hoek en schaduw. */
+       daar als een staande baan tussen twee onscherpe marges. Pas waar
+       --stage-spel bindt (een venster van ruim 2180 punten hoog, hoger dan 4K) past het kader
+       weer helemaal in het vak en staat het toestel er compleet, met hoek en
+       schaduw. */
     .world-frame { min-width: 0; min-height: 0;
       width: clamp(min(340px, 100cqw),
                    min(100cqh * var(--podium-groei) * var(--art-w) / var(--art-h), var(--stage-spel)),

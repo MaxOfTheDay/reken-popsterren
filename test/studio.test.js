@@ -20,6 +20,12 @@
  *      nooit bij een kind terechtkomen
  *   I  de standen en schermen waar de Dev Studio knoppen voor heeft, openen ook
  *      echt -- en schrijven niets weg
+ *   J  een beeld vervangen werkt, ook zonder wereld; en "niet gebruikt" is alleen
+ *      wat het spel echt nergens laadt
+ *   Q  in de Dev Studio laat het paneel weg wat de studio eromheen al heeft
+ *   R  een nieuwe wereld maken gaat in de volgorde waarin je het doet: haltes
+ *      aantikken, de schat van idee tot naam, en begin en einde spelen bij
+ *      Publiceren; een melding is één zin
  *
  * Draaien:
  *   npm run test:studio        (of: npm test voor alle suites)
@@ -423,7 +429,8 @@ function check(ok, label, detail) {
         const data = '<script>window.__SLOTS=' + JSON.stringify(scene.SLOTS, (k, v) =>
             v instanceof RegExp ? undefined : v)
           + ';window.__SCHERMEN=' + JSON.stringify(scene.SCHERMEN)
-          + ';window.__INCOMING=[];window.__ASSETS={"assets/bg/landing.webp":76};'
+          + ';window.__INCOMING=[];window.__ASSETS={"assets/bg/landing.webp":76,'
+          + '"assets/world/muziek-map.webp":337,"assets/world/muziek-klein.webp":76,"assets/world/wees-map.webp":9};'
           + 'window.__MERK=[];window.__GEWIJZIGD=[];<\/script>';
         res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
         return res.end(html.replace('</head>', data + '</head>'));
@@ -467,6 +474,13 @@ function check(ok, label, detail) {
     });
     const erIs = await page.$('.st-slot[data-slot="landing"]');
     check(!!erIs, 'J · het startscherm staat in Beelden', String(!!erIs));
+    /* Niet gebruikt: alleen wat werkelijk nergens bij hoort. Het kleine broertje
+       van een kaart (wereldKleinPad) staat niet in WORLDS maar de reis laadt hem
+       wél -- wie hem op dit lijstje weggooit, laat de reis de grote tekeningen
+       laden. */
+    const los = await page.evaluate(() => document.getElementById('st-ongebruikt').textContent);
+    check(/wees-map/.test(los) && !/muziek-klein/.test(los) && !/muziek-map/.test(los),
+      'J · niet gebruikt: een wees wel, de kaart en zijn kleine broertje niet', los);
 
     await page.evaluate(() => goProfiles());
     await page.waitForTimeout(250);
@@ -506,6 +520,56 @@ function check(ok, label, detail) {
     check(terug.ok && terug.naam.length > 0, 'J · en de wereldstudio werkt daarna gewoon door',
       JSON.stringify(terug));
     check(!fout.length, 'J · nog steeds geen fouten', fout.slice(0, 3).join(' | '));
+
+    /* Q: in de Dev Studio (een kijkvak in /studio) laat het paneel weg wat de
+       studio eromheen al heeft -- de kop met de naam, en onder ⋯ Meer het kijkvak,
+       de wereldlijst, de beelden van de app en de losse git-stappen. Wat over
+       déze wereld gaat blijft, en de ? staat naast de stappen. Los geopend (alles
+       hierboven) blijft alles staan. */
+    const opzich = await page.evaluate(() => ({
+      kop: getComputedStyle(document.querySelector('#studio .st-top')).display !== 'none',
+      blokken: document.querySelectorAll('#studio .los').length,
+    }));
+    check(opzich.kop && opzich.blokken === 3, 'Q · los geopend: kop en alle blokken onder Meer', JSON.stringify(opzich));
+    // een eigen omhulsel van dezelfde herkomst, zoals /studio dat is
+    const omhulsel = await ctx.newPage();
+    omhulsel.on('pageerror', e => fout.push('PAGEERROR ' + e.message));
+    await omhulsel.goto(basis + '/manifest.json');
+    await omhulsel.setContent('<iframe id="kv" style="width:1280px;height:900px;border:0" src="'
+      + basis + '/?debug&demo&star=p1&screen=map&mapedit"></iframe>');
+    const kv = await (await omhulsel.waitForSelector('#kv')).contentFrame();
+    await kv.waitForSelector('#studio');
+    await kv.waitForTimeout(500);
+    const ingebed = await kv.evaluate(() => {
+      const zie = el => !!el && el.getClientRects().length > 0;
+      document.getElementById('st-meer').click();
+      return {
+        kop: zie(document.querySelector('#studio .st-top')),
+        lijst: zie(document.getElementById('st-list')),
+        kijk: zie(document.querySelector('#studio .st-kijk')),
+        beelden: zie(document.getElementById('st-schermen')),
+        git: zie(document.getElementById('st-commit')),
+        id: zie(document.getElementById('mf-id')),
+        terug: zie(document.getElementById('st-revert')),
+        diff: zie(document.getElementById('st-diff')),
+        vraag: !!document.querySelector('#studio .st-stappen #st-uitleg') && zie(document.getElementById('st-uitleg')),
+        stappen: document.querySelectorAll('#studio .st-stappen button[data-stap]').length,
+      };
+    });
+    check(!ingebed.kop && !ingebed.lijst && !ingebed.kijk && !ingebed.beelden && !ingebed.git,
+      'Q · in de Dev Studio: geen eigen kop, lijst, kijkvak, beelden of git-stappen', JSON.stringify(ingebed));
+    check(ingebed.id && ingebed.terug && ingebed.diff,
+      'Q · wat over deze wereld gaat blijft onder Meer', JSON.stringify(ingebed));
+    check(ingebed.vraag && ingebed.stappen === 4, 'Q · de ? staat naast de vier stappen', JSON.stringify(ingebed));
+    // de ? is geen stap: hem aantikken zet de uitleg aan en laat de stap staan
+    const na = await kv.evaluate(() => {
+      document.querySelector('#studio .st-stappen [data-stap="2"]').click();
+      document.getElementById('st-uitleg').click();
+      return { uitleg: document.getElementById('studio').classList.contains('uitleg'),
+               stap: (document.querySelector('#studio .st-stappen button.on[data-stap]') || {}).dataset };
+    });
+    check(na.uitleg && na.stap && na.stap.stap === '2', 'Q · en de ? is geen stap', JSON.stringify(na));
+    check(!fout.length, 'Q · geen fouten', fout.slice(0, 3).join(' | '));
 
     await ctx.close();
     await new Promise(ok => server.close(ok));
@@ -753,6 +817,95 @@ function check(ok, label, detail) {
       check(st.bewaard === false, 'I · "' + g.naam + '" schrijft niets weg', String(st.bewaard));
       await page.close();
     }
+    await ctx.close();
+  }
+
+  // ---- R: een nieuwe wereld, in de volgorde waarin je hem maakt ---------------
+  {
+    const { ctx, page } = await studio();
+    await page.evaluate(() => { document.getElementById('st-meer').click(); });
+    await page.click('#st-new');
+    await page.fill('#st-nieuwnaam', 'Proefwereld');
+    await page.click('#st-nieuwmaak');
+    await page.waitForTimeout(300);
+    // E: een melding is één zin; de rest klapt open
+    const melding = await page.evaluate(() => {
+      const v = document.getElementById('st-out');
+      const kop = v.querySelector('.kop'), rest = v.querySelector('.rest');
+      const dicht = rest ? getComputedStyle(rest).display : null;
+      v.click();
+      return { kop: kop && kop.textContent, title: v.title, dicht,
+               open: rest ? getComputedStyle(rest).display : null };
+    });
+    check(/Proefwereld erbij/.test(melding.kop || '') && !/Volgende stap/.test(melding.kop || ''),
+      'R · een melding is één zin', JSON.stringify(melding));
+    check(/Volgende stap/.test(melding.title) && melding.dicht === 'none' && melding.open !== 'none',
+      'R · de rest staat in de tooltip en klapt open met een tik', JSON.stringify(melding));
+
+    // A: tik de haltes aan, van onder naar boven
+    await page.evaluate(() => document.querySelector('.st-stappen button[data-stap="2"]').click());
+    await page.click('#st-tik');
+    const r = await page.$eval('.world-frame', e => { const b = e.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height }; });
+    const plekken = [[30, 85], [65, 76], [35, 66], [62, 56], [38, 47], [64, 38], [40, 29], [55, 20]];
+    const tussen = [];
+    for (const [px, py] of plekken) {
+      await page.mouse.click(r.x + r.w * px / 100, r.y + r.h * py / 100);
+      await page.waitForTimeout(60);
+      tussen.push(await page.evaluate(() => document.querySelectorAll('.tour-stop.me-wacht').length));
+    }
+    const na = await page.evaluate(() => {
+      const w = WORLDS[WORLDS.length - 1];
+      return { nodes: w.nodes, curve: w.curve || null, tikt: document.body.classList.contains('st-tikken'),
+               scherm: (document.querySelector('.screen.active') || {}).id };
+    });
+    const raak = na.nodes && na.nodes.length === 8 && na.nodes.every((n, i) =>
+      Math.abs(n.x - plekken[i][0]) < 0.6 && Math.abs(n.y - plekken[i][1]) < 0.6);
+    check(raak, 'R · acht tikken zetten de acht haltes, in volgorde', JSON.stringify(na.nodes));
+    check(na.curve === null, 'R · en de weg buigt vanzelf (geen oude ruitjes)', JSON.stringify(na.curve));
+    check(!na.tikt && na.scherm === 'screen-map', 'R · daarna is het gewoon slepen weer, en geen show geopend', JSON.stringify(na));
+    check(tussen.join(',') === '7,6,5,4,3,2,1,0', 'R · wat nog geen plek heeft staat flauw', tussen.join(','));
+    await page.keyboard.press('Control+z');
+    const terug = await page.evaluate(() => JSON.stringify(WORLDS[WORLDS.length - 1].nodes || null));
+    check(terug !== JSON.stringify(na.nodes), 'R · Ctrl+Z neemt het hele aantikken terug', terug);
+    // Esc stopt halverwege, en wat getikt is blijft
+    await page.click('#st-tik');
+    await page.mouse.click(r.x + r.w * 0.5, r.y + r.h * 0.8);
+    await page.keyboard.press('Escape');
+    const esc = await page.evaluate(() => ({ tikt: document.body.classList.contains('st-tikken'),
+      n1: WORLDS[WORLDS.length - 1].nodes[0] }));
+    check(!esc.tikt && Math.abs(esc.n1.x - 50) < 0.6, 'R · Esc stopt, wat al getikt is blijft staan', JSON.stringify(esc));
+
+    // C: de schat in de volgorde idee, plakken, naam -- en geen leeg kaartje erboven
+    await page.evaluate(() => document.querySelector('.st-stappen button[data-stap="3"]').click());
+    const schat = await page.evaluate(() => {
+      const voor = (a, b) => !!(document.getElementById(a).compareDocumentPosition(document.getElementById(b)) & Node.DOCUMENT_POSITION_FOLLOWING);
+      return { volgorde: voor('sc-idee', 'sc-svg') && voor('sc-svg', 'sc-naam'),
+               leeg: document.getElementById('st-bel').hidden,
+               emoji: document.getElementById('sc-emoji').value };
+    });
+    check(schat.volgorde, 'R · de schat: eerst het idee, dan plakken, dan de naam', JSON.stringify(schat));
+    check(schat.leeg, 'R · geen leeg "nog geen wereldschat"-kaartje', JSON.stringify(schat));
+    check(schat.emoji === '✨', 'R · de emoji is die van de wereld', schat.emoji);
+    await page.fill('#sc-idee', 'een regenboogkroontje');
+    const naam = await page.inputValue('#sc-naam');
+    check(naam === 'Regenboogkroontje', 'R · het idee wordt de naam', naam);
+    await page.fill('#sc-naam', 'Kroon');
+    await page.fill('#sc-idee', 'een ster');
+    check(await page.inputValue('#sc-naam') === 'Kroon', 'R · een zelf gekozen naam blijft staan', await page.inputValue('#sc-naam'));
+
+    // B: begin en einde spelen vanuit Publiceren
+    await page.evaluate(() => {
+      window.__geopend = [];
+      window.open = u => { window.__geopend.push(u); return {}; };
+      document.querySelector('.st-stappen button[data-stap="4"]').click();
+      document.getElementById('st-speel-eerst').click();
+      document.getElementById('st-speel-laatst').click();
+    });
+    const urls = await page.evaluate(() => window.__geopend);
+    const nr = await page.evaluate(() => WORLDS.length);
+    check(urls.length === 2 && /screen=game/.test(urls[0]) && /stand=vers/.test(urls[0])
+      && /stand=bijna/.test(urls[1]) && urls.every(u => u.indexOf('wereld=' + nr + '&') >= 0 && /onuitgebracht/.test(u)),
+      'R · eerste en laatste show openen deze wereld', JSON.stringify(urls));
     await ctx.close();
   }
 

@@ -786,7 +786,8 @@ function lichtDefs(uid) {
       <stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/>
       <stop offset=".62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>
     <radialGradient id="wang${uid}"><stop offset="0" stop-color="#ff8fa3" stop-opacity=".75"/><stop offset="1" stop-color="#ff8fa3" stop-opacity="0"/></radialGradient>
-    <radialGradient id="vlek${uid}"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>`;
+    <radialGradient id="vlek${uid}"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="grond${uid}"><stop offset="0" stop-color="#1a0628" stop-opacity=".6"/><stop offset=".5" stop-color="#1a0628" stop-opacity=".28"/><stop offset="1" stop-color="#1a0628" stop-opacity="0"/></radialGradient>`;
 }
 function avatarSVG(p, width, propMaat) {
   // true blijft 'groot': de kleedkamer geeft nog altijd een vlaggetje mee
@@ -809,9 +810,30 @@ function avatarSVG(p, width, propMaat) {
     <stop offset="0.5" stop-color="#8bd450"/><stop offset="0.75" stop-color="#47c9ff"/>
     <stop offset="1" stop-color="#b06ab3"/></linearGradient>${lichtDefs(uid)}</defs>`;
   /* Huisdier en instrument staan óp het podium, niet aan haar vast: in een
-     eigen groep, zodat pasLaag ze uit de dansende tekening kan tillen (zie daar). */
-  if (pet || instr) {
+     eigen groep, zodat pasLaag ze uit de dansende tekening kan tillen (zie daar).
+
+     In die groep ligt ook de SCHADUW op het podium: een zachte vlek onder elke
+     schoen en een vage brede eronder, en een kleinere onder dier en instrument.
+     Zonder schaduw zweefden ze vóór de schijf in plaats van erop te staan. Ze
+     hoort in deze laag en niet in de tekening, want de tekening danst: een
+     schaduw die mee de lucht in springt is geen schaduw. Hier blijft ze op de
+     vloer en krimpt ze als zij opstijgt (zie .av-sch in het stijlblad).
+     Alleen waar ze op een podium staat: de groep is er altijd (behalve op de
+     kaart, die heeft zijn eigen sticker-schaduw), maar de vlekken staan met
+     visibility="hidden" als áttribuut uit. Een portretje of een miniatuur zonder
+     pas-laag laat ze dus weg; .prop-laag zet ze aan.
+     Geen geneste groep hierin: PROPS_RE knipt tot de eerste sluit-g. */
+  if (!kaart) {
+    const vlek = (cls, cx, cy, rx, ry, sterk) =>
+      `<ellipse class="av-sch ${cls}" cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#grond${uid})" fill-opacity="${sterk}" visibility="hidden"/>`;
+    // onder een emoji: midden ~ half zijn maat voorbij x, de inkt tot ~een vijfde onder de basislijn
+    const onder = (cls, [x, y, m]) => vlek(cls + ' av-sch-wijd', +(x + m * .52).toFixed(1), +(y + m * .18).toFixed(1), +(m * .44).toFixed(1), +(m * .1).toFixed(1), .6)
+      + vlek(cls, +(x + m * .52).toFixed(1), +(y + m * .18).toFixed(1), +(m * .26).toFixed(1), +(m * .055).toFixed(1), 1);
     s += '<g class="av-props">';
+    s += vlek('av-sch-pop av-sch-wijd', 100, 239, 40, 8, .55)
+      + vlek('av-sch-pop av-sch-l', 86, 238.6, 14, 4, 1) + vlek('av-sch-pop av-sch-r', 114, 238.6, 14, 4, 1);
+    if (pet) s += onder('av-sch-dier', pm.pet);
+    if (instr) s += onder('av-sch-instr', pm.instr);
     if (pet) s += `<text class="av-dier" x="${pm.pet[0]}" y="${pm.pet[1]}" font-size="${pm.pet[2]}">${pet.emoji}</text>`;
     if (instr) s += `<text class="av-instr" x="${pm.instr[0]}" y="${pm.instr[1]}" font-size="${pm.instr[2]}">${instr.emoji}</text>`;
     s += '</g>';

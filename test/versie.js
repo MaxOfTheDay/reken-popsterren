@@ -345,6 +345,12 @@ async function nieuwste() {
   if (!gitStil(['rev-parse', '--verify', '--quiet', 'origin/main'])) {
     return { ok: false, tekst: 'Er is geen origin/main om bij te werken.' };
   }
+  if (uitDePas(feiten())) {
+    const hier = feiten().vanMain.voor;
+    return { ok: false, uitDePas: true, hier,
+      tekst: 'Je kopie loopt uit de pas met GitHub: hier staan ' + hier + ' oude stappen die GitHub niet meer '
+        + 'heeft. Zet hem gelijk: wat hier stond blijft bewaard.' };
+  }
   try {
     if (!f.isMain) {
       const opMain = gitStil(['merge-base', '--is-ancestor', 'HEAD', 'origin/main'], 'nee') !== 'nee';
@@ -358,6 +364,50 @@ async function nieuwste() {
     return { ok: true, tekst: 'Je hebt de nieuwste versie (' + gitStil(['rev-parse', '--short', 'HEAD']) + ').' };
   } catch (e) {
     return { ok: false, tekst: 'Bijwerken lukte niet — er is niets veranderd.\n'
+      + String(e.message).split('\n').slice(0, 4).join('\n') };
+  }
+}
+
+/* ---- Uit de pas met GitHub -------------------------------------------------
+   Main hier en main op GitHub hebben allebei stappen die de ander niet heeft.
+   Dat gebeurt niet door gewoon werken -- publiceren gaat via een eigen tak en
+   duwt main meteen -- maar wél als de geschiedenis op GitHub herschreven is: dan
+   blijft een oude kopie op de oude geschiedenis staan, kan --ff-only nooit meer,
+   en vergelijkt de studio elke wereld met een spel van weken terug ("Niet
+   gepubliceerd" bij allemaal). Daar kan niemand iets mee zonder git te kennen.
+
+   Gelijkzetten is het enige dat main hier terugzet, dus het gebeurt alleen op
+   een vraag (de knop), en er raakt niets kwijt: main hier gaat eerst op een tak
+   oud-main-<moment>, open werk eerst in de stash. Pas dan reset --hard naar
+   origin/main. Een kopie die alleen vóórloopt (achter = 0) is niet uit de pas en
+   blijft van deze knop af. */
+function uitDePas(f) {
+  return !!(f && f.git && f.isMain && f.vanMain && f.vanMain.ref === 'origin/main'
+    && f.vanMain.voor > 0 && f.vanMain.achter > 0);
+}
+async function gelijkZetten() {
+  const f = feiten();
+  if (!f.git) return { ok: false, tekst: 'Dit is geen git-map.' };
+  if (!f.isMain) return { ok: false, tekst: 'Gelijkzetten gaat alleen vanaf main; je staat op ' + f.naam + '.' };
+  const h = await haalOp(30000);
+  if (!h.ok) return { ok: false, tekst: 'Ophalen lukte niet: ' + h.tekst + '\nJe hebt wel internet nodig.' };
+  if (!uitDePas(feiten())) return nieuwste();
+  const stempel = new Date().toISOString().slice(0, 16).replace(/[-:]/g, '').replace('T', '-');
+  const tak = 'oud-main-' + stempel;
+  try {
+    let gestasht = false;
+    if (feiten().vuil) {
+      await git(['stash', 'push', '-u', '-m', 'studio voor gelijkzetten ' + stempel]);
+      gestasht = true;
+    }
+    await git(['branch', tak, 'HEAD']);
+    await git(['reset', '--hard', 'origin/main']);
+    return { ok: true, tak, gestasht,
+      tekst: 'Gelijk met GitHub (' + gitStil(['rev-parse', '--short', 'HEAD']) + '). Sluit de studio en open hem '
+        + 'opnieuw, dan draait ook de studio zelf de nieuwe versie.\nWat hier stond staat op de tak ' + tak
+        + (gestasht ? ', en je open werk in de stash (Haal terug).' : '.') };
+  } catch (e) {
+    return { ok: false, tekst: 'Gelijkzetten lukte niet. Main hier is niet teruggezet.\n'
       + String(e.message).split('\n').slice(0, 4).join('\n') };
   }
 }
@@ -380,8 +430,9 @@ async function nieuwste() {
                  enige dat werk wégdoet, dus het gaat in twee stappen -- net als
                  publiceren: de eerste aanroep vertelt alleen wat er zou gebeuren.
 
-   Wat hier nog steeds niet gebeurt, en nooit gaat gebeuren: reset --hard, een
-   force, of iets wat onaangekondigd over je werk heen loopt. */
+   Wat hier nog steeds niet gebeurt, en nooit gaat gebeuren: een force, of iets
+   wat onaangekondigd over je werk heen loopt. (De enige reset --hard is
+   gelijkZetten hierboven, op een knop, en pas nadat alles bewaard is.) */
 function opengewerk() {
   const f = feiten();
   if (!f.git) return { ok: false, tekst: 'dit is geen git-map' };
@@ -489,6 +540,6 @@ async function terugdraaien(fase, paden) {
   }
 }
 
-module.exports = { feiten, samenvatting, bronnen, haalOp, wissel, bijwerken, nieuwste,
+module.exports = { feiten, samenvatting, bronnen, haalOp, wissel, bijwerken, nieuwste, uitDePas, gelijkZetten,
                    opengewerk, opzij, haalTerug, vastleggen, terugdraaien, takNaam,
                    prVoorSha, prLijst, ROOT };

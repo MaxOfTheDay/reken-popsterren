@@ -39,8 +39,9 @@
        Zodra --stage-spel bindt is het podium smaller dan de hoogte toelaat, en
        dan blijft er lucht boven en onder over. De kop plakt aan de bovenrand van
        het schérm en de balk zweeft boven de onderrand ervan, dus die twee bleven
-       daar achter: op 2560x1440 stond de kop 240 pixels boven de wereldkaart en
-       de balk er 240 onder, alle drie los van elkaar in het onscherpe.
+       daar achter, los van de wereldkaart in het onscherpe. Sinds --stage-spel
+       de tekening op ware grootte is gebeurt dat pas op een venster van ruim
+       2180 punten hoog (hoger dan 4K); daaronder is de lucht nul.
 
        Dat is precies de gelaagdheid die dit scherm juist goed had (omgeving --
        podium -- bediening), alleen viel de bediening van het podium af. Dus
@@ -72,28 +73,24 @@
                         min(calc(var(--podium-h) * var(--podium-groei) * var(--art-w) / var(--art-h)), var(--stage-spel)),
                         100vw);
       --podium-lucht: max(0px, calc((var(--podium-h) - var(--podium-w) * var(--art-h) / var(--art-w)) / 2));
+      --balk-op: var(--podium-lucht);
     }
     /* De kop draagt al een negatieve bovenmarge (de overbloeding uit .hub-sticky);
        die blijft staan en de lucht komt erbij. */
     #screen-map .hub-sticky { margin-top: calc(var(--rand, 12px) * -1 + var(--podium-lucht)); }
-    /* En de balk alleen op de kaart -- het enige scherm met een podium dat
-       smaller kan zijn dan het venster hoog is. :has() staat al elders in dit
-       blad (zie de wolkjes bij #screen-map), dus het is hier geen nieuw middel. */
-    body:has(#screen-map.active) .main-nav {
-      bottom: calc(var(--balk-rand) + var(--veilig-onder) + var(--podium-lucht));
-    }
-    /* Van de kaart naar de kleedkamer verandert die voet, en zonder deze regel
-       verspringt de balk op het moment van de schermwissel. .18s is precies de
-       duur van screenIn (zie .screen.active): de balk zakt dus mee terwijl het
-       ene scherm in het andere overvloeit, in plaats van eroverheen te knippen.
-       Hij staat hier en niet op .main-nav zelf, zodat er op een telefoon -- waar
-       --podium-lucht niet bestaat en er dus nooit iets te bewegen valt -- ook
-       geen overgang op een positie-eigenschap loopt. */
-    .main-nav { transition: bottom .18s ease; }
-    @media (prefers-reduced-motion: reduce) { .main-nav { transition: none; } }
+    /* En de balk zakt mee, op élk scherm waar hij staat en niet alleen op de
+       kaart (--balk-op, zie de margin-bottom bij .main-nav). Hij hoort onderaan
+       het podium, en de kaart is het enige scherm waar je dat podium ziet --
+       maar zat hij alleen dáár hoger, dan sprong hij bij elke tik tussen Kaart
+       en Kleedkamer of Trofeeën een stuk op en neer -- toen de grens nog 560 was
+       al vanaf 1920x1080, en tot 212px ver. Een overgang op bottom maakte er een glijden van, maar die
+       liep op de hoofddraad, precies terwijl die het nieuwe scherm opbouwt, en
+       haperde dus (en meetChroom mat de balk halverwege). Eén hoogte voor alle
+       tabbladen: de balk is het enige dat bij een tabwissel blíjft staan.
+       Daarom staat er hier ook geen transition meer op de balk. */
     /* En de veeg ónder de balk hoort bij dezelfde wereld. Hij is 100vw breed --
        op een telefoon klopt dat, want daar ís de wereld het scherm -- maar op een
-       podium van 560 in een venster van 2560 trok hij een donkere streep dwars
+       podium dat smaller is dan het venster trok hij een donkere streep dwars
        over de onscherpe omgeving, met een kaarsrechte rand op precies de hoogte
        waar de kaart ophoudt. Dat is het tegenovergestelde van wat hij moet doen:
        hij hoort de ónderste band van de wereld te dempen zodat "Kleedkamer" er
@@ -102,9 +99,18 @@
        Dus krijgt hij de breedte van het podium en de ronde onderhoeken ervan. Op
        een venster waar het podium de volle breedte pakt is --podium-w gewoon
        100vw en staat er precies wat er altijd stond. */
-    body:has(#screen-map.active) .main-nav::before {
+    /* Op de kaart, en ook als de kleedkamer of de kast er staat: daar is deze
+       lichte veeg toch onzichtbaar (zie .main-nav::after), en hangt hij aan een
+       scherm, dan knipt hij van breedte op het moment van de tik -- terwijl de
+       kaart nog wegvloeit. Alleen de reis houdt hem vensterbreed; die wissel
+       valt weg in de vlucht ernaartoe. Hij houdt op aan de voet van het podium
+       en niet aan de vensterrand, dus zonder --balk-op. */
+    body:not(:has(#screen-journey.active)) .main-nav::before {
       width: var(--podium-w); margin-left: calc(var(--podium-w) / -2);
       border-bottom-left-radius: var(--r-md); border-bottom-right-radius: var(--r-md);
+      bottom: calc(0px - var(--balk-rand) - var(--veilig-onder) - var(--vh-drift, 0px));
+      height: calc(var(--balk-ruimte) + 44px + var(--vh-drift, 0px));
+      background-size: 100% calc(var(--balk-ruimte) + 44px), 100% var(--vh-drift, 0px);
     }
     /* Twee zwevende knopjes hangen met right: 14px aan de rechterrand van het
        venster (de memory-knop aan die van #screen-map, die even breed is), en

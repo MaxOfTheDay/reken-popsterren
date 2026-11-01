@@ -130,6 +130,11 @@ function startMapEdit() {
       background: rgba(10,40,26,.35); border: 0.5cqw solid rgba(120,255,180,.95);
       box-shadow: 0 0 0 0.35cqw rgba(8,2,20,.75), inset 0 0 0 0.3cqw rgba(255,255,255,.55);
       transition: background .1s, border-color .1s; }
+    /* Aantikken (stap 2): wat nog geen plek kreeg staat flauw, zodat je ziet welke
+       halte de volgende tik krijgt. */
+    body.mapedit.st-tikken .world-frame { cursor: crosshair; }
+    body.mapedit.st-tikken .me-ctrl { display: none; }
+    .tour-stop.me-wacht { opacity: .28; }
     .me-ctrl:hover { background: rgba(120,255,180,.6); }
     .me-ctrl:active, .me-ctrl.dragging { cursor: grabbing; background: rgba(120,255,180,.9); }
     /* wat je nu bij de kop hebt: een ring die er niet omheen te kijken valt */
@@ -179,6 +184,12 @@ function startMapEdit() {
       border-top: 1px solid rgba(255,255,255,.14); }
     #studio .st-nav #st-verder { margin-left: auto; }
     #studio.dicht .st-stappen, #studio.dicht .st-nav { display: none; }
+    #studio.in-dev .st-top, #studio.in-dev .los { display: none; }
+    #studio.in-dev .st-stappen { grid-template-columns: repeat(4, auto) 24px; justify-content: space-between; align-items: center; }
+    #studio.in-dev .st-stappen button[data-stap] { white-space: nowrap; padding-inline: 6px; }
+    #studio.in-dev .st-stappen #st-uitleg { padding: 3px 0; margin-bottom: 4px; border-radius: 7px; }
+    #studio.in-dev .st-stappen [data-stap="4"].vuil::after { content: ''; display: inline-block;
+      width: 6px; height: 6px; border-radius: 50%; background: #ffd98a; margin-left: 4px; vertical-align: 2px; }
     #studio button.groot { padding: 10px 16px; font-size: 14px; }
     #studio .st-top b#st-wnaam { text-transform: none; letter-spacing: 0; font-size: 14px;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -191,7 +202,6 @@ function startMapEdit() {
       background: rgba(255,255,255,.05); border: 1px solid transparent;
       transition: background .12s, border-color .12s; }
     #studio .st-slot.over { background: rgba(120,255,180,.14); border-color: rgba(120,255,180,.8); }
-    #studio .st-slot.kan { opacity: .72; }
     #studio .st-slot b { font-size: 12.5px; }
     #studio .st-slot small { grid-column: 1 / -1; color: #9c86bd; font-size: 11px;
       font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
@@ -242,6 +252,8 @@ function startMapEdit() {
     #studio .st-bel .vb { width: 46px; height: 46px; border-radius: 8px;
       background: rgba(0,0,0,.28); display: grid; place-items: center; padding: 3px; }
     #studio .st-bel .vb svg { width: 100%; height: 100%; }
+    /* een schat in de verhouding van zijn vak in het rek (64 x 48, zie .thumb-schat) */
+    #studio .st-bel .vb.schat svg { height: 75%; }
     #studio .st-bel b { display: block; font-size: 12.5px; }
     #studio .st-bel small { display: block; color: #9c86bd; font-size: 11px; margin-top: 2px; }
     #studio .st-bel button { padding: 3px 9px; font-size: 11px; }
@@ -290,18 +302,27 @@ function startMapEdit() {
       font-size: 12px; color: #e6dbf5; }
     #studio details[open].st-prompt > summary, #studio details[open].st-schat > summary { margin-bottom: 8px; }
     #studio details.st-schat .st-btns { margin: 4px 0 6px; }
+    /* De schat in de volgorde waarin je hem maakt: idee, plakken, naam. */
+    #studio .st-sstap { margin: 10px 0 5px; font-size: 12px; color: #e6dbf5; }
+    #studio .st-sstap b { display: inline-grid; place-items: center; width: 17px; height: 17px;
+      margin-right: 5px; border-radius: 50%; background: rgba(255,255,255,.14); font-size: 10.5px; }
     #studio textarea { width: 100%; box-sizing: border-box; min-height: 58px; resize: vertical;
       font: 11px/1.4 ui-monospace, monospace; color: #fff; background: rgba(255,255,255,.08);
       border: 1px solid rgba(255,255,255,.22); border-radius: 7px; padding: 6px 8px; margin-bottom: 6px; }
     #studio textarea.over { border-color: rgba(120,255,180,.85); background: rgba(120,255,180,.12); }
-    /* Het voorbeeld: de schat op allebei de paspoppen, en het miniatuur zoals de
-       kleedkamer het toont -- de drie plekken waar een kind hem ziet. */
-    #studio .st-sc-vb { display: grid; grid-template-columns: 1fr 1fr 58px; gap: 6px; align-items: end;
+    /* Het voorbeeld: de schat op allebei de paspoppen, en in het rek zoals de
+       kleedkamer hem toont -- de plekken waar een kind hem ziet. Het rek is geen
+       nagemaakt plaatje maar het echte kaartje (.item-card met itemThumb, dus het
+       vak van een emoji, de dunnere rand en de glans), tussen twee emoji uit de
+       winkel: naast die buren zie je of hij erbij past, en daar ging het mis. */
+    #studio .st-sc-vb { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: end;
       margin-bottom: 6px; }
     #studio .st-sc-vb > div { border-radius: 8px; background: rgba(0,0,0,.28); text-align: center;
       font-size: 10px; color: #9c86bd; padding: 3px 2px 2px; }
-    #studio .st-sc-vb svg { display: block; width: 100%; height: auto; }
-    #studio .st-sc-vb .mini svg { height: 52px; }
+    #studio .st-sc-vb > div > svg { display: block; width: 100%; height: auto; }
+    #studio .st-sc-vb .st-rek { grid-column: 1 / -1; padding: 8px 6px 4px; }
+    #studio .st-sc-vb .st-rek > span { display: flex; gap: 6px; justify-content: center; margin-bottom: 3px; }
+    #studio .st-sc-vb .st-rek .item-card { flex: 0 0 76px; max-width: 76px; padding: 7px 4px 8px; cursor: default; }
     /* Geavanceerd: de dingen die je bijna nooit nodig hebt, en die de gewone
        werkwijze in de weg staan zodra ze bovenaan meedoen. Dicht, tenzij je ze
        zoekt. */
@@ -370,13 +391,17 @@ function startMapEdit() {
     #studio .ct-let { color: #ffd98a; font-weight: 700; }
     #studio .ct-goed { color: #b6ffd6; font-weight: 700; }
     #studio.uitleg .st-hint { display: block; }
-    #studio .st-top button.on { background: rgba(120,255,180,.24); border-color: rgba(120,255,180,.6); }
+    #studio .st-top button.on, #studio .st-stappen #st-uitleg.on { background: rgba(120,255,180,.24); border-color: rgba(120,255,180,.6); }
     /* De uitvoer staat buiten de tabbladen: wat er misging moet je kunnen lezen
        terwijl je al ergens anders kijkt. */
-    #studio .st-uit { flex: none; padding: 7px 12px 9px; font: 11.5px/1.5 ui-monospace, monospace;
+    #studio .st-uit { flex: none; padding: 7px 12px 9px; font-size: 12px; line-height: 1.45;
       color: #b6ffd6; white-space: pre-wrap; max-height: 30vh; overflow: auto;
       border-top: 1px solid rgba(255,255,255,.14); }
     #studio .st-uit:empty { display: none; }
+    #studio .st-uit .rest { display: none; font: 11px/1.5 ui-monospace, monospace; color: #9c86bd; }
+    #studio .st-uit.open .rest { display: inline; }
+    #studio .st-uit.heeft-meer { cursor: pointer; }
+    #studio .st-uit.heeft-meer:not(.open) .kop::after { content: '  ⋯'; color: #9c86bd; }
     #studio .st-hint code { background: rgba(255,255,255,.1); border-radius: 4px; padding: 0 4px; }
     #me-dump { position: fixed; inset: 8% 360px auto 6%; z-index: 61; display: none;
       max-height: 70vh; padding: 12px; border-radius: 10px; background: #140426; color: #d8ffe8;
@@ -509,7 +534,11 @@ function startMapEdit() {
 
       <section data-stap="2" hidden>
         <p class="st-waarschuwing" id="st-onder" hidden></p>
-        <p class="st-noot">Sleep de rondjes naar de plekken op de tekening, en de groene ruitjes om de weg te buigen.</p>
+        <div class="st-btns">
+          <button class="prim" id="st-tik">👆 Tik de haltes aan, 1 tot 8</button>
+        </div>
+        <p class="st-noot" id="st-tiknoot">Van onder naar boven: de weg buigt vanzelf mee. Daarna sleep je
+          een rondje of een groen ruitje om bij te schaven.</p>
         <div class="st-btns" style="margin-top:6px">
           <button class="stil" id="st-undo" title="Ctrl+Z">↶ terug</button>
           <button class="stil" id="st-renodes">↺ haltes</button>
@@ -548,10 +577,15 @@ function startMapEdit() {
         <select id="mf-beloning" hidden></select>
         <div class="st-schat" id="st-schat">
           <h6>Je eigen schat</h6>
-          <div class="st-prow"><label>emoji</label><input id="sc-emoji" maxlength="4"></div>
-          <div class="st-prow"><label>naam</label><input id="sc-naam" placeholder="bv. Regenboogkroon"></div>
+          <p class="st-sstap"><b>1</b> Een idee, en de prompt voor je AI</p>
+          <div class="st-prow"><label>idee</label><input id="sc-idee" placeholder="bv. een regenboogkroontje"></div>
+          <div class="st-btns"><button id="sc-prompt">Kopieer de prompt</button></div>
+          <p class="st-sstap"><b>2</b> Plak wat je AI terugschrijft</p>
           <textarea id="sc-svg" rows="3" spellcheck="false"
             placeholder="plak hier de SVG, of sleep een .svg-bestand erop"></textarea>
+          <p class="st-sstap"><b>3</b> Een naam, en kijk hoe hij staat</p>
+          <div class="st-prow"><label>naam</label><input id="sc-naam" placeholder="bv. Regenboogkroon"></div>
+          <div class="st-prow"><label>emoji</label><input id="sc-emoji" maxlength="4"></div>
           <div class="st-sc-vb" id="sc-vb" hidden></div>
           <div class="st-prow"><label>hoger</label><input id="sc-hoogte" type="range" min="-12" max="12" step="0.5" value="0"></div>
           <div class="st-prow"><label>groter</label><input id="sc-grootte" type="range" min="0.7" max="1.3" step="0.02" value="1"></div>
@@ -560,18 +594,17 @@ function startMapEdit() {
             <button class="prim" id="sc-gebruik" disabled>✓ Maak dit de schat</button>
             <button class="stil" id="sc-weg" hidden>✕ schat weg</button>
           </div>
-          <details class="st-prompt" open>
-            <summary>✨ Prompt voor de schat</summary>
-            <div class="st-prow"><label>idee</label><input id="sc-idee" placeholder="bv. een regenboogkroontje"></div>
-            <div class="st-btns"><button id="sc-prompt">Kopieer de prompt</button></div>
-            <p class="st-hint" style="display:block">Voor Claude of ChatGPT: een schat is een tekening in SVG.</p>
-          </details>
         </div>
       </section>
 
       <section data-stap="4" hidden>
         <div class="st-check" id="st-klaar"></div>
-        <p class="st-noot" id="st-kijknoot">Kijk nog één keer naar de kaart hiernaast en de schat op de pop.</p>
+        <div class="st-check" id="st-zwak" hidden></div>
+        <p class="st-noot" id="st-kijknoot">Kijk nog één keer naar de kaart hiernaast en de schat op de pop, en speel het begin en het einde.</p>
+        <div class="st-btns" style="margin-top:6px">
+          <button id="st-speel-eerst" title="in een écht venster, op de gekozen toestelmaat">▶ eerste show</button>
+          <button id="st-speel-laatst" title="de laatste show, en daarna het wereldfeest met de schat">▶ laatste show + wereldfeest</button>
+        </div>
         <p class="st-let" id="st-live" hidden></p>
         <div class="st-btns" style="margin-top:10px">
           <button class="prim groot" id="st-publiceer">🚀 Publiceer</button>
@@ -580,6 +613,7 @@ function startMapEdit() {
       </section>
 
       <section data-stap="meer" hidden>
+        <div class="los">
         <h6>Bekijken</h6>
         <div class="st-kijk">
           <div class="kr">
@@ -618,14 +652,13 @@ function startMapEdit() {
         <div class="st-list" id="st-list"></div>
         <div class="st-btns" style="margin-top:6px">
           <button class="prim" id="st-new">＋ wereld</button>
-          <button class="stil" id="st-revert" title="Deze wereld terug naar wat er in het spel staat">↶ deze terug</button>
-          <button class="stil" id="st-weg" title="Alleen voor een wereld die nog niet in het spel staat">✕ weg</button>
         </div>
         <div class="st-nieuwrij" id="st-nieuwrij" hidden>
           <input id="st-nieuwnaam" placeholder="naam, bv. Regenboogwereld">
           <button class="prim" id="st-nieuwmaak">Maak</button>
         </div>
         <p class="st-noot" id="st-nieuwid" hidden></p>
+        </div>
 
         <h6>Gegevens</h6>
         <label class="st-vink"><input type="checkbox" id="mf-released">
@@ -639,7 +672,12 @@ function startMapEdit() {
           <button id="st-copy">Kopieer blok</button>
           <button id="st-paste">Plak blok</button>
         </div>
+        <div class="st-btns" style="margin-top:6px">
+          <button class="stil" id="st-revert" title="Deze wereld terug naar wat er in het spel staat">↶ deze terug</button>
+          <button class="stil" id="st-weg" title="Alleen voor een wereld die nog niet in het spel staat">✕ weg</button>
+        </div>
 
+        <div class="los">
         <h6>Beelden van de app</h6>
         <div class="st-row" style="margin-top:8px"><label>kwaliteit</label><select id="st-kwal">
           <option value="0.9">0.90 — ruim</option>
@@ -649,6 +687,7 @@ function startMapEdit() {
         <div id="st-schermen"></div>
         <div id="st-ongebruikt"></div>
         <div id="st-merk"></div>
+        </div>
         <input type="file" accept="image/*" hidden id="me-file">
 
         <h6>Wat verandert er</h6>
@@ -656,6 +695,7 @@ function startMapEdit() {
         <div class="st-btns" style="margin-top:6px"><button id="st-check-knop">✓ kijk alle werelden na</button></div>
         <div class="st-check" id="st-check" hidden></div>
 
+        <div class="los">
         <h6>Losse stappen</h6>
         <div class="st-btns">
           <button id="st-push">⇪ Opslaan in het project</button>
@@ -670,6 +710,7 @@ function startMapEdit() {
         </div>
         <p class="st-let" id="st-pw" hidden>Publiceren draait ook de browsertests, en daarvoor
           ontbreekt playwright. Draai één keer <code>npm install</code> in de projectmap.</p>
+        </div>
       </section>
 
     </div>
@@ -680,6 +721,19 @@ function startMapEdit() {
     </div>
     <div class="st-uit" id="st-out"></div>`;
   document.body.appendChild(panel);
+  /* In de Dev Studio (een kijkvak in /studio) staat er al een balk boven met de
+     naam van de wereld, een lijst met alle werelden, een toestelkiezer, Testen,
+     App & merk en de losse git-stappen. Dan laat dit paneel zijn eigen versie
+     daarvan weg: de kop, en de blokken .los onder ⋯ Meer. Wat overblijft is wat
+     alleen over déze wereld gaat. De ? schuift naast de stappen, en dat er iets
+     niet gepubliceerd is zegt een stip op Publiceren. Los geopend (/ts op een
+     telefoon, of ?debug&mapedit zonder studio) blijft alles staan. */
+  const inDev = window.parent !== window;
+  if (inDev) {
+    panel.classList.add('in-dev');
+    panel.querySelector('.st-stappen').appendChild(F('st-uitleg'));
+    F('st-meer').title = 'het id, het bestand en wat er verandert';
+  }
   const dump = document.createElement('pre');
   dump.id = 'me-dump';
   dump.onclick = () => { dump.style.display = 'none'; };
@@ -773,7 +827,8 @@ function startMapEdit() {
        4 Publiceren  nog één keer kijken, en dan helemaal naar buiten
      Alles wat je zelden nodig hebt staat onder ⋯ Meer: bekijken in een andere
      stand of maat, een andere wereld kiezen, het id, de beelden van de app en de
-     losse stappen naar main. Zo staat er bij het maken van een wereld alleen wat
+     losse stappen naar main (in de Dev Studio alleen het id en wat er verandert;
+     de rest heeft die zelf, zie inDev). Zo staat er bij het maken van een wereld alleen wat
      bij die stap hoort -- de rest bestaat nog, maar staat niet in de weg.
 
      De Dev Studio opent dit paneel met &stap=<n> (Publiceren in de lijst opent
@@ -785,7 +840,8 @@ function startMapEdit() {
     if (stap !== 'meer' && STAPPEN.indexOf(stap) < 0) stap = '1';
     if (stap === 'meer' && stapNu !== 'meer') stapVoorMeer = stapNu;
     stapNu = stap;
-    panel.querySelectorAll('.st-stappen button').forEach(b => b.classList.toggle('on', b.dataset.stap === stap));
+    if (stap !== '2' && typeof stopTik === 'function') stopTik();
+    panel.querySelectorAll('.st-stappen button[data-stap]').forEach(b => b.classList.toggle('on', b.dataset.stap === stap));
     panel.querySelectorAll('.st-body > section').forEach(sec => { sec.hidden = sec.dataset.stap !== stap; });
     const i = STAPPEN.indexOf(stap);
     F('st-terug').hidden = stap !== 'meer' && i <= 0;
@@ -805,7 +861,7 @@ function startMapEdit() {
     document.body.classList.toggle('st-kijken', stap === '4');
     if (stap === '4' && typeof tekenPubliceer === 'function') tekenPubliceer(true);
   }
-  panel.querySelectorAll('.st-stappen button').forEach(b => { b.onclick = () => toonStap(b.dataset.stap); });
+  panel.querySelectorAll('.st-stappen button[data-stap]').forEach(b => { b.onclick = () => toonStap(b.dataset.stap); });
   F('st-verder').onclick = () => toonStap(STAPPEN[Math.min(STAPPEN.length - 1, STAPPEN.indexOf(stapNu) + 1)]);
   F('st-terug').onclick = () => toonStap(stapNu === 'meer' ? stapVoorMeer
     : STAPPEN[Math.max(0, STAPPEN.indexOf(stapNu) - 1)]);
@@ -844,7 +900,32 @@ function startMapEdit() {
      schermpixel geen tekenpixel meer, en een richel raak je niet met de muis alleen. */
   let sel = null;
   let wegWacht = null;      // welke wereld wacht op de tweede tik van "✕ weg"
-  const setOut = t => { F('st-out').textContent = t || ''; };
+  /* De meldregel onderin. Eén gewone zin: de eerste regel van wat er te melden
+     is. De rest (een pad, wat de tests zeiden, de stappen van git) staat erachter
+     en klapt open met een tik op de regel, en staat ook in de tooltip. Zo leest
+     een melding als een zin en niet als een log, en gaat er toch niets verloren. */
+  const setOut = t => {
+    const vak = F('st-out');
+    const regels = String(t || '').split('\n');
+    const kop = regels.shift().trim();
+    const rest = regels.join('\n').trim();
+    vak.textContent = '';
+    vak.title = rest;
+    vak.classList.toggle('heeft-meer', !!rest);
+    vak.classList.remove('open');
+    if (!kop && !rest) return;
+    const k = document.createElement('span');
+    k.className = 'kop';
+    k.textContent = kop || rest;
+    vak.appendChild(k);
+    if (kop && rest) {
+      const r = document.createElement('span');
+      r.className = 'rest';
+      r.textContent = '\n' + rest;
+      vak.appendChild(r);
+    }
+  };
+  F('st-out').onclick = () => { const v = F('st-out'); if (v.classList.contains('heeft-meer')) v.classList.toggle('open'); };
   /* Een storing die een mens kan lezen, en de volle waarheid in de console.
      Wat er misging, wat er met je werk gebeurd is, en waar de details staan --
      nooit een kale JavaScript-regel onderin het paneel. */
@@ -891,6 +972,10 @@ function startMapEdit() {
     chip.title = totaal ? totaal + ' ding' + (totaal === 1 ? '' : 'en') + ' anders dan in het project' : '';
     chip.hidden = !totaal;
     chip.className = 'st-chip ' + (totaal ? 'vuil' : 'schoon');
+    // in de Dev Studio is er geen kop: daar zegt een stip op Publiceren hetzelfde
+    const vier = panel.querySelector('.st-stappen [data-stap="4"]');
+    vier.classList.toggle('vuil', !!totaal);
+    vier.title = chip.title;
   }
   function refreshList() {
     const list = F('st-list');
@@ -1018,7 +1103,10 @@ function startMapEdit() {
     const vak = F('st-bel'), it = huidig;
     const stuk = !!w.beloning && (!it || it.price != null);
     vak.className = 'st-bel' + (stuk ? ' stuk' : it ? '' : ' leeg');
+    // nog geen schat: dan is er niets te tonen, en staan de drie stappen eronder bovenaan
+    vak.hidden = !w.beloning;
     F('st-bel-vb').innerHTML = it ? (it.thumb ? it.thumb(curBase()) : (it.emoji || '·')) : '·';
+    F('st-bel-vb').classList.toggle('schat', !!(it && it.thumb));
     F('st-bel-naam').textContent = !it && w.beloning ? 'onbekend spulletje' : it ? (it.full || it.name) : 'nog geen wereldschat';
     F('st-bel-uit').textContent = !it && w.beloning
       ? w.beloning + ' staat niet in ITEMS — deze wereld deelt niets uit'
@@ -1216,6 +1304,7 @@ function startMapEdit() {
     const p = schatProef;
     vb.hidden = !p || !!p.fout;
     knop.disabled = true;
+    knop.textContent = w.schat ? '✓ Vervang de schat' : '✓ Maak dit de schat';
     if (!p) { let_.hidden = true; return; }
     if (p.fout) { let_.hidden = false; let_.className = 'st-check'; let_.innerHTML = '<span class="ct-fout">⚠</span> ' + esc(p.fout); return; }
     // het voorbeeld: dezelfde avatarSVG en thumb() als het spel, met een tijdelijk spulletje
@@ -1227,8 +1316,11 @@ function startMapEdit() {
     try {
       const pop = base => ster
         ? avatarSVG({ ...ster, base, equipped: { ...ster.equipped, acc: proef.id } }, 110) : '';
+      const kaart = it => '<div class="item-card">' + itemThumb(it) + '</div>';
+      const buren = ITEMS.filter(it => it.cat === 'acc' && it.emoji && !it.thumb && it.price != null).slice(0, 2);
       vb.innerHTML = '<div>' + pop('meisje') + 'meisje</div><div>' + pop('jongen') + 'jongen</div>'
-        + '<div class="mini">' + proef.thumb() + 'kast</div>';
+        + '<div class="st-rek"><span>' + (buren[0] ? kaart(buren[0]) : '') + kaart(proef)
+        + (buren[1] ? kaart(buren[1]) : '') + '</span>in het rek, tussen de emoji</div>';
     } finally { ITEMS.splice(ITEMS.indexOf(proef), 1); }
     // de keuring: de regels van het spel, en wat alleen hier te meten valt
     const rood = schatFouten({ naam: F('sc-naam').value, emoji: F('sc-emoji').value, view: p.view, svg: p.svg });
@@ -1251,7 +1343,6 @@ function startMapEdit() {
     let_.innerHTML = rood.map(t => '<span class="ct-fout">⚠</span> ' + esc(t)).concat(
       geel.map(t => '<span class="ct-let">·</span> ' + esc(t))).join('<br>');
     knop.disabled = rood.length > 0 || !!p.opgeslagen;
-    knop.textContent = w.schat ? '✓ Vervang de schat' : '✓ Maak dit de schat';
   }
   let schatKlok = null;
   F('sc-svg').addEventListener('input', () => { clearTimeout(schatKlok); schatKlok = setTimeout(() => tekenSchatProef(true), 250); });
@@ -1346,6 +1437,17 @@ function startMapEdit() {
     });
   }
   F('sc-prompt').onclick = () => kopieer(schatPrompt(shown().world), 'De prompt voor de schat');
+  /* Het idee is meestal al de naam: "een regenboogkroontje" wordt Regenboogkroontje.
+     Alleen zolang je de naam zelf niet aanraakte. */
+  let naamUitIdee = '';
+  F('sc-idee').addEventListener('input', () => {
+    const naam = F('sc-naam');
+    if (naam.value.trim() && naam.value !== naamUitIdee) return;
+    const kaal = F('sc-idee').value.trim().replace(/^(een|de|het|a|an|the)\s+/i, '').slice(0, 30);
+    naamUitIdee = kaal ? kaal[0].toUpperCase() + kaal.slice(1) : '';
+    naam.value = naamUitIdee;
+    naam.dispatchEvent(new Event('input'));
+  });
   // een wereld heet "Regenboogwereld"; het thema is "Regenboog"
   const themaVan = w => String(w.name || '').replace(/\s*wereld$/i, '').trim() || w.name;
   let kaartPromptWereld = null;
@@ -1487,6 +1589,7 @@ function startMapEdit() {
     if (historie.length > 40) historie.shift();
   }
   function stapTerug() {
+    if (tik) { tik = null; zetTikKnop(); }
     const h = historie.pop();
     if (!h) { setOut('niets meer om terug te nemen'); return; }
     if (h.idx !== viewWorldIdx) { viewWorldIdx = h.idx; }
@@ -1566,6 +1669,8 @@ function startMapEdit() {
         st.appendChild(k);
       });
     }
+    if (tik) frame.querySelectorAll('.tour-stop').forEach(st =>
+      st.classList.toggle('me-wacht', Number(st.dataset.lvl) - shown().first >= tik.k));
     leesCurve().forEach((c, i) => {
       const h = document.createElement('div');
       h.className = 'me-ctrl';
@@ -1677,6 +1782,7 @@ function startMapEdit() {
     if (msg !== undefined) setOut(msg);
   }
   function goWorld(i) {
+    if (tik) { tik = null; zetTikKnop(); }
     viewWorldIdx = i;
     kies(null);
     meldAanStudio();
@@ -1756,6 +1862,60 @@ function startMapEdit() {
   };
   F('st-renodes').onclick = () => { bewaarStap('haltes terugzetten'); delete shown().world.nodes; kies(null); commit('haltes terug naar de slinger'); };
   F('st-recurve').onclick = () => { bewaarStap('weg terugzetten'); delete shown().world.curve; kies(null); commit('weg terug naar de vanzelf-bocht'); };
+
+  /* ---- Haltes aantikken ------------------------------------------------------
+     De snelle weg voor een nieuwe tekening: tik de acht plekken aan, van onder
+     (halte 1) naar boven. Slepen vanaf de standaardslinger was acht keer zoeken
+     wélk rondje waar hoort, en daarna zeven ruitjes bijbuigen; zo is het acht
+     tikken en de rest gaat vanzelf. De weg gaat aan het begin terug naar de
+     vanzelf-bocht (defaultControl), want ruitjes die bij de oude haltes hoorden
+     trekken de weg bij de nieuwe alle kanten op. Daarna schaaf je bij met slepen,
+     zoals altijd.
+
+     Eén stap ongedaan maken neemt het hele aantikken terug: halverwege terug
+     naar halte 4 tikken klopt niet met wat je net deed. Esc stopt, en wat al
+     getikt is blijft staan. */
+  let tik = null;              // { k } = de halte die de volgende tik krijgt
+  function zetTikKnop() {
+    const knop = F('st-tik');
+    knop.textContent = tik ? '✕ stop met aantikken' : '👆 Tik de haltes aan, 1 tot 8';
+    knop.classList.toggle('prim', !tik);
+    document.body.classList.toggle('st-tikken', !!tik);
+    F('st-tiknoot').innerHTML = tik
+      ? '<b>Tik halte ' + (tik.k + 1) + ' van ' + shown().levels + '</b> op de tekening. Esc stopt.'
+      : 'Van onder naar boven: de weg buigt vanzelf mee. Daarna sleep je een rondje of een groen ruitje om bij te schaven.';
+  }
+  function stopTik(msg) {
+    if (!tik) return;
+    tik = null;
+    zetTikKnop();
+    commit(msg);
+  }
+  F('st-tik').onclick = () => {
+    if (tik) { stopTik('Gestopt. Wat je aantikte blijft staan.'); return; }
+    bewaarStap('haltes aantikken');
+    ownNodes();
+    delete shown().world.curve;
+    kies(null);
+    tik = { k: 0 };
+    zetTikKnop();
+    commit('Tik halte 1 aan, onderaan de tekening.');
+  };
+  function tikHalte(e, frame) {
+    const r = frame.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, (e.clientX - r.left) / r.width * 100));
+    const y = Math.max(0, Math.min(100, (e.clientY - r.top) / r.height * 100));
+    const lijst = ownNodes();
+    lijst[tik.k] = { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
+    tik.k++;
+    if (tik.k >= lijst.length) {
+      stopTik('De ' + lijst.length + ' haltes staan en de weg buigt vanzelf. Sleep om bij te schaven.');
+      meetStil();
+      return;
+    }
+    zetTikKnop();
+    commit('Halte ' + tik.k + ' staat. Nu halte ' + (tik.k + 1) + '.');
+  }
   /* ---------------------------------------------------------------- beelden
      Per scherm zie je welke tekening daar hoort, hoe groot hij moet zijn en waar
      hij landt. Die tabel komt uit test/scene.js en wordt door de server in de
@@ -1788,56 +1948,47 @@ function startMapEdit() {
     const w = wereldNu();
     return w ? d.pad.replace('{wereld}', w.world.id) : '';
   }
-  /* Vier van de zes plekken uit scene.js leest het spel nog niet: die zijn voorstel
-     en leven alleen in incoming/. Dat hoort de studio te zéggen in plaats van een
-     knop aan te bieden die niets doet. */
+  /* Elke plek uit scene.js heeft een pad dat het spel leest; de wereldkaart staat
+     niet hier maar in stap 1. */
   function tekenSchermen() {
     tekenWereldbeeld();
     const vak = F('st-schermen');
     if (!vak) return;
     vak.innerHTML = '';
     SCHERMEN.forEach(sc => {
-      // alleen plekken die het spel écht leest: de vier voorstellen uit scene.js
-      // (zaal, landschap, wolken, slotscherm) hebben nog geen doelpad, en een rij
-      // die niets doet is een rij die je elke keer opnieuw moet wegdenken
-      const keys = Object.keys(SLOTS).filter(k =>
-        SLOTS[k].screen === sc.id && !SLOTS[k].perWereld && SLOTS[k].pad);
+      const keys = Object.keys(SLOTS).filter(k => SLOTS[k].screen === sc.id && !SLOTS[k].perWereld);
       if (!keys.length) return;
       const groep = document.createElement('div');
       groep.className = 'st-scherm';
       groep.innerHTML = '<h6>' + esc(sc.label) + '</h6>';
       keys.forEach(k => {
-        const d = SLOTS[k], pad = slotPad(k), kan = !pad;
+        const d = SLOTS[k], pad = slotPad(k);
         const kb = OP_SCHIJF[pad];
         const rij = document.createElement('div');
-        rij.className = 'st-slot' + (kan ? ' kan' : '');
+        rij.className = 'st-slot';
         rij.dataset.slot = k;
-        rij.title = kan ? 'nog niet in het spel — alleen via incoming/'
-          : 'sleep een beeld hierheen, of tik om te kiezen';
+        rij.title = 'sleep een beeld hierheen, of tik om te kiezen';
         rij.innerHTML = '<b>' + esc(d.label) + '</b>'
-          + '<span class="st-dot ' + (kan ? '' : kb ? 'er' : 'weg') + '"></span>'
+          + '<span class="st-dot ' + (kb ? 'er' : 'weg') + '"></span>'
           + '<small>' + d.lever[0] + ' × ' + d.lever[1] + ' — '
-          + (kan ? 'nog niet in het spel; leg hem in incoming/ als ' + esc(d.canoniek || k)
-             : esc(pad) + (kb ? '  · ' + kb + ' kB' : '  · ontbreekt nog')) + '</small>';
-        if (!kan) {
-          rij.onclick = () => { bezigSlot = k; F('me-file').click(); };
-          ['dragenter', 'dragover'].forEach(n => rij.addEventListener(n, e => {
-            e.preventDefault(); rij.classList.add('over');
-          }));
-          ['dragleave', 'dragend'].forEach(n => rij.addEventListener(n, () => rij.classList.remove('over')));
-          rij.addEventListener('drop', e => {
-            e.preventDefault();
-            rij.classList.remove('over');
-            const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-            if (!f) return setOut('daar zat geen bestand bij');
-            if (!/^image\//.test(f.type)) return setOut('dat is geen afbeelding: ' + f.name);
-            verwerkBeeld(f, k);
-          });
-        }
+          + esc(pad) + (kb ? '  · ' + kb + ' kB' : '  · ontbreekt nog') + '</small>';
+        rij.onclick = () => { bezigSlot = k; F('me-file').click(); };
+        ['dragenter', 'dragover'].forEach(n => rij.addEventListener(n, e => {
+          e.preventDefault(); rij.classList.add('over');
+        }));
+        ['dragleave', 'dragend'].forEach(n => rij.addEventListener(n, () => rij.classList.remove('over')));
+        rij.addEventListener('drop', e => {
+          e.preventDefault();
+          rij.classList.remove('over');
+          const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+          if (!f) return setOut('daar zat geen bestand bij');
+          if (!/^image\//.test(f.type)) return setOut('dat is geen afbeelding: ' + f.name);
+          verwerkBeeld(f, k);
+        });
         /* Ligt er een kandidaat voor deze plek in incoming/? Dan is de vraag niet
            "welk bestand is dit" maar "wordt hij het". Eén knop, naast de huidige. */
         const k2 = kandidaatVoor(k);
-        if (k2 && !kan) {
+        if (k2) {
           const nieuw = document.createElement('div');
           nieuw.className = 'st-nieuw';
           nieuw.innerHTML = '<div class="paar">'
@@ -1924,7 +2075,9 @@ function startMapEdit() {
     const vak = F('st-ongebruikt');
     if (!vak) return;
     const gebruikt = {};
-    WORLDS.forEach(w => { if (w.art) gebruikt[w.art] = true; });
+    // de kaart én zijn kleine broertje voor de reis (wereldKleinPad): dat pad staat
+    // nergens in WORLDS, het spel leidt het af -- en dus leek het hier ongebruikt
+    WORLDS.forEach(w => { if (w.art) { gebruikt[w.art] = true; const k = wereldKleinPad(w.art); if (k) gebruikt[k] = true; } });
     Object.keys(SLOTS).forEach(k => { const d = SLOTS[k]; if (d.pad && !d.perWereld) gebruikt[d.pad] = true; });
     const los = Object.keys(OP_SCHIJF)
       .filter(f => /^assets\/world\//.test(f) && !gebruikt[f]).sort();
@@ -2286,8 +2439,11 @@ function startMapEdit() {
         window.__INCOMING = (window.__INCOMING || []).filter(x => x.url !== bron);
         fetch('/incoming-weg?f=' + encodeURIComponent(label), { method: 'POST' }).catch(() => {});
       }
+      contrastStil = null;                // zelfde pad, andere tekening: opnieuw meten
       commit('');
-      const klaar = 'Gewijzigd · ' + label + '  ' + maat + ' → ' + txt + klein
+      // eerst de zin, dan de maten (die klappen open onder de meldregel)
+      const klaar = (key === 'world' ? 'De tekening staat erop.' : 'Het beeld staat erop.')
+        + '\nGewijzigd · ' + label + '  ' + maat + ' → ' + txt + klein
         + (eigen ? '' : '\nVervers de pagina: de kaart toont nu nog de kandidaat uit incoming/.');
       setOut(klaar);
       if (key === 'world') autoKleuren(klaar + '\nKleuren en zaal komen uit de tekening.');
@@ -2425,8 +2581,8 @@ function startMapEdit() {
 
      Wat er gemeten wordt: de gemiddelde helderheid van de tekening in precies het
      schijfje waar het rondje komt, en langs de weg. Daar tegenover de kleur van wat
-     er óverheen komt. Een halte gaat door drie standen (op slot grijs, gedaan paars,
-     nu goud) en moet in alle drie te zien blijven, dus de slechtste telt.
+     er óverheen komt. Een halte gaat door drie standen (op slot stoffig violet,
+     gedaan paars, nu goud) en moet in alle drie te zien blijven.
 
      De verhouding is de gebruikelijke (L1+0,05)/(L2+0,05); onder de 2,0 valt iets
      weg, tussen 2 en 3 is het krap. Een doorzichtige wegkleur wordt eerst over de
@@ -2491,8 +2647,12 @@ function startMapEdit() {
       const v = getComputedStyle(frame).getPropertyValue(naam).trim();
       return naarRgb(v || '#fff');
     };
-    const goud = kleur('--gold-cta-bottom'), paars = kleur('--purple-shadow');
-    const grijs = kleur('--gray-bottom');
+    /* De vullingen en de rand zoals de kaart een halte tekent (55-haltes.css, "De
+       knoplip" en "De stickerrand"): gespeeld, hier speel je, en op slot. Uit het
+       blad gelezen, zodat de meter meegaat als er aan de haltes gedraaid wordt. De
+       rand is die van een halte op slot: de zwakste van de twee. */
+    const vullingen = ['--halte-vulling', '--gold-cta-bottom', '--slot-vulling'].map(kleur);
+    const ring = kleur('--slot-sticker');
     const wegKleur = naarRgb(getComputedStyle(frame).getPropertyValue('--w-road').trim() || 'rgba(255,255,255,.42)');
     // het donkere halootje onder elke stip: 4 eenheden per kant breder (zie .tour-road-under)
     const randKleur = naarRgb(getComputedStyle(frame).getPropertyValue('--route-onder').trim() || 'rgba(30,8,52,.45)');
@@ -2514,17 +2674,12 @@ function startMapEdit() {
        concurreren met de halte. Een meter die bij elke tekening iets roept, leer je
        negeren, en dan is hij minder waard dan geen meter. */
     const uit = { haltes: [], weg: [], fout: null };
-    // de witte ring om een halte (.tour-stop). Staat als waarde in het blad en niet
-    // als token -- een doorzichtig wit dat niets betekent schrijven we uit, zie de
-    // noot bij de verdwenen --glass-*-familie.
-    const ring = naarRgb('rgba(255,255,255,.3)');
-
     leesNodes().forEach((n, i) => {
       const bg = schijf(data, br, ho, n.x, n.y, dotStraal);
       if (!bg) return;
       const L = lum(bg);
       // de vulling óf de ring mag het dragen -- de beste van de twee telt
-      const vulling = Math.max(verhouding(L, lum(paars)), verhouding(L, lum(goud)), verhouding(L, lum(grijs)));
+      const vulling = Math.max.apply(null, vullingen.map(v => verhouding(L, lum(v))));
       const opRing = ring.a < 1 ? meng(ring, bg) : ring;
       const beste = Math.max(vulling, verhouding(L, lum(opRing)));
       uit.haltes.push({ nr: i + 1, licht: Math.round(L * 100), v: beste });
@@ -2541,14 +2696,62 @@ function startMapEdit() {
     });
     return uit;
   }
+  /* Drempels verschillen per ding, want ze falen anders. Een halte heeft de beste
+     van vulling en ring, en die zakt alleen in een smalle middentoonband; de weg en
+     de sterretjes zijn dún en doorzichtig en hebben meer nodig. */
+  const CONTRAST_ZWAK = { halte: 1.8, weg: 2.5 };
+  /* Vanzelf meten. De knop onder Hulpmiddelen vond bijna niemand, en een halte op
+     een middentoon zie je op een scherm met de lamp aan pas als het te laat is.
+     Dus meet de studio stil na elke sleep en na het aantikken, en nog eens bij
+     Publiceren; de uitkomst hoort bij precies deze haltes, deze weg en deze
+     tekening (de sleutel), zodat een oude meting nooit voor een nieuwe doorgaat.
+     Wat echt zwak is komt in de lijst van stap 4 -- als waarschuwing, niet als
+     slot: het oog beslist, niet de meter. */
+  let contrastStil = null;     // { sleutel, m }
+  const contrastSleutel = () => {
+    const w = shown().world;
+    return JSON.stringify([w.id, w.art, leesNodes(), leesCurve(), (w.theme || {}).road || '']);
+  };
+  async function meetStil() {
+    const sleutel = contrastSleutel();
+    if (contrastStil && contrastStil.sleutel === sleutel) return contrastStil.m;
+    /* Over file:// geeft de browser de pixels niet vrij. Stil meten zwijgt dan:
+       er is niemand die erom vroeg, en een rode regel in de console bij elke sleep
+       zegt niets wat de knop niet ook zegt. */
+    if (!/^http/.test(location.protocol)) return null;
+    let m;
+    try { m = await meetContrast(); } catch (e) { m = { fout: pixelFout(e) }; }
+    contrastStil = { sleutel, m };
+    if (!F('st-contrast').hidden) toonContrast(m);
+    if (stapNu === '4') tekenZwak();
+    return m;
+  }
+  function zwakkePlekken(m) {
+    if (!m || m.fout) return [];
+    return m.haltes.filter(o => o.v < CONTRAST_ZWAK.halte).map(o => 'halte ' + o.nr)
+      .concat(m.weg.filter(o => o.v < CONTRAST_ZWAK.weg).map(o => 'de weg ' + o.nr));
+  }
+  function tekenZwak() {
+    const vak = F('st-zwak');
+    const m = contrastStil && contrastStil.sleutel === contrastSleutel() ? contrastStil.m : null;
+    const zwak = zwakkePlekken(m);
+    vak.hidden = !zwak.length;
+    if (!zwak.length) return;
+    vak.innerHTML = '<span class="ct-let">·</span> Slecht te zien op de tekening: ' + esc(zwak.join(', '))
+      + ' <a href="#" data-stap="2">→ Haltes</a>';
+    vak.querySelector('a').onclick = e => {
+      e.preventDefault();
+      toonStap('2');
+      const d = F('st-contrast').closest('details');
+      if (d) d.open = true;
+      toonContrast(m);
+    };
+  }
   function toonContrast(m) {
     const vak = F('st-contrast');
     vak.hidden = false;
     if (m.fout) { vak.className = 'st-check'; vak.textContent = m.fout; return; }
-    /* Drempels verschillen per ding, want ze falen anders. Een halte heeft de beste
-       van vulling en ring, en die zakt alleen in een smalle middentoonband; de weg en
-       de sterretjes zijn dún en doorzichtig en hebben meer nodig. */
-    const zwak = { halte: 1.8, weg: 2.5 };
+    const zwak = CONTRAST_ZWAK;
     const merk = (v, g) => v < g ? 'ct-fout' : v < g * 1.3 ? 'ct-let' : 'ct-goed';
     const teken = (v, g) => v < g ? '⚠' : v < g * 1.3 ? '·' : '✓';
     const regel = (naam, o, g) => '<span class="' + merk(o.v, g) + '">' + teken(o.v, g) + ' ' + naam
@@ -2852,6 +3055,8 @@ function startMapEdit() {
       F('st-pubwat').textContent = punten.length ? ''
         : (live ? '' : 'Hij gaat open voor kinderen. ') + 'Opslaan, testen en naar main, in één keer.';
     }
+    tekenZwak();
+    if (kijk) meetStil();
     if (kijk) {
       if (sterNu()) zetStand('halverwege');
       const bel = w.beloning ? item(w.beloning) : null;
@@ -2994,6 +3199,12 @@ function startMapEdit() {
     setOut(maten.length + ' venster(s) met ' + WORLDS[viewWorldIdx].name
       + ' geopend — ververs ze na een wijziging');
   }
+  /* Stap 4: het begin en het einde van deze wereld, met één tik. Dezelfde vensters
+     als probeer onder ⋯ Meer, maar daar zocht je ze in een keuzelijst -- en dit
+     zijn de twee die je vóór elke publicatie wilt zien. */
+  const speelOp = keuze => toonVoorbeeld([toestelKiezer.value || MATEN[0].id], keuze);
+  F('st-speel-eerst').onclick = () => speelOp('game:vers');
+  F('st-speel-laatst').onclick = () => speelOp('game:bijna');
   F('st-venster').onclick = e => {
     if (e.shiftKey) return toonVoorbeeld(MATEN.map(m => m.id));
     const m = toestelKiezer.value;
@@ -3127,6 +3338,7 @@ function startMapEdit() {
   document.addEventListener('keydown', e => {
     if (!document.body.classList.contains('mapedit')) return;
     const inVeld = /^(INPUT|SELECT|TEXTAREA)$/.test((e.target.tagName || ''));
+    if (e.key === 'Escape' && tik) { e.preventDefault(); stopTik('Gestopt. Wat je aantikte blijft staan.'); return; }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
       e.preventDefault(); stapTerug(); return;
     }
@@ -3146,6 +3358,15 @@ function startMapEdit() {
   map.addEventListener('pointerdown', e => {
     const frame = map.querySelector('.world-frame');
     if (!frame || !e.target.closest) return;
+    if (tik) {
+      if (!frame.contains(e.target)) return;
+      // de klik die erop volgt mag geen halte openen
+      map.addEventListener('click', ev => { ev.stopPropagation(); ev.preventDefault(); },
+        { capture: true, once: true });
+      e.preventDefault(); e.stopPropagation();
+      tikHalte(e, frame);
+      return;
+    }
     const ctrl = e.target.closest('.me-ctrl');
     const stop = ctrl ? null : e.target.closest('.tour-stop');
     if (!ctrl && !stop) return;
@@ -3180,6 +3401,7 @@ function startMapEdit() {
     drag = null;
     saveWorldDraft();
     refreshList();
+    meetStil();
   };
   map.addEventListener('pointerup', endDrag, true);
   map.addEventListener('pointercancel', endDrag, true);

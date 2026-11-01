@@ -477,6 +477,11 @@ async function haalVersie() {
     'Draait de studio nog? De rest van de pagina blijft werken.'); return; }
   VERSIE = f;
   $('#vsam').textContent = f.samenvatting;
+  if (f.isMain && f.vanMain && f.vanMain.ref === 'origin/main' && f.vanMain.voor > 0 && f.vanMain.achter > 0
+      && !$('#gelijkzetten')) {
+    toonUitDePas('Je kopie loopt uit de pas met GitHub: hier staan ' + f.vanMain.voor + ' oude stappen die GitHub '
+      + 'niet meer heeft. Daarom staat elke wereld op "Niet gepubliceerd". Zet hem gelijk: wat hier stond blijft bewaard.');
+  }
   tekenLijn();
   const achter = f.vanMain ? f.vanMain.achter : f.achter;
   const ernst = f.vuil ? 'let' : (achter ? 'let' : 'ok');
@@ -517,6 +522,32 @@ async function haalVersie() {
   if ($('#v-open').hidden === !f.vuil) { /* al goed */ } else haalOpenWerk();
 }
 
+/* ---- uit de pas met GitHub --------------------------------------------------
+   Main hier en op GitHub zijn uit elkaar gelopen (zie uitDePas in test/versie.js):
+   dan kan Nieuwste versie niets, en vergelijkt de studio elke wereld met een oud
+   spel. In plaats van git-tekst een zin en één knop. Hij verschijnt vanzelf bij
+   het openen, en als Nieuwste versie erop stuit. */
+function toonUitDePas(tekst) {
+  const m = $('#nieuwstemeld');
+  meld('#nieuwstemeld', 'let', tekst);
+  const knop = el('button', 'prim', 'Zet gelijk met GitHub');
+  knop.id = 'gelijkzetten';
+  knop.onclick = async () => {
+    knop.disabled = true;
+    meld('#nieuwstemeld', '', 'Gelijkzetten…');
+    let j;
+    try { j = await (await fetch('/api/gelijk', { method: 'POST' })).json(); }
+    catch (e) { meldFout('#nieuwstemeld', 'Gelijkzetten lukte niet', e, 'Er is niets veranderd. Draait npm run studio nog?'); return; }
+    meld('#nieuwstemeld', j.ok ? 'ok' : 'let', j.tekst);
+    await haalVersie();
+    await haalWerelden();
+    await haalOpenWerk();
+    herlaad();
+  };
+  m.appendChild(document.createElement('br'));
+  m.appendChild(knop);
+}
+
 /* ---- de nieuwste versie ----------------------------------------------------
    De knop bovenin: ophalen en naar de nieuwste main (versie.nieuwste in
    test/versie.js). Wacht er nog een wereld op een merge, of staat er werk open,
@@ -530,6 +561,7 @@ async function nieuwste() {
   catch (e) { b.disabled = false; meldFout('#nieuwstemeld', 'De nieuwste versie ophalen lukte niet', e,
     'Er is niets veranderd. Draait npm run studio nog?'); return; }
   b.disabled = false;
+  if (j.uitDePas) { toonUitDePas(j.tekst); return; }
   meld('#nieuwstemeld', j.ok ? 'ok' : 'let', j.tekst);
   if (S.blad !== 'wereld' && !S.bewerken) naarBlad('wereld');
   await haalVersie();
@@ -1758,12 +1790,16 @@ function init() {
     if (d.wereldstudio !== 'wereld' || !d.nr) return;
     const was = S.wereld;
     S.wereld = d.nr;
-    if (S.bewerken) {
-      S.url = bladUrl(); $('#nu').textContent = S.url;
+    /* De naam in de balk: pas als de lijst deze wereld kent. Een nieuwe wereld
+       staat er bij het eerste berichtje nog niet in, en dan bleef de balk de naam
+       houden van de wereld die het paneel vóór &nieuw even liet zien. */
+    const zetNaam = () => {
       const w = huidigeWereld();
-      if (w && w.nr === d.nr) $('#bewerknaam').textContent = (w.icoon || '') + ' ' + w.naam;
-    }
-    if (was !== d.nr || !huidigeWereld() || huidigeWereld().nr !== d.nr) haalWerelden();
+      if (S.bewerken && S.wereld === d.nr && w && w.nr === d.nr) $('#bewerknaam').textContent = (w.icoon || '') + ' ' + w.naam;
+    };
+    if (S.bewerken) { S.url = bladUrl(); $('#nu').textContent = S.url; }
+    zetNaam();
+    if (was !== d.nr || !huidigeWereld() || huidigeWereld().nr !== d.nr) Promise.resolve(haalWerelden()).then(zetNaam, () => {});
   });
 
   $('#kiesbestand').onchange = e => {
