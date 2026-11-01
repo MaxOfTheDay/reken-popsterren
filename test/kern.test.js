@@ -2565,6 +2565,14 @@ zaak('TR', () => {
   check(Object.keys(app.LADDERS).join() === app.THEMAS.filter(t => t.ladder).map(t => t.id).join()
     && app.PLAATJE.join() === app.THEMAS.filter(t => t.plaatje).map(t => t.id).join(),
   'TR · LADDERS en PLAATJE komen uit het register, in de volgorde van de tegels', Object.keys(app.LADDERS).join() + ' / ' + app.PLAATJE.join());
+  /* De kaart staat de hele show op de maat van zijn hoogste proef. Een
+     kalenderblad van een maand met zes weken is een rij hoger; met getrokken
+     maanden zat die er soms niet bij, en dan schoof de kaart bij die vraag
+     20px (schuiven zaak E, af en toe rood). Dus: elk blad, elke maand. */
+  const kal = app.THEMAS.find(t => t.id === 'kalender');
+  const bladen = kal.ladder.pad.filter(r => ['blad', 'datum'].includes(r.id));
+  const zonder = bladen.flatMap(r => app.MAANDEN.filter(m => !kal.proeven({ rijen: [r] }).some(h => h.includes(`kal-blad`) && h.includes(m))).map(m => `${r.id} ${m}`));
+  check(bladen.length === 2 && !zonder.length, 'TR · de kalender meet elk blad met elke maand, zodat de kaart niet groeit in de show', zonder.join(', ') || bladen.map(r => r.id).join());
 });
 
 /* KZ · De knoppen van élke rij van élk thema, zoals het spel ze legt
