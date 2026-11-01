@@ -212,7 +212,7 @@ const BRUG = `globalThis.__api = {
   activeTrophies, isRetiredTrophy, earnedActiveCount, trophyProgress, unitText, trophyStatus,
   trophyBoog, ladderStand, pwNaam, spreekbaar, telLeer, telThema, leerTel, telModus,
   // tellers
-  totalStarCount, perfectCount, playedCount, doneWorldCount, boughtCount,
+  totalStarCount, perfectCount, playedCount, doneWorldCount, beterTel, boughtCount, bouwThemaTrofeeen, THEMA_TROFEE, applyShowResult,
   // opslag
   defaultProfile, migrate, normalizeProfiles, load, save, profileKeys, nextProfileKey, P,
   // de sterren veiligstellen: de regel in de back-upkaart, en de browser vragen ze te houden

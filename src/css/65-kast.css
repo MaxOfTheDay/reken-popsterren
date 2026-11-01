@@ -284,6 +284,9 @@
     box-shadow: 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.1);
   }
   .trophy-card .tico { filter: var(--emoji-schaduw); }
+  /* Een trofee met een eigen tekening (de thema's, zie trofeeTeken): even groot als
+     een emoji op die plek, en het dempen van .tico werkt er net zo op. */
+  .trophy-card .tico .thema-ico, .tp-emoji .thema-ico { display: block; width: 1em; height: 1em; }
   .trophy-card.done .temoji, .trophy-card.ready .temoji {
     background: var(--medaille-vul-goud) padding-box, var(--medaille-goud) border-box;
     box-shadow: 0 0 16px rgba(var(--goud-rgb),.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18);
@@ -481,8 +484,9 @@
     font-size: var(--tx-klein); font-weight: 700; margin-top: 9px; line-height: 1.2;
     overflow-wrap: break-word; max-width: 100%;
   }
-  /* Op 320 breed is een derde van de plank smaller dan "Wereldreiziger" in 13:
-     dan brak de naam midden in het woord ("Wereldreizige / r"). Daar een trede
+  /* Op 320 breed is een derde van de plank smaller dan een lange naam in 13
+     ("Wereldreiziger", nu "Rekenmedaille" of "Kalenderkind"): dan brak hij midden
+     in het woord ("Wereldreizige / r"). Daar een trede
      lager op de ladder, en alleen daar. */
   @media (max-width: 340px) { .trophy-card .tname { font-size: var(--tx-mini); } }
   .trophy-card.ready .tname { color: var(--gold-light); }

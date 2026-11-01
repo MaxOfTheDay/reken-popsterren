@@ -1096,7 +1096,8 @@ function confirmShopBuy(id, blijf) {
   }
   p.diamonds -= prijs;
   erbij.forEach(id2 => { if (!p.owned.includes(id2)) p.owned.push(id2); });
-  if (erbij.includes(p.wens)) delete p.wens;   // de wens is uitgekomen
+  // de wens is uitgekomen: hij gaat eruit, en dat het gebeurd is blijft staan (💖 Wens vervuld)
+  if (erbij.includes(p.wens)) { delete p.wens; p.wensUit = true; }
   p.equipped[it.cat] = it.id;
   /* Was dit los gekocht stuk het laatste van een podium? Dan is dat podium nu af,
      en ze gaat erop staan -- kopen doet aan, en dit is wat het stuk aan haar

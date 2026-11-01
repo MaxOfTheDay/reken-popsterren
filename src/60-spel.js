@@ -1079,7 +1079,7 @@ function antwoordGoed(q, p, btnEl) {
   else if (q.count) updateCountAcc(p, true, firstTry);
   p.stats.correct++;
   telThema(p, true);
-  telLeer(p, q);   // over het tiental, zoek het getal, drie getallen (zie de plank Nieuwe sommen)
+  telLeer(p, q);   // over het tiental, zoek het getal, drie getallen (zie de plank Nieuw geleerd)
   // enkel een directe treffer telt als "beheerst" -- en zet het onderhoudsinterval
   // van een al geleerde som verder vooruit (zie toLearned/bumpLearned)
   if (firstTry) { decWeak(p, q); bumpLearned(p, q); }
@@ -1600,6 +1600,7 @@ function applyShowResult(p, lvl, wl, stars) {
   const wasUit = worldDone(p, wl.index);
   const wasVol = worldProgress(p, worldForIndex(wl.index)).vol;
   p.stars[lvl] = Math.max(vorige, stars);
+  if (beter) p.beter = beterTel(p) + 1;   // 💪 Doorzetter (zie TROPHIES)
   /* Vooruit gaat alleen de vóórste halte, en nooit voorbij het einde van wat er
      geschreven is. Die klem is fase 4A: hiervoor liep p.level door in het
      oneindige en bezette het levelnummers die een latere wereld zou opeisen.

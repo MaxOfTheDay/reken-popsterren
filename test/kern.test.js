@@ -484,7 +484,7 @@ zaak('L', () => {
   const actief = app.activeTrophies();
   const vast = actief.filter(t => !t.perfect);
   const perfect = actief.filter(t => t.perfect);
-  check(vast.length === 27,   // 12 -> 18 -> 27 in oktober 2026, zie inhoud.test.js zaak F
+  check(vast.length === 33,   // 12 -> 18 -> 27 -> 33, zie inhoud.test.js zaak F
     'L · het vaste deel van de kast groeit niet mee', vast.length);
   check(perfect.length === app.WORLDS.length && perfect.length === voorErbij + 1,
     'L · en het perfecte deel precies wel', perfect.length + '/' + app.WORLDS.length);
@@ -1671,19 +1671,66 @@ zaak('ZA', () => {
   // een wereldnaam breekt vóór "wereld", niet midden in het woord (zie pwNaam)
   check(app.pwNaam('Onderwaterwereld') === 'Onderwater&shy;wereld' && app.pwNaam('Wereld') === 'Wereld',
     'ZA · perfecte wereld: zacht afbreekstreepje vóór "wereld"', app.pwNaam('Onderwaterwereld'));
-  // Wereldtournee: behalve een lege boog achter de mist
-  const wt = t('worldtour');
-  const w = verseSter(), q = w.p;
-  check(w.app.trophyBoog(wt, q, 'busy') === 0, 'ZA · Wereldtournee zonder uitgespeelde wereld: lege boog', w.app.trophyBoog(wt, q, 'busy'));
-  speel(w.app, q, 0, { sterren: 2 });
-  const wt2 = w.app.TROPHIES.find(x => x.id === 'worldtour');
-  if (w.app.meerWereldenVooruit(q)) {
-    const zicht = w.app.laatsteZichtbareWereld(q) + 1;
-    check(w.app.trophyBoog(wt2, q, 'busy') === Math.round(100 / zicht),
-      'ZA · achter de mist telt de boog tegen de werelden die ze ziet', w.app.trophyBoog(wt2, q, 'busy') + ' bij ' + zicht + ' zichtbaar');
+  /* 💪 Doorzetter telt een show die opnieuw gespeeld werd en béter ging (meer
+     sterren); een eerste keer, of een herkansing die niet beter ging, telt niet. */
+  {
+    const w = verseSter(), q = w.p, wl = w.app.worldFor(1);
+    w.app.applyShowResult(q, 1, wl, 1);
+    check(w.app.beterTel(q) === 0, 'ZA · Doorzetter: een eerste keer telt niet', w.app.beterTel(q));
+    w.app.applyShowResult(q, 1, wl, 1);
+    check(w.app.beterTel(q) === 0, 'ZA · Doorzetter: even goed telt niet', w.app.beterTel(q));
+    w.app.applyShowResult(q, 1, wl, 3);
+    check(w.app.beterTel(q) === 1 && q.readyTrophies.includes('beter1'),
+      'ZA · Doorzetter: beter gedaan telt, en brons ligt klaar', JSON.stringify({ n: w.app.beterTel(q), klaar: q.readyTrophies }));
+    const oud = w.app.defaultProfile('Oud', 'dress_roze'); delete oud.beter; w.app.migrate(oud);
+    check(oud.beter === 0, 'ZA · een oude save krijgt p.beter op nul', oud.beter);
+  }
+  /* Een thema-trofee: alleen bij wie het thema aan heeft, en tien keer goed. */
+  {
+    const w = verseSter(), q = w.p, kl = t('thema-klok');
+    check(kl && !kl.voor(q), 'ZA · Klokkijker staat er niet zolang de klok uit staat', '');
+    q.settings.themas = ['klok'];
+    check(kl.voor(q) && !kl.has(q), 'ZA · klok aan: Klokkijker staat erbij, nog niet gehaald', '');
+    q.stats.thema = { klok: [10, 3] };
+    check(kl.has(q) && w.app.unitText(kl.progress(q).label, 1) === 'klokvraag',
+      'ZA · tien klokvragen goed: Klokkijker, en "nog 1 klokvraag"', w.app.unitText(kl.progress(q).label, 1));
+    q.settings.track = 'count';
+    check(!kl.voor(q), 'ZA · in de telmodus geen thema-trofeeën', '');
   }
 });
 
+
+/* TD · Elke medaille kan af binnen de tournee.
+   De toppen lagen eerst ver achter wat een kind ooit haalt (1000 sommen, 100
+   gouden vragen, 100 van de 106 spulletjes): een boog die nooit volloopt. Hier
+   staat per ladder wat een gemiddeld kind in de uitgebrachte tournee haalt,
+   met dezelfde vuistregels als docs/DIAMANTEN.md, en de top moet daaronder
+   liggen. Een wereld of winkelstukken erbij verschuift de grens vanzelf; een
+   drempel die te hoog gezet wordt, of een ladder die erbij komt zonder regel
+   hier, valt om.
+     sommen         per show 8 vragen, 95% goed (ook na een hint: stats.correct)
+     gouden vragen  in de helft van de shows één, 85% goed
+     perfecte shows 40% van alle shows (met overspelen; zonder ± 27%)
+     spulletjes     75% van wat er te koop is
+     beter gedaan   de helft van de shows zonder drie sterren (73%) nog eens
+                    gespeeld en beter gedaan: wie overspeelt voor het diploma */
+zaak('TD', () => {
+  const app = laadApp();
+  const shows = app.WORLDS.slice(0, app.WORLD_AVAIL).reduce((n, w) => n + w.levels, 0);
+  const koop = app.ITEMS.filter(i => i.cat !== app.PODIA_CAT && !app.isBeloning(i.id) && i.price > 0).length;
+  const haalt = {
+    hit: shows * 0.4, reken: shows * 8 * 0.95, goud: shows * 0.5 * 0.85,
+    kast: koop * 0.75, beter: shows * 0.73 * 0.5,
+  };
+  const p = app.defaultProfile('Meet', 'dress_roze');
+  app.TROPHY_LADDERS.forEach(l => {
+    const top = app.TROPHIES.find(t => t.id === l.ids[l.ids.length - 1]);
+    const doel = top.progress(p).target;
+    check(haalt[l.key] != null, `TD · ${l.name}: er staat een regel voor hoeveel een kind haalt`, l.key);
+    check(doel <= haalt[l.key], `TD · ${l.name}: de top (${doel}) is te halen binnen de tournee`,
+      `${doel} > ${Math.round(haalt[l.key])} bij ${shows} shows en ${koop} spulletjes`);
+  });
+});
 
 /* ZB · De foutmelder (src/05-foutmelder.js). Het briefje heeft precies vijf velden
    en niets dat naar een kind wijst; onder de tests (file://) staat hij uit. */
@@ -2518,6 +2565,17 @@ zaak('TR', () => {
     nodig(t, 'naam', typeof t.naam === 'string' && t.naam.length > 0);
     nodig(t, 'icoon', typeof t.icoon === 'function' && /^<svg[^>]*thema-ico/.test(t.icoon(30)) && t.icoon(30).includes('width="30"'));
     nodig(t, 'ops of plaatje (precies een van de twee)', !!t.ops !== !!t.plaatje);
+    /* Elk thema behalve rekenen heeft een trofee op Nieuw geleerd (zie
+       bouwThemaTrofeeen): een naam, een emoji, en zijn eenheid in enkel- en
+       meervoud. Rekenen niet: dat is het spel zelf. */
+    if (t.id === 'rekenen') nodig(t, 'geen trofee', !t.trofee);
+    else {
+      const tr = t.trofee || {};
+      nodig(t, 'trofee.naam/emoji', typeof tr.naam === 'string' && tr.naam && typeof tr.emoji === 'string' && tr.emoji);
+      nodig(t, 'trofee.eenheid [enkelvoud, meervoud]', Array.isArray(tr.eenheid) && tr.eenheid.length === 2 && tr.eenheid[0] !== tr.eenheid[1]);
+      nodig(t, 'zijn trofee hangt op Nieuw geleerd', app.TROPHIES.some(x => x.id === app.THEMA_TROFEE + t.id)
+        && app.TROPHY_SHELVES.find(sh => sh.key === 'leren').ids.includes(app.THEMA_TROFEE + t.id));
+    }
     if (t.ops) {
       nodig(t, 'ops', Array.isArray(t.ops) && t.ops.length && t.ops.every(o => ['+', '-', 'x', ':'].includes(o) && !ops.has(o)));
       t.ops.forEach(o => ops.add(o));

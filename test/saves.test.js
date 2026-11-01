@@ -165,61 +165,35 @@ zaak('D', () => {
     [app.allWorldsDone(q), erft, app.WORLD_AVAIL - 1].join('/'));
 });
 
-/* ================= L · Alles uit, en dan een wereld erbij =================
-   De Wereldtournee is de enige trofee die weer onwaar kan worden: "alle werelden
-   uitgespeeld" klopt niet meer als er een wereld bijkomt. Wat er dan hoort:
-     - lag hij nog dicht (klaar om te openen), dan niet meer -- anders biedt de
-       kast "Alle werelden uitgespeeld — Open!" aan terwijl er een wereld bij kwam
-       die ze nooit zag. Hij gaat terug naar "bezig", en ligt weer klaar zodra ook
-       de nieuwe wereld uit is;
-     - had ze hem al geopend, dan blijft hij van haar. Een trofee wordt nooit
-       ingetrokken;
-     - zonder nieuwe wereld verandert er niets, en de andere trofeeën die klaarlagen
-       blijven gewoon liggen.
+/* ================= L · Wereldreiziger met pensioen =================
+   November 2026 ging de Wereldreiziger (worlds3, worlds6, worlds9, worldtour) met
+   pensioen: de plank Werelden telt de uitgespeelde werelden al, als diploma's.
+   Wat er dan hoort, voor een save die hem nog draagt:
+     - geopend (p.trophies): het id blijft staan -- niets wordt ingetrokken of
+       weggeschreven -- maar hij telt niet mee in de kastteller;
+     - nog dicht (readyTrophies): eruit, anders lag er een cadeautje klaar dat
+       nergens in de kast hangt. De andere die klaarlagen blijven liggen;
+     - en hij komt niet terug: checkTrophies legt hem nooit meer klaar.
    Zelfde volgorde als zaak D: eerst de nieuwe versie van de app, dan het bestand. */
 zaak('L', () => {
   const eerst = laadApp();
-  const maak = naam => {
-    const p = eerst.defaultProfile(naam, 'dress_roze');
-    for (let l = 1; l <= eerst.WORLD_LAST; l++) p.stars[l] = 2;
-    p.level = eerst.WORLD_LAST + 1;
-    p.stats.correct = 30;                         // en Rekenritme ligt ook klaar
-    eerst.checkTrophies(p);
-    return p;
-  };
-  const a = maak('Nog dicht'), b = maak('Al open');
-  check(a.readyTrophies.includes('worldtour') && a.readyTrophies.includes('sums25'),
-    'L · alles uit: de Wereldtournee ligt klaar om te openen', JSON.stringify(a.readyTrophies));
-  b.readyTrophies = b.readyTrophies.filter(id => id !== 'worldtour');
-  b.trophies.push('worldtour');                   // deze opende hem al
-  const ruw = JSON.stringify({ sound: true, haptics: true, schemaV: 2, profiles: { p1: a, p2: b } });
-  const open = app => app.run('localStorage.setItem(LS_KEY, ' + JSON.stringify(ruw) + '); load();');
-
-  const zelfde = laadApp();
-  open(zelfde);
-  check(zelfde.db.profiles.p1.readyTrophies.includes('worldtour'),
-    'L · zonder nieuwe wereld blijft hij gewoon klaarliggen', JSON.stringify(zelfde.db.profiles.p1.readyTrophies));
-
-  const na = laadApp();
-  na.WORLDS.push({ id: 'test7', name: 'Testwereld', icon: '🧪', levels: 8 });
-  na.rebuildWorldStarts();
-  na.rebuildWorldBadges();
-  open(na);
-  const p1 = na.db.profiles.p1, p2 = na.db.profiles.p2;
-  const tour = na.TROPHIES.filter(t => t.id === 'worldtour')[0];
-  check(!p1.readyTrophies.includes('worldtour') && na.trophyStatus(p1, tour) === 'busy',
-    'L · er kwam een wereld bij: de dichte Wereldtournee gaat terug naar "bezig"',
-    JSON.stringify({ klaar: p1.readyTrophies, status: na.trophyStatus(p1, tour) }));
-  check(p1.readyTrophies.includes('sums25'),
-    'L · de andere trofeeën die klaarlagen blijven liggen', JSON.stringify(p1.readyTrophies));
-  check(p2.trophies.includes('worldtour') && na.trophyStatus(p2, tour) === 'done',
-    'L · een geopende Wereldtournee blijft van haar', JSON.stringify(p2.trophies));
-  // de nieuwe wereld uitspelen: dan ligt hij weer klaar
-  const v = na.worldForIndex(na.WORLDS.length - 1);
-  for (let l = v.first; l < v.first + v.levels; l++) p1.stars[l] = 2;
-  na.checkTrophies(p1);
-  check(p1.readyTrophies.includes('worldtour'),
-    'L · en de nieuwe wereld uitspelen legt hem weer klaar', JSON.stringify(p1.readyTrophies));
+  const p = eerst.defaultProfile('Reiziger', 'dress_roze');
+  for (let l = 1; l <= eerst.WORLD_LAST; l++) p.stars[l] = 2;
+  p.level = eerst.WORLD_LAST + 1;
+  p.stats.correct = 30;
+  p.trophies = ['first', 'worlds3', 'worlds6'];
+  p.readyTrophies = ['worlds9', 'worldtour', 'sums25'];
+  const ruw = JSON.stringify({ sound: true, haptics: true, schemaV: 2, profiles: { p1: p } });
+  const app = laadApp();
+  app.run('localStorage.setItem(LS_KEY, ' + JSON.stringify(ruw) + '); load();');
+  const q = app.db.profiles.p1;
+  check(q.trophies.includes('worlds3') && q.trophies.includes('worlds6'),
+    'L · wat ze opende blijft in haar save staan', JSON.stringify(q.trophies));
+  check(app.earnedActiveCount(q) === 1, 'L · maar telt niet mee in de kast', app.earnedActiveCount(q));
+  check(!q.readyTrophies.includes('worlds9') && !q.readyTrophies.includes('worldtour') && q.readyTrophies.includes('sums25'),
+    'L · wat nog dicht lag gaat eruit, de rest blijft liggen', JSON.stringify(q.readyTrophies));
+  app.checkTrophies(q);
+  check(!q.readyTrophies.some(id => /^world/.test(id)), 'L · en hij komt niet terug', JSON.stringify(q.readyTrophies));
 });
 
 /* ================= E · Van vóór de beloningen =================

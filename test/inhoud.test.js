@@ -264,8 +264,11 @@ zaak('F', () => {
      18 -> 27 (oktober 2026): Sterrenhit, Wereldreiziger en Verzamelaar werden
      medailles die meegroeien, en elke ladder kreeg vier trappen. In de kast zijn
      dat vijf kaartjes in plaats van negentien: het aantal trappen groeide, het
-     aantal dingen om naar te kijken niet. */
-  const VASTE_KAST = 27;
+     aantal dingen om naar te kijken niet.
+     27 -> 33 (november 2026): Wereldreiziger (4) met pensioen -- de plank Werelden
+     telt dat al -- en Doorzetter (4) in zijn plaats; Wens vervuld, en één trofee
+     per thema (5, uit THEMAS: een kind ziet er alleen die van haar thema's). */
+  const VASTE_KAST = 33;
   const actief = app.activeTrophies();
   const vast = actief.filter(t => !t.perfect);
   const perfect = actief.filter(t => t.perfect);
