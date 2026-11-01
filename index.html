@@ -8175,6 +8175,100 @@
 
 
 
+  .diploma-laag {
+    position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px;
+    background: rgba(var(--nacht-0-rgb), .8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    animation: popFade .25s ease;
+  }
+  .diploma-laag.closing { animation: popFade .25s ease reverse forwards; }
+  .diploma {
+    position: relative; width: min(300px, 100%); border-radius: 28px; padding: 3px; text-align: center; color: var(--c-white);
+    background: linear-gradient(160deg, color-mix(in srgb, var(--dip-a) 70%, #fff), var(--dip-b));
+    box-shadow: 0 20px 44px rgba(var(--nacht-0-rgb), .55);
+    animation: popIn .35s var(--ease-plop) both;
+  }
+  .dip-binnen {
+    border-radius: 25px; overflow: hidden; padding-bottom: 18px;
+    background: linear-gradient(180deg, rgb(var(--nacht-3-rgb)), rgb(var(--nacht-1-rgb)));
+  }
+  .dip-beeld { position: relative; height: 200px; overflow: hidden; }
+  .dip-kunst { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 70%; }
+  .dip-beeld::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, transparent 40%, rgb(var(--nacht-3-rgb)) 100%);
+  }
+  .dip-pop { position: absolute; left: 50%; bottom: 10px; width: 124px; transform: translateX(-50%); z-index: 1; }
+  .dip-podium { position: absolute; left: 50%; bottom: 0; width: 160px; aspect-ratio: 100 / 16; transform: translateX(-50%); }
+  .dip-podium .podium { width: 100%; height: 100%; --pod-dik: 8px; }
+  .dip-av { position: relative; width: 124px; margin-bottom: 17px; }
+  .dip-av svg { display: block; width: 100%; height: auto; }
+  .dip-label { margin-top: 12px; font-size: var(--tx-klein); font-weight: 600; letter-spacing: .22em; text-transform: uppercase; opacity: .7; }
+  .dip-naam { margin-top: 3px; font-size: var(--tx-groot); font-weight: 700; line-height: 1.05; overflow-wrap: anywhere; padding: 0 12px; }
+  .dip-wereld { margin-top: 2px; font-size: var(--tx-body); opacity: .8; }
+  .dip-deel { margin-top: 14px; }
+  .dip-x {
+    position: absolute; top: -14px; right: -14px; z-index: 2; width: 42px; height: 42px; border-radius: 50%; border: 0;
+    display: grid; place-items: center; font: inherit; font-size: var(--tx-sub); font-weight: 700; cursor: pointer;
+    background: var(--c-white); color: var(--purple-shadow); box-shadow: 0 3px 8px rgba(var(--nacht-0-rgb), .4);
+  }
+
+
+  .dip-stempels { display: flex; justify-content: center; margin-top: 14px; }
+  .dip-rij { display: inline-flex; gap: 26px; }
+  .dip-plek {
+    display: grid; justify-items: center; gap: 6px; padding: 0; border: 0; background: none; color: inherit; font: inherit;
+    cursor: pointer;
+  }
+  .dip-plek[tabindex="-1"] { cursor: default; }
+  .dip-stempel {
+    --s: 58px; position: relative; width: var(--s); height: var(--s); border-radius: 50%;
+    display: grid; place-items: center; font-size: calc(var(--s) * .45); line-height: 1;
+  }
+  .dip-stempel.heb { transform: rotate(-8deg); }
+  .dip-stempel.pod.heb {
+    background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--dip-a) 45%, #fff), var(--dip-a) 65%, var(--dip-b));
+    box-shadow: 0 0 0 3px rgb(var(--nacht-1-rgb)), 0 0 0 5px color-mix(in srgb, var(--dip-a) 55%, #fff);
+  }
+  .dip-stempel.ster.heb {
+    background: radial-gradient(circle at 35% 30%, rgb(var(--goud-glans-rgb)), var(--gold-accent) 55%, var(--gold-cta-shadow));
+    box-shadow: 0 0 0 3px rgb(var(--nacht-1-rgb)), 0 0 0 5px var(--gold-light), 0 0 16px rgba(var(--goud-gloed-rgb), .6);
+  }
+  .dip-stempel.mist { border: 2px dashed rgba(255,255,255,.35); }
+  .dip-stempel.mist > * { opacity: .4; filter: grayscale(1); }
+
+  .dip-stempel.ster.mist::after {
+    content: ''; position: absolute; inset: -5px; border-radius: 50%; border: 3px solid transparent;
+    background: conic-gradient(rgba(255,255,255,.9) calc(var(--p, 0) * 1%), rgba(255,255,255,.12) 0) border-box;
+    -webkit-mask: linear-gradient(#000 0 0) border-box, linear-gradient(#000 0 0) padding-box;
+    -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  .dip-mini { display: block; width: 70%; aspect-ratio: 100 / 30; }
+  .dip-mini .podium { width: 100%; height: 100%; --pod-dik: 4px; border-width: 1.5px; }
+  .dip-actie {
+    min-height: 22px; padding: 1px 9px; border-radius: var(--r-pill); font-size: var(--tx-klein); font-weight: 600;
+    background: rgba(255,255,255,.12); white-space: nowrap;
+  }
+  .dip-actie.doe { background: var(--gold-accent); color: var(--purple-shadow); }
+  .dip-actie.leeg { visibility: hidden; }
+
+  .dip-stempels.klein { margin-top: 4px; }
+  .dip-stempels.klein .dip-rij { gap: 6px; }
+  .dip-stempels.klein .dip-stempel { --s: 22px; border-width: 1.5px; }
+  .dip-stempels.klein .dip-stempel.heb { transform: none; }
+  .dip-stempels.klein .dip-stempel.pod.heb { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--dip-a) 55%, #fff); }
+  .dip-stempels.klein .dip-stempel.ster.heb { box-shadow: 0 0 0 1.5px var(--gold-light), 0 0 8px rgba(var(--goud-gloed-rgb), .6); }
+  .dip-stempels.klein .dip-stempel.ster.mist::after { inset: -3px; border-width: 2px; }
+  .dip-stempels.klein .dip-mini .podium { --pod-dik: 2px; border-width: 1px; }
+  @media (prefers-reduced-motion: reduce) {
+    .diploma-laag, .diploma-laag.closing, .diploma { animation: none; }
+  }
+  .dip-ster { width: 56%; height: 56%; fill: var(--c-white); filter: drop-shadow(0 1px 0 rgba(150,90,0,.6)); }
+  .dip-stempel.mist .dip-ster { filter: none; }
+
+
+
+
+
 
 
 
@@ -15036,7 +15130,19 @@ const TROPHY_LADDERS = [
 
 
 
+
+
+
+
+
+
+
 const TROPHY_SHELVES = [
+
+
+
+  { key: 'perfect',  ico: '📜', name: 'Werelden',          note: 'Een diploma voor elke wereld die je uitspeelt; perfect in goud',
+    ids: [] },
   { key: 'medailles', ico: '🎖️', name: 'Medailles',      note: 'Medailles die meegroeien: brons, zilver, goud, diamant',
     ids: ['perfect1', 'perfect10', 'perfect25', 'perfect50', 'worlds3', 'worlds6', 'worlds9', 'worldtour',
           'sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20', 'gold50', 'gold100',
@@ -15045,11 +15151,6 @@ const TROPHY_SHELVES = [
     ids: ['first', 'eigenpodium'] },
   { key: 'leren',    ico: '💡', name: 'Nieuwe sommen',     note: 'Wat je nieuw geleerd hebt',
     ids: ['leer-brug', 'leer-zoek', 'leer-drie', 'leer-cijfers', 'leer-telsom'] },
-
-
-
-  { key: 'perfect',  ico: '🥇', name: 'Perfecte werelden', note: 'Overal drie sterren: de grootste prijs van het spel',
-    ids: [] },
 ];
 
 
@@ -22721,8 +22822,17 @@ function perfectCardHTML(t, p, status) {
 
 
 
-  if (st) { st.goud = status === 'done'; if (st.goud) st.af = true; }
+
+
+
+
+
+
+  if (st) st.goud = status === 'done';
   const prijs = st ? wereldPrijsHTML(p, i, 72, st) : '';
+
+  const stempels = i >= 0 && worldAvailable(i) && worldProgress(p, worldForIndex(i)).uit
+    ? `<div class="dip-stempels klein">${diplomaStempels(p, i, true)}</div>` : '';
 
 
 
@@ -22730,10 +22840,11 @@ function perfectCardHTML(t, p, status) {
 
   const naam = pwNaam(t.name);
   if (prijs) {
-    const pr = status === 'busy' ? t.progress(p) : null;
+
+    const pr = status === 'busy' && !stempels ? t.progress(p) : null;
     const stijl = pr ? ` style="--p:${Math.round(100 * pr.now / pr.target)}"` : '';
-    return `<div class="pw-medal pw-prijs"${stijl}>${prijs}${status === 'done' ? DIAMANT_VONKJES : ''}</div>`
-      + `<div class="tname">${naam}</div>`;
+    return `<div class="pw-medal pw-prijs${stempels ? ' met-diploma' : ''}"${stijl}>${prijs}${status === 'done' ? DIAMANT_VONKJES : ''}</div>`
+      + `<div class="tname">${naam}</div>` + stempels;
   }
   return `<div class="pw-medal" style="${kleur}"><span class="pw-ico">${t.emoji}</span></div>`
     + `<div class="tname">${naam}</div>`
@@ -22753,10 +22864,238 @@ function pwNaam(naam) { return esc(naam).replace(/(.)wereld$/, '$1&shy;wereld');
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+function diplomaStand(p, i) {
+  const w = WORLDS[i], v = worldProgress(p, worldForIndex(i));
+  const podium = wereldPodium(w);
+  const heeftPodium = !!podium && podiumVanJou(p, podium);
+
+  const prijs = podium ? podiumStukken(podium).filter(it => !(p.owned || []).includes(it.id))
+    .reduce((som, it) => som + (it.price || 0), 0) : 0;
+  return { w, podium, heeftPodium, prijs, perfect: v.vol, voortgang: Math.round(100 * v.perfect / v.levels) };
+}
+
+
+
+
+const DIP_STER = '<svg class="dip-ster" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>';
+function diplomaStempels(p, i, klein) {
+  const d = diplomaStand(p, i);
+  const th = d.w.theme || {};
+  const kleur = `--dip-a:${th.sky || '#3a1f6e'};--dip-b:${th.glow || '#7a2f63'}`;
+  const pod = d.podium ? `<span class="dip-mini">${podiumHTML(d.podium)}</span>` : '🎪';
+  const stempel = (soort, heb, binnen, label, actie) => {
+    const rond = `<span class="dip-stempel ${soort} ${heb ? 'heb' : 'mist'}"${soort === 'ster' && !heb ? ` style="--p:${d.voortgang}"` : ''}>${binnen}</span>`;
+    if (klein) return rond;
+    const onder = heb ? '<span class="dip-actie leeg"></span>' : `<span class="dip-actie ${soort === 'ster' ? 'doe' : ''}">${actie}</span>`;
+    return `<button class="dip-plek" type="button" data-dip="${heb ? '' : soort}" aria-label="${label}"${heb ? ' tabindex="-1"' : ''}>${rond}${onder}</button>`;
+  };
+  if (!d.podium) return stempel('ster', d.perfect, DIP_STER, d.perfect ? 'Perfect' : 'Speel voor drie sterren', '🗺️ Speel');
+  return `<span class="dip-rij" style="${kleur}">`
+    + stempel('pod', d.heeftPodium, pod, d.heeftPodium ? 'Podium van jou' : `Podium: nog ${d.prijs} diamanten`, `💎 ${d.prijs}`)
+    + stempel('ster', d.perfect, DIP_STER, d.perfect ? 'Perfect' : 'Speel voor drie sterren', '🗺️ Speel')
+    + '</span>';
+}
+
+
+function diplomaPop(p, d) {
+  const q = JSON.parse(JSON.stringify(p));
+  const schat = beloningItem(d.w);
+  if (schat) q.equipped[schat.cat] = schat.id;
+  q.equipped.stage = d.heeftPodium ? d.podium.id : 'stage_disco';
+  return q;
+}
+function openDiploma(i) {
+  const p = P();
+  const d = diplomaStand(p, i);
+  const th = d.w.theme || {};
+  const q = diplomaPop(p, d);
+  const ov = openOverlay('diploma-laag',
+    `<div class="diploma" role="dialog" aria-label="Diploma ${esc(d.w.name)}" style="--dip-a:${th.sky || '#3a1f6e'};--dip-b:${th.glow || '#7a2f63'}">`
+    + '<button class="dip-x" type="button" aria-label="Sluiten">✕</button>'
+    + '<div class="dip-binnen">'
+    +   `<div class="dip-beeld"><img class="dip-kunst" src="${d.w.art || ''}" alt="" draggable="false">`
+    +     `<div class="dip-pop"><div class="dip-podium">${podiumHTML(item(q.equipped.stage))}</div>`
+    +       `<div class="dip-av">${avatarSVG(q, 124)}</div></div></div>`
+    +   '<div class="dip-label">Diploma</div>'
+    +   `<div class="dip-naam">${esc(p.name)}</div>`
+    +   `<div class="dip-wereld">${esc(d.w.name)}</div>`
+    +   `<div class="dip-stempels">${diplomaStempels(p, i, false)}</div>`
+    +   '<button class="btn soft dip-deel" type="button">📤 Delen</button>'
+    + '</div></div>', { fade: 250 });
+
+  ov.onclick = e => { if (e.target === ov) { sndClick(); ov._close(); } };
+  ov.querySelector('.dip-x').onclick = () => { sndClick(); ov._close(); };
+  ov.querySelectorAll('.dip-plek').forEach(knop => knop.onclick = () => {
+    const soort = knop.dataset.dip;
+    if (!soort) return;
+    sndClick(); ov._close();
+    if (soort === 'ster') naarWereldKaart(i);
+
+    else { openKleedkamerItem(d.podium.id); dressReturnTo = 'trophies'; }
+  });
+  ov.querySelector('.dip-deel').onclick = () => { sndClick(); diplomaDelen(i); };
+  speak(`Diploma ${d.w.name}`);
+}
+
+
+
+
+
+
+
+
+
+const DIP_B = 600, DIP_H = 860;
+function diplomaLaad(src) {
+  return new Promise((ja, nee) => { const im = new Image(); im.onload = () => ja(im); im.onerror = nee; im.src = src; });
+}
+function diplomaRond(c, x, y, b, h, r) {
+  c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + b, y, x + b, y + h, r); c.arcTo(x + b, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + b, y, r); c.closePath();
+}
+async function diplomaBeeld(i) {
+  const p = P(), d = diplomaStand(p, i), th = d.w.theme || {};
+  const a = th.sky || '#3a1f6e', b = th.glow || '#7a2f63';
+  const q = diplomaPop(p, d);
+  const st = item(q.equipped.stage);
+  const svg = avatarSVG(q, 248);
+  const [kunst, pop] = await Promise.all([
+    diplomaLaad(d.w.art),
+    diplomaLaad('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)),
+    document.fonts && document.fonts.load ? document.fonts.load('700 60px Fredoka') : null,
+  ]);
+  const cv = document.createElement('canvas');
+  cv.width = DIP_B; cv.height = DIP_H;
+  const c = cv.getContext('2d');
+
+  const lijst = c.createLinearGradient(0, 0, DIP_B, DIP_H);
+  lijst.addColorStop(0, a); lijst.addColorStop(1, b);
+  diplomaRond(c, 0, 0, DIP_B, DIP_H, 56); c.fillStyle = lijst; c.fill();
+  const vlak = c.createLinearGradient(0, 0, 0, DIP_H);
+  vlak.addColorStop(0, '#2a1958'); vlak.addColorStop(1, '#1a0e3b');
+  diplomaRond(c, 6, 6, DIP_B - 12, DIP_H - 12, 50); c.fillStyle = vlak; c.fill();
+
+  const BH = 400;
+  c.save(); diplomaRond(c, 6, 6, DIP_B - 12, BH, 50); c.clip();
+  const s = Math.max((DIP_B - 12) / kunst.width, BH / kunst.height);
+  const kb = kunst.width * s, kh = kunst.height * s;
+  c.drawImage(kunst, 6 + ((DIP_B - 12) - kb) / 2, 6 + (BH - kh) * 0.7, kb, kh);
+  const waas = c.createLinearGradient(0, 6 + BH * 0.4, 0, 6 + BH);
+  waas.addColorStop(0, 'rgba(31,18,71,0)'); waas.addColorStop(1, '#1f1247');
+  c.fillStyle = waas; c.fillRect(6, 6, DIP_B - 12, BH);
+  c.restore();
+
+  const v = st.vloer || item('stage_disco').vloer;
+  const px = DIP_B / 2, py = 6 + BH - 52, rx = 160, ry = 26;
+  c.fillStyle = v[2]; c.beginPath(); c.ellipse(px, py + 16, rx, ry, 0, 0, Math.PI * 2); c.fill();
+  const boven = c.createRadialGradient(px, py - 6, 10, px, py, rx);
+  boven.addColorStop(0, v[0]); boven.addColorStop(0.72, v[1]);
+  c.fillStyle = boven; c.beginPath(); c.ellipse(px, py, rx, ry, 0, 0, Math.PI * 2); c.fill();
+  c.lineWidth = 4; c.strokeStyle = v[3]; c.stroke();
+
+  const ph = 248 * pop.height / pop.width;
+  c.drawImage(pop, px - 124, py - ph + 34, 248, ph);
+
+  c.textAlign = 'center'; c.fillStyle = '#fff';
+  c.globalAlpha = 0.7; c.font = '600 24px Fredoka, sans-serif';
+  c.fillText('D I P L O M A', px, BH + 70);
+  c.globalAlpha = 1; c.font = '700 64px Fredoka, sans-serif';
+  c.fillText(p.name, px, BH + 140);
+  c.globalAlpha = 0.85; c.font = '500 32px Fredoka, sans-serif';
+  c.fillText(d.w.name, px, BH + 186);
+  c.globalAlpha = 1;
+
+  const sy = BH + 290;
+  const stempel = (x, heb, goud, teken) => {
+    c.save();
+    c.beginPath(); c.arc(x, sy, 58, 0, Math.PI * 2);
+    if (heb) {
+      const g = c.createRadialGradient(x - 20, sy - 20, 6, x, sy, 58);
+      if (goud) { g.addColorStop(0, '#fff6cf'); g.addColorStop(0.55, '#ffc94a'); g.addColorStop(1, '#c98a12'); }
+      else { g.addColorStop(0, '#ffffff'); g.addColorStop(0.15, a); g.addColorStop(1, b); }
+      c.fillStyle = g; c.fill();
+      c.lineWidth = 5; c.strokeStyle = goud ? '#ffe08a' : 'rgba(255,255,255,.55)'; c.stroke();
+    } else {
+      c.setLineDash([10, 9]); c.lineWidth = 4; c.strokeStyle = 'rgba(255,255,255,.35)'; c.stroke();
+      c.globalAlpha = 0.35;
+    }
+    c.setLineDash([]);
+    teken(x);
+    c.restore();
+  };
+
+  const ster = x => {
+    c.save(); c.translate(x - 36, sy - 36); c.scale(3, 3);
+    c.fillStyle = '#fff'; c.shadowColor = 'rgba(150,90,0,.6)'; c.shadowOffsetY = 0.6;
+    c.fill(new Path2D('M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z'));
+    c.restore();
+  };
+  const podium = x => {
+    const pv = d.podium.vloer || v;
+    c.fillStyle = pv[2]; c.beginPath(); c.ellipse(x, sy + 9, 38, 11, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = pv[1]; c.beginPath(); c.ellipse(x, sy, 38, 11, 0, 0, Math.PI * 2); c.fill();
+    c.lineWidth = 2; c.strokeStyle = pv[3]; c.stroke();
+  };
+  if (d.podium) { stempel(px - 80, d.heeftPodium, false, podium); stempel(px + 80, d.perfect, true, ster); }
+  else stempel(px, d.perfect, true, ster);
+  c.textBaseline = 'alphabetic'; c.globalAlpha = 0.5; c.font = '500 22px Fredoka, sans-serif';
+  c.fillText('rekensterren.be', px, DIP_H - 30);
+  return new Promise((ja, nee) => {
+    try { cv.toBlob(bl => bl ? ja(bl) : nee(new Error('geen plaatje')), 'image/png'); } catch (e) { nee(e); }
+  });
+}
+async function diplomaDelen(i) {
+  const d = WORLDS[i];
+  const naam = `diploma-${(P().name || 'ster').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${d.id}.png`;
+  let blob;
+  try { blob = await diplomaBeeld(i); }
+  catch (e) { showToast('📤 Delen lukt hier niet', null, null, 'hint'); return; }
+  const file = typeof File === 'function' ? new File([blob], naam, { type: 'image/png' }) : null;
+  if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+
+    try { await navigator.share({ files: [file], title: `Diploma ${d.name}` }); } catch (e) { }
+    return;
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = naam;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+
+
+
+
+
+
+
+
 function tapTrophy(t, card) {
   const p = P();
   const st = trophyStatus(p, t);
   if (st === 'ready') { openTrophy(t.id); return; }
+
+
+
+  if (t.perfect && worldAvailable(t.index) && worldProgress(p, worldForIndex(t.index)).uit) {
+    kastBalk(null);
+    if (st === 'done') kastKlink(card); else sndClick();
+    openDiploma(t.index);
+    return;
+  }
 
   if (st === 'done') kastKlink(card); else kastDof(card);
 

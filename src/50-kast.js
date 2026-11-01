@@ -434,8 +434,17 @@ function perfectCardHTML(t, p, status) {
      stukken nog niet gekocht zijn: deze trofee gaat over hoe je speelde, niet
      over wat je kocht. Elders (Podia, de kaart) blijft kleur "gekocht"
      betekenen -- zie "= De prijs van een wereld". */
-  if (st) { st.goud = status === 'done'; if (st.goud) st.af = true; }
+  /* Gewonnen is in de kast het podium met een gouden rand; in kleur alleen als
+     het van haar is. Hier stond eerst "gewonnen is altijd het volle podium in
+     goud, ook ongekocht": deze trofee gaat over hoe je speelde. Dat zegt nu de
+     ⭐-stempel eronder, en de 🎪-stempel ernaast zegt het podium (zie "= Het
+     diploma van een wereld") -- dan hoort het podium zelf niet iets anders te
+     zeggen dan zijn stempel. Elders (Podia, de kaart) betekent kleur hetzelfde. */
+  if (st) st.goud = status === 'done';
   const prijs = st ? wereldPrijsHTML(p, i, 72, st) : '';
+  // Een wereld die uit is heeft een diploma: twee stempels onder de naam.
+  const stempels = i >= 0 && worldAvailable(i) && worldProgress(p, worldForIndex(i)).uit
+    ? `<div class="dip-stempels klein">${diplomaStempels(p, i, true)}</div>` : '';
   /* Onderweg: geen balkje meer maar een witte rand om het podium die vol loopt
      (--p, zie .pw-card.busy in de kast) -- dezelfde taal als de boog om een
      medaille. Wit en niet goud: goud betekent hier "gewonnen", en een gouden rand
@@ -443,10 +452,11 @@ function perfectCardHTML(t, p, status) {
      krijgt de gloed en twee vonkjes. */
   const naam = pwNaam(t.name);
   if (prijs) {
-    const pr = status === 'busy' ? t.progress(p) : null;
+    // met stempels loopt de witte rand om de ⭐-stempel, niet nog eens om het podium
+    const pr = status === 'busy' && !stempels ? t.progress(p) : null;
     const stijl = pr ? ` style="--p:${Math.round(100 * pr.now / pr.target)}"` : '';
-    return `<div class="pw-medal pw-prijs"${stijl}>${prijs}${status === 'done' ? DIAMANT_VONKJES : ''}</div>`
-      + `<div class="tname">${naam}</div>`;
+    return `<div class="pw-medal pw-prijs${stempels ? ' met-diploma' : ''}"${stijl}>${prijs}${status === 'done' ? DIAMANT_VONKJES : ''}</div>`
+      + `<div class="tname">${naam}</div>` + stempels;
   }
   return `<div class="pw-medal" style="${kleur}"><span class="pw-ico">${t.emoji}</span></div>`
     + `<div class="tname">${naam}</div>`
@@ -457,6 +467,225 @@ function perfectCardHTML(t, p, status) {
    "Onderwaterwerel / d". Met een zacht afbreekstreepje wordt het
    "Onderwater- / wereld", en past hij wel, dan zie je niets. */
 function pwNaam(naam) { return esc(naam).replace(/(.)wereld$/, '$1&shy;wereld'); }
+/* ================= = Het diploma van een wereld =================
+   Elke wereld die uit is heeft een diploma: haar pop in de wereld, met de schat
+   van die wereld op, op een podium. Je opent het door in de kast op de wereld te
+   tikken. Het is geen prijs erbij -- één wereld is één prijs -- maar een plaatje
+   van wat ze al heeft, en een grote mag het als plaatje delen.
+
+   Drie dingen, elk met een eigen teken en niets dat twee dingen tegelijk zegt:
+     wereld uit   het diploma bestaat. Daarvoor houdt de kast de balk met
+                  "nog N shows" (zie tapTrophy)
+     podium       waar ze op staat: het podium van de wereld als het van haar
+                  is, anders het parelpodium -- en de 🎪-stempel
+     perfect      de ⭐-stempel, in goud. Goud betekent ook hier alleen "overal
+                  drie sterren"; de lijst eromheen blijft in de wereldkleuren
+   Een stempel die nog ontbreekt is een gestippelde cirkel met eronder wat je
+   ervoor doet (💎 wat de stukken nog kosten, of 🗺️ Speel). Onderweg naar perfect
+   loopt er een witte rand om de ⭐ vol, net als op de perfecte plank. De rij met
+   een stip per halte die er eerst stond, zei te veel tegelijk (Max, november
+   2026): de kaart zegt al welke halte nog geen drie sterren heeft.
+
+   Alles afgeleid, niets bewaard: uit en perfect staan in p.stars, het podium in
+   p.owned. Dezelfde regel als de prijs van een wereld. */
+function diplomaStand(p, i) {
+  const w = WORLDS[i], v = worldProgress(p, worldForIndex(i));
+  const podium = wereldPodium(w);
+  const heeftPodium = !!podium && podiumVanJou(p, podium);
+  // wat de stukken die ze nog mist samen kosten (de schat heeft ze: de wereld is uit)
+  const prijs = podium ? podiumStukken(podium).filter(it => !(p.owned || []).includes(it.id))
+    .reduce((som, it) => som + (it.price || 0), 0) : 0;
+  return { w, podium, heeftPodium, prijs, perfect: v.vol, voortgang: Math.round(100 * v.perfect / v.levels) };
+}
+/* De twee stempels. klein = het rijtje onder de wereld in de kast: alleen de
+   twee rondjes, zonder wat je moet doen (dat staat op het diploma zelf). */
+// De ster op de ⭐-stempel: getekend en wit, want een ⭐-emoji op een gouden
+// stempel is goud op goud -- dan zie je een lege munt.
+const DIP_STER = '<svg class="dip-ster" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>';
+function diplomaStempels(p, i, klein) {
+  const d = diplomaStand(p, i);
+  const th = d.w.theme || {};
+  const kleur = `--dip-a:${th.sky || '#3a1f6e'};--dip-b:${th.glow || '#7a2f63'}`;
+  const pod = d.podium ? `<span class="dip-mini">${podiumHTML(d.podium)}</span>` : '🎪';
+  const stempel = (soort, heb, binnen, label, actie) => {
+    const rond = `<span class="dip-stempel ${soort} ${heb ? 'heb' : 'mist'}"${soort === 'ster' && !heb ? ` style="--p:${d.voortgang}"` : ''}>${binnen}</span>`;
+    if (klein) return rond;
+    const onder = heb ? '<span class="dip-actie leeg"></span>' : `<span class="dip-actie ${soort === 'ster' ? 'doe' : ''}">${actie}</span>`;
+    return `<button class="dip-plek" type="button" data-dip="${heb ? '' : soort}" aria-label="${label}"${heb ? ' tabindex="-1"' : ''}>${rond}${onder}</button>`;
+  };
+  if (!d.podium) return stempel('ster', d.perfect, DIP_STER, d.perfect ? 'Perfect' : 'Speel voor drie sterren', '🗺️ Speel');
+  return `<span class="dip-rij" style="${kleur}">`
+    + stempel('pod', d.heeftPodium, pod, d.heeftPodium ? 'Podium van jou' : `Podium: nog ${d.prijs} diamanten`, `💎 ${d.prijs}`)
+    + stempel('ster', d.perfect, DIP_STER, d.perfect ? 'Perfect' : 'Speel voor drie sterren', '🗺️ Speel')
+    + '</span>';
+}
+// Haar pop zoals ze op het diploma staat: met de schat van de wereld op, en op
+// het podium van de wereld als het van haar is. Een kopie: ze draagt niets echt.
+function diplomaPop(p, d) {
+  const q = JSON.parse(JSON.stringify(p));
+  const schat = beloningItem(d.w);
+  if (schat) q.equipped[schat.cat] = schat.id;
+  q.equipped.stage = d.heeftPodium ? d.podium.id : 'stage_disco';
+  return q;
+}
+function openDiploma(i) {
+  const p = P();
+  const d = diplomaStand(p, i);
+  const th = d.w.theme || {};
+  const q = diplomaPop(p, d);
+  const ov = openOverlay('diploma-laag',
+    `<div class="diploma" role="dialog" aria-label="Diploma ${esc(d.w.name)}" style="--dip-a:${th.sky || '#3a1f6e'};--dip-b:${th.glow || '#7a2f63'}">`
+    + '<button class="dip-x" type="button" aria-label="Sluiten">✕</button>'
+    + '<div class="dip-binnen">'
+    +   `<div class="dip-beeld"><img class="dip-kunst" src="${d.w.art || ''}" alt="" draggable="false">`
+    +     `<div class="dip-pop"><div class="dip-podium">${podiumHTML(item(q.equipped.stage))}</div>`
+    +       `<div class="dip-av">${avatarSVG(q, 124)}</div></div></div>`
+    +   '<div class="dip-label">Diploma</div>'
+    +   `<div class="dip-naam">${esc(p.name)}</div>`
+    +   `<div class="dip-wereld">${esc(d.w.name)}</div>`
+    +   `<div class="dip-stempels">${diplomaStempels(p, i, false)}</div>`
+    +   '<button class="btn soft dip-deel" type="button">📤 Delen</button>'
+    + '</div></div>', { fade: 250 });
+  // naast het diploma tikken sluit, net als ✕ en terug
+  ov.onclick = e => { if (e.target === ov) { sndClick(); ov._close(); } };
+  ov.querySelector('.dip-x').onclick = () => { sndClick(); ov._close(); };
+  ov.querySelectorAll('.dip-plek').forEach(knop => knop.onclick = () => {
+    const soort = knop.dataset.dip;
+    if (!soort) return;
+    sndClick(); ov._close();
+    if (soort === 'ster') naarWereldKaart(i);
+    // naar dat podium in Podia, en terug brengt haar weer in de kast
+    else { openKleedkamerItem(d.podium.id); dressReturnTo = 'trophies'; }
+  });
+  ov.querySelector('.dip-deel').onclick = () => { sndClick(); diplomaDelen(i); };
+  speak(`Diploma ${d.w.name}`);
+}
+/* Delen: het diploma als plaatje, getekend op een canvas -- zonder bibliotheek,
+   dus met de hand: de lijst, de wereld, het podium, haar pop (dezelfde SVG als
+   overal), de tekst en de twee stempels. Geen knoppen en geen "wat moet je nog
+   doen": een plaatje voor oma is af.
+
+   Daarna navigator.share met het bestand (telefoon: het deelblad), en waar dat
+   niet kan een download. Vanaf file:// weigert de browser een canvas met een
+   tekening van schijf terug te geven (een "besmet" canvas); dan zegt een toast
+   het, in plaats van niets te doen. */
+const DIP_B = 600, DIP_H = 860;   // het plaatje: 2× de kaart van 300 breed
+function diplomaLaad(src) {
+  return new Promise((ja, nee) => { const im = new Image(); im.onload = () => ja(im); im.onerror = nee; im.src = src; });
+}
+function diplomaRond(c, x, y, b, h, r) {
+  c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + b, y, x + b, y + h, r); c.arcTo(x + b, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + b, y, r); c.closePath();
+}
+async function diplomaBeeld(i) {
+  const p = P(), d = diplomaStand(p, i), th = d.w.theme || {};
+  const a = th.sky || '#3a1f6e', b = th.glow || '#7a2f63';
+  const q = diplomaPop(p, d);
+  const st = item(q.equipped.stage);
+  const svg = avatarSVG(q, 248);
+  const [kunst, pop] = await Promise.all([
+    diplomaLaad(d.w.art),
+    diplomaLaad('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)),
+    document.fonts && document.fonts.load ? document.fonts.load('700 60px Fredoka') : null,
+  ]);
+  const cv = document.createElement('canvas');
+  cv.width = DIP_B; cv.height = DIP_H;
+  const c = cv.getContext('2d');
+  // de lijst in de wereldkleuren, en het donkere vlak erin
+  const lijst = c.createLinearGradient(0, 0, DIP_B, DIP_H);
+  lijst.addColorStop(0, a); lijst.addColorStop(1, b);
+  diplomaRond(c, 0, 0, DIP_B, DIP_H, 56); c.fillStyle = lijst; c.fill();
+  const vlak = c.createLinearGradient(0, 0, 0, DIP_H);
+  vlak.addColorStop(0, '#2a1958'); vlak.addColorStop(1, '#1a0e3b');
+  diplomaRond(c, 6, 6, DIP_B - 12, DIP_H - 12, 50); c.fillStyle = vlak; c.fill();
+  // de wereld, bijgesneden zoals op het diploma (midden, iets onder het midden)
+  const BH = 400;
+  c.save(); diplomaRond(c, 6, 6, DIP_B - 12, BH, 50); c.clip();
+  const s = Math.max((DIP_B - 12) / kunst.width, BH / kunst.height);
+  const kb = kunst.width * s, kh = kunst.height * s;
+  c.drawImage(kunst, 6 + ((DIP_B - 12) - kb) / 2, 6 + (BH - kh) * 0.7, kb, kh);
+  const waas = c.createLinearGradient(0, 6 + BH * 0.4, 0, 6 + BH);
+  waas.addColorStop(0, 'rgba(31,18,71,0)'); waas.addColorStop(1, '#1f1247');
+  c.fillStyle = waas; c.fillRect(6, 6, DIP_B - 12, BH);
+  c.restore();
+  // het podium: zijband, dan de bovenkant (de kleuren van podiumHTML)
+  const v = st.vloer || item('stage_disco').vloer;
+  const px = DIP_B / 2, py = 6 + BH - 52, rx = 160, ry = 26;
+  c.fillStyle = v[2]; c.beginPath(); c.ellipse(px, py + 16, rx, ry, 0, 0, Math.PI * 2); c.fill();
+  const boven = c.createRadialGradient(px, py - 6, 10, px, py, rx);
+  boven.addColorStop(0, v[0]); boven.addColorStop(0.72, v[1]);
+  c.fillStyle = boven; c.beginPath(); c.ellipse(px, py, rx, ry, 0, 0, Math.PI * 2); c.fill();
+  c.lineWidth = 4; c.strokeStyle = v[3]; c.stroke();
+  // haar pop, met de voeten midden op het podium
+  const ph = 248 * pop.height / pop.width;
+  c.drawImage(pop, px - 124, py - ph + 34, 248, ph);
+  // de tekst
+  c.textAlign = 'center'; c.fillStyle = '#fff';
+  c.globalAlpha = 0.7; c.font = '600 24px Fredoka, sans-serif';
+  c.fillText('D I P L O M A', px, BH + 70);
+  c.globalAlpha = 1; c.font = '700 64px Fredoka, sans-serif';
+  c.fillText(p.name, px, BH + 140);
+  c.globalAlpha = 0.85; c.font = '500 32px Fredoka, sans-serif';
+  c.fillText(d.w.name, px, BH + 186);
+  c.globalAlpha = 1;
+  // de stempels: gekleurd als je hem hebt, gestippeld als hij nog ontbreekt
+  const sy = BH + 290;
+  const stempel = (x, heb, goud, teken) => {
+    c.save();
+    c.beginPath(); c.arc(x, sy, 58, 0, Math.PI * 2);
+    if (heb) {
+      const g = c.createRadialGradient(x - 20, sy - 20, 6, x, sy, 58);
+      if (goud) { g.addColorStop(0, '#fff6cf'); g.addColorStop(0.55, '#ffc94a'); g.addColorStop(1, '#c98a12'); }
+      else { g.addColorStop(0, '#ffffff'); g.addColorStop(0.15, a); g.addColorStop(1, b); }
+      c.fillStyle = g; c.fill();
+      c.lineWidth = 5; c.strokeStyle = goud ? '#ffe08a' : 'rgba(255,255,255,.55)'; c.stroke();
+    } else {
+      c.setLineDash([10, 9]); c.lineWidth = 4; c.strokeStyle = 'rgba(255,255,255,.35)'; c.stroke();
+      c.globalAlpha = 0.35;
+    }
+    c.setLineDash([]);
+    teken(x);
+    c.restore();
+  };
+  // dezelfde ster als DIP_STER (24 eenheden breed), op 3× getekend
+  const ster = x => {
+    c.save(); c.translate(x - 36, sy - 36); c.scale(3, 3);
+    c.fillStyle = '#fff'; c.shadowColor = 'rgba(150,90,0,.6)'; c.shadowOffsetY = 0.6;
+    c.fill(new Path2D('M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z'));
+    c.restore();
+  };
+  const podium = x => {
+    const pv = d.podium.vloer || v;
+    c.fillStyle = pv[2]; c.beginPath(); c.ellipse(x, sy + 9, 38, 11, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = pv[1]; c.beginPath(); c.ellipse(x, sy, 38, 11, 0, 0, Math.PI * 2); c.fill();
+    c.lineWidth = 2; c.strokeStyle = pv[3]; c.stroke();
+  };
+  if (d.podium) { stempel(px - 80, d.heeftPodium, false, podium); stempel(px + 80, d.perfect, true, ster); }
+  else stempel(px, d.perfect, true, ster);
+  c.textBaseline = 'alphabetic'; c.globalAlpha = 0.5; c.font = '500 22px Fredoka, sans-serif';
+  c.fillText('rekensterren.be', px, DIP_H - 30);
+  return new Promise((ja, nee) => {
+    try { cv.toBlob(bl => bl ? ja(bl) : nee(new Error('geen plaatje')), 'image/png'); } catch (e) { nee(e); }
+  });
+}
+async function diplomaDelen(i) {
+  const d = WORLDS[i];
+  const naam = `diploma-${(P().name || 'ster').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${d.id}.png`;
+  let blob;
+  try { blob = await diplomaBeeld(i); }
+  catch (e) { showToast('📤 Delen lukt hier niet', null, null, 'hint'); return; }
+  const file = typeof File === 'function' ? new File([blob], naam, { type: 'image/png' }) : null;
+  if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+    // weggetikt deelblad is geen fout: dan gebeurt er gewoon niets
+    try { await navigator.share({ files: [file], title: `Diploma ${d.name}` }); } catch (e) { /* geannuleerd */ }
+    return;
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = naam;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
 /* Tikken mag, en elke tik speelt: klaar opent de trofee; anders klinkt hij (of
    zegt hij "tok") en zegt de balk onderin wat hij is of wat er nog moet gebeuren.
    Nog eens op dezelfde speelt nog eens -- de balk blijft dan gewoon staan. Hier
@@ -470,6 +699,15 @@ function tapTrophy(t, card) {
   const p = P();
   const st = trophyStatus(p, t);
   if (st === 'ready') { openTrophy(t.id); return; }
+  /* Een wereld die uit is opent zijn diploma (zie "= Het diploma van een
+     wereld"): daar staat wat er nog te halen valt, met de weg erheen. Een wereld
+     die nog niet uit is houdt de balk met "nog N shows" en de 🗺️-knop. */
+  if (t.perfect && worldAvailable(t.index) && worldProgress(p, worldForIndex(t.index)).uit) {
+    kastBalk(null);
+    if (st === 'done') kastKlink(card); else sndClick();
+    openDiploma(t.index);
+    return;
+  }
   // eerst het klankje en het bewegen: behaald klinkt, de rest zegt "tok" (zie kastKlink)
   if (st === 'done') kastKlink(card); else kastDof(card);
   // nog eens op dezelfde: alleen spelen -- de balk staat er al, en de stem hoeft
