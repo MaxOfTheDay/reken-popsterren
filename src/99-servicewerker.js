@@ -1,5 +1,8 @@
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  navigator.serviceWorker.register('sw.js');
+  /* Een browser mag het aanmelden weigeren (een privévenster, uitgezette
+     sitegegevens). Het spel draait dan gewoon zonder voorraad verder; de catch
+     houdt dat stil, zodat de foutmelder het niet als fout telt. */
+  navigator.serviceWorker.register('sw.js').catch(() => {});
   /* Welke tekeningen er vandaag bestaan weet alleen dit bestand -- sw.js kent
      geen werelden en hoort ze ook niet te kennen. Deze lijst laat hem opruimen wat
      er niet meer bij hoort (een wereld die weg is, een tekening die hernoemd is),
