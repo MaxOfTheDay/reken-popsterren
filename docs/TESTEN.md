@@ -30,6 +30,12 @@ dan telt hij als geslaagd maar meldt het verslag "pas bij de tweede keer" --
 gebeurt dat vaker bij dezelfde suite, dan wiebelt er een controle: laat die
 wachten op een stand in plaats van op een aantal milliseconden.
 
+De browserjobs op GitHub (`.github/workflows/keuring.yml`) gaan ook via
+`test/suites.js`, met `node test/alles.js <bestand>`: één suite per job, met
+dezelfde tweede kans. Slaagt hij pas de tweede keer, dan blijft de PR groen en
+staat er een gele waarschuwing op de run met de controle die wiebelde. Zie je
+dezelfde controle daar vaker staan, maak hem dan vast zoals hierboven.
+
 Wachten tot een scherm binnen is doe je met `rust(page)` uit `test/browser.js`:
 die wacht tot er geen korte animatie meer loopt, in plaats van een vaste tel die
 op de ene machine te lang en op de andere te kort is. Binnen een suite mogen

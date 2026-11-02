@@ -13,7 +13,13 @@
 #             lopen: sterren (de kortste die het beginscherm echt opbouwt; die
 #             ziet een const die te vroeg gelezen wordt en een lege pagina geeft,
 #             CLAUDE.md regel 0) en schuiven (geen scherm schuift verder dan er
-#             iets te zien valt, en wat geen lijst is past op elke maat)
+#             iets te zien valt, en wat geen lijst is past op elke maat).
+#             Ze draaien via test/alles.js, dus met dezelfde tweede kans als
+#             npm test en Publiceren: wat omvalt draait nog één keer, en slaagt
+#             het dan wel, dan blijft de PR groen met een gele waarschuwing die
+#             zegt welke controle wiebelde. Zonder die tweede kans gaf één
+#             beeldje te laat op een drukke GitHub-machine een rode PR en een
+#             mail "run failed", terwijl de code goed was.
 #
 # Bij een push naar main die een PR binnenhaalt slaat browser over: precies
 # die samenvoeging is in de PR al door een browser gegaan. Een push met de hand
@@ -54,7 +60,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [sterren, schuiven]
+        # suite = de naam van de job (en van npm run test:<suite>),
+        # bestand = test/<bestand>.test.js
+        include:
+          - { suite: sterren, bestand: profiles }
+          - { suite: schuiven, bestand: schuiven }
     name: browser (${{ matrix.suite }})
     runs-on: ubuntu-latest
     steps:
@@ -64,4 +74,4 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:${{ matrix.suite }}
+      - run: node test/alles.js ${{ matrix.bestand }}
