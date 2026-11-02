@@ -4698,6 +4698,30 @@
   .count-tile .cgroup.klein .cg-obj { font-size: min(17px, 13cqw); }
 
 
+
+
+
+  .count-tiles.vergelijk, .count-tiles.vergelijk.two, .count-tiles.vergelijk.three { grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); }
+
+  .count-tiles.vergelijk .cgroup { max-width: 100%; gap: 1cqw 2cqw; }
+  .count-tiles.vergelijk .count-tile { min-height: 0; padding: 10px 8px; }
+  .count-tiles.vergelijk .count-tile .cg-obj { font-size: min(34px, 8.6cqw, 4.4vh); }
+  .count-tiles.vergelijk .count-tile .cg-dot { width: min(26px, 7cqw); height: min(26px, 7cqw); }
+
+
+  .count-tiles.vergelijk .count-tile .dframe:not(.mini) .df-cell, .count-tiles.vergelijk .count-tile .cframe .tf-cell { width: min(24px, 6.4cqw, 3.2vh); height: min(24px, 6.4cqw, 3.2vh); }
+  .count-tiles.vergelijk .count-tile .cgroup.groot .cg-obj { font-size: min(48px, 10.5cqw, 6vh); }
+  .count-tiles.vergelijk .count-tile .cgroup.klein .cg-obj { font-size: min(22px, 6cqw, 3vh); }
+
+  .count-q:has(> .cq-label) { min-height: 0; }
+
+  .vgl-teken { display: inline-flex; align-items: flex-end; gap: .12em; height: 1.1em; margin-right: .35em; vertical-align: -.12em; }
+  .vgl-teken i { display: block; width: .36em; border-radius: .1em; background: rgba(var(--purple-shadow-rgb),.2); }
+  .vgl-teken i.hoog { height: 1.1em; }
+  .vgl-teken i.laag { height: .42em; }
+  .vgl-teken i.goud { background: linear-gradient(180deg, var(--gold-accent), var(--gold-cta-bottom)); }
+
+
   .choice-btn.good, .count-tile.good { position: relative; animation: goodPop .5s var(--ease-plop); }
   @keyframes goodPop { 0% { transform: scale(1); } 35% { transform: scale(1.11); } 70% { transform: scale(.98); } 100% { transform: scale(1); } }
   .choice-btn.good::before, .count-tile.good::before {
@@ -4796,13 +4820,25 @@
     display: flex; align-items: center; justify-content: center; overflow: hidden;
     box-shadow: 0 4px 0 rgba(0,0,0,.18);
   }
+
+
+
+
   .mem-back {
-    font-size: clamp(26px, 8vw, 40px); font-size: 40cqw;
-    background: linear-gradient(150deg, var(--purple-input-top), var(--purple-input-bottom));
-    border: 2px solid rgba(255,255,255,.35);
-
-
-    text-shadow: 0 0 12px rgba(255,255,255,.6);
+    background:
+      radial-gradient(circle at 20% 18%, rgba(255,255,255,.55) 0 2px, transparent 3px),
+      radial-gradient(circle at 78% 30%, rgba(255,255,255,.4) 0 1.5px, transparent 2.5px),
+      radial-gradient(circle at 30% 80%, rgba(255,255,255,.45) 0 1.5px, transparent 2.5px),
+      radial-gradient(circle at 85% 84%, rgba(255,255,255,.5) 0 2px, transparent 3px),
+      radial-gradient(120% 90% at 50% 0%, var(--rug-gloed, var(--purple-input-top)), var(--rug-lucht, var(--purple-input-top)) 45%, var(--rug-diep, var(--purple-input-bottom)));
+    border: 2px solid var(--goud-rand);
+    box-shadow: inset 0 0 0 5px rgba(255,255,255,.08), 0 4px 0 rgba(0,0,0,.25);
+  }
+  .mem-munt {
+    width: 52%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+    font-size: clamp(20px, 7vw, 32px); font-size: 30cqw; line-height: 1;
+    background: radial-gradient(circle at 35% 30%, var(--c-white), rgba(var(--goud-glans-rgb), .35) 140%);
+    box-shadow: 0 0 0 3px var(--gold-accent), 0 4px 0 rgba(0,0,0,.25), var(--goud-gloed-zacht);
   }
   .mem-face {
     transform: rotateY(180deg); background: var(--c-white);
@@ -4979,9 +5015,29 @@
   }
 
 
+
+
+
+
+
+
+
+
+
   @media (min-aspect-ratio: 1/1) and (min-width: 900px) and (min-height: 700px) {
-    .numpad { width: min(40vw, 390px); gap: 12px; }
-    .num-btn { font-size: 32px; padding: 15px 0; }
+    #screen-game .game-arena { flex-wrap: nowrap; gap: 3vw; }
+    .show-stage { --stage-h: min(44vh, 400px); height: var(--stage-h); width: calc(var(--stage-h) * 1.19); }
+    .math-panel { --kaart-w: min(44vw, 75vh, 600px); }
+    .question-card { width: var(--kaart-w); min-width: 0; box-sizing: border-box; font-size: min(10vh, 92px); padding: 2.6vh 3.6vh 3.6vh; }
+    .question-card .gl { width: 100%; }
+    #answer-area, .choices, .count-tiles { width: var(--kaart-w); }
+    .choices { gap: 2.2vh; }
+    .choice-btn { font-size: min(6.4vh, 56px); padding: 3vh 8px; }
+    .count-tiles { gap: 2vh; }
+    .count-tile { min-height: 15vh; }
+    .count-tile .cg-obj { font-size: min(4.6vh, 40px); }
+    .numpad { width: var(--kaart-w); gap: 1.6vh; }
+    .num-btn { font-size: min(4.6vh, 40px); padding: 1.9vh 0; }
   }
 
 
@@ -8103,7 +8159,15 @@
     -webkit-mask-composite: xor; mask-composite: exclude;
   }
   .pw-card.busy .wereldprijs .wp-schat { z-index: 1; }
-  .pw-card.busy .wereldprijs, .pw-card.fresh .wereldprijs { opacity: .8; }
+
+
+
+
+
+
+  .pw-card .wereldprijs:not(.af) .podium { filter: grayscale(.6) brightness(1); opacity: .9; }
+  .pw-card .wereldprijs.geheim .wp-schat { filter: brightness(0) invert(1) opacity(.4); }
+  .pw-card.fresh .pw-medal.pw-prijs, .pw-card.busy .pw-medal.pw-prijs { opacity: 1; }
 
 
 
@@ -8664,6 +8728,18 @@
     .end-actions .btn.big { font-size: var(--tx-sub); padding: 11px 18px; }
     .end-actions .btn.soft { font-size: var(--tx-label); padding: 9px 16px; }
     .gold-pill { font-size: var(--tx-label); padding: 6px 13px; min-height: 30px; }
+  }
+
+
+
+
+
+
+
+  @media (orientation: portrait) and (max-width: 599px) and (min-height: 760px) {
+    .result-card { --pop-b: min(150px + (100svh - 760px) * .35, 210px); }
+    .venue-aan .end-panel { width: var(--pop-b); }
+    .end-stage { width: var(--pop-b); height: calc(var(--pop-b) * 1.12); }
   }
   .result-stars span { display: inline-block; }
 
@@ -25576,7 +25652,7 @@ function genCount(p) {
     }
     q.ans = wantMore ? Math.max(...vals) : Math.min(...vals);
     q.compare = wantMore ? 'more' : 'less';
-    q.card = { kind: 'label', text: wantMore ? '⬆️ de meeste' : '⬇️ de minste' };
+    q.card = vergelijkKaart(wantMore);
     q.choices = shuffle(vals.map(qgroup));
 
 
@@ -25787,10 +25863,13 @@ function telVormen(p) {
         else if (type === 'match') reprs.concat(repr === 'dots' ? 'objects' : 'dots').forEach(tr => rij(1, max, v => ({ kind: 'group', n: v, emoji, repr: tr, frame })));
         else rij(1, max, groep);
       } else if (type === 'compare') {
-        ['⬆️ de meeste', '⬇️ de minste'].forEach(text => kaart({ kind: 'label', text }));
-        const k = d.rung >= 1 ? 3 : 2;
+        [true, false].forEach(meer => kaart(vergelijkKaart(meer)));
+
+
+        const k = d.rung >= 1 ? 3 : 2, al = tegels.length;
         rij(1, max, groep, k);
         if (repr === 'objects') rij(1, max, (v, i) => ({ ...groep(v), frame: false, cls: i ? 'klein' : 'groot' }), k);
+        tegels.slice(al).forEach(t => { t.compare = true; });
       } else if (type === 'listen') { kaart({ kind: 'listen' }); rij(1, max, groep); }
       else if (type === 'numquant') { reeks(1, max).forEach(n => kaart({ kind: 'bignum', n })); rij(1, max, groep); }
       else if (type === 'onemore' || type === 'oneless') {
@@ -25826,13 +25905,26 @@ function telVormen(p) {
   return { kaarten, tegels };
 }
 
+
+
+
+
+
+function vergelijkKaart(meer) {
+  return { kind: 'label', vgl: meer ? 'meer' : 'minder', text: meer ? 'de meeste' : 'de minste' };
+}
+function vergelijkTeken(vgl) {
+  const [links, rechts] = vgl === 'meer' ? ['laag', 'hoog goud'] : ['hoog', 'laag goud'];
+  return `<span class="vgl-teken" aria-hidden="true"><i class="${links}"></i><i class="${rechts}"></i></span>`;
+}
+
 function telKaartHTML(q) {
   const cardRepr = q.card.repr || 'objects';
   const kind = q.card.kind;
   let body = '';
   const cap = q.card.cap;
   if (kind === 'group') body = `<div class="cq-groupwrap">${groupHTML(q.card.n, q.card.emoji, cardRepr, 'big', q.card.frame, cap)}</div>`;
-  else if (kind === 'label') body = `<div class="cq-label">${q.card.text}</div>`;
+  else if (kind === 'label') body = `<div class="cq-label">${q.card.vgl ? vergelijkTeken(q.card.vgl) : ''}${q.card.text}</div>`;
   else if (kind === 'listen') body = `<div class="cq-listen">👂</div>`;
   else if (kind === 'bignum') body = `<div class="cq-bignum">${q.card.n}</div>`;
   else if (kind === 'delta') body = `<div class="cq-groupwrap">${groupHTML(q.card.base, q.card.emoji, cardRepr, 'big', q.card.frame, cap)}<span class="cq-delta ${q.card.dir > 0 ? 'add' : 'rem'}">${q.card.dir > 0 ? '＋1' : '－1'}</span></div>`;
@@ -25913,7 +26005,7 @@ function telTegelsHTML(q) {
   }).join('');
   const n = q.choices.length;
 
-  const cls = 'count-tiles' + (n <= 2 ? ' two' : n === 3 ? ' three' : '') + (q.tap && !q.getikt ? ' wacht' : '');
+  const cls = 'count-tiles' + (n <= 2 ? ' two' : n === 3 ? ' three' : '') + (q.compare ? ' vergelijk' : '') + (q.tap && !q.getikt ? ' wacht' : '');
   return `<div class="${cls}">${tiles}</div>`;
 }
 function renderCountAnswers(q, area) {
@@ -26190,12 +26282,20 @@ function startMemory() {
 
   const wi = viewWorldIdx != null && WORLDS[viewWorldIdx] ? viewWorldIdx : continueWorld(p);
   const rug = (WORLDS[wi] && WORLDS[wi].icon) || '🎤';
+
+
+
+
+  const kleur = (WORLDS[wi] && WORLDS[wi].theme) || {};
+  [['--rug-lucht', kleur.sky], ['--rug-diep', kleur.deep], ['--rug-gloed', kleur.glow]].forEach(([k, v]) => {
+    if (v) $('mem-grid').style.setProperty(k, v); else $('mem-grid').style.removeProperty(k);
+  });
   $('mem-done').style.display = 'none';
   telNu($('mem-diamonds'), p.diamonds);
   const grid = $('mem-grid');
   grid.style.setProperty('--cols', Math.min(pairs, 4));
   grid.innerHTML = cards.map((c, i) =>
-    `<button class="mem-card" data-i="${i}"><span class="mem-inner"><span class="mem-back">${rug}</span><span class="mem-face">${memFaceHTML(c)}</span></span></button>`
+    `<button class="mem-card" data-i="${i}"><span class="mem-inner"><span class="mem-back"><span class="mem-munt">${rug}</span></span><span class="mem-face">${memFaceHTML(c)}</span></span></button>`
   ).join('');
   grid.querySelectorAll('.mem-card').forEach(b => b.onclick = () => flipCard(parseInt(b.dataset.i, 10), b));
   renderSegBar($('mem-progress'), pairs, 0, false);
@@ -27104,6 +27204,8 @@ function vakVullen(area) {
   tekst.style.paddingTop = tekst.style.paddingBottom = '';
   area.style.minHeight = '';
   area.classList.remove('vast');
+  const rij = area.querySelector('.count-tiles.vergelijk');
+  if (rij) { rij.style.height = ''; for (const t of rij.children) if (t.firstElementChild) t.firstElementChild.style.zoom = ''; }
   if (G.vakMin == null) G.vakMin = vakMeten(area);
   const m = G.vakMin, rand = kaart.offsetHeight - tekst.offsetHeight;
   if (naast) {
@@ -27127,7 +27229,13 @@ function vakVullen(area) {
     return;
   }
   const nu = () => kaart.offsetHeight + area.offsetHeight;
-  if (G.count) { telPast(tekst.firstElementChild, nu() - m.samen - rand); telBreed(tekst); telPast(area.firstElementChild, nu() - m.samen - rand); }
+
+
+
+
+  const vergelijk = G.count && G.qs[G.idx] && G.qs[G.idx].compare && area.querySelector('.count-tiles.vergelijk');
+  if (vergelijk) vergelijkVullen(vergelijk, m.samen + rand - (nu() - vergelijk.offsetHeight));
+  else if (G.count) { telPast(tekst.firstElementChild, nu() - m.samen - rand); telBreed(tekst); telPast(area.firstElementChild, nu() - m.samen - rand); }
   m.samen = Math.max(m.samen + rand, nu()) - rand;
   const vak = m.samen + rand;
   const knoppen = [...area.querySelectorAll('.choice-btn')];
@@ -27137,6 +27245,17 @@ function vakVullen(area) {
     if (h > h0) area.style.setProperty('--knop-h', h + 'px');
   }
   if (vak > nu()) tekst.style.paddingTop = tekst.style.paddingBottom = (vak - nu()) / 2 + 'px';
+}
+
+
+
+function vergelijkVullen(tegels, hoog) {
+  tegels.style.height = Math.max(0, Math.floor(hoog)) + 'px';
+  for (const t of tegels.children) {
+    const g = t.firstElementChild, cs = getComputedStyle(t);
+    const ruimte = t.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    if (g && g.offsetHeight > ruimte) g.style.zoom = Math.max(0.5, ruimte / g.offsetHeight);
+  }
 }
 
 

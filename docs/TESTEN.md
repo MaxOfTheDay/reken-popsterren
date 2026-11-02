@@ -581,6 +581,18 @@ eronder ligt:
   op precies dezelfde plek uit;
 - en **er verschuift geen enkele ster**: uitzoomen is kijken.
 
+### `test/beeldverschil.js` — welke schermen zien er anders uit
+
+Geen test die omvalt maar een lijst. `test/shots.js --vast` neemt de schermen
+op met een vast zaadje voor `Math.random` (opnieuw gezaaid vlak voor elk scherm)
+en elke animatie op haar eindstand, zodat twee opnames van hetzelfde bestand
+pixel voor pixel gelijk zijn. `--app=<map>` neemt dezelfde schermen op van een
+andere kloon. `beeldverschil.js` legt twee mappen naast elkaar in Chromium
+(canvas, geen extra pakket) en schrijft per veranderd scherm voor | na |
+verschil weg, met een samenvatting. Op GitHub doet de job `beelden` dit bij
+elke PR tegen main. Een scherm in de lijst dat je PR niet hoort te raken, is
+een stille verschuiving in de cascade.
+
 ## Hoe de keuring werkt
 
 `test/app.js` knipt het `<script>`-blok uit `index.html` en draait het in een

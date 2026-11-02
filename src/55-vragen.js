@@ -1894,7 +1894,7 @@ function genCount(p) {
     }
     q.ans = wantMore ? Math.max(...vals) : Math.min(...vals);
     q.compare = wantMore ? 'more' : 'less';
-    q.card = { kind: 'label', text: wantMore ? '⬆️ de meeste' : '⬇️ de minste' };
+    q.card = vergelijkKaart(wantMore);
     q.choices = shuffle(vals.map(qgroup));
     /* Groot tegen klein: op de hoogste trap staat de kleinste groep er soms in
        grote voorwerpen en de andere in kleine, los en niet in een raam. Dan
@@ -2105,10 +2105,13 @@ function telVormen(p) {
         else if (type === 'match') reprs.concat(repr === 'dots' ? 'objects' : 'dots').forEach(tr => rij(1, max, v => ({ kind: 'group', n: v, emoji, repr: tr, frame })));
         else rij(1, max, groep);
       } else if (type === 'compare') {
-        ['⬆️ de meeste', '⬇️ de minste'].forEach(text => kaart({ kind: 'label', text }));
-        const k = d.rung >= 1 ? 3 : 2;
+        [true, false].forEach(meer => kaart(vergelijkKaart(meer)));
+        /* Gemeten zoals ze echt staan, onder elkaar (telTegelsHTML): anders is het
+           vak van deze fase te klein en groeit het bij elke vraag mee. */
+        const k = d.rung >= 1 ? 3 : 2, al = tegels.length;
         rij(1, max, groep, k);
         if (repr === 'objects') rij(1, max, (v, i) => ({ ...groep(v), frame: false, cls: i ? 'klein' : 'groot' }), k);   // de kleinste groot
+        tegels.slice(al).forEach(t => { t.compare = true; });
       } else if (type === 'listen') { kaart({ kind: 'listen' }); rij(1, max, groep); }
       else if (type === 'numquant') { reeks(1, max).forEach(n => kaart({ kind: 'bignum', n })); rij(1, max, groep); }
       else if (type === 'onemore' || type === 'oneless') {
@@ -2143,6 +2146,19 @@ function telVormen(p) {
   ct.rung = was;
   return { kaarten, tegels };
 }
+/* De kaart van "de meeste" / "de minste". Hier staat alleen de opdracht: de
+   groepen zelf staan in de tegels eronder, en die krijgen de ruimte (zie
+   vakVullen: wat er in het vak overblijft gaat bij deze vraag naar de tegels,
+   niet naar de kaart). Op de kaart twee staafjes, het gouden is het soort groep
+   dat je zoekt: hoog bij de meeste, laag bij de minste. Een kind van vijf leest
+   "de meeste" nog niet, en een ⬆️ zei "omhoog", niet "veel". */
+function vergelijkKaart(meer) {
+  return { kind: 'label', vgl: meer ? 'meer' : 'minder', text: meer ? 'de meeste' : 'de minste' };
+}
+function vergelijkTeken(vgl) {
+  const [links, rechts] = vgl === 'meer' ? ['laag', 'hoog goud'] : ['hoog', 'laag goud'];
+  return `<span class="vgl-teken" aria-hidden="true"><i class="${links}"></i><i class="${rechts}"></i></span>`;
+}
 // De kaart van een telvraag. Los van het tekenen: vakMeten meet er de grootste van de fase mee.
 function telKaartHTML(q) {
   const cardRepr = q.card.repr || 'objects';
@@ -2150,7 +2166,7 @@ function telKaartHTML(q) {
   let body = '';
   const cap = q.card.cap;
   if (kind === 'group') body = `<div class="cq-groupwrap">${groupHTML(q.card.n, q.card.emoji, cardRepr, 'big', q.card.frame, cap)}</div>`;
-  else if (kind === 'label') body = `<div class="cq-label">${q.card.text}</div>`;
+  else if (kind === 'label') body = `<div class="cq-label">${q.card.vgl ? vergelijkTeken(q.card.vgl) : ''}${q.card.text}</div>`;
   else if (kind === 'listen') body = `<div class="cq-listen">👂</div>`;
   else if (kind === 'bignum') body = `<div class="cq-bignum">${q.card.n}</div>`;
   else if (kind === 'delta') body = `<div class="cq-groupwrap">${groupHTML(q.card.base, q.card.emoji, cardRepr, 'big', q.card.frame, cap)}<span class="cq-delta ${q.card.dir > 0 ? 'add' : 'rem'}">${q.card.dir > 0 ? '＋1' : '－1'}</span></div>`;
@@ -2231,7 +2247,7 @@ function telTegelsHTML(q) {
   }).join('');
   const n = q.choices.length;
   // tik en tel: de knoppen wachten tot alles geteld is (zie bindTap)
-  const cls = 'count-tiles' + (n <= 2 ? ' two' : n === 3 ? ' three' : '') + (q.tap && !q.getikt ? ' wacht' : '');
+  const cls = 'count-tiles' + (n <= 2 ? ' two' : n === 3 ? ' three' : '') + (q.compare ? ' vergelijk' : '') + (q.tap && !q.getikt ? ' wacht' : '');
   return `<div class="${cls}">${tiles}</div>`;
 }
 function renderCountAnswers(q, area) {
@@ -2508,12 +2524,20 @@ function startMemory() {
      scherm), niet altijd dezelfde microfoon: zo hoort het potje bij de reis. */
   const wi = viewWorldIdx != null && WORLDS[viewWorldIdx] ? viewWorldIdx : continueWorld(p);
   const rug = (WORLDS[wi] && WORLDS[wi].icon) || '🎤';
+  /* De rug in de kleuren van die wereld (zie .mem-back): dezelfde vier kleuren die
+     de kaart heeft zolang er geen tekening is, dus elke wereld heeft ze -- ook een
+     nieuwe uit de studio. Het teken staat op een witte munt: een eenkleurig teken
+     als 🎵 verdween op violet, op wit leest elk teken. */
+  const kleur = (WORLDS[wi] && WORLDS[wi].theme) || {};
+  [['--rug-lucht', kleur.sky], ['--rug-diep', kleur.deep], ['--rug-gloed', kleur.glow]].forEach(([k, v]) => {
+    if (v) $('mem-grid').style.setProperty(k, v); else $('mem-grid').style.removeProperty(k);
+  });
   $('mem-done').style.display = 'none';
   telNu($('mem-diamonds'), p.diamonds);
   const grid = $('mem-grid');
   grid.style.setProperty('--cols', Math.min(pairs, 4));   // voorlopige waarde; memFitCols meet zo de echte
   grid.innerHTML = cards.map((c, i) =>
-    `<button class="mem-card" data-i="${i}"><span class="mem-inner"><span class="mem-back">${rug}</span><span class="mem-face">${memFaceHTML(c)}</span></span></button>`
+    `<button class="mem-card" data-i="${i}"><span class="mem-inner"><span class="mem-back"><span class="mem-munt">${rug}</span></span><span class="mem-face">${memFaceHTML(c)}</span></span></button>`
   ).join('');
   grid.querySelectorAll('.mem-card').forEach(b => b.onclick = () => flipCard(parseInt(b.dataset.i, 10), b));
   renderSegBar($('mem-progress'), pairs, 0, false);

@@ -297,6 +297,8 @@ function vakVullen(area) {
   tekst.style.paddingTop = tekst.style.paddingBottom = '';
   area.style.minHeight = '';
   area.classList.remove('vast');
+  const rij = area.querySelector('.count-tiles.vergelijk');
+  if (rij) { rij.style.height = ''; for (const t of rij.children) if (t.firstElementChild) t.firstElementChild.style.zoom = ''; }
   if (G.vakMin == null) G.vakMin = vakMeten(area);
   const m = G.vakMin, rand = kaart.offsetHeight - tekst.offsetHeight;
   if (naast) {
@@ -320,7 +322,13 @@ function vakVullen(area) {
     return;
   }
   const nu = () => kaart.offsetHeight + area.offsetHeight;
-  if (G.count) { telPast(tekst.firstElementChild, nu() - m.samen - rand); telBreed(tekst); telPast(area.firstElementChild, nu() - m.samen - rand); }
+  /* Bij "de meeste" draagt de kaart alleen de opdracht en staan de groepen in de
+     tegels, onder elkaar (.count-tiles.vergelijk). De tegels krijgen dan precies
+     wat er in het vak over is -- niet de kaart, en ook niet meer: het vak houdt
+     zijn maat en zij de hare. Wat in een rij niet past, krimpt in die rij. */
+  const vergelijk = G.count && G.qs[G.idx] && G.qs[G.idx].compare && area.querySelector('.count-tiles.vergelijk');
+  if (vergelijk) vergelijkVullen(vergelijk, m.samen + rand - (nu() - vergelijk.offsetHeight));
+  else if (G.count) { telPast(tekst.firstElementChild, nu() - m.samen - rand); telBreed(tekst); telPast(area.firstElementChild, nu() - m.samen - rand); }
   m.samen = Math.max(m.samen + rand, nu()) - rand;   // groter dan gemeten: het vak groeit mee
   const vak = m.samen + rand;
   const knoppen = [...area.querySelectorAll('.choice-btn')];
@@ -330,6 +338,17 @@ function vakVullen(area) {
     if (h > h0) area.style.setProperty('--knop-h', h + 'px');
   }
   if (vak > nu()) tekst.style.paddingTop = tekst.style.paddingBottom = (vak - nu()) / 2 + 'px';
+}
+/* De tegels van "de meeste" op een vaste hoogte (zie vakVullen). Een rij die
+   daarbinnen te hoog is (acht grote voorwerpen op een kleine telefoon), krijgt
+   een kleinere groep -- nooit kleiner dan de helft, en nooit groter dan hij is. */
+function vergelijkVullen(tegels, hoog) {
+  tegels.style.height = Math.max(0, Math.floor(hoog)) + 'px';
+  for (const t of tegels.children) {
+    const g = t.firstElementChild, cs = getComputedStyle(t);
+    const ruimte = t.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    if (g && g.offsetHeight > ruimte) g.style.zoom = Math.max(0.5, ruimte / g.offsetHeight);
+  }
 }
 /* Wat er in deze show kan komen, als paren van kaart en knoppen. Gemeten in
    de kaart en het vak zelf, niet op een kopie: een telkaart is zo breed als

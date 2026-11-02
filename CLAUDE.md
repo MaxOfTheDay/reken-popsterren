@@ -46,6 +46,14 @@ dan valt zaak H om.
 Raak je aan het uiterlijk, draai dan ook `npm run shots` (schermafdrukken om
 mee te vergelijken) of `npm run achtergrondproef`.
 
+Bij elke PR legt de job **beelden** dezelfde schermen van main en van de PR
+naast elkaar (`test/shots.js --vast`, `test/beeldverschil.js`) en zet in de
+samenvatting welke er anders uitzien; voor, na en het verschil staan in het
+artefact `beeldverschil`. Hij blokkeert niets. Kijk de lijst wel na: staat er
+een scherm in dat je PR niet hoort te raken, dan heb je in de cascade iets
+verschoven. Zelf: `node test/shots.js voor --vast --app=<kloon van main>`,
+`node test/shots.js na --vast`, `node test/beeldverschil.js shots/voor shots/na shots/verschil`.
+
 ## De harde regels
 
 Dit zijn de valkuilen die je niet aan de code ziet. Vier ervan zijn ooit
