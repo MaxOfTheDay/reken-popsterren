@@ -593,7 +593,7 @@ async function runTests() {
     throw new Error('de testen falen — er is niets vastgelegd\n\n'
       + r.tekst.split('\n').slice(-25).join('\n'));
   }
-  return r.wiebel.length ? 'pas bij de tweede keer geslaagd: ' + r.wiebel.join(', ') : '';
+  return r.wiebel.length ? 'pas bij de tweede keer geslaagd: ' + r.wiebel.map(w => w.naam).join(', ') : '';
 }
 async function commitAll(bericht, res) {
   const zeg = (code, tekst) => {
