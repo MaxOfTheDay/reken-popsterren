@@ -314,6 +314,18 @@
     .end-actions .btn.soft { font-size: var(--tx-label); padding: 9px 16px; }
     .gold-pill { font-size: var(--tx-label); padding: 6px 13px; min-height: 30px; }
   }
+  /* Een hoge telefoon, staand: zij groeit mee, net als in de show (zie "ZIJ
+     GROEIT MEE" in 50-zaal). Op 390x844 stond de kaart klaar op ~80% van de
+     hoogte en bleef eronder een strook met alleen confetti. Nu krijgt zij een deel
+     van die lucht: 150px op 760 hoog, tot 210px op ~930. Alleen de pop; de rest
+     van de kaart houdt zijn maat, dus ook een wereldeinde met mijlpaal past nog
+     (schuiven kijkt het eindscherm na). --pop-b is de breedte van de pop en
+     haar paneel samen (het podium moet zo breed zijn als zij, zie .end-panel). */
+  @media (orientation: portrait) and (max-width: 599px) and (min-height: 760px) {
+    .result-card { --pop-b: min(150px + (100svh - 760px) * .35, 210px); }
+    .venue-aan .end-panel { width: var(--pop-b); }
+    .end-stage { width: var(--pop-b); height: calc(var(--pop-b) * 1.12); }
+  }
   .result-stars span { display: inline-block; }
   /* gemiste ster: dof én kleurloos — zelfde taal als op de reiskaart */
   .result-stars .dim { opacity: .25; filter: grayscale(1); }

@@ -7,6 +7,15 @@
  *
  *   npm run shots            -> shots/huidig/...
  *   npm run shots -- fase0   -> shots/fase0/...
+ *   npm run shots -- voor --app=../andere-kloon --vast
+ *
+ * --app=<map>  maak de beelden van de index.html in die map (een andere kloon
+ *              of een git worktree van main), met déze lijst schermen. Zo zijn
+ *              "voor" en "na" precies dezelfde opnames.
+ * --vast       elke opname hetzelfde: Math.random met een vast zaadje (dezelfde
+ *              sommen, dezelfde confetti) en elke animatie op haar eindstand.
+ *              Voor de beeldvergelijking op een PR (test/beeldverschil.js):
+ *              zonder dit verschilt elk beeld al door een andere som.
  *
  * De map shots/ staat in .gitignore: dit zijn werkbeelden, geen bronbestanden.
  *
@@ -18,8 +27,23 @@ const fs = require('fs');
 const path = require('path');
 const { launch, cacheFonts, APP_URL } = require('./browser.js');
 
-const label = process.argv[2] || 'huidig';
+const args = process.argv.slice(2);
+const vlag = n => { const a = args.find(x => x.startsWith('--' + n)); return a == null ? null : (a.split('=')[1] || true); };
+const label = args.find(a => !a.startsWith('--')) || 'huidig';
 const OUT = path.resolve(__dirname, '..', 'shots', label);
+const APP = vlag('app') ? 'file://' + path.resolve(vlag('app'), 'index.html') + '?debug' : APP_URL;
+const VAST = !!vlag('vast');
+/* Een vast zaadje voor Math.random (mulberry32), vóór het eerste script van de
+   pagina: elke opname trekt dezelfde sommen en dezelfde confetti. */
+function vastToeval() {
+  let t = 20261102;
+  Math.random = () => {
+    t = (t + 0x6D2B79F5) | 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 // Alle schermen op telefoonmaat; op de krappe en de brede maat alleen de
 // schermen waar de indeling écht anders uitpakt (daar gaat het mis, niet in
@@ -64,6 +88,12 @@ const SCREENS = [
   { key: '09-nieuwe-ster',  wide: false, go: () => { cur = null; goProfiles(); openNewStar('profile'); } },
   { key: '10-kaart-tellen', wide: false, go: () => selectProfile('p2') },
   { key: '11-show-tellen',  wide: false, go: () => { selectProfile('p2'); startLevel(2); } },
+  // "de meeste": de kaart draagt alleen de opdracht, de groepen krijgen de ruimte
+  { key: '11b-tellen-vergelijk', wide: true, go: () => {
+      selectProfile('p2');
+      const p = P(); p.settings.stage = 3; p.countTrack = { ...(p.countTrack || {}), stage: 3, rung: 2 };
+      startLevel(2);
+    } },
   { key: '12-memory',       wide: false, go: () => { selectProfile('p2'); startMemory(); } },
 ];
 
@@ -71,20 +101,25 @@ const SCREENS = [
 // een overlay of een halve show die van het vorige scherm blijft hangen maakt
 // juist de vergelijking onbetrouwbaar.
 async function capture(page, screen, dir) {
-  await page.goto(APP_URL + '&demo&star=p1');
+  await page.goto(APP + '&demo&star=p1');
   await page.waitForFunction(() => typeof selectProfile === 'function');
-  await page.evaluate(fn => {
+  /* Met --vast opnieuw zaaien vlak voor het scherm opent: wat er bij het
+     opstarten al aan toeval getrokken werd, hangt af van de tijd (een vonkje
+     meer of minder), en dan schoof de som van dit scherm een plek op. */
+  await page.evaluate(([fn, zaai]) => {
+    if (zaai) new Function('(' + zaai + ')()')();   // eslint-disable-line no-new-func
     // eslint-disable-next-line no-new-func
     new Function(fn)();
-  }, '(' + screen.go.toString() + ')()');
+  }, ['(' + screen.go.toString() + ')()', VAST ? vastToeval.toString() : null]);
   // wachten tot het bewegen klaar is: de sterren zwaaien bij het openen (950ms)
   await page.waitForTimeout(screen.wacht || 1500);
-  await page.screenshot({ path: path.join(dir, screen.key + '.png') });
+  await page.screenshot({ path: path.join(dir, screen.key + '.png'), animations: VAST ? 'disabled' : 'allow' });
 }
 
 (async () => {
   const browser = await launch();
   const context = await browser.newContext({ deviceScaleFactor: 2 });
+  if (VAST) await context.addInitScript(vastToeval);
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));

@@ -20,6 +20,12 @@
 #             zegt welke controle wiebelde. Zonder die tweede kans gaf één
 #             beeldje te laat op een drukke GitHub-machine een rode PR en een
 #             mail "run failed", terwijl de code goed was.
+#   beelden  alleen bij een PR: dezelfde schermen voor (main) en na (deze PR),
+#             naast elkaar gelegd (test/shots.js --vast, test/beeldverschil.js).
+#             Blokkeert niets; de lijst staat in de samenvatting van de job en
+#             voor | na | verschil in het artefact "beeldverschil". In het
+#             stijlblad is de volgorde de cascade: een verhangen regel breekt
+#             niets en geen test valt om, er ziet alleen iets anders uit.
 #
 # Bij een push naar main die een PR binnenhaalt slaat browser over: precies
 # die samenvoeging is in de PR al door een browser gegaan. Een push met de hand
@@ -75,3 +81,27 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
       - run: node test/alles.js ${{ matrix.bestand }}
+
+  beelden:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      # main ernaast, in een eigen map: de opnames van allebei met de lijst schermen van deze PR
+      - run: git worktree add ../basis origin/${{ github.base_ref }}
+      - run: node test/shots.js voor --vast --app=../basis
+      - run: node test/shots.js na --vast
+      - run: node test/beeldverschil.js shots/voor shots/na shots/verschil
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: beeldverschil
+          path: shots/verschil
+          if-no-files-found: ignore

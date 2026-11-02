@@ -550,7 +550,15 @@
     -webkit-mask-composite: xor; mask-composite: exclude;
   }
   .pw-card.busy .wereldprijs .wp-schat { z-index: 1; }
-  .pw-card.busy .wereldprijs, .pw-card.fresh .wereldprijs { opacity: .8; }
+  /* Nog te winnen is in de kast een lichtgrijs silhouet, geen bijna-zwart. Het
+     podium kreeg elders de bleke stand (grijs, .62 licht, .75 dicht), en daar
+     kwamen hier de dekking van de kaart en die van het medaillon nog bovenop: op
+     de donkere plank was een Snoepwereld-podium dan niet meer te lezen. Grijs
+     blijft "nog niet van jou"; alleen kleur en goud zeggen dat je hem hebt. De
+     schat erop is een licht schaduwbeeld, zoals de stempels van het diploma. */
+  .pw-card .wereldprijs:not(.af) .podium { filter: grayscale(.6) brightness(1); opacity: .9; }
+  .pw-card .wereldprijs.geheim .wp-schat { filter: brightness(0) invert(1) opacity(.4); }
+  .pw-card.fresh .pw-medal.pw-prijs, .pw-card.busy .pw-medal.pw-prijs { opacity: 1; }
   /* Gewonnen: het verschil met onderweg moet je van een afstand zien. Een dikkere
      gouden rand met een volle gloed, een warme gloed erachter, twee vonkjes (de
      opmaak van de diamanten medaille, zie DIAMANT_VONKJES) en de naam in goud. */

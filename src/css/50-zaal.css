@@ -664,6 +664,30 @@
   .count-tile .cgroup.groot .cg-obj { font-size: min(44px, 36cqw); }
   .count-tile .cgroup.klein { gap: 2px 3px; }
   .count-tile .cgroup.klein .cg-obj { font-size: min(17px, 13cqw); }
+  /* "De meeste" / "de minste": de groepen onder elkaar, elk een hele rij breed.
+     De kaart erboven draagt alleen de opdracht, dus wat er in het vak overblijft
+     gaat naar deze tegels (vakVullen) -- en de voorwerpen worden zo groot als
+     die rij toelaat. Naast elkaar in een derde van de breedte was een groep van
+     acht lieveheersbeestjes van 11px; hier is het tellen het werk, niet zoeken. */
+  .count-tiles.vergelijk, .count-tiles.vergelijk.two, .count-tiles.vergelijk.three { grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); }
+  /* één regel per groep (tot acht): de maat volgt de breedte van de rij */
+  .count-tiles.vergelijk .cgroup { max-width: 100%; gap: 1cqw 2cqw; }
+  .count-tiles.vergelijk .count-tile { min-height: 0; padding: 10px 8px; }
+  .count-tiles.vergelijk .count-tile .cg-obj { font-size: min(34px, 8.6cqw, 4.4vh); }
+  .count-tiles.vergelijk .count-tile .cg-dot { width: min(26px, 7cqw); height: min(26px, 7cqw); }
+  /* een raampje in zo'n rij: vakjes zo groot als een voorwerp, niet groter -- de
+     rij moet laag blijven, de breedte heeft hij al */
+  .count-tiles.vergelijk .count-tile .dframe:not(.mini) .df-cell, .count-tiles.vergelijk .count-tile .cframe .tf-cell { width: min(24px, 6.4cqw, 3.2vh); height: min(24px, 6.4cqw, 3.2vh); }
+  .count-tiles.vergelijk .count-tile .cgroup.groot .cg-obj { font-size: min(48px, 10.5cqw, 6vh); }
+  .count-tiles.vergelijk .count-tile .cgroup.klein .cg-obj { font-size: min(22px, 6cqw, 3vh); }
+  /* de kaart van die vraag is één regel: hij staat zijn hoogte af aan de tegels */
+  .count-q:has(> .cq-label) { min-height: 0; }
+  /* de twee staafjes op de kaart: het gouden is de groep die je zoekt (vergelijkTeken) */
+  .vgl-teken { display: inline-flex; align-items: flex-end; gap: .12em; height: 1.1em; margin-right: .35em; vertical-align: -.12em; }
+  .vgl-teken i { display: block; width: .36em; border-radius: .1em; background: rgba(var(--purple-shadow-rgb),.2); }
+  .vgl-teken i.hoog { height: 1.1em; }
+  .vgl-teken i.laag { height: .42em; }
+  .vgl-teken i.goud { background: linear-gradient(180deg, var(--gold-accent), var(--gold-cta-bottom)); }
 
   /* ---- Goed antwoord: de tegel viert zelf mee (veerpop + glow-ring + ✓-stempel) ---- */
   .choice-btn.good, .count-tile.good { position: relative; animation: goodPop .5s var(--ease-plop); }
@@ -764,13 +788,25 @@
     display: flex; align-items: center; justify-content: center; overflow: hidden;
     box-shadow: 0 4px 0 rgba(0,0,0,.18);
   }
+  /* De rug: de kleuren van de wereld (--rug-*, zie startMemory; zonder vallen ze
+     terug op het violet van de knoppen), een paar vonkjes, een gouden rand en het
+     teken van de wereld op een witte munt. Rustig met opzet: acht keer dezelfde
+     rug naast elkaar, en de voorkant moet opvallen als hij omdraait. */
   .mem-back {
-    font-size: clamp(26px, 8vw, 40px); font-size: 40cqw;
-    background: linear-gradient(150deg, var(--purple-input-top), var(--purple-input-bottom));
-    border: 2px solid rgba(255,255,255,.35);
-    /* op de rug staat het teken van de wereld (startMemory); 🎵 is een donker,
-       eenkleurig teken en verdween bijna in het violet -- een zachte gloed erachter */
-    text-shadow: 0 0 12px rgba(255,255,255,.6);
+    background:
+      radial-gradient(circle at 20% 18%, rgba(255,255,255,.55) 0 2px, transparent 3px),
+      radial-gradient(circle at 78% 30%, rgba(255,255,255,.4) 0 1.5px, transparent 2.5px),
+      radial-gradient(circle at 30% 80%, rgba(255,255,255,.45) 0 1.5px, transparent 2.5px),
+      radial-gradient(circle at 85% 84%, rgba(255,255,255,.5) 0 2px, transparent 3px),
+      radial-gradient(120% 90% at 50% 0%, var(--rug-gloed, var(--purple-input-top)), var(--rug-lucht, var(--purple-input-top)) 45%, var(--rug-diep, var(--purple-input-bottom)));
+    border: 2px solid var(--goud-rand);
+    box-shadow: inset 0 0 0 5px rgba(255,255,255,.08), 0 4px 0 rgba(0,0,0,.25);
+  }
+  .mem-munt {
+    width: 52%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+    font-size: clamp(20px, 7vw, 32px); font-size: 30cqw; line-height: 1; /* teken */
+    background: radial-gradient(circle at 35% 30%, var(--c-white), rgba(var(--goud-glans-rgb), .35) 140%);
+    box-shadow: 0 0 0 3px var(--gold-accent), 0 4px 0 rgba(0,0,0,.25), var(--goud-gloed-zacht);
   }
   .mem-face {
     transform: rotateY(180deg); background: var(--c-white);
@@ -945,11 +981,31 @@
     .show-stage { width: 240px; height: 202px; }
     .question-card { font-size: clamp(50px, 6vw, 68px); }
   }
-  /* een tablet liggend: het cijferblok had telefoonmaat midden op een groot
-     scherm; nu is het even breed als de antwoordknoppen in de kiesmodus */
+  /* Een tablet liggend, en een groot scherm. Zij, de som en de antwoorden staan
+     hier naast elkaar, maar kregen telefoonmaten: op 1024x768 stond alles in de
+     bovenste twee derde en bleef onderaan een derde leeg. Nu een maat groter,
+     net als staand hieronder -- maar met de hoogte als maatstok (vh), want liggend
+     is de hoogte de grens: zij krijgt bijna de helft ervan, de kaart en de
+     antwoorden worden even breed (--kaart-w) en hun letters groeien mee.
+     Eén regel voor elke show (sommen, tellen, elk thema): alles wat in de kaart
+     staat rekent al in em of in de maat van de kaart. Schuiven zaak E en F
+     kijken na dat het op 1024x768 en 1180x820 nog past.
+     Het cijferblok had telefoonmaat midden op een groot scherm; nu is het even
+     breed als de antwoordknoppen in de kiesmodus. */
   @media (min-aspect-ratio: 1/1) and (min-width: 900px) and (min-height: 700px) {
-    .numpad { width: min(40vw, 390px); gap: 12px; }
-    .num-btn { font-size: 32px; padding: 15px 0; }
+    #screen-game .game-arena { flex-wrap: nowrap; gap: 3vw; }
+    .show-stage { --stage-h: min(44vh, 400px); height: var(--stage-h); width: calc(var(--stage-h) * 1.19); }
+    .math-panel { --kaart-w: min(44vw, 75vh, 600px); }
+    .question-card { width: var(--kaart-w); min-width: 0; box-sizing: border-box; font-size: min(10vh, 92px); padding: 2.6vh 3.6vh 3.6vh; }
+    .question-card .gl { width: 100%; }   /* de getallenlijn binnen de kaart, niet op zijn eigen 440px */
+    #answer-area, .choices, .count-tiles { width: var(--kaart-w); }
+    .choices { gap: 2.2vh; }
+    .choice-btn { font-size: min(6.4vh, 56px); padding: 3vh 8px; }
+    .count-tiles { gap: 2vh; }
+    .count-tile { min-height: 15vh; }
+    .count-tile .cg-obj { font-size: min(4.6vh, 40px); }
+    .numpad { width: var(--kaart-w); gap: 1.6vh; }
+    .num-btn { font-size: min(4.6vh, 40px); padding: 1.9vh 0; }
   }
   /* Een tablet staand (768x1024, 834x1194). Daar paste de ster nét naast de som,
      dus zette de arena ze naast elkaar: links de pop, rechts in het midden de
