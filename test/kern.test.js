@@ -2944,6 +2944,37 @@ zaak('KM', () => {
   check(klaar(p), 'KM · Zelf kiezen: na een vlotte reeks blijft "Klaar voor meer" ook na mindere shows', JSON.stringify(p.stap));
   s.kies = ['tot10', 'tot20'];
   check(!klaar(p), 'KM · Zelf kiezen: een vinkje erbij is een nieuwe stap, dan is hij weg', app.run('stapSleutel')(p));
+  /* Zelf kiezen met alleen tafels: de stip had geen knop. Nu: altijd een
+     "Erbij" naast "Klaar voor meer", een tafel erbij aantikken maakt hem weg,
+     en wie alles aan heeft krijgt geen stip meer. */
+  const z = app.db.profiles.p4 = app.defaultProfile('Tafel', 'dress_roze', {});
+  app.normalizeProfiles();
+  const zs = z.settings; app.themaZet(zs, 'tafels', true); app.themaZet(zs, 'rekenen', false);
+  zs.modus = 'vrij'; zs.tables = [2, 5, 10]; zs.ops = ['x'];
+  const vlot = () => { z.stap = { id: app.run('stapSleutel')(z), n: 4, meer: 1 }; z.recent = [3, 3, 3, 3]; };
+  vlot();
+  const ze = app.run('zelfErbij')(z);
+  check(klaar(z) && ze && ze.k === 'tafels' && /3 en 4/.test(ze.naam), 'KM · alleen tafels: bij "Klaar voor meer" staat er een Erbij (de volgende tafels)', JSON.stringify(ze));
+  zs.tables = [2, 3, 5, 10];
+  check(!klaar(z), 'KM · alleen tafels: zelf een tafel aantikken is ook iets erbij, dan is hij weg', app.run('stapSleutel')(z));
+  zs.tables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; vlot();
+  check(klaar(z) && /Delen/.test(app.run('zelfErbij')(z).naam), 'KM · alle tafels aan, alleen ×: Erbij is delen', JSON.stringify(app.run('zelfErbij')(z)));
+  zs.ops = ['x', ':']; vlot();
+  check(!klaar(z) && app.run('zelfErbij')(z) === null, 'KM · alles aan: niets meer bij te zetten, dus ook geen stip', app.run('vgStand')(z));
+  // de regel zelf, over veel instellingen: een stip zonder knop mag nooit
+  let zonder = null;
+  for (let i = 0; i < 200 && !zonder; i++) {
+    const q = app.db.profiles.p5 = app.defaultProfile('Mix', 'dress_roze', {});
+    app.normalizeProfiles();
+    const qs = q.settings; qs.modus = 'vrij';
+    app.THEMAS.forEach(t => { if (Math.random() < 0.5) app.themaZet(qs, t.id, true); });
+    if (Math.random() < 0.5) app.themaZet(qs, 'rekenen', false);
+    qs.tables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].filter(() => Math.random() < 0.6);
+    if (!qs.tables.length) qs.tables = [2];
+    q.stap = { id: app.run('stapSleutel')(q), n: 4, meer: 1 }; q.recent = [3, 3, 3, 3];
+    if (app.run('klaarVoorMeer')(q) && !app.run('zelfErbij')(q)) zonder = qs;
+  }
+  check(!zonder, 'KM · Zelf kiezen: "Klaar voor meer" heeft altijd een Erbij om op te tikken', JSON.stringify(zonder));
   // twee ladders tegelijk omhoog: de tweede krijgt zijn pil een show later
   const r = app.db.profiles.p3 = app.defaultProfile('Twee', 'dress_roze', {});
   app.normalizeProfiles();

@@ -394,8 +394,12 @@ function vgStand(p) {
      overzicht, en op de themakaart "Erbij" -- zie zelfErbij). Anders bleef een
      kind dat het allang kon eindeloos hetzelfde spelen. */
   if (zelfGekozen(p.settings)) {
+    const s = p.settings;
     // eens vlot blijft vlot, tot er iets bij komt (p.stap.meer, zie endLevel; een vinkje erbij maakt een nieuwe stap)
-    if ((p.stap && p.stap.meer && p.stap.id === stapSleutel(p)) || (u && u.stand === 'vlot')) return 'meer';
+    /* Alleen als er ook iets bij kán (zelfVolgende). Een stip waar op haar
+       pagina geen knop bij staat, is een vraag zonder antwoord: zo stond hij er
+       bij alleen tafels, want die hadden geen "Erbij". */
+    if (((p.stap && p.stap.meer && p.stap.id === stapSleutel(p)) || (u && u.stand === 'vlot')) && zelfVolgende(s)) return 'meer';
     if (u) return u.stand;
   }
   if (u) return u.stand;
@@ -756,11 +760,18 @@ function zelfLadderHtml(p, k) {
 }
 /* De rij die er bij Zelf kiezen bij kan, als het vlot gaat: { k, naam, doe }
    of null. De eerste die nog niet aan staat ná de laatste die wel aan staat,
-   in het eerste thema waar er zo een is. Tafels hebben geen volgende rij (de
-   ouder kiest ze los, "Tafels van"). */
+   in het eerste thema waar er zo een is. */
 function zelfErbij(p) {
-  const s = p.settings;
-  if (!zelfGekozen(s) || !klaarVoorMeer(p)) return null;
+  return zelfGekozen(p.settings) && klaarVoorMeer(p) ? zelfVolgende(p.settings) : null;
+}
+/* Wat er bij kan, los van of het vlot gaat. vgStand vraagt het ook: is er niets
+   meer bij te zetten, dan is er geen "Klaar voor meer" -- de gouden stip zegt
+   "hier kun je iets doen", en dan moet die knop er ook staan (kern zaak KM).
+   TAFELS: in de volgorde van het leerpad (TAFELPAD), de tafels van de eerste
+   rij waar er nog een van ontbreekt; staan ze er allemaal, dan het andere
+   teken (÷ bij ×, of × bij ÷). De tafel van 1 hoort bij geen rij en wordt dus
+   niet voorgesteld. */
+function zelfVolgende(s) {
   const volgende = (alle, aan) => alle.slice(Math.max(-1, ...aan.map(v => alle.indexOf(v))) + 1).find(v => !aan.includes(v));
   if (s.track === 'count') {
     const v = volgende(Array.from({ length: COUNT_STAGE_MAX }, (_, i) => i + 1), kiesFasen(s));
@@ -770,6 +781,16 @@ function zelfErbij(p) {
     if (k === 'rekenen') {
       const rijen = kiesRijen(s), v = volgende(rijen.map(r => r.id), s.kies || []);
       if (v) return { k, naam: rijen.find(r => r.id === v).naam, doe: () => { s.kies = (s.kies || []).concat(v); } };
+    } else if (k === 'tafels') {
+      const rij = TAFELPAD.find(r => r.tafels.some(t => !s.tables.includes(t)));
+      if (rij) {
+        const nieuw = rij.tafels.filter(t => !s.tables.includes(t));
+        const naam = nieuw.length > 1 ? `Tafels van ${nieuw.slice(0, -1).join(', ')} en ${nieuw[nieuw.length - 1]}` : `Tafel van ${nieuw[0]}`;
+        return { k, naam: s.ops.includes('x') ? naam : naam.replace(/^Tafels? van/, 'Delen door'), doe: () => { s.tables = s.tables.concat(nieuw); } };
+      }
+      const t = s.tables.slice().sort((a, b) => a - b).join(', ');
+      if (!s.ops.includes(':')) return { k, naam: `Delen door ${t}`, doe: () => { s.ops = s.ops.concat(':'); } };
+      if (!s.ops.includes('x')) return { k, naam: `Tafels van ${t}`, doe: () => { s.ops = s.ops.concat('x'); } };
     } else if (LADDERS[k] && LADDERS[k].kies) {
       const L = LADDERS[k], v = volgende(L.pad.map(r => r.id), s[L.kies] || []);
       if (v) return { k, naam: L.pad.find(r => r.id === v).naam, doe: () => { s[L.kies] = (s[L.kies] || []).concat(v); } };
