@@ -1534,7 +1534,9 @@ function wachtendeRijen(p) {
 function stapSleutel(p) {
   const s = p.settings;
   // Zelf kiezen: wat er aangevinkt staat is de stap -- vink je iets bij, dan begint het label opnieuw
-  if (zelfGekozen(s)) return 'vrij:' + (s.track === 'count' ? kiesFasen(s) : kiesGekozen(s).map(r => r.id).concat(s.ops.filter(o => o === 'x' || o === ':'))).join(',');
+  // (de tafels tellen mee: een tafel erbij aantikken is ook iets bij, zie zelfVolgende)
+  if (zelfGekozen(s)) return 'vrij:' + (s.track === 'count' ? kiesFasen(s) : kiesGekozen(s).map(r => r.id).concat(s.ops.filter(o => o === 'x' || o === ':'),
+    themaAan(s, 'tafels') ? ['t' + s.tables.slice().sort((a, b) => a - b).join('.')] : [])).join(',');
   return s.track === 'count' ? 'fase' + countLiveStage(p) : 'pad:' + padNu(p);
 }
 /* De uitkomst onthouden, met de stap waar hij bij hoort (stap = stapSleutel van
