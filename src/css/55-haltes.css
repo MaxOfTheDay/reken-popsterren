@@ -125,7 +125,7 @@
   /* Indrukken: kort en strak erin (88%, 90ms, zonder veer), en er met een kleine
      doorschieter weer uit -- dat is de veer in de overgang hierboven. Eén tik
      voelt daardoor als indrukken en loslaten, en niet als een schakelaartje. */
-  .tour-stop:active .stop-body { transform: scale(calc(var(--stop-schaal) * .88));
+  .tour-stop:active .stop-body { transform: scale(calc(var(--stop-schaal) * .88)); /* uitzondering: de veer van een halte, zie hierboven */
     transition: transform .09s ease-out; }
 
   /* Minimale medaillon-stijl i.p.v. een 3D-knop: plat rondje, dunne rand,
@@ -221,7 +221,7 @@
   /* Op slot drukt niet in: indrukken zegt "ja, deze show". Hij wiebelt nee, met
      dezelfde beweging als het slotje van een wereld op slot in Werelden. */
   .tour-stop.locked:active .stop-body { transform: scale(var(--stop-schaal)); }
-  .tour-stop.locked .dot.nee { animation: slot-nee .5s ease; }
+  .tour-stop.locked .dot.nee { animation: nogNiet .5s ease; }
   @media (prefers-reduced-motion: reduce) { .tour-stop.locked .dot.nee { animation: none; } }
   /* Op slot = nog niet aan de beurt, en dus rustiger: een stillere kleur en een
      zachtere schaduw. Niet grijzer of vager -- het moet een halte blijven die je
@@ -394,10 +394,8 @@
     border-radius: 50%; border: 1cqw solid var(--halte-sticker);
     box-shadow: 0 0 0 .5cqw var(--gold-cta-top), inset 0 0 0 .5cqw var(--gold-cta-top);
   }
-  .tour-stop.next.aangekomen .stop-body::after { animation: aankomstRing 560ms var(--ease-uit); }
-  @keyframes aankomstRing {
-    0%   { opacity: 1; transform: scale(.6); }
-    100% { opacity: 0; transform: scale(1.5); }
+  .tour-stop.next.aangekomen .stop-body::after {
+    --ring-licht: 1; --ring-van: .6; --ring-tot: 1.5; animation: ring 560ms var(--ease-uit);
   }
   /* Gespeeld: een paars rondje met een warm witte rand, en verder niets. Er zat
      hier eerst een gouden rand (eerst vol, daarna op 66%), en dat hield tot op

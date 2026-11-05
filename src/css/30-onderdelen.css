@@ -101,7 +101,7 @@
   .ster-tegel:hover, .leeg-tegel:hover { transform: translateY(-4px);
     box-shadow: 0 0 0 1.25px rgba(255,255,255,.24), 0 0 0 2.5px rgba(var(--nacht-1-rgb),.45),
                 0 0 24px rgba(var(--w-glow-rgb), .36), var(--e-3); }
-  .ster-tegel:active, .leeg-tegel:active { transform: scale(.97); }
+  .ster-tegel:active, .leeg-tegel:active { transform: scale(var(--druk-plat)); }
   /* De tik zelf: even indrukken en oplichten, en dán pas het spel in (zie
      kiesSter). Kort genoeg om antwoord te zijn en niet om een animatie te zijn. */
   .ster-tegel.kiest {
@@ -213,7 +213,7 @@
   }
   .add-tegel .at-plus { font-size: calc(21px + var(--focus-groei) * .05); line-height: 1; opacity: .9; }
   .add-tegel:hover { background: rgba(255,255,255,.18); }
-  .add-tegel:active { transform: scale(.96); }
+  .add-tegel:active { transform: scale(var(--druk-plat)); }
   /* Nog geen enkele ster: dan is dit het enige op het scherm en mag het ook zo
      groot zijn. Geen leeg raster met zes lege vakjes -- één uitnodiging. */
   /* Breder dan hoog, en breed genoeg voor "Maak je eerste ster" op één regel: een
@@ -384,7 +384,7 @@
     text-shadow: var(--hud-ink);
   }
   .app-knop:active, .corner-btns .icon-btn:active {
-    transform: scale(.94); box-shadow: var(--hud-shadow), inset 0 0 0 1px rgba(255,255,255,.16);
+    transform: scale(var(--druk-plat)); box-shadow: var(--hud-shadow), inset 0 0 0 1px rgba(255,255,255,.16);
   }
   .app-knop {
     position: fixed; top: var(--balk-rand); left: var(--balk-rand); z-index: 50;
@@ -500,7 +500,7 @@
   }
   .stage .deco { position: absolute; font-size: 26px; text-shadow: var(--op-kunst-ink); }
   .stage.tappable { cursor: pointer; }
-  .stage.tappable:active { transform: scale(.98); }
+  .stage.tappable:active { transform: scale(.98); } /* uitzondering: zij zelf, geen keuze -- 4% van een hele figuur is een sprong */
   .avatar-holder { line-height: 0; }
   .avatar-holder.idle { animation: sway 2.6s ease-in-out infinite; transform-origin: 50% 95%; }
   /* ±1,2 graden, overal hetzelfde (oktober 2026). Het was ±2,5: op de kaart een
@@ -877,7 +877,7 @@
     text-shadow: var(--hud-ink);
   }
   .screen-header .icon-btn.header-left:active {
-    transform: scale(.94); box-shadow: var(--hud-shadow), inset 0 0 0 1px rgba(255,255,255,.16);
+    transform: scale(var(--druk-plat)); box-shadow: var(--hud-shadow), inset 0 0 0 1px rgba(255,255,255,.16);
   }
   .screen-header .header-right { justify-self: end; }
   /* De teller-pil. Er stonden er drie maten naast elkaar (.chip-badge en
@@ -910,7 +910,7 @@
      ernaast weer letters ("Trofeeënk..."). De hoogte blijft --hud-h. */
   @media (max-width: 389px) { .diamond-badge { font-size: var(--tx-body); padding: 0 11px; } }
   button.diamond-badge { cursor: pointer; }
-  button.diamond-badge:active { transform: scale(.95); }
+  button.diamond-badge:active { transform: scale(var(--druk-plat)); }
   /* Mijn wens op de kaart: het emoji van je wens achter je diamanten, en een
      streepje onderaan de pil dat volloopt naarmate je spaart (--wens, gezet door
      zetWensPil). Zonder wens staat er niets en is de pil precies wat hij was. */
@@ -944,7 +944,7 @@
   .diamond-badge.wens-klaar::after { display: none; }
   /* De kleedkamer-pil is alleen een knop zolang er een wens is (zie zetWensPil) */
   .diamond-badge[role="button"] { cursor: pointer; }
-  .diamond-badge[role="button"]:active { transform: scale(.95); }
+  .diamond-badge[role="button"]:active { transform: scale(var(--druk-plat)); }
   /* Het emoji van een volle wens wiebelt nog wel waar het vakje níét goud wordt:
      het 💎-vakje op het eindscherm (zie eindWens). Met transform en niet met een
      groeiende gloed: dat draait op de compositor en kost op een oude tablet niets. */

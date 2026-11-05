@@ -431,7 +431,7 @@
     background: radial-gradient(52% 12% at 50% 86%, rgba(var(--goud-glans-rgb),.5), transparent 74%);
     transition: transform var(--t-tik);
   }
-  .spiegel:active { transform: scale(.98); }
+  .spiegel:active { transform: scale(.98); } /* uitzondering: zij zelf, net als .stage.tappable */
   /* dezelfde afspraak als bij .stage: de pop schaalt mee met de hoogte van haar
      kader, zodat ze op geen enkel scherm afgesneden kan raken */
   .spiegel .avatar-holder { height: 92%; }
@@ -495,7 +495,7 @@
      kwam geen outfit; alleen de rechterrand deed het. */
   .shuffle-btn { z-index: 2; }
   .shuffle-btn:hover { transform: scale(1.06); box-shadow: 0 4px 16px rgba(var(--nacht-0-rgb),.5), inset 0 0 0 1.5px rgba(255,255,255,.4); }
-  .shuffle-btn:active { transform: scale(.92); }
+  .shuffle-btn:active { transform: scale(var(--druk-plat)); }
   /* DE BALK MET DE LADEN (renderShop). Acht knoppen in één stuk, zonder scrollen
      en zonder woorden: de zeven kledingsoorten en 🎪 Podia. Hetzelfde materiaal
      als de tabbalk onderaan -- een donker vlak met een ring -- en hetzelfde
@@ -534,7 +534,7 @@
     min-height: 44px; min-width: 46px; flex: none;
   }
   .tab-btn .tab-ico { font-size: 21px; line-height: 1; filter: var(--emoji-schaduw); }
-  .tab-btn:active { transform: scale(.95); }
+  .tab-btn:active { transform: scale(var(--druk-plat)); }
   /* Wat niet gekozen is staat iets stiller (zoals .nav-item); het vlak eronder
      is het licht (zie .shop-tabs .tab-btn verderop, na .tab-btn.active). */
   .shop-tabs .tab-btn {
@@ -681,7 +681,7 @@
     transition: transform var(--t-tik), background .12s, border-color .12s, box-shadow .12s;
   }
   .item-card:hover { background: var(--vlak-hover); }
-  .item-card:active { transform: scale(.97); }
+  .item-card:active { transform: scale(var(--druk-plat)); }
   /* Kaart-staten: blauw = "hier kijk je naar", goud = "dit staat aan". De blauwe
      variant had ook nog een 3px ring én een schaalsprong; dat was een vierde
      signaal in een raster dat er al drie heeft, terwijl de paspop erboven de
@@ -731,13 +731,7 @@
          behaalde trofee (.trophy-card.just-claimed, claimShimmer): "dit is nu
          van jou" hoort in de hele app hetzelfde te zeggen, of het nu verdiend of
          gekocht is. */
-  .item-card.just-bought { animation: boughtPop .5s var(--ease-plop); }
-  @keyframes boughtPop {
-    0%   { transform: scale(1); }
-    32%  { transform: scale(1.085); }
-    64%  { transform: scale(.985); }
-    100% { transform: scale(1); }
-  }
+  .item-card.just-bought { animation: ja var(--t-ja) var(--ease-plop); }
   /* De glans blijft binnen het kaartje: inset:0 plus een gradient die eroverheen
      schuift, en de ronding van het kaartje zelf. Hij ligt over de tekening heen,
      en dat kan hier gewoon: er staat niets in de hoek dat hij zou bedekken. */
@@ -991,7 +985,7 @@
     font-size: 19px; line-height: 1; padding: 0; font-family: inherit;
   }
   .wens-knop.aan { background: rgba(240,98,146,.3); border-color: rgba(255,128,171,.7); }
-  .wens-knop:active { transform: scale(.92); }
+  .wens-knop:active { transform: scale(var(--druk-plat)); }
   /* ...en op het kaartje zelf: een klein hartje in de hoek, zodat je je wens in
      het rek terugvindt. */
   .item-card.gewenst::before {
@@ -1041,7 +1035,7 @@
     background: rgba(255,255,255,.07); border: 2px solid rgba(255,255,255,.12);
     display: flex; flex-direction: column; align-items: center;
   }
-  .mini-kaart:active { transform: scale(.96); }
+  .mini-kaart:active { transform: scale(var(--druk-plat)); }
   /* Dezelfde drie standen als een kaartje in het rek (zie .item-card hierboven):
      van jou, gekozen om te kopen, en aan. */
   .mini-kaart.owned { border-color: rgba(255,255,255,.15); background: rgba(255,255,255,.11); }

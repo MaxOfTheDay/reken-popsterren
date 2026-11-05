@@ -1054,6 +1054,66 @@
     --ease-plop: cubic-bezier(.2,1.3,.4,1);
     /* --t-pas (de duur van één danspasje) zet het script, uit PAS in
        10-feestjes.js; .9s is alleen de terugval als er geen script is. */
+
+    /* ---- Gebaren: zes woorden, en elk zegt één ding --------------------------
+       Een kleur betekent hier iets (§2), en een beweging hoort dat ook te doen.
+       Dat deed ze niet: elk scherm had zijn eigen dialect gekregen. Negen maten
+       van indrukken (88% tot 98%), vier keer "ja" met een andere piek, drie
+       zijwaartse schudjes van 4, 5 en 10 pixels, twee keer "nog niet" en vier
+       ringen. Niemand ziet één verschil los; samen maakten ze dat een kind op elk
+       scherm opnieuw moest leren wat een tik terugzegt.
+
+         druk     DIT DOET IETS. Een knop met een lip zakt op zijn lip (.btn,
+                  de antwoordknoppen). Die stonden al gelijk en staan bij --btn-lip.
+         knijp    DIT KIES JE. Alles zonder lip -- een tegel, een kaartje, een
+                  pil, een tab -- knijpt naar --druk-plat. Eén maat.
+         ja       DIT IS HET / DIT IS VAN JOU. Een goed antwoord, een memorypaar,
+                  een gekocht kaartje, het getal dat in het vakje valt. Keyframe
+                  `ja`, met --ease-plop en --t-ja.
+         fout     NIET DEZE. Alleen voor een fout antwoord: de som, een memory-
+                  kaartje, een verkeerde code, een chip die niet uit mag.
+                  Zijwaarts, keyframe `fout`. De somkaart in een show doet het
+                  zachter: die kantelt even (kaartWiebelt in het script), want een
+                  misser midden in een show hoort niet als straf te voelen.
+         nog niet LATER. Een halte, wereld of trofee die nog op slot zit. Een
+                  wiebel om het midden (keyframe `nogNiet`), nooit rood en nooit
+                  zijwaarts: "later" is geen fout.
+         ring     HIER KWAM HET AAN. Een ring die uit het ding zelf komt -- nooit
+                  uit de vinger. Keyframe `ring`; elk ding geeft zijn eigen maat
+                  mee (--ring-van/--ring-tot), want een ring om een brede knop
+                  hoort minder te groeien dan een ring om een rondje.
+       En de draai (een kaartje omdraaien) is er alleen voor iets met een
+       achterkant: het memoryspel. Een medaille glanst, ze draait niet.
+
+       De woorden staan hieronder één keer; schermen gebruiken ze en schrijven ze
+       niet over. inhoud.test.js zaak R houdt dat zo: een :active met een eigen
+       schaal, of een van de oude keyframes, valt erover. Een indruk die met
+       reden afwijkt (de veer van een halte, haar eigen figuur) zet het
+       commentaar uitzondering op dezelfde regel, met de reden erbij. */
+    --druk-plat: .96;
+    --t-ja: 420ms;
+  }
+
+  @keyframes ja { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
+  @keyframes fout {
+    0%, 100% { transform: translateX(0); } 20% { transform: translateX(-8px); }
+    45% { transform: translateX(7px); } 70% { transform: translateX(-4px); } 88% { transform: translateX(2px); }
+  }
+  /* --nee-basis is de stand waarin het ding al stond (de kast tilt een getikte
+     medaille op: translateY(-3px) scale(1.08)); de wiebel speelt zich daarin af.
+     --nee-van is waar hij vandaan komt als dat anders is: de kast begint plat en
+     tilt de medaille tijdens de eerste wiebel op. */
+  @keyframes nogNiet {
+    0% { transform: var(--nee-van, var(--nee-basis, translate(0))) rotate(0) scale(1); }
+    100% { transform: var(--nee-basis, translate(0)) rotate(0) scale(1); }
+    18% { transform: var(--nee-basis, translate(0)) rotate(-10deg) scale(1.1); }
+    44% { transform: var(--nee-basis, translate(0)) rotate(8deg) scale(1.1); }
+    70% { transform: var(--nee-basis, translate(0)) rotate(-4deg) scale(1.04); }
+  }
+  /* --ring-plek staat ervoor voor een ring die met translate gecentreerd wordt. */
+  @keyframes ring {
+    from { opacity: var(--ring-licht, .9); transform: var(--ring-plek, translate(0)) scale(var(--ring-van, .9)); }
+    to   { opacity: 0; transform: var(--ring-plek, translate(0)) scale(var(--ring-tot, 1.5)); }
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }

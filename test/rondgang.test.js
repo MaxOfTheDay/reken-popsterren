@@ -1874,7 +1874,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
         for (let i = 0; i < ms / 40; i++) {
           await new Promise(r => setTimeout(r, 40));
           const b = document.querySelector('#tour-map .tour-stop.next.aangekomen .stop-body');
-          if (b && getComputedStyle(b, '::after').animationName === 'aankomstRing'
+          if (b && getComputedStyle(b, '::after').animationName === 'ring'
               && +getComputedStyle(b, '::after').opacity > .02) gezien = true;
         }
         return gezien;

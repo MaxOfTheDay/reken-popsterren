@@ -241,7 +241,7 @@
     color: inherit; text-align: left; transition: transform var(--t-tik);
   }
   .map-id-btn:hover { transform: scale(1.02); }
-  .map-id-btn:active { transform: scale(.96); }
+  .map-id-btn:active { transform: scale(var(--druk-plat)); }
   /* gedeeld rond portretkader: kaartkop (.map-portrait) en de kindkiezer in het
      ouderdeel (.who-portrait, zie daar) tonen allebei hetzelfde echte avatartje */
   .map-portrait, .who-portrait {
@@ -508,7 +508,7 @@
     transition: transform var(--t-tik), background .15s, opacity .15s;
   }
   .nav-item .nav-ico { font-size: var(--tab-ico); line-height: 1.1; filter: var(--emoji-schaduw); }
-  .nav-item:active { transform: scale(.94); }
+  .nav-item:active { transform: scale(var(--druk-plat)); }
   .nav-item.active { opacity: 1; }
   /* Muis: een zacht vlak onder wat je aanwijst. Alleen waar zweven bestaat, anders
      blijft het op een tablet na een tik hangen. */
@@ -824,11 +824,11 @@
   /* De pop begint op de maat waarop het getal landt en zwelt dán pas op: begon
      hij op zijn grootst, dan sprong het getal bij het landen in één beeld 18%
      groter -- een schokje, precies op het moment waar je naar kijkt. */
-  .q-blank.done.klikt { animation: somKlikt 300ms ease-out; }
+  /* het ja-gebaar, korter: het zit midden in het dichtvallen van de som */
+  .q-blank.done.klikt { animation: ja 300ms var(--ease-plop); }
   /* een getikt cijfer (typmodus) landt met een kleinere plop dan het antwoord */
   .q-blank.tikt { animation: somTikt 180ms ease-out; }
   @keyframes somTikt { 0% { transform: none; } 40% { transform: scale(1.08); } 100% { transform: none; } }
-  @keyframes somKlikt { 0% { transform: none; } 35% { transform: scale(1.14); } 100% { transform: none; } }
   .q-blank.done.rustig {
     border-color: rgba(var(--purple-light-rgb),.55); background: rgba(var(--purple-light-rgb),.08); color: var(--purple-shadow);
     animation: somRustig 320ms ease-out;

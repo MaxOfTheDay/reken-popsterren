@@ -23,7 +23,20 @@ function naarCadeau(glij) {
   const midden = kast.clientHeight / 2;
   const plek = c => c.getBoundingClientRect().top - kast.getBoundingClientRect().top;
   const volgende = (glij && klaar.find(c => plek(c) > midden + 8)) || klaar[0];
-  const top = Math.max(0, kast.scrollTop + plek(volgende) - midden + 40);
+  let top = Math.max(0, kast.scrollTop + plek(volgende) - midden + 40);
+  /* Bij het openen niet midden in een plank stoppen: dan stond de naam van die
+     plank ("📜 Werelden") onder de kop en leek de kast afgeknipt. Begin op de
+     bovenkant van de plank waar het cadeautje in ligt -- zolang het cadeautje
+     dan nog ruim in beeld staat; een lange plank houdt de oude plek. */
+  const plank = !glij && volgende.closest('.kast-groep');
+  if (plank) {
+    const kop = kast.querySelector('.hub-sticky');
+    const opPlank = kast.scrollTop + plek(plank) - (kop ? kop.offsetHeight : 0) - 8;
+    if (plek(volgende) - plek(plank) + volgende.offsetHeight < kast.clientHeight * .8) top = Math.max(0, opPlank);
+    /* en staat het cadeautje bovenaan de kast al ruim in beeld (boven de balk
+       onderin), dan hoeft er niets te schuiven: dan blijft de bovenste plank staan */
+    if (kast.scrollTop + plek(volgende) + volgende.offsetHeight < kast.clientHeight * .8) top = 0;
+  }
   if (glij && !motionOff() && kast.scrollTo) kast.scrollTo({ top, behavior: 'smooth' });
   else kast.scrollTop = top;
 }

@@ -154,13 +154,15 @@
     82% { transform: rotate(-5deg) translateY(-2px); } 90% { transform: rotate(3deg); }
   }
 
-  /* (2) Tik-ripple: een lichtkringetje dat vanaf de vingerplek uitdijt */
+  /* (2) De tikring: een ring uit het midden van wat je aantikte (een halte, een
+     wereld), het ring-gebaar uit de afspraak. Was een lichtvlek die uitdijde, de
+     enige plek in de app waar een tik een vlek gaf in plaats van een ring. */
   .tap-ripple {
-    position: fixed; z-index: 93; pointer-events: none; width: 14px; height: 14px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(var(--goud-glans-rgb),.85), rgba(var(--goud-glans-rgb),0) 70%);
-    transform: translate(-50%, -50%) scale(0); animation: tapRipple .5s ease-out forwards;
+    position: fixed; z-index: 93; pointer-events: none; width: 44px; height: 44px; border-radius: 50%;
+    border: 3px solid rgba(var(--goud-glans-rgb),.9); opacity: 0;
+    --ring-plek: translate(-50%, -50%); --ring-van: .6; --ring-tot: 2;
+    animation: ring .5s ease-out forwards;
   }
-  @keyframes tapRipple { 0% { transform: translate(-50%,-50%) scale(0); opacity: .9; } 100% { transform: translate(-50%,-50%) scale(9); opacity: 0; } }
 
   /* (3) Openen: schatkist-moment met stralen, schokgolf en emoji-inslag */
   .tp-stage { position: relative; width: 240px; height: 230px; margin: 4px auto 6px; display: flex; align-items: center; justify-content: center; }
@@ -200,8 +202,8 @@
   .trophy-pop.burst .tp-rays { animation: raysReveal .5s ease .12s forwards, raysSpin 10s linear .12s infinite; }
   @keyframes raysReveal { 0% { opacity: 0; } 100% { opacity: .5; } }
   @keyframes raysSpin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
-  .trophy-pop.burst .tp-ring { animation: ringOut .55s ease-out .12s forwards; }
-  @keyframes ringOut { 0% { opacity: .9; transform: scale(.4); } 100% { opacity: 0; transform: scale(3.4); } }
+  /* de schokgolf is het ring-gebaar, alleen veel groter: hier knalt er een kist open */
+  .trophy-pop.burst .tp-ring { --ring-van: .4; --ring-tot: 3.4; animation: ring .55s ease-out .12s forwards; }
   .trophy-pop.burst .tp-name { animation: rankTextRise .45s ease .25s both; }
   .trophy-pop.burst .tp-waarom { animation: rankTextRise .45s ease .32s both; }
   /* De trappen onder de naam (zie tpTrappen): het rijtje komt op met de naam,
