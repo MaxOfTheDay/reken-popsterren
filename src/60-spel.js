@@ -36,6 +36,7 @@ function startLevel(lvl, eigenOvergang) {
   // De vorige show loslaten vóór G vervangen wordt: daarna is haar spotlight-
   // teller niet meer te vinden (die hangt aan G). Zie startSpot.
   stopSpot();
+  $('screen-game').classList.remove('eindigt');   // de som van het vorige einde staat weer recht
   const p = P();
   const s = p.settings;
   // Vragen worden nu per stuk gebouwd (zodat zwakke sommen kunnen terugkomen); vooraf enkel
@@ -779,7 +780,8 @@ function kaartMeten(tekst) {
 function kaartProeven(insts) {
   return Object.keys(insts).flatMap(k => THEMA[k] && THEMA[k].proeven ? THEMA[k].proeven(insts[k]) : []);
 }
-addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = G.vakMin = G.zaalVol = null; $('show-stage').style.height = $('show-stage').style.width = ''; });
+addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = G.vakMin = G.zaalVol = null; $('show-stage').style.height = $('show-stage').style.width = '';
+  $('end-stage').style.height = $('end-stage').style.width = ''; document.querySelector('#screen-end .end-math').style.minHeight = ''; });
 function numpadPress(n) {
   if (!G || G.lock) return;
   if (n === 'del') { if (G.input === '') return; G.input = G.input.slice(0, -1); sndClick(); }
@@ -1644,8 +1646,28 @@ function applyShowResult(p, lvl, wl, stars) {
   return { stars, beter, bonus, travel, feest, trofees };
 }
 
+/* Zij staat op het eindscherm waar ze in de show stond. Haar maat komt uit
+   zaalPast (die haar in de show soms kleiner zet), dus die gaat mee. En de
+   arena staat onderaan vast: is het blok onder haar (kaart + knoppen) even
+   hoog als in de show (som + antwoorden), dan staat zij ook even hoog. De
+   knoppen gaan daarbij naar onderen, waar de antwoorden stonden. Alleen als
+   zij boven de som staat; naast elkaar staan ze al gelijk. */
+function zelfdePodium() {
+  const zaal = $('show-stage'), eind = $('end-stage'), som = document.querySelector('#screen-game .math-panel');
+  const blok = document.querySelector('#screen-end .end-math');
+  eind.style.width = zaal.style.width; eind.style.height = zaal.style.height;
+  const boven = zaal.offsetHeight && onderkant(zaal) <= onderkant(som) - som.offsetHeight;
+  blok.style.minHeight = boven ? som.offsetHeight + 'px' : '';
+}
 function endLevel(success) {
   stopSpot();
+  /* De som draait weg en de antwoorden zakken (zie #screen-game.eindigt): de
+     eerste helft van de draai die het eindscherm afmaakt. De balk gaat mee naar
+     de kop daar, zoals hij nu staat. */
+  $('screen-game').classList.add('eindigt');
+  $('end-progress').innerHTML = $('qprogress').innerHTML;
+  document.querySelector('#screen-end .result-card').classList.toggle('mislukt', !success);
+  zelfdePodium();
   const p = P();
   const lvl = G.lvl;
   applyRampUpdates(p, G);   // frequentie-trap van de extra uitdagingen bijstellen
