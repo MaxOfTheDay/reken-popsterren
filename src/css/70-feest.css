@@ -57,8 +57,8 @@
      boven en onder, en een spookversie van "Naar je podium" eronder. Zolang het
      feest openstaat stapt de eindkaart opzij; bij het sluiten komt hij terug
      (zie wereldFeest). */
-  #screen-end .result-card { transition: opacity .3s ease; }
-  #screen-end.feest-open .result-card { opacity: 0; }
+  #screen-end .end-math { transition: opacity .3s ease; justify-content: space-between; }
+  #screen-end.feest-open .end-math { opacity: 0; }
   .wereld-feest { width: min(92vw, 360px); padding: 18px 18px 14px; }
   .wf-kop { font-size: var(--tx-feest); font-weight: 700; color: var(--c-white); line-height: 1.1;
     text-shadow: var(--goud-ink); }
@@ -266,67 +266,55 @@
     .screen-header .header-title { font-size: var(--tx-sub); overflow: hidden; text-overflow: ellipsis; }
   }
 
-  /* ---- Level einde ---- */
-  /* verticaal gecentreerd via veilige auto-marges (knipt nooit af bij overloop) */
-  /* Wit glas op 14% was net genoeg om op een vlak verloop te bestaan, maar het
-     is geen oppervlak: de gouden pil, de drie vakjes en de juichtekst zweefden
-     er meer bovenop dan erin. Nu een echt donker paneel in dezelfde taal als de
-     plakkende kop -- dat leest ook straks nog, als er licht achter staat.
+  /* ===== Het einde op hetzelfde podium =====
+     November 2026. Het einde van een show was een eigen scherm: de zaal doofde,
+     en zij stond opnieuw, kleiner, in een donkere glazen kaart met een kop
+     erboven ("Show 6 was geweldig!"). Daarmee was zij het enige in de app dat in
+     een doos stond (zie "Gebaren" en de vlakken in de afspraak: een kaart is om
+     te lezen of te kiezen, zij staat vrij op haar podium).
 
-     ZONDER WAAS, en dat is geen smaakkeuze maar de batterij. Achter deze kaart
-     beweegt het podiumlicht, dus een backdrop-filter moest hier élk beeldje
-     opnieuw vervagen, zo lang het eindscherm openstaat: een groot vlak, zestig
-     keer per seconde, op de grafische chip van een oude telefoon. Gemeten (4x
-     vertraagd, 390x844): het tekenen van het stilstaande eindscherm ging van
-     ~750 naar ~85 ms per seconde. En te zien was de waas toch niet -- het paneel
-     is al 80% dicht; op een schermafdruk met en zonder verschillen alleen de
-     pixels van de wiegende pop. Zet hem dus niet terug. */
+     Nu blijft alles staan waar het in de show stond. #screen-end heeft dezelfde
+     arena als #screen-game (.game-arena, .show-panel, .show-stage, .math-panel),
+     dus elke maat en elk breekpunt van de show geldt hier vanzelf ook: zij staat
+     op dezelfde plek, even groot, onder dezelfde bundel. Wat er verandert:
+       - de somkaart draait om (kaartOm), en zijn achterkant is de uitslag:
+         sterren, de 💎, de mijlpaal. De show draait de som weg
+         (#screen-game.eindigt in 50-zaal), dit scherm draait hem terug.
+       - de knoppen komen waar de antwoorden stonden (eindKomtOp).
+       - de kop wordt niet gezegd: de sterren zeggen het. Hij blijft voor de
+         voorlezer, en is alleen te zien bij een mislukte show ("Bijna!"),
+         want daar staat er geen ster die het zegt. */
   .result-card {
-    background: var(--paneel);
-    border: 1.5px solid var(--paneel-rand);
-    box-shadow: var(--e-2), inset 0 1px 0 rgba(255,255,255,.12);
-    border-radius: var(--r-lg); padding: 18px 22px 20px; text-align: center;
-    width: 100%; max-width: var(--kolom); margin: auto 0;
+    font-size: var(--tx-body); line-height: 1.2;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 16px 20px 16px;
+    animation: kaartOm 320ms var(--ease-uit) 120ms backwards;
   }
-  /* de titel is hier de kop van een kaart, niet van een scherm: kleiner dan de
-     .title elders, zodat de sterren eronder de blikvanger blijven */
-  .result-card .title { font-size: var(--tx-feest); margin: 2px 0 0; }
-  /* eigen klasse i.p.v. de vorige losse inline width/height -- net als de andere
-     paspop-scènes (.show-stage, en .spiegel in de kleedkamer) nu met eigen
-     smalle-scherm-maat, zodat 'm ook op een laag/liggend toestel nooit
-     afgesneden wordt */
-  .end-stage { width: 150px; height: 168px; margin: 4px auto 0; }
+  /* Het gebaar "draai" uit de afspraak: een kaartje met een achterkant. Van op
+     zijn kant (waar de som hem achterliet) terug naar plat. */
+  @keyframes kaartOm { from { transform: perspective(700px) rotateY(-90deg); } to { transform: perspective(700px) rotateY(0); } }
+  @media (prefers-reduced-motion: reduce) { .result-card { animation: none; } }
+  .result-card .title {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .result-card.mislukt .title {
+    position: static; width: auto; height: auto; overflow: visible; clip-path: none;
+    font-size: var(--tx-kop); color: var(--purple-shadow); margin: 0;
+  }
   /* balance: geen los woord ("eens!") op de laatste regel */
-  .end-text { font-size: var(--tx-body); text-wrap: balance; }
-  .result-stars { font-size: 48px; letter-spacing: 4px; margin: 6px 0 2px; }
-  /* korte schermen: het eindscherm moet ook op een 320x568 in één beeld passen --
-     het is een vier-seconden-moment, daar hoort geen scrollen bij */
+  .end-text { font-size: var(--tx-label); text-wrap: balance; color: var(--purple-mid); font-weight: 600; }
+  .result-stars { font-size: 48px; letter-spacing: 4px; line-height: 1.05; margin: 2px 0; } /* teken */
+  /* korte schermen: dezelfde krappere maat als de som in de show */
   @media (max-height: 740px) {
-    .result-card { padding: 11px 16px 10px; }
-    .result-card .title { font-size: var(--tx-feest-kort); }
-    .end-stage { width: 104px; height: 116px; }
-    .result-stars { font-size: 36px; letter-spacing: 2px; margin: 3px 0 0; }
-    .end-text { font-size: var(--tx-label); }
-    .earn-line { gap: 6px; margin: 7px 0 8px; }
-    .earn-chip { font-size: var(--tx-label); padding: 7px 4px; }
-    .result-card .earn-line .earn-chip { padding: 6px 13px; min-height: 30px; }
-    .end-milestone { min-height: 30px; margin-bottom: 8px; }
+    .result-card { padding: 11px 16px 11px; }
+    .result-stars { font-size: 38px; letter-spacing: 2px; } /* teken */
+    .earn-line { gap: 6px; margin: 4px 0 2px; }
+    .result-card .earn-line .earn-chip { padding: 6px 13px; min-height: 30px; font-size: var(--tx-label); }
+    .end-milestone { min-height: 30px; margin-bottom: 0; }
     .end-actions { gap: 7px; }
     .end-actions .btn.big { font-size: var(--tx-sub); padding: 11px 18px; }
     .end-actions .btn.soft { font-size: var(--tx-label); padding: 9px 16px; }
-    .gold-pill { font-size: var(--tx-label); padding: 6px 13px; min-height: 30px; }
-  }
-  /* Een hoge telefoon, staand: zij groeit mee, net als in de show (zie "ZIJ
-     GROEIT MEE" in 50-zaal). Op 390x844 stond de kaart klaar op ~80% van de
-     hoogte en bleef eronder een strook met alleen confetti. Nu krijgt zij een deel
-     van die lucht: 150px op 760 hoog, tot 210px op ~930. Alleen de pop; de rest
-     van de kaart houdt zijn maat, dus ook een wereldeinde met mijlpaal past nog
-     (schuiven kijkt het eindscherm na). --pop-b is de breedte van de pop en
-     haar paneel samen (het podium moet zo breed zijn als zij, zie .end-panel). */
-  @media (orientation: portrait) and (max-width: 599px) and (min-height: 760px) {
-    .result-card { --pop-b: min(150px + (100svh - 760px) * .35, 210px); }
-    .venue-aan .end-panel { width: var(--pop-b); }
-    .end-stage { width: var(--pop-b); height: calc(var(--pop-b) * 1.12); }
+    .result-card .gold-pill { font-size: var(--tx-label); padding: 6px 13px; min-height: 30px; }
   }
   .result-stars span { display: inline-block; }
   /* gemiste ster: dof én kleurloos — zelfde taal als op de reiskaart */
@@ -379,7 +367,7 @@
      ("nog 13 ⭐ tot ...", gestippeld en stil) is weg; zie endLevel. Is er niets te
      vieren, dan houdt het vak ook geen ruimte bezig: de sterren en de knop schuiven
      dan gewoon naar elkaar toe, in plaats van om een leeg vakje heen te staan. */
-  .end-milestone { margin: 0 0 14px; min-height: 40px; display: flex; align-items: center; justify-content: center; }
+  .end-milestone { margin: 0; min-height: 40px; display: flex; align-items: center; justify-content: center; }
   .end-milestone:empty { display: none; }
   /* Gegroeid (zie groeiMoment): gouden letters, en verder niets -- geen vlak,
      geen rand. Er valt niets te openen. Een gouden pil vlak boven de gouden
@@ -397,45 +385,27 @@
   .groei-vb .klok-vb { display: none; }
   /* de antwoordstap (zie ANTWOORD_PIL): het getal staat op een streepje, zoals ze het straks zelf intikt */
   .groei-vb .typ-vak { display: inline-block; min-width: 1.4em; text-align: center; border-bottom: 3px solid currentColor; line-height: 1.1; }
-  .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+  /* Op de achterkant van de somkaart staat dit op wit, net als de som zelf: het
+     💎-vakje wordt de lichte pil van de kaart (de 💎 vliegt er nog steeds uit naar
+     de teller), en goud als letter is op wit niet te lezen -- de inkt van goud
+     neemt het over. */
+  .result-card .earn-chip.dia { background: rgba(var(--purple-shadow-rgb),.08); color: var(--purple-shadow); }
+  .result-card .earn-chip.met-wens::before { background: rgba(var(--purple-shadow-rgb),.14); }
+  .result-card .groei-pil { color: var(--ink-on-gold-card); text-shadow: none; }
+  .result-card .groei-vb { color: var(--purple-shadow); }
+  .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; width: 100%; margin-top: 4px; }
   /* tot ze opkomen tellen tikken niet mee (zie eindWacht) */
   .end-actions.wacht { pointer-events: none; }
-  .end-actions .btn { width: 100%; max-width: 320px; }
+  .end-actions .btn { width: 100%; }
   .end-actions .btn.big { font-size: var(--tx-kop); padding: 15px 20px; }
-  /* Een telefoon op zijn kant: twee kolommen. Hierboven staat dat dit scherm
-     zonder scrollen in beeld hoort, en voor 320x568 klopt dat. Liggend (844x390,
-     667x375) niet: de kaart was een kolom van ruim 500 hoog en "Verder op
-     tournee" stond onder de rand. Nu staat de pop links, naast de sterren en wat
-     ze opleverden, en de knoppen staan in één rij onderaan, met de hoofdknop
-     breed. De volgorde in de markup verandert niet, dus het opkomen in
-     eindKomtOp loopt precies zoals staand. */
+  /* Een telefoon op zijn kant: de arena van de show zet de kaart en de
+     antwoorden daar naast elkaar (zie 50-zaal), dus de knoppen staan hier waar de
+     antwoorden stonden, rechts van de kaart, even breed. */
   @media (orientation: landscape) and (max-height: 500px) {
-    .result-card {
-      display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 18px;
-      align-items: center; max-width: 640px; padding: 10px 18px 12px;
-    }
-    .result-card > .title { grid-column: 1 / -1; margin: 0 0 2px; }
-    .result-card > .end-panel { grid-column: 1; grid-row: 2 / span 4; align-self: center; }
-    .result-card > .result-stars { grid-column: 2; margin: 0; }
-    .result-card > .end-text { grid-column: 2; }
-    .result-card > .earn-line { grid-column: 2; margin: 5px 0 4px; }
-    .result-card > .end-milestone { grid-column: 2; margin: 0 0 2px; min-height: 0; }
-    .end-stage { width: 112px; height: 124px; margin: 0 auto; }
-    .result-card > .end-actions {
-      grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-      align-items: stretch; gap: 10px; margin-top: 8px;
-    }
-    .end-actions .btn { max-width: none; }
-  }
-  /* het laagste liggende scherm (568x320): nog één maatje kleiner, anders hing
-     de knoppenrij er 30px onder */
-  @media (orientation: landscape) and (max-height: 340px) {
-    .result-card { padding: 6px 16px 8px; }
-    .end-stage { width: 92px; height: 100px; }
-    .result-stars { font-size: 30px; }
-    .result-card > .earn-line { margin: 3px 0 2px; }
-    .result-card > .end-actions { margin-top: 5px; }
-    .end-actions .btn.big { padding: 8px 16px; }
-    .end-actions .btn.soft { padding: 7px 14px; }
+    .end-math .end-actions { width: min(30vw, 260px); flex: 0 0 auto; margin-top: 0; }
+    .end-actions .btn.big { font-size: var(--tx-body); padding: 10px 14px; }
+    .end-actions .btn.soft { font-size: var(--tx-label); padding: 8px 12px; }
+    .result-stars { font-size: 32px; } /* teken */
+    .result-card { padding: 8px 12px; }
   }
 

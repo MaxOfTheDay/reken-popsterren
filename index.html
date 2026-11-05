@@ -1309,12 +1309,12 @@
 
 
   #screen-map { --kolom: 100%; --rand: 10px; --kop-gap: 4px; }
-  #screen-game { --kolom: 860px; --rand: 8px; --kop-gap: 10px; }
 
 
 
 
-  #screen-end { --kolom: 420px; --kop-kolom: 860px; }
+
+  :is(#screen-game, #screen-end) { --kolom: 860px; --rand: 8px; --kop-gap: 10px; }
 
 
 
@@ -3735,7 +3735,7 @@
 
 
 
-  #screen-game { padding: 8px; justify-content: flex-start; }
+  #screen-game, #screen-end { padding: 8px; justify-content: flex-start; }
 
 
   .game-progress-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
@@ -4330,22 +4330,6 @@
   }
 
 
-
-
-  .venue-aan .end-panel { width: 150px; margin: 24px auto 19px; }
-  .venue-aan .end-stage { margin: 0; }
-
-  .venue-aan .result-card .title { position: relative; z-index: 2; }
-  @media (max-height: 740px) {
-    .venue-aan .end-panel { width: 104px; margin-top: 12px; }
-  }
-
-
-  @media (max-height: 600px) {
-    .venue-aan .end-panel { margin: 4px auto 10px; }
-  }
-
-
   .venue-aan .show-stage, .venue-aan .end-stage {
     background: none !important; border: 0; box-shadow: none; overflow: visible;
     position: relative; z-index: 1;
@@ -4412,28 +4396,35 @@
 
 
 
-  :is(#screen-game, #screen-memory) .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
-  :is(#screen-game, #screen-memory) .screen-header .header-title,
-  #screen-end .screen-header .header-title {
+  :is(#screen-game, #screen-memory, #screen-end) .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
+  :is(#screen-game, #screen-memory, #screen-end) .screen-header .header-title {
     position: absolute; width: 1px; height: 1px; overflow: hidden;
     clip-path: inset(50%); white-space: nowrap;
   }
-  :is(#screen-game, #screen-memory) .screen-header .game-progress-row {
+  :is(#screen-game, #screen-memory, #screen-end) .screen-header .game-progress-row {
     justify-self: center; width: 100%; max-width: 380px; min-width: 0;
     height: 44px; box-sizing: border-box; padding: 0 16px; gap: 10px;
   }
-  :is(#screen-game, #screen-memory) .screen-header .game-progress-row { padding: 0 18px; }
-  :is(#screen-game, #screen-memory) .screen-header .segbar { flex: 1; width: auto; max-width: 320px; gap: 5px; }
-  :is(#screen-game, #screen-memory) .screen-header .segbar > span { height: 11px; }
+  :is(#screen-game, #screen-memory, #screen-end) .screen-header .game-progress-row { padding: 0 18px; }
+  :is(#screen-game, #screen-memory, #screen-end) .screen-header .segbar { flex: 1; width: auto; max-width: 320px; gap: 5px; }
+  :is(#screen-game, #screen-memory, #screen-end) .screen-header .segbar > span { height: 11px; }
 
 
   @media (max-width: 359px) {
-    :is(#screen-game, #screen-memory) .screen-header .segbar { gap: 4px; }
-    :is(#screen-game, #screen-memory) .screen-header .segbar > span { height: 8px; }
+    :is(#screen-game, #screen-memory, #screen-end) .screen-header .segbar { gap: 4px; }
+    :is(#screen-game, #screen-memory, #screen-end) .screen-header .segbar > span { height: 8px; }
   }
 
-  :is(#screen-game, #screen-memory) .screen-header .game-progress-row { grid-column: 2; }
+  :is(#screen-game, #screen-memory, #screen-end) .screen-header .game-progress-row { grid-column: 2; }
   :is(#screen-game, #screen-memory, #screen-end) .screen-header .header-right { grid-column: 3; }
+
+
+
+  #screen-game.eindigt .question-card { transform: perspective(700px) rotateY(90deg); transition: transform 160ms ease-in; }
+  #screen-game.eindigt #answer-area { opacity: 0; transform: translateY(24px); transition: opacity 160ms, transform 160ms ease-in; }
+  @media (prefers-reduced-motion: reduce) {
+    #screen-game.eindigt .question-card, #screen-game.eindigt #answer-area { transition: none; }
+  }
 
 
 
@@ -5086,7 +5077,7 @@
 
 
   @media (min-aspect-ratio: 1/1) and (min-width: 900px) and (min-height: 700px) {
-    #screen-game .game-arena { flex-wrap: nowrap; gap: 3vw; }
+    :is(#screen-game, #screen-end) .game-arena { flex-wrap: nowrap; gap: 3vw; }
     .show-stage { --stage-h: min(44vh, 400px); height: var(--stage-h); width: calc(var(--stage-h) * 1.19); }
     .math-panel { --kaart-w: min(44vw, 75vh, 600px); }
     .question-card { width: var(--kaart-w); min-width: 0; box-sizing: border-box; font-size: min(10vh, 92px); padding: 2.6vh 3.6vh 3.6vh; }
@@ -5928,33 +5919,10 @@
   }
   .stage-podium .podium { width: 100%; height: 100%; --pod-dik: 7px; }
   .stage.op-podium .avatar-holder { position: relative; z-index: 1; margin-bottom: 9%; }
-  .venue-aan #show-stage .stage-podium { width: 99%; bottom: 5.5%; }
 
-  .venue-aan #show-stage { margin-bottom: 6px; }
-  .venue-aan #end-stage .stage-podium { width: 139%; bottom: .3%; }
-  .venue-aan #end-stage .stage-podium .podium { --pod-dik: 8px; }
+  .venue-aan :is(#show-stage, #end-stage) .stage-podium { width: 99%; bottom: 5.5%; }
 
-
-  .venue-aan .end-panel > .venue-bundel { width: 165%; }
-
-
-
-
-
-
-
-
-
-
-  .bundel-titel {
-    position: absolute; left: 0; right: 0; height: 70px;
-    bottom: calc(27.27% + var(--titel-lucht, 24px) - 6px);
-    background: linear-gradient(180deg, rgba(var(--nacht-2-rgb),0), rgba(var(--nacht-2-rgb),.62) 35%,
-                                rgba(var(--nacht-2-rgb),.62) 65%, rgba(var(--nacht-2-rgb),0));
-  }
-  @media (max-height: 740px) { .bundel-titel { --titel-lucht: 12px; height: 56px; } }
-  @media (max-height: 600px) { .bundel-titel { --titel-lucht: 4px; } }
-  @media (orientation: landscape) and (max-height: 500px) { .bundel-titel { display: none; } }
+  .venue-aan :is(#show-stage, #end-stage) { margin-bottom: 6px; }
 
 
 
@@ -8516,8 +8484,8 @@
 
 
 
-  #screen-end .result-card { transition: opacity .3s ease; }
-  #screen-end.feest-open .result-card { opacity: 0; }
+  #screen-end .end-math { transition: opacity .3s ease; justify-content: space-between; }
+  #screen-end.feest-open .end-math { opacity: 0; }
   .wereld-feest { width: min(92vw, 360px); padding: 18px 18px 14px; }
   .wf-kop { font-size: var(--tx-feest); font-weight: 700; color: var(--c-white); line-height: 1.1;
     text-shadow: var(--goud-ink); }
@@ -8740,52 +8708,40 @@
 
 
 
+
+
+
   .result-card {
-    background: var(--paneel);
-    border: 1.5px solid var(--paneel-rand);
-    box-shadow: var(--e-2), inset 0 1px 0 rgba(255,255,255,.12);
-    border-radius: var(--r-lg); padding: 18px 22px 20px; text-align: center;
-    width: 100%; max-width: var(--kolom); margin: auto 0;
+    font-size: var(--tx-body); line-height: 1.2;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 16px 20px 16px;
+    animation: kaartOm 320ms var(--ease-uit) 120ms backwards;
   }
 
 
-  .result-card .title { font-size: var(--tx-feest); margin: 2px 0 0; }
+  @keyframes kaartOm { from { transform: perspective(700px) rotateY(-90deg); } to { transform: perspective(700px) rotateY(0); } }
+  @media (prefers-reduced-motion: reduce) { .result-card { animation: none; } }
+  .result-card .title {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .result-card.mislukt .title {
+    position: static; width: auto; height: auto; overflow: visible; clip-path: none;
+    font-size: var(--tx-kop); color: var(--purple-shadow); margin: 0;
+  }
 
-
-
-
-  .end-stage { width: 150px; height: 168px; margin: 4px auto 0; }
-
-  .end-text { font-size: var(--tx-body); text-wrap: balance; }
-  .result-stars { font-size: 48px; letter-spacing: 4px; margin: 6px 0 2px; }
-
+  .end-text { font-size: var(--tx-label); text-wrap: balance; color: var(--purple-mid); font-weight: 600; }
+  .result-stars { font-size: 48px; letter-spacing: 4px; line-height: 1.05; margin: 2px 0; }
 
   @media (max-height: 740px) {
-    .result-card { padding: 11px 16px 10px; }
-    .result-card .title { font-size: var(--tx-feest-kort); }
-    .end-stage { width: 104px; height: 116px; }
-    .result-stars { font-size: 36px; letter-spacing: 2px; margin: 3px 0 0; }
-    .end-text { font-size: var(--tx-label); }
-    .earn-line { gap: 6px; margin: 7px 0 8px; }
-    .earn-chip { font-size: var(--tx-label); padding: 7px 4px; }
-    .result-card .earn-line .earn-chip { padding: 6px 13px; min-height: 30px; }
-    .end-milestone { min-height: 30px; margin-bottom: 8px; }
+    .result-card { padding: 11px 16px 11px; }
+    .result-stars { font-size: 38px; letter-spacing: 2px; }
+    .earn-line { gap: 6px; margin: 4px 0 2px; }
+    .result-card .earn-line .earn-chip { padding: 6px 13px; min-height: 30px; font-size: var(--tx-label); }
+    .end-milestone { min-height: 30px; margin-bottom: 0; }
     .end-actions { gap: 7px; }
     .end-actions .btn.big { font-size: var(--tx-sub); padding: 11px 18px; }
     .end-actions .btn.soft { font-size: var(--tx-label); padding: 9px 16px; }
-    .gold-pill { font-size: var(--tx-label); padding: 6px 13px; min-height: 30px; }
-  }
-
-
-
-
-
-
-
-  @media (orientation: portrait) and (max-width: 599px) and (min-height: 760px) {
-    .result-card { --pop-b: min(150px + (100svh - 760px) * .35, 210px); }
-    .venue-aan .end-panel { width: var(--pop-b); }
-    .end-stage { width: var(--pop-b); height: calc(var(--pop-b) * 1.12); }
+    .result-card .gold-pill { font-size: var(--tx-label); padding: 6px 13px; min-height: 30px; }
   }
   .result-stars span { display: inline-block; }
 
@@ -8838,7 +8794,7 @@
 
 
 
-  .end-milestone { margin: 0 0 14px; min-height: 40px; display: flex; align-items: center; justify-content: center; }
+  .end-milestone { margin: 0; min-height: 40px; display: flex; align-items: center; justify-content: center; }
   .end-milestone:empty { display: none; }
 
 
@@ -8856,46 +8812,28 @@
   .groei-vb .klok-vb { display: none; }
 
   .groei-vb .typ-vak { display: inline-block; min-width: 1.4em; text-align: center; border-bottom: 3px solid currentColor; line-height: 1.1; }
-  .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+
+
+
+
+  .result-card .earn-chip.dia { background: rgba(var(--purple-shadow-rgb),.08); color: var(--purple-shadow); }
+  .result-card .earn-chip.met-wens::before { background: rgba(var(--purple-shadow-rgb),.14); }
+  .result-card .groei-pil { color: var(--ink-on-gold-card); text-shadow: none; }
+  .result-card .groei-vb { color: var(--purple-shadow); }
+  .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; width: 100%; margin-top: 4px; }
 
   .end-actions.wacht { pointer-events: none; }
-  .end-actions .btn { width: 100%; max-width: 320px; }
+  .end-actions .btn { width: 100%; }
   .end-actions .btn.big { font-size: var(--tx-kop); padding: 15px 20px; }
 
 
 
-
-
-
-
   @media (orientation: landscape) and (max-height: 500px) {
-    .result-card {
-      display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 18px;
-      align-items: center; max-width: 640px; padding: 10px 18px 12px;
-    }
-    .result-card > .title { grid-column: 1 / -1; margin: 0 0 2px; }
-    .result-card > .end-panel { grid-column: 1; grid-row: 2 / span 4; align-self: center; }
-    .result-card > .result-stars { grid-column: 2; margin: 0; }
-    .result-card > .end-text { grid-column: 2; }
-    .result-card > .earn-line { grid-column: 2; margin: 5px 0 4px; }
-    .result-card > .end-milestone { grid-column: 2; margin: 0 0 2px; min-height: 0; }
-    .end-stage { width: 112px; height: 124px; margin: 0 auto; }
-    .result-card > .end-actions {
-      grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-      align-items: stretch; gap: 10px; margin-top: 8px;
-    }
-    .end-actions .btn { max-width: none; }
-  }
-
-
-  @media (orientation: landscape) and (max-height: 340px) {
-    .result-card { padding: 6px 16px 8px; }
-    .end-stage { width: 92px; height: 100px; }
-    .result-stars { font-size: 30px; }
-    .result-card > .earn-line { margin: 3px 0 2px; }
-    .result-card > .end-actions { margin-top: 5px; }
-    .end-actions .btn.big { padding: 8px 16px; }
-    .end-actions .btn.soft { padding: 7px 14px; }
+    .end-math .end-actions { width: min(30vw, 260px); flex: 0 0 auto; margin-top: 0; }
+    .end-actions .btn.big { font-size: var(--tx-body); padding: 10px 14px; }
+    .end-actions .btn.soft { font-size: var(--tx-label); padding: 8px 12px; }
+    .result-stars { font-size: 32px; }
+    .result-card { padding: 8px 12px; }
   }
 
 
@@ -11641,28 +11579,38 @@
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="naTik(goMapNaShow)" aria-label="Terug naar de kaart" title="Terug naar de kaart"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
         <div class="header-title" id="end-lvl-label"></div>
+        <!-- de balk van de show, vol: dezelfde kop als een tel geleden (zie endLevel) -->
+        <div class="game-progress-row" aria-hidden="true"><div class="segbar" id="end-progress"></div></div>
         <div class="diamond-badge header-right">💎 <span id="end-diamonds">0</span></div>
       </div>
     </div>
-    <div class="result-card">
-      <h1 class="title" id="end-title"></h1>
+    <!-- Het einde staat op hetzelfde podium als de show: dezelfde arena, dezelfde
+         bundel, zij op dezelfde plek. Alleen de somkaart draait om (zijn
+         achterkant is de uitslag) en de knoppen komen waar de antwoorden stonden.
+         Zie "= Het einde op hetzelfde podium" in 70-feest.css. -->
+    <div class="game-arena end-arena">
       <div class="show-panel end-panel">
-        <!-- bundel-titel: de bundel dooft waar hij door de titel loopt;
-             bundel-flits: het licht dat even opgloeit als er een ster landt
-             (zie bundelFlits). Allebei binnen de bundel, dus met zijn vorm mee geknipt -->
-        <div class="venue-bundel" aria-hidden="true"><div class="bundel-titel"></div><div class="bundel-flits"></div></div>
+        <!-- bundel-flits: het licht dat even opgloeit als er een ster landt
+             (zie bundelFlits), binnen de bundel, dus met zijn vorm mee geknipt -->
+        <div class="venue-bundel" aria-hidden="true"><div class="bundel-flits"></div></div>
         <div class="venue-vloer" aria-hidden="true"></div>
-        <div class="stage tappable stage-frame end-stage" id="end-stage" onclick="tapDance('end-avatar')">
+        <div class="stage tappable stage-frame show-stage end-stage" id="end-stage" onclick="tapDance('end-avatar')">
           <div class="avatar-holder idle levend" id="end-avatar"></div>
         </div>
       </div>
-      <div class="result-stars" id="end-stars"></div>
-      <div class="end-text" id="end-text"></div>
-      <div class="earn-line" id="end-earn"></div>
-      <div class="end-milestone" id="end-milestone"></div>
-      <div class="end-actions">
-        <button class="btn big" id="btn-end-next"></button>
-        <button class="btn soft" id="btn-end-alt"></button>
+      <div class="math-panel end-math">
+        <div class="question-card result-card">
+          <!-- de kop: voor de voorlezer, en zichtbaar alleen bij "Bijna!" -->
+          <h1 class="title" id="end-title"></h1>
+          <div class="result-stars" id="end-stars"></div>
+          <div class="end-text" id="end-text"></div>
+          <div class="earn-line" id="end-earn"></div>
+          <div class="end-milestone" id="end-milestone"></div>
+        </div>
+        <div class="end-actions">
+          <button class="btn big" id="btn-end-next"></button>
+          <button class="btn soft" id="btn-end-alt"></button>
+        </div>
       </div>
     </div>
   </div>
@@ -26995,6 +26943,7 @@ function startLevel(lvl, eigenOvergang) {
 
 
   stopSpot();
+  $('screen-game').classList.remove('eindigt');
   const p = P();
   const s = p.settings;
 
@@ -27738,7 +27687,8 @@ function kaartMeten(tekst) {
 function kaartProeven(insts) {
   return Object.keys(insts).flatMap(k => THEMA[k] && THEMA[k].proeven ? THEMA[k].proeven(insts[k]) : []);
 }
-addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = G.vakMin = G.zaalVol = null; $('show-stage').style.height = $('show-stage').style.width = ''; });
+addEventListener('resize', () => { if (G) G.kaartMin = G.antwoordMin = G.vakMin = G.zaalVol = null; $('show-stage').style.height = $('show-stage').style.width = '';
+  $('end-stage').style.height = $('end-stage').style.width = ''; document.querySelector('#screen-end .end-math').style.minHeight = ''; });
 function numpadPress(n) {
   if (!G || G.lock) return;
   if (n === 'del') { if (G.input === '') return; G.input = G.input.slice(0, -1); sndClick(); }
@@ -28603,8 +28553,28 @@ function applyShowResult(p, lvl, wl, stars) {
   return { stars, beter, bonus, travel, feest, trofees };
 }
 
+
+
+
+
+
+
+function zelfdePodium() {
+  const zaal = $('show-stage'), eind = $('end-stage'), som = document.querySelector('#screen-game .math-panel');
+  const blok = document.querySelector('#screen-end .end-math');
+  eind.style.width = zaal.style.width; eind.style.height = zaal.style.height;
+  const boven = zaal.offsetHeight && onderkant(zaal) <= onderkant(som) - som.offsetHeight;
+  blok.style.minHeight = boven ? som.offsetHeight + 'px' : '';
+}
 function endLevel(success) {
   stopSpot();
+
+
+
+  $('screen-game').classList.add('eindigt');
+  $('end-progress').innerHTML = $('qprogress').innerHTML;
+  document.querySelector('#screen-end .result-card').classList.toggle('mislukt', !success);
+  zelfdePodium();
   const p = P();
   const lvl = G.lvl;
   applyRampUpdates(p, G);

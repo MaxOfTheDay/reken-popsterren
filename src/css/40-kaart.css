@@ -547,7 +547,7 @@
      Dat stond hier vroeger nog een keer als een eigen kop-regel met -8px/16px/10px erin
      uitgerekend; nu zet het scherm alleen --rand en --kop-gap om (zie .screen) en volgt
      de kop daaruit. */
-  #screen-game { padding: 8px; justify-content: flex-start; }
+  #screen-game, #screen-end { padding: 8px; justify-content: flex-start; }
   /* De voortgang van de show: één balk in vakjes (hoe ver ben ik, en hoe ging
      elke vraag). Die balk (.segbar) is gedeeld met het memory-spel. */
   .game-progress-row { display: flex; align-items: center; justify-content: center; gap: 12px; }

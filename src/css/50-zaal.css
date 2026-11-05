@@ -236,22 +236,6 @@
       radial-gradient(58% 64% at 50% 52%, rgba(var(--w-deep-rgb), .88), rgba(var(--w-deep-rgb), .36) 72%, transparent 88%);
     box-shadow: 0 0 40px rgba(var(--warm-licht-rgb),.30), inset 0 2px 0 rgba(var(--goud-glans-rgb),.35);
   }
-  /* Op het eindscherm staat het podium ín een kaart. Het paneel moet dus precies
-     zo breed zijn als de paspop, anders loopt de richel als een streep dwars over
-     de hele kaart. De ruimte erboven is voor de slotchoreografie: die springt tot
-     38px omhoog, en zonder kader is dat nu zichtbaar in plaats van weggeknipt. */
-  .venue-aan .end-panel { width: 150px; margin: 24px auto 19px; }   /* onder: de zijband van haar podium, zie .stage-podium */
-  .venue-aan .end-stage { margin: 0; }
-  /* de kop van de kaart blijft bovenop, ook als ze op haar hoogste sprong zit */
-  .venue-aan .result-card .title { position: relative; z-index: 2; }
-  @media (max-height: 740px) {
-    .venue-aan .end-panel { width: 104px; margin-top: 12px; }
-  }
-  /* de kleinste telefoon (320x568): de kaart moet zonder scrollen passen, dus
-     minder lucht rond de pop -- de zijband raakt de sterren nog net niet */
-  @media (max-height: 600px) {
-    .venue-aan .end-panel { margin: 4px auto 10px; }
-  }
   /* Het kader zelf gaat weg, de maat blijft: alles eromheen (de arena, de
      smalle-schermregels) rekent op deze afmeting. */
   .venue-aan .show-stage, .venue-aan .end-stage {
@@ -320,28 +304,35 @@
      haar en de som, en dat telt het meest op een klein scherm.
      De titel blijft in de opmaak staan, alleen voor de voorlezer; het
      eindscherm doet hetzelfde, zodat ✕ en ← en 💎 op dezelfde plek blijven. */
-  :is(#screen-game, #screen-memory) .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
-  :is(#screen-game, #screen-memory) .screen-header .header-title,
-  #screen-end .screen-header .header-title {
+  :is(#screen-game, #screen-memory, #screen-end) .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
+  :is(#screen-game, #screen-memory, #screen-end) .screen-header .header-title {
     position: absolute; width: 1px; height: 1px; overflow: hidden;
     clip-path: inset(50%); white-space: nowrap;
   }
-  :is(#screen-game, #screen-memory) .screen-header .game-progress-row {
+  :is(#screen-game, #screen-memory, #screen-end) .screen-header .game-progress-row {
     justify-self: center; width: 100%; max-width: 380px; min-width: 0;
     height: 44px; box-sizing: border-box; padding: 0 16px; gap: 10px;
   }
-  :is(#screen-game, #screen-memory) .screen-header .game-progress-row { padding: 0 18px; }
-  :is(#screen-game, #screen-memory) .screen-header .segbar { flex: 1; width: auto; max-width: 320px; gap: 5px; }
-  :is(#screen-game, #screen-memory) .screen-header .segbar > span { height: 11px; }
+  :is(#screen-game, #screen-memory, #screen-end) .screen-header .game-progress-row { padding: 0 18px; }
+  :is(#screen-game, #screen-memory, #screen-end) .screen-header .segbar { flex: 1; width: auto; max-width: 320px; gap: 5px; }
+  :is(#screen-game, #screen-memory, #screen-end) .screen-header .segbar > span { height: 11px; }
   /* Op een smal scherm worden acht vakjes van 11 hoog rondjes; even lager en
      dichter blijven het korte streepjes, dezelfde vorm als op elk ander scherm. */
   @media (max-width: 359px) {
-    :is(#screen-game, #screen-memory) .screen-header .segbar { gap: 4px; }
-    :is(#screen-game, #screen-memory) .screen-header .segbar > span { height: 8px; }
+    :is(#screen-game, #screen-memory, #screen-end) .screen-header .segbar { gap: 4px; }
+    :is(#screen-game, #screen-memory, #screen-end) .screen-header .segbar > span { height: 8px; }
   }
   /* een verborgen titel neemt geen vak meer in: zet de rest zelf op zijn plek */
-  :is(#screen-game, #screen-memory) .screen-header .game-progress-row { grid-column: 2; }
+  :is(#screen-game, #screen-memory, #screen-end) .screen-header .game-progress-row { grid-column: 2; }
   :is(#screen-game, #screen-memory, #screen-end) .screen-header .header-right { grid-column: 3; }
+  /* De show draait zijn som weg zodra het einde komt: de kaart op zijn kant, de
+     antwoorden zakken weg. Het eindscherm draait hem terug (kaartOm in
+     70-feest). Twee helften van één draai, over de schermwissel heen. */
+  #screen-game.eindigt .question-card { transform: perspective(700px) rotateY(90deg); transition: transform 160ms ease-in; }
+  #screen-game.eindigt #answer-area { opacity: 0; transform: translateY(24px); transition: opacity 160ms, transform 160ms ease-in; }
+  @media (prefers-reduced-motion: reduce) {
+    #screen-game.eindigt .question-card, #screen-game.eindigt #answer-area { transition: none; }
+  }
 
   /* De somkaart draagt in een zaal zijn eigen licht: een zachte gloed eromheen,
      zodat hij op de vloer staat en er niet op geplakt is. */
@@ -994,7 +985,7 @@
      Het cijferblok had telefoonmaat midden op een groot scherm; nu is het even
      breed als de antwoordknoppen in de kiesmodus. */
   @media (min-aspect-ratio: 1/1) and (min-width: 900px) and (min-height: 700px) {
-    #screen-game .game-arena { flex-wrap: nowrap; gap: 3vw; }
+    :is(#screen-game, #screen-end) .game-arena { flex-wrap: nowrap; gap: 3vw; }
     .show-stage { --stage-h: min(44vh, 400px); height: var(--stage-h); width: calc(var(--stage-h) * 1.19); }
     .math-panel { --kaart-w: min(44vw, 75vh, 600px); }
     .question-card { width: var(--kaart-w); min-width: 0; box-sizing: border-box; font-size: min(10vh, 92px); padding: 2.6vh 3.6vh 3.6vh; }
@@ -1836,33 +1827,10 @@
   }
   .stage-podium .podium { width: 100%; height: 100%; --pod-dik: 7px; }
   .stage.op-podium .avatar-holder { position: relative; z-index: 1; margin-bottom: 9%; }
-  .venue-aan #show-stage .stage-podium { width: 99%; bottom: 5.5%; }
+  /* (het eindscherm staat op hetzelfde podium als de show, dus #end-stage telt mee) */
+  .venue-aan :is(#show-stage, #end-stage) .stage-podium { width: 99%; bottom: 5.5%; }
   /* de lucht tussen de zijband en de som (de band hangt een paar pixel onder het vlak) */
-  .venue-aan #show-stage { margin-bottom: 6px; }
-  .venue-aan #end-stage .stage-podium { width: 139%; bottom: .3%; }
-  .venue-aan #end-stage .stage-podium .podium { --pod-dik: 8px; }
-  /* de bundel valt op haar podium (zie OP HAAR PODIUM): dat is hier 139% van
-     het vlak in plaats van 99%, dus de bundel in dezelfde verhouding mee */
-  .venue-aan .end-panel > .venue-bundel { width: 165%; }
-  /* WAAR HIJ DOOR DE TITEL LOOPT. Staand valt de bundel recht door "Show 4 was
-     geweldig!", en zijn twee harde randen knipten de titel in een lichte en twee
-     donkere stukken. Een tekstschaduw hielp nauwelijks; een donkere ovaal achter
-     de titel zag je als ovaal ("te veel die ronde vorm", zei Max). Nu dooft de
-     bundel zelf daar: een strook in de kleur van de kaart (--paneel), ín de
-     bundel, dus alleen waar licht is -- buiten de bundel verandert er niets.
-     Waar hij staat: de bundel is 330% van het paneel hoog en eindigt op 10%
-     ervan, dus de bovenkant van het paneel ligt op 90/330 = 27,27% van onderen;
-     daarboven de marge van het paneel (24, 12 of 4px, zie .end-panel), en dan
-     de titel. Liggend staat de titel niet in de bundel en is de strook weg. */
-  .bundel-titel {
-    position: absolute; left: 0; right: 0; height: 70px;
-    bottom: calc(27.27% + var(--titel-lucht, 24px) - 6px);
-    background: linear-gradient(180deg, rgba(var(--nacht-2-rgb),0), rgba(var(--nacht-2-rgb),.62) 35%,
-                                rgba(var(--nacht-2-rgb),.62) 65%, rgba(var(--nacht-2-rgb),0));
-  }
-  @media (max-height: 740px) { .bundel-titel { --titel-lucht: 12px; height: 56px; } }
-  @media (max-height: 600px) { .bundel-titel { --titel-lucht: 4px; } }
-  @media (orientation: landscape) and (max-height: 500px) { .bundel-titel { display: none; } }
+  .venue-aan :is(#show-stage, #end-stage) { margin-bottom: 6px; }
   /* Het licht gloeit op bij elke ster die landt (bundelFlits). Een laag ín de
      bundel, zodat de clip-path en het masker van de bundel hem meteen zijn vorm
      geven; alleen opacity, dus de samensteller doet het. Bovenin doorzichtig:
