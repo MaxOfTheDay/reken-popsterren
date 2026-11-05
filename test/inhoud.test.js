@@ -1187,4 +1187,39 @@ zaak('Q', () => {
   check(!klein.length, 'Q · kleine tekst staat op de letterladder (--tx-*), of de regel is een teken (/* teken */)', klein.join(' | '));
 });
 
+/* R · DE GEBARENWACHT. Net als de kleuren hadden de bewegingen per scherm hun
+   eigen dialect gekregen: negen maten van indrukken, vier keer "ja", drie
+   schudjes, twee keer "nog niet", vier ringen. Die staan nu als zes woorden in
+   de afspraak ("Gebaren" in 00-afspraak.css), en deze zaak houdt ze daar:
+   - een :active die knijpt, knijpt naar --druk-plat. Een indruk die met reden
+     afwijkt zet het commentaar uitzondering op dezelfde regel;
+   - de gebaren ja, fout, nogNiet en ring staan alleen in de afspraak;
+   - de oude dialecten komen niet terug onder hun eigen naam. */
+zaak('R', () => {
+  const map = path.join(WORTEL, 'src', 'css');
+  const OUD = ['goodPop', 'memSnap', 'boughtPop', 'somKlikt', 'shake', 'memShake', 'oz-schud',
+    'slot-nee', 'kastNee', 'goodRing', 'aankomstRing', 'kastRing', 'ringOut', 'tapRipple'];
+  const GEBAREN = ['ja', 'fout', 'nogNiet', 'ring'];
+  const knijp = [], dubbel = [], oud = [];
+  const gevonden = new Set();
+  for (const f of fs.readdirSync(map).filter(f => f.endsWith('.css')).sort()) {
+    const tekst = fs.readFileSync(path.join(map, f), 'utf8');
+    const zonder = tekst.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+    zonder.split('\n').forEach((code, i) => {
+      const regel = tekst.split('\n')[i];
+      const waar = `${f}:${i + 1}`;
+      if (/:active\b[^{]*\{[^}]*scale\(\s*(calc\()?[^)]*\d/.test(code) && !/var\(--druk-plat\)/.test(code)
+          && !/\/\*\s*uitzondering/.test(regel)) knijp.push(waar);
+      for (const k of code.matchAll(/@keyframes\s+([\w-]+)/g)) {
+        if (GEBAREN.includes(k[1])) { if (f === '00-afspraak.css') gevonden.add(k[1]); else dubbel.push(`${waar} ${k[1]}`); }
+        if (OUD.includes(k[1])) oud.push(`${waar} ${k[1]}`);
+      }
+    });
+  }
+  check(GEBAREN.every(g => gevonden.has(g)), 'R · de gebaren ja, fout, nogNiet en ring staan in de afspraak', [...gevonden].join(','));
+  check(!knijp.length, 'R · knijpen gaat naar --druk-plat (of de regel zegt /* uitzondering: waarom */)', knijp.join(' | '));
+  check(!dubbel.length, 'R · een gebaar staat alleen in 00-afspraak.css, schermen gebruiken het', dubbel.join(' | '));
+  check(!oud.length, 'R · geen oud dialect terug (gebruik ja, fout, nogNiet of ring)', oud.join(' | '));
+});
+
 klaar();

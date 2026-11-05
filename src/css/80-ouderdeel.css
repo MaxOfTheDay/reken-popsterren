@@ -359,7 +359,7 @@
     transition: transform var(--t-tik), background .12s, border-color .12s, color .12s;
   }
   .chip:hover { border-color: var(--purple-light); }
-  .chip:active { transform: scale(.95); }
+  .chip:active { transform: scale(var(--druk-plat)); }
   .chip.on { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); border-color: transparent; color: var(--c-white); box-shadow: 0 3px 9px rgba(var(--purple-mid-rgb), .32); }
   /* kleurkeuze bij het maken van een ster: het woord alleen zegt te weinig, dus
      de kleur staat erbij. (.item-thumb uit de winkel kan dit ook, maar die is
@@ -1126,8 +1126,7 @@
   .oz-code.laden .oz-c:nth-child(5) { animation-delay: .3s; } .oz-code.laden .oz-c:nth-child(6) { animation-delay: .4s; }
   .oz-code.laden .oz-c:nth-child(7) { animation-delay: .5s; }
   @keyframes oz-wacht { 50% { background: var(--paper-border); } }
-  .oz-code.fout .oz-c { border-color: var(--red-500); background: var(--danger-bg); color: var(--red-answer-600); animation: oz-schud .3s; }
-  @keyframes oz-schud { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+  .oz-code.fout .oz-c { border-color: var(--red-500); background: var(--danger-bg); color: var(--red-answer-600); animation: fout .3s; }
   /* het echte invoerveld ligt onzichtbaar over de vakjes heen; 16px, anders
      zoomt iOS in zodra hij focus krijgt */
   .oz-invoer { position: relative; }

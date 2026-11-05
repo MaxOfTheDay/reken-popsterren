@@ -153,7 +153,7 @@
   /* 2px raakvlak rondom, net als de pil op de kaart: 48 x 48 */
   #screen-journey .reis-titel::before { content: ''; position: absolute; inset: -2px; }
   /* dezelfde indruk als de pil op de kaart (.world-pick:active) */
-  #screen-journey .reis-titel:active { transform: scale(.96); filter: brightness(1.15); }
+  #screen-journey .reis-titel:active { transform: scale(var(--druk-plat)); filter: brightness(1.15); }
   @media (prefers-reduced-motion: reduce) { #screen-journey .reis-titel:active { transform: none; } }
   /* line-height 1.25 en niet 1. Een emoji is breder dan zijn em-vierkant -- op 24px
      tekent hij ~27px -- en een regelhoogte van precies 1em snijdt hem dan boven en
@@ -347,7 +347,7 @@
   /* Élke bestemming drukt in, ook een die op slot zit: sinds fase 6C is dat geen
      <button disabled> meer maar een knop die antwoordt (zie slotWereld), en dan
      hoort hij ook te voelen alsof de tik aankwam. */
-  .reis-halte:active .reis-plaats { transform: scale(.965); }
+  .reis-halte:active .reis-plaats { transform: scale(var(--druk-plat)); }
   .reis-art { position: absolute; inset: 0; background-size: cover; background-position: 50% 36%;
     transition: opacity var(--t-snel) var(--ease-uit); }
   /* Een tekening die er nog niet is (zie reisStartWaarnemer) komt erin in plaats
@@ -418,13 +418,7 @@
      pixels, en de vinkjesschud van .shake (10px heen en weer) zou het van zijn
      hoek af gooien. Bij prefers-reduced-motion blijft alleen de toast over; die
      zegt het in woorden en dat is waar het om gaat. */
-  .reis-zegel.slot.nee { animation: slot-nee .5s ease; }
-  @keyframes slot-nee {
-    0%, 100% { transform: rotate(0) scale(1); }
-    18% { transform: rotate(-11deg) scale(1.14); }
-    44% { transform: rotate(9deg) scale(1.14); }
-    70% { transform: rotate(-5deg) scale(1.06); }
-  }
+  .reis-zegel.slot.nee { animation: nogNiet .5s ease; }
   @media (prefers-reduced-motion: reduce) { .reis-zegel.slot.nee { animation: none; } }
   /* Vol: géén badge. Een wereld waar alles binnen is heeft al zijn eigen lijst en
      een gouden teller -- er hoeft alleen nog een teken bij dat zégt "dit is
@@ -550,7 +544,7 @@
     transition: transform var(--t-tik);
   }
   /* de lijst drukt mee in, anders laat de tik de kaart los van zijn eigen rand */
-  .reis-halte.vol:active::after { transform: scale(.972); }
+  .reis-halte.vol:active::after { transform: scale(calc(1 - (1 - var(--druk-plat)) * .8)); }
 
   /* Hier ben je. De enige bestemming die groter is, licht geeft en de ster draagt --
      en de enige met beweging op dit scherm. */
@@ -582,7 +576,7 @@
     position: absolute; inset: 0; border-radius: var(--r-md); pointer-events: none;
     transition: transform var(--t-tik);
   }
-  .reis-halte:active .reis-gloed { transform: scale(.965); }
+  .reis-halte:active .reis-gloed { transform: scale(var(--druk-plat)); }
   .reis-gloed::before, .reis-gloed::after {
     content: ''; position: absolute; inset: 0; border-radius: inherit;
   }
@@ -695,7 +689,7 @@
   .reis-terug .ico { transition: transform .2s var(--ease-uit); }
   .reis-terug.neer .ico { transform: rotate(180deg); }
   .reis-terug.aan { opacity: 1; transform: translateX(-50%); pointer-events: auto; }
-  .reis-terug:active { transform: translateX(-50%) scale(.96); filter: brightness(1.15); }
+  .reis-terug:active { transform: translateX(-50%) scale(var(--druk-plat)); filter: brightness(1.15); }
   @media (max-width: 389px) {
     .reis-terug { font-size: var(--tx-klein); }
   }

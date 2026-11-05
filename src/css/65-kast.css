@@ -408,22 +408,18 @@
        behaald   kastKlop: kort indrukken, dan omhoog de lift in met een kleine
                  uitloop; een glans gaat één keer over het vlak, en een ring licht
                  in het eigen metaal gaat eraf
-       nog niet  kastNee: omhoog de lift in en daar nee schudden */
+       nog niet  het gebaar nogNiet uit de afspraak, dat vanaf plat de lift in
+                 wiebelt -- hetzelfde "later" als een halte of wereld op slot */
   .trophy-card.klink .temoji, .trophy-card.klink .pw-medal { animation: kastKlop .5s cubic-bezier(.3,.8,.4,1) both; }
-  .trophy-card.dof .temoji, .trophy-card.dof .pw-medal { animation: kastNee .45s ease-out both; }
+  .trophy-card.dof .temoji, .trophy-card.dof .pw-medal {
+    --nee-van: translateY(0) scale(1); --nee-basis: translateY(-3px) scale(1.08);
+    animation: nogNiet .5s ease-out both;
+  }
   @keyframes kastKlop {
     0% { transform: translateY(0) scale(1); }
     22% { transform: translateY(1px) scale(.9); }
     58% { transform: translateY(-6px) scale(1.17); }
     100% { transform: translateY(-3px) scale(1.08); }
-  }
-  @keyframes kastNee {
-    0% { transform: translateY(0) scale(1); }
-    25% { transform: translateY(-3px) scale(1.08) rotate(0); }
-    45% { transform: translateY(-3px) scale(1.08) rotate(-5deg); }
-    65% { transform: translateY(-3px) scale(1.08) rotate(4deg); }
-    82% { transform: translateY(-3px) scale(1.08) rotate(-2deg); }
-    100% { transform: translateY(-3px) scale(1.08) rotate(0); }
   }
   /* De glans: dezelfde schuine streep als op de bovenste trap, één keer. Hij
      schuift als achtergrond door een rondje ter grootte van het vlak, zodat hij
@@ -443,7 +439,7 @@
   .trophy-card.klink::before {
     content: ''; position: absolute; top: -1px; left: 50%; width: 80px; height: 80px; margin-left: -40px;
     border-radius: 50%; pointer-events: none; border: 2px solid var(--ring, rgba(var(--goud-glans-rgb),.9));
-    animation: kastRing .5s ease-out .1s both;
+    --ring-licht: .85; --ring-van: .9; --ring-tot: 1.45; animation: ring .5s ease-out .1s both;
   }
   .trophy-card.pw-card.klink::before { content: none; }
   .trophy-card.ladder.nu-0 { --ring: var(--m-0); }
@@ -470,7 +466,6 @@
     content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
     background: radial-gradient(60% 45% at 35% 22%, rgba(255,255,255,.28), transparent 70%);
   }
-  @keyframes kastRing { from { opacity: .85; transform: scale(.9); } to { opacity: 0; transform: scale(1.45); } }
   @media (prefers-reduced-motion: reduce) {
     .trophy-card.ladder.top .temoji::after { animation: none; display: none; }
     .trophy-card.klink .temoji, .trophy-card.klink .pw-medal,
@@ -641,7 +636,7 @@
      een melding die er nog staat, geen knop die om een tik vraagt. */
   @keyframes beloningKlop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.025); } }
   @media (prefers-reduced-motion: reduce) { .gold-pill { animation: none; } }
-  .gold-pill:active { transform: scale(.96); }
+  .gold-pill:active { transform: scale(var(--druk-plat)); }
   /* Op een laag scherm is de pil 30-34px hoog; het raakvlak komt er met een
      doorzichtige rand omheen op 44. Hij staat op het eindscherm vrij, met de
      knoppen ruim eronder, dus hij pakt niemand een tik af. */

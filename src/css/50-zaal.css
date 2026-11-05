@@ -297,14 +297,16 @@
   /* De diamantenteller is hier een teller en geen knop: hij is het doel waar de
      verdiende diamanten naartoe vliegen. Een maat kleiner dan op de rustpunten,
      zodat hij niet met de som concurreert. */
-  .venue-aan .screen-header .diamond-badge { font-size: var(--tx-body); padding: 6px 13px; }
-  /* De showvoortgang in een pilletje van dezelfde stof als ✕ en 💎 ernaast. */
-  .venue-aan .game-progress-row {
+  .venue-aan .screen-header .diamond-badge,
+  #screen-memory .screen-header .diamond-badge { font-size: var(--tx-body); padding: 6px 13px; }
+  /* De showvoortgang in een pilletje van dezelfde stof als ✕ en 💎 ernaast.
+     Memory is ook een spel met een voortgang, en krijgt dus dezelfde kop. */
+  .venue-aan .game-progress-row, #screen-memory .screen-header .game-progress-row {
     padding: 5px 14px 6px; border-radius: var(--r-pill);
     background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
   }
-  .venue-aan .segbar > span { height: 8px; }
+  .venue-aan .segbar > span, #screen-memory .screen-header .segbar > span { height: 8px; }
 
   /* ---- Eén rij ----
      De kop van een show is één rij: ✕ | voortgang | 💎. Hier stond
@@ -318,28 +320,28 @@
      haar en de som, en dat telt het meest op een klein scherm.
      De titel blijft in de opmaak staan, alleen voor de voorlezer; het
      eindscherm doet hetzelfde, zodat ✕ en ← en 💎 op dezelfde plek blijven. */
-  #screen-game .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
-  #screen-game .screen-header .header-title,
+  :is(#screen-game, #screen-memory) .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
+  :is(#screen-game, #screen-memory) .screen-header .header-title,
   #screen-end .screen-header .header-title {
     position: absolute; width: 1px; height: 1px; overflow: hidden;
     clip-path: inset(50%); white-space: nowrap;
   }
-  #screen-game .screen-header .game-progress-row {
+  :is(#screen-game, #screen-memory) .screen-header .game-progress-row {
     justify-self: center; width: 100%; max-width: 380px; min-width: 0;
     height: 44px; box-sizing: border-box; padding: 0 16px; gap: 10px;
   }
-  #screen-game .screen-header .game-progress-row { padding: 0 18px; }
-  #screen-game .screen-header .segbar { flex: 1; width: auto; max-width: 320px; gap: 5px; }
-  #screen-game .screen-header .segbar > span { height: 11px; }
+  :is(#screen-game, #screen-memory) .screen-header .game-progress-row { padding: 0 18px; }
+  :is(#screen-game, #screen-memory) .screen-header .segbar { flex: 1; width: auto; max-width: 320px; gap: 5px; }
+  :is(#screen-game, #screen-memory) .screen-header .segbar > span { height: 11px; }
   /* Op een smal scherm worden acht vakjes van 11 hoog rondjes; even lager en
      dichter blijven het korte streepjes, dezelfde vorm als op elk ander scherm. */
   @media (max-width: 359px) {
-    #screen-game .screen-header .segbar { gap: 4px; }
-    #screen-game .screen-header .segbar > span { height: 8px; }
+    :is(#screen-game, #screen-memory) .screen-header .segbar { gap: 4px; }
+    :is(#screen-game, #screen-memory) .screen-header .segbar > span { height: 8px; }
   }
   /* een verborgen titel neemt geen vak meer in: zet de rest zelf op zijn plek */
-  #screen-game .screen-header .game-progress-row { grid-column: 2; }
-  #screen-game .screen-header .header-right, #screen-end .screen-header .header-right { grid-column: 3; }
+  :is(#screen-game, #screen-memory) .screen-header .game-progress-row { grid-column: 2; }
+  :is(#screen-game, #screen-memory, #screen-end) .screen-header .header-right { grid-column: 3; }
 
   /* De somkaart draagt in een zaal zijn eigen licht: een zachte gloed eromheen,
      zodat hij op de vloer staat en er niet op geplakt is. */
@@ -690,13 +692,14 @@
   .vgl-teken i.goud { background: linear-gradient(180deg, var(--gold-accent), var(--gold-cta-bottom)); }
 
   /* ---- Goed antwoord: de tegel viert zelf mee (veerpop + glow-ring + ✓-stempel) ---- */
-  .choice-btn.good, .count-tile.good { position: relative; animation: goodPop .5s var(--ease-plop); }
-  @keyframes goodPop { 0% { transform: scale(1); } 35% { transform: scale(1.11); } 70% { transform: scale(.98); } 100% { transform: scale(1); } }
+  .choice-btn.good, .count-tile.good { position: relative; animation: ja var(--t-ja) var(--ease-plop); }
+  /* de ring om een brede knop groeit maar een klein stukje: 14% van 150px is al
+     een flinke kring (zie "Gebaren" in de afspraak) */
   .choice-btn.good::before, .count-tile.good::before {
     content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-    box-shadow: 0 0 0 3px var(--green-top); opacity: 0; animation: goodRing .55s ease-out forwards;
+    box-shadow: 0 0 0 3px var(--green-top); opacity: 0;
+    --ring-van: 1; --ring-tot: 1.14; animation: ring .55s ease-out forwards;
   }
-  @keyframes goodRing { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.14); } }
   /* Na een tweede misser: dít was het goede antwoord. Groen, maar zonder veer en
      zonder ring -- dat zijn de tekens van een gewonnen antwoord. Een korte fade
      in plaats daarvan, zodat het oplichten wel gezien wordt. */
@@ -751,7 +754,7 @@
      zonder plus was het precies de prijspil uit de kleedkamer ("💎 15"), en las
      het als betalen om te mogen spelen. */
   .mem-fab .mem-pay { font-size: var(--tx-mini); font-weight: 700; opacity: .88; letter-spacing: .01em; }
-  .mem-fab:active { transform: scale(.95); }
+  .mem-fab:active { transform: scale(var(--druk-plat)); }
   /* ---- Zonder woord -----------------------------------------------------------
      Op 320x568 is het knopje 67x70 en staat de onderste halte van de Piratenwereld
      er pal achter: het hárt van halte 26 viel binnen het knopje, dus een tik daarop
@@ -814,10 +817,8 @@
   }
   .mem-card.done .mem-face { background: var(--green-badge-bg); border-color: var(--green-deep); animation: cpop .4s ease; }
   /* mis: de twee kaarten schudden kort voor ze dichtklappen; match: ze 'klikken samen' */
-  .mem-card.wrong { animation: memShake .4s ease; }
-  @keyframes memShake { 0%,100% { transform: translateX(0); } 22% { transform: translateX(-5px); } 48% { transform: translateX(5px); } 74% { transform: translateX(-3px); } }
-  .mem-card.snap { animation: memSnap .42s var(--ease-plop); }
-  @keyframes memSnap { 0% { transform: scale(1); } 45% { transform: scale(1.12); } 100% { transform: scale(1); } }
+  .mem-card.wrong { animation: fout .4s ease; }
+  .mem-card.snap { animation: ja var(--t-ja) var(--ease-plop); }
   @media (prefers-reduced-motion: reduce) { .mem-card.wrong, .mem-card.snap { animation: none; } }
   /* Memory-kaartjes zijn klein: elke weergave krijgt een eigen compacte maat die
      écht binnen de kaart past (geen transform:scale -- dan blijft de layout-box
@@ -1159,11 +1160,7 @@
      naar deze laag) zodat een kind overal mag tikken, niet precies op de
      kleine bubbel zelf moet mikken. */
   .tap-veil { position: fixed; inset: 0; z-index: 59; display: none; }
-  .shake { animation: shake .4s; }
-  @keyframes shake {
-    0%,100% { transform: translateX(0); } 20% { transform: translateX(-10px); }
-    40% { transform: translateX(10px); } 60% { transform: translateX(-7px); } 80% { transform: translateX(7px); }
-  }
+  .shake { animation: fout .4s; }
   /* Wie geen beweging wil: geen schud. Het bericht zit in de hartjes zelf --
      loseHeart schrijft er een gebroken hartje in -- en dat blijft staan. */
   @media (prefers-reduced-motion: reduce) { .shake { animation: none; } }
@@ -1686,7 +1683,7 @@
     border: 0; background: none; color: inherit; font: inherit; cursor: pointer;
     padding: 0; border-radius: var(--r-pill); }
   /* .bezig: ingedrukt blijven tot de vlucht hem meeneemt -- zie pilTik */
-  .world-pick:active, .world-pick.bezig { transform: scale(.96); filter: brightness(1.15); }
+  .world-pick:active, .world-pick.bezig { transform: scale(var(--druk-plat)); filter: brightness(1.15); }
   @media (prefers-reduced-motion: reduce) { .world-pick:active, .world-pick.bezig { transform: none; } }
   .wp-cta { display: flex; align-items: center; justify-content: center; white-space: nowrap; }
   /* .wp-cta krimpt nooit: het icoon is wat deze pil als knop leest. */
@@ -1788,7 +1785,7 @@
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
     text-shadow: var(--hud-ink);
   }
-  .world-back:active { transform: translateX(-50%) scale(.96); filter: brightness(1.15); }
+  .world-back:active { transform: translateX(-50%) scale(var(--druk-plat)); filter: brightness(1.15); }
   /* Het raakvlak, op dezelfde manier als bij de wereldpil: een onzichtbaar vlakje,
      zodat hij 44px hoog te raken is terwijl hij er even groot uitziet als de pil
      erboven. Alleen naar ónder: de 8px erboven zijn al van de wereldpil (zijn
