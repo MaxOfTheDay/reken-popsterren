@@ -221,6 +221,15 @@ verjaart niet.
 * **De overgangen** (`= Bewegingstaal`, `= De reis`, `= Wereld naar wereld`)
   zijn op enkele beeldjes afgeregeld. Verplaats er niets zonder het op een
   telefoon te bekijken; headless ziet dit soort fouten niet.
+  Twee regels gelden voor élke overgang:
+  **eerst bouwen, dan bewegen** — wie een scherm opbouwt en in dezelfde taak een
+  animatie start, ziet op een trage tablet het eerste beeldje pas halverwege die
+  animatie (de klok liep al tijdens het opbouwen). Bouw, laat het vertrekkende
+  scherm als `.wegvallend` bovenop staan, en start de beweging in `naOpbouw`
+  (`= Bewegingstaal`).
+  En **haal nooit een deklaag weg voordat wat eronder ligt geverfd is** — een
+  grote tekening die nog niet gedecodeerd is, tekent op Android één beeldje leeg.
+  `npm run test:flits` bewaakt de vorm hiervan.
 * **Duren staan in JavaScript, niet twee keer.** `--t-tik` en `--t-snel` in
   `:root` zijn de twee korte; de twee lange worden uitgerekend in
   `MOTION.totaal` en `VLUCHT.totaal`. Schrijf een duur nooit in een commentaar

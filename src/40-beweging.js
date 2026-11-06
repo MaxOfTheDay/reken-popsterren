@@ -700,6 +700,31 @@ function wisselSchuif(el, a) {
   a.addEventListener('cancel', klaar);
 }
 function wisselSchuifUit(el) { el.style.removeProperty('--schuif'); }
+/* EERST BOUWEN, DAN BEWEGEN.
+
+   Een overgang die een nieuw scherm opbouwt (de zaal, Werelden, de kaart van een
+   wereld) en in dezelfde beurt zijn animaties start, verliest het begin van die
+   animaties. De klok van een animatie loopt vanaf het beeldje waarin ze begint,
+   en dat is precies het beeldje waarin de browser het nieuwe scherm voor het
+   eerst moet opmaken en schilderen -- op een tablet 150 tot 230 ms. Het eerste
+   beeldje dat je dan zíét staat al halverwege: de duik in de zaal was op een
+   tablet bij het eerste zichtbare beeldje voor negen tienden klaar. Een enkele
+   requestAnimationFrame helpt niet: die draait vóór dat zware beeldje, niet erna.
+
+   Dus: bouwen (en het scherm laten staan zoals het stond), dan twee beeldjes
+   wachten, en pas dán bewegen. In het eerste beeldje doet de browser het zware
+   werk onder een scherm dat stilstaat; in het tweede begint de beweging, en die
+   speelt helemaal. Wat er in de wachttijd te zien is moet dus het scherm van
+   vóór de tik zijn, ongewijzigd -- zet daarom vóór naOpbouw alleen wat het oude
+   scherm laat staan (.wegvallend), en alles wat iets verbergt of verplaatst pas
+   erin.
+
+   De wachttijd kost één gewoon beeldje (16 ms) bovenop het zware beeldje dat er
+   toch al was. */
+const OPBOUW_RUIM = 700;   // hoe lang een vangnet extra wacht op een opbouw die naOpbouw voorafgaat
+function naOpbouw(doe) {
+  requestAnimationFrame(() => requestAnimationFrame(doe));
+}
 function schermWeg(el, naarBinnen, punt) {
   if (!el || !el.animate || motionOff()) return;
   schermAnimsStop(el);   // een tweede tik stapelt geen tweede animatie
@@ -1169,7 +1194,19 @@ function wereldVlucht(van, naar, bron, op, hoog) {
      doorzichtigheid) hoort bij het kind eronder. Dat is ook waarom het er twee
      zijn, en het houdt het vak vrij van eigenschappen die zijn clip zouden kunnen
      laten verhuizen. */
-  const eind = kunst.animate([{ opacity: 1 }, { opacity: 0 }],
+  /* Op de terugweg (hoog: de vlucht in een wereld) begint dat wegdoven niet op de
+     klok maar pas als de kaart eronder zijn tekening weer getekend heeft: de
+     aanroeper zet .vlucht-weg eraf en roept dan vluchtOp.vervaag, twee beeldjes
+     later (zie naOpbouw). Begon het op de klok, dan doofde de vliegende tekening
+     al uit terwijl de kaart zijn grote plaatje nog moest schilderen: één beeldje
+     stond er dan een bleke, verschoven tekening, en op een bureaublad een lege
+     doos. */
+  const vervaag = () => {
+    const e = kunst.animate([{ opacity: 1 }, { opacity: 0 }],
+      { duration: VLUCHT.kruis, easing: 'linear', fill: 'forwards' });
+    e.onfinish = vluchtKlaar;
+  };
+  const eind = hoog ? null : kunst.animate([{ opacity: 1 }, { opacity: 0 }],
     { duration: VLUCHT.kruis, delay: VLUCHT.duur, easing: 'linear', fill: 'forwards' });
 
   /* De grendel gaat al open zodra de béweging klaar is, en niet pas na de
@@ -1177,10 +1214,10 @@ function wereldVlucht(van, naar, bron, op, hoog) {
      tikt hoort gewoon antwoord te krijgen in plaats van een tik die verdwijnt.
      Veilig, want elke ingang begint met vluchtKlaar(): een tik in dat venster
      sluit deze vlucht eerst netjes af en begint dan pas aan de volgende. */
-  vluchtOp = { laag, doek, op, beweging,
-    timer: setTimeout(vluchtKlaar, VLUCHT.duur + VLUCHT.kruis + MOTION.vangnet),
+  vluchtOp = { laag, doek, op, beweging, vervaag: hoog ? vervaag : null,
+    timer: setTimeout(vluchtKlaar, VLUCHT.duur + VLUCHT.kruis + MOTION.vangnet + (hoog ? OPBOUW_RUIM : 0)),
     grendel: setTimeout(() => { overgangBezig = false; }, VLUCHT.duur) };
-  eind.onfinish = vluchtKlaar;
+  if (eind) eind.onfinish = vluchtKlaar;
   overgangBezig = true;
   return VLUCHT.duur;
 }
@@ -1368,9 +1405,13 @@ function enterLevel(lvl, stopEl) {
      wordt de opruimer nog steeds afgeroepen -- anders bleef overgangBezig op true
      staan en deed geen enkele halte ooit nog iets. De kaart ruimt zichzelf op,
      zie schermWeg; hier gaat het alleen over het scherm dat aankomt. */
-  const klaar = eindigOvergang(null, MOTION.totaal + HALTE_JA, () => {
+  /* Het vangnet rekent met de opbouw erbij (zie naOpbouw): op een trage tablet
+     begint de duik pas een paar honderd ms na HALTE_JA, en een vangnet dat dan al
+     afgaat zet het draaipunt van de zaal midden in de beweging terug. */
+  const klaar = eindigOvergang(null, MOTION.totaal + HALTE_JA + OPBOUW_RUIM, () => {
     spel.style.transformOrigin = '';       // .komt-op blijft tot de volgende show()
     spel.style.pointerEvents = '';
+    spel.style.willChange = kaart.style.willChange = '';
   });
   const punt = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
   tapRipple(punt.x, punt.y);               // 1 -- dezelfde tikreactie als elders in de app
@@ -1402,7 +1443,15 @@ function duikIn(lvl, kaart, spel, punt, klaar) {
      opmaken midden in de tik (6x geremd: zo'n 200 ms), en dat was het haperen
      aan het begin van de duik. */
   const oorsprong = oorsprongPct(kaart, punt);
-  schermWeg(kaart, true, punt);            // 2 -- de hele kaart, om het aangetikte punt
+  /* De kaart blijft staan zoals hij stond, bovenop (.wegvallend), terwijl de
+     zaal eronder gebouwd wordt. De beweging zelf begint pas na het opbouwen --
+     zie naOpbouw. Het draaipunt nu al: na .wegvallend kost meten een volle opmaak. */
+  kaart.style.transformOrigin = oorsprong;
+  kaart.classList.add('wegvallend');
+  /* En allebei alvast op een eigen laag: dat schilderen hoort ook bij het
+     opbouwen. Anders doet de browser het in het eerste beeldje van de beweging,
+     en dan verspringt die alsnog. */
+  kaart.style.willChange = spel.style.willChange = 'transform, opacity';
 
   /* 3 -- het spel staat er nú al, ook al zie je het nog niet.
      startLevel doet zijn volle werk in dezelfde beurt als de tik; de animatie
@@ -1413,16 +1462,32 @@ function duikIn(lvl, kaart, spel, punt, klaar) {
      wordt: zonder die vlag legt hij de stille wissel eroverheen (zie daar). */
   startLevel(lvl, true);
   spel.classList.add('komt-op');
-  navMee(true);                            // de balk van de kaart gaat mét de kaart weg
   spel.style.transformOrigin = oorsprong;
   spel.style.pointerEvents = 'none';       // niet op een bewegend doel kunnen tikken
-  // Alleen beweging, geen doorzichtigheid: de zaal staat er ondoorzichtig onder de
-  // kaart, en de kaart doft eroverheen weg. Zie de regel bij MOTION -- en let op de
-  // ondergrens van 1 die daar staat: kleiner beginnen laat de randen los.
-  const groei = spel.animate(
-    [{ transform: 'scale(1.06)' }, { transform: 'none' }],
-    { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
-  groei.onfinish = klaar;
+  // de balk van de kaart blijft ook nog even staan (show() zette hem net uit)
+  const nav = $('main-nav');
+  if (nav) { nav.style.display = 'flex'; nav.style.pointerEvents = 'none'; }
+  naOpbouw(() => {
+    /* Kwam er in die twee beeldjes iets tussen (een tabblad, de terugknop), dan
+       staat de zaal er al niet meer. De kaart staat dan nog als .wegvallend: die
+       hoort er gewoon af, zonder beweging. */
+    if (!spel.classList.contains('active')) {
+      kaart.classList.remove('wegvallend');
+      kaart.style.transformOrigin = '';
+      navVolgtScherm();
+      klaar();
+      return;
+    }
+    schermWeg(kaart, true);                // 2 -- de hele kaart, om het aangetikte punt
+    navMee(true);                          // de balk van de kaart gaat mét de kaart weg
+    // Alleen beweging, geen doorzichtigheid: de zaal staat er ondoorzichtig onder de
+    // kaart, en de kaart doft eroverheen weg. Zie de regel bij MOTION -- en let op de
+    // ondergrens van 1 die daar staat: kleiner beginnen laat de randen los.
+    const groei = spel.animate(
+      [{ transform: 'scale(1.06)' }, { transform: 'none' }],
+      { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
+    groei.onfinish = klaar;
+  });
 }
 /* Zaal -> kaart: precies de omgekeerde zin. De kaart komt licht ingezoomd op de
    halte waar de show speelde binnen en zakt daar vandaan naar zijn gewone maat,

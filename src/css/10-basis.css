@@ -239,6 +239,36 @@
      schermwissel. Alles wat daarna komt fadet gewoon; alleen de eerste aanblik niet. */
   body.start .screen.active { animation: none; }
 
+  /* HET EERSTE SCHERM STAAT ER IN ÉÉN KEER, OF NOG NIET.
+
+     body.start hierboven haalde de fade weg, maar niet het probleem eronder: de
+     browser schildert de opmaak al terwijl hij het grote scriptblok onderaan nog
+     leest, en tot dat gedraaid heeft staat er een half scherm -- het lichtere
+     verloop van <body>, het tandwiel en de "+"-tegel, maar nog geen sterrentegels,
+     geen avond en geen tekening. Nagemeten bij een koude start: één à twee
+     beeldjes op een snelle laptop, ruim een tiende seconde op een 4x geremde
+     processor, en op een oude tablet meer.
+
+     Dus ligt er tijdens het opbouwen een deken in de kleur van de nacht over alles
+     heen. <html class="opbouw"> staat in de opmaak; opstartTonen (80-start.js) haalt
+     hem eraf zodra de tegels er staan en de tekening uitgepakt is, met een plafond,
+     en dan zakt de deken in een kort moment weg. Wat je ziet is donker, en dan het
+     hele startscherm -- nooit iets ertussenin.
+
+     Het vangnet: valt het script om, dan gaat de deken na 2,5 s vanzelf weg (de
+     animatie hieronder), zodat een fout nooit een zwart scherm wordt. Een
+     ::after op <body> omdat geen enkel scherm daar iets mee doet, en omdat hij zo
+     boven alles ligt zonder dat er een element in de opmaak bij moet. */
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: 2147483000; pointer-events: none;
+    background: rgb(var(--nacht-1-rgb));
+    opacity: 0; visibility: hidden;
+    transition: opacity var(--t-snel) ease, visibility 0s linear var(--t-snel);
+  }
+  html.opbouw body::after { opacity: 1; visibility: visible; transition: none;
+    animation: opbouwVangnet 0s 2.5s forwards; }
+  @keyframes opbouwVangnet { to { opacity: 0; visibility: hidden; } }
+
   h1.title {
     font-size: clamp(28px, 5.4vw, 46px);
     font-weight: 700; letter-spacing: .5px;

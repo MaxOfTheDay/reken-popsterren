@@ -187,6 +187,35 @@ function zetSchermkunst() {
   });
 }
 
+/* Het eerste scherm tonen, in één keer. Zie html.opbouw in 10-basis.css: tot
+   hier lag er een deken in de kleur van de nacht over alles, zodat niemand het
+   halve scherm ziet dat de browser al schildert terwijl hij dit scriptblok nog
+   leest.
+
+   De tegels staan er nu (renderProfiles). Wacht alleen nog op de tekening van de
+   sterrenkeuze -- die is al vanuit de <head> opgevraagd -- maar nooit langer dan
+   OPSTART_WACHT: een trage schijf of een wegvallend net mag het spel niet
+   ophouden. Zonder tekening staat het scherm er dan zonder, en komt die erbij
+   zodra hij er is, zoals elk ander scherm met een tekening.
+
+   decode() en niet onload: een geladen plaatje is nog niet uitgepakt, en dat
+   uitpakken is precies wat de browser anders in het eerste beeldje doet. */
+const OPSTART_WACHT = 250;
+function opstartTonen(daarna) {
+  let gedaan = false;
+  const toon = () => {
+    if (gedaan) return;
+    gedaan = true;
+    document.documentElement.classList.remove('opbouw');
+    if (daarna) daarna();
+  };
+  setTimeout(toon, OPSTART_WACHT);
+  const b = new Image();
+  b.src = 'assets/bg/landing.webp';
+  if (b.decode) b.decode().then(toon, toon);
+  else toon();
+}
+
 /* ================= Start ================= */
 load();
 zetSchermkunst();
@@ -196,8 +225,9 @@ renderProfiles();
 // ergens anders heen, dan zet show() hem hieronder net zo goed weer stil.
 landingLeeft();
 // Alleen hier, bij het opstarten -- niet bij elke terugkeer naar dit scherm. Zie
-// "= Het spelogo komt binnen".
-logoIntro();
+// "= Het spelogo komt binnen". Pas als de deken weg is: anders speelt het begin
+// van het logo onder de deken af.
+opstartTonen(logoIntro);
 syncBackGuard();
 // geopend via een ophaallink van een ander toestel? (zie = Overzetten)
 ophaalLinkLees();

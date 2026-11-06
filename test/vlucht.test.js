@@ -397,7 +397,13 @@ const STOF_WEK = 900;
     await page.waitForTimeout(500);
     const uit = await page.evaluate(() => new Promise(res => {
       openReis();
-      requestAnimationFrame(() => {
+      /* De vlucht begint niet meer in het eerstvolgende beeldje maar ná het
+         opbouwen van Werelden (zie naOpbouw): wacht tot de laag er is. */
+      let n = 0;
+      const wacht = () => document.querySelector('.wereld-vlucht') || ++n > 12
+        ? meet() : requestAnimationFrame(wacht);
+      requestAnimationFrame(wacht);
+      function meet() {
         const laag = document.querySelector('.wereld-vlucht');
         if (!laag) return res(null);
         const kunst = laag.querySelector('.wereld-vlucht-art');
@@ -418,7 +424,7 @@ const STOF_WEK = 900;
               knipt: getComputedStyle(laag).overflow,
               clip: getComputedStyle(laag).clipPath,
               vermengd: samen.filter(ks => ks.length > 1) });
-      });
+      }
     }));
     check(uit && uit.ergst < 0.5, 'J · de tekening vervormt onderweg niet',
       uit ? uit.ergst + '% afwijking' : 'geen vluchtlaag');
@@ -484,7 +490,16 @@ const STOF_WEK = 900;
     });
 
     const tel = heen => new Promise(res => {
+      /* Een scherm dat nog ongewijzigd als .wegvallend bovenop ligt (de wachttijd
+         van naOpbouw: het nieuwe scherm wordt eronder opgebouwd) dekt alles van het
+         scherm eronder af. Pas met .vlucht-weg wordt het doorzichtig. */
+      const dekt = el => {
+        const scherm = el.closest('.screen');
+        return !!scherm && [...document.querySelectorAll('.screen.wegvallend:not(.vlucht-weg)')]
+          .some(w => w !== scherm && getComputedStyle(w).zIndex > (getComputedStyle(scherm).zIndex | 0));
+      };
       const zichtbaar = el => {
+        if (dekt(el)) return false;
         let n = el;
         while (n && n !== document.body) {
           const st = getComputedStyle(n);
@@ -515,13 +530,16 @@ const STOF_WEK = 900;
        landing weer omlaag. Opgemeten toen dat zo was: 2,1px omhoog, 2,5px omlaag. */
     const gezet = await page.evaluate(() => new Promise(res => {
       openReis();
-      requestAnimationFrame(() => {
+      let n = 0;   // de kopie komt pas na het opbouwen (zie naOpbouw)
+      const wacht = () => {
         const kopie = document.querySelector('.globe-vlucht');
+        if (!kopie && ++n <= 12) return requestAnimationFrame(wacht);
         const bron = document.querySelector('#screen-map .wp-cta-ico');
         if (!kopie || !bron) return res(null);
         const a = getComputedStyle(kopie), b = getComputedStyle(bron);
         res({ kopie: [a.fontSize, a.lineHeight], bron: [b.fontSize, b.lineHeight] });
-      });
+      };
+      requestAnimationFrame(wacht);
     }));
     check(gezet && gezet.kopie.join() === gezet.bron.join(),
       'K · de vliegende kopie wordt gezet als de globe die hij vervangt',
