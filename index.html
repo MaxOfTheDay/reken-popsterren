@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="nl" class="opbouw">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
@@ -10,6 +10,11 @@
      regel maakt Safari daar een schermafdruk van de pagina van. Zelfde bestand,
      want het is hetzelfde icoon -- iOS schaalt het zelf naar 180. -->
 <link rel="apple-touch-icon" href="icon-192.png">
+<!-- De tekening van de sterrenkeuze, zo vroeg mogelijk opgevraagd: hij laadt dan
+     al terwijl het grote scriptblok onderaan nog gelezen wordt, en staat klaar
+     als het eerste scherm opengaat (zie html.opbouw in het stijlblad). Een
+     plaatje wordt zonder CORS opgehaald, dus dit werkt ook vanaf file://. -->
+<link rel="preload" as="image" href="assets/bg/landing.webp">
 <meta name="theme-color" content="#33084c">
 <meta name="mobile-web-app-capable" content="yes">
 <!-- Wat een deelkaartje laat zien als iemand de link doorstuurt (WhatsApp, mail,
@@ -1426,6 +1431,36 @@
 
 
   body.start .screen.active { animation: none; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: 2147483000; pointer-events: none;
+    background: rgb(var(--nacht-1-rgb));
+    opacity: 0; visibility: hidden;
+    transition: opacity var(--t-snel) ease, visibility 0s linear var(--t-snel);
+  }
+  html.opbouw body::after { opacity: 1; visibility: visible; transition: none;
+    animation: opbouwVangnet 0s 2.5s forwards; }
+  @keyframes opbouwVangnet { to { opacity: 0; visibility: hidden; } }
 
   h1.title {
     font-size: clamp(28px, 5.4vw, 46px);
@@ -18996,6 +19031,31 @@ function wisselSchuif(el, a) {
   a.addEventListener('cancel', klaar);
 }
 function wisselSchuifUit(el) { el.style.removeProperty('--schuif'); }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const OPBOUW_RUIM = 700;
+function naOpbouw(doe) {
+  requestAnimationFrame(() => requestAnimationFrame(doe));
+}
 function schermWeg(el, naarBinnen, punt) {
   if (!el || !el.animate || motionOff()) return;
   schermAnimsStop(el);
@@ -19465,7 +19525,19 @@ function wereldVlucht(van, naar, bron, op, hoog) {
 
 
 
-  const eind = kunst.animate([{ opacity: 1 }, { opacity: 0 }],
+
+
+
+
+
+
+
+  const vervaag = () => {
+    const e = kunst.animate([{ opacity: 1 }, { opacity: 0 }],
+      { duration: VLUCHT.kruis, easing: 'linear', fill: 'forwards' });
+    e.onfinish = vluchtKlaar;
+  };
+  const eind = hoog ? null : kunst.animate([{ opacity: 1 }, { opacity: 0 }],
     { duration: VLUCHT.kruis, delay: VLUCHT.duur, easing: 'linear', fill: 'forwards' });
 
 
@@ -19473,10 +19545,10 @@ function wereldVlucht(van, naar, bron, op, hoog) {
 
 
 
-  vluchtOp = { laag, doek, op, beweging,
-    timer: setTimeout(vluchtKlaar, VLUCHT.duur + VLUCHT.kruis + MOTION.vangnet),
+  vluchtOp = { laag, doek, op, beweging, vervaag: hoog ? vervaag : null,
+    timer: setTimeout(vluchtKlaar, VLUCHT.duur + VLUCHT.kruis + MOTION.vangnet + (hoog ? OPBOUW_RUIM : 0)),
     grendel: setTimeout(() => { overgangBezig = false; }, VLUCHT.duur) };
-  eind.onfinish = vluchtKlaar;
+  if (eind) eind.onfinish = vluchtKlaar;
   overgangBezig = true;
   return VLUCHT.duur;
 }
@@ -19664,9 +19736,13 @@ function enterLevel(lvl, stopEl) {
 
 
 
-  const klaar = eindigOvergang(null, MOTION.totaal + HALTE_JA, () => {
+
+
+
+  const klaar = eindigOvergang(null, MOTION.totaal + HALTE_JA + OPBOUW_RUIM, () => {
     spel.style.transformOrigin = '';
     spel.style.pointerEvents = '';
+    spel.style.willChange = kaart.style.willChange = '';
   });
   const punt = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
   tapRipple(punt.x, punt.y);
@@ -19698,7 +19774,15 @@ function duikIn(lvl, kaart, spel, punt, klaar) {
 
 
   const oorsprong = oorsprongPct(kaart, punt);
-  schermWeg(kaart, true, punt);
+
+
+
+  kaart.style.transformOrigin = oorsprong;
+  kaart.classList.add('wegvallend');
+
+
+
+  kaart.style.willChange = spel.style.willChange = 'transform, opacity';
 
 
 
@@ -19709,16 +19793,32 @@ function duikIn(lvl, kaart, spel, punt, klaar) {
 
   startLevel(lvl, true);
   spel.classList.add('komt-op');
-  navMee(true);
   spel.style.transformOrigin = oorsprong;
   spel.style.pointerEvents = 'none';
 
+  const nav = $('main-nav');
+  if (nav) { nav.style.display = 'flex'; nav.style.pointerEvents = 'none'; }
+  naOpbouw(() => {
 
 
-  const groei = spel.animate(
-    [{ transform: 'scale(1.06)' }, { transform: 'none' }],
-    { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
-  groei.onfinish = klaar;
+
+    if (!spel.classList.contains('active')) {
+      kaart.classList.remove('wegvallend');
+      kaart.style.transformOrigin = '';
+      navVolgtScherm();
+      klaar();
+      return;
+    }
+    schermWeg(kaart, true);
+    navMee(true);
+
+
+
+    const groei = spel.animate(
+      [{ transform: 'scale(1.06)' }, { transform: 'none' }],
+      { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
+    groei.onfinish = klaar;
+  });
 }
 
 
@@ -21170,10 +21270,16 @@ function openReis(alGetikt) {
 
 
   if (!vlieg) {
-    if (!stil && vorige && vorige !== reis) schermWeg(vorige, false);
-    requestAnimationFrame(() => {
+
+    const wijkt = !stil && vorige && vorige !== reis;
+    if (wijkt) vorige.classList.add('wegvallend');
+    (stil ? requestAnimationFrame : naOpbouw)(() => {
       reisFocus(reisVanuit);
       if (stil) { vluchtDoof(reis.querySelector('.reis-pad'), true, 140); return; }
+      if (wijkt) {
+        if (!reis.classList.contains('active')) { vorige.classList.remove('wegvallend'); return; }
+        schermWeg(vorige, false);
+      }
       const hier = reis.querySelector(`.reis-halte[data-w="${reisVanuit}"]`)
         || reis.querySelector('.reis-halte.nu');
       const r = hier && hier.getBoundingClientRect();
@@ -21194,12 +21300,10 @@ function openReis(alGetikt) {
 
 
   overgangBezig = true;
-  kaart.classList.add('wegvallend', 'vlucht-weg');
 
 
 
-
-  kaart.classList.remove('ster-bij-kop');
+  kaart.classList.add('wegvallend');
 
 
 
@@ -21207,7 +21311,19 @@ function openReis(alGetikt) {
 
   if (schuif && $('tour-map')) $('tour-map').scrollTop = schuif;
 
-  requestAnimationFrame(() => {
+  naOpbouw(() => {
+
+    if (!reis.classList.contains('active')) {
+      overgangBezig = false;
+      kaart.classList.remove('wegvallend');
+      return;
+    }
+    kaart.classList.add('vlucht-weg');
+
+
+
+
+    kaart.classList.remove('ster-bij-kop');
     reisFocus(reisVanuit);
     const doel = reis.querySelector(`.reis-halte[data-w="${reisVanuit}"]`)
       || reis.querySelector('.reis-halte.nu');
@@ -21449,14 +21565,22 @@ function reisNaarWereld(idx, el, stil, alGetikt) {
   const schuif = reis.scrollTop;
 
   goMap();
-  kaart.classList.add('vlucht-weg', 'vlucht-boven');
   reis.classList.add('wegvallend');
   reis.scrollTop = schuif;
 
 
 
 
-  requestAnimationFrame(() => {
+
+
+  naOpbouw(() => {
+    if (!kaart.classList.contains('active')) {
+      overgangBezig = false;
+      reis.classList.remove('wegvallend');
+      el.classList.remove('vlucht-doel');
+      return;
+    }
+    kaart.classList.add('vlucht-weg', 'vlucht-boven');
     const naar = kaartVlak();
     const lokaal = [$('tour-map'), $('mem-fab'), $('world-back'),
                     kaart.querySelector('.map-id-btn'), kaart.querySelector('.world-pick')];
@@ -21505,6 +21629,10 @@ function reisNaarWereld(idx, el, stil, alGetikt) {
     naVluchtLanding(() => {
       kaart.classList.remove('vlucht-weg');
       reis.classList.remove('wegvallend');
+
+
+      const v = vluchtOp;
+      naOpbouw(() => { if (vluchtOp === v && v.vervaag) v.vervaag(); });
     });
   });
 }
@@ -27101,7 +27229,7 @@ function renderQuestion() {
 
   showBalk(G.idx);
   drawQuestion();
-  vraagKomtIn($('question-card'), G.idx === 0);
+  vraagKomtIn($('question-text'), G.idx === 0);
   kijkStraks();
 
   const area = $('answer-area');
@@ -27503,6 +27631,13 @@ function antwoordMeten(area) {
 
 
 
+
+
+
+
+
+
+
 const VRAAG_IN = 140;
 let vraagInAnim = null;
 function vraagKomtIn(kaart, metScherm) {
@@ -27514,8 +27649,6 @@ function vraagKomtIn(kaart, metScherm) {
     [metScherm ? rust : { opacity: 0, transform: 'translateY(7px)' }, rust],
     { duration: VRAAG_IN, easing: MOTION.uit, fill: 'both' });
 }
-
-
 
 
 
@@ -33234,6 +33367,35 @@ function zetSchermkunst() {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+const OPSTART_WACHT = 250;
+function opstartTonen(daarna) {
+  let gedaan = false;
+  const toon = () => {
+    if (gedaan) return;
+    gedaan = true;
+    document.documentElement.classList.remove('opbouw');
+    if (daarna) daarna();
+  };
+  setTimeout(toon, OPSTART_WACHT);
+  const b = new Image();
+  b.src = 'assets/bg/landing.webp';
+  if (b.decode) b.decode().then(toon, toon);
+  else toon();
+}
+
+
 load();
 zetSchermkunst();
 renderProfiles();
@@ -33243,7 +33405,8 @@ renderProfiles();
 landingLeeft();
 
 
-logoIntro();
+
+opstartTonen(logoIntro);
 syncBackGuard();
 
 onderVrijWaarnemen();

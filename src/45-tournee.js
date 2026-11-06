@@ -610,10 +610,16 @@ function openReis(alGetikt) {
      gevolg. De reis komt kort op in plaats van eruit te klappen -- opacity is
      geen beweging, en zonder iets is een schermwissel hier een harde knip. */
   if (!vlieg) {
-    if (!stil && vorige && vorige !== reis) schermWeg(vorige, false);
-    requestAnimationFrame(() => {
+    // het vorige scherm blijft staan tot de reis gebouwd is -- zie naOpbouw
+    const wijkt = !stil && vorige && vorige !== reis;
+    if (wijkt) vorige.classList.add('wegvallend');
+    (stil ? requestAnimationFrame : naOpbouw)(() => {
       reisFocus(reisVanuit);
       if (stil) { vluchtDoof(reis.querySelector('.reis-pad'), true, 140); return; }
+      if (wijkt) {
+        if (!reis.classList.contains('active')) { vorige.classList.remove('wegvallend'); return; }
+        schermWeg(vorige, false);
+      }
       const hier = reis.querySelector(`.reis-halte[data-w="${reisVanuit}"]`)
         || reis.querySelector('.reis-halte.nu');
       const r = hier && hier.getBoundingClientRect();
@@ -634,12 +640,10 @@ function openReis(alGetikt) {
      eroverheen weg. .wegvallend haalt hem uit de kolom en legt hem bovenop (zie
      schermWeg), zodat de reis er meteen op volle maat onder staat. */
   overgangBezig = true;
-  kaart.classList.add('wegvallend', 'vlucht-weg');
-  /* De kop van de kaart dimt als de ster ertegenaan staat (zie .ster-bij-kop).
-     Tijdens een vlucht hoort dat niet: de diamantenpil moet stil blijven staan en
-     de reis heeft er een identieke onder liggen. Hij komt vanzelf terug zodra de
-     volgende kaart zichzelf opmeet. */
-  kaart.classList.remove('ster-bij-kop');
+  /* Eerst alleen .wegvallend: de kaart blijft precies staan zoals hij stond
+     terwijl Werelden eronder gebouwd wordt. Zijn tekening gaat pas naar de
+     vluchtlaag (.vlucht-weg) als de vlucht echt begint -- zie naOpbouw. */
+  kaart.classList.add('wegvallend');
   /* Alleen als er iets terug te zetten valt. Een scrollTop schrijven dwingt hier de
      volledige opmaak af van de reis die er net in gezet is (renderReis + show),
      en dan nog eens in het eerste beeldje: gemeten ~280 ms op een 6x vertraagde
@@ -647,7 +651,19 @@ function openReis(alGetikt) {
      niet (schuif is 0), en 0 is precies waar display:none hem al op zette. */
   if (schuif && $('tour-map')) $('tour-map').scrollTop = schuif;
 
-  requestAnimationFrame(() => {
+  naOpbouw(() => {
+    // kwam er in de wachttijd iets anders tussen, dan valt er niets meer te vliegen
+    if (!reis.classList.contains('active')) {
+      overgangBezig = false;
+      kaart.classList.remove('wegvallend');
+      return;
+    }
+    kaart.classList.add('vlucht-weg');
+    /* De kop van de kaart dimt als de ster ertegenaan staat (zie .ster-bij-kop).
+       Tijdens een vlucht hoort dat niet: de diamantenpil moet stil blijven staan en
+       de reis heeft er een identieke onder liggen. Hij komt vanzelf terug zodra de
+       volgende kaart zichzelf opmeet. */
+    kaart.classList.remove('ster-bij-kop');
     reisFocus(reisVanuit);        // pas ná de opmaak: hier staat de baan er en is hij op te meten
     const doel = reis.querySelector(`.reis-halte[data-w="${reisVanuit}"]`)
       || reis.querySelector('.reis-halte.nu');
@@ -889,14 +905,22 @@ function reisNaarWereld(idx, el, stil, alGetikt) {
   const schuif = reis.scrollTop;             // display:none zet de schuifstand terug op nul
 
   goMap();                                   // de kaart staat er nú al, op reisDoel
-  kaart.classList.add('vlucht-weg', 'vlucht-boven');
-  reis.classList.add('wegvallend');
+  reis.classList.add('wegvallend');          // en Werelden blijft er nog ongewijzigd bovenop
   reis.scrollTop = schuif;
 
-  /* Eén beeldje later: renderTourMap heeft zijn eigen rAF dan gehad (daar wordt de
-     kaart op een tablet nog op de juiste halte geschoven), dus nu pas valt er te
-     meten waar de tekening straks ligt. */
-  requestAnimationFrame(() => {
+  /* Pas na het opbouwen van de kaart (zie naOpbouw): renderTourMap heeft zijn
+     eigen rAF dan ook gehad (daar wordt de kaart op een tablet nog op de juiste
+     halte geschoven), dus nu valt er te meten waar de tekening straks ligt. En
+     pas nu gaat de tekening van de kaart naar de vluchtlaag (.vlucht-weg) -- tot
+     hier stond Werelden er gewoon, stil, bovenop. */
+  naOpbouw(() => {
+    if (!kaart.classList.contains('active')) {
+      overgangBezig = false;
+      reis.classList.remove('wegvallend');
+      el.classList.remove('vlucht-doel');
+      return;
+    }
+    kaart.classList.add('vlucht-weg', 'vlucht-boven');
     const naar = kaartVlak();
     const lokaal = [$('tour-map'), $('mem-fab'), $('world-back'),
                     kaart.querySelector('.map-id-btn'), kaart.querySelector('.world-pick')];
@@ -945,6 +969,10 @@ function reisNaarWereld(idx, el, stil, alGetikt) {
     naVluchtLanding(() => {
       kaart.classList.remove('vlucht-weg');
       reis.classList.remove('wegvallend');
+      // en pas als de kaart zijn tekening weer geschilderd heeft, dooft de vlucht
+      // erop weg -- zie vervaag in wereldVlucht
+      const v = vluchtOp;
+      naOpbouw(() => { if (vluchtOp === v && v.vervaag) v.vervaag(); });
     });
   });
 }

@@ -194,7 +194,7 @@ function renderQuestion() {
   // voortgang
   showBalk(G.idx);
   drawQuestion();
-  vraagKomtIn($('question-card'), G.idx === 0);
+  vraagKomtIn($('question-text'), G.idx === 0);
   kijkStraks();
   // antwoorden
   const area = $('answer-area');
@@ -575,7 +575,14 @@ function antwoordMeten(area) {
 /* Een nieuwe vraag komt binnen in plaats van te verspringen: 140ms, alleen
    opacity + een duwtje omhoog. Dat is het "en nu de volgende" van het goede
    antwoord dat er net was -- geen overgang, een aankondiging. Alleen in een
-   zaal (.venue-aan); zonder zaal staat de kaart er gewoon.
+   zaal (.venue-aan); zonder zaal staat de som er gewoon.
+
+   ALLEEN DE SOM, NIET DE KAART. Hier kwam eerst de hele witte kaart van nul op,
+   terwijl de knoppen eronder in hetzelfde beeldje al de nieuwe vraag toonden:
+   één beeldje stond er dan géén kaart, en daarna een grijze die wit werd. Dat
+   leest als een knipper, tien keer per show, en geen "hier is de volgende".
+   De kaart is het vaste meubel; wat erop staat is wat er nieuw is. Geef deze
+   functie dus #question-text, niet #question-card.
 
    Met een eigen Animation en niet meer met een klasse die eraf en er weer op
    gaat. Die klasse herstartte via "void kaart.offsetWidth", en dat dwingt de
@@ -585,7 +592,7 @@ function antwoordMeten(area) {
    de hele overgang. Hier wordt niets opgevraagd; de vorige animatie stoppen we
    omdat we hem zelf bijhouden (net als schermAnim).
 
-   fill 'both', net als de CSS-animatie hiervoor: de kaart blijft na afloop op
+   fill 'both', net als de CSS-animatie hiervoor: de som blijft na afloop op
    zijn eindstand staan, en daarmee op een eigen laag. Met 'backwards' viel hij
    daar na 140ms van af, en dan tekent de browser de som net anders -- genoeg om
    het getal dat erin vliegt (somVult) af en toe ruim een pixel naast het vakje
@@ -609,12 +616,10 @@ function vraagKomtIn(kaart, metScherm) {
 }
 /* De kaart schudt kort "nee" bij een misser.
 
-   Dit was een CSS-klasse (.wobble), en die deed niets meer: vraagKomtIn laat
-   hierboven met opzet een animatie met fill 'both' op de kaart staan, en een
-   animatie uit het script gaat altijd vóór een CSS-animatie. De kaart bleef dus
-   op transform none staan terwijl de klasse er netjes op zat. Nu is het schudje
-   zelf ook een animatie uit het script, en omdat hij later begint dan de opkomst,
-   wint hij -- en daarna valt de kaart terug op diezelfde rusttand. */
+   Een animatie uit het script en geen CSS-klasse: een animatie uit het script
+   gaat altijd vóór een CSS-animatie, en zo kan geen latere animatie op de kaart
+   het schudje ooit stil wegdrukken (dat gebeurde toen vraagKomtIn nog de hele
+   kaart liet opkomen, met fill 'both'). */
 const WIEBEL = 420;
 function kaartWiebelt(kaart) {
   if (!kaart || !kaart.animate || motionOff()) return;
