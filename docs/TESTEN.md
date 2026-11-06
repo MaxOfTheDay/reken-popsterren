@@ -58,6 +58,7 @@ npm run test:rondgang
 npm run test:voortgang
 npm run test:reis
 npm run test:vlucht     # de zoom tussen de wereldkaart en Werelden
+npm run test:flits      # niets half zien: beginscherm, somkaart, eerst bouwen dan bewegen
 npm run test:beloning
 npm run test:studio      # de wereldstudio (?debug&mapedit)
 npm run test:onderrand   # de zwevende bediening onderaan blijft staan
@@ -586,6 +587,21 @@ eronder ligt:
 - **wie geen beweging wil krijgt er geen** (`prefers-reduced-motion`) en komt wél
   op precies dezelfde plek uit;
 - en **er verschuift geen enkele ster**: uitzoomen is kijken.
+
+### `test/flits.test.js` — wat een kind nooit half mag zien
+
+Een browsersuite die per beeldje (`requestAnimationFrame`, in de pagina zelf)
+meet wat er in beeld staat, voor drie fouten die niets breken maar één beeldje
+lang iets laten zien wat er niet hoort:
+
+- **het beginscherm staat er in één keer**: de pagina begint onder de nachtlaag
+  (`html.opbouw`), en die gaat pas weg als de sterrentegels er staan;
+- **de kaart van de som knippert niet** tussen twee vragen: alleen de som
+  vervaagt, de kaart (en alles erboven) blijft boven 90 % zichtbaar;
+- **eerst bouwen, dan bewegen**: in het eerste beeldje waarin de show actief is
+  staat de som er al en beweegt er nog niets (`naOpbouw`). Headless bouwt te snel
+  om het halve-overgang-beeldje van een tablet zelf te zien, dus dit meet de vorm:
+  wie weer in dezelfde taak bouwt als hij beweegt, valt hier om.
 
 ### `test/beeldverschil.js` — welke schermen zien er anders uit
 
