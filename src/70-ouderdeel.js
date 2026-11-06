@@ -1467,7 +1467,7 @@ function beheerEmptyHtml() {
      (vanaf file://) blijft het de ene volle knop. */
   const terug = overzetMag()
     ? `<div class="bb-tegels">
-        <button class="bb-tegel" id="oz-code" type="button">${ozIco('code')}Code invullen</button>
+        <button class="bb-tegel" id="oz-code" type="button">${ozIco('code')}Sterren ophalen</button>
         <button class="bb-tegel" id="set-import" type="button">${ozIco('terug')}Back-up terugzetten</button>
       </div>
       <div class="data-btns"><button class="btn small paper" id="set-newstar">➕ Nieuwe ster maken</button></div>`
@@ -2231,7 +2231,7 @@ function importData(file) {
    Achter de rij "Back-up ›" op het overzicht van Voor ouders. Bovenaan wanneer
    de laatste was, daaronder vier tegels in twee paren:
      Bestand        Maken · Terugzetten        (exportData / importData)
-     Ander toestel  Overzetten · Code invullen (= Overzetten, hieronder)
+     Ander toestel  Overzetten · Ophalen (= Overzetten, hieronder)
    Het tweede paar staat er alleen als overzetten kan (overzetMag). */
 function backupBladStandHtml() {
   const oud = backupOud();
@@ -2248,7 +2248,7 @@ function openBackupBlad() {
       <div class="bb-kop">Bestand</div>
       <div class="bb-tegels">${tegel('bb-maak', ozIco('maak'), 'Maken')}${tegel('bb-terug', ozIco('terug'), 'Terugzetten')}</div>`
     + (overzetMag() ? `<div class="bb-kop">Ander toestel</div>
-      <div class="bb-tegels">${tegel('bb-zet', ozIco('zet'), 'Overzetten')}${tegel('bb-code', ozIco('code'), 'Code invullen')}</div>` : '')
+      <div class="bb-tegels">${tegel('bb-zet', ozIco('zet'), 'Overzetten')}${tegel('bb-code', ozIco('code'), 'Ophalen')}</div>` : '')
     + '</div>';
   $('confirm-actions').innerHTML = '<button class="btn small paper" id="bb-dicht">Sluiten</button>';
   $('bb-dicht').onclick = closeConfirmModal;
@@ -2264,13 +2264,14 @@ function openBackupBlad() {
 }
 
 /* ================= Overzetten ===============================================
-   Je sterren naar een ander toestel, met een code van zes cijfers. Voor de
+   Je sterren naar een ander toestel, met een link (of de code van zes cijfers erin). Voor de
    iPhone vooral: de app op het beginscherm krijgt een eigen opslag, los van
    Safari, en begint dus leeg -- ook als er in Safari al weken gespeeld is. En
    voor een nieuwe telefoon of tablet.
 
-     toestel A  "Overzetten"     -> de hele save naar de ontvanger, een code terug
-     toestel B  "Code invullen"  -> de save terug, de ontvanger gooit hem weg
+     toestel A  "Overzetten"     -> de hele save naar de ontvanger, een code terug,
+                                    gedeeld als link (Deel link)
+     toestel B  de link, of "Ophalen" -> de save terug, de ontvanger gooit hem weg
                 "Zet op dit toestel" / "Vervangen" -> backupToepassen
 
    Het is een kopie, geen verhuizing: A houdt zijn sterren. Het is ook dezelfde
@@ -2303,6 +2304,7 @@ function ozIco(naam) {
     code: '<rect x="3" y="6" width="18" height="12" rx="3"/><path d="M7 12h.01M10.5 12h.01M14 12h.01M17.5 12h.01"/>',
     maak: '<path d="M12 3v11M7.5 9.5 12 14l4.5-4.5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
     terug: '<path d="M12 14V3M7.5 7.5 12 3l4.5 4.5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
+    plak: '<rect x="7" y="4" width="10" height="4" rx="1.5"/><path d="M7 6H5.5A1.5 1.5 0 0 0 4 7.5v12A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5v-12A1.5 1.5 0 0 0 18.5 6H17"/>',
   }[naam]);
 }
 const OVERZET_POLL = 3000;   // hoe vaak het toestel met de code vraagt of hij al opgehaald is
@@ -2349,6 +2351,48 @@ const ozOpen = nr => { const b = $('oz-blad'); return !!b && b.dataset.nr === St
 let ozNr = 0;   // elk blad een eigen nummer: een antwoord voor een gesloten blad doet niets
 
 /* ---- Toestel A: de code tonen ---- */
+/* ---- Toestel A: een ophaallink maken ----
+   Wat er weggaat is een link (ozLinkVan): wie hem op het andere toestel aantikt,
+   opent het spel met de code al ingevuld (ophaalLinkLees). De link gaat met de
+   knop "Deel link" langs het deelvenster van de telefoon (WhatsApp, Berichten,
+   AirDrop...), en staat bovendien al op het klembord. De zes cijfers blijven
+   eronder staan, klein: voor wie hem toch overtypt.
+
+   KOPIËREN IN DEZELFDE TIK. Safari kopieert alleen tijdens een tik, en de code
+   komt pas een halve tel later van de ontvanger. kopieerBelofte geeft het
+   klembord daarom meteen een belofte (ClipboardItem), die vult als de code er
+   is. Lukt dat niet, dan staat er gewoon niets van "Gekopieerd". */
+function ozMaakLink() {
+  return ozVraag('zet', JSON.stringify(db)).then(r => {
+    if (r.status !== 201 || !r.data || !/^\d{6}$/.test(r.data.code)) throw r.status;
+    return r.data;
+  }, () => { throw 0; });
+}
+// De link naar dit spel met de code erachter. Een hekje, geen ?: dat gaat nooit
+// naar een server, en ophaalLinkLees haalt het meteen weer uit de adresbalk.
+function ozLinkVan(code) { return location.href.split('#')[0] + '#ophalen=' + code; }
+// Zes cijfers uit wat er geplakt of gedeeld is: een link, "482 913", of een hele zin.
+function codeUit(tekst) {
+  const t = String(tekst || '');
+  const m = /ophalen=(\d{6})/.exec(t) || /(?:^|\D)(\d{3})\s?(\d{3})(?!\d)/.exec(t);
+  return !m ? null : m[2] ? m[1] + m[2] : m[1];
+}
+function kopieer(tekst) {
+  try { return navigator.clipboard.writeText(tekst).then(() => true, () => false); }
+  catch (e) { return Promise.resolve(false); }
+}
+// Kopieert wat de belofte oplevert, maar vraagt het klembord al in deze tik.
+// Geeft true als het gelukt is; gooit als de belofte zelf gooit.
+function kopieerBelofte(belofte) {
+  const cb = navigator.clipboard;
+  if (cb && cb.write && typeof ClipboardItem === 'function') {
+    try {
+      const item = new ClipboardItem({ 'text/plain': belofte.then(t => new Blob([t], { type: 'text/plain' })) });
+      return cb.write([item]).then(() => true, () => belofte.then(kopieer));
+    } catch (e) { /* een oude browser: hieronder */ }
+  }
+  return belofte.then(kopieer);
+}
 function openOverzetBlad() {
   sndClick();
   const nr = ++ozNr;
@@ -2358,13 +2402,11 @@ function openOverzetBlad() {
     '<button class="btn small paper" id="oz-dicht">Sluiten</button>');
   $('oz-blad').dataset.nr = nr;
   $('oz-dicht').onclick = closeConfirmModal;
-  ozVraag('zet', JSON.stringify(db)).then(
-    r => {
-      if (!ozOpen(nr)) return;
-      if (r.status !== 201 || !r.data || !/^\d{6}$/.test(r.data.code)) { ozZetFout(nr, r.status); return; }
-      ozToonCode(nr, r.data);
-    },
-    () => { if (ozOpen(nr)) ozZetFout(nr, 0); });
+  const link = ozMaakLink();
+  const gekopieerd = kopieerBelofte(link.then(d => ozLinkVan(d.code))).catch(() => false);
+  link.then(
+    d => { if (ozOpen(nr)) ozToonCode(nr, d, gekopieerd); },
+    st => { if (ozOpen(nr)) ozZetFout(nr, st); });
 }
 function ozZetFout(nr, status) {
   $('oz-blad').innerHTML = `<div class="oz-fout">${ozFoutTekst(status)}</div>`;
@@ -2372,18 +2414,31 @@ function ozZetFout(nr, status) {
   $('oz-dicht').onclick = closeConfirmModal;
   $('oz-weer').onclick = openOverzetBlad;
 }
-function ozToonCode(nr, { code, tot, sleutel }) {
+// Het deel-icoon, in de lijn van ozIco maar in de kleur van de knop.
+const OZ_DEEL = '<svg class="oz-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+function ozToonCode(nr, { code, tot, sleutel }, gekopieerd) {
   const duur = 15 * 60 * 1000;
   const rest = Math.max(0, Math.min(duur, tot - Date.now()));
   const mee = $('oz-blad').querySelector('.oz-mee');
+  const url = ozLinkVan(code);
   $('oz-blad').innerHTML = (mee ? mee.outerHTML : '')
-    + `<div role="img" aria-label="Code ${code.split('').join(' ')}">${ozCodeHtml(code)}</div>`
+    + `<button class="btn purple oz-groot" id="oz-deel" type="button">${OZ_DEEL} Deel link</button>`
+    + '<div class="oz-ok" id="oz-ok" aria-live="polite"></div>'
+    + `<div class="oz-waar">of typ daar de code <b class="oz-klein-code" data-code="${code}">${code.slice(0, 3)} ${code.slice(3)}</b></div>`
     // de balk loopt leeg in de tijd die nog rest: een animatie van een kwartier die
     // al (duur - rest) gevorderd is
-    + `<div class="oz-tijd"><i style="animation-duration:${duur}ms;animation-delay:-${duur - rest}ms"></i></div>`
-    + `<div class="oz-waar">Daar: <span class="ab-kbd">${ozIco('code')} Code invullen</span></div>`
-    + '<div class="oz-wacht" aria-hidden="true"><i></i><i></i><i></i></div>';
+    + `<div class="oz-tijd"><i style="animation-duration:${duur}ms;animation-delay:-${duur - rest}ms"></i></div>`;
   $('oz-blad').classList.add('met-code');
+  const meld = ok => { const o = $('oz-ok'); if (o && ok) o.textContent = '✓ Gekopieerd'; };
+  if (gekopieerd) gekopieerd.then(meld);
+  /* Deel: het deelvenster van het toestel, met de cijfers ook in de tekst -- dan
+     vindt Plakken ze ook als iemand alleen de tekst kopieert. Waar delen niet kan
+     (een computer, een oude browser), kopieert de knop de link. */
+  $('oz-deel').onclick = () => {
+    const tekst = `Rekensterren: ${code.slice(0, 3)} ${code.slice(3)} · een kwartier geldig`;
+    if (navigator.share) navigator.share({ title: 'Rekensterren', text: tekst, url }).catch(() => {});
+    else kopieer(url).then(meld);
+  };
   const vraag = () => {
     if (!ozOpen(nr)) return;
     if (document.hidden) { setTimeout(vraag, OVERZET_POLL); return; }
@@ -2419,11 +2474,16 @@ function ozVerlopen() {
    weg -- geen "Ophalen"-knop. Klopt hij niet, dan worden de vakjes rood en
    begint het volgende cijfer opnieuw. vanStart: geopend vanaf het lege
    beginscherm (dan daarheen terug, met confetti), anders vanuit Voor ouders. */
-function openCodeBlad(vanStart) {
+function openCodeBlad(vanStart, code) {
   sndClick();
   const nr = ++ozNr;
-  ozToon(ozIco('code') + ' Code invullen',
-    `<div class="oz-invoer">${ozCodeHtml('', '', 0)}
+  // Plakken alleen waar de browser het klembord laat lezen (iOS vraagt het dan
+  // zelf met een "Plakken"-bubbel). Het is de weg voor de app op het beginscherm
+  // van een iPhone: een link opent daar Safari, nooit de app.
+  const plak = !!(navigator.clipboard && navigator.clipboard.readText);
+  ozToon('<span aria-hidden="true">⭐</span> Sterren ophalen',
+    (plak ? `<button class="btn purple oz-groot" id="oz-plak" type="button">${ozIco('plak')} Plakken</button><div class="oz-of">of typ de code</div>` : '')
+    + `<div class="oz-invoer">${ozCodeHtml('', '', 0)}
        <input id="oz-veld" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" aria-label="Code van zes cijfers"></div>
      <div class="oz-onder" id="oz-onder"><div class="oz-waar">Andere toestel: <span class="ab-kbd">⚙️ Ouders › Back-up › Overzetten</span></div></div>`,
     '<button class="btn small paper" id="oz-dicht">Annuleer</button>');
@@ -2463,9 +2523,35 @@ function openCodeBlad(vanStart) {
         teken();
       });
   };
-  // in dezelfde tik als de knop: alleen dan opent een telefoon het klavier
-  veld.focus();
+  const p = $('oz-plak');
+  if (p) p.onclick = () => navigator.clipboard.readText().then(t => {
+    if (!ozOpen(nr) || bezig) return;
+    const c = codeUit(t);
+    if (!c) { $('oz-onder').innerHTML = '<div class="oz-fout">Geen link of code gevonden</div>'; return; }
+    veld.value = c;
+    veld.oninput();
+  }, () => {});
+  // Uit een ophaallink: de code staat er al, en het ophalen begint meteen.
+  if (code) { veld.value = code; veld.oninput(); return; }
+  // Zonder Plakken: in dezelfde tik als de knop het veld in, alleen dan opent een
+  // telefoon het klavier. Mét Plakken niet: dan schuift het klavier over de knop.
+  if (!plak) veld.focus();
 }
+/* ---- Een ophaallink ----
+   Opent iemand het spel via een link van "Deel link" (#ophalen=482913), dan gaat
+   het hekje meteen uit de adresbalk -- anders zou een herlaad of een bladwijzer
+   dezelfde, intussen verbruikte code nog eens proberen -- en opent het blad
+   "Sterren ophalen" met de code al ingevuld. Ná het spelogo, dat bij het
+   opstarten binnenkomt. */
+function ophaalLinkLees() {
+  const c = /[#&]ophalen=(\d{6})(?!\d)/.exec(location.hash || '');
+  if (!c) return;
+  try { history.replaceState(null, '', location.href.split('#')[0]); } catch (e) { /* dan blijft het staan */ }
+  if (!overzetMag()) return;
+  const doe = () => { if (!$('confirm-modal').classList.contains('open')) openCodeBlad(true, c[1]); };
+  setTimeout(doe, motionOff() ? 0 : 900);
+}
+addEventListener('hashchange', ophaalLinkLees);
 
 /* Wat er in de save zit, vóór er iets verandert. De pop van elke ster met haar
    sterren; staan er op dit toestel al sterren, dan staan die er grijs onder,
@@ -2612,6 +2698,8 @@ addEventListener('appinstalled', () => {
   appKnopZet();
   renderGeluid();
   if ($('app-blad')) closeConfirmModal();
+  // Het tabblad blijft gewoon in de browser staan: zeg dan dat het gelukt is.
+  showToast('✓ Staat op je beginscherm');
 });
 
 /* ================= Speel als app ============================================
@@ -2632,22 +2720,12 @@ addEventListener('appinstalled', () => {
    bij één ster of zes. Onderaan midden lag het op een kleine telefoon over MAX,
    en daar tikken kinderen; onder de tegels schoof het mee met het raster.
 
-   WANNEER. Alleen op de sterrenkeuze, alleen in de browser (speeltAlsApp), en
-   pas vanaf het tweede bezoek: wie het spel voor het eerst opent, moet eerst
-   kunnen spelen. Behalve op een iPhone of iPad zolang er nog geen ster is: daar
-   krijgt de app op het beginscherm een eigen, lege opslag, dus wat er in Safari
-   gespeeld is gaat niet mee (zie het blad). Vóór de eerste ster is installeren
-   gratis; erna kost het een back-up. Op Android en de computer gaan de sterren
-   gewoon mee, dus daar blijft het bij het tweede bezoek. "Niet nu" laat het twee weken met rust; na drie keer "Niet nu"
-   komt het knopje niet meer terug. De kaart in Beheer blijft wél -- het knopje
-   gaat weg, de weg niet.
-
-   WAT HIERVAN BEWAARD WORDT. Drie getallen in een eigen sleutel (APPKNOP_KEY):
-   het aantal bezoeken, tot wanneer het knopje rust, en hoe vaak er "Niet nu"
-   gezegd is. Bewust niet in db: dat gaat de back-up in en een terugzetting
-   vervángt hem, en dit gaat over dit toestel en niet over de sterren. En er
-   staat nergens "geïnstalleerd" in -- dat wordt nog altijd elke keer aan de
-   browser gevraagd, om dezelfde reden als bij de kaart.
+   WANNEER. Altijd, op de sterrenkeuze in de browser -- ook bij het eerste
+   bezoek. Het is één stille pil in een hoek, en een ouder die het zoekt moet het
+   kunnen vinden; een knopje dat na "Niet nu" verdwijnt, is net weg als die het
+   wél wil. Het blad zegt dus "Sluiten", en er wordt niets geteld of bewaard.
+   Weg is het alleen waar het niets te doen heeft: in de app zelf, en net na
+   installeren (appUitlegNodig).
 
    HET VOORSTEL VAN CHROME. Chrome geeft de pagina een beforeinstallprompt mee
    als hij hem installeerbaar vindt. Dat event wordt hier bewaard, zodat de knop
@@ -2658,39 +2736,18 @@ addEventListener('appinstalled', () => {
    de stappen. inhoud.test.js zaak J kijkt na dat het bij bewaren blijft.
 
    ?debug. Onder ?debug blijft het knopje weg, tenzij er &appknop bij staat: de
-   browsersuites openen de pagina vaak meerdere keren in dezelfde opslag, en
-   dan stond er vanaf de tweede keer ineens een knop in hun beeld. */
-const APPKNOP_KEY = 'rekenPopsterren_appknop';
-const APPKNOP = { vanafBezoek: 2, rustDagen: 14, maxNee: 3 };
+   browsersuites zetten anders allemaal een knop in hun beeld. */
 let installVoorstel = null;
 addEventListener('beforeinstallprompt', e => { installVoorstel = e; });
-function appKnopLees() {
-  try {
-    const s = JSON.parse(localStorage.getItem(APPKNOP_KEY) || 'null');
-    return s && typeof s === 'object' ? s : {};
-  } catch (e) { return {}; }
-}
-function appKnopSchrijf(s) {
-  try { localStorage.setItem(APPKNOP_KEY, JSON.stringify(s)); } catch (e) { /* vol of dicht: dan maar elke keer */ }
-}
-// Eén bezoek per keer dat de pagina opstart -- in de app telt er niets.
-(function () {
-  if (speeltAlsApp()) return;
-  const s = appKnopLees();
-  s.bezoek = (s.bezoek | 0) + 1;
-  appKnopSchrijf(s);
-})();
+/* Een oude sleutel van dit knopje (een bezoekteller en een rustdatum), waar
+   geen code meer bij hoort: bij het opstarten opruimen. */
+try { localStorage.removeItem('rekenPopsterren_appknop'); } catch (e) { /* dicht: dan blijft hij staan */ }
 // Mag er iets over "als app" staan: niet in de app zelf, en niet net na installeren.
 function appUitlegNodig() { return !beginschermNetErop && !speeltAlsApp(); }
-function appKnopTonen(nu) {
+function appKnopTonen() {
   if (!appUitlegNodig()) return false;
   const zoek = location.search || '';
-  if (zoek.indexOf('debug') !== -1 && zoek.indexOf('appknop') === -1) return false;
-  const s = appKnopLees();
-  const iosLeeg = /^ios/.test(beginschermSoort()) && profileKeys().length === 0;
-  if ((s.bezoek | 0) < APPKNOP.vanafBezoek && !iosLeeg) return false;
-  if ((s.nee | 0) >= APPKNOP.maxNee) return false;
-  return !(s.rustTot > (nu || Date.now()));
+  return !(zoek.indexOf('debug') !== -1 && zoek.indexOf('appknop') === -1);
 }
 // Het knopje volgt het scherm: show() en renderProfiles roepen dit aan.
 function appKnopZet() {
@@ -2698,14 +2755,6 @@ function appKnopZet() {
   if (!k) return;
   const opLanding = $('screen-profile').classList.contains('active');
   k.style.display = opLanding && appKnopTonen() ? '' : 'none';
-}
-function appKnopNietNu() {
-  const s = appKnopLees();
-  s.nee = (s.nee | 0) + 1;
-  s.rustTot = Date.now() + APPKNOP.rustDagen * 24 * 3600 * 1000;
-  appKnopSchrijf(s);
-  closeConfirmModal();
-  appKnopZet();
 }
 /* Het deel-icoon van Safari, getekend en niet als plaatje: dan klopt het op
    elke schermmaat en kost het niets. Het plus-vierkantje van "Zet op
@@ -2725,66 +2774,77 @@ function isSafari26(nav) {
   const m = /Version\/(\d+)/.exec(String((nav || navigator).userAgent || ''));
   return !!m && +m[1] >= 26;
 }
-/* Wat er in het blad staat. Geeft { html, installeer } terug: installeer zegt of
-   er een knop "Installeren" bij hoort (alleen als Chrome zijn voorstel gaf).
-   nieuw: Safari 26 of later (zie isSafari26). */
+/* Wat er in het blad staat: alleen genummerde stappen, en per toestel één knop.
+   Geeft { html, installeer, meenemen, kopieer } terug:
+     installeer  er hoort een knop "Installeren" bij (alleen als Chrome zijn voorstel gaf)
+     meenemen    stap 1 is de knop "Neem je sterren mee" (#ab-mee)
+     kopieer     er hoort een knop "Kopieer link" bij (in een app-in-app-browser)
+   nieuw: Safari 26 of later (zie isSafari26).
+
+   NEEM JE STERREN MEE. Een app op het beginscherm van een iPhone of iPad krijgt
+   een eigen, lege opslag, los van Safari. Wie al sterren heeft, neemt ze dus
+   eerst mee: stap 1 maakt een ophaallink (= Overzetten) en kopieert hem, de
+   laatste stap plakt hem in de app (Al gespeeld? › Plakken). Kan overzetten hier
+   niet (overzetMag), dan blijft het de weg via een back-upbestand. */
 function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
-  const stap = (n, t) => `<div class="ab-stap"><span class="ab-nr">${n}</span><span>${t}</span></div>`;
   const kbd = t => `<span class="ab-kbd">${t}</span>`;
   const erbij = kbd(ico('erbij') + ' Zet op beginscherm');
-  /* Wat je eraan hebt, in drie tegeltjes in plaats van een zin: een eigen
-     icoon, het hele scherm, en spelen zonder internet. */
-  const voordeel = (pad, t) => `<span class="ab-vd"><svg class="ab-vd-i" viewBox="0 0 24 24" aria-hidden="true">${pad}</svg>${t}</span>`;
-  let html = '<div class="ab-voor">Voor papa of mama</div><div class="ab-voordelen">'
-    + voordeel('<rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/>', 'Eigen icoon')
-    + voordeel('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>', 'Heel scherm')
-    + voordeel('<path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9 9 0 0 1 13 0M9 16a4 4 0 0 1 6 0M3 3l18 18"/>', 'Zonder internet')
-    + '</div>';
+  const stappen = l => l.map((t, i) => `<div class="ab-stap"><span class="ab-nr">${i + 1}</span><span class="ab-tekst">${t}</span></div>`).join('');
+  let html = '<div class="ab-voor">Voor papa of mama</div>';
   if (soort === 'ios') {
-    if (ipad) {
-      html += stap(1, `Tik in Safari rechtsboven op ${kbd(DEEL_SVG + ' Deel')}`) + stap(2, `Kies ${erbij}`);
-    } else if (nieuw) {
-      // een nagetekende smalle balk van Safari 26, met ··· omcirkeld
-      html += stap(1, `Tik onderaan op ${kbd('···')}`)
-        + '<div class="ab-balk26" aria-hidden="true"><span class="ab-rond">‹</span><span class="ab-adres">rekensterren.be</span><span class="ab-rond ab-doel">···</span></div>'
-        + stap(2, `Tik op ${kbd(DEEL_SVG + ' Deel')} en dan op ${erbij}`);
-    } else {
-      html += stap(1, `Tik in Safari onderaan op ${kbd(DEEL_SVG + ' Deel')}`)
-        + '<div class="ab-balk" aria-hidden="true"><span>‹</span><span>›</span><span class="ab-doel">' + DEEL_SVG + '</span><span>📖</span><span>⧉</span></div>'
-        + stap(2, `Kies ${erbij}`);
-    }
-    html += stap(3, `Tik op ${kbd('Voeg toe')}`);
-    /* De app op het beginscherm krijgt een eigen opslag, los van Safari: hij begint
-       leeg. Met overzetten (= Overzetten) neem je je sterren mee met een code --
-       de knop staat onderaan dit blad; anders blijft het de weg via een bestand. */
+    let zet;
+    if (ipad) zet = [`Tik in Safari rechtsboven op ${kbd(DEEL_SVG + ' Deel')}`, `${erbij} › ${kbd('Voeg toe')}`];
+    else if (nieuw) zet = [`Tik onderaan op ${kbd('···')}`
+        + '<span class="ab-balk26" aria-hidden="true"><span class="ab-rond">‹</span><span class="ab-adres">rekensterren.be</span><span class="ab-rond ab-doel">···</span></span>',
+      `${kbd(DEEL_SVG + ' Deel')} › ${erbij} › ${kbd('Voeg toe')}`];
+    else zet = [`Tik in Safari onderaan op ${kbd(DEEL_SVG + ' Deel')}`
+        + '<span class="ab-balk" aria-hidden="true"><span>‹</span><span>›</span><span class="ab-doel">' + DEEL_SVG + '</span><span>📖</span><span>⧉</span></span>',
+      `${erbij} › ${kbd('Voeg toe')}`];
     const meenemen = hasStars && overzetMag();
-    if (hasStars) html += meenemen
-      ? '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Neem je sterren mee met een code.</div>'
-      : '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › Back-up, en zet hem in de app terug.</div>';
-    return { html, installeer: false, meenemen };
+    if (meenemen) {
+      html += stappen(['<button class="btn small purple ab-mee" id="ab-mee" type="button"><span aria-hidden="true">⭐</span> Neem je sterren mee</button>'
+          + '<span class="ab-ok" id="ab-mee-ok" aria-live="polite"></span>']
+        .concat(zet, [`Open de app › ${kbd('Al gespeeld?')} › ${kbd('Plakken')}`]));
+    } else {
+      html += stappen(zet);
+      if (hasStars) html += '<div class="ab-noot">⭐ De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › Back-up, en zet hem in de app terug.</div>';
+    }
+    return { html, installeer: false, meenemen, kopieer: false };
   }
-  if (soort === 'android' && kanInstalleren) {
-    html += '<div class="ab-noot">Je sterren blijven gewoon staan.</div>';
-    return { html, installeer: true };
+  if (soort === 'android' && kanInstalleren) return { html, installeer: true, meenemen: false, kopieer: false };
+  if (soort === 'android') {
+    html += stappen([`Tik in Chrome rechtsboven op ${kbd('⋮')}`
+        + '<span class="ab-balk26" aria-hidden="true"><span class="ab-adres">rekensterren.be</span><span class="ab-rond ab-doel">⋮</span></span>',
+      `${kbd(ico('erbij') + ' App installeren')} › ${kbd('Installeren')}`]);
+    return { html, installeer: false, meenemen: false, kopieer: false };
   }
-  const [uitleg, tweede] = beginschermUitleg(soort, hasStars);
-  html += `<p class="ab-uitleg">${uitleg}</p>` + (tweede ? `<div class="ab-noot">${tweede}</div>` : '');
-  return { html, installeer: false };
+  // In WhatsApp, Facebook... kan het niet: de link naar de echte browser brengen.
+  if (soort === 'inapp' || soort === 'ios-elders') {
+    const browser = soort === 'inapp' ? 'Chrome' : 'Safari';
+    html += stappen([`Tik op ${kbd('Kopieer link')}`, `Open ${browser} en plak de link`, `Tik daar op ${kbd(ico('erbij') + ' Als app')}`]);
+    return { html, installeer: false, meenemen: false, kopieer: true };
+  }
+  const [uitleg] = beginschermUitleg(soort, false);
+  html += `<p class="ab-uitleg">${uitleg}</p>`;
+  return { html, installeer: false, meenemen: false, kopieer: false };
 }
-// vanKnop: geopend via het knopje linksboven (dan telt "Niet nu").
-function openAppBlad(vanKnop) {
+function openAppBlad() {
   sndClick();
   const hasStars = profileKeys().length > 0;   // zoals in Beheer: wie een ster heeft, heeft iets te redden
-  const { html, installeer, meenemen } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel, isSafari26());
+  const { html, installeer, meenemen, kopieer } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel, isSafari26());
   $('confirm-title').innerHTML = ico('erbij') + ' Rekensterren als app';
   $('confirm-body').innerHTML = `<div id="app-blad">${html}</div>`;
   $('confirm-actions').innerHTML =
-    `<button class="btn small paper" id="app-blad-dicht">${vanKnop ? 'Niet nu' : 'Sluiten'}</button>`
+    '<button class="btn small paper" id="app-blad-dicht">Sluiten</button>'
     + (installeer ? '<button class="btn small purple" id="app-blad-installeer">Installeren</button>' : '')
-    + (meenemen ? `<button class="btn small purple" id="app-blad-mee">${ozIco('zet')} Sterren meenemen</button>` : '');
-  $('app-blad-dicht').onclick = vanKnop ? appKnopNietNu : closeConfirmModal;
-  const mee = $('app-blad-mee');
-  if (mee) mee.onclick = openOverzetBlad;
+    + (kopieer ? '<button class="btn small purple" id="app-blad-kopieer">Kopieer link</button>' : '');
+  $('app-blad-dicht').onclick = closeConfirmModal;
+  const mee = $('ab-mee');
+  if (mee && meenemen) mee.onclick = () => neemSterrenMee(mee);
+  const kop = $('app-blad-kopieer');
+  if (kop) kop.onclick = () => kopieer(location.href.split('#')[0]).then(ok => {
+    kop.textContent = ok ? '✓ Gekopieerd' : 'Kopiëren lukte niet';
+  });
   const ik = $('app-blad-installeer');
   if (ik) ik.onclick = () => {
     const e = installVoorstel;
@@ -2794,5 +2854,22 @@ function openAppBlad(vanKnop) {
   };
   $('confirm-modal').classList.add('open');
   syncBackGuard();
+}
+/* Stap 1 op een iPhone met sterren: een ophaallink maken en kopiëren, in
+   dezelfde tik (zie kopieerBelofte). Lukt kopiëren niet, dan staat de code er,
+   om in de app over te typen. */
+function neemSterrenMee(knop) {
+  const ok = $('ab-mee-ok');
+  knop.disabled = true;
+  const link = ozMaakLink();
+  kopieerBelofte(link.then(r => ozLinkVan(r.code))).then(gekopieerd => link.then(r => {
+    if (!$('app-blad')) return;
+    knop.style.display = 'none';
+    ok.innerHTML = gekopieerd ? '✓ Gekopieerd' : `Code: <b>${r.code.slice(0, 3)} ${r.code.slice(3)}</b>`;
+  })).catch(st => {
+    if (!$('app-blad')) return;
+    knop.disabled = false;
+    ok.innerHTML = `<span class="oz-fout">${ozFoutTekst(typeof st === 'number' ? st : 0)}</span>`;
+  });
 }
 

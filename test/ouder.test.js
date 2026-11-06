@@ -1060,7 +1060,7 @@ function check(ok, label, detail) {
       await page.waitForTimeout(200);
       const tekst = await page.evaluate(() => document.getElementById('app-blad').textContent.replace(/\s+/g, ' '));
       check(/Zet op beginscherm/.test(tekst), `O · ${naam}: Deel → Zet op beginscherm`, tekst);
-      check(/Al gespeeld in Safari\? .*back-up via ⚙️ Ouders › Back-up/.test(tekst), `O · ${naam}: met de back-upwaarschuwing`, tekst);
+      check(/De app begint leeg\. Maak eerst een back-up via ⚙️ Ouders › Back-up/.test(tekst), `O · ${naam}: zonder overzetten (file://) de back-upwaarschuwing`, tekst);
       await ctx.close();
     }
 
@@ -1542,12 +1542,13 @@ function check(ok, label, detail) {
     await tik(a.page, '#bb-zet');
     await a.page.waitForTimeout(300);
     r = await a.page.evaluate(() => ({
-      code: [...document.querySelectorAll('#oz-blad .oz-c')].map(c => c.textContent).join(''),
+      code: (document.querySelector('#oz-blad .oz-klein-code') || { dataset: {} }).dataset.code,
+      deel: !!document.getElementById('oz-deel'),
       gezichten: document.querySelectorAll('#oz-blad .oz-mini').length,
       db: JSON.stringify(db),
     }));
     const code = r.code;
-    check(/^\d{6}$/.test(code), 'T · Overzetten toont een code van zes cijfers', code);
+    check(/^\d{6}$/.test(code) && r.deel, 'T · Overzetten: een grote "Deel link", en de code van zes cijfers eronder', JSON.stringify(r).slice(0, 80));
     check(r.gezichten === 2, 'T · met de gezichten van wie er meegaat', String(r.gezichten));
     check(neergelegd === r.db, 'T · wat weggaat is precies de save', (neergelegd || '').slice(0, 60));
 
@@ -1559,6 +1560,9 @@ function check(ok, label, detail) {
     r = await b.page.evaluate(() => getComputedStyle(document.getElementById('code-hint')).display);
     check(r === 'flex', 'T · het lege beginscherm heeft "Code invullen"', r);
     await tik(b.page, '#code-hint');
+    r = await b.page.evaluate(() => ({ titel: document.getElementById('confirm-title').textContent, plak: !!document.getElementById('oz-plak') }));
+    check(/Sterren ophalen/.test(r.titel) && r.plak, 'T · "Al gespeeld?" opent "Sterren ophalen", met Plakken', JSON.stringify(r));
+    await b.page.focus('#oz-veld');
     await b.page.keyboard.type('999999');
     await b.page.waitForTimeout(400);
     r = await b.page.evaluate(() => ({
@@ -1605,6 +1609,7 @@ function check(ok, label, detail) {
     await open(c2.page, null, null);
     await tik(c2.page, '#set-backup');
     await tik(c2.page, '#bb-code');
+    await c2.page.focus('#oz-veld');
     await c2.page.keyboard.type(code);
     await c2.page.waitForTimeout(400);
     r = await c2.page.evaluate(() => !!document.querySelector('#oz-blad .oz-code.fout'));
@@ -1614,7 +1619,7 @@ function check(ok, label, detail) {
     await tik(a.page, '#set-backup');
     await tik(a.page, '#bb-zet');
     await a.page.waitForTimeout(300);
-    const code2 = await a.page.evaluate(() => [...document.querySelectorAll('#oz-blad .oz-c')].map(c => c.textContent).join(''));
+    const code2 = await a.page.evaluate(() => document.querySelector('#oz-blad .oz-klein-code').dataset.code);
     await c2.page.keyboard.type(code2);
     await c2.page.waitForTimeout(400);
     r = await c2.page.evaluate(() => ({
@@ -1640,10 +1645,42 @@ function check(ok, label, detail) {
     // het blad "als app" op een iPhone met sterren: meenemen met een code
     r = await d.page.evaluate(() => {
       const m = appBladInhoud('ios', false, true, false, true), z = appBladInhoud('ios', false, false, false, true);
-      return { mee: m.meenemen, noot: /met een code/.test(m.html), leeg: z.meenemen };
+      return { mee: m.meenemen, noot: /Neem je sterren mee/.test(m.html) && /Plakken/.test(m.html), leeg: z.meenemen };
     });
-    check(r.mee && r.noot && !r.leeg, 'T · iPhone met sterren: "Sterren meenemen" in het blad "als app"', JSON.stringify(r));
-    for (const x of [a, b, c2, d]) await x.ctx.close();
+    check(r.mee && r.noot && !r.leeg, 'T · iPhone met sterren: stap 1 "Neem je sterren mee", en in de app Plakken', JSON.stringify(r));
+    // De link: een nieuwe code van A, geopend op een leeg toestel E -- het spel
+    // opent meteen op "Sterren gevonden", en het hekje is uit de adresbalk.
+    await c2.page.evaluate(() => closeConfirmModal());
+    await a.page.evaluate(() => closeConfirmModal());
+    await tik(a.page, '#set-backup');
+    await tik(a.page, '#bb-zet');
+    await a.page.waitForTimeout(300);
+    const code3 = await a.page.evaluate(() => document.querySelector('#oz-blad .oz-klein-code').dataset.code);
+    const e = await fresh([]);
+    await e.ctx.route(ADRES + '**', ontvanger);
+    await e.page.goto(APP_URL + '&overzet#ophalen=' + code3);
+    await e.page.waitForTimeout(1800);
+    r = await e.page.evaluate(() => ({
+      titel: document.getElementById('confirm-title').textContent,
+      knop: (document.getElementById('oz-ja') || {}).textContent,
+      hekje: location.hash,
+    }));
+    check(/Sterren gevonden/.test(r.titel) && r.knop === 'Zet op dit toestel' && r.hekje === '',
+      'T · een ophaallink opent meteen "Sterren gevonden", en het hekje gaat weg', JSON.stringify(r));
+    // Plakken: haalt de code uit wat er op het klembord staat (hier nagebootst)
+    await e.page.evaluate(() => closeConfirmModal());
+    await tik(a.page, '#oz-dicht');
+    await tik(a.page, '#set-backup');
+    await tik(a.page, '#bb-zet');
+    await a.page.waitForTimeout(300);
+    const code4 = await a.page.evaluate(() => document.querySelector('#oz-blad .oz-klein-code').dataset.code);
+    await e.page.evaluate(t => { navigator.clipboard.readText = () => Promise.resolve(t); }, 'Rekensterren: ' + code4.slice(0, 3) + ' ' + code4.slice(3));
+    await e.page.evaluate(() => openCodeBlad(true));
+    await tik(e.page, '#oz-plak');
+    await e.page.waitForTimeout(400);
+    r = await e.page.evaluate(() => document.getElementById('confirm-title').textContent);
+    check(/Sterren gevonden/.test(r), 'T · Plakken vindt de code in de gedeelde tekst', r);
+    for (const x of [a, b, c2, d, e]) await x.ctx.close();
     // Een verkeerde code is een 404 en "geen net" een afgebroken aanvraag: de
     // browser zet die zelf in de console, en dat hoort zo. Alleen díe twee gaan eruit.
     const verwacht = /Failed to load resource: (the server responded with a status of 404|net::ERR_FAILED)/;

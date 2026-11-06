@@ -1,16 +1,25 @@
 # Overzetten: sterren naar een ander toestel
 
-Een ouder zet alle sterren van dit toestel over naar een ander met een code van
-zes cijfers. Vooral voor de iPhone: de app op het beginscherm heeft een eigen
+Een ouder zet alle sterren van dit toestel over naar een ander met een link (met
+een code van zes cijfers erin). Vooral voor de iPhone: de app op het beginscherm heeft een eigen
 opslag, los van Safari, en begint dus leeg. Maar ook voor een nieuwe telefoon of
 tablet.
 
 ```
-toestel A   ⚙️ › Back-up › Overzetten   -> de save naar de Worker, een code terug
-toestel B   Code invullen               -> de save terug, de Worker gooit hem weg
+toestel A   ⚙️ › Back-up › Overzetten   -> de save naar de Worker, een code terug;
+                                           "Deel link" deelt …/#ophalen=<code>, en
+                                           de link staat ook op het klembord
+toestel B   de link aantikken           -> het spel opent op "Sterren ophalen", ingevuld
+            of: Al gespeeld? / Ophalen  -> Plakken (de link of de cijfers), of typen
             (leeg beginscherm, of ⚙️ › Back-up)
+            de save terug, de Worker gooit hem weg
             "Zet op dit toestel" / "Vervangen" -> backupToepassen, zoals een bestand
 ```
+
+Een link opent op een iPhone altijd Safari, nooit de app op het beginscherm.
+Daarom heeft "Sterren ophalen" een knop Plakken: kopiëren in Safari, plakken in
+de app. Het blad "Als app" doet dat op een iPhone met sterren zelf, als stap 1
+("Neem je sterren mee").
 
 Het is een kopie: A houdt zijn sterren. De save is dezelfde als het
 back-upbestand (`JSON.stringify(db)`), met dezelfde keuring (`backupVormOk`) en

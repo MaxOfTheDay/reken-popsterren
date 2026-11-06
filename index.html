@@ -2421,7 +2421,7 @@
 
   .over-hint {
     display: none; align-items: center; justify-content: center; gap: .3em; width: fit-content; text-decoration: none;
-    margin: 12px auto 0; font-size: var(--tx-klein); opacity: .72; text-align: center; z-index: 1;
+    margin: 0; font-size: var(--tx-klein); opacity: .82; text-align: center; z-index: 1;
 
 
     font-family: inherit; font-weight: 600; color: var(--c-white); background: transparent; border: none;
@@ -2429,6 +2429,9 @@
     transition: opacity var(--t-tik) ease, background var(--t-tik) ease;
   }
   .over-hint:hover, .over-hint:focus-visible { opacity: 1; background: rgba(255,255,255,.1); }
+
+  .leeg-regel { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; margin-top: 8px; position: relative; z-index: 1; }
+  .leeg-regel .over-hint { padding: 0 10px; }
 
 
 
@@ -2556,21 +2559,15 @@
 
   #app-blad { text-align: left; color: var(--paper-ink); }
   #app-blad .ab-voor {
-    display: table; margin: 0 auto 8px; padding: 3px 10px; border-radius: var(--r-pill);
-    background: var(--lavender-wash); color: var(--purple-deep); font-size: var(--tx-mini); font-weight: 700;
+    display: table; margin: 0 auto 10px; padding: 3px 10px; border-radius: var(--r-pill);
+    background: var(--lavender-wash); color: var(--purple-deep); font-size: var(--tx-klein); font-weight: 700;
   }
+  #app-blad .ab-stap { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; line-height: 1.5; }
+  #app-blad .ab-tekst { flex: 1; min-width: 0; }
 
-  #app-blad .ab-voordelen { display: flex; gap: 8px; margin: 2px 0 12px; }
-  #app-blad .ab-vd {
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
-    font-size: var(--tx-mini); font-weight: 700; color: var(--paper-ink-muted); text-align: center;
-  }
-  #app-blad .ab-vd-i {
-    width: 40px; height: 40px; padding: 9px; border-radius: var(--r-sm);
-    background: var(--lavender-wash); color: var(--purple-deep);
-    fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
-  }
-  #app-blad .ab-stap { display: flex; gap: 10px; align-items: flex-start; margin: 9px 0; line-height: 1.4; }
+  #app-blad .ab-mee { margin: -3px 0 0; }
+  #app-blad .ab-ok { font-weight: 700; color: var(--green-deep); }
+  #app-blad .ab-ok:empty { display: none; }
   #app-blad .ab-nr {
     flex: 0 0 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
     background: var(--purple-mid); color: var(--c-white); font-size: var(--tx-klein); font-weight: 700;
@@ -2584,12 +2581,12 @@
   #confirm-title .ico { display: inline-block; width: 1em; height: 1em; vertical-align: -.12em; stroke-width: 2.6; }
 
   #app-blad .ab-balk {
-    display: flex; justify-content: space-around; align-items: center; height: 40px; margin: 4px 0 6px 34px;
+    display: flex; justify-content: space-around; align-items: center; height: 40px; margin: 6px 0 2px;
     border-radius: 12px; background: var(--paper-muted-bg); color: #0a84ff; font-size: 18px;
   }
   #app-blad .ab-doel { display: grid; padding: 3px; border-radius: 7px; box-shadow: 0 0 0 2.5px var(--pink-hot); }
 
-  #app-blad .ab-balk26 { display: flex; align-items: center; gap: 8px; height: 44px; margin: 4px 0 8px 34px; }
+  #app-blad .ab-balk26 { display: flex; align-items: center; gap: 8px; height: 44px; margin: 6px 0 2px; }
   #app-blad .ab-rond {
     flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
     background: var(--paper-muted-bg); color: var(--paper-ink); font-size: 18px; font-weight: 700;
@@ -11006,8 +11003,19 @@
 
   .oz-blad { text-align: center; }
 
-  .over-hint.code-hint { margin-top: 0; }
-  .over-hint.code-hint .oz-i { width: 18px; height: 18px; }
+
+  .over-hint.code-hint::before { content: '·'; margin-right: 8px; opacity: .6; }
+
+  .oz-groot {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; min-height: 54px; margin: 4px 0 0; font-size: var(--tx-body);
+  }
+  .oz-groot .oz-i { width: 22px; height: 22px; }
+  .oz-ok { min-height: 22px; margin: 6px 0 2px; font-size: var(--tx-klein); font-weight: 700; color: var(--green-deep); }
+  .oz-ok:empty { min-height: 10px; }
+  .oz-of { margin: 14px 0 2px; font-size: var(--tx-klein); color: var(--paper-ink-muted); }
+  .oz-klein-code { font-size: var(--tx-label); letter-spacing: .06em; color: var(--purple-deep); }
+  .oz-blad.met-code .oz-tijd { margin-top: 10px; }
   .oz-mee { display: flex; justify-content: center; padding-left: 10px; margin: 0 0 8px; }
   .oz-mini {
     position: relative; display: inline-block; width: 40px; height: 40px; margin-left: -10px;
@@ -11286,19 +11294,18 @@
     <div class="star-grid" id="profile-row">
       <button class="add-tegel" id="btn-newstar" onclick="openNewStar('profile')" aria-label="Nieuwe ster maken"><span class="at-plus" aria-hidden="true">＋</span><span class="at-tekst">Nieuwe ster</span></button>
     </div>
-    <!-- Alleen zonder sterren (renderProfiles). Hier stond "Al een back-up? Zet hem
-         terug" -- maar wie dit lege scherm ziet is bijna altijd een gezin dat net
-         begint, en terugzetten is de zeldzaamste reden om hier te staan. Wie het wél
-         nodig heeft, wordt erheen gewezen (het blad "als app" zegt ⚙️ → Voor ouders,
-         en zonder sterren opent dat meteen op terugzetten). Dus zegt de ene stille
-         regel hier wat dit spel is: de pagina over/, met dezelfde handler als in
-         Beheer (eerst bewaren, zonder net een melding). Een echte link, in hetzelfde
-         venster -- zie naarOver. -->
-    <a class="over-hint" id="over-hint" href="over/index.html" onclick="naarOver(event)">🎬 Wat is Rekensterren? <span aria-hidden="true">›</span></a>
-    <!-- En wie al gespeeld heeft op een ander toestel (of in Safari, vóór de app op
-         het beginscherm stond): de code van "Overzetten". Alleen als dat kan
-         (overzetMag) en alleen zonder sterren -- renderProfiles zet hem aan. -->
-    <button class="over-hint code-hint" id="code-hint" type="button" style="display:none" onclick="openCodeBlad(true)"><svg class="oz-i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M7 12h.01M10.5 12h.01M14 12h.01M17.5 12h.01"/></svg> Al gespeeld? Code invullen <span aria-hidden="true">›</span></button>
+    <!-- Alleen zonder sterren (renderProfiles): één stille regel onder de tegel,
+         zodat "Maak je ster" het enige is dat om aandacht vraagt. Links wat dit
+         spel is -- de pagina over/, met dezelfde handler als in Beheer (eerst
+         bewaren, zonder net een melding), een echte link in hetzelfde venster
+         (zie naarOver). Rechts, voor wie al gespeeld heeft op een ander toestel of
+         in Safari vóór de app op het beginscherm stond: sterren ophalen (zie
+         = Overzetten). Die alleen als dat kan (overzetMag); het puntje ertussen is
+         van hem (.code-hint::before), dus valt hij weg, dan staat er ook geen punt. -->
+    <div class="leeg-regel">
+      <a class="over-hint" id="over-hint" href="over/index.html" onclick="naarOver(event)">Wat is Rekensterren?</a>
+      <button class="over-hint code-hint" id="code-hint" type="button" style="display:none" onclick="openCodeBlad(true)">Al gespeeld?</button>
+    </div>
     <div class="profile-spacer" aria-hidden="true"></div>
   </div>
 
@@ -11728,7 +11735,7 @@
 
 <!-- Linksboven, het spiegelbeeld van het tandwiel: "Als app". Alleen op de
      sterrenkeuze en alleen in de browser -- appKnopZet zet hem aan en uit. -->
-<button class="app-knop" id="app-knop" style="display:none" onclick="openAppBlad(true)">
+<button class="app-knop" id="app-knop" style="display:none" onclick="openAppBlad()">
   <svg class="ico" aria-hidden="true"><use href="#ico-erbij"/></svg> Als app
 </button>
 
@@ -31715,7 +31722,7 @@ function beheerEmptyHtml() {
 
   const terug = overzetMag()
     ? `<div class="bb-tegels">
-        <button class="bb-tegel" id="oz-code" type="button">${ozIco('code')}Code invullen</button>
+        <button class="bb-tegel" id="oz-code" type="button">${ozIco('code')}Sterren ophalen</button>
         <button class="bb-tegel" id="set-import" type="button">${ozIco('terug')}Back-up terugzetten</button>
       </div>
       <div class="data-btns"><button class="btn small paper" id="set-newstar">➕ Nieuwe ster maken</button></div>`
@@ -32496,7 +32503,7 @@ function openBackupBlad() {
       <div class="bb-kop">Bestand</div>
       <div class="bb-tegels">${tegel('bb-maak', ozIco('maak'), 'Maken')}${tegel('bb-terug', ozIco('terug'), 'Terugzetten')}</div>`
     + (overzetMag() ? `<div class="bb-kop">Ander toestel</div>
-      <div class="bb-tegels">${tegel('bb-zet', ozIco('zet'), 'Overzetten')}${tegel('bb-code', ozIco('code'), 'Code invullen')}</div>` : '')
+      <div class="bb-tegels">${tegel('bb-zet', ozIco('zet'), 'Overzetten')}${tegel('bb-code', ozIco('code'), 'Ophalen')}</div>` : '')
     + '</div>';
   $('confirm-actions').innerHTML = '<button class="btn small paper" id="bb-dicht">Sluiten</button>';
   $('bb-dicht').onclick = closeConfirmModal;
@@ -32510,6 +32517,7 @@ function openBackupBlad() {
   $('confirm-modal').classList.add('open');
   syncBackGuard();
 }
+
 
 
 
@@ -32551,6 +32559,7 @@ function ozIco(naam) {
     code: '<rect x="3" y="6" width="18" height="12" rx="3"/><path d="M7 12h.01M10.5 12h.01M14 12h.01M17.5 12h.01"/>',
     maak: '<path d="M12 3v11M7.5 9.5 12 14l4.5-4.5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
     terug: '<path d="M12 14V3M7.5 7.5 12 3l4.5 4.5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
+    plak: '<rect x="7" y="4" width="10" height="4" rx="1.5"/><path d="M7 6H5.5A1.5 1.5 0 0 0 4 7.5v12A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5v-12A1.5 1.5 0 0 0 18.5 6H17"/>',
   }[naam]);
 }
 const OVERZET_POLL = 3000;
@@ -32597,6 +32606,48 @@ const ozOpen = nr => { const b = $('oz-blad'); return !!b && b.dataset.nr === St
 let ozNr = 0;
 
 
+
+
+
+
+
+
+
+
+
+
+
+function ozMaakLink() {
+  return ozVraag('zet', JSON.stringify(db)).then(r => {
+    if (r.status !== 201 || !r.data || !/^\d{6}$/.test(r.data.code)) throw r.status;
+    return r.data;
+  }, () => { throw 0; });
+}
+
+
+function ozLinkVan(code) { return location.href.split('#')[0] + '#ophalen=' + code; }
+
+function codeUit(tekst) {
+  const t = String(tekst || '');
+  const m = /ophalen=(\d{6})/.exec(t) || /(?:^|\D)(\d{3})\s?(\d{3})(?!\d)/.exec(t);
+  return !m ? null : m[2] ? m[1] + m[2] : m[1];
+}
+function kopieer(tekst) {
+  try { return navigator.clipboard.writeText(tekst).then(() => true, () => false); }
+  catch (e) { return Promise.resolve(false); }
+}
+
+
+function kopieerBelofte(belofte) {
+  const cb = navigator.clipboard;
+  if (cb && cb.write && typeof ClipboardItem === 'function') {
+    try {
+      const item = new ClipboardItem({ 'text/plain': belofte.then(t => new Blob([t], { type: 'text/plain' })) });
+      return cb.write([item]).then(() => true, () => belofte.then(kopieer));
+    } catch (e) { }
+  }
+  return belofte.then(kopieer);
+}
 function openOverzetBlad() {
   sndClick();
   const nr = ++ozNr;
@@ -32606,13 +32657,11 @@ function openOverzetBlad() {
     '<button class="btn small paper" id="oz-dicht">Sluiten</button>');
   $('oz-blad').dataset.nr = nr;
   $('oz-dicht').onclick = closeConfirmModal;
-  ozVraag('zet', JSON.stringify(db)).then(
-    r => {
-      if (!ozOpen(nr)) return;
-      if (r.status !== 201 || !r.data || !/^\d{6}$/.test(r.data.code)) { ozZetFout(nr, r.status); return; }
-      ozToonCode(nr, r.data);
-    },
-    () => { if (ozOpen(nr)) ozZetFout(nr, 0); });
+  const link = ozMaakLink();
+  const gekopieerd = kopieerBelofte(link.then(d => ozLinkVan(d.code))).catch(() => false);
+  link.then(
+    d => { if (ozOpen(nr)) ozToonCode(nr, d, gekopieerd); },
+    st => { if (ozOpen(nr)) ozZetFout(nr, st); });
 }
 function ozZetFout(nr, status) {
   $('oz-blad').innerHTML = `<div class="oz-fout">${ozFoutTekst(status)}</div>`;
@@ -32620,18 +32669,31 @@ function ozZetFout(nr, status) {
   $('oz-dicht').onclick = closeConfirmModal;
   $('oz-weer').onclick = openOverzetBlad;
 }
-function ozToonCode(nr, { code, tot, sleutel }) {
+
+const OZ_DEEL = '<svg class="oz-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+function ozToonCode(nr, { code, tot, sleutel }, gekopieerd) {
   const duur = 15 * 60 * 1000;
   const rest = Math.max(0, Math.min(duur, tot - Date.now()));
   const mee = $('oz-blad').querySelector('.oz-mee');
+  const url = ozLinkVan(code);
   $('oz-blad').innerHTML = (mee ? mee.outerHTML : '')
-    + `<div role="img" aria-label="Code ${code.split('').join(' ')}">${ozCodeHtml(code)}</div>`
+    + `<button class="btn purple oz-groot" id="oz-deel" type="button">${OZ_DEEL} Deel link</button>`
+    + '<div class="oz-ok" id="oz-ok" aria-live="polite"></div>'
+    + `<div class="oz-waar">of typ daar de code <b class="oz-klein-code" data-code="${code}">${code.slice(0, 3)} ${code.slice(3)}</b></div>`
 
 
-    + `<div class="oz-tijd"><i style="animation-duration:${duur}ms;animation-delay:-${duur - rest}ms"></i></div>`
-    + `<div class="oz-waar">Daar: <span class="ab-kbd">${ozIco('code')} Code invullen</span></div>`
-    + '<div class="oz-wacht" aria-hidden="true"><i></i><i></i><i></i></div>';
+    + `<div class="oz-tijd"><i style="animation-duration:${duur}ms;animation-delay:-${duur - rest}ms"></i></div>`;
   $('oz-blad').classList.add('met-code');
+  const meld = ok => { const o = $('oz-ok'); if (o && ok) o.textContent = '✓ Gekopieerd'; };
+  if (gekopieerd) gekopieerd.then(meld);
+
+
+
+  $('oz-deel').onclick = () => {
+    const tekst = `Rekensterren: ${code.slice(0, 3)} ${code.slice(3)} · een kwartier geldig`;
+    if (navigator.share) navigator.share({ title: 'Rekensterren', text: tekst, url }).catch(() => {});
+    else kopieer(url).then(meld);
+  };
   const vraag = () => {
     if (!ozOpen(nr)) return;
     if (document.hidden) { setTimeout(vraag, OVERZET_POLL); return; }
@@ -32667,11 +32729,16 @@ function ozVerlopen() {
 
 
 
-function openCodeBlad(vanStart) {
+function openCodeBlad(vanStart, code) {
   sndClick();
   const nr = ++ozNr;
-  ozToon(ozIco('code') + ' Code invullen',
-    `<div class="oz-invoer">${ozCodeHtml('', '', 0)}
+
+
+
+  const plak = !!(navigator.clipboard && navigator.clipboard.readText);
+  ozToon('<span aria-hidden="true">⭐</span> Sterren ophalen',
+    (plak ? `<button class="btn purple oz-groot" id="oz-plak" type="button">${ozIco('plak')} Plakken</button><div class="oz-of">of typ de code</div>` : '')
+    + `<div class="oz-invoer">${ozCodeHtml('', '', 0)}
        <input id="oz-veld" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" aria-label="Code van zes cijfers"></div>
      <div class="oz-onder" id="oz-onder"><div class="oz-waar">Andere toestel: <span class="ab-kbd">⚙️ Ouders › Back-up › Overzetten</span></div></div>`,
     '<button class="btn small paper" id="oz-dicht">Annuleer</button>');
@@ -32711,9 +32778,35 @@ function openCodeBlad(vanStart) {
         teken();
       });
   };
+  const p = $('oz-plak');
+  if (p) p.onclick = () => navigator.clipboard.readText().then(t => {
+    if (!ozOpen(nr) || bezig) return;
+    const c = codeUit(t);
+    if (!c) { $('oz-onder').innerHTML = '<div class="oz-fout">Geen link of code gevonden</div>'; return; }
+    veld.value = c;
+    veld.oninput();
+  }, () => {});
 
-  veld.focus();
+  if (code) { veld.value = code; veld.oninput(); return; }
+
+
+  if (!plak) veld.focus();
 }
+
+
+
+
+
+
+function ophaalLinkLees() {
+  const c = /[#&]ophalen=(\d{6})(?!\d)/.exec(location.hash || '');
+  if (!c) return;
+  try { history.replaceState(null, '', location.href.split('#')[0]); } catch (e) { }
+  if (!overzetMag()) return;
+  const doe = () => { if (!$('confirm-modal').classList.contains('open')) openCodeBlad(true, c[1]); };
+  setTimeout(doe, motionOff() ? 0 : 900);
+}
+addEventListener('hashchange', ophaalLinkLees);
 
 
 
@@ -32860,6 +32953,8 @@ addEventListener('appinstalled', () => {
   appKnopZet();
   renderGeluid();
   if ($('app-blad')) closeConfirmModal();
+
+  showToast('✓ Staat op je beginscherm');
 });
 
 
@@ -32897,48 +32992,17 @@ addEventListener('appinstalled', () => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-const APPKNOP_KEY = 'rekenPopsterren_appknop';
-const APPKNOP = { vanafBezoek: 2, rustDagen: 14, maxNee: 3 };
 let installVoorstel = null;
 addEventListener('beforeinstallprompt', e => { installVoorstel = e; });
-function appKnopLees() {
-  try {
-    const s = JSON.parse(localStorage.getItem(APPKNOP_KEY) || 'null');
-    return s && typeof s === 'object' ? s : {};
-  } catch (e) { return {}; }
-}
-function appKnopSchrijf(s) {
-  try { localStorage.setItem(APPKNOP_KEY, JSON.stringify(s)); } catch (e) { }
-}
 
-(function () {
-  if (speeltAlsApp()) return;
-  const s = appKnopLees();
-  s.bezoek = (s.bezoek | 0) + 1;
-  appKnopSchrijf(s);
-})();
+
+try { localStorage.removeItem('rekenPopsterren_appknop'); } catch (e) { }
 
 function appUitlegNodig() { return !beginschermNetErop && !speeltAlsApp(); }
-function appKnopTonen(nu) {
+function appKnopTonen() {
   if (!appUitlegNodig()) return false;
   const zoek = location.search || '';
-  if (zoek.indexOf('debug') !== -1 && zoek.indexOf('appknop') === -1) return false;
-  const s = appKnopLees();
-  const iosLeeg = /^ios/.test(beginschermSoort()) && profileKeys().length === 0;
-  if ((s.bezoek | 0) < APPKNOP.vanafBezoek && !iosLeeg) return false;
-  if ((s.nee | 0) >= APPKNOP.maxNee) return false;
-  return !(s.rustTot > (nu || Date.now()));
+  return !(zoek.indexOf('debug') !== -1 && zoek.indexOf('appknop') === -1);
 }
 
 function appKnopZet() {
@@ -32946,14 +33010,6 @@ function appKnopZet() {
   if (!k) return;
   const opLanding = $('screen-profile').classList.contains('active');
   k.style.display = opLanding && appKnopTonen() ? '' : 'none';
-}
-function appKnopNietNu() {
-  const s = appKnopLees();
-  s.nee = (s.nee | 0) + 1;
-  s.rustTot = Date.now() + APPKNOP.rustDagen * 24 * 3600 * 1000;
-  appKnopSchrijf(s);
-  closeConfirmModal();
-  appKnopZet();
 }
 
 
@@ -32976,63 +33032,74 @@ function isSafari26(nav) {
 
 
 
+
+
+
+
+
+
+
+
+
 function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
-  const stap = (n, t) => `<div class="ab-stap"><span class="ab-nr">${n}</span><span>${t}</span></div>`;
   const kbd = t => `<span class="ab-kbd">${t}</span>`;
   const erbij = kbd(ico('erbij') + ' Zet op beginscherm');
-
-
-  const voordeel = (pad, t) => `<span class="ab-vd"><svg class="ab-vd-i" viewBox="0 0 24 24" aria-hidden="true">${pad}</svg>${t}</span>`;
-  let html = '<div class="ab-voor">Voor papa of mama</div><div class="ab-voordelen">'
-    + voordeel('<rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/>', 'Eigen icoon')
-    + voordeel('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>', 'Heel scherm')
-    + voordeel('<path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9 9 0 0 1 13 0M9 16a4 4 0 0 1 6 0M3 3l18 18"/>', 'Zonder internet')
-    + '</div>';
+  const stappen = l => l.map((t, i) => `<div class="ab-stap"><span class="ab-nr">${i + 1}</span><span class="ab-tekst">${t}</span></div>`).join('');
+  let html = '<div class="ab-voor">Voor papa of mama</div>';
   if (soort === 'ios') {
-    if (ipad) {
-      html += stap(1, `Tik in Safari rechtsboven op ${kbd(DEEL_SVG + ' Deel')}`) + stap(2, `Kies ${erbij}`);
-    } else if (nieuw) {
-
-      html += stap(1, `Tik onderaan op ${kbd('···')}`)
-        + '<div class="ab-balk26" aria-hidden="true"><span class="ab-rond">‹</span><span class="ab-adres">rekensterren.be</span><span class="ab-rond ab-doel">···</span></div>'
-        + stap(2, `Tik op ${kbd(DEEL_SVG + ' Deel')} en dan op ${erbij}`);
-    } else {
-      html += stap(1, `Tik in Safari onderaan op ${kbd(DEEL_SVG + ' Deel')}`)
-        + '<div class="ab-balk" aria-hidden="true"><span>‹</span><span>›</span><span class="ab-doel">' + DEEL_SVG + '</span><span>📖</span><span>⧉</span></div>'
-        + stap(2, `Kies ${erbij}`);
-    }
-    html += stap(3, `Tik op ${kbd('Voeg toe')}`);
-
-
-
+    let zet;
+    if (ipad) zet = [`Tik in Safari rechtsboven op ${kbd(DEEL_SVG + ' Deel')}`, `${erbij} › ${kbd('Voeg toe')}`];
+    else if (nieuw) zet = [`Tik onderaan op ${kbd('···')}`
+        + '<span class="ab-balk26" aria-hidden="true"><span class="ab-rond">‹</span><span class="ab-adres">rekensterren.be</span><span class="ab-rond ab-doel">···</span></span>',
+      `${kbd(DEEL_SVG + ' Deel')} › ${erbij} › ${kbd('Voeg toe')}`];
+    else zet = [`Tik in Safari onderaan op ${kbd(DEEL_SVG + ' Deel')}`
+        + '<span class="ab-balk" aria-hidden="true"><span>‹</span><span>›</span><span class="ab-doel">' + DEEL_SVG + '</span><span>📖</span><span>⧉</span></span>',
+      `${erbij} › ${kbd('Voeg toe')}`];
     const meenemen = hasStars && overzetMag();
-    if (hasStars) html += meenemen
-      ? '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Neem je sterren mee met een code.</div>'
-      : '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › Back-up, en zet hem in de app terug.</div>';
-    return { html, installeer: false, meenemen };
+    if (meenemen) {
+      html += stappen(['<button class="btn small purple ab-mee" id="ab-mee" type="button"><span aria-hidden="true">⭐</span> Neem je sterren mee</button>'
+          + '<span class="ab-ok" id="ab-mee-ok" aria-live="polite"></span>']
+        .concat(zet, [`Open de app › ${kbd('Al gespeeld?')} › ${kbd('Plakken')}`]));
+    } else {
+      html += stappen(zet);
+      if (hasStars) html += '<div class="ab-noot">⭐ De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › Back-up, en zet hem in de app terug.</div>';
+    }
+    return { html, installeer: false, meenemen, kopieer: false };
   }
-  if (soort === 'android' && kanInstalleren) {
-    html += '<div class="ab-noot">Je sterren blijven gewoon staan.</div>';
-    return { html, installeer: true };
+  if (soort === 'android' && kanInstalleren) return { html, installeer: true, meenemen: false, kopieer: false };
+  if (soort === 'android') {
+    html += stappen([`Tik in Chrome rechtsboven op ${kbd('⋮')}`
+        + '<span class="ab-balk26" aria-hidden="true"><span class="ab-adres">rekensterren.be</span><span class="ab-rond ab-doel">⋮</span></span>',
+      `${kbd(ico('erbij') + ' App installeren')} › ${kbd('Installeren')}`]);
+    return { html, installeer: false, meenemen: false, kopieer: false };
   }
-  const [uitleg, tweede] = beginschermUitleg(soort, hasStars);
-  html += `<p class="ab-uitleg">${uitleg}</p>` + (tweede ? `<div class="ab-noot">${tweede}</div>` : '');
-  return { html, installeer: false };
-}
 
-function openAppBlad(vanKnop) {
+  if (soort === 'inapp' || soort === 'ios-elders') {
+    const browser = soort === 'inapp' ? 'Chrome' : 'Safari';
+    html += stappen([`Tik op ${kbd('Kopieer link')}`, `Open ${browser} en plak de link`, `Tik daar op ${kbd(ico('erbij') + ' Als app')}`]);
+    return { html, installeer: false, meenemen: false, kopieer: true };
+  }
+  const [uitleg] = beginschermUitleg(soort, false);
+  html += `<p class="ab-uitleg">${uitleg}</p>`;
+  return { html, installeer: false, meenemen: false, kopieer: false };
+}
+function openAppBlad() {
   sndClick();
   const hasStars = profileKeys().length > 0;
-  const { html, installeer, meenemen } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel, isSafari26());
+  const { html, installeer, meenemen, kopieer } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel, isSafari26());
   $('confirm-title').innerHTML = ico('erbij') + ' Rekensterren als app';
   $('confirm-body').innerHTML = `<div id="app-blad">${html}</div>`;
   $('confirm-actions').innerHTML =
-    `<button class="btn small paper" id="app-blad-dicht">${vanKnop ? 'Niet nu' : 'Sluiten'}</button>`
+    '<button class="btn small paper" id="app-blad-dicht">Sluiten</button>'
     + (installeer ? '<button class="btn small purple" id="app-blad-installeer">Installeren</button>' : '')
-    + (meenemen ? `<button class="btn small purple" id="app-blad-mee">${ozIco('zet')} Sterren meenemen</button>` : '');
-  $('app-blad-dicht').onclick = vanKnop ? appKnopNietNu : closeConfirmModal;
-  const mee = $('app-blad-mee');
-  if (mee) mee.onclick = openOverzetBlad;
+    + (kopieer ? '<button class="btn small purple" id="app-blad-kopieer">Kopieer link</button>' : '');
+  $('app-blad-dicht').onclick = closeConfirmModal;
+  const mee = $('ab-mee');
+  if (mee && meenemen) mee.onclick = () => neemSterrenMee(mee);
+  const kop = $('app-blad-kopieer');
+  if (kop) kop.onclick = () => kopieer(location.href.split('#')[0]).then(ok => {
+    kop.textContent = ok ? '✓ Gekopieerd' : 'Kopiëren lukte niet';
+  });
   const ik = $('app-blad-installeer');
   if (ik) ik.onclick = () => {
     const e = installVoorstel;
@@ -33042,6 +33109,23 @@ function openAppBlad(vanKnop) {
   };
   $('confirm-modal').classList.add('open');
   syncBackGuard();
+}
+
+
+
+function neemSterrenMee(knop) {
+  const ok = $('ab-mee-ok');
+  knop.disabled = true;
+  const link = ozMaakLink();
+  kopieerBelofte(link.then(r => ozLinkVan(r.code))).then(gekopieerd => link.then(r => {
+    if (!$('app-blad')) return;
+    knop.style.display = 'none';
+    ok.innerHTML = gekopieerd ? '✓ Gekopieerd' : `Code: <b>${r.code.slice(0, 3)} ${r.code.slice(3)}</b>`;
+  })).catch(st => {
+    if (!$('app-blad')) return;
+    knop.disabled = false;
+    ok.innerHTML = `<span class="oz-fout">${ozFoutTekst(typeof st === 'number' ? st : 0)}</span>`;
+  });
 }
 
 
@@ -33245,6 +33329,8 @@ landingLeeft();
 
 logoIntro();
 syncBackGuard();
+
+ophaalLinkLees();
 
 onderVrijWaarnemen();
 onderVrijOpnieuw();
