@@ -229,6 +229,8 @@ landingLeeft();
 // van het logo onder de deken af.
 opstartTonen(logoIntro);
 syncBackGuard();
+// geopend via een ophaallink van een ander toestel? (zie = Overzetten)
+ophaalLinkLees();
 // de ruimte onder de balken: meten voor het eerste scherm, en daarna bijhouden
 onderVrijWaarnemen();
 onderVrijOpnieuw();

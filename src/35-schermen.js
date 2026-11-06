@@ -971,11 +971,11 @@ function renderProfiles() {
     add.style.display = n >= MAX_PROFILES ? 'none' : '';
     if (n) plusKnop(add); else leegTegel(add);
   }
-  // alleen op het lege scherm: wat is dit spel (zie de opmaak van #over-hint)
+  // alleen op het lege scherm: wat is dit spel (zie de opmaak van .leeg-regel)
   const hint = $('over-hint');
   if (hint) hint.style.display = n ? 'none' : 'flex';
   ouderStip();   // goud op ⚙️ als er een ster klaar is voor meer
-  // en eronder: al gespeeld op een ander toestel? (zie = Overzetten)
+  // en ernaast: al gespeeld op een ander toestel? (zie = Overzetten)
   const codeHint = $('code-hint');
   if (codeHint) codeHint.style.display = !n && overzetMag() ? 'flex' : 'none';
   renderGeluid();

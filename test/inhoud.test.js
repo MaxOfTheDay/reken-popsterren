@@ -799,53 +799,43 @@ zaak('J', () => {
   const morgen = laadApp({ opslag: c.opslag() });
   check(html(morgen, UA.android).includes('set-beginscherm'), 'J · een nieuwe start vraagt het gewoon weer aan de browser', '');
 
-  /* ---- Het knopje "Speel als app" ---- */
-  // Het eerste bezoek telt, maar toont nog niets; het tweede wel.
+  /* ---- Het knopje "Als app" ----
+     Altijd in de browser, ook bij het eerste bezoek, en er wordt niets geteld of
+     bewaard. Weg alleen in de app zelf en net na installeren. */
   const een = laadApp();
-  check(een.run('appKnopTonen()') === false, 'J · knopje: niet bij het eerste bezoek', een.opslag().rekenPopsterren_appknop);
-  const twee = laadApp({ opslag: een.opslag() });
-  check(twee.run('appKnopTonen()') === true, 'J · knopje: wel vanaf het tweede bezoek', twee.opslag().rekenPopsterren_appknop);
-  check(!/appknop|bezoek/i.test(JSON.stringify(twee.db)), 'J · knopje: de tellers staan niet in db, dus niet in de back-up', '');
-  // Op een iPhone of iPad wél meteen, zolang er nog geen ster is: daar begint de
-  // app op het beginscherm met een eigen, lege opslag. Is er al een ster, dan
-  // weer gewoon vanaf het tweede bezoek. Android blijft op het tweede bezoek.
-  const iosEen = laadApp();
-  iosEen.run(`navigator.userAgent = '${UA.iphone}'`);
-  check(iosEen.run('appKnopTonen()') === true, 'J · knopje: op een iPhone al bij het eerste bezoek, zonder ster', '');
-  iosEen.run(`db.profiles = { p1: defaultProfile('Noor', 'dress_roze') }`);
-  check(iosEen.run('appKnopTonen()') === false, 'J · knopje: maar met een ster pas vanaf het tweede bezoek', '');
-  const ipadEen = laadApp();
-  ipadEen.run(`navigator.userAgent = '${UA.ipad}'; navigator.maxTouchPoints = 5`);
-  check(ipadEen.run('appKnopTonen()') === true, 'J · knopje: op een iPad ook', '');
-  const androidEen = laadApp();
-  androidEen.run(`navigator.userAgent = '${UA.android}'`);
-  check(androidEen.run('appKnopTonen()') === false, 'J · knopje: op Android niet bij het eerste bezoek', '');
+  check(een.run('appKnopTonen()') === true, 'J · knopje: al bij het eerste bezoek', '');
+  check(!('rekenPopsterren_appknop' in een.opslag()), 'J · knopje: er wordt niets geteld of bewaard', JSON.stringify(een.opslag()));
+  const oud = laadApp({ opslag: { rekenPopsterren_appknop: JSON.stringify({ bezoek: 9, nee: 3, rustTot: Date.now() + 1e9 }) } });
+  check(oud.run('appKnopTonen()') === true && !('rekenPopsterren_appknop' in oud.opslag()),
+    'J · knopje: een oude "Niet nu" houdt het niet meer weg, en de oude sleutel gaat weg', JSON.stringify(oud.opslag()));
+  for (const [naam, ua] of [['iPhone', UA.iphone], ['Android', UA.android]]) {
+    const t = laadApp();
+    t.run(`navigator.userAgent = '${ua}'; db.profiles = { p1: defaultProfile('Noor', 'dress_roze') }`);
+    check(t.run('appKnopTonen()') === true, `J · knopje: ${naam}, met een ster, eerste bezoek: ook`, '');
+  }
   // Onder ?debug alleen met &appknop: de browsersuites openen de pagina vaak opnieuw.
-  check(laadApp({ opslag: twee.opslag(), zoek: '?debug' }).run('appKnopTonen()') === false,
-    'J · knopje: onder ?debug weg', '');
-  check(laadApp({ opslag: twee.opslag(), zoek: '?debug&appknop' }).run('appKnopTonen()') === true,
-    'J · knopje: onder ?debug&appknop wel', '');
+  check(laadApp({ zoek: '?debug' }).run('appKnopTonen()') === false, 'J · knopje: onder ?debug weg', '');
+  check(laadApp({ zoek: '?debug&appknop' }).run('appKnopTonen()') === true, 'J · knopje: onder ?debug&appknop wel', '');
   // In de app, of net geïnstalleerd: nergens een knopje of een menuregel.
-  const inApp = laadApp({ opslag: twee.opslag() });
+  const inApp = laadApp();
   inApp.run(`matchMedia = q => ({ matches: q === '(display-mode: fullscreen)' });`);
   check(inApp.run('appKnopTonen()') === false && inApp.run('appUitlegNodig()') === false,
     'J · knopje: weg als het spel als app draait', '');
-  const netErop = laadApp({ opslag: twee.opslag() });
+  const netErop = laadApp();
   netErop.run('beginschermNetErop = true');
   check(netErop.run('appKnopTonen()') === false, 'J · knopje: weg na appinstalled', '');
-  // "Niet nu": twee weken rust, en na drie keer nooit meer.
-  const nee = laadApp({ opslag: twee.opslag() });
-  nee.run('appKnopNietNu()');
-  check(nee.run('appKnopTonen()') === false, 'J · knopje: na Niet nu weg', '');
-  check(nee.run(`appKnopTonen(Date.now() + 15 * 24 * 3600 * 1000)`) === true, 'J · knopje: na twee weken terug', '');
-  nee.run('appKnopNietNu(); appKnopNietNu()');
-  check(nee.run(`appKnopTonen(Date.now() + 365 * 24 * 3600 * 1000)`) === false, 'J · knopje: na drie keer Niet nu blijft het weg', '');
-  check(nee.run('appUitlegNodig()') === true, 'J · knopje: maar de uitleg in Voor ouders blijft', '');
+
+  /* ---- Een ophaallink ---- */
+  const codeVan = t => a.run(`codeUit(${JSON.stringify(t)})`);
+  check(codeVan('https://rekensterren.be/#ophalen=482913') === '482913' && codeVan('Rekensterren: 482 913 · een kwartier geldig') === '482913'
+    && codeVan('482913') === '482913' && codeVan('12345') === null && codeVan('') === null && codeVan('1234567') === null,
+    'J · Plakken vindt de code in een link, een zin of zes cijfers, en niets in de rest', '');
+  check(/#ophalen=482913$/.test(a.run(`ozLinkVan('482913')`)), 'J · de link draagt de code na een hekje', a.run(`ozLinkVan('482913')`));
 
   /* ---- Het blad ---- */
   const blad = (soort, ipad, sterren, kan, nieuw) => a.run(`appBladInhoud(${JSON.stringify(soort)}, ${ipad}, ${sterren}, ${kan}, ${!!nieuw})`);
   const iph = blad('ios', false, true, false);
-  check(iph.html.includes('onderaan') && iph.html.includes('ab-balk') && iph.html.includes('Zet op beginscherm') && !iph.installeer,
+  check(iph.html.includes('onderaan') && iph.html.includes('ab-balk') && iph.html.includes('Zet op beginscherm') && !iph.installeer && !iph.html.includes('ab-voordelen'),
     'J · blad iPhone: deelknop onderaan, met de nagetekende werkbalk', iph.html);
   // Safari 26: Deel zit achter ···, dus de smalle balk en niet de oude werkbalk.
   const iph26 = blad('ios', false, false, false, true);
@@ -855,13 +845,17 @@ zaak('J', () => {
   const s26 = ua => a.run(`isSafari26(${JSON.stringify({ userAgent: ua })})`);
   check(s26(UA.iphone.replace('Version/18.5', 'Version/26.0')) && !s26(UA.iphone) && !s26(UA.android),
     'J · Safari 26 wordt herkend aan Version/26 (het systeem staat bevroren op 18_x)', '');
-  check(iph.html.includes('Maak eerst een back-up'), 'J · blad iPhone: met sterren de back-upnoot', '');
+  check(iph.html.includes('Maak eerst een back-up') && !iph.meenemen, 'J · blad iPhone: met sterren, zonder overzetten (file://), de back-upnoot', '');
   check(!blad('ios', false, false, false).html.includes('back-up'), 'J · blad iPhone: zonder sterren geen back-upnoot', '');
   const ipd = blad('ios', true, false, false);
   check(ipd.html.includes('rechtsboven') && !ipd.html.includes('ab-balk'), 'J · blad iPad: deelknop rechtsboven, zonder werkbalk', ipd.html);
   check(blad('android', false, true, true).installeer === true, 'J · blad Android: met voorstel van Chrome een knop Installeren', '');
   const andZonder = blad('android', false, true, false);
-  check(!andZonder.installeer && andZonder.html.includes('Tik op ⋮'), 'J · blad Android: zonder voorstel de stappen via ⋮', andZonder.html);
+  check(!andZonder.installeer && andZonder.html.includes('⋮') && andZonder.html.includes('App installeren') && andZonder.html.includes('ab-nr'),
+    'J · blad Android: zonder voorstel genummerde stappen via ⋮', andZonder.html);
+  const inap = blad('inapp', false, true, false);
+  check(inap.kopieer && /Chrome/.test(inap.html) && blad('ios-elders', false, true, false).kopieer && /Safari/.test(blad('ios-elders', false, true, false).html),
+    'J · blad in WhatsApp en co: Kopieer link, naar Chrome (Android) of Safari (iOS)', inap.html);
   check(!blad('anders', false, true, true).installeer, 'J · blad: Installeren alleen in Chrome op Android', '');
   check(isIpadVan(a, UA.ipad, 5) && !isIpadVan(a, UA.iphone, 5) && !isIpadVan(a, UA.macSafari, 0),
     'J · een iPad wordt herkend, ook als hij zich als Mac voordoet', '');

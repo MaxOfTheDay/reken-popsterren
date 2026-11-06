@@ -278,7 +278,7 @@
      begint, en is "wat is dit spel?" het andere ding dat een ouder kan willen */
   .over-hint {
     display: none; align-items: center; justify-content: center; gap: .3em; width: fit-content; text-decoration: none;
-    margin: 12px auto 0; font-size: var(--tx-klein); opacity: .72; text-align: center; z-index: 1;
+    margin: 0; font-size: var(--tx-klein); opacity: .82; text-align: center; z-index: 1;
     /* een knop die leest als de zin die hij was: geen vlak, geen rand -- wel een
        echt raakvlak van 44, en helder als je erop wijst */
     font-family: inherit; font-weight: 600; color: var(--c-white); background: transparent; border: none;
@@ -286,6 +286,9 @@
     transition: opacity var(--t-tik) ease, background var(--t-tik) ease;
   }
   .over-hint:hover, .over-hint:focus-visible { opacity: 1; background: rgba(255,255,255,.1); }
+  /* de regel waar ze samen in staan: één stille zin onder de tegel (zie de opmaak) */
+  .leeg-regel { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; margin-top: 8px; position: relative; z-index: 1; }
+  .leeg-regel .over-hint { padding: 0 10px; }
 
   /* --balk-rand en niet twee keer 10: dit is dezelfde afstand tot de schermrand
      als waarop de navigatiebalk onderaan zweeft, en dat is geen toeval maar de
@@ -413,21 +416,15 @@
      is alleen wat erin staat. Links uitgelijnd: het zijn stappen, geen melding. */
   #app-blad { text-align: left; color: var(--paper-ink); }
   #app-blad .ab-voor {
-    display: table; margin: 0 auto 8px; padding: 3px 10px; border-radius: var(--r-pill);
-    background: var(--lavender-wash); color: var(--purple-deep); font-size: var(--tx-mini); font-weight: 700;
+    display: table; margin: 0 auto 10px; padding: 3px 10px; border-radius: var(--r-pill);
+    background: var(--lavender-wash); color: var(--purple-deep); font-size: var(--tx-klein); font-weight: 700;
   }
-  /* wat je eraan hebt: drie tegeltjes naast elkaar, in de stof van .ab-voor */
-  #app-blad .ab-voordelen { display: flex; gap: 8px; margin: 2px 0 12px; }
-  #app-blad .ab-vd {
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
-    font-size: var(--tx-mini); font-weight: 700; color: var(--paper-ink-muted); text-align: center;
-  }
-  #app-blad .ab-vd-i {
-    width: 40px; height: 40px; padding: 9px; border-radius: var(--r-sm);
-    background: var(--lavender-wash); color: var(--purple-deep);
-    fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
-  }
-  #app-blad .ab-stap { display: flex; gap: 10px; align-items: flex-start; margin: 9px 0; line-height: 1.4; }
+  #app-blad .ab-stap { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; line-height: 1.5; }
+  #app-blad .ab-tekst { flex: 1; min-width: 0; }
+  /* stap 1 op een iPhone met sterren is een knop (neemSterrenMee) */
+  #app-blad .ab-mee { margin: -3px 0 0; }
+  #app-blad .ab-ok { font-weight: 700; color: var(--green-deep); }
+  #app-blad .ab-ok:empty { display: none; }
   #app-blad .ab-nr {
     flex: 0 0 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
     background: var(--purple-mid); color: var(--c-white); font-size: var(--tx-klein); font-weight: 700;
@@ -441,12 +438,12 @@
   #confirm-title .ico { display: inline-block; width: 1em; height: 1em; vertical-align: -.12em; stroke-width: 2.6; }
   /* een nagetekende werkbalk van Safari op een iPhone, met de deelknop omcirkeld */
   #app-blad .ab-balk {
-    display: flex; justify-content: space-around; align-items: center; height: 40px; margin: 4px 0 6px 34px;
+    display: flex; justify-content: space-around; align-items: center; height: 40px; margin: 6px 0 2px;
     border-radius: 12px; background: var(--paper-muted-bg); color: #0a84ff; font-size: 18px;
   }
   #app-blad .ab-doel { display: grid; padding: 3px; border-radius: 7px; box-shadow: 0 0 0 2.5px var(--pink-hot); }
   /* en de smalle balk van Safari 26: ‹, het adres, en ··· -- daar zit Deel achter */
-  #app-blad .ab-balk26 { display: flex; align-items: center; gap: 8px; height: 44px; margin: 4px 0 8px 34px; }
+  #app-blad .ab-balk26 { display: flex; align-items: center; gap: 8px; height: 44px; margin: 6px 0 2px; }
   #app-blad .ab-rond {
     flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
     background: var(--paper-muted-bg); color: var(--paper-ink); font-size: 18px; font-weight: 700;
