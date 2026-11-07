@@ -1832,9 +1832,13 @@ function endLevel(success) {
     $('btn-end-alt').onclick = naar
       ? () => { sndClick(); naTik(() => openKleedkamerItem(naar.id)); }
       : () => { sndClick(); naTik(openKleedkamer); };
+    /* Geen regen van veertig meer bij het omdraaien: die viel een halve tel
+       vóór de eerste ster, dus vóór er iets te vieren was, en vlak na de
+       confetti van het laatste antwoord. Nu gooit elke ster die landt zelf een
+       handje sterretjes (zie renderEndStars): oorzaak eerst, dan het feest, en
+       een betere show ziet er vanzelf groter uit. */
     sndWin();
-    confetti(40, $('screen-end'));
-    finaleDance('end-avatar', 4);   // grote slotchoreografie: vier hele pasjes, ruim 3.6s
+    finaleDance('end-avatar', 4, true);   // grote slotchoreografie: drie hele pasjes en de buiging, ruim 3.6s
   } else {
     // Mislukt: er komt geen ster bij en er schuift niets op. Alleen de 💎 van de
     // publieksteller hierboven zijn al bijgeschreven, en die horen bewaard.
@@ -1858,13 +1862,24 @@ function endLevel(success) {
     $('btn-end-alt').textContent = '🗺️ Kaart';
     $('btn-end-alt').classList.remove('wens-klaar');
     $('btn-end-alt').onclick = () => { sndClick(); naTik(() => goMap(lvl)); };
+    /* Eén klein zwaaitje als de kaart staat: "tot zo". Ze stond hier stil, en
+       zonder klank en zonder beweging leek het of de app bleef hangen. Geen
+       dans en geen klank: een mislukte show is geen feest, alleen geen einde. */
+    setTimeout(() => {
+      const pop = $('end-avatar');
+      if ($('screen-end').classList.contains('active') && zetPas(pop, MOVES.find(m => m.cls === 'move-wave'))) pasUit(pop);
+    }, EINDE.mislukt);
   }
   /* DE VOLGORDE op het eindscherm: eerst de sterren, dan wat ze opleveren, dan
      de weg verder. Hier stond alles behalve de sterren al klaar op het eerste
      beeldje: de "+15", de teller op zijn eindstand, de trofeepil en de knoppen
-     -- en pas daarna landden de sterren die dat allemaal verdiend hadden. Nu
-     telt de teller op vanaf wat er vóór de show stond. */
-  telNu($('end-diamonds'), p.diamonds - opbrengst);
+     -- en pas daarna landden de sterren die dat allemaal verdiend hadden.
+     De teller begint waar die van de show net ophield, en telt alleen op wat
+     er nu pas bijkomt (sterrenbonus en publieksbonus). Niet vanaf wat er vóór
+     de show stond: de 💎 van de antwoorden waren tijdens de show al
+     binnengevlogen, en dan sprong de teller bij het omdraaien terug (276 in de
+     show, 240 op de kaart) -- een kind zag diamanten verdwijnen. */
+  telNu($('end-diamonds'), p.diamonds - (opbrengst - G.earned));
   const aankomst = eindKomtOp(success);
   telStraks($('end-diamonds'), p.diamonds, aankomst);
   eindWensVul(wens, aankomst);   // het streepje loopt vol als de diamanten landen
@@ -1899,7 +1914,9 @@ function endLevel(success) {
      gaat niet verloren: de schat hangt in de kleedkamer, de badge staat klaar in
      de kast, en de kaart laat de wereldovergang zelf zien. */
   const naFeest = feest ? () => { if ($('screen-end').classList.contains('active')) wereldFeest(feest); } : null;
-  const wacht = naSterren();
+  /* En ook pas als de 💎 bij de teller zijn: het feest kwam 0,6 tel na de
+     derde ster en schoof dan over de diamanten heen die nog onderweg waren. */
+  const wacht = Math.max(naSterren(), aankomst);
   if (naFeest) setTimeout(naFeest, wacht);
   /* Lees-vrij: in de telmodus wordt alles voorgelezen -- de vraag, de hint, de
      trofee, het wereldfeest -- maar het eindscherm was alleen tekst, en dan zegt
@@ -1930,6 +1947,7 @@ const STERCEREMONIE = {
   land: 480,     // hoe lang één ster erover doet om neer te komen
   knal: 1160,    // foutloos: het confetti-kanon vanuit de sterrenrij
   puls: 420,     // en het opveren van die rij zelf
+  handje: 10,    // zoveel stukjes gooit elke ster die landt (zie renderEndStars)
   /* Beperkte beweging: de sterren staan er meteen (zie hieronder), maar hun
      klankjes niet. Beperkte beweging gaat over bewegen en niet over geluid, en
      de drie stijgende tonen zijn het duidelijkste wat het eindscherm zegt over
@@ -2053,6 +2071,13 @@ function renderEndStars(n) {
         ], { duration: STERCEREMONIE.land, easing: 'ease-out' });
         playSfx('star.land', { i });
         bundelFlits();
+        /* Een handje sterretjes uit de ster zelf, op de top van haar plop
+           (60% van de landing, zie de keyframes hierboven). */
+        setTimeout(() => {
+          if (!s.isConnected) return;
+          const r = s.getBoundingClientRect();
+          confettiBurst(r.left + r.width / 2, r.top + r.height / 2, STERCEREMONIE.handje, '⭐');
+        }, Math.round(STERCEREMONIE.land * .6));
       } else {
         s.animate([{ opacity: 0 }, { opacity: .25 }], { duration: 400, easing: 'ease-out' });
       }

@@ -337,7 +337,10 @@ function sparkleAt(r, emojis) {
   setTimeout(() => s.remove(), VONK_OP + 60);
 }
 // Grote finale-choreografie op het eindscherm: alle pasjes achter elkaar.
-function finaleDance(elId, count) {
+/* buig: het laatste pasje is de buiging. Een show eindigt zoals een show
+   eindigt -- ze danst, en buigt dan voor de zaal. Het blijft één ding (zie
+   BUIGING): de buiging komt alleen na een show, nooit na een gewoon antwoord. */
+function finaleDance(elId, count, buig) {
   const el = $(elId);
   if (!el) return;
   // Bijna vier seconden dansen is precies het soort beweging dat je niet wilt
@@ -352,7 +355,8 @@ function finaleDance(elId, count) {
   let i = 0;
   const step = () => {
     if (i >= count) { stilStaan(el); return; }
-    if (!zetPas(el, MOVES[i % MOVES.length])) return;
+    const pas = buig && i === count - 1 ? BUIGING : MOVES[i % MOVES.length];
+    if (!zetPas(el, pas)) return;
     i++;
     pasUit(el, step);
   };
