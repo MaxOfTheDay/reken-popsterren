@@ -324,10 +324,14 @@ function openSettings() {
    ← en ▶ daarna gewoon terugkomen waar ze speelde. */
 function stopNaarOuders() {
   const wie = cur;
-  stopNu();
-  openSettings();   // zet setOpen en setUitleg al op null
-  setKey = wie;
-  renderSettings();
+  modalDicht('quit-modal');
+  // een beeldje later, net als Stoppen (zie stopNu): stoppen én openen samen
+  naTik(() => {
+    stopMeteen();
+    openSettings();   // zet setOpen en setUitleg al op null
+    setKey = wie;
+    renderSettings();
+  });
 }
 // de tweede regel van die rij, met haar naam (askQuit en vraagMemoryStop)
 function quitOudersZet() {
@@ -2090,11 +2094,14 @@ function bindSettings(p, s) {
      de pagina mee in plaats van onder je duim weg. */
   document.querySelectorAll('#settings-body .kaart-pen').forEach(b => b.onclick = () => {
     sndClick();
+    // gemeten op het moment van de tik; het hertekenen een beeldje later (naTik)
     const k = b.dataset.kaart, voor = b.getBoundingClientRect().top;
-    setOpen = setOpen === k ? null : k;
-    renderSettings();
-    const na = document.querySelector(`#settings-body .kaart-pen[data-kaart="${k}"]`);
-    if (na) $('screen-settings').scrollTop += na.getBoundingClientRect().top - voor;
+    naTik(() => {
+      setOpen = setOpen === k ? null : k;
+      renderSettings();
+      const na = document.querySelector(`#settings-body .kaart-pen[data-kaart="${k}"]`);
+      if (na) $('screen-settings').scrollTop += na.getBoundingClientRect().top - voor;
+    });
   });
   // een tik op haar stap: de uitleg van hoe ver ze is aan of uit (zie vgUitleg)
   document.querySelectorAll('#settings-body [data-uitleg]').forEach(r => {
@@ -2117,7 +2124,7 @@ function bindSettings(p, s) {
   // Het maakformulier heeft niets op te slaan, dus wat er ná een wijziging
   // gebeurt komt van de aanroeper (hier: opslaan + hertekenen).
   bindOefenChips(s, p, '', () => { save(); renderSettings(); });
-  on('set-newstar', 'onclick', () => openNewStar('settings'));
+  on('set-newstar', 'onclick', () => naTik(() => openNewStar('settings')));
   // het geluid aan, vanaf de notitie op haar pagina (zie stemNotitie): dezelfde
   // schakelaar als op het overzicht, en dan staat de notitie er niet meer
   on('stem-aan', 'onclick', () => { if (!db.sound) toggleSound(); renderSettings(); });
@@ -2127,8 +2134,10 @@ function bindSettings(p, s) {
   on('set-overzet', 'onclick', openOverzetBlad);
   on('oz-code', 'onclick', () => openCodeBlad(false));
   // het overzicht: een tik op een ster opent haar pagina
+  /* Haar pagina wordt in z'n geheel opgebouwd: een beeldje later (naTik), zodat
+     de tik eerst getekend wordt. Op een trage tablet was dat anders 150 ms stil. */
   document.querySelectorAll('#set-sterren .ster-rij[data-key]').forEach(b => {
-    b.onclick = () => openSter(b.dataset.key);
+    b.onclick = () => naTik(() => openSter(b.dataset.key));
   });
   on('set-export', 'onclick', exportData);
   on('set-deel', 'onclick', deelOver);

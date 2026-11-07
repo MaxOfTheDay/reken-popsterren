@@ -175,7 +175,24 @@ self.addEventListener('fetch', e => {
 
    Een lege lijst doet niets: dat is geen "alles mag weg" maar een bericht dat we
    niet begrijpen, en dat is precies het moment om van de voorraad af te blijven. */
+/* bewaar: de tekeningen die het spel al opgehaald had vóór deze service worker
+   meekeek (het eerste bezoek, zie 99-servicewerker.js). Wat er nog niet in de
+   voorraad staat, gaat erin; meestal komt het uit de gewone browsercache. Alleen
+   assets/, en alleen een goed antwoord (net als bewaar(), maar hier wachtend tot
+   het erin staat: de worker mag niet stoppen voordat dat zo is). */
+function bewaarGetoond(lijst) {
+  if (!Array.isArray(lijst) || !lijst.length) return Promise.resolve();
+  return caches.open(ART_CACHE).then(c => Promise.all(lijst.map(u => {
+    let url;
+    try { url = new URL(u, self.location.href); } catch (_) { return null; }
+    if (url.origin !== self.location.origin || !isArt(url)) return null;
+    return c.match(sleutel(url)).then(hit => hit || fetch(url).then(resp => {
+      if (resp.ok && resp.type !== 'opaque') return c.put(sleutel(url), resp);
+    }));
+  }))).catch(() => {});
+}
 self.addEventListener('message', e => {
+  if (e.data && e.data.bewaar) e.waitUntil(bewaarGetoond(e.data.bewaar));
   const lijst = e.data && e.data.art;
   if (!Array.isArray(lijst) || !lijst.length) return;
   const houden = new Set(lijst.map(p => new URL(p, self.location.href).pathname));

@@ -11344,7 +11344,7 @@
          in het ouderdeel en in de tests), en is er geen los blok onder het raster
          meer dat op een eigen rij om aandacht vraagt. -->
     <div class="star-grid" id="profile-row">
-      <button class="add-tegel" id="btn-newstar" onclick="openNewStar('profile')" aria-label="Nieuwe ster maken"><span class="at-plus" aria-hidden="true">＋</span><span class="at-tekst">Nieuwe ster</span></button>
+      <button class="add-tegel" id="btn-newstar" onclick="naTik(() => openNewStar('profile'))" aria-label="Nieuwe ster maken"><span class="at-plus" aria-hidden="true">＋</span><span class="at-tekst">Nieuwe ster</span></button>
     </div>
     <!-- Alleen zonder sterren (renderProfiles): één stille regel onder de tegel,
          zodat "Maak je ster" het enige is dat om aandacht vraagt. Links wat dit
@@ -17291,6 +17291,31 @@ function show(id) {
   onderVrijOpnieuw();
   schuifWacht();
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function schermInert() {
+  if (typeof MutationObserver !== 'function') return;
+  const kijk = new MutationObserver(lijst => {
+    for (const m of lijst) {
+      const s = m.target, weg = s.classList.contains('wegvallend');
+      if (s.inert !== weg) s.inert = weg;
+    }
+  });
+  document.querySelectorAll('.screen').forEach(s => kijk.observe(s, { attributes: true, attributeFilter: ['class'] }));
+}
+schermInert();
 
 
 
@@ -26763,8 +26788,16 @@ function vraagMemoryStop() {
   syncBackGuard();
 }
 
+
+
+
 function stopNu() {
-  if ($('screen-memory').classList.contains('active')) { modalDicht('quit-modal'); exitMemory(); }
+  modalDicht('quit-modal');
+  naTik(stopMeteen);
+}
+
+function stopMeteen() {
+  if ($('screen-memory').classList.contains('active')) exitMemory();
   else quitGame();
 }
 
@@ -27344,6 +27377,10 @@ function showOpzet(p, lvl, goldIdx) {
 function startLevel(lvl, eigenOvergang) {
 
 
+
+  if (!P()) return;
+
+
   stopSpot();
   $('screen-game').classList.remove('eindigt');
   const p = P();
@@ -27410,7 +27447,11 @@ function startLevel(lvl, eigenOvergang) {
 
 function askQuit() {
   sndClick();
-  if (G && G.idx === 0 && G.errors === 0 && G.misses === 0) { quitGame(); return; }
+
+
+
+
+  if (G && G.idx === 0 && G.errors === 0 && G.misses === 0) { naTik(quitGame); return; }
 
   $('quit-titel').textContent = '🎭 Show stoppen?';
   $('quit-zin').textContent = 'Dan stopt dit optreden en ga je terug naar de kaart.';
@@ -31004,10 +31045,14 @@ function openSettings() {
 
 function stopNaarOuders() {
   const wie = cur;
-  stopNu();
-  openSettings();
-  setKey = wie;
-  renderSettings();
+  modalDicht('quit-modal');
+
+  naTik(() => {
+    stopMeteen();
+    openSettings();
+    setKey = wie;
+    renderSettings();
+  });
 }
 
 function quitOudersZet() {
@@ -32770,11 +32815,14 @@ function bindSettings(p, s) {
 
   document.querySelectorAll('#settings-body .kaart-pen').forEach(b => b.onclick = () => {
     sndClick();
+
     const k = b.dataset.kaart, voor = b.getBoundingClientRect().top;
-    setOpen = setOpen === k ? null : k;
-    renderSettings();
-    const na = document.querySelector(`#settings-body .kaart-pen[data-kaart="${k}"]`);
-    if (na) $('screen-settings').scrollTop += na.getBoundingClientRect().top - voor;
+    naTik(() => {
+      setOpen = setOpen === k ? null : k;
+      renderSettings();
+      const na = document.querySelector(`#settings-body .kaart-pen[data-kaart="${k}"]`);
+      if (na) $('screen-settings').scrollTop += na.getBoundingClientRect().top - voor;
+    });
   });
 
   document.querySelectorAll('#settings-body [data-uitleg]').forEach(r => {
@@ -32797,7 +32845,7 @@ function bindSettings(p, s) {
 
 
   bindOefenChips(s, p, '', () => { save(); renderSettings(); });
-  on('set-newstar', 'onclick', () => openNewStar('settings'));
+  on('set-newstar', 'onclick', () => naTik(() => openNewStar('settings')));
 
 
   on('stem-aan', 'onclick', () => { if (!db.sound) toggleSound(); renderSettings(); });
@@ -32807,8 +32855,10 @@ function bindSettings(p, s) {
   on('set-overzet', 'onclick', openOverzetBlad);
   on('oz-code', 'onclick', () => openCodeBlad(false));
 
+
+
   document.querySelectorAll('#set-sterren .ster-rij[data-key]').forEach(b => {
-    b.onclick = () => openSter(b.dataset.key);
+    b.onclick = () => naTik(() => openSter(b.dataset.key));
   });
   on('set-export', 'onclick', exportData);
   on('set-deel', 'onclick', deelOver);
@@ -34071,16 +34121,41 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
   naDeRust(() => {
-    const sw = navigator.serviceWorker.controller;
-    if (!sw) return;
-    const art = [];
-    WORLDS.forEach(w => {
-      [w.art, wereldKleinPad(w.art), w.venue && w.venue.art].forEach(a => {
-        if (a && a.indexOf('blob:') !== 0 && !art.includes(a)) art.push(a);
+    navigator.serviceWorker.ready.then(reg => {
+      const sw = reg.active;
+      if (!sw) return;
+      const art = [];
+      WORLDS.forEach(w => {
+        [w.art, wereldKleinPad(w.art), w.venue && w.venue.art].forEach(a => {
+          if (a && a.indexOf('blob:') !== 0 && !art.includes(a)) art.push(a);
+        });
       });
-    });
-    if (art.length) sw.postMessage({ art: art });
+
+
+
+      const bewaar = (performance.getEntriesByType ? performance.getEntriesByType('resource') : [])
+        .map(e => e.name).filter(u => u.indexOf(location.origin + '/') === 0 && u.indexOf('/assets/') > 0);
+      Object.values(db.profiles).forEach(p => {
+        const w = worldFor(hereLevel(p)).world;
+        [w.art, wereldKleinPad(w.art), w.venue && w.venue.art].forEach(a => {
+          if (a && a.indexOf('blob:') !== 0) bewaar.push(a);
+        });
+      });
+      sw.postMessage({ art: art, bewaar: bewaar });
+    }).catch(() => {});
   });
 }
 
