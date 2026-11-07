@@ -1539,6 +1539,23 @@ const DUIK = {
      de kaart na het wegvloeien van het eindscherm nog een tiende stil en schoot
      hij daarna pas weg. */
   terugCurve: 'cubic-bezier(.25,.1,.2,1)',
+  /* Terug is de spiegel van heen, ook in volgorde. Eerst gaat wat de kaart niet
+     heeft (kop, kaart met de sterren, knoppen, podium, spotlight); dan vloeit de
+     zaal mét haar over in de kaart, waar haar kopie precies op haar plek staat
+     (het eindscherm ligt bovenop, dus haar eerder laten gaan liet een gat), en
+     zoomt de camera uit; als laatste komen haltes, weg,
+     kop en balk erbij. Het eindscherm krimpt hier niet zoals een gewoon
+     vertrekkend scherm: de camera is de beweging, en twee bewegingen tegen
+     elkaar in lazen als een hapering. */
+  uiWeg: 90,
+  zaalNa: 20,
+  zaalWeg: 120,
+  /* En zij krimpt mee met de wereld: ze blijft alleen staan tot het eindscherm
+     weg is (zaalNa + zaalWeg, een derde van de camera) en gaat dan gelijk op
+     met de camera naar haar halte. Bleef ze, zoals heen, tot halverwege staan, dan
+     stond er een grote zij stil terwijl de wereld achter haar wegkromp, en
+     schoot ze daarna ineens omlaag. */
+  landTerug: .67,
 };
 /* Wat de camera van de zaal moet weten: waar de tekening staat en waar zij
    staat. Apart van de kaart gemeten, omdat het op een ander moment moet: op de
@@ -1611,22 +1628,28 @@ function duikVlak(kaart, zaal, dekken) {
     const z = zij.getBoundingClientRect(), hr = held.getBoundingClientRect();
     if (z.height) {
       const voet = { x: z.left + z.width / 2, y: z.bottom }, doel = { x: q.left + q.width / 2, y: q.bottom };
-      const kz = q.height / z.height, beelden = [];
-      for (let i = 0; i <= 10; i++) {
-        const p = i / 10, c = 1 + (k - 1) * p;                   // de schaal van de camera op dat moment
-        const h = Math.min(1, p / DUIK.land);                    // hoe ver zíj is: eerder klaar dan de camera
-        const fx = m.x + tx * p + (voet.x - m.x) * c, fy = m.y + ty * p + (voet.y - m.y) * c;
-        const wx = voet.x + (doel.x - voet.x) * h, wy = voet.y + (doel.y - voet.y) * h;
-        beelden.push({ offset: p,
-          transform: `translateX(-50%) translate(${(wx - fx) / c}px, ${(wy - fy) / c}px) scale(${(1 + (kz - 1) * h) / c})` });
-      }
+      const kz = q.height / z.height;
+      const reeks = land => {
+        const r = [];
+        for (let i = 0; i <= 10; i++) {
+          const p = i / 10, c = 1 + (k - 1) * p;                 // de schaal van de camera op dat moment
+          const h = Math.min(1, p / land);                       // hoe ver zíj is: eerder klaar dan de camera
+          const fx = m.x + tx * p + (voet.x - m.x) * c, fy = m.y + ty * p + (voet.y - m.y) * c;
+          const wx = voet.x + (doel.x - voet.x) * h, wy = voet.y + (doel.y - voet.y) * h;
+          r.push({ offset: p,
+            transform: `translateX(-50%) translate(${(wx - fx) / c}px, ${(wy - fy) / c}px) scale(${(1 + (kz - 1) * h) / c})` });
+        }
+        return r;
+      };
+      const beelden = dekken ? null : reeks(DUIK.land);
+      const beeldenTerug = dekken ? reeks(DUIK.landTerug) : null;
       /* Hier al, bij de rest van het meten: duikRand moet weten of .pas-laag een
          draaipunt voor de kopie is, en daarna wordt er alleen nog geschreven.
          Las duikRand het zelf, dan moest de browser midden in het opzetten alle
          stijl van de verse kaart opnieuw uitrekenen -- 7 tot 9 ms op een gewone
          telefoon, vóór het eerste beeldje van de weg terug. */
       const svg = held.querySelector('.avatar-holder svg:not(.duik-kaal)');
-      vlak.held = { el: held, oorsprong: `${voet.x - hr.left}px ${voet.y - hr.top}px`, beelden,
+      vlak.held = { el: held, oorsprong: `${voet.x - hr.left}px ${voet.y - hr.top}px`, beelden, beeldenTerug,
         svg, laagStatisch: !!svg && getComputedStyle(svg.parentNode).position === 'static' };
     }
   }
@@ -1660,7 +1683,7 @@ function duikHeld(vlak, heen, opties) {
   const h = vlak.held;
   if (!h) return () => {};
   h.el.style.transformOrigin = h.oorsprong;
-  const r = heen ? h.beelden : h.beelden.map(b => ({ offset: 1 - b.offset, transform: b.transform })).reverse();
+  const r = heen ? h.beelden : h.beeldenTerug.map(b => ({ offset: 1 - b.offset, transform: b.transform })).reverse();
   const a = h.el.animate(r, opties);
   return () => { a.cancel(); h.el.style.transformOrigin = ''; };
 }
@@ -1737,6 +1760,25 @@ function terugDuik() {
   schermAnimsStop(kaart);
   kaart.classList.add('komt-op');
   kaart.style.transformOrigin = vlak.oorsprong;
+  /* Het eindscherm: eerst wat de kaart niet heeft, dan de zaal zelf (zie
+     DUIK.uiWeg). schermWeg (kaartVertrek) zette er een krimp en een fade op;
+     die gaan eraf. */
+  schermAnimsStop(van);
+  /* Dit draait één beeldje na kaartVertrek (in de rAF van renderTourMap), en het
+     eindscherm was toen al begonnen te vervagen. Dus starten deze een beeldje
+     ver in hun loop, anders stond alles één beeldje langer stil dan vroeger. */
+  const beeldje = -16;
+  const vanUi = [...van.querySelectorAll('.hub-sticky, .math-panel, .stage-podium, .venue-licht, .venue-bundel')];
+  const vanAnims = vanUi.map(el => el.animate([{ opacity: 1 }, { opacity: 0 }],
+    { duration: DUIK.uiWeg, delay: beeldje, easing: MOTION.uit, fill: 'forwards' }));
+  const zaalWeg = schermAnim(van, [{ opacity: 1 }, { opacity: 0 }],
+    { duration: DUIK.zaalWeg, delay: DUIK.zaalNa + beeldje, fill: 'both' });
+  // ...en ruimt zelf op zodra hij weg is, zoals schermWeg had gedaan (zijn vangnet komt pas later)
+  zaalWeg.onfinish = () => requestAnimationFrame(() => {
+    van.classList.remove('wegvallend');
+    van.style.transformOrigin = '';
+    schermAnimsStop(van);
+  });
   const curve = { duration: DUIK.terug, delay: DUIK.terugNa, easing: DUIK.terugCurve, fill: 'backwards' };
   const a = schermAnim(kaart, [{ transform: vlak.eind }, { transform: 'none' }], curve);
   const heldOp = duikHeld(vlak, false, curve);
@@ -1759,6 +1801,10 @@ function terugDuik() {
     if (duikOpruim === op) duikOpruim = null;
     kaart.style.transformOrigin = '';
     heldOp(); randOp();
+    /* Het eindscherm is dan al uit beeld; zonder dit stond zijn kaart er de
+       volgende keer op nul. Alleen wat hier gezet is: haar eigen wiegen (een
+       CSS-animatie op .avatar-holder) blijft lopen. */
+    vanAnims.forEach(x => x.cancel());
   };
   duikNieuw(op);
   a.onfinish = op;

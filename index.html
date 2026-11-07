@@ -19942,6 +19942,23 @@ const DUIK = {
 
 
   terugCurve: 'cubic-bezier(.25,.1,.2,1)',
+
+
+
+
+
+
+
+
+  uiWeg: 90,
+  zaalNa: 20,
+  zaalWeg: 120,
+
+
+
+
+
+  landTerug: .67,
 };
 
 
@@ -20014,22 +20031,28 @@ function duikVlak(kaart, zaal, dekken) {
     const z = zij.getBoundingClientRect(), hr = held.getBoundingClientRect();
     if (z.height) {
       const voet = { x: z.left + z.width / 2, y: z.bottom }, doel = { x: q.left + q.width / 2, y: q.bottom };
-      const kz = q.height / z.height, beelden = [];
-      for (let i = 0; i <= 10; i++) {
-        const p = i / 10, c = 1 + (k - 1) * p;
-        const h = Math.min(1, p / DUIK.land);
-        const fx = m.x + tx * p + (voet.x - m.x) * c, fy = m.y + ty * p + (voet.y - m.y) * c;
-        const wx = voet.x + (doel.x - voet.x) * h, wy = voet.y + (doel.y - voet.y) * h;
-        beelden.push({ offset: p,
-          transform: `translateX(-50%) translate(${(wx - fx) / c}px, ${(wy - fy) / c}px) scale(${(1 + (kz - 1) * h) / c})` });
-      }
+      const kz = q.height / z.height;
+      const reeks = land => {
+        const r = [];
+        for (let i = 0; i <= 10; i++) {
+          const p = i / 10, c = 1 + (k - 1) * p;
+          const h = Math.min(1, p / land);
+          const fx = m.x + tx * p + (voet.x - m.x) * c, fy = m.y + ty * p + (voet.y - m.y) * c;
+          const wx = voet.x + (doel.x - voet.x) * h, wy = voet.y + (doel.y - voet.y) * h;
+          r.push({ offset: p,
+            transform: `translateX(-50%) translate(${(wx - fx) / c}px, ${(wy - fy) / c}px) scale(${(1 + (kz - 1) * h) / c})` });
+        }
+        return r;
+      };
+      const beelden = dekken ? null : reeks(DUIK.land);
+      const beeldenTerug = dekken ? reeks(DUIK.landTerug) : null;
 
 
 
 
 
       const svg = held.querySelector('.avatar-holder svg:not(.duik-kaal)');
-      vlak.held = { el: held, oorsprong: `${voet.x - hr.left}px ${voet.y - hr.top}px`, beelden,
+      vlak.held = { el: held, oorsprong: `${voet.x - hr.left}px ${voet.y - hr.top}px`, beelden, beeldenTerug,
         svg, laagStatisch: !!svg && getComputedStyle(svg.parentNode).position === 'static' };
     }
   }
@@ -20063,7 +20086,7 @@ function duikHeld(vlak, heen, opties) {
   const h = vlak.held;
   if (!h) return () => {};
   h.el.style.transformOrigin = h.oorsprong;
-  const r = heen ? h.beelden : h.beelden.map(b => ({ offset: 1 - b.offset, transform: b.transform })).reverse();
+  const r = heen ? h.beelden : h.beeldenTerug.map(b => ({ offset: 1 - b.offset, transform: b.transform })).reverse();
   const a = h.el.animate(r, opties);
   return () => { a.cancel(); h.el.style.transformOrigin = ''; };
 }
@@ -20140,6 +20163,25 @@ function terugDuik() {
   schermAnimsStop(kaart);
   kaart.classList.add('komt-op');
   kaart.style.transformOrigin = vlak.oorsprong;
+
+
+
+  schermAnimsStop(van);
+
+
+
+  const beeldje = -16;
+  const vanUi = [...van.querySelectorAll('.hub-sticky, .math-panel, .stage-podium, .venue-licht, .venue-bundel')];
+  const vanAnims = vanUi.map(el => el.animate([{ opacity: 1 }, { opacity: 0 }],
+    { duration: DUIK.uiWeg, delay: beeldje, easing: MOTION.uit, fill: 'forwards' }));
+  const zaalWeg = schermAnim(van, [{ opacity: 1 }, { opacity: 0 }],
+    { duration: DUIK.zaalWeg, delay: DUIK.zaalNa + beeldje, fill: 'both' });
+
+  zaalWeg.onfinish = () => requestAnimationFrame(() => {
+    van.classList.remove('wegvallend');
+    van.style.transformOrigin = '';
+    schermAnimsStop(van);
+  });
   const curve = { duration: DUIK.terug, delay: DUIK.terugNa, easing: DUIK.terugCurve, fill: 'backwards' };
   const a = schermAnim(kaart, [{ transform: vlak.eind }, { transform: 'none' }], curve);
   const heldOp = duikHeld(vlak, false, curve);
@@ -20162,6 +20204,10 @@ function terugDuik() {
     if (duikOpruim === op) duikOpruim = null;
     kaart.style.transformOrigin = '';
     heldOp(); randOp();
+
+
+
+    vanAnims.forEach(x => x.cancel());
   };
   duikNieuw(op);
   a.onfinish = op;
