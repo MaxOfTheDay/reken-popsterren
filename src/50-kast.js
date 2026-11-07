@@ -1076,16 +1076,42 @@ function wereldFeest(f) {
   // even platte gele "Perfecte wereld!" dat níét tikbaar is -- twee keer
   // hetzelfde vorm voor twee verschillende dingen.
   const aanKnop = f.spul ? `<button class="btn small wf-aan" type="button">Doe aan</button>` : '';
-  const ov = openOverlay('wereld-feest-overlay',
-    `<div class="pop-panel wereld-feest">`
+  /* OP HETZELFDE PODIUM. Dit was een donkere laag over het hele scherm, en
+     daaronder verdween zij -- op het ene moment dat ze iets nieuws krijgt. Nu
+     neemt de kaart de plek van de uitslagkaart in (zoals de somkaart omdraaide
+     naar de sterren), en blijft zij in het licht staan. Met de schat al op: dat
+     is passen, zoals in de kleedkamer, en er wordt niets bewaard. "Doe aan"
+     houdt hem op; wie wegtikt ziet hem weer afgaan (zie onClose hieronder).
+     Dan hoeft de prijs niet ook nog als plaatje op de kaart: hij staat op haar. */
+  const pop = $('end-avatar');
+  const past = !!(f.spul && pop && $('screen-end').classList.contains('active'));
+  let aangedaan = false;
+  if (past) {
+    const q = P();
+    popKleren(pop, avatarSVG(Object.assign({}, q, { equipped: Object.assign({}, q.equipped, { [f.spul.cat]: f.spul.id }) }), 150));
+  }
+  const ov = openOverlay('wereld-feest-overlay op-podium',
+    `<div class="pop-panel wereld-feest${past ? ' op-haar' : ''}">`
     + `<div class="wf-kop">${kop}</div>`
     + `<div class="wf-wereld">${w.icon || '🌍'} ${esc(w.name)}</div>`
     + `<div class="wf-rijen wf-een">${rijen}</div>`
     + aanKnop + `</div>`,
     /* Geen "Tik om verder te gaan" meer: hij sluit zichzelf, elke tik sluit hem,
        en een kind van vijf leest die regel toch niet. */
-    { fade: 300, onClose: () => $('screen-end').classList.remove('feest-open') });
+    { fade: 300, onClose: () => {
+      $('screen-end').classList.remove('feest-open');
+      if (past && !aangedaan) popKleren(pop, avatarSVG(P(), 150));
+    } });
   $('screen-end').classList.add('feest-open');
+  /* Precies op de plek van de uitslagkaart en de knoppen eronder (die stappen
+     zolang opzij, zie .feest-open): op een telefoon onder haar, op een liggende
+     tablet rechts naast haar. */
+  const vak = document.querySelector('#screen-end .end-math');
+  const paneel = ov.querySelector('.wereld-feest');
+  if (vak && paneel) {
+    const r = vak.getBoundingClientRect();
+    if (r.width > 0) Object.assign(paneel.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', minHeight: r.height + 'px' });
+  }
   let af = false;
   const dicht = () => { if (af) return; af = true; ov._close(); };
   ov.onclick = dicht;
@@ -1106,6 +1132,7 @@ function wereldFeest(f) {
   if (aan) aan.onclick = (e) => {
     e.stopPropagation();   // anders sluit de tik óók de laag via ov.onclick hierboven
     sndAan();              // dezelfde handeling als in de kleedkamer, dus hetzelfde klankje
+    aangedaan = true;
     const q = P();
     q.equipped[f.spul.cat] = f.spul.id;
     noticeReady(checkTrophies(q));   // een outfit-combo kan een geheime trofee zijn

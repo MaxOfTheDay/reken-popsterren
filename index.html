@@ -8518,6 +8518,16 @@
 
   #screen-end .end-math { transition: opacity .3s ease; justify-content: space-between; }
   #screen-end.feest-open .end-math { opacity: 0; }
+
+
+
+
+  .wereld-feest-overlay.op-podium { background: none; }
+  .op-podium .wereld-feest[style*="top"] { position: fixed; margin: 0; max-width: none;
+    display: flex; flex-direction: column; justify-content: center;
+    animation: kaartOm 320ms var(--ease-uit) backwards; }
+  .op-podium .wereld-feest[style*="top"] .wf-aan { align-self: center; }
+  .wereld-feest.op-haar .wf-prijs { display: none; }
   .wereld-feest { width: min(92vw, 360px); padding: 18px 18px 14px; }
   .wf-kop { font-size: var(--tx-feest); font-weight: 700; color: var(--c-white); line-height: 1.1;
     text-shadow: var(--goud-ink); }
@@ -8548,7 +8558,7 @@
   .wereld-feest .wf-een > :nth-child(3) { animation-delay: .2s; }
   .wereld-feest .wf-een > :nth-child(4) { animation-delay: .3s; }
   @media (prefers-reduced-motion: reduce) {
-    .wereld-feest-overlay { animation: none; }
+    .wereld-feest-overlay, .op-podium .wereld-feest[style*="top"] { animation: none; }
     .wereld-feest .wf-een > * { animation: none; }
   }
 
@@ -12354,7 +12364,10 @@ function sparkleAt(r, emojis) {
   setTimeout(() => s.remove(), VONK_OP + 60);
 }
 
-function finaleDance(elId, count) {
+
+
+
+function finaleDance(elId, count, buig) {
   const el = $(elId);
   if (!el) return;
 
@@ -12369,7 +12382,8 @@ function finaleDance(elId, count) {
   let i = 0;
   const step = () => {
     if (i >= count) { stilStaan(el); return; }
-    if (!zetPas(el, MOVES[i % MOVES.length])) return;
+    const pas = buig && i === count - 1 ? BUIGING : MOVES[i % MOVES.length];
+    if (!zetPas(el, pas)) return;
     i++;
     pasUit(el, step);
   };
@@ -23827,16 +23841,42 @@ function wereldFeest(f) {
 
 
   const aanKnop = f.spul ? `<button class="btn small wf-aan" type="button">Doe aan</button>` : '';
-  const ov = openOverlay('wereld-feest-overlay',
-    `<div class="pop-panel wereld-feest">`
+
+
+
+
+
+
+
+  const pop = $('end-avatar');
+  const past = !!(f.spul && pop && $('screen-end').classList.contains('active'));
+  let aangedaan = false;
+  if (past) {
+    const q = P();
+    popKleren(pop, avatarSVG(Object.assign({}, q, { equipped: Object.assign({}, q.equipped, { [f.spul.cat]: f.spul.id }) }), 150));
+  }
+  const ov = openOverlay('wereld-feest-overlay op-podium',
+    `<div class="pop-panel wereld-feest${past ? ' op-haar' : ''}">`
     + `<div class="wf-kop">${kop}</div>`
     + `<div class="wf-wereld">${w.icon || '🌍'} ${esc(w.name)}</div>`
     + `<div class="wf-rijen wf-een">${rijen}</div>`
     + aanKnop + `</div>`,
 
 
-    { fade: 300, onClose: () => $('screen-end').classList.remove('feest-open') });
+    { fade: 300, onClose: () => {
+      $('screen-end').classList.remove('feest-open');
+      if (past && !aangedaan) popKleren(pop, avatarSVG(P(), 150));
+    } });
   $('screen-end').classList.add('feest-open');
+
+
+
+  const vak = document.querySelector('#screen-end .end-math');
+  const paneel = ov.querySelector('.wereld-feest');
+  if (vak && paneel) {
+    const r = vak.getBoundingClientRect();
+    if (r.width > 0) Object.assign(paneel.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', minHeight: r.height + 'px' });
+  }
   let af = false;
   const dicht = () => { if (af) return; af = true; ov._close(); };
   ov.onclick = dicht;
@@ -23857,6 +23897,7 @@ function wereldFeest(f) {
   if (aan) aan.onclick = (e) => {
     e.stopPropagation();
     sndAan();
+    aangedaan = true;
     const q = P();
     q.equipped[f.spul.cat] = f.spul.id;
     noticeReady(checkTrophies(q));
@@ -28881,9 +28922,13 @@ function endLevel(success) {
     $('btn-end-alt').onclick = naar
       ? () => { sndClick(); naTik(() => openKleedkamerItem(naar.id)); }
       : () => { sndClick(); naTik(openKleedkamer); };
+
+
+
+
+
     sndWin();
-    confetti(40, $('screen-end'));
-    finaleDance('end-avatar', 4);
+    finaleDance('end-avatar', 4, true);
   } else {
 
 
@@ -28907,13 +28952,24 @@ function endLevel(success) {
     $('btn-end-alt').textContent = '🗺️ Kaart';
     $('btn-end-alt').classList.remove('wens-klaar');
     $('btn-end-alt').onclick = () => { sndClick(); naTik(() => goMap(lvl)); };
+
+
+
+    setTimeout(() => {
+      const pop = $('end-avatar');
+      if ($('screen-end').classList.contains('active') && zetPas(pop, MOVES.find(m => m.cls === 'move-wave'))) pasUit(pop);
+    }, EINDE.mislukt);
   }
 
 
 
 
 
-  telNu($('end-diamonds'), p.diamonds - opbrengst);
+
+
+
+
+  telNu($('end-diamonds'), p.diamonds - (opbrengst - G.earned));
   const aankomst = eindKomtOp(success);
   telStraks($('end-diamonds'), p.diamonds, aankomst);
   eindWensVul(wens, aankomst);
@@ -28948,7 +29004,9 @@ function endLevel(success) {
 
 
   const naFeest = feest ? () => { if ($('screen-end').classList.contains('active')) wereldFeest(feest); } : null;
-  const wacht = naSterren();
+
+
+  const wacht = Math.max(naSterren(), aankomst);
   if (naFeest) setTimeout(naFeest, wacht);
 
 
@@ -28979,6 +29037,7 @@ const STERCEREMONIE = {
   land: 480,
   knal: 1160,
   puls: 420,
+  handje: 10,
 
 
 
@@ -29102,6 +29161,13 @@ function renderEndStars(n) {
         ], { duration: STERCEREMONIE.land, easing: 'ease-out' });
         playSfx('star.land', { i });
         bundelFlits();
+
+
+        setTimeout(() => {
+          if (!s.isConnected) return;
+          const r = s.getBoundingClientRect();
+          confettiBurst(r.left + r.width / 2, r.top + r.height / 2, STERCEREMONIE.handje, '⭐');
+        }, Math.round(STERCEREMONIE.land * .6));
       } else {
         s.animate([{ opacity: 0 }, { opacity: .25 }], { duration: 400, easing: 'ease-out' });
       }

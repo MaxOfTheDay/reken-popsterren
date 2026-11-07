@@ -809,7 +809,11 @@ function check(ok, label, detail) {
       const ov = document.querySelector('.wereld-feest-overlay:not(.closing)');
       const knop = ov && ov.querySelector('.wf-aan');
       const voor = P().equipped.acc;
-      const popVoor = document.getElementById('end-avatar').innerHTML;
+      /* Op hetzelfde podium past ze de schat al zodra de kaart er staat (zie
+         wereldFeest): de pop tekent hem dus vóór de tik al. */
+      const laag = () => document.getElementById('end-avatar').firstElementChild;
+      const metSchat = kledingSleutel(avatarSVG(Object.assign({}, P(), { equipped: Object.assign({}, P().equipped, { acc: 'acc_wereld_muziek' }) }), 150));
+      const popVoor = laag() && laag().svg === metSchat;
       if (knop) knop.click();
       await new Promise(res => setTimeout(res, 400));
       return {
@@ -820,14 +824,15 @@ function check(ok, label, detail) {
            opmaak) en tekent nu de schat. Niet op de innerHTML vergeleken: de
            browser schrijft SVG die hij terugleest anders op (<path/> wordt
            <path></path>), dus dat vergelijkt opmaakstijl en geen inhoud. */
-        popHertekend: document.getElementById('end-avatar').innerHTML !== popVoor,
+        popPast: popVoor,
+        popNa: laag() && laag().svg === metSchat,
         popDraagt: avatarSVG(P(), 150).includes(item('acc_wereld_muziek').draw('meisje', 1)),
       };
     });
     check(r.knop, 'K · bij een nieuwe wereldschat staat er een Aandoen-knop', JSON.stringify(r));
     check(r.voor === null && r.na === 'acc_wereld_muziek',
       'K · en één tik doet hem aan', JSON.stringify(r));
-    check(r.dicht && r.popHertekend && r.popDraagt,
+    check(r.dicht && r.popPast && r.popNa && r.popDraagt,
       'K · de laag gaat dicht en de pop op het eindscherm draagt hem al', JSON.stringify(r));
     /* Dezelfde wereld nog eens uitspelen: geen feestje, dus ook geen knop. Een
        kind hoort dit één keer per wereld tegen te komen en niet elke keer weg te
@@ -1050,6 +1055,31 @@ function check(ok, label, detail) {
     await page.waitForTimeout(600);
     const laat = await page.evaluate(() => document.querySelector('.screen.active').id);
     check(laat === 'screen-dress', 'O · en zodra ze er staan werkt dezelfde tik wel', laat);
+    await ctx.close();
+  }
+
+  /* ---- S · De 💎-teller loopt nooit terug ----
+   * De 💎 van de antwoorden vlogen tijdens de show al binnen. Het eindscherm
+   * begon te tellen vanaf wat er vóór de show stond, en dan sprong de teller
+   * bij het omdraaien terug (276 in de show, 240 op de kaart). */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await page.goto(APP_URL + '&demo&star=p1');
+    await page.waitForFunction(() => typeof selectProfile === 'function');
+    for (const gelukt of [true, false]) {
+      const r = await page.evaluate(ok => {
+        selectProfile('p1'); startLevel(6);
+        P().diamonds += 20; G.earned = 20;   // zoals na een show vol goede antwoorden
+        const inShow = P().diamonds;
+        if (ok) { G.misses = 0; endLevel(true); } else { G.errors = 3; G.misses = 3; endLevel(false); }
+        return { inShow, eerste: +document.getElementById('end-diamonds').textContent, eind: P().diamonds };
+      }, gelukt);
+      check(r.eerste >= r.inShow && r.eerste <= r.eind,
+        `S · de teller begint waar de show ophield (${gelukt ? 'geslaagd' : 'mislukt'})`, JSON.stringify(r));
+    }
     await ctx.close();
   }
 

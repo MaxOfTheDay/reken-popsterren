@@ -59,6 +59,16 @@
      (zie wereldFeest). */
   #screen-end .end-math { transition: opacity .3s ease; justify-content: space-between; }
   #screen-end.feest-open .end-math { opacity: 0; }
+  /* Op hetzelfde podium (zie wereldFeest): geen donkere laag, de kaart staat
+     waar de uitslag stond en draait er net zo in (kaartOm). De laag zelf blijft
+     het hele scherm: elke tik sluit hem nog steeds. De plek en maat zet
+     wereldFeest; zonder die maat (geen eindscherm) blijft hij in het midden. */
+  .wereld-feest-overlay.op-podium { background: none; }
+  .op-podium .wereld-feest[style*="top"] { position: fixed; margin: 0; max-width: none;
+    display: flex; flex-direction: column; justify-content: center;
+    animation: kaartOm 320ms var(--ease-uit) backwards; }
+  .op-podium .wereld-feest[style*="top"] .wf-aan { align-self: center; }
+  .wereld-feest.op-haar .wf-prijs { display: none; }
   .wereld-feest { width: min(92vw, 360px); padding: 18px 18px 14px; }
   .wf-kop { font-size: var(--tx-feest); font-weight: 700; color: var(--c-white); line-height: 1.1;
     text-shadow: var(--goud-ink); }
@@ -89,7 +99,7 @@
   .wereld-feest .wf-een > :nth-child(3) { animation-delay: .2s; }
   .wereld-feest .wf-een > :nth-child(4) { animation-delay: .3s; }
   @media (prefers-reduced-motion: reduce) {
-    .wereld-feest-overlay { animation: none; }
+    .wereld-feest-overlay, .op-podium .wereld-feest[style*="top"] { animation: none; }
     .wereld-feest .wf-een > * { animation: none; }
   }
 
