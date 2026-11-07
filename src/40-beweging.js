@@ -1625,7 +1625,7 @@ function duikVlak(kaart, zaal, dekken) {
          Las duikRand het zelf, dan moest de browser midden in het opzetten alle
          stijl van de verse kaart opnieuw uitrekenen -- 7 tot 9 ms op een gewone
          telefoon, vóór het eerste beeldje van de weg terug. */
-      const svg = held.querySelector('.avatar-holder svg');
+      const svg = held.querySelector('.avatar-holder svg:not(.duik-kaal)');
       vlak.held = { el: held, oorsprong: `${voet.x - hr.left}px ${voet.y - hr.top}px`, beelden,
         svg, laagStatisch: !!svg && getComputedStyle(svg.parentNode).position === 'static' };
     }
@@ -1644,10 +1644,12 @@ function duikRand(h, heen, opties) {
   const svg = h && h.svg;
   if (!svg || !svg.animate) return () => {};
   const laag = svg.parentNode;
+  if (!laag) return () => {};
   const los = h.laagStatisch;
   if (los) laag.style.position = 'relative';
   const kaal = svg.cloneNode(true);
   kaal.removeAttribute('id');
+  kaal.classList.add('duik-kaal');
   kaal.style.cssText = 'position:absolute;left:0;top:0;width:100%;filter:none;z-index:0;pointer-events:none';
   laag.insertBefore(kaal, svg);
   const a = svg.animate(heen ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1 }],
@@ -1675,9 +1677,10 @@ function duikNieuw(op) {
 }
 const DUIK_RANDEN = '.hub-sticky, .tour-road-svg, .wereld-stof, .tour-stop > :not(.tour-hero), .world-back, .mem-fab';
 function duikCamera(kaart, spel, klaar) {
+  // eerst wat een vorige duik achterliet weg, dán meten: anders meet je zijn kopie van haar
+  if (duikOpruim) duikOpruim();
   const vlak = duikVlak(kaart, zaalMaat(spel));
   if (!vlak) return false;
-  if (duikOpruim) duikOpruim();
   schermAnimsStop(kaart);
   kaart.style.transformOrigin = vlak.oorsprong;
   const randen = [...kaart.querySelectorAll(DUIK_RANDEN)];
@@ -1728,9 +1731,9 @@ function terugDuik() {
   if (!kaart || !kaart.animate || motionOff() || !van) return false;
   const zaal = terugZaal;
   terugZaal = null;
+  if (duikOpruim) duikOpruim();
   const vlak = duikVlak(kaart, zaal, true);
   if (!vlak) return false;
-  if (duikOpruim) duikOpruim();
   schermAnimsStop(kaart);
   kaart.classList.add('komt-op');
   kaart.style.transformOrigin = vlak.oorsprong;
