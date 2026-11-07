@@ -312,8 +312,9 @@ function tapDance(elId, stil) {
   // De tik wordt altijd beantwoord -- het klankje is het antwoord, het pasje de
   // versiering. Dus eerst het geluid, en pas daarna kijken of er gedanst wordt.
   if (!stil) sndTap();
+  const r = el.getBoundingClientRect();   // vóór het pasje: meten na een wijziging dwingt een opmaak af
   if (!zetPas(el, pick(MOVES))) return;
-  sparkle(el);
+  sparkleAt(r);
   pasUit(el);
 }
 // klein sterretje dat oppopt bij een tik-dans

@@ -8107,11 +8107,15 @@
 
 
 
+
+
   .kast-noot {
+    left: calc(50% + 18px); top: -2px;
     position: absolute; z-index: 3; line-height: 0; pointer-events: none;
     fill: var(--noot, var(--gold-accent)); filter: drop-shadow(0 0 6px var(--noot, var(--gold-accent)));
     animation: kastNoot .8s ease-out forwards;
   }
+  .pw-prijs ~ .kast-noot { left: calc(50% + 22px); }
   @keyframes kastNoot {
     0% { opacity: 0; transform: translate(0, 6px) scale(.6) rotate(-10deg); }
     20% { opacity: 1; transform: translate(4px, -6px) scale(1.1) rotate(4deg); }
@@ -11710,7 +11714,7 @@
           <div class="spiegel-podium" id="shop-podium" onclick="openPodia(event)"></div>
           <div class="avatar-holder idle levend" id="shop-avatar"></div>
         </div>
-        <button class="shuffle-btn" onclick="surpriseOutfit()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
+        <button class="shuffle-btn" onclick="verrasMe()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
       </div>
       <div class="shop-tabs-wrap" id="shop-tabs-wrap">
         <div class="shop-tabs" id="shop-tabs" role="group" aria-label="Laden"></div>
@@ -12339,8 +12343,9 @@ function tapDance(elId, stil) {
 
 
   if (!stil) sndTap();
+  const r = el.getBoundingClientRect();
   if (!zetPas(el, pick(MOVES))) return;
-  sparkle(el);
+  sparkleAt(r);
   pasUit(el);
 }
 
@@ -17371,11 +17376,16 @@ function onderVrijOpnieuw() {
 
 
 
+
+
+
+
+
 function onderVrijWaarnemen() {
-  const kijk = typeof MutationObserver === 'function'
-    ? new MutationObserver(onderVrijMeet) : null;
   const maat = typeof ResizeObserver === 'function'
     ? new ResizeObserver(onderVrijMeet) : null;
+  const kijk = !maat && typeof MutationObserver === 'function'
+    ? new MutationObserver(onderVrijMeet) : null;
   for (const id of ONDER_BALKEN) {
     const balk = $(id);
     if (!balk) continue;
@@ -23615,15 +23625,14 @@ function kastKlink(card, trap) {
   kastNoot(card, trap);
 }
 
+
+
+
 function kastNoot(card, trap) {
-  const m = card.querySelector('.temoji, .pw-medal');
-  if (!m) return;
-  const r = m.getBoundingClientRect(), c = card.getBoundingClientRect();
+  if (!card.querySelector('.temoji, .pw-medal')) return;
   const n = document.createElement('span');
   n.className = 'kast-noot';
   n.innerHTML = KAST_NOOT[(card._keer || 0) % 2];
-  n.style.left = (r.right - c.left - 16) + 'px';
-  n.style.top = (r.top - c.top - 10) + 'px';
   if (trap != null) n.style.setProperty('--noot', KAST_NOOT_KLEUR[trap]);
   card.appendChild(n);
   setTimeout(() => n.remove(), 850);
@@ -23692,13 +23701,18 @@ function kastBalk(t, card, tekst, getal, rij, stem) {
     if (naarKaart) naarWereldKaart(t.wereldIdx); else openKleedkamerCat(t.naar);
   };
   bar.style.display = 'flex';
-  onderVrijMeet();
   speak(stem || tekst);
 
 
 
-  const teveel = card.getBoundingClientRect().bottom - (bar.getBoundingClientRect().top - 12);
-  if (teveel > 0 && kast.scrollBy) kast.scrollBy({ top: teveel, behavior: motionOff() ? 'auto' : 'smooth' });
+
+
+
+  naOpbouw(() => {
+    if (!card.classList.contains('kies') || !kast.scrollBy) return;
+    const teveel = card.getBoundingClientRect().bottom - (bar.getBoundingClientRect().top - 12);
+    if (teveel > 0) kast.scrollBy({ top: teveel, behavior: motionOff() ? 'auto' : 'smooth' });
+  });
 }
 
 
@@ -29805,7 +29819,6 @@ function paintShop() {
   }
   popKleren($('shop-avatar'), avatarSVG(preview, 165, true));
   renderDressBar(selected, p);
-  onderVrijMeet();
   $('item-grid').querySelectorAll('.item-card').forEach(card => {
     const it = item(card.dataset.item);
     if (it) dressCardState(card, it, p);
@@ -29826,6 +29839,11 @@ function previewProfile(p, it) {
 
 
 
+
+
+
+
+function verrasMe() { sndAan(); naTik(surpriseOutfit); }
 function surpriseOutfit() {
   const p = P();
   const optioneel = OPTIONELE_SPULLEN;
@@ -29843,10 +29861,6 @@ function surpriseOutfit() {
 
   paintShop();
   tapDance('shop-avatar', true);
-
-
-
-  sndAan();
 }
 
 
@@ -30132,6 +30146,12 @@ function naarWereldKaart(idx) {
 
 
 function zichtbaarBovenBalk(id) {
+  naOpbouw(() => schuifBovenBalk(id));
+}
+
+
+function schuifBovenBalk(id) {
+  if (shopSelectedId !== id) return;
   const kaart = $('item-grid').querySelector(`.item-card[data-item="${id}"]`);
   const bar = $('dress-bar');
   if (!kaart || !bar || bar.style.display === 'none' || !kaart.getBoundingClientRect) return;

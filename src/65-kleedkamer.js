@@ -578,8 +578,7 @@ function paintShop() {
     plek.dataset.podium = podium.id;
   }
   popKleren($('shop-avatar'), avatarSVG(preview, 165, true));   // zonder haar pasje te breken
-  renderDressBar(selected, p);
-  onderVrijMeet();   // de lade kan net opengegaan zijn -- vóór zichtbaarBovenBalk scrolt
+  renderDressBar(selected, p);   // de ruimte onderin volgt vanzelf (onderVrijWaarnemen)
   $('item-grid').querySelectorAll('.item-card').forEach(card => {
     const it = item(card.dataset.item);
     if (it) dressCardState(card, it, p);
@@ -600,6 +599,11 @@ function previewProfile(p, it) {
 // 🎲 Verras me: een willekeurige outfit uit wat de ster al bezit, met een vreugdedansje.
 // Optionele spullen (micro, instrument, extra, dier) blijven soms bewust weg,
 // anders hangt de ster altijd vol.
+// De knop: eerst het klankje (sndAan, hetzelfde als elk ander aandoen, met de
+// tril erin) en de ingedrukte dobbelsteen, de nieuwe outfit een
+// beeldje later (naTik) -- spiegel, rek en dansje samen zijn op een trage tablet
+// ruim 150 ms, en zolang bleef de tik zelf onbeantwoord.
+function verrasMe() { sndAan(); naTik(surpriseOutfit); }
 function surpriseOutfit() {
   const p = P();
   const optioneel = OPTIONELE_SPULLEN;
@@ -617,10 +621,6 @@ function surpriseOutfit() {
   // alleen ándere spullen aan: het rek zelf verandert niet, dus alleen bijwerken
   paintShop();
   tapDance('shop-avatar', true);
-  /* Dit was de enige gebeurtenis in de hele app die wél trilde en niet klonk: een
-     buzz(20) zonder noot. Nu hetzelfde klankje als elk ander aandoen -- en de tril
-     van 20 zit erin, dus hij is niet weg maar verhuisd. */
-  sndAan();
 }
 
 /* ================= Mijn wens ==================================================
@@ -906,6 +906,12 @@ function naarWereldKaart(idx) {
    kaartje tot boven de balk -- welke houder dat ook is: hij wordt opgezocht en
    niet aangenomen. (scrollIntoView met een scroll-margin deed hier niets.) */
 function zichtbaarBovenBalk(id) {
+  naOpbouw(() => schuifBovenBalk(id));
+}
+/* Pas na de eerste verf (zie kastBalk): dan is het rek opgemaakt, kost meten
+   niets, en staat de ruimte onderin er al. */
+function schuifBovenBalk(id) {
+  if (shopSelectedId !== id) return;   // intussen iets anders getikt
   const kaart = $('item-grid').querySelector(`.item-card[data-item="${id}"]`);
   const bar = $('dress-bar');
   if (!kaart || !bar || bar.style.display === 'none' || !kaart.getBoundingClientRect) return;

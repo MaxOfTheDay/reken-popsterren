@@ -11,6 +11,16 @@
  *      zonder klok: show() noteert of hij loopt terwijl er een tik wordt
  *      afgehandeld (window.event). Elke zichtbare knop op elk scherm, plus het
  *      Stoppen?-venster.
+ *      En in diezelfde tik: niet meten wat je net veranderd hebt. Een maat
+ *      lezen (getBoundingClientRect, offsetHeight ...) nadat de tik al iets in
+ *      de pagina schreef, dwingt de browser het hele scherm midden in de tik op
+ *      te maken; daarna doet hij het bij het tekenen nog eens. In de kast kostte
+ *      dat een tik 120 ms op een trage tablet. Meet vóór je schrijft, of na de
+ *      verf (naOpbouw), of laat een ResizeObserver het zeggen. Gemeten met een
+ *      MutationObserver: staat er iets in zijn wachtrij op het moment van meten,
+ *      dan is er sinds het begin van de tik geschreven. offsetWidth telt niet:
+ *      dat is het gewone "void el.offsetWidth" om een animatie opnieuw te
+ *      starten, en dat raakt alleen de stijl van dat ene element.
  *   B  wie vertrekt, neemt geen tikken meer aan. Een scherm dat wegvalt is
  *      inert (schermInert). Concreet: haar portret op de kaart en meteen een
  *      halte -- dat startte een show zonder ster en gaf een fout.
@@ -36,6 +46,10 @@ const TELEFOON = { width: 390, height: 844 };
 const TABLET = { width: 800, height: 1280 };
 const KNOPPEN = 'button, [onclick], .tour-stop, .item-card, .trophy-card, .ster-tegel';
 // Wat iets wist, deelt, de pagina verlaat of een bestand opent, tikken we niet aan.
+/* Wie met reden meet na een wijziging. somVult en vakNaar: de som valt dicht --
+   het getal vliegt van de knop naar het vakje, en waar het vakje uitkomt weet je
+   pas als het getal erin staat (meten, schrijven, meten). */
+const MEET_MAG = /^(somVult|vakNaar)$/;
 const NIET = /set-reset|set-delete|delete|wis|import|export|backup|deel|kopieer|installeer|oz-|set-over|over-hint|naarOver|app-knop|alsapp|speel-als|set-beginscherm/i;
 
 (async () => {
@@ -72,7 +86,32 @@ const NIET = /set-reset|set-delete|delete|wis|import|export|backup|deel|kopieer|
         await page.waitForTimeout(900);
         if (klaarzetten) { await page.evaluate(klaarzetten); await page.waitForTimeout(400); }
         await page.evaluate(() => {
-          window.__inTik = [];
+          window.__inTik = []; window.__meet = [];
+          const TIK = /^(click|pointerdown|pointerup|touchstart|touchend|mousedown|mouseup|keydown)$/;
+          const mo = new MutationObserver(() => {});
+          mo.observe(document, { subtree: true, attributes: true, childList: true, characterData: true });
+          for (const t of ['click', 'pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'mouseup', 'keydown'])
+            addEventListener(t, () => mo.takeRecords(), true);
+          const meld = maat => {
+            const e = window.event;
+            if (!e || !TIK.test(e.type) || !mo.takeRecords().length) return;
+            const wie = (new Error().stack || '').split('\n').slice(3, 6).map(r => (r.match(/at (?:\w+\.)?([\w$]+) /) || [])[1]).filter(Boolean);
+            window.__meet.push({ maat, wie });
+          };
+          if (!window.__meetAan) {
+            window.__meetAan = true;
+            for (const m of ['getBoundingClientRect', 'getClientRects']) {
+              const o = Element.prototype[m];
+              Element.prototype[m] = function () { meld(m); return o.apply(this, arguments); };
+            }
+            for (const [proto, namen] of [[HTMLElement.prototype, ['offsetHeight', 'offsetTop', 'offsetLeft']],
+              [Element.prototype, ['clientWidth', 'clientHeight', 'scrollHeight', 'scrollWidth']]]) {
+              for (const n of namen) {
+                const d = Object.getOwnPropertyDescriptor(proto, n);
+                Object.defineProperty(proto, n, Object.assign({}, d, { get() { meld(n); return d.get.call(this); } }));
+              }
+            }
+          }
           const echt = window.show;
           window.show = function (id) {
             const e = window.event;
@@ -102,11 +141,13 @@ const NIET = /set-reset|set-delete|delete|wis|import|export|backup|deel|kopieer|
         const voor = await page.evaluate(() => (document.querySelector('.screen.active') || {}).id + '|' + document.querySelectorAll('.modal-bg.open, .rp-overlay').length);
         if (!await tik(page, await page.$(`[data-robuust="${i}"]`))) continue;
         await page.waitForTimeout(120);
-        const r = await page.evaluate(() => ({ inTik: window.__inTik.slice(),
+        const r = await page.evaluate(() => ({ inTik: window.__inTik.slice(), meet: window.__meet.slice(),
           na: (document.querySelector('.screen.active') || {}).id + '|' + document.querySelectorAll('.modal-bg.open, .rp-overlay').length }));
         check(!r.inTik.length, 'A · geen schermwissel binnen de tik zelf (naTik)', `${naam}: ${knoppen[i - 1]} -> ${r.inTik.join(',')}`);
+        const meet = r.meet.filter(m => !m.wie.some(w => MEET_MAG.test(w)));
+        check(!meet.length, 'A · in de tik niet meten wat de tik net veranderde', `${naam}: ${knoppen[i - 1]} -> ${meet.map(m => m.maat + ' in ' + m.wie.join(' < ')).join(' | ')}`);
         if (r.na !== voor) vers = false;
-        await page.evaluate(() => { window.__inTik.length = 0; });
+        await page.evaluate(() => { window.__inTik.length = 0; window.__meet.length = 0; });
       }
     }
     await ctx.close();
