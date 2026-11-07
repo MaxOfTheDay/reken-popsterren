@@ -1060,7 +1060,7 @@ function check(ok, label, detail) {
       await page.waitForTimeout(200);
       const tekst = await page.evaluate(() => document.getElementById('app-blad').textContent.replace(/\s+/g, ' '));
       check(/Zet op beginscherm/.test(tekst), `O · ${naam}: Deel → Zet op beginscherm`, tekst);
-      check(/De app begint leeg\. Maak eerst een back-up via ⚙️ Ouders › Back-up op dit toestel/.test(tekst), `O · ${naam}: zonder overzetten (file://) de back-upwaarschuwing`, tekst);
+      check(/De app begint leeg\. Maak eerst een back-up via ⚙️ Ouders › Back-up,/.test(tekst), `O · ${naam}: zonder overzetten (file://) de back-upwaarschuwing`, tekst);
       await ctx.close();
     }
 
@@ -1523,14 +1523,16 @@ function check(ok, label, detail) {
       await page.waitForTimeout(250);
     };
     const tik = async (page, sel) => { await page.click(sel); await page.waitForTimeout(200); };
+    // naar het overzetblad: de rij "Ander toestel en back-up", dan de paarse knop
+    const naarAnder = async page => { await tik(page, '#set-backup'); await tik(page, '#bb-naar'); };
 
     // A: de afzender, met Anna en Bas
     const a = await fresh();
     // zonder ?overzet (zoals vanaf file://): alleen het bestand
     await open(a.page, null, null);
     await tik(a.page, '#set-backup');
-    let r = await a.page.evaluate(() => ({ tegels: ['bb-maak', 'bb-terug'].filter(id => document.getElementById(id)), rij: !!document.getElementById('set-overzet') }));
-    check(r.tegels.join() === 'bb-maak,bb-terug' && !r.rij, 'T · zonder overzetten: geen rij "Naar ander toestel", de back-up heeft Bewaren en Terugzetten', JSON.stringify(r));
+    let r = await a.page.evaluate(() => ({ rijen: [...document.querySelectorAll('#confirm-body .gear-item')].map(b => b.id), knop: !!document.getElementById('bb-naar'), titel: document.getElementById('confirm-title').textContent }));
+    check(r.rijen.join() === 'bb-maak,bb-terug' && !r.knop && /Back.up$/.test(r.titel), 'T · zonder overzetten: "Back-up", met alleen Back-up maken en Terugzetten', JSON.stringify(r));
     await metOverzet(a.page, a.ctx);
     await a.page.evaluate(() => { db.profiles.p1.stars = { 1: 3, 2: 2 }; db.profiles.p2.stars = { 1: 1 }; save(); });
     await open(a.page, null, null);
@@ -1538,14 +1540,14 @@ function check(ok, label, detail) {
       const kaart = document.querySelector('.geluid-kaart');
       return { rijen: [...kaart.querySelectorAll('.gear-item')].map(b => b.id), knoppen: !!document.getElementById('set-export') };
     });
-    check(r.rijen.slice(0, 3).join() === 'set-sound,set-overzet,set-backup' && !r.knoppen,
-      'T · onder Geluid eerst "Naar ander toestel", dan de back-up, zonder knoppen op het overzicht', JSON.stringify(r));
-    // de back-up is alleen het bestand: overzetten staat er niet meer in
+    check(r.rijen.slice(0, 2).join() === 'set-sound,set-backup' && !r.knoppen,
+      'T · onder Geluid één rij voor ander toestel en back-up, zonder knoppen op het overzicht', JSON.stringify(r));
+    // erachter één paarse knop, en de rest als rijen
     await tik(a.page, '#set-backup');
-    r = await a.page.evaluate(() => ({ tegels: [...document.querySelectorAll('#confirm-body .bb-tegel')].map(b => b.id), titel: document.getElementById('confirm-title').textContent }));
-    check(r.tegels.join() === 'bb-maak,bb-terug' && /op dit toestel/.test(r.titel), 'T · "Back-up op dit toestel": alleen Bewaren en Terugzetten', JSON.stringify(r));
-    await a.page.evaluate(() => closeConfirmModal());
-    await tik(a.page, '#set-overzet');
+    r = await a.page.evaluate(() => ({ rijen: [...document.querySelectorAll('#confirm-body .gear-item')].map(b => b.id), knoppen: [...document.querySelectorAll('#confirm-body .btn')].map(b => b.id), titel: document.getElementById('confirm-title').textContent }));
+    check(r.knoppen.join() === 'bb-naar' && r.rijen.join() === 'bb-van,bb-maak,bb-terug' && /Ander toestel en back.up/.test(r.titel),
+      'T · "Ander toestel en back-up": één knop Naar ander toestel, dan Van ander toestel, Back-up maken, Terugzetten', JSON.stringify(r));
+    await tik(a.page, '#bb-naar');
     await a.page.waitForTimeout(300);
     r = await a.page.evaluate(() => ({
       code: (document.querySelector('#oz-blad .oz-klein-code') || { dataset: {} }).dataset.code,
@@ -1613,9 +1615,9 @@ function check(ok, label, detail) {
     const c2 = await fresh(['Cato']);
     await metOverzet(c2.page, c2.ctx);
     await open(c2.page, null, null);
-    await tik(c2.page, '#set-overzet');
-    // de weg andersom staat onderaan het overzetblad
-    await tik(c2.page, '#oz-andersom');
+    // de weg andersom is een rij in het blad
+    await tik(c2.page, '#set-backup');
+    await tik(c2.page, '#bb-van');
     await c2.page.focus('#oz-veld');
     await c2.page.keyboard.type(code);
     await c2.page.waitForTimeout(400);
@@ -1623,7 +1625,7 @@ function check(ok, label, detail) {
     check(r, 'T · een code werkt maar één keer', String(r));
     // een nieuwe code van A, op een toestel mét een ster: vervangen, of annuleren
     await a.page.evaluate(() => closeConfirmModal());
-    await tik(a.page, '#set-overzet');
+    await naarAnder(a.page);
     await a.page.waitForTimeout(300);
     const code2 = await a.page.evaluate(() => document.querySelector('#oz-blad .oz-klein-code').dataset.code);
     await c2.page.keyboard.type(code2);
@@ -1643,7 +1645,7 @@ function check(ok, label, detail) {
     await d.page.goto(APP_URL + '&overzet');
     await d.page.waitForTimeout(250);
     await open(d.page, null, null);
-    await tik(d.page, '#set-overzet');
+    await naarAnder(d.page);
     await d.page.waitForTimeout(300);
     r = await d.page.evaluate(() => ({ fout: (document.querySelector('#oz-blad .oz-fout') || {}).textContent, weer: !!document.getElementById('oz-weer') }));
     check(!!r.fout && r.weer, 'T · zonder ontvanger: een zin en "Opnieuw"', JSON.stringify(r));
@@ -1657,7 +1659,7 @@ function check(ok, label, detail) {
     // opent meteen op "Sterren gevonden", en het hekje is uit de adresbalk.
     await c2.page.evaluate(() => closeConfirmModal());
     await a.page.evaluate(() => closeConfirmModal());
-    await tik(a.page, '#set-overzet');
+    await naarAnder(a.page);
     await a.page.waitForTimeout(300);
     const code3 = await a.page.evaluate(() => document.querySelector('#oz-blad .oz-klein-code').dataset.code);
     const e = await fresh([]);
@@ -1674,7 +1676,7 @@ function check(ok, label, detail) {
     // Plakken: haalt de code uit wat er op het klembord staat (hier nagebootst)
     await e.page.evaluate(() => closeConfirmModal());
     await tik(a.page, '#oz-dicht');
-    await tik(a.page, '#set-overzet');
+    await naarAnder(a.page);
     await a.page.waitForTimeout(300);
     const code4 = await a.page.evaluate(() => document.querySelector('#oz-blad .oz-klein-code').dataset.code);
     await e.page.evaluate(t => { navigator.clipboard.readText = () => Promise.resolve(t); }, 'Rekensterren: ' + code4.slice(0, 3) + ' ' + code4.slice(3));

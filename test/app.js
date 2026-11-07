@@ -216,7 +216,7 @@ const BRUG = `globalThis.__api = {
   // opslag
   defaultProfile, migrate, normalizeProfiles, load, save, profileKeys, nextProfileKey, P,
   // de sterren veiligstellen: de regel in de back-upkaart, en de browser vragen ze te houden
-  backupStandHtml, opslagVasthouden,
+  backupStandHtml, backupWanneer, opslagVasthouden,
   // de telmodus: de klim, het plafond, en de stem
   COUNT_OPTS, COUNT_STAGE_MAX, countTopRung, countMaxStage, countLiveStage,
   updateCountAcc, advanceCountStage, telPlafondTel, telPlafondOpnieuw, stemAan, somZin,

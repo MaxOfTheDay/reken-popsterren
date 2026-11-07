@@ -394,23 +394,25 @@ zaak('K', () => {
 /* ================= M · De laatste back-up =================
    db.backupAt is het enige veld buiten de profielen dat de ouder iets vertelt
    over de veiligheid van de sterren. Het moet een heropening overleven, en de
-   onderregel van de rij Back-up moet zeggen wat er is: nooit, recent of te lang
-   geleden. */
+   blad moet zeggen wat er is (nooit, recent of te lang geleden), en de rij op
+   het overzicht krijgt een stipje als het tijd wordt. */
 zaak('M', () => {
   const app = laadApp({ opslag: F.tweeSterren() });
   const dag = 86400000, nu = Date.parse('2026-10-19T12:00:00Z');
-  check(/Nog nooit/.test(app.backupStandHtml(nu)) && / oud"/.test(app.backupStandHtml(nu)),
-    'M · zonder back-up: "nog nooit", in amber', app.backupStandHtml(nu));
+  // de tekst staat in het blad (backupWanneer), op het overzicht alleen het stipje (backupStandHtml)
+  const stip = () => / oud"/.test(app.backupStandHtml(nu)) && /gi-dot/.test(app.backupStandHtml(nu));
+  check(/Nog nooit/.test(app.backupWanneer(nu)) && stip(),
+    'M · zonder back-up: "nog nooit", en een stipje', app.backupWanneer(nu) + ' ' + app.backupStandHtml(nu));
   app.db.backupAt = new Date(nu - 2 * 3600000).toISOString();
-  check(/Vandaag/.test(app.backupStandHtml(nu)) && !/ oud"/.test(app.backupStandHtml(nu)),
-    'M · van vandaag: gewoon grijs', app.backupStandHtml(nu));
+  check(/Vandaag/.test(app.backupWanneer(nu)) && !stip(),
+    'M · van vandaag: geen stipje', app.backupWanneer(nu) + ' ' + app.backupStandHtml(nu));
   app.db.backupAt = new Date(nu - 10 * dag).toISOString();
-  check(/10 dagen geleden/.test(app.backupStandHtml(nu)), 'M · tien dagen: in dagen', app.backupStandHtml(nu));
+  check(/10 dagen geleden/.test(app.backupWanneer(nu)), 'M · tien dagen: in dagen', app.backupWanneer(nu));
   app.db.backupAt = new Date(nu - 35 * dag).toISOString();
-  check(/5 weken geleden/.test(app.backupStandHtml(nu)) && / oud"/.test(app.backupStandHtml(nu)),
-    'M · vijf weken: in weken, en weer amber', app.backupStandHtml(nu));
+  check(/5 weken geleden/.test(app.backupWanneer(nu)) && stip(),
+    'M · vijf weken: in weken, en weer een stipje', app.backupWanneer(nu) + ' ' + app.backupStandHtml(nu));
   app.db.backupAt = 'onzin';
-  check(/Nog nooit/.test(app.backupStandHtml(nu)), 'M · een onleesbare datum telt als nooit', app.backupStandHtml(nu));
+  check(/Nog nooit/.test(app.backupWanneer(nu)) && stip(), 'M · een onleesbare datum telt als nooit', app.backupWanneer(nu));
   app.db.backupAt = new Date(nu).toISOString();
   app.save();
   const na = heropen(app);
