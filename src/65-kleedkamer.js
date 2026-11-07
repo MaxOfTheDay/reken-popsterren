@@ -273,12 +273,19 @@ function renderShop() {
     b.setAttribute('aria-label', c.name);
     b.setAttribute('aria-pressed', aan ? 'true' : 'false');
     b.innerHTML = `<span class="tab-ico" aria-hidden="true">${c.ico}</span>`;
+    /* Het licht schuift meteen naar de lade, het rek volgt een beeldje later
+       (naTik): een heel rek opbouwen binnen de tik liet een trage tablet 200 à
+       300 ms stilstaan voordat er iets oplichtte. */
     b.onclick = () => {
+      if (aan || tikWacht) return sndClick();
       sndClick();
-      if (aan) return;
-      shopCat = c.id; shopSelectedId = null; podiumStuk = null;
-      onderVrijOpnieuw(); renderShop();
-      $('screen-dress').scrollTop = 0;   // een nieuwe lade begint bovenaan
+      tabs.querySelectorAll('.tab-btn').forEach(x => x.classList.toggle('active', x === b));
+      tabs.style.setProperty('--i', i);
+      naTik(() => {
+        shopCat = c.id; shopSelectedId = null; podiumStuk = null;
+        onderVrijOpnieuw(); renderShop();
+        $('screen-dress').scrollTop = 0;   // een nieuwe lade begint bovenaan
+      });
     };
     tabs.appendChild(b);
     if (aan) tabs.style.setProperty('--i', i);
@@ -326,38 +333,13 @@ function renderShop() {
          nog niet van jou       -> kiezen: de pop past het en de lade onderaan
                                    zegt wat het kost (bij een podium: wat er nog
                                    ontbreekt). */
+    /* Het werk achter een tik (de pop opnieuw aankleden, elk kaartje bijwerken, de
+       lade meten) een beeldje later, via naTik: dan tekent de browser eerst het
+       ingedrukte kaartje. Binnen de tik stond een trage tablet hier 200 à 300 ms
+       stil, en de kleedkamer is waar een kind het vaakst achter elkaar tikt. */
     card.onclick = () => {
       if (it.id === 'mic_pintje') bumpPintjeTaps(card);   // easter egg telt hier mee, ook los aangetikt
-      const p2 = P();
-      /* Past ze iets dat niet van haar is, dan is een tik op wat ze écht aanheeft
-         (het gouden ✓) of nog eens op het blauwe kaartje: "laat maar, terug naar
-         mij". Eerst deed de eerste niets (de pop bleef in het paskleed staan, de
-         lade bleef "Koop" zeggen) en trok hij bij een micro je eígen micro uit --
-         precies het omgekeerde van wat het kind vroeg. Pas ná deze tik, als er
-         niets meer gepast wordt, gelden de drie gevallen hieronder weer. */
-      if (shopSelectedId && (shopSelectedId === it.id || (bezit(p2, it) && p2.equipped[it.cat] === it.id))) {
-        return stopPassen();
-      }
-      if (bezit(p2, it)) {
-        if (p2.equipped[it.cat] === it.id) {
-          if (OPTIONELE_SPULLEN.includes(it.cat) || it.cat === PODIA_CAT) return unequipShopItem(it.cat);
-          sndClick(); tapDance('shop-avatar'); return;
-        }
-        naamBordje(it);
-        return equipShopItem(it.id);
-      }
-      sndClick();
-      speak(it.full || it.name);   // de balk zegt het in letters; wie niet leest, hoort het
-      /* Stond er een "Nieuw!"-kaartje open, dan verandert de vólgorde zodra dat
-         feestje voorbij is (het spulletje verhuist naar de bezit-groep), en dus
-         moet het rek dan wél opnieuw. In alle andere gevallen blijft het staan
-         waar het staat. */
-      const herbouw = !!shopJustBoughtId;
-      clearTimeout(shopBoughtTimer);
-      shopJustBoughtId = null; shopSelectedId = it.id;
-      podiumStuk = it.cat === PODIA_CAT ? volgendStuk(P(), it) : null;
-      herbouw ? renderShop() : paintShop();
-      if (it.cat === PODIA_CAT) zichtbaarBovenBalk(it.id);
+      naTik(() => rekTik(it));
     };
     kaarten.appendChild(card);
   });
@@ -377,6 +359,41 @@ function renderShop() {
   paintShop();
   // de kop krimpt op een laag scherm als er gescrold wordt (zie 75-kleedkamer.css)
   kopKrimpMeten($('screen-dress'), 'kleedkamer');
+}
+/* Een tik op een kaartje in het rek, een beeldje na de tik zelf (zie renderShop).
+   Is de kleedkamer intussen weggetikt, dan niets. */
+function rekTik(it) {
+  if (!$('screen-dress').classList.contains('active')) return;
+  const p2 = P();
+  /* Past ze iets dat niet van haar is, dan is een tik op wat ze écht aanheeft
+     (het gouden ✓) of nog eens op het blauwe kaartje: "laat maar, terug naar
+     mij". Eerst deed de eerste niets (de pop bleef in het paskleed staan, de
+     lade bleef "Koop" zeggen) en trok hij bij een micro je eígen micro uit --
+     precies het omgekeerde van wat het kind vroeg. Pas ná deze tik, als er
+     niets meer gepast wordt, gelden de drie gevallen hieronder weer. */
+  if (shopSelectedId && (shopSelectedId === it.id || (bezit(p2, it) && p2.equipped[it.cat] === it.id))) {
+    return stopPassen();
+  }
+  if (bezit(p2, it)) {
+    if (p2.equipped[it.cat] === it.id) {
+      if (OPTIONELE_SPULLEN.includes(it.cat) || it.cat === PODIA_CAT) return unequipShopItem(it.cat);
+      sndClick(); tapDance('shop-avatar'); return;
+    }
+    naamBordje(it);
+    return equipShopItem(it.id);
+  }
+  sndClick();
+  speak(it.full || it.name);   // de balk zegt het in letters; wie niet leest, hoort het
+  /* Stond er een "Nieuw!"-kaartje open, dan verandert de vólgorde zodra dat
+     feestje voorbij is (het spulletje verhuist naar de bezit-groep), en dus
+     moet het rek dan wél opnieuw. In alle andere gevallen blijft het staan
+     waar het staat. */
+  const herbouw = !!shopJustBoughtId;
+  clearTimeout(shopBoughtTimer);
+  shopJustBoughtId = null; shopSelectedId = it.id;
+  podiumStuk = it.cat === PODIA_CAT ? volgendStuk(P(), it) : null;
+  herbouw ? renderShop() : paintShop();
+  if (it.cat === PODIA_CAT) zichtbaarBovenBalk(it.id);
 }
 /* Elk kaartje in het rek even breed, ook op de laatste rij. Het rek is een
    flex-wrap met justify-content:center (zie .item-grid), zodat een halve laatste

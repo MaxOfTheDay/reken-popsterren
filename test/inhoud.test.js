@@ -1216,4 +1216,26 @@ zaak('R', () => {
   check(!oud.length, 'R · geen oud dialect terug (gebruik ja, fout, nogNiet of ring)', oud.join(' | '));
 });
 
+/* zaak S — elke functienaam op het hoogste niveau staat maar één keer in src/.
+   De bronbestanden worden achter elkaar geplakt, en van twee gelijke
+   declaraties wint stil de laatste: de eerste is dan dode code, en wie hem
+   aanroept krijgt de andere. Zo liep telFase ooit uit 25-kern.js (de fase van
+   het leerpad) over in die uit 55-vragen.js (een loting), en hing een trofee
+   van het toeval af. */
+zaak('S', () => {
+  const map = path.join(WORTEL, 'src');
+  const waar = new Map(), dubbel = [];
+  for (const f of fs.readdirSync(map).filter(f => f.endsWith('.js') && f !== '90-wereldstudio.js').sort()) {
+    const tekst = fs.readFileSync(path.join(map, f), 'utf8');
+    tekst.split('\n').forEach((regel, i) => {
+      const m = /^(?:async\s+)?function\s*\*?\s*([\w$]+)\s*\(/.exec(regel);
+      if (!m) return;
+      if (waar.has(m[1])) dubbel.push(`${m[1]} (${waar.get(m[1])} en ${f}:${i + 1})`);
+      else waar.set(m[1], `${f}:${i + 1}`);
+    });
+  }
+  check(waar.size > 100, 'S · de functies op het hoogste niveau zijn gevonden', waar.size);
+  check(!dubbel.length, 'S · geen functienaam twee keer op het hoogste niveau (de laatste wint stil)', dubbel.join(' | '));
+});
+
 klaar();
