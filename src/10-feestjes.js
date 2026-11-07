@@ -38,7 +38,7 @@
    een vraag van de app zelf. */
 /* DICHT, MET EEN SCHILD. Een venster verdween in één beeldje (display: none),
    en dan landde de tweede tik van een dubbeltik op wat eronder lag: "Sluiten"
-   twee keer in het vel van Als app opende "Over Rekensterren" en verliet de
+   twee keer in het vel van Als app opende "Wat is Rekensterren?" en verliet de
    app, en "Stoppen" twee keer kon op de kaart al een halte raken. Elk venster
    gaat daarom hierlangs dicht: het is meteen weg, maar de doorzichtige achtergrond
    blijft MODAL_SCHILD ms liggen en vangt die tweede tik (.schild in

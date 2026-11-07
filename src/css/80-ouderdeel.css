@@ -184,11 +184,13 @@
   .set-card.secundair .set-card-head .ico { font-size: 16px; width: 30px; height: 30px; } /* teken */
   /* de tweede, vervangende actie in de back-upkaart: een streepje erboven, zodat
      "maken" en "terugzetten" niet als twee knoppen van hetzelfde soort lezen */
-  /* De onderregel van de rij Back-up (zie backupStandHtml): grijs zoals elke
-     onderregel, amber met een stipje als het tijd wordt. Amber is een
-     herinnering en geen gevaar -- vandaar de oefen-oranje en niet de
-     danger-kleuren. Geen vlak en geen rand meer: het is één rij in een lijst. */
+  /* De datum van de laatste back-up, onder "Back-up maken" in het blad (zie
+     backupBladStandHtml): grijs zoals elke onderregel, amber met een stipje als
+     het tijd wordt. Amber is een herinnering en geen gevaar -- vandaar de
+     oefen-oranje en niet de danger-kleuren. Op het overzicht staat alleen het
+     stipje, vlak voor de › (backupStandHtml). */
   .gear-item .gi-sub.backup-stand.oud { color: var(--practice-text); }
+  .backup-stip .gi-dot { margin: 0 6px 0 0; }
   .gi-dot {
     display: inline-block; width: 8px; height: 8px; margin-left: 6px; border-radius: 50%;
     background: var(--gold-cta-bottom); vertical-align: 1px; flex: none;
@@ -225,18 +227,9 @@
   .sheet-rule { display: flex; align-items: center; gap: 10px; margin: 4px 2px 0;
     color: var(--c-white); opacity: .8; font-size: var(--tx-klein); font-weight: 700; }
   .sheet-rule::before, .sheet-rule::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.22); }
-  /* De voetregel onder het overzicht (en zonder sterren onder de lege pagina): "Over Rekensterren" en delen. Geen kaart en geen
-     volle knop -- het is een verwijzing en geen instelling, en hij mag niet even
-     hard roepen als de back-up. Op de paarse achtergrond, dus witte letters, net
-     als het streepje hierboven; wel twee echte raakvlakken van 44. */
-  .ouder-voet { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 14px; margin: 2px 0 6px; }
-  .ov-link {
-    font-family: inherit; font-size: var(--tx-klein); font-weight: 700; color: var(--c-white);
-    background: transparent; border: none; cursor: pointer; text-decoration: none;
-    display: inline-flex; align-items: center; gap: 5px; min-height: 44px; padding: 0 10px;
-    border-radius: var(--r-pill); opacity: .85; transition: opacity var(--t-tik) ease, background var(--t-tik) ease;
-  }
-  .ov-link:hover, .ov-link:focus-visible { opacity: 1; background: rgba(255,255,255,.1); }
+  /* "Over het spel" (overKaartHtml): dezelfde rijen als in "Voor alle sterren",
+     maar de eerste is een echte link naar over/ -- dus zonder onderstreping. */
+  a.gear-item { text-decoration: none; }
 
   .set-field { display: flex; flex-direction: column; gap: 7px; }
   .set-field + .set-field { margin-top: 15px; }
@@ -1069,37 +1062,27 @@
   }
 
   /* ---- Het back-upblad en Overzetten (zie = Het back-upblad, = Overzetten) ----
-     Twee bladen in het gewone venster (#confirm-modal). Tegels in plaats van
-     knoppen: vier handelingen van hetzelfde gewicht, elk met een getekend icoon
-     in de lijn van de voordelen in het blad "als app". */
+     Twee bladen in het gewone venster (#confirm-modal). Het back-upblad: één
+     paarse knop en daaronder dezelfde rijen als op het overzicht, in een lijst
+     met een randje (het blad is zelf al wit, dus geen tweede kaart). */
   .oz-i {
     width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2;
     stroke-linecap: round; stroke-linejoin: round; flex: none;
   }
   #confirm-title .oz-i { vertical-align: -4px; }
-  .bb-stand {
-    display: block; padding: 0 8px;
-    font-size: var(--tx-klein); color: var(--paper-ink-muted); text-align: center;
+  .bb-blad { display: flex; flex-direction: column; gap: 12px; }
+  .bb-blad .oz-groot { margin: 2px 0 0; }
+  .bb-lijst { border: 1px solid var(--paper-border); border-radius: var(--r-lg); padding: 4px 6px; text-align: left; overflow: hidden; }
+  .bb-lijst .gear-item + .gear-item { border-top: 1px solid var(--paper-border); border-radius: 0; }
+  /* Op de smalste telefoons (320) past "Van ander toestel" anders net niet op één regel */
+  @media (max-width: 360px) {
+    .bb-lijst { padding: 2px; }
+    .bb-lijst .gear-item { padding: 0 6px; gap: 8px; }
   }
-  .bb-stand.oud { color: var(--practice-text); }
-  .bb-stand .gi-dot { margin: 0 6px 0 0; }
-  /* de regel die zegt dat het bestand op dit toestel blijft */
-  .bb-hier { margin: 2px 0 12px; font-size: var(--tx-klein); color: var(--paper-ink-muted); text-align: center; }
-  .bb-tegels { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   /* de getekende iconen in een rij van Voor ouders, op de plek van een emoji */
   .gear-item .gi-ico .oz-i { width: 24px; height: 24px; color: var(--purple-light); vertical-align: middle; }
   .data-btns .oz-i { width: 18px; height: 18px; vertical-align: -3px; }
   .settings-panel .oz-groot { margin: 2px 0 10px; }
-  .bb-tegel {
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-    min-height: 84px; padding: 12px 6px; border-radius: var(--r-sm);
-    background: var(--paper-tint); border: 1.5px solid var(--paper-border);
-    font-family: inherit; font-size: var(--tx-label); font-weight: 700; color: var(--purple-deep);
-    cursor: pointer; transition: background var(--t-tik) ease;
-  }
-  .bb-tegel .oz-i { width: 28px; height: 28px; color: var(--purple-light); }
-  .bb-tegel:hover { background: var(--lavender-wash); }
-  .bb-tegel:active { background: var(--paper-border); }
 
   .oz-blad { text-align: center; }
   /* "Al gespeeld?" naast "Wat is Rekensterren?" op het lege beginscherm, met het
@@ -1113,12 +1096,6 @@
   .oz-groot .oz-i { width: 22px; height: 22px; }
   .oz-ok { min-height: 22px; margin: 6px 0 2px; font-size: var(--tx-klein); font-weight: 700; color: var(--green-deep); }
   .oz-ok:empty { min-height: 10px; }
-  /* "Andersom? Sterren hierheen halen ›": stil, onderaan het overzetblad */
-  .oz-andersom {
-    display: block; margin: 12px auto 0; padding: 6px 8px; background: none; border: 0; cursor: pointer;
-    font-family: inherit; font-size: var(--tx-klein); font-weight: 700; color: var(--purple-deep);
-  }
-  .oz-andersom span { font-weight: 400; color: var(--paper-ink-muted); }
   .oz-of { margin: 14px 0 2px; font-size: var(--tx-klein); color: var(--paper-ink-muted); }
   .oz-klein-code { font-size: var(--tx-label); letter-spacing: .06em; color: var(--purple-deep); }
   .oz-blad.met-code .oz-tijd { margin-top: 10px; }
