@@ -32,6 +32,14 @@
  *      bezoek al ophaalde (vóór de service worker meekeek) staan in de voorraad,
  *      dus zonder net staat haar kaart er met tekening. Over een echte lokale
  *      server, want vanaf file:// draait geen service worker.
+ *   E  geen zware waas onder wat beweegt. Een CSS-filter met blur op een laag zo
+ *      groot als het venster rekent de browser bij élk beeldje opnieuw uit zodra
+ *      er iets overheen beweegt -- en de pop wiegt altijd. De kleedkamer haalde
+ *      met blur(8px) over de hele kamer 25 beeldjes per seconde (CPU zes keer
+ *      vertraagd), zonder 60; de kleine waas van de zaal en van de kaart naast
+ *      een liggend scherm (2,5 tot 5px) kostte gemeten niets. Dus: geen blur van
+ *      WAAS_MAX px of meer op iets dat meer dan een derde van het venster beslaat.
+ *      Wil je zo'n waas, teken hem dan in de tekening zelf (zie --kleed-tekening).
  *
  * Draaien:
  *   npm run test:robuust      (of: npm test voor alle suites)
@@ -50,6 +58,7 @@ const KNOPPEN = 'button, [onclick], .tour-stop, .item-card, .trophy-card, .ster-
    het getal vliegt van de knop naar het vakje, en waar het vakje uitkomt weet je
    pas als het getal erin staat (meten, schrijven, meten). */
 const MEET_MAG = /^(somVult|vakNaar)$/;
+const WAAS_MAX = 6;   // px blur; zie zaak E
 const NIET = /set-reset|set-delete|delete|wis|import|export|backup|deel|kopieer|installeer|oz-|set-over|over-hint|naarOver|app-knop|alsapp|speel-als|set-beginscherm/i;
 
 (async () => {
@@ -272,6 +281,36 @@ const NIET = /set-reset|set-delete|delete|wis|import|export|backup|deel|kopieer|
       JSON.stringify({ mis, kapot: r.kapot }));
     await ctx.close();
     server.close();
+  }
+
+  /* ---- E · geen zware waas onder wat beweegt ---- */
+  for (const maat of [TELEFOON, { width: 1280, height: 800 }]) {
+    const { ctx, page } = await nieuw(maat);
+    for (const scherm of ['map', 'reis', 'game', 'end', 'dress', 'tro', 'ouders']) {
+      await page.goto(APP_URL + '&demo&star=p1&wereld=5&stand=halverwege&screen=' + scherm);
+      await page.waitForTimeout(900);
+      const zwaar = await page.evaluate(max => {
+        const uit = [], venster = innerWidth * innerHeight;
+        for (const el of document.querySelectorAll('body *')) {
+          const scherm = el.closest('.screen');
+          if (scherm && !scherm.classList.contains('active')) continue;   // de andere schermen staan er wel, maar niet in beeld
+          for (const ps of [null, '::before', '::after']) {
+            const cs = getComputedStyle(el, ps);
+            if ((ps && cs.content === 'none') || cs.display === 'none' || cs.visibility === 'hidden') continue;
+            const px = Math.max(0, ...[...cs.filter.matchAll(/blur\(([\d.]+)px\)/g)].map(m => +m[1]));
+            if (px < max) continue;
+            // een pseudo-element meten kan niet: een vaste neemt het venster, een andere zijn ouder
+            const vast = cs.position === 'fixed', r = el.getBoundingClientRect();
+            const w = vast ? innerWidth : Math.min(r.width, innerWidth), h = vast ? innerHeight : Math.min(r.height, innerHeight);
+            const zichtbaar = vast || el.getClientRects().length > 0;
+            if (zichtbaar && w * h > venster / 3) uit.push(`${el.id || String(el.className).split(' ')[0] || el.tagName}${ps || ''} blur(${px}px)`);
+          }
+        }
+        return uit;
+      }, WAAS_MAX);
+      check(!zwaar.length, `E · geen blur van ${WAAS_MAX}px of meer over een groot deel van het scherm`, `${scherm} ${maat.width}x${maat.height}: ${zwaar.join(', ')}`);
+    }
+    await ctx.close();
   }
 
   check(!fouten.length, 'geen javascript-fouten', fouten.slice(0, 5).join(' | '));

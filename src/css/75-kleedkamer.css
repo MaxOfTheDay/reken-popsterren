@@ -117,12 +117,8 @@
     content: ''; position: absolute; top: 0; left: 50%;
     width: 100vw; height: 100vh; height: 100dvh; transform: translateX(-50%);
     /* gedempt tot de helft: zij en de spot op haar zijn het lichtste ding in de
-       kop (zie "De spot"). Hetzelfde filter als de kamer achter het scherm. */
-    filter: var(--waas-klein) brightness(.5) saturate(.8);
-    background-image:
-      var(--kunst-sluier),
-      var(--fonkeling),
-      var(--kleed-tekening);
+       kop (zie "De spot"). Dezelfde lagen als de kamer achter het scherm. */
+    background-image: var(--kleed-demper), var(--kunst-sluier), var(--kleed-tekening);
     background-size: cover, cover, cover;
     background-position: 50% 50%, 50% 50%, 50% 22%;
     background-repeat: no-repeat, no-repeat, no-repeat;
@@ -132,11 +128,20 @@
      kolom is (liggend en breed). Dezelfde demping en dezelfde waas als de kopie
      in de kop hierboven, zodat telefoon en bureaublad dezelfde kamer laten zien.
      Scherp stonden de kostuums aan de twee rekken als vier pastel lichtbundels
-     bovenin, naast de echte spot op haar. De laag steekt 40px buiten het venster
-     uit, anders tekent de waas een lichte zoom langs de rand. */
+     bovenin, naast de echte spot op haar.
+     GEEN FILTER op deze laag (en niet op de kopie in de kop). Hier stond
+     filter: blur(8px) brightness(.5) saturate(.8), en een filter op een laag
+     ter grootte van het venster rekent de browser bij élk beeldje opnieuw uit
+     zodra er iets overheen beweegt -- en zij wiegt altijd. Met de CPU zes keer
+     vertraagd haalde de kleedkamer zo 25 beeldjes per seconde, de rest van de
+     app 60; zonder het filter ook 60.
+     Nu zit de waas in de tekening zelf (het filter vaag in --kleed-tekening,
+     één keer getekend en daarna een gewoon plaatje), en de demping is een
+     zwart vlak van half doorzichtig erbovenop (--kleed-demper): de helft zwart
+     erover ís de helft zo licht. */
+  :root { --kleed-demper: linear-gradient(rgba(0,0,0,.5), rgba(0,0,0,.5)); }
   #screen-dress:not(.kunst).app-sfeer::before {
-    inset: calc(var(--schuif, 0px) - 40px) -40px calc(-40px - var(--schuif, 0px)) -40px;
-    filter: var(--waas-klein) brightness(.5) saturate(.8);
+    background-image: var(--kleed-demper), var(--kunst-sluier), var(--kleed-tekening);
   }
   #screen-dress .hub-sticky .screen-header { margin-bottom: 3px; }
   /* De schermnaam staat sinds de tekening niet meer op een vlak maar op de kamer.
