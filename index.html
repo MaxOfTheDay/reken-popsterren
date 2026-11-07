@@ -19908,39 +19908,7 @@ const DUIK = {
   som: 200,
   somDuur: 160,
   curve: 'cubic-bezier(.5,0,.2,1)',
-
-
-
-
-
-  terug: 240,
-  terugNa: 60,
-
-
-
-  terugCurve: 'cubic-bezier(.25,.1,.2,1)',
-
-
-
-
-
-
-
-
-  uiWeg: 90,
-  zaalNa: 20,
-  zaalWeg: 120,
-
-
-
-
-
-  landTerug: .67,
 };
-
-
-
-
 
 
 function zaalMaat(spel, plekZij) {
@@ -19957,7 +19925,7 @@ function zaalMaat(spel, plekZij) {
     q: q && q.height ? { left: q.left, bottom: q.bottom, width: q.width, height: q.height } : null,
   };
 }
-function duikVlak(kaart, zaal, dekken) {
+function duikVlak(kaart, zaal) {
   const frame = kaart.querySelector('.world-frame');
   if (!frame || !zaal) return null;
   const { aw, l, t, vx, vy, ar } = zaal;
@@ -19972,18 +19940,7 @@ function duikVlak(kaart, zaal, dekken) {
   let k = Math.max(aw / fr.width, 1);
   const m = { x: fr.left + vx / 100 * fr.width, y: fr.top + vy / 100 * fr.height };
   const d = { x: ar.left + l + vx / 100 * aw, y: ar.top + t + vy / 100 * ah };
-  let tx = d.x - m.x, ty = d.y - m.y;
-
-
-
-
-
-
-  if (dekken) {
-    const ox = m.x - sr.left, oy = m.y - sr.top;
-    tx = Math.min(Math.max(tx, -(sr.width - ox) * (k - 1)), ox * (k - 1));
-    ty = Math.min(Math.max(ty, -(sr.height - oy) * (k - 1)), oy * (k - 1));
-  }
+  const tx = d.x - m.x, ty = d.y - m.y;
   const vlak = {
     oorsprong: `${m.x - sr.left}px ${m.y - sr.top}px`,
     eind: `translate(${tx}px, ${ty}px) scale(${k})`,
@@ -20021,15 +19978,14 @@ function duikVlak(kaart, zaal, dekken) {
         }
         return r;
       };
-      const beelden = dekken ? null : reeks(DUIK.land);
-      const beeldenTerug = dekken ? reeks(DUIK.landTerug) : null;
+      const beelden = reeks(DUIK.land);
 
 
 
 
 
       const svg = held.querySelector('.avatar-holder svg:not(.duik-kaal)');
-      vlak.held = { el: held, oorsprong: `${voet.x - hr.left}px ${voet.y - hr.top}px`, beelden, beeldenTerug,
+      vlak.held = { el: held, oorsprong: `${voet.x - hr.left}px ${voet.y - hr.top}px`, beelden,
         svg, laagStatisch: !!svg && getComputedStyle(svg.parentNode).position === 'static' };
     }
   }
@@ -20042,7 +19998,7 @@ function duikVlak(kaart, zaal, dekken) {
 
 
 
-function duikRand(h, heen, opties) {
+function duikRand(h, opties) {
 
   const svg = h && h.svg;
   if (!svg || !svg.animate) return () => {};
@@ -20055,16 +20011,15 @@ function duikRand(h, heen, opties) {
   kaal.classList.add('duik-kaal');
   kaal.style.cssText = 'position:absolute;left:0;top:0;width:100%;filter:none;z-index:0;pointer-events:none';
   laag.insertBefore(kaal, svg);
-  const a = svg.animate(heen ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1 }],
+  const a = svg.animate([{ opacity: 1 }, { opacity: 0 }],
     Object.assign({ easing: 'linear' }, opties));
   return () => { a.cancel(); kaal.remove(); if (los) laag.style.position = ''; };
 }
-function duikHeld(vlak, heen, opties) {
+function duikHeld(vlak, opties) {
   const h = vlak.held;
   if (!h) return () => {};
   h.el.style.transformOrigin = h.oorsprong;
-  const r = heen ? h.beelden : h.beeldenTerug.map(b => ({ offset: 1 - b.offset, transform: b.transform })).reverse();
-  const a = h.el.animate(r, opties);
+  const a = h.el.animate(h.beelden, opties);
   return () => { a.cancel(); h.el.style.transformOrigin = ''; };
 }
 
@@ -20073,7 +20028,6 @@ function duikHeld(vlak, heen, opties) {
 
 
 let duikOpruim = null;
-let terugZaal = null;
 function duikNieuw(op) {
   if (duikOpruim) duikOpruim();
   duikOpruim = op;
@@ -20088,8 +20042,8 @@ function duikCamera(kaart, spel, klaar) {
   kaart.style.transformOrigin = vlak.oorsprong;
   const randen = [...kaart.querySelectorAll(DUIK_RANDEN)];
   const curve = { duration: DUIK.duur, easing: DUIK.curve, fill: 'forwards' };
-  const heldOp = duikHeld(vlak, true, curve);
-  const randOp = duikRand(vlak.held, true,
+  const heldOp = duikHeld(vlak, curve);
+  const randOp = duikRand(vlak.held,
     { duration: DUIK.duur * DUIK.stift, fill: 'forwards' });
   let klaarOp = false;
   const op = () => {
@@ -20128,83 +20082,11 @@ function duikCamera(kaart, spel, klaar) {
 
 
 
-function terugDuik() {
-  const kaart = $('screen-map');
-  const van = ['screen-end', 'screen-game'].map($).find(el => el && el.classList.contains('wegvallend'));
-  if (!kaart || !kaart.animate || motionOff() || !van) return false;
-  const zaal = terugZaal;
-  terugZaal = null;
-  if (duikOpruim) duikOpruim();
-  const vlak = duikVlak(kaart, zaal, true);
-  if (!vlak) return false;
-  schermAnimsStop(kaart);
-  kaart.classList.add('komt-op');
-  kaart.style.transformOrigin = vlak.oorsprong;
-
-
-
-  schermAnimsStop(van);
-
-
-
-  const beeldje = -16;
-  const vanUi = [...van.querySelectorAll('.hub-sticky, .math-panel, .stage-podium, .venue-licht, .venue-bundel')];
-  const vanAnims = vanUi.map(el => el.animate([{ opacity: 1 }, { opacity: 0 }],
-    { duration: DUIK.uiWeg, delay: beeldje, easing: MOTION.uit, fill: 'forwards' }));
-  const zaalWeg = schermAnim(van, [{ opacity: 1 }, { opacity: 0 }],
-    { duration: DUIK.zaalWeg, delay: DUIK.zaalNa + beeldje, fill: 'both' });
-
-  zaalWeg.onfinish = () => requestAnimationFrame(() => {
-    van.classList.remove('wegvallend');
-    van.style.transformOrigin = '';
-    schermAnimsStop(van);
-  });
-  const curve = { duration: DUIK.terug, delay: DUIK.terugNa, easing: DUIK.terugCurve, fill: 'backwards' };
-  const a = schermAnim(kaart, [{ transform: vlak.eind }, { transform: 'none' }], curve);
-  const heldOp = duikHeld(vlak, false, curve);
-  const laat = { duration: DUIK.terug * (1 - DUIK.doof), delay: DUIK.terugNa + DUIK.terug * DUIK.doof, fill: 'backwards' };
-  const randOp = duikRand(vlak.held, false,
-    { duration: DUIK.terug * DUIK.stift, delay: DUIK.terugNa + DUIK.terug * (1 - DUIK.stift), fill: 'backwards' });
-  const randen = [...kaart.querySelectorAll(DUIK_RANDEN)];
-  randen.forEach(el => el.animate([{ opacity: 0 }, { opacity: 1 }], Object.assign({ easing: MOTION.uit }, laat)));
-
-
-  const nav = $('main-nav');
-  if (nav && nav.style.display !== 'none') {
-    schermAnimsStop(nav);
-    schermAnim(nav, [{ opacity: 0 }, { opacity: 1 }], Object.assign({ easing: MOTION.uit }, laat));
-  }
-  let klaarOp = false;
-  const op = () => {
-    if (klaarOp) return;
-    klaarOp = true;
-    if (duikOpruim === op) duikOpruim = null;
-    kaart.style.transformOrigin = '';
-    heldOp(); randOp();
-
-
-
-    vanAnims.forEach(x => x.cancel());
-  };
-  duikNieuw(op);
-  a.onfinish = op;
-  setTimeout(op, DUIK.terugNa + DUIK.terug + MOTION.vangnet);
-  return true;
-}
-
-
-
-
-
-
-
-
 
 
 
 
 function kaartTerugZoom(map, lvl) {
-  if (terugDuik()) return;
   const doel = map.querySelector('.tour-stop[data-lvl="' + lvl + '"]');
   if (!doel) return kaartKomtOp(null);
   const d = doel.getBoundingClientRect();
@@ -20673,10 +20555,6 @@ function goMap(vanLvl) {
   kaartFocus = uitShow ? vanLvl : null;
   netAf = uitShow ? vanLvl : null;
   const vorige = document.querySelector('.screen.active');
-
-
-  terugZaal = uitShow && vorige && !motionOff()
-    ? zaalMaat(vorige, vorige.id === 'screen-end' ? '#end-avatar' : '#game-avatar-inner') : null;
   telNu($('map-diamonds'), p.diamonds);
   zetWensPil(p);
   $('map-tournee-label').classList.remove('bezig');

@@ -1528,41 +1528,9 @@ const DUIK = {
   som: 200,
   somDuur: 160,
   curve: 'cubic-bezier(.5,0,.2,1)',
-  /* De weg terug is korter en begint later: hij eindigt waar de oude terugzoom
-     eindigde (MOTION.totaal), zodat runTravel haar na REIS_WACHT op een kaart laat
-     vertrekken die al stilstaat. Langer laten lopen meette op een geremde
-     telefoon schokkeriger: de kaart is dan net vers gebouwd en zijn eerste
-     beeldjes vallen samen met het eindscherm dat nog wegvloeit. */
-  terug: 240,
-  terugNa: 60,
-  /* Terug begint hij meteen te bewegen: met de trage aanloop van de heenweg stond
-     de kaart na het wegvloeien van het eindscherm nog een tiende stil en schoot
-     hij daarna pas weg. */
-  terugCurve: 'cubic-bezier(.25,.1,.2,1)',
-  /* Terug is de spiegel van heen, ook in volgorde. Eerst gaat wat de kaart niet
-     heeft (kop, kaart met de sterren, knoppen, podium, spotlight); dan vloeit de
-     zaal mét haar over in de kaart, waar haar kopie precies op haar plek staat
-     (het eindscherm ligt bovenop, dus haar eerder laten gaan liet een gat), en
-     zoomt de camera uit; als laatste komen haltes, weg,
-     kop en balk erbij. Het eindscherm krimpt hier niet zoals een gewoon
-     vertrekkend scherm: de camera is de beweging, en twee bewegingen tegen
-     elkaar in lazen als een hapering. */
-  uiWeg: 90,
-  zaalNa: 20,
-  zaalWeg: 120,
-  /* En zij krimpt mee met de wereld: ze blijft alleen staan tot het eindscherm
-     weg is (zaalNa + zaalWeg, een derde van de camera) en gaat dan gelijk op
-     met de camera naar haar halte. Bleef ze, zoals heen, tot halverwege staan, dan
-     stond er een grote zij stil terwijl de wereld achter haar wegkromp, en
-     schoot ze daarna ineens omlaag. */
-  landTerug: .67,
 };
 /* Wat de camera van de zaal moet weten: waar de tekening staat en waar zij
-   staat. Apart van de kaart gemeten, omdat het op een ander moment moet: op de
-   weg terug kan het alleen vóórdat de zaal wegvalt. Zodra hij .wegvallend is,
-   stapt hij uit zijn kolom en moest de browser het hele eindscherm opnieuw
-   opmaken om deze getallen te geven -- op een geremde tablet kostte dat 80 ms
-   vóór het eerste beeldje van de terugweg. Zie goMap. */
+   staat. Gemeten in naOpbouw, als de zaal al opgemaakt en geschilderd is. */
 function zaalMaat(spel, plekZij) {
   const art = spel && spel.querySelector('.venue-art');
   if (!art || !getComputedStyle) return null;
@@ -1577,7 +1545,7 @@ function zaalMaat(spel, plekZij) {
     q: q && q.height ? { left: q.left, bottom: q.bottom, width: q.width, height: q.height } : null,
   };
 }
-function duikVlak(kaart, zaal, dekken) {
+function duikVlak(kaart, zaal) {
   const frame = kaart.querySelector('.world-frame');
   if (!frame || !zaal) return null;
   const { aw, l, t, vx, vy, ar } = zaal;
@@ -1592,18 +1560,7 @@ function duikVlak(kaart, zaal, dekken) {
   let k = Math.max(aw / fr.width, 1);
   const m = { x: fr.left + vx / 100 * fr.width, y: fr.top + vy / 100 * fr.height };     // de halte op de kaart
   const d = { x: ar.left + l + vx / 100 * aw, y: ar.top + t + vy / 100 * ah };          // dezelfde plek in de zaal
-  let tx = d.x - m.x, ty = d.y - m.y;
-  /* Op de weg terug is de kaart het scherm dat aankomt, en dat dekt op élk
-     beeldje het hele venster (rondgang 6f): er ligt niets onder dan de kale
-     achtergrond van de app. Staat de halte dicht bij een rand, dan trok de
-     verschuiving die rand het venster in. Dus blijft de verschuiving binnen wat
-     de vergroting toelaat; omdat schaal en verschuiving samen lineair naar 1 en
-     0 lopen, geldt dat dan ook voor elk tussenbeeldje. */
-  if (dekken) {
-    const ox = m.x - sr.left, oy = m.y - sr.top;
-    tx = Math.min(Math.max(tx, -(sr.width - ox) * (k - 1)), ox * (k - 1));
-    ty = Math.min(Math.max(ty, -(sr.height - oy) * (k - 1)), oy * (k - 1));
-  }
+  const tx = d.x - m.x, ty = d.y - m.y;
   const vlak = {
     oorsprong: `${m.x - sr.left}px ${m.y - sr.top}px`,
     eind: `translate(${tx}px, ${ty}px) scale(${k})`,
@@ -1641,15 +1598,14 @@ function duikVlak(kaart, zaal, dekken) {
         }
         return r;
       };
-      const beelden = dekken ? null : reeks(DUIK.land);
-      const beeldenTerug = dekken ? reeks(DUIK.landTerug) : null;
+      const beelden = reeks(DUIK.land);
       /* Hier al, bij de rest van het meten: duikRand moet weten of .pas-laag een
          draaipunt voor de kopie is, en daarna wordt er alleen nog geschreven.
          Las duikRand het zelf, dan moest de browser midden in het opzetten alle
-         stijl van de verse kaart opnieuw uitrekenen -- 7 tot 9 ms op een gewone
-         telefoon, vóór het eerste beeldje van de weg terug. */
+         stijl van de kaart opnieuw uitrekenen -- 7 tot 9 ms op een gewone
+         telefoon, vóór het eerste beeldje van de duik. */
       const svg = held.querySelector('.avatar-holder svg:not(.duik-kaal)');
-      vlak.held = { el: held, oorsprong: `${voet.x - hr.left}px ${voet.y - hr.top}px`, beelden, beeldenTerug,
+      vlak.held = { el: held, oorsprong: `${voet.x - hr.left}px ${voet.y - hr.top}px`, beelden,
         svg, laagStatisch: !!svg && getComputedStyle(svg.parentNode).position === 'static' };
     }
   }
@@ -1662,7 +1618,7 @@ function duikVlak(kaart, zaal, dekken) {
    ze nog klein is, en wat overblijft is precies zij zoals in de zaal. Alleen
    opacity, en de kopie gaat er na afloop weer uit.
    Geeft de animatie van het origineel en een functie die alles opruimt. */
-function duikRand(h, heen, opties) {
+function duikRand(h, opties) {
   // de svg staat in .pas-laag (de danspasjes), en de kopie gaat ernaast
   const svg = h && h.svg;
   if (!svg || !svg.animate) return () => {};
@@ -1675,25 +1631,23 @@ function duikRand(h, heen, opties) {
   kaal.classList.add('duik-kaal');
   kaal.style.cssText = 'position:absolute;left:0;top:0;width:100%;filter:none;z-index:0;pointer-events:none';
   laag.insertBefore(kaal, svg);
-  const a = svg.animate(heen ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1 }],
+  const a = svg.animate([{ opacity: 1 }, { opacity: 0 }],
     Object.assign({ easing: 'linear' }, opties));
   return () => { a.cancel(); kaal.remove(); if (los) laag.style.position = ''; };
 }
-function duikHeld(vlak, heen, opties) {
+function duikHeld(vlak, opties) {
   const h = vlak.held;
   if (!h) return () => {};
   h.el.style.transformOrigin = h.oorsprong;
-  const r = heen ? h.beelden : h.beeldenTerug.map(b => ({ offset: 1 - b.offset, transform: b.transform })).reverse();
-  const a = h.el.animate(r, opties);
+  const a = h.el.animate(h.beelden, opties);
   return () => { a.cancel(); h.el.style.transformOrigin = ''; };
 }
-/* Wat de lopende duik (heen of terug) achterlaat: een kale kopie van haar, een
-   draaipunt, animaties op haar en de randen. Begint er een nieuwe voordat de
-   vorige klaar is -- een halte aantikken terwijl de kaart nog uitzoomt -- dan
-   ruimt die eerst de vorige op. Anders zette het vangnet van de oude duik midden
+/* Wat de lopende duik achterlaat: een kale kopie van haar, een draaipunt,
+   animaties op haar en de randen. Begint er een nieuwe voordat de vorige klaar
+   is -- terug naar de kaart en meteen weer een halte -- dan ruimt die eerst de
+   vorige op. Anders zette het vangnet van de oude duik midden
    in de nieuwe haar draaipunt terug, en sprong ze. */
 let duikOpruim = null;
-let terugZaal = null;   // de zaal zoals goMap hem opmat, voor terugDuik
 function duikNieuw(op) {
   if (duikOpruim) duikOpruim();
   duikOpruim = op;
@@ -1708,8 +1662,8 @@ function duikCamera(kaart, spel, klaar) {
   kaart.style.transformOrigin = vlak.oorsprong;
   const randen = [...kaart.querySelectorAll(DUIK_RANDEN)];
   const curve = { duration: DUIK.duur, easing: DUIK.curve, fill: 'forwards' };
-  const heldOp = duikHeld(vlak, true, curve);
-  const randOp = duikRand(vlak.held, true,
+  const heldOp = duikHeld(vlak, curve);
+  const randOp = duikRand(vlak.held,
     { duration: DUIK.duur * DUIK.stift, fill: 'forwards' });
   let klaarOp = false;
   const op = () => {
@@ -1740,77 +1694,6 @@ function duikCamera(kaart, spel, klaar) {
   if (s) s.onfinish = klaar; else a.onfinish = () => { op(); klaar(); };
   return true;
 }
-/* En terug: dezelfde vlucht achteruit. De kaart staat eerst ingezoomd zoals de
-   zaal hem liet zien en zoomt uit tot hij weer de hele wereld is; zij krimpt mee
-   tot ze op haar halte staat, haar stickerrand komt terug, en wat de zaal niet
-   had (haltes, weg, kop) komt op het eind terug. Daarna huppelt ze door zoals
-   altijd (runTravel wacht REIS_WACHT, en die is langer dan deze vlucht).
-
-   Gemeten aan het scherm dat vertrekt -- het eindscherm, of de zaal als je
-   midden in een show stopte. Dat staat nog als .wegvallend in beeld. */
-function terugDuik() {
-  const kaart = $('screen-map');
-  const van = ['screen-end', 'screen-game'].map($).find(el => el && el.classList.contains('wegvallend'));
-  if (!kaart || !kaart.animate || motionOff() || !van) return false;
-  const zaal = terugZaal;
-  terugZaal = null;
-  if (duikOpruim) duikOpruim();
-  const vlak = duikVlak(kaart, zaal, true);
-  if (!vlak) return false;
-  schermAnimsStop(kaart);
-  kaart.classList.add('komt-op');
-  kaart.style.transformOrigin = vlak.oorsprong;
-  /* Het eindscherm: eerst wat de kaart niet heeft, dan de zaal zelf (zie
-     DUIK.uiWeg). schermWeg (kaartVertrek) zette er een krimp en een fade op;
-     die gaan eraf. */
-  schermAnimsStop(van);
-  /* Dit draait één beeldje na kaartVertrek (in de rAF van renderTourMap), en het
-     eindscherm was toen al begonnen te vervagen. Dus starten deze een beeldje
-     ver in hun loop, anders stond alles één beeldje langer stil dan vroeger. */
-  const beeldje = -16;
-  const vanUi = [...van.querySelectorAll('.hub-sticky, .math-panel, .stage-podium, .venue-licht, .venue-bundel')];
-  const vanAnims = vanUi.map(el => el.animate([{ opacity: 1 }, { opacity: 0 }],
-    { duration: DUIK.uiWeg, delay: beeldje, easing: MOTION.uit, fill: 'forwards' }));
-  const zaalWeg = schermAnim(van, [{ opacity: 1 }, { opacity: 0 }],
-    { duration: DUIK.zaalWeg, delay: DUIK.zaalNa + beeldje, fill: 'both' });
-  // ...en ruimt zelf op zodra hij weg is, zoals schermWeg had gedaan (zijn vangnet komt pas later)
-  zaalWeg.onfinish = () => requestAnimationFrame(() => {
-    van.classList.remove('wegvallend');
-    van.style.transformOrigin = '';
-    schermAnimsStop(van);
-  });
-  const curve = { duration: DUIK.terug, delay: DUIK.terugNa, easing: DUIK.terugCurve, fill: 'backwards' };
-  const a = schermAnim(kaart, [{ transform: vlak.eind }, { transform: 'none' }], curve);
-  const heldOp = duikHeld(vlak, false, curve);
-  const laat = { duration: DUIK.terug * (1 - DUIK.doof), delay: DUIK.terugNa + DUIK.terug * DUIK.doof, fill: 'backwards' };
-  const randOp = duikRand(vlak.held, false,
-    { duration: DUIK.terug * DUIK.stift, delay: DUIK.terugNa + DUIK.terug * (1 - DUIK.stift), fill: 'backwards' });
-  const randen = [...kaart.querySelectorAll(DUIK_RANDEN)];
-  randen.forEach(el => el.animate([{ opacity: 0 }, { opacity: 1 }], Object.assign({ easing: MOTION.uit }, laat)));
-  /* De tabbladbalk hoort bij die randen. navMee (vanuit kaartVertrek) liet hem
-     al halverwege de zoom opkomen, vóór de kop en de haltes; nu komen ze samen. */
-  const nav = $('main-nav');
-  if (nav && nav.style.display !== 'none') {
-    schermAnimsStop(nav);
-    schermAnim(nav, [{ opacity: 0 }, { opacity: 1 }], Object.assign({ easing: MOTION.uit }, laat));
-  }
-  let klaarOp = false;
-  const op = () => {
-    if (klaarOp) return;
-    klaarOp = true;
-    if (duikOpruim === op) duikOpruim = null;
-    kaart.style.transformOrigin = '';
-    heldOp(); randOp();
-    /* Het eindscherm is dan al uit beeld; zonder dit stond zijn kaart er de
-       volgende keer op nul. Alleen wat hier gezet is: haar eigen wiegen (een
-       CSS-animatie op .avatar-holder) blijft lopen. */
-    vanAnims.forEach(x => x.cancel());
-  };
-  duikNieuw(op);
-  a.onfinish = op;
-  setTimeout(op, DUIK.terugNa + DUIK.terug + MOTION.vangnet);
-  return true;
-}
 /* Zaal -> kaart: precies de omgekeerde zin. De kaart komt licht ingezoomd op de
    halte waar de show speelde binnen en zakt daar vandaan naar zijn gewone maat,
    zodat je terugkomt op de plek waar je wegging en niet ergens op een kaart.
@@ -1824,7 +1707,6 @@ function terugDuik() {
    Aangeroepen vanuit de rAF van renderTourMap: dan staan de haltes er en zijn ze
    op te meten. */
 function kaartTerugZoom(map, lvl) {
-  if (terugDuik()) return;
   const doel = map.querySelector('.tour-stop[data-lvl="' + lvl + '"]');
   if (!doel) return kaartKomtOp(null);
   const d = doel.getBoundingClientRect();
@@ -2293,10 +2175,6 @@ function goMap(vanLvl) {
   kaartFocus = uitShow ? vanLvl : null;
   netAf = uitShow ? vanLvl : null;
   const vorige = document.querySelector('.screen.active');
-  /* De zaal opmeten voor de camera terug (terugDuik), nu hij nog gewoon staat --
-     vóór er hier iets verandert en vóór show() hem uit beeld haalt. */
-  terugZaal = uitShow && vorige && !motionOff()
-    ? zaalMaat(vorige, vorige.id === 'screen-end' ? '#end-avatar' : '#game-avatar-inner') : null;
   telNu($('map-diamonds'), p.diamonds);
   zetWensPil(p);
   $('map-tournee-label').classList.remove('bezig');   // zie pilTik
