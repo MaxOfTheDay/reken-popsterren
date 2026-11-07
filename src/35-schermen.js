@@ -63,6 +63,31 @@ function show(id) {
   schuifWacht();
 }
 
+/* = Wie vertrekt, neemt geen tikken meer aan ----------------------------------
+   Een scherm dat wegvalt (.wegvallend) ligt nog een paar honderd ms bovenop en
+   hoort dan niets meer te doen. Het stijlblad zet daar pointer-events: none op,
+   maar dat erft niet door naar wie zélf weer auto zegt -- en de haltes van de
+   kaart doen dat. Wie op de kaart haar portret aantikte (Wie speelt er?) en
+   meteen daarna een halte, startte zo een show zonder ster.
+
+   Daarom hier, op één plek en voor alle tien de schermen: zolang een scherm
+   .wegvallend draagt is het inert. Geen tik, geen focus, wat de stijl van een
+   kind ervan ook zegt. Een waarnemer en geen regel bij elke classList.add: die
+   staan op een dozijn plekken, en een nieuwe overgang vergeet het anders. De
+   waarnemer loopt als microtaak, dus vóór de volgende tik binnenkomt.
+   robuust.test.js zaak B kijkt het na. */
+function schermInert() {
+  if (typeof MutationObserver !== 'function') return;
+  const kijk = new MutationObserver(lijst => {
+    for (const m of lijst) {
+      const s = m.target, weg = s.classList.contains('wegvallend');
+      if (s.inert !== weg) s.inert = weg;
+    }
+  });
+  document.querySelectorAll('.screen').forEach(s => kijk.observe(s, { attributes: true, attributeFilter: ['class'] }));
+}
+schermInert();
+
 /* = De ruimte onder de balken ------------------------------------------------
    Op een lijst (.lijst, zie .screen in 10-basis) zweeft er onderaan van alles
    over de inhoud: de navigatie, de lade van de kleedkamer, de balk van de kast.

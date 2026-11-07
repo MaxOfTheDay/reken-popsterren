@@ -20,6 +20,7 @@
     "test:reis": "node test/reis.test.js",
     "test:vlucht": "node test/vlucht.test.js",
     "test:flits": "node test/flits.test.js",
+    "test:robuust": "node test/robuust.test.js",
     "test:beloning": "node test/beloning.test.js",
     "test:studio": "node test/studio.test.js",
     "merk": "node test/merk.js",

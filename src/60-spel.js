@@ -33,6 +33,10 @@ function showOpzet(p, lvl, goldIdx) {
   return { vragenPlan, insts, inst, plan };
 }
 function startLevel(lvl, eigenOvergang) {
+  /* Zonder ster geen show. Dat hoort nooit te gebeuren -- een vertrekkend scherm
+     neemt geen tikken meer aan, zie schermInert -- maar als het toch gebeurt is
+     "er gebeurt niets" beter dan een fout midden in een tik. */
+  if (!P()) return;
   // De vorige show loslaten vóór G vervangen wordt: daarna is haar spotlight-
   // teller niet meer te vinden (die hangt aan G). Zie startSpot.
   stopSpot();
@@ -101,7 +105,11 @@ function startLevel(lvl, eigenOvergang) {
    hij het na, zodat een per-ongeluk-tik geen show kost. */
 function askQuit() {
   sndClick();
-  if (G && G.idx === 0 && G.errors === 0 && G.misses === 0) { quitGame(); return; }
+  /* Niets te verliezen: meteen terug naar de kaart, zonder vraag. Wel een beeldje
+     later (naTik), net als de tabbladen: quitGame bouwt de kaart op, en op een
+     trage tablet stond de ✕ anders een paar honderd ms stil voordat er iets
+     gebeurde -- Cloudflare zag hem bij echte spelers bij de traagste tikken. */
+  if (G && G.idx === 0 && G.errors === 0 && G.misses === 0) { naTik(quitGame); return; }
   // hetzelfde venster vraagt het ook voor memory (zie vraagMemoryStop)
   $('quit-titel').textContent = '🎭 Show stoppen?';
   $('quit-zin').textContent = 'Dan stopt dit optreden en ga je terug naar de kaart.';

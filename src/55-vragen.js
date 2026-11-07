@@ -2603,8 +2603,16 @@ function vraagMemoryStop() {
   syncBackGuard();
 }
 // "Stoppen" in dat venster: memory uit, of de show uit.
+/* "Stoppen" op het venster. Het venster gaat meteen dicht; het scherm erachter
+   wisselt een beeldje later (naTik), zodat de tik eerst getekend wordt -- zie
+   "Eerst antwoorden, dan pas het zware werk". */
 function stopNu() {
-  if ($('screen-memory').classList.contains('active')) { modalDicht('quit-modal'); exitMemory(); }
+  modalDicht('quit-modal');
+  naTik(stopMeteen);
+}
+// het stoppen zelf, zonder wachten: memory of show, wat er nu speelt
+function stopMeteen() {
+  if ($('screen-memory').classList.contains('active')) exitMemory();
   else quitGame();
 }
 // MEM_DRAAI is de draai van een kaart (.mem-inner in 50-zaal: transition .35s).
