@@ -150,7 +150,7 @@ const SCHERMEN = [
   for (const k of voorOver) {
     if (!SCHERMEN.some(s => s.key === k)) { console.log(`over/index.html vraagt ${k}, dat hier niet opgenomen wordt`); process.exitCode = 1; continue; }
     execFileSync(FFMPEG, ['-loglevel', 'error', '-y', '-i', path.join(OUT, k + '.jpg'),
-      '-vf', 'scale=360:-1:flags=lanczos', '-c:v', 'libwebp', '-quality', '82', path.join(OVER, 'beelden', k + '.webp')]);
+      '-vf', 'scale=480:-1:flags=lanczos', '-c:v', 'libwebp', '-quality', '82', path.join(OVER, 'beelden', k + '.webp')]);
   }
 
   console.log(`\n${SCHERMEN.length} schermen en ${werelden.length} werelden -> ${OUT}, ${voorOver.length} ervan ook naar over/beelden`);

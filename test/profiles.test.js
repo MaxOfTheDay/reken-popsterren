@@ -108,7 +108,7 @@ function check(ok, label, detail) {
     check(r.cards === 0, 'verse installatie toont geen kaarten', `cards=${r.cards}`);
     check(r.leeg && r.vraag, 'verse installatie toont één lege tegel met het vraagteken', JSON.stringify(r));
     check(/eerste ster/.test(r.addLabel), 'de knop noemt de eerste ster', r.addLabel);
-    check(r.hintShown && r.hintHref === 'over/index.html', 'bij nul sterren zegt één stille regel wat het spel is', JSON.stringify(r));
+    check(r.hintShown && r.hintHref === 'over/index.html?van=start', 'bij nul sterren zegt één stille regel wat het spel is', JSON.stringify(r));
     // terugzetten zit achter het tandwiel: zonder sterren opent Voor ouders meteen daar
     await page.click('#btn-gear');
     await page.waitForTimeout(300);
@@ -119,6 +119,49 @@ function check(ok, label, detail) {
     check(naHint.scherm === 'screen-settings' && naHint.terugzetten,
       'zonder sterren brengt Voor ouders je meteen bij terugzetten', JSON.stringify(naHint));
     check(r.stored === null, 'een verse start schrijft nog niets weg', `stored=${r.stored && r.stored.slice(0, 40)}`);
+    await ctx.close();
+  });
+
+  /* ================= 1b · Naar over/ en terug ================= */
+  /* "Wat is Rekensterren?" in Voor ouders, en dan Terug: je hoort terug in Voor
+     ouders te staan, zonder dat het spel opnieuw opstart en zonder een stap
+     extra in de geschiedenis (anders bracht de terugknop van Android je daarna
+     wéér naar over/). Uit het spel staat daar alleen Terug; via een gedeelde
+     link alleen Speel meteen. */
+  zaak(async () => {
+    const { ctx, page } = await fresh();
+    await makeStar(page, { name: 'Over' });
+    await page.evaluate(() => openSettings());
+    await page.waitForTimeout(400);
+    const lengte = await page.evaluate(() => history.length);
+    await page.click('#set-over');
+    await page.waitForURL(/over\/index\.html\?van=ouders/);
+    const zicht = () => page.evaluate(() => ({
+      terug: getComputedStyle(document.getElementById('terug')).display !== 'none',
+      speel: [...document.querySelectorAll('.alleen-nieuw')].some(e => getComputedStyle(e).display !== 'none'),
+    }));
+    const uit = await zicht();
+    check(uit.terug && !uit.speel, 'over/ uit het spel: alleen Terug, geen Speel meteen', JSON.stringify(uit));
+    await page.click('#terug');
+    await page.waitForFunction(() => typeof openSettings === 'function' && document.querySelector('.screen.active'), null, { timeout: 5000 });
+    await page.waitForTimeout(400);
+    const terug = await page.evaluate(() => ({
+      scherm: document.querySelector('.screen.active').id, lengte: history.length, hekje: location.hash }));
+    check(terug.scherm === 'screen-settings', 'Terug van over/ staat weer in Voor ouders', JSON.stringify(terug));
+    check(terug.lengte === lengte + 1, 'en zet geen stap extra in de geschiedenis', `voor ${lengte}, na ${terug.lengte}`);
+    check(!terug.hekje, 'en het hekje #ouders staat niet meer in de adresbalk', terug.hekje);
+    // Gooit de browser het spel weg, dan laadt Terug het opnieuw op #ouders:
+    // ook dan Voor ouders, en niet het beginscherm.
+    const spel = page.url().split('#')[0];
+    await page.goto('about:blank');
+    await page.goto(spel + '#ouders');
+    await page.waitForTimeout(900);
+    const herlaad = await page.evaluate(() => document.querySelector('.screen.active').id);
+    check(herlaad === 'screen-settings', 'het spel op #ouders opent meteen Voor ouders', herlaad);
+    // via een gedeelde link: geen Terug
+    await page.goto(spel.split('?')[0].replace(/index\.html$/, '') + 'over/index.html');
+    const link = await zicht();
+    check(!link.terug && link.speel, 'over/ via een gedeelde link: Speel meteen, geen Terug', JSON.stringify(link));
     await ctx.close();
   });
 

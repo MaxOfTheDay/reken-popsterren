@@ -227,7 +227,11 @@ landingLeeft();
 // Alleen hier, bij het opstarten -- niet bij elke terugkeer naar dit scherm. Zie
 // "= Het spelogo komt binnen". Pas als de deken weg is: anders speelt het begin
 // van het logo onder de deken af.
-opstartTonen(logoIntro);
+// Terug van over/ (#ouders, zie ouderLinkLees): meteen in Voor ouders. Het
+// spelogo begint wel -- show() maakt het meteen af, zodat het er heel staat als
+// je straks terug op het beginscherm komt.
+const naarOuders = ouderLinkLees();
+opstartTonen(naarOuders ? () => { logoIntro(); openSettings(); } : logoIntro);
 syncBackGuard();
 // geopend via een ophaallink van een ander toestel? (zie = Overzetten)
 ophaalLinkLees();
