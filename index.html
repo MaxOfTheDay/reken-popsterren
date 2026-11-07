@@ -10147,7 +10147,9 @@
 
 
 
+
   .gear-item .gi-sub.backup-stand.oud { color: var(--practice-text); }
+  .backup-stip .gi-dot { margin: 0 6px 0 0; }
   .gi-dot {
     display: inline-block; width: 8px; height: 8px; margin-left: 6px; border-radius: 50%;
     background: var(--gold-cta-bottom); vertical-align: 1px; flex: none;
@@ -11027,29 +11029,19 @@
     stroke-linecap: round; stroke-linejoin: round; flex: none;
   }
   #confirm-title .oz-i { vertical-align: -4px; }
-  .bb-stand {
-    display: block; padding: 0 8px;
-    font-size: var(--tx-klein); color: var(--paper-ink-muted); text-align: center;
-  }
-  .bb-stand.oud { color: var(--practice-text); }
-  .bb-stand .gi-dot { margin: 0 6px 0 0; }
+  .bb-blad { display: flex; flex-direction: column; gap: 12px; }
+  .bb-blad .oz-groot { margin: 2px 0 0; }
+  .bb-lijst { border: 1px solid var(--paper-border); border-radius: var(--r-lg); padding: 4px 6px; text-align: left; overflow: hidden; }
+  .bb-lijst .gear-item + .gear-item { border-top: 1px solid var(--paper-border); border-radius: 0; }
 
-  .bb-hier { margin: 2px 0 12px; font-size: var(--tx-klein); color: var(--paper-ink-muted); text-align: center; }
-  .bb-tegels { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (max-width: 360px) {
+    .bb-lijst { padding: 2px; }
+    .bb-lijst .gear-item { padding: 0 6px; gap: 8px; }
+  }
 
   .gear-item .gi-ico .oz-i { width: 24px; height: 24px; color: var(--purple-light); vertical-align: middle; }
   .data-btns .oz-i { width: 18px; height: 18px; vertical-align: -3px; }
   .settings-panel .oz-groot { margin: 2px 0 10px; }
-  .bb-tegel {
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-    min-height: 84px; padding: 12px 6px; border-radius: var(--r-sm);
-    background: var(--paper-tint); border: 1.5px solid var(--paper-border);
-    font-family: inherit; font-size: var(--tx-label); font-weight: 700; color: var(--purple-deep);
-    cursor: pointer; transition: background var(--t-tik) ease;
-  }
-  .bb-tegel .oz-i { width: 28px; height: 28px; color: var(--purple-light); }
-  .bb-tegel:hover { background: var(--lavender-wash); }
-  .bb-tegel:active { background: var(--paper-border); }
 
   .oz-blad { text-align: center; }
 
@@ -11063,12 +11055,6 @@
   .oz-groot .oz-i { width: 22px; height: 22px; }
   .oz-ok { min-height: 22px; margin: 6px 0 2px; font-size: var(--tx-klein); font-weight: 700; color: var(--green-deep); }
   .oz-ok:empty { min-height: 10px; }
-
-  .oz-andersom {
-    display: block; margin: 12px auto 0; padding: 6px 8px; background: none; border: 0; cursor: pointer;
-    font-family: inherit; font-size: var(--tx-klein); font-weight: 700; color: var(--purple-deep);
-  }
-  .oz-andersom span { font-weight: 400; color: var(--paper-ink-muted); }
   .oz-of { margin: 14px 0 2px; font-size: var(--tx-klein); color: var(--paper-ink-muted); }
   .oz-klein-code { font-size: var(--tx-label); letter-spacing: .06em; color: var(--purple-deep); }
   .oz-blad.met-code .oz-tijd { margin-top: 10px; }
@@ -31873,7 +31859,7 @@ function themaKaartHtml(s, p, show) {
 function geluidRijHtml() {
   return `
       <button class="gear-item" id="set-sound" role="switch" aria-checked="${db.sound ? 'true' : 'false'}">
-        <span class="gi-ico" aria-hidden="true">${db.sound ? '🔊' : '🔇'}</span><span class="gi-label">Geluid<span class="gi-sub">Muziek en de stem die voorleest</span></span><span class="gi-state${db.sound ? '' : ' off'}" id="set-sound-state">${db.sound ? 'Aan' : 'Uit'}</span>
+        <span class="gi-ico" aria-hidden="true">${db.sound ? '🔊' : '🔇'}</span><span class="gi-label">Geluid</span><span class="gi-state${db.sound ? '' : ' off'}" id="set-sound-state">${db.sound ? 'Aan' : 'Uit'}</span>
       </button>`;
 }
 
@@ -31896,19 +31882,16 @@ function geluidRijHtml() {
 
 
 
+function sterrenRijNaam() { return overzetMag() ? 'Ander toestel en back\u2011up' : 'Back\u2011up'; }
 function appWideCardsHtml() {
   const alsApp = (beginschermNetErop || speeltAlsApp()) ? '' : `
       <button class="gear-item" id="set-alsapp" type="button">
         <span class="gi-ico" aria-hidden="true">📲</span><span class="gi-label">Als app</span><span class="gi-pijl" aria-hidden="true">›</span>
       </button>`;
-  const overzet = !overzetMag() ? '' : `
-      <button class="gear-item" id="set-overzet" type="button">
-        <span class="gi-ico" aria-hidden="true">${ozIco('zet')}</span><span class="gi-label">Naar ander toestel<span class="gi-sub">Je sterren meenemen met een link</span></span><span class="gi-pijl" aria-hidden="true">›</span>
-      </button>`;
   return `
-    <div class="set-card geluid-kaart">${geluidRijHtml()}${overzet}
+    <div class="set-card geluid-kaart">${geluidRijHtml()}
       <button class="gear-item" id="set-backup" type="button">
-        <span class="gi-ico" aria-hidden="true">${ozIco('hier')}</span><span class="gi-label">Back-up op dit toestel${backupStandHtml()}</span><span class="gi-pijl" aria-hidden="true">›</span>
+        <span class="gi-ico" aria-hidden="true">💾</span><span class="gi-label">${sterrenRijNaam()}</span>${backupStandHtml()}<span class="gi-pijl" aria-hidden="true">›</span>
       </button>${alsApp}
     </div>
     ${importInvoerHtml()}`;
@@ -31937,10 +31920,11 @@ function backupWanneer(nu) {
 }
 
 
+
 function backupStandHtml(nu) {
   const oud = backupOud(nu);
-  return `<span class="gi-sub backup-stand${oud ? ' oud' : ''}" id="set-backup-stand">${backupWanneer(nu)}`
-    + (oud ? '<span class="gi-dot" aria-hidden="true"></span>' : '') + '</span>';
+  return `<span class="backup-stip${oud ? ' oud' : ''}" id="set-backup-stand">`
+    + (oud ? '<span class="gi-dot" role="img" aria-label="Al lang geen back-up"></span>' : '') + '</span>';
 }
 
 
@@ -31976,13 +31960,12 @@ function importInvoerHtml() {
 const OVER_URL = 'https://www.rekensterren.be/over/';
 function overKaartHtml() {
   return `
-    <div class="sheet-rule"><span>Over het spel</span></div>
     <div class="set-card geluid-kaart over-kaart">
       <a class="gear-item" id="set-over" href="over/index.html">
-        <span class="gi-ico" aria-hidden="true">🎬</span><span class="gi-label">Wat is Rekensterren?<span class="gi-sub">Een kort filmpje en wat uitleg</span></span><span class="gi-pijl" aria-hidden="true">›</span>
+        <span class="gi-ico" aria-hidden="true">🎬</span><span class="gi-label">Wat is Rekensterren?</span><span class="gi-pijl" aria-hidden="true">›</span>
       </a>
       <button class="gear-item" id="set-deel" type="button">
-        <span class="gi-ico" aria-hidden="true">💌</span><span class="gi-label">Tip een andere ouder<span class="gi-sub">Stuur de link naar het spel</span></span><span class="gi-pijl" aria-hidden="true">›</span>
+        <span class="gi-ico" aria-hidden="true">📤</span><span class="gi-label">Rekensterren delen</span><span class="gi-pijl" aria-hidden="true">›</span>
       </button>
     </div>`;
 }
@@ -32801,22 +32784,41 @@ function importData(file) {
 
 
 
+
+
+
+
+
+
+
+
+
 function backupBladStandHtml() {
   const w = backupWanneer();
   const oud = backupOud();
   const tekst = backupDagen() === null ? w : 'Laatste: ' + w.toLowerCase();
-  return `<div class="bb-stand${oud ? ' oud' : ''}" id="bb-stand">${oud ? '<span class="gi-dot" aria-hidden="true"></span>' : ''}${tekst}</div>`;
+  return `<span class="gi-sub backup-stand${oud ? ' oud' : ''}" id="bb-stand">${tekst}${oud ? '<span class="gi-dot" aria-hidden="true"></span>' : ''}</span>`;
 }
 function openBackupBlad() {
   sndClick();
-  const tegel = (id, ico, t) => `<button class="bb-tegel" id="${id}" type="button">${ico}${t}</button>`;
-  $('confirm-title').innerHTML = ozIco('hier') + ' Back-up op dit toestel';
-  $('confirm-body').innerHTML = `<div class="bb-blad">${backupBladStandHtml()}
-      <div class="bb-hier">Een bestand dat op dit toestel blijft</div>
-      <div class="bb-tegels">${tegel('bb-maak', ozIco('maak'), 'Bewaren')}${tegel('bb-terug', ozIco('terug'), 'Terugzetten')}</div>
-    </div>`;
+  const rij = (id, ico, label, pijl) => `<button class="gear-item" id="${id}" type="button">`
+    + `<span class="gi-ico" aria-hidden="true">${ozIco(ico)}</span><span class="gi-label">${label}</span>`
+    + (pijl ? '<span class="gi-pijl" aria-hidden="true">›</span>' : '') + '</button>';
+  const oz = overzetMag();
+  $('confirm-title').textContent = '💾 ' + sterrenRijNaam();
+  $('confirm-body').innerHTML = `<div class="bb-blad">`
+    + (oz ? `<button class="btn purple oz-groot" id="bb-naar" type="button">${ozIco('zet')} Naar ander toestel</button>` : '')
+    + `<div class="bb-lijst">`
+    + (oz ? rij('bb-van', 'code', 'Van ander toestel', true) : '')
+    + rij('bb-maak', 'maak', 'Back-up maken' + backupBladStandHtml())
+    + rij('bb-terug', 'terug', 'Terugzetten')
+    + '</div></div>';
   $('confirm-actions').innerHTML = '<button class="btn small paper" id="bb-dicht">Sluiten</button>';
   $('bb-dicht').onclick = closeConfirmModal;
+  if (oz) {
+    $('bb-naar').onclick = openOverzetBlad;
+    $('bb-van').onclick = () => { sndClick(); openCodeBlad(false); };
+  }
   $('bb-maak').onclick = exportData;
 
 
@@ -32957,15 +32959,6 @@ function kopieerBelofte(belofte) {
   }
   return belofte.then(kopieer);
 }
-
-
-
-
-function ozAndersom() {
-  $('oz-blad').insertAdjacentHTML('beforeend',
-    '<button class="oz-andersom" id="oz-andersom" type="button"><span>Andersom?</span> Sterren hierheen halen ›</button>');
-  $('oz-andersom').onclick = () => openCodeBlad(false);
-}
 function openOverzetBlad() {
   sndClick();
   const nr = ++ozNr;
@@ -32974,7 +32967,6 @@ function openOverzetBlad() {
     `<div class="oz-mee">${gezichten}</div>${ozCodeHtml('', 'laden')}<div class="oz-onder" id="oz-onder"></div>`,
     '<button class="btn small paper" id="oz-dicht">Sluiten</button>');
   $('oz-blad').dataset.nr = nr;
-  ozAndersom();
   $('oz-dicht').onclick = closeConfirmModal;
   const link = ozMaakLink();
   const gekopieerd = kopieerBelofte(link.then(d => ozLinkVan(d.code))).catch(() => false);
@@ -33002,7 +32994,6 @@ function ozToonCode(nr, { code, tot, sleutel }, gekopieerd) {
 
 
     + `<div class="oz-tijd"><i style="animation-duration:${duur}ms;animation-delay:-${duur - rest}ms"></i></div>`;
-  ozAndersom();
   $('oz-blad').classList.add('met-code');
   const meld = ok => { const o = $('oz-ok'); if (o && ok) o.textContent = '✓ Gekopieerd'; };
   if (gekopieerd) gekopieerd.then(meld);
@@ -33060,7 +33051,7 @@ function openCodeBlad(vanStart, code) {
     (plak ? `<button class="btn purple oz-groot" id="oz-plak" type="button">${ozIco('plak')} Plakken</button><div class="oz-of">of typ de code</div>` : '')
     + `<div class="oz-invoer">${ozCodeHtml('', '', 0)}
        <input id="oz-veld" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" aria-label="Code van zes cijfers"></div>
-     <div class="oz-onder" id="oz-onder"><div class="oz-waar">Andere toestel: <span class="ab-kbd">⚙️ Ouders › Naar ander toestel</span></div></div>`,
+     <div class="oz-onder" id="oz-onder"><div class="oz-waar">Andere toestel: <span class="ab-kbd">⚙️ Ouders › Ander toestel en back-up</span></div></div>`,
     '<button class="btn small paper" id="oz-dicht">Annuleer</button>');
   $('oz-blad').dataset.nr = nr;
   $('oz-dicht').onclick = closeConfirmModal;
@@ -33382,7 +33373,7 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
         .concat(zet, [`Open de app › ${kbd('Al gespeeld?')} › ${kbd('Plakken')}`]));
     } else {
       html += stappen(zet);
-      if (hasStars) html += '<div class="ab-noot">⭐ De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › Back-up op dit toestel, en zet hem in de app terug.</div>';
+      if (hasStars) html += '<div class="ab-noot">⭐ De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › Back-up, en zet hem in de app terug.</div>';
     }
     return { html, installeer: false, meenemen, kopieer: false };
   }

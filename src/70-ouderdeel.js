@@ -1334,42 +1334,39 @@ function themaKaartHtml(s, p, show) {
 function geluidRijHtml() {
   return `
       <button class="gear-item" id="set-sound" role="switch" aria-checked="${db.sound ? 'true' : 'false'}">
-        <span class="gi-ico" aria-hidden="true">${db.sound ? '🔊' : '🔇'}</span><span class="gi-label">Geluid<span class="gi-sub">Muziek en de stem die voorleest</span></span><span class="gi-state${db.sound ? '' : ' off'}" id="set-sound-state">${db.sound ? 'Aan' : 'Uit'}</span>
+        <span class="gi-ico" aria-hidden="true">${db.sound ? '🔊' : '🔇'}</span><span class="gi-label">Geluid</span><span class="gi-state${db.sound ? '' : ' off'}" id="set-sound-state">${db.sound ? 'Aan' : 'Uit'}</span>
       </button>`;
 }
 /* Wat voor alle sterren geldt, onderaan het overzicht: één kaart met stille
-   rijen, in deze volgorde:
+   rijen zonder onderregel, in deze volgorde:
 
      * Geluid -- de schakelaar.
-     * Naar ander toestel › -- opent meteen "Deel link" (openOverzetBlad), met
-       onderaan de weg andersom. Eerst, want het is wat het vaakst gebeurt: een
-       nieuwe telefoon, of de app op het beginscherm na Safari. Alleen waar
-       overzetten kan (overzetMag).
-     * Back-up op dit toestel › -- alleen het bestand. De naam zegt waar het
-       staat: hij was eerst "Back-up" met overzetten erin, en dan las het alsof
-       een back-up ook op een ander toestel terechtkwam. De datum van de laatste
-       back-up, grijs; nooit, of langer dan BACKUP_OUD_DAGEN geleden, dan amber
-       met een stipje. De knoppen staan in het blad erachter (openBackupBlad).
+     * Ander toestel en back-up › -- één rij voor alles wat je sterren buiten
+       dit toestel brengt (of terug). Erachter één blad met één paarse knop,
+       "Naar ander toestel", en de rest als rijen (openBackupBlad). Het waren
+       eerst twee rijen met elk een getekend icoon en een onderregel, en dat
+       woog zwaarder dan iets wat een ouder een paar keer per jaar doet. De
+       naam zegt wat erachter zit, dus hij heeft geen onderregel nodig; alleen
+       een stipje als er lang geen back-up was (backupStandHtml). Zonder
+       overzetten (vanaf file://) heet hij gewoon "Back-up".
      * Als app › -- zolang het spel nog in de browser draait. Die opent hetzelfde
        blad als het knopje op de sterrenkeuze (openAppBlad). Hij staat als laatste
        omdat hij verdwijnt zodra het spel geïnstalleerd is: dan schuift er niets.
 
-   Hier stond eerst een eigen back-upkaart met een amber regel en Maken naast
-   Terugzetten. Die vroeg bij elk bezoek even hard om aandacht als de sterren
-   erboven, voor iets wat een ouder een paar keer per jaar doet. */
+   Elke rij heeft een emoji als icoon, zoals de rest van de app; de getekende
+   iconen (ozIco) horen bij de bladen erachter. */
+// back‑up met een harde streep (U+2011): op een smalle telefoon breekt de titel
+// van het blad anders midden in het woord, als "back-" en "up".
+function sterrenRijNaam() { return overzetMag() ? 'Ander toestel en back\u2011up' : 'Back\u2011up'; }
 function appWideCardsHtml() {
   const alsApp = (beginschermNetErop || speeltAlsApp()) ? '' : `
       <button class="gear-item" id="set-alsapp" type="button">
         <span class="gi-ico" aria-hidden="true">📲</span><span class="gi-label">Als app</span><span class="gi-pijl" aria-hidden="true">›</span>
       </button>`;
-  const overzet = !overzetMag() ? '' : `
-      <button class="gear-item" id="set-overzet" type="button">
-        <span class="gi-ico" aria-hidden="true">${ozIco('zet')}</span><span class="gi-label">Naar ander toestel<span class="gi-sub">Je sterren meenemen met een link</span></span><span class="gi-pijl" aria-hidden="true">›</span>
-      </button>`;
   return `
-    <div class="set-card geluid-kaart">${geluidRijHtml()}${overzet}
+    <div class="set-card geluid-kaart">${geluidRijHtml()}
       <button class="gear-item" id="set-backup" type="button">
-        <span class="gi-ico" aria-hidden="true">${ozIco('hier')}</span><span class="gi-label">Back-up op dit toestel${backupStandHtml()}</span><span class="gi-pijl" aria-hidden="true">›</span>
+        <span class="gi-ico" aria-hidden="true">💾</span><span class="gi-label">${sterrenRijNaam()}</span>${backupStandHtml()}<span class="gi-pijl" aria-hidden="true">›</span>
       </button>${alsApp}
     </div>
     ${importInvoerHtml()}`;
@@ -1396,12 +1393,13 @@ function backupWanneer(nu) {
     : dagen < 60 ? `${Math.floor(dagen / 7)} weken geleden`
     : `${Math.floor(dagen / 30)} maanden geleden`;
 }
-// De onderregel van de rij Back-up. Dezelfde id als de oude regel in de kaart, dus
-// exportData werkt hem ter plekke bij.
+// Het stipje op de rij: alleen als er nooit een back-up was, of lang geleden. De
+// datum zelf staat in het blad erachter (backupBladStandHtml). Het lege vak blijft
+// staan, zodat exportData het ter plekke kan vervangen.
 function backupStandHtml(nu) {
   const oud = backupOud(nu);
-  return `<span class="gi-sub backup-stand${oud ? ' oud' : ''}" id="set-backup-stand">${backupWanneer(nu)}`
-    + (oud ? '<span class="gi-dot" aria-hidden="true"></span>' : '') + '</span>';
+  return `<span class="backup-stip${oud ? ' oud' : ''}" id="set-backup-stand">`
+    + (oud ? '<span class="gi-dot" role="img" aria-label="Al lang geen back-up"></span>' : '') + '</span>';
 }
 // Het verborgen bestandsveld achter "terugzetten". Eén keer per paneel, en in
 // beide panelen (met en zonder sterren) onder hetzelfde id -- bindSettings bindt
@@ -1418,12 +1416,12 @@ function importInvoerHtml() {
    daarna onder Voortgang, toen ⚙️ daar nog opende.
 
    EEN EIGEN KAARTJE, MET GEWONE RIJEN. Het zijn geen instellingen maar
-   verwijzingen, dus ze staan niet ín "Voor alle sterren" maar eronder, met een
-   eigen streepje ("Over het spel"). Wel in dezelfde rijen als erboven (icoon,
-   woord, onderregel, ›): als twee losse witte links onder de kaart zagen ze er
-   niet uit als iets van het ouderdeel. De onderregel van delen zegt wát je deelt:
-   "Naar ander toestel" deelt ook een link, maar dan van je sterren, en "Deel de
-   link" las als hetzelfde. Het filmpje zit niet in de app zelf; het wordt pas
+   verwijzingen, dus ze staan niet ín "Voor alle sterren" maar in een kaart
+   eronder -- zonder eigen kopje: de twee rijen zeggen zelf waar ze over gaan.
+   Wel in dezelfde rijen als erboven (icoon, woord, ›): als twee losse witte
+   links onder de kaart zagen ze er niet uit als iets van het ouderdeel. Delen
+   heet "Rekensterren delen" en niet "Deel de link": je sterren gaan ook met een
+   link naar een ander toestel, en dan las het als hetzelfde. Het filmpje zit niet in de app zelf; het wordt pas
    opgehaald als iemand op afspelen tikt (en sw.js bewaart het niet).
 
    De link opent in hetzelfde venster, niet met target="_blank": over/ valt
@@ -1437,13 +1435,12 @@ function importInvoerHtml() {
 const OVER_URL = 'https://www.rekensterren.be/over/';
 function overKaartHtml() {
   return `
-    <div class="sheet-rule"><span>Over het spel</span></div>
     <div class="set-card geluid-kaart over-kaart">
       <a class="gear-item" id="set-over" href="over/index.html">
-        <span class="gi-ico" aria-hidden="true">🎬</span><span class="gi-label">Wat is Rekensterren?<span class="gi-sub">Een kort filmpje en wat uitleg</span></span><span class="gi-pijl" aria-hidden="true">›</span>
+        <span class="gi-ico" aria-hidden="true">🎬</span><span class="gi-label">Wat is Rekensterren?</span><span class="gi-pijl" aria-hidden="true">›</span>
       </a>
       <button class="gear-item" id="set-deel" type="button">
-        <span class="gi-ico" aria-hidden="true">💌</span><span class="gi-label">Tip een andere ouder<span class="gi-sub">Stuur de link naar het spel</span></span><span class="gi-pijl" aria-hidden="true">›</span>
+        <span class="gi-ico" aria-hidden="true">📤</span><span class="gi-label">Rekensterren delen</span><span class="gi-pijl" aria-hidden="true">›</span>
       </button>
     </div>`;
 }
@@ -2256,28 +2253,47 @@ function importData(file) {
 }
 
 /* ================= Het back-upblad =========================================
-   Achter de rij "Back-up op dit toestel ›" op het overzicht van Voor ouders.
-   Alleen het bestand: bovenaan wanneer de laatste was, één regel dat hij op dit
-   toestel blijft, en twee tegels Bewaren · Terugzetten (exportData / importData).
-   Overzetten staat hier niet meer in maar als eigen rij ernaast: een bestand en
-   een ander toestel zijn niet hetzelfde, en in één blad las het alsof ze dat wel
-   waren. "Bewaren" en niet "Maken": het blijft hier. */
+   Achter de rij "Ander toestel en back-up ›" op het overzicht van Voor ouders.
+   EÉN KNOP, DE REST RIJEN. "Naar ander toestel" is wat je hier meestal komt doen
+   (een nieuwe telefoon, de app op het beginscherm na Safari), dus dat is de enige
+   paarse knop. Daaronder dezelfde rijen als op de pagina zelf:
+
+     Van ander toestel ›   de code invullen (openCodeBlad) -- zeldzaam: op een
+                           toestel zonder sterren staat "Sterren ophalen" al
+                           groot op de lege pagina. Met ›, want er gaat een blad open.
+     Back-up maken         het bestand (exportData), met de datum eronder
+     Terugzetten           het bestand terug (importData)
+
+   Een rij zonder › doet meteen iets, zoals Geluid. Hier stonden eerst vier tegels
+   van hetzelfde gewicht en daarna twee bladen; allebei maakten ze niet duidelijk
+   wat de gewone weg was. Zonder overzetten (vanaf file://) vallen de knop en de
+   eerste rij weg. */
 function backupBladStandHtml() {
   const w = backupWanneer();
   const oud = backupOud();
   const tekst = backupDagen() === null ? w : 'Laatste: ' + w.toLowerCase();
-  return `<div class="bb-stand${oud ? ' oud' : ''}" id="bb-stand">${oud ? '<span class="gi-dot" aria-hidden="true"></span>' : ''}${tekst}</div>`;
+  return `<span class="gi-sub backup-stand${oud ? ' oud' : ''}" id="bb-stand">${tekst}${oud ? '<span class="gi-dot" aria-hidden="true"></span>' : ''}</span>`;
 }
 function openBackupBlad() {
   sndClick();
-  const tegel = (id, ico, t) => `<button class="bb-tegel" id="${id}" type="button">${ico}${t}</button>`;
-  $('confirm-title').innerHTML = ozIco('hier') + ' Back-up op dit toestel';
-  $('confirm-body').innerHTML = `<div class="bb-blad">${backupBladStandHtml()}
-      <div class="bb-hier">Een bestand dat op dit toestel blijft</div>
-      <div class="bb-tegels">${tegel('bb-maak', ozIco('maak'), 'Bewaren')}${tegel('bb-terug', ozIco('terug'), 'Terugzetten')}</div>
-    </div>`;
+  const rij = (id, ico, label, pijl) => `<button class="gear-item" id="${id}" type="button">`
+    + `<span class="gi-ico" aria-hidden="true">${ozIco(ico)}</span><span class="gi-label">${label}</span>`
+    + (pijl ? '<span class="gi-pijl" aria-hidden="true">›</span>' : '') + '</button>';
+  const oz = overzetMag();
+  $('confirm-title').textContent = '💾 ' + sterrenRijNaam();
+  $('confirm-body').innerHTML = `<div class="bb-blad">`
+    + (oz ? `<button class="btn purple oz-groot" id="bb-naar" type="button">${ozIco('zet')} Naar ander toestel</button>` : '')
+    + `<div class="bb-lijst">`
+    + (oz ? rij('bb-van', 'code', 'Van ander toestel', true) : '')
+    + rij('bb-maak', 'maak', 'Back-up maken' + backupBladStandHtml())
+    + rij('bb-terug', 'terug', 'Terugzetten')
+    + '</div></div>';
   $('confirm-actions').innerHTML = '<button class="btn small paper" id="bb-dicht">Sluiten</button>';
   $('bb-dicht').onclick = closeConfirmModal;
+  if (oz) {
+    $('bb-naar').onclick = openOverzetBlad;
+    $('bb-van').onclick = () => { sndClick(); openCodeBlad(false); };
+  }
   $('bb-maak').onclick = exportData;
   // het bestandsveld staat in het paneel (importInvoerHtml); de vraag erna gebruikt
   // dit venster opnieuw, dus eerst dicht
@@ -2418,15 +2434,6 @@ function kopieerBelofte(belofte) {
   }
   return belofte.then(kopieer);
 }
-/* Onderaan het blad: de weg andersom, voor wie op dít toestel sterren wil
-   ontvangen. Eén stille regel en geen tweede tegel: versturen gebeurt vaker, en
-   een toestel dat ontvangt is meestal leeg en heeft dan "Sterren ophalen" al
-   als grote knop (beheerEmptyHtml, het beginscherm). */
-function ozAndersom() {
-  $('oz-blad').insertAdjacentHTML('beforeend',
-    '<button class="oz-andersom" id="oz-andersom" type="button"><span>Andersom?</span> Sterren hierheen halen ›</button>');
-  $('oz-andersom').onclick = () => openCodeBlad(false);
-}
 function openOverzetBlad() {
   sndClick();
   const nr = ++ozNr;
@@ -2435,7 +2442,6 @@ function openOverzetBlad() {
     `<div class="oz-mee">${gezichten}</div>${ozCodeHtml('', 'laden')}<div class="oz-onder" id="oz-onder"></div>`,
     '<button class="btn small paper" id="oz-dicht">Sluiten</button>');
   $('oz-blad').dataset.nr = nr;
-  ozAndersom();
   $('oz-dicht').onclick = closeConfirmModal;
   const link = ozMaakLink();
   const gekopieerd = kopieerBelofte(link.then(d => ozLinkVan(d.code))).catch(() => false);
@@ -2463,7 +2469,6 @@ function ozToonCode(nr, { code, tot, sleutel }, gekopieerd) {
     // de balk loopt leeg in de tijd die nog rest: een animatie van een kwartier die
     // al (duur - rest) gevorderd is
     + `<div class="oz-tijd"><i style="animation-duration:${duur}ms;animation-delay:-${duur - rest}ms"></i></div>`;
-  ozAndersom();
   $('oz-blad').classList.add('met-code');
   const meld = ok => { const o = $('oz-ok'); if (o && ok) o.textContent = '✓ Gekopieerd'; };
   if (gekopieerd) gekopieerd.then(meld);
@@ -2521,7 +2526,7 @@ function openCodeBlad(vanStart, code) {
     (plak ? `<button class="btn purple oz-groot" id="oz-plak" type="button">${ozIco('plak')} Plakken</button><div class="oz-of">of typ de code</div>` : '')
     + `<div class="oz-invoer">${ozCodeHtml('', '', 0)}
        <input id="oz-veld" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" aria-label="Code van zes cijfers"></div>
-     <div class="oz-onder" id="oz-onder"><div class="oz-waar">Andere toestel: <span class="ab-kbd">⚙️ Ouders › Naar ander toestel</span></div></div>`,
+     <div class="oz-onder" id="oz-onder"><div class="oz-waar">Andere toestel: <span class="ab-kbd">⚙️ Ouders › Ander toestel en back-up</span></div></div>`,
     '<button class="btn small paper" id="oz-dicht">Annuleer</button>');
   $('oz-blad').dataset.nr = nr;
   $('oz-dicht').onclick = closeConfirmModal;
@@ -2843,7 +2848,7 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
         .concat(zet, [`Open de app › ${kbd('Al gespeeld?')} › ${kbd('Plakken')}`]));
     } else {
       html += stappen(zet);
-      if (hasStars) html += '<div class="ab-noot">⭐ De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › Back-up op dit toestel, en zet hem in de app terug.</div>';
+      if (hasStars) html += '<div class="ab-noot">⭐ De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › Back-up, en zet hem in de app terug.</div>';
     }
     return { html, installeer: false, meenemen, kopieer: false };
   }
