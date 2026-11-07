@@ -141,12 +141,17 @@ function onderVrijOpnieuw() {
 /* Wie een balk opent of dichtdoet roept onderVrijMeet zelf aan, in dezelfde tik
    (de kleedkamer en de kast doen dat). Dit is het vangnet voor wie dat vergeet:
    elke balk die verschijnt, verdwijnt of van hoogte verandert, en elk venster
-   dat draait of van maat verandert, meet opnieuw. */
+   dat draait of van maat verandert, meet opnieuw.
+   Een ResizeObserver is daarvoor genoeg: verschijnen, verdwijnen en van hoogte
+   veranderen zijn allemaal een andere maat, en hij meldt het ná de opmaak, als
+   meten niets meer kost. Een MutationObserver alleen waar die er niet is: die
+   meldt zich meteen na de tik, vóór de opmaak, en dan dwong onderVrijMeet bij
+   elke tik in de kast of de kleedkamer een tweede opmaak van het hele scherm af. */
 function onderVrijWaarnemen() {
-  const kijk = typeof MutationObserver === 'function'
-    ? new MutationObserver(onderVrijMeet) : null;
   const maat = typeof ResizeObserver === 'function'
     ? new ResizeObserver(onderVrijMeet) : null;
+  const kijk = !maat && typeof MutationObserver === 'function'
+    ? new MutationObserver(onderVrijMeet) : null;
   for (const id of ONDER_BALKEN) {
     const balk = $(id);
     if (!balk) continue;

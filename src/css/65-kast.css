@@ -449,11 +449,15 @@
   /* Het muzieknootje van een tik (zie kastNoot): rechtsboven van de medaille
      omhoog en weg, in goud of in het metaal van een medaille die meegroeit. Het
      zegt zonder woorden wat de tik deed: die trofee speelde een noot. */
+  /* Rechtsboven van de medaille (zie kastNoot): die staat gecentreerd, 8px onder
+     de bovenrand van het kaartje, en is 68px breed -- de prijs 76px. */
   .kast-noot {
+    left: calc(50% + 18px); top: -2px;
     position: absolute; z-index: 3; line-height: 0; pointer-events: none;
     fill: var(--noot, var(--gold-accent)); filter: drop-shadow(0 0 6px var(--noot, var(--gold-accent)));
     animation: kastNoot .8s ease-out forwards;
   }
+  .pw-prijs ~ .kast-noot { left: calc(50% + 22px); }
   @keyframes kastNoot {
     0% { opacity: 0; transform: translate(0, 6px) scale(.6) rotate(-10deg); }
     20% { opacity: 1; transform: translate(4px, -6px) scale(1.1) rotate(4deg); }

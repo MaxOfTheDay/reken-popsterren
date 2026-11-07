@@ -824,16 +824,15 @@ function kastKlink(card, trap) {
   opnieuw(card, 'klink');
   kastNoot(card, trap);
 }
-// Het nootje: rechtsboven van de medaille omhoog, en weg.
+/* Het nootje: rechtsboven van de medaille omhoog, en weg. Waar precies staat in
+   het stijlblad (.kast-noot): de medaille staat altijd gecentreerd bovenaan het
+   kaartje, dus de plek is een vaste maat. Hier werd hij eerst gemeten, en dat
+   meten midden in de tik kostte een hele opmaak van de kast. */
 function kastNoot(card, trap) {
-  const m = card.querySelector('.temoji, .pw-medal');
-  if (!m) return;
-  const r = m.getBoundingClientRect(), c = card.getBoundingClientRect();
+  if (!card.querySelector('.temoji, .pw-medal')) return;
   const n = document.createElement('span');
   n.className = 'kast-noot';
   n.innerHTML = KAST_NOOT[(card._keer || 0) % 2];
-  n.style.left = (r.right - c.left - 16) + 'px';
-  n.style.top = (r.top - c.top - 10) + 'px';
   if (trap != null) n.style.setProperty('--noot', KAST_NOOT_KLEUR[trap]);
   card.appendChild(n);
   setTimeout(() => n.remove(), 850);
@@ -902,13 +901,18 @@ function kastBalk(t, card, tekst, getal, rij, stem) {
     if (naarKaart) naarWereldKaart(t.wereldIdx); else openKleedkamerCat(t.naar);
   };
   bar.style.display = 'flex';
-  onderVrijMeet();   // ruimte onderin, zodat ook de onderste plank boven de balk kan -- vóór de scroll hieronder
   speak(stem || tekst);
   /* Viel de getikte trofee achter de balk (een tik vlak boven de navigatie), dan
      schuift de kast hem erboven -- hetzelfde als zichtbaarBovenBalk in de
-     kleedkamer. */
-  const teveel = card.getBoundingClientRect().bottom - (bar.getBoundingClientRect().top - 12);
-  if (teveel > 0 && kast.scrollBy) kast.scrollBy({ top: teveel, behavior: motionOff() ? 'auto' : 'smooth' });
+     kleedkamer. Pas na de eerste verf (naOpbouw): dan is de kast al opgemaakt
+     en kost meten niets, en heeft onderVrijWaarnemen de ruimte onderin al
+     gemaakt waar hij heen kan schuiven. Hier meten, midden in de tik, dwong een
+     extra opmaak van de hele kast af. */
+  naOpbouw(() => {
+    if (!card.classList.contains('kies') || !kast.scrollBy) return;   // intussen iets anders getikt
+    const teveel = card.getBoundingClientRect().bottom - (bar.getBoundingClientRect().top - 12);
+    if (teveel > 0) kast.scrollBy({ top: teveel, behavior: motionOff() ? 'auto' : 'smooth' });
+  });
 }
 // Het claim-moment: van 'klaar' naar 'behaald', met een kort, vrolijk feestje.
 /* Een trofee openen geeft TROFEE_DIAMANTEN 💎 (oktober 2026, Max). Eerst gaf hij
