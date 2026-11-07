@@ -1517,8 +1517,11 @@ const DUIK = {
   duur: 320,          // de vlucht van de camera; samen met de som die opkomt even lang als de oude wissel
   doof: .5,           // vanaf hier vloeit de kaart in de zaal over
   rand: .3,           // tot hier vervagen haltes, weg en kop: wat níét in de zaal staat
-  som: 140,           // wanneer de som en de knoppen opkomen
-  somDuur: 200,
+  stift: .35,         // tot hier vloeit haar witte stickerrand weg, terwijl ze nog klein is
+  /* De som en de knoppen komen op als de kaart al grotendeels weg is: eerder
+     schemerden ze als een tweede beeld door de wegvloeiende kaart heen. */
+  som: 190,
+  somDuur: 180,
   curve: 'cubic-bezier(.5,0,.2,1)',
   /* De weg terug is korter en begint later: hij eindigt waar de oude terugzoom
      eindigde (MOTION.totaal), zodat runTravel haar na REIS_WACHT op een kaart laat
@@ -1527,6 +1530,10 @@ const DUIK = {
      beeldjes vallen samen met het eindscherm dat nog wegvloeit. */
   terug: 240,
   terugNa: 60,
+  /* Terug begint hij meteen te bewegen: met de trage aanloop van de heenweg stond
+     de kaart na het wegvloeien van het eindscherm nog een tiende stil en schoot
+     hij daarna pas weg. */
+  terugCurve: 'cubic-bezier(.25,.1,.2,1)',
 };
 function duikVlak(kaart, spel, plekZij, dekken) {
   const frame = kaart.querySelector('.world-frame');
@@ -1539,62 +1546,115 @@ function duikVlak(kaart, spel, plekZij, dekken) {
   const fr = frame.getBoundingClientRect(), ar = art.getBoundingClientRect(), sr = kaart.getBoundingClientRect();
   if (!(aw > 0) || !(fr.width > 0) || !isFinite(l + t + vx + vy)) return null;
   const ah = aw * ART_H / ART_W;
-  let k = aw / fr.width;
+  /* De camera landt precies op de tekening van de zaal: dezelfde plek, dezelfde
+     maat. Dan valt de scherpe kaart bij het overvloeien óp zijn eigen onscherpe
+     versie, en leest dat als scherpstellen in plaats van als twee beelden over
+     elkaar. (Eerst mikte de camera op háár; dan schoof de achtergrond een
+     hoofdlengte mee en zag je hem dubbel.) */
+  let k = Math.max(aw / fr.width, 1);
   const m = { x: fr.left + vx / 100 * fr.width, y: fr.top + vy / 100 * fr.height };     // de halte op de kaart
-  let d = { x: ar.left + l + vx / 100 * aw, y: ar.top + t + vy / 100 * ah };            // dezelfde plek in de zaal
-  /* Zij landt op zichzelf. De halte valt in de zaal boven haar hoofd (zie
-     venuePunt), en zij staat op de kaart bóven haar halte -- recht op de halte
-     vliegen zette haar dus een hoofd te hoog, en dan stonden er bij het
-     overvloeien twee van haar. Daarom mikt de camera op háár: de achtergrond
-     schuift daardoor een stukje mee, maar die is in de zaal onscherp en donker,
-     en dat is precies het moment waarop hij overvloeit. */
-  const zij = kaart.querySelector('.tour-hero .avatar-holder');
-  const daar = spel.querySelector(plekZij || '#game-avatar-inner');
-  if (zij && daar) {
-    const z = zij.getBoundingClientRect(), q = daar.getBoundingClientRect();
-    if (z.width && q.width) {
-      /* En op haar eigen maat. Staand komt dat vanzelf overeen met de zoom van
-         de zaal (± 2x), maar liggend zoomt de zaal veel verder in (zie de
-         @media in 50-zaal.css), en dan landde een reuzin op het podium. Haar
-         maat wint: de achtergrond is daar toch onscherp. */
-      k = Math.min(k, q.height / z.height);
-      const voet = { x: z.left + z.width / 2, y: z.bottom }, doel = { x: q.left + q.width / 2, y: q.bottom };
-      d = { x: doel.x - (voet.x - m.x) * k, y: doel.y - (voet.y - m.y) * k };
-    }
-  }
+  const d = { x: ar.left + l + vx / 100 * aw, y: ar.top + t + vy / 100 * ah };          // dezelfde plek in de zaal
   let tx = d.x - m.x, ty = d.y - m.y;
   /* Op de weg terug is de kaart het scherm dat aankomt, en dat dekt op élk
      beeldje het hele venster (rondgang 6f): er ligt niets onder dan de kale
      achtergrond van de app. Staat de halte dicht bij een rand, dan trok de
      verschuiving die rand het venster in. Dus blijft de verschuiving binnen wat
      de vergroting toelaat; omdat schaal en verschuiving samen lineair naar 1 en
-     0 lopen, geldt dat dan ook voor elk tussenbeeldje. Zij landt daar een
-     stukje naast haar plek -- op het moment dat de zaal net wegvloeit. */
+     0 lopen, geldt dat dan ook voor elk tussenbeeldje. */
   if (dekken) {
-    k = Math.max(k, 1);
     const ox = m.x - sr.left, oy = m.y - sr.top;
     tx = Math.min(Math.max(tx, -(sr.width - ox) * (k - 1)), ox * (k - 1));
     ty = Math.min(Math.max(ty, -(sr.height - oy) * (k - 1)), oy * (k - 1));
   }
-  return {
+  const vlak = {
     oorsprong: `${m.x - sr.left}px ${m.y - sr.top}px`,
     eind: `translate(${tx}px, ${ty}px) scale(${k})`,
+    held: null,
   };
+  /* Zij vliegt apart, binnen de camera. De halte valt in de zaal boven haar
+     hoofd (zie venuePunt) en ze heeft er een andere maat: liggend zoomt de zaal
+     veel verder in (zie de @media in 50-zaal.css), en dan landde een reuzin op
+     het podium. Dus krijgt .tour-hero zijn eigen verschuiving en schaal, voet op
+     voet, tot ze precies staat waar en zo groot als ze in de zaal staat.
+     Niet in twee sleutelbeelden maar in negen: camera en zij lopen elk lineair,
+     en hun product niet -- liggend zoomt de camera 4,5 keer in terwijl zij moet
+     krimpen, en halverwege was ze dan anderhalf keer zo groot als aan beide
+     kanten. Nu gaat ze op het scherm in een rechte lijn en groeit of krimpt ze
+     gelijkmatig. De curve staat op het geheel (zie duikHeld), dus "p" hieronder
+     is dezelfde voortgang als die van de camera. Gerekend in de pixels van de
+     kaart vóór de zoom: alles wat de camera al doet, gaat er eerst af. */
+  const held = kaart.querySelector('.tour-hero');
+  const zij = held && held.querySelector('.avatar-holder');
+  const daar = spel.querySelector(plekZij || '#game-avatar-inner');
+  if (zij && daar) {
+    const z = zij.getBoundingClientRect(), q = daar.getBoundingClientRect(), hr = held.getBoundingClientRect();
+    if (z.height && q.height) {
+      const voet = { x: z.left + z.width / 2, y: z.bottom }, doel = { x: q.left + q.width / 2, y: q.bottom };
+      const kz = q.height / z.height, beelden = [];
+      for (let i = 0; i <= 8; i++) {
+        const p = i / 8, c = 1 + (k - 1) * p;                    // de schaal van de camera op dat moment
+        const fx = m.x + tx * p + (voet.x - m.x) * c, fy = m.y + ty * p + (voet.y - m.y) * c;
+        const wx = voet.x + (doel.x - voet.x) * p, wy = voet.y + (doel.y - voet.y) * p;
+        beelden.push({ offset: p,
+          transform: `translateX(-50%) translate(${(wx - fx) / c}px, ${(wy - fy) / c}px) scale(${(1 + (kz - 1) * p) / c})` });
+      }
+      vlak.held = { el: held, oorsprong: `${voet.x - hr.left}px ${voet.y - hr.top}px`, beelden };
+    }
+  }
+  return vlak;
 }
+/* Haar witte stickerrand (#tourHeroContour) hoort bij de kaart en niet bij de
+   zaal. Liet je hem staan, dan zoomde hij mee tot een dikke witte rand en
+   verdween hij in het overvloeien ineens. Dus ligt er tijdens de duik een kale
+   kopie van haar onder het origineel; het origineel (met rand) vloeit weg terwijl
+   ze nog klein is, en wat overblijft is precies zij zoals in de zaal. Alleen
+   opacity, en de kopie gaat er na afloop weer uit.
+   Geeft de animatie van het origineel en een functie die alles opruimt. */
+function duikRand(held, heen, opties) {
+  // de svg staat in .pas-laag (de danspasjes), en de kopie gaat ernaast
+  const svg = held && held.querySelector('.avatar-holder svg');
+  if (!svg || !svg.animate) return () => {};
+  const laag = svg.parentNode;
+  const los = getComputedStyle(laag).position === 'static';
+  if (los) laag.style.position = 'relative';
+  const kaal = svg.cloneNode(true);
+  kaal.removeAttribute('id');
+  kaal.style.cssText = 'position:absolute;left:0;top:0;width:100%;filter:none;z-index:0;pointer-events:none';
+  laag.insertBefore(kaal, svg);
+  const a = svg.animate(heen ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1 }],
+    Object.assign({ easing: 'linear' }, opties));
+  return () => { a.cancel(); kaal.remove(); if (los) laag.style.position = ''; };
+}
+function duikHeld(vlak, heen, opties) {
+  const h = vlak.held;
+  if (!h) return () => {};
+  h.el.style.transformOrigin = h.oorsprong;
+  const r = heen ? h.beelden : h.beelden.map(b => ({ offset: 1 - b.offset, transform: b.transform })).reverse();
+  const a = h.el.animate(r, opties);
+  return () => { a.cancel(); h.el.style.transformOrigin = ''; };
+}
+const DUIK_RANDEN = '.hub-sticky, .tour-road-svg, .wereld-stof, .tour-stop > :not(.tour-hero), .world-back, .mem-fab';
 function duikCamera(kaart, spel, klaar) {
   const vlak = duikVlak(kaart, spel);
   if (!vlak) return false;
   schermAnimsStop(kaart);
   kaart.style.transformOrigin = vlak.oorsprong;
-  const randen = [...kaart.querySelectorAll('.hub-sticky, .tour-road-svg, .wereld-stof, .tour-stop > :not(.tour-hero), .world-back, .mem-fab')];
+  const randen = [...kaart.querySelectorAll(DUIK_RANDEN)];
+  const curve = { duration: DUIK.duur, easing: DUIK.curve, fill: 'forwards' };
+  const heldOp = duikHeld(vlak, true, curve);
+  const randOp = duikRand(vlak.held && vlak.held.el, true,
+    { duration: DUIK.duur * DUIK.stift, fill: 'forwards' });
+  let klaarOp = false;
   const op = () => {
+    if (klaarOp) return;
+    klaarOp = true;
     kaart.classList.remove('wegvallend');
     kaart.style.transformOrigin = '';
     schermAnimsStop(kaart);
     randen.forEach(el => el.getAnimations().forEach(a => a.cancel()));
+    heldOp(); randOp();
   };
-  const a = schermAnim(kaart, [{ transform: 'none' }, { transform: vlak.eind }],
-    { duration: DUIK.duur, easing: DUIK.curve, fill: 'forwards' });
+  const a = schermAnim(kaart, [{ transform: 'none' }, { transform: vlak.eind }], curve);
   schermAnim(kaart, [{ opacity: 1 }, { opacity: 1, offset: DUIK.doof }, { opacity: 0 }],
     { duration: DUIK.duur, fill: 'forwards' });
   randen.forEach(el => el.animate([{ opacity: 1 }, { opacity: 0 }],
@@ -1613,9 +1673,9 @@ function duikCamera(kaart, spel, klaar) {
 }
 /* En terug: dezelfde vlucht achteruit. De kaart staat eerst ingezoomd zoals de
    zaal hem liet zien en zoomt uit tot hij weer de hele wereld is; zij krimpt mee
-   tot ze op haar halte staat, en wat de zaal niet had (haltes, weg, kop) komt
-   op het eind terug. Daarna huppelt ze door zoals altijd (runTravel wacht
-   REIS_WACHT, en die is langer dan deze vlucht).
+   tot ze op haar halte staat, haar stickerrand komt terug, en wat de zaal niet
+   had (haltes, weg, kop) komt op het eind terug. Daarna huppelt ze door zoals
+   altijd (runTravel wacht REIS_WACHT, en die is langer dan deze vlucht).
 
    Gemeten aan het scherm dat vertrekt -- het eindscherm, of de zaal als je
    midden in een show stopte. Dat staat nog als .wegvallend in beeld. */
@@ -1628,12 +1688,21 @@ function terugDuik() {
   schermAnimsStop(kaart);
   kaart.classList.add('komt-op');
   kaart.style.transformOrigin = vlak.oorsprong;
-  const a = schermAnim(kaart, [{ transform: vlak.eind }, { transform: 'none' }],
-    { duration: DUIK.terug, delay: DUIK.terugNa, easing: DUIK.curve, fill: 'backwards' });
-  const randen = [...kaart.querySelectorAll('.hub-sticky, .tour-road-svg, .wereld-stof, .tour-stop > :not(.tour-hero), .world-back, .mem-fab')];
-  randen.forEach(el => el.animate([{ opacity: 0 }, { opacity: 1 }],
-    { duration: DUIK.terug * (1 - DUIK.doof), delay: DUIK.terugNa + DUIK.terug * DUIK.doof, easing: MOTION.uit, fill: 'backwards' }));
-  const op = () => { kaart.style.transformOrigin = ''; };
+  const curve = { duration: DUIK.terug, delay: DUIK.terugNa, easing: DUIK.terugCurve, fill: 'backwards' };
+  const a = schermAnim(kaart, [{ transform: vlak.eind }, { transform: 'none' }], curve);
+  const heldOp = duikHeld(vlak, false, curve);
+  const laat = { duration: DUIK.terug * (1 - DUIK.doof), delay: DUIK.terugNa + DUIK.terug * DUIK.doof, fill: 'backwards' };
+  const randOp = duikRand(vlak.held && vlak.held.el, false,
+    { duration: DUIK.terug * DUIK.stift, delay: DUIK.terugNa + DUIK.terug * (1 - DUIK.stift), fill: 'backwards' });
+  const randen = [...kaart.querySelectorAll(DUIK_RANDEN)];
+  randen.forEach(el => el.animate([{ opacity: 0 }, { opacity: 1 }], Object.assign({ easing: MOTION.uit }, laat)));
+  let klaarOp = false;
+  const op = () => {
+    if (klaarOp) return;
+    klaarOp = true;
+    kaart.style.transformOrigin = '';
+    heldOp(); randOp();
+  };
   a.onfinish = op;
   setTimeout(op, DUIK.terugNa + DUIK.terug + MOTION.vangnet);
   return true;
