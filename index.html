@@ -19837,6 +19837,10 @@ function duikIn(lvl, kaart, spel, punt, klaar) {
       klaar();
       return;
     }
+
+
+
+    if (duikCamera(kaart, spel, klaar)) { navMee(true); return; }
     schermWeg(kaart, true);
     navMee(true);
 
@@ -19860,7 +19864,153 @@ function duikIn(lvl, kaart, spel, punt, klaar) {
 
 
 
+
+
+
+
+
+
+
+
+const DUIK = {
+  duur: 320,
+  doof: .5,
+  rand: .3,
+  som: 140,
+  somDuur: 200,
+  curve: 'cubic-bezier(.5,0,.2,1)',
+
+
+
+
+
+  terug: 240,
+  terugNa: 60,
+};
+function duikVlak(kaart, spel, plekZij, dekken) {
+  const frame = kaart.querySelector('.world-frame');
+  const art = spel.querySelector('.venue-art');
+  if (!frame || !art || !getComputedStyle) return null;
+  const v = getComputedStyle(art, '::before');
+  const aw = parseFloat(v.width), l = parseFloat(v.left), t = parseFloat(v.top);
+  const cs = getComputedStyle(art);
+  const vx = parseFloat(cs.getPropertyValue('--venue-x')), vy = parseFloat(cs.getPropertyValue('--venue-y'));
+  const fr = frame.getBoundingClientRect(), ar = art.getBoundingClientRect(), sr = kaart.getBoundingClientRect();
+  if (!(aw > 0) || !(fr.width > 0) || !isFinite(l + t + vx + vy)) return null;
+  const ah = aw * ART_H / ART_W;
+  let k = aw / fr.width;
+  const m = { x: fr.left + vx / 100 * fr.width, y: fr.top + vy / 100 * fr.height };
+  let d = { x: ar.left + l + vx / 100 * aw, y: ar.top + t + vy / 100 * ah };
+
+
+
+
+
+
+  const zij = kaart.querySelector('.tour-hero .avatar-holder');
+  const daar = spel.querySelector(plekZij || '#game-avatar-inner');
+  if (zij && daar) {
+    const z = zij.getBoundingClientRect(), q = daar.getBoundingClientRect();
+    if (z.width && q.width) {
+
+
+
+
+      k = Math.min(k, q.height / z.height);
+      const voet = { x: z.left + z.width / 2, y: z.bottom }, doel = { x: q.left + q.width / 2, y: q.bottom };
+      d = { x: doel.x - (voet.x - m.x) * k, y: doel.y - (voet.y - m.y) * k };
+    }
+  }
+  let tx = d.x - m.x, ty = d.y - m.y;
+
+
+
+
+
+
+
+  if (dekken) {
+    k = Math.max(k, 1);
+    const ox = m.x - sr.left, oy = m.y - sr.top;
+    tx = Math.min(Math.max(tx, -(sr.width - ox) * (k - 1)), ox * (k - 1));
+    ty = Math.min(Math.max(ty, -(sr.height - oy) * (k - 1)), oy * (k - 1));
+  }
+  return {
+    oorsprong: `${m.x - sr.left}px ${m.y - sr.top}px`,
+    eind: `translate(${tx}px, ${ty}px) scale(${k})`,
+  };
+}
+function duikCamera(kaart, spel, klaar) {
+  const vlak = duikVlak(kaart, spel);
+  if (!vlak) return false;
+  schermAnimsStop(kaart);
+  kaart.style.transformOrigin = vlak.oorsprong;
+  const randen = [...kaart.querySelectorAll('.hub-sticky, .tour-road-svg, .wereld-stof, .tour-stop > :not(.tour-hero), .world-back, .mem-fab')];
+  const op = () => {
+    kaart.classList.remove('wegvallend');
+    kaart.style.transformOrigin = '';
+    schermAnimsStop(kaart);
+    randen.forEach(el => el.getAnimations().forEach(a => a.cancel()));
+  };
+  const a = schermAnim(kaart, [{ transform: 'none' }, { transform: vlak.eind }],
+    { duration: DUIK.duur, easing: DUIK.curve, fill: 'forwards' });
+  schermAnim(kaart, [{ opacity: 1 }, { opacity: 1, offset: DUIK.doof }, { opacity: 0 }],
+    { duration: DUIK.duur, fill: 'forwards' });
+  randen.forEach(el => el.animate([{ opacity: 1 }, { opacity: 0 }],
+    { duration: DUIK.duur * DUIK.rand, easing: MOTION.uit, fill: 'forwards' }));
+  a.onfinish = op;
+  setTimeout(op, DUIK.duur + MOTION.vangnet);
+
+  const som = spel.querySelector('.math-panel');
+  const kop = spel.querySelector('.hub-sticky');
+  if (kop) kop.animate([{ opacity: 0 }, { opacity: 1 }],
+    { duration: DUIK.somDuur, delay: DUIK.som, easing: MOTION.uit, fill: 'backwards' });
+  const s = som && som.animate([{ opacity: 0, transform: 'translateY(18px)' }, { opacity: 1, transform: 'none' }],
+    { duration: DUIK.somDuur, delay: DUIK.som, easing: MOTION.uit, fill: 'backwards' });
+  if (s) s.onfinish = klaar; else a.onfinish = () => { op(); klaar(); };
+  return true;
+}
+
+
+
+
+
+
+
+
+function terugDuik() {
+  const kaart = $('screen-map');
+  const van = ['screen-end', 'screen-game'].map($).find(el => el && el.classList.contains('wegvallend'));
+  if (!kaart || !kaart.animate || motionOff() || !van) return false;
+  const vlak = duikVlak(kaart, van, van.id === 'screen-end' ? '#end-avatar' : '#game-avatar-inner', true);
+  if (!vlak) return false;
+  schermAnimsStop(kaart);
+  kaart.classList.add('komt-op');
+  kaart.style.transformOrigin = vlak.oorsprong;
+  const a = schermAnim(kaart, [{ transform: vlak.eind }, { transform: 'none' }],
+    { duration: DUIK.terug, delay: DUIK.terugNa, easing: DUIK.curve, fill: 'backwards' });
+  const randen = [...kaart.querySelectorAll('.hub-sticky, .tour-road-svg, .wereld-stof, .tour-stop > :not(.tour-hero), .world-back, .mem-fab')];
+  randen.forEach(el => el.animate([{ opacity: 0 }, { opacity: 1 }],
+    { duration: DUIK.terug * (1 - DUIK.doof), delay: DUIK.terugNa + DUIK.terug * DUIK.doof, easing: MOTION.uit, fill: 'backwards' }));
+  const op = () => { kaart.style.transformOrigin = ''; };
+  a.onfinish = op;
+  setTimeout(op, DUIK.terugNa + DUIK.terug + MOTION.vangnet);
+  return true;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 function kaartTerugZoom(map, lvl) {
+  if (terugDuik()) return;
   const doel = map.querySelector('.tour-stop[data-lvl="' + lvl + '"]');
   if (!doel) return kaartKomtOp(null);
   const d = doel.getBoundingClientRect();
