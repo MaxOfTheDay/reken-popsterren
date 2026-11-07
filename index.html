@@ -15306,12 +15306,14 @@ const TROPHIES = [
     voor: p => !telModus(p) && p.settings.chain3 !== false && p.settings.ops.includes('+'),
     has: p => leerTel(p, 'drie') >= 10, progress: p => trophyProgress(leerTel(p, 'drie'), 10, 'sommen met drie getallen') },
 
+
+
   { id: 'leer-cijfers', emoji: '🔢', name: 'Cijferkenner',  desc: 'Je telt met cijfers',
     voor: p => telModus(p) && countMaxStage(p.settings) >= 6,
-    has: p => telModus(p) && telFase(p) >= 6 },
+    has: p => telModus(p) && telTopFase(p) >= 6 },
   { id: 'leer-telsom', emoji: '➕', name: 'Eerste sommen',  desc: 'Je maakt je eerste sommen',
     voor: p => telModus(p) && countMaxStage(p.settings) >= 9,
-    has: p => telModus(p) && telFase(p) >= 9 },
+    has: p => telModus(p) && telTopFase(p) >= 9 },
 
 
 
@@ -15533,8 +15535,6 @@ function bouwThemaTrofeeen() {
   });
 }
 function telModus(p) { return !!p.settings && p.settings.track === 'count'; }
-
-function telFase(p) { return (p.countTrack && p.countTrack.stage) || 1; }
 
 
 
@@ -29718,12 +29718,19 @@ function renderShop() {
     b.setAttribute('aria-label', c.name);
     b.setAttribute('aria-pressed', aan ? 'true' : 'false');
     b.innerHTML = `<span class="tab-ico" aria-hidden="true">${c.ico}</span>`;
+
+
+
     b.onclick = () => {
+      if (aan || tikWacht) return sndClick();
       sndClick();
-      if (aan) return;
-      shopCat = c.id; shopSelectedId = null; podiumStuk = null;
-      onderVrijOpnieuw(); renderShop();
-      $('screen-dress').scrollTop = 0;
+      tabs.querySelectorAll('.tab-btn').forEach(x => x.classList.toggle('active', x === b));
+      tabs.style.setProperty('--i', i);
+      naTik(() => {
+        shopCat = c.id; shopSelectedId = null; podiumStuk = null;
+        onderVrijOpnieuw(); renderShop();
+        $('screen-dress').scrollTop = 0;
+      });
     };
     tabs.appendChild(b);
     if (aan) tabs.style.setProperty('--i', i);
@@ -29771,38 +29778,13 @@ function renderShop() {
 
 
 
+
+
+
+
     card.onclick = () => {
       if (it.id === 'mic_pintje') bumpPintjeTaps(card);
-      const p2 = P();
-
-
-
-
-
-
-      if (shopSelectedId && (shopSelectedId === it.id || (bezit(p2, it) && p2.equipped[it.cat] === it.id))) {
-        return stopPassen();
-      }
-      if (bezit(p2, it)) {
-        if (p2.equipped[it.cat] === it.id) {
-          if (OPTIONELE_SPULLEN.includes(it.cat) || it.cat === PODIA_CAT) return unequipShopItem(it.cat);
-          sndClick(); tapDance('shop-avatar'); return;
-        }
-        naamBordje(it);
-        return equipShopItem(it.id);
-      }
-      sndClick();
-      speak(it.full || it.name);
-
-
-
-
-      const herbouw = !!shopJustBoughtId;
-      clearTimeout(shopBoughtTimer);
-      shopJustBoughtId = null; shopSelectedId = it.id;
-      podiumStuk = it.cat === PODIA_CAT ? volgendStuk(P(), it) : null;
-      herbouw ? renderShop() : paintShop();
-      if (it.cat === PODIA_CAT) zichtbaarBovenBalk(it.id);
+      naTik(() => rekTik(it));
     };
     kaarten.appendChild(card);
   });
@@ -29822,6 +29804,41 @@ function renderShop() {
   paintShop();
 
   kopKrimpMeten($('screen-dress'), 'kleedkamer');
+}
+
+
+function rekTik(it) {
+  if (!$('screen-dress').classList.contains('active')) return;
+  const p2 = P();
+
+
+
+
+
+
+  if (shopSelectedId && (shopSelectedId === it.id || (bezit(p2, it) && p2.equipped[it.cat] === it.id))) {
+    return stopPassen();
+  }
+  if (bezit(p2, it)) {
+    if (p2.equipped[it.cat] === it.id) {
+      if (OPTIONELE_SPULLEN.includes(it.cat) || it.cat === PODIA_CAT) return unequipShopItem(it.cat);
+      sndClick(); tapDance('shop-avatar'); return;
+    }
+    naamBordje(it);
+    return equipShopItem(it.id);
+  }
+  sndClick();
+  speak(it.full || it.name);
+
+
+
+
+  const herbouw = !!shopJustBoughtId;
+  clearTimeout(shopBoughtTimer);
+  shopJustBoughtId = null; shopSelectedId = it.id;
+  podiumStuk = it.cat === PODIA_CAT ? volgendStuk(P(), it) : null;
+  herbouw ? renderShop() : paintShop();
+  if (it.cat === PODIA_CAT) zichtbaarBovenBalk(it.id);
 }
 
 

@@ -509,13 +509,15 @@ const TROPHIES = [
   { id: 'leer-drie',   emoji: '🧩', name: 'Drie op een rij', desc: '10 sommen met drie getallen goed',
     voor: p => !telModus(p) && p.settings.chain3 !== false && p.settings.ops.includes('+'),
     has: p => leerTel(p, 'drie') >= 10, progress: p => trophyProgress(leerTel(p, 'drie'), 10, 'sommen met drie getallen') },
-  // de telmodus: fase 6 is waar de cijfers komen, fase 9 de eerste sommen (zie countStageInfo)
+  /* de telmodus: fase 6 is waar de cijfers komen, fase 9 de eerste sommen (zie countStageInfo).
+     telTopFase en niet telFase: telFase loot bij Zelf kiezen per vraag een fase,
+     en een trofee mag niet van een loting afhangen. */
   { id: 'leer-cijfers', emoji: '🔢', name: 'Cijferkenner',  desc: 'Je telt met cijfers',
     voor: p => telModus(p) && countMaxStage(p.settings) >= 6,
-    has: p => telModus(p) && telFase(p) >= 6 },
+    has: p => telModus(p) && telTopFase(p) >= 6 },
   { id: 'leer-telsom', emoji: '➕', name: 'Eerste sommen',  desc: 'Je maakt je eerste sommen',
     voor: p => telModus(p) && countMaxStage(p.settings) >= 9,
-    has: p => telModus(p) && telFase(p) >= 9 },
+    has: p => telModus(p) && telTopFase(p) >= 9 },
   /* 👕 Kleedkamer — de trofeeën die je ergens anders in de app verdient; `naar`
      is de lade die de knop in de balk opent (zie kastBalk). De plank heette
      Sterrenleven, en dat zei niet wat erop stond. */
@@ -737,8 +739,6 @@ function bouwThemaTrofeeen() {
   });
 }
 function telModus(p) { return !!p.settings && p.settings.track === 'count'; }
-// De fase waar de telmodus nu staat (zie countTrack; klimt mee met wat ze kan).
-function telFase(p) { return (p.countTrack && p.countTrack.stage) || 1; }
 
 /* ================= Sterrencarrière ================= */
 /* MET PENSIOEN (oktober 2026). Hier stond een ster-status: acht rangen op het
