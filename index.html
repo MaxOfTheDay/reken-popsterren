@@ -11019,12 +11019,13 @@
   }
   .bb-stand.oud { color: var(--practice-text); }
   .bb-stand .gi-dot { margin: 0 6px 0 0; }
-  .bb-kop {
-    margin: 14px 2px 6px; font-size: var(--tx-mini); font-weight: 700; letter-spacing: .04em;
-    text-transform: uppercase; color: var(--paper-ink-muted); text-align: left;
-  }
+
+  .bb-hier { margin: 2px 0 12px; font-size: var(--tx-klein); color: var(--paper-ink-muted); text-align: center; }
   .bb-tegels { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .settings-panel .bb-tegels { margin-bottom: 10px; }
+
+  .gear-item .gi-ico .oz-i { width: 24px; height: 24px; color: var(--purple-light); vertical-align: middle; }
+  .data-btns .oz-i { width: 18px; height: 18px; vertical-align: -3px; }
+  .settings-panel .oz-groot { margin: 2px 0 10px; }
   .bb-tegel {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
     min-height: 84px; padding: 12px 6px; border-radius: var(--r-sm);
@@ -11048,6 +11049,12 @@
   .oz-groot .oz-i { width: 22px; height: 22px; }
   .oz-ok { min-height: 22px; margin: 6px 0 2px; font-size: var(--tx-klein); font-weight: 700; color: var(--green-deep); }
   .oz-ok:empty { min-height: 10px; }
+
+  .oz-andersom {
+    display: block; margin: 12px auto 0; padding: 6px 8px; background: none; border: 0; cursor: pointer;
+    font-family: inherit; font-size: var(--tx-klein); font-weight: 700; color: var(--purple-deep);
+  }
+  .oz-andersom span { font-weight: 400; color: var(--paper-ink-muted); }
   .oz-of { margin: 14px 0 2px; font-size: var(--tx-klein); color: var(--paper-ink-muted); }
   .oz-klein-code { font-size: var(--tx-label); letter-spacing: .06em; color: var(--purple-deep); }
   .oz-blad.met-code .oz-tijd { margin-top: 10px; }
@@ -31714,6 +31721,7 @@ function themaKaartHtml(s, p, show) {
 
 
 
+
 function geluidRijHtml() {
   return `
       <button class="gear-item" id="set-sound" role="switch" aria-checked="${db.sound ? 'true' : 'false'}">
@@ -31736,15 +31744,23 @@ function geluidRijHtml() {
 
 
 
+
+
+
+
 function appWideCardsHtml() {
   const alsApp = (beginschermNetErop || speeltAlsApp()) ? '' : `
       <button class="gear-item" id="set-alsapp" type="button">
         <span class="gi-ico" aria-hidden="true">📲</span><span class="gi-label">Als app</span><span class="gi-pijl" aria-hidden="true">›</span>
       </button>`;
+  const overzet = !overzetMag() ? '' : `
+      <button class="gear-item" id="set-overzet" type="button">
+        <span class="gi-ico" aria-hidden="true">${ozIco('zet')}</span><span class="gi-label">Naar ander toestel<span class="gi-sub">Je sterren meenemen met een link</span></span><span class="gi-pijl" aria-hidden="true">›</span>
+      </button>`;
   return `
-    <div class="set-card geluid-kaart">${geluidRijHtml()}
+    <div class="set-card geluid-kaart">${geluidRijHtml()}${overzet}
       <button class="gear-item" id="set-backup" type="button">
-        <span class="gi-ico" aria-hidden="true">🗄️</span><span class="gi-label">Back-up${backupStandHtml()}</span><span class="gi-pijl" aria-hidden="true">›</span>
+        <span class="gi-ico" aria-hidden="true">${ozIco('hier')}</span><span class="gi-label">Back-up op dit toestel${backupStandHtml()}</span><span class="gi-pijl" aria-hidden="true">›</span>
       </button>${alsApp}
     </div>
     ${importInvoerHtml()}`;
@@ -31854,11 +31870,11 @@ function beheerEmptyHtml() {
 
 
   const terug = overzetMag()
-    ? `<div class="bb-tegels">
-        <button class="bb-tegel" id="oz-code" type="button">${ozIco('code')}Sterren ophalen</button>
-        <button class="bb-tegel" id="set-import" type="button">${ozIco('terug')}Back-up terugzetten</button>
-      </div>
-      <div class="data-btns"><button class="btn small paper" id="set-newstar">➕ Nieuwe ster maken</button></div>`
+    ? `<button class="btn purple oz-groot" id="oz-code" type="button">${ozIco('zet')} Sterren ophalen</button>
+      <div class="data-btns">
+        <button class="btn small paper" id="set-import" type="button">${ozIco('hier')} Uit back-upbestand</button>
+        <button class="btn small paper" id="set-newstar">➕ Nieuwe ster</button>
+      </div>`
     : `<div class="data-btns">
         <button class="btn small purple" id="set-import">📂 Back-up terugzetten…</button>
         <button class="btn small paper" id="set-newstar">➕ Nieuwe ster maken</button>
@@ -32503,6 +32519,7 @@ function bindSettings(p, s) {
   on('set-sound', 'onclick', toggleSound);
   on('set-alsapp', 'onclick', () => openAppBlad(false));
   on('set-backup', 'onclick', openBackupBlad);
+  on('set-overzet', 'onclick', openOverzetBlad);
   on('oz-code', 'onclick', () => openCodeBlad(false));
 
   document.querySelectorAll('#set-sterren .ster-rij[data-key]').forEach(b => {
@@ -32621,32 +32638,27 @@ function importData(file) {
 
 
 
+
 function backupBladStandHtml() {
-  const oud = backupOud();
   const w = backupWanneer();
-  const tekst = (backupDagen() === null ? 'Nog nooit een back-up gemaakt' : 'Laatste back-up: ' + w.toLowerCase())
-    + ' · alles staat alleen op dit toestel';
+  const oud = backupOud();
+  const tekst = backupDagen() === null ? w : 'Laatste: ' + w.toLowerCase();
   return `<div class="bb-stand${oud ? ' oud' : ''}" id="bb-stand">${oud ? '<span class="gi-dot" aria-hidden="true"></span>' : ''}${tekst}</div>`;
 }
 function openBackupBlad() {
   sndClick();
   const tegel = (id, ico, t) => `<button class="bb-tegel" id="${id}" type="button">${ico}${t}</button>`;
-  $('confirm-title').innerHTML = '🗄️ Back-up';
+  $('confirm-title').innerHTML = ozIco('hier') + ' Back-up op dit toestel';
   $('confirm-body').innerHTML = `<div class="bb-blad">${backupBladStandHtml()}
-      <div class="bb-kop">Bestand</div>
-      <div class="bb-tegels">${tegel('bb-maak', ozIco('maak'), 'Maken')}${tegel('bb-terug', ozIco('terug'), 'Terugzetten')}</div>`
-    + (overzetMag() ? `<div class="bb-kop">Ander toestel</div>
-      <div class="bb-tegels">${tegel('bb-zet', ozIco('zet'), 'Overzetten')}${tegel('bb-code', ozIco('code'), 'Ophalen')}</div>` : '')
-    + '</div>';
+      <div class="bb-hier">Een bestand dat op dit toestel blijft</div>
+      <div class="bb-tegels">${tegel('bb-maak', ozIco('maak'), 'Bewaren')}${tegel('bb-terug', ozIco('terug'), 'Terugzetten')}</div>
+    </div>`;
   $('confirm-actions').innerHTML = '<button class="btn small paper" id="bb-dicht">Sluiten</button>';
   $('bb-dicht').onclick = closeConfirmModal;
   $('bb-maak').onclick = exportData;
 
 
   $('bb-terug').onclick = () => { closeConfirmModal(); const f = $('set-import-file'); if (f) f.click(); };
-  const z = $('bb-zet'), c = $('bb-code');
-  if (z) z.onclick = openOverzetBlad;
-  if (c) c.onclick = () => openCodeBlad(false);
   $('confirm-modal').classList.add('open');
   syncBackGuard();
 }
@@ -32692,6 +32704,8 @@ function ozIco(naam) {
     code: '<rect x="3" y="6" width="18" height="12" rx="3"/><path d="M7 12h.01M10.5 12h.01M14 12h.01M17.5 12h.01"/>',
     maak: '<path d="M12 3v11M7.5 9.5 12 14l4.5-4.5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
     terug: '<path d="M12 14V3M7.5 7.5 12 3l4.5 4.5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
+
+    hier: '<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M12 6v7M9 10.5l3 3 3-3M10 18h4"/>',
     plak: '<rect x="7" y="4" width="10" height="4" rx="1.5"/><path d="M7 6H5.5A1.5 1.5 0 0 0 4 7.5v12A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5v-12A1.5 1.5 0 0 0 18.5 6H17"/>',
   }[naam]);
 }
@@ -32781,6 +32795,15 @@ function kopieerBelofte(belofte) {
   }
   return belofte.then(kopieer);
 }
+
+
+
+
+function ozAndersom() {
+  $('oz-blad').insertAdjacentHTML('beforeend',
+    '<button class="oz-andersom" id="oz-andersom" type="button"><span>Andersom?</span> Sterren hierheen halen ›</button>');
+  $('oz-andersom').onclick = () => openCodeBlad(false);
+}
 function openOverzetBlad() {
   sndClick();
   const nr = ++ozNr;
@@ -32789,6 +32812,7 @@ function openOverzetBlad() {
     `<div class="oz-mee">${gezichten}</div>${ozCodeHtml('', 'laden')}<div class="oz-onder" id="oz-onder"></div>`,
     '<button class="btn small paper" id="oz-dicht">Sluiten</button>');
   $('oz-blad').dataset.nr = nr;
+  ozAndersom();
   $('oz-dicht').onclick = closeConfirmModal;
   const link = ozMaakLink();
   const gekopieerd = kopieerBelofte(link.then(d => ozLinkVan(d.code))).catch(() => false);
@@ -32816,6 +32840,7 @@ function ozToonCode(nr, { code, tot, sleutel }, gekopieerd) {
 
 
     + `<div class="oz-tijd"><i style="animation-duration:${duur}ms;animation-delay:-${duur - rest}ms"></i></div>`;
+  ozAndersom();
   $('oz-blad').classList.add('met-code');
   const meld = ok => { const o = $('oz-ok'); if (o && ok) o.textContent = '✓ Gekopieerd'; };
   if (gekopieerd) gekopieerd.then(meld);
@@ -32873,7 +32898,7 @@ function openCodeBlad(vanStart, code) {
     (plak ? `<button class="btn purple oz-groot" id="oz-plak" type="button">${ozIco('plak')} Plakken</button><div class="oz-of">of typ de code</div>` : '')
     + `<div class="oz-invoer">${ozCodeHtml('', '', 0)}
        <input id="oz-veld" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" aria-label="Code van zes cijfers"></div>
-     <div class="oz-onder" id="oz-onder"><div class="oz-waar">Andere toestel: <span class="ab-kbd">⚙️ Ouders › Back-up › Overzetten</span></div></div>`,
+     <div class="oz-onder" id="oz-onder"><div class="oz-waar">Andere toestel: <span class="ab-kbd">⚙️ Ouders › Naar ander toestel</span></div></div>`,
     '<button class="btn small paper" id="oz-dicht">Annuleer</button>');
   $('oz-blad').dataset.nr = nr;
   $('oz-dicht').onclick = closeConfirmModal;
@@ -33195,7 +33220,7 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
         .concat(zet, [`Open de app › ${kbd('Al gespeeld?')} › ${kbd('Plakken')}`]));
     } else {
       html += stappen(zet);
-      if (hasStars) html += '<div class="ab-noot">⭐ De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › Back-up, en zet hem in de app terug.</div>';
+      if (hasStars) html += '<div class="ab-noot">⭐ De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › Back-up op dit toestel, en zet hem in de app terug.</div>';
     }
     return { html, installeer: false, meenemen, kopieer: false };
   }

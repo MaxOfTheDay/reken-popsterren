@@ -1083,12 +1083,13 @@
   }
   .bb-stand.oud { color: var(--practice-text); }
   .bb-stand .gi-dot { margin: 0 6px 0 0; }
-  .bb-kop {
-    margin: 14px 2px 6px; font-size: var(--tx-mini); font-weight: 700; letter-spacing: .04em;
-    text-transform: uppercase; color: var(--paper-ink-muted); text-align: left;
-  }
+  /* de regel die zegt dat het bestand op dit toestel blijft */
+  .bb-hier { margin: 2px 0 12px; font-size: var(--tx-klein); color: var(--paper-ink-muted); text-align: center; }
   .bb-tegels { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .settings-panel .bb-tegels { margin-bottom: 10px; }
+  /* de getekende iconen in een rij van Voor ouders, op de plek van een emoji */
+  .gear-item .gi-ico .oz-i { width: 24px; height: 24px; color: var(--purple-light); vertical-align: middle; }
+  .data-btns .oz-i { width: 18px; height: 18px; vertical-align: -3px; }
+  .settings-panel .oz-groot { margin: 2px 0 10px; }
   .bb-tegel {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
     min-height: 84px; padding: 12px 6px; border-radius: var(--r-sm);
@@ -1112,6 +1113,12 @@
   .oz-groot .oz-i { width: 22px; height: 22px; }
   .oz-ok { min-height: 22px; margin: 6px 0 2px; font-size: var(--tx-klein); font-weight: 700; color: var(--green-deep); }
   .oz-ok:empty { min-height: 10px; }
+  /* "Andersom? Sterren hierheen halen ›": stil, onderaan het overzetblad */
+  .oz-andersom {
+    display: block; margin: 12px auto 0; padding: 6px 8px; background: none; border: 0; cursor: pointer;
+    font-family: inherit; font-size: var(--tx-klein); font-weight: 700; color: var(--purple-deep);
+  }
+  .oz-andersom span { font-weight: 400; color: var(--paper-ink-muted); }
   .oz-of { margin: 14px 0 2px; font-size: var(--tx-klein); color: var(--paper-ink-muted); }
   .oz-klein-code { font-size: var(--tx-label); letter-spacing: .06em; color: var(--purple-deep); }
   .oz-blad.met-code .oz-tijd { margin-top: 10px; }
