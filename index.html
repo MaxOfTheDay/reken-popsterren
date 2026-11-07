@@ -33806,6 +33806,57 @@ if (location.search.indexOf('debug') !== -1) {
   }
   if (dbg.get('fit')) fitVenster(dbg.get('fit'));
   if (dbg.has('mapedit') && cur) laadStudio();
+  if (dbg.has('fps')) beeldMeter();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function beeldMeter() {
+  const vak = document.createElement('div');
+  vak.id = 'beeldmeter';
+  vak.style.cssText = 'position:fixed;left:6px;top:calc(6px + env(safe-area-inset-top,0px));z-index:99999;'
+    + 'pointer-events:none;background:rgba(0,0,0,.72);color:#fff;font:600 13px/1.35 ui-monospace,monospace;'
+    + 'padding:4px 7px;border-radius:6px;white-space:pre';
+  document.body.appendChild(vak);
+  let vorig = 0, scherm = '', traag = 0, ergst = 0, geschreven = 0;
+  const tijden = [];
+  const lus = nu => {
+    if (vorig) {
+      const d = nu - vorig;
+      const a = document.querySelector('.screen.active');
+      const id = a ? a.id.replace('screen-', '') : '?';
+      if (id !== scherm) { scherm = id; traag = 0; ergst = 0; }
+      if (d > 50) traag++;
+      if (d > ergst) ergst = d;
+      tijden.push(nu);
+      while (tijden.length && tijden[0] < nu - 1000) tijden.shift();
+      if (nu - geschreven > 500) {
+        geschreven = nu;
+        vak.textContent = tijden.length + ' fps  ' + scherm + '\ntraag ' + traag + '  ergst ' + Math.round(ergst) + ' ms';
+      }
+    }
+    vorig = nu;
+    requestAnimationFrame(lus);
+  };
+
+
+  document.addEventListener('visibilitychange', () => { vorig = 0; });
+  requestAnimationFrame(lus);
 }
 
 

@@ -356,6 +356,57 @@ if (location.search.indexOf('debug') !== -1) {
   }
   if (dbg.get('fit')) fitVenster(dbg.get('fit'));
   if (dbg.has('mapedit') && cur) laadStudio();
+  if (dbg.has('fps')) beeldMeter();
+}
+/* ---- De beeldmeter (?debug&fps) ---------------------------------------------
+   Hoe vloeiend draait het op déze tablet? De tests draaien in een browser zonder
+   grafische chip, met een geremde processor als stand-in voor een trage tablet --
+   maar hoe een echte oude tablet tekent, zie je daar niet. Dit hokje zegt het op
+   het toestel zelf: speel een ronde en maak een schermafdruk.
+
+     fps     beeldjes in de laatste seconde (60 is vloeiend)
+     traag   beeldjes van meer dan 50 ms (een zichtbare hapering) op dit scherm
+     ergst   het langste beeldje op dit scherm, in ms
+
+   Per scherm, omdat een hapering bij een overgang iets anders is dan een kaart
+   die stilstaat: "traag" en "ergst" beginnen opnieuw zodra er een ander scherm
+   aan gaat. De overgang zelf telt bij het scherm waar je naartoe ging.
+
+   Het hokje schrijft twee keer per seconde, niet elk beeldje: anders meet hij
+   vooral zichzelf. Het is pointer-events: none, dus elke tik gaat erdoorheen.
+   Zonder ?debug bestaat het niet. Hij leest .screen.active per beeldje, en dat is
+   een gewone zoekopdracht: die laat de browser niets opnieuw opmaken. */
+function beeldMeter() {
+  const vak = document.createElement('div');
+  vak.id = 'beeldmeter';
+  vak.style.cssText = 'position:fixed;left:6px;top:calc(6px + env(safe-area-inset-top,0px));z-index:99999;'
+    + 'pointer-events:none;background:rgba(0,0,0,.72);color:#fff;font:600 13px/1.35 ui-monospace,monospace;'
+    + 'padding:4px 7px;border-radius:6px;white-space:pre';
+  document.body.appendChild(vak);
+  let vorig = 0, scherm = '', traag = 0, ergst = 0, geschreven = 0;
+  const tijden = [];
+  const lus = nu => {
+    if (vorig) {
+      const d = nu - vorig;
+      const a = document.querySelector('.screen.active');
+      const id = a ? a.id.replace('screen-', '') : '?';
+      if (id !== scherm) { scherm = id; traag = 0; ergst = 0; }
+      if (d > 50) traag++;
+      if (d > ergst) ergst = d;
+      tijden.push(nu);
+      while (tijden.length && tijden[0] < nu - 1000) tijden.shift();
+      if (nu - geschreven > 500) {
+        geschreven = nu;
+        vak.textContent = tijden.length + ' fps  ' + scherm + '\ntraag ' + traag + '  ergst ' + Math.round(ergst) + ' ms';
+      }
+    }
+    vorig = nu;
+    requestAnimationFrame(lus);
+  };
+  /* Na verbergen en terugkomen is het eerste beeldje seconden "lang": dat is de
+     tablet die sliep, geen hapering. */
+  document.addEventListener('visibilitychange', () => { vorig = 0; });
+  requestAnimationFrame(lus);
 }
 /* De wereldstudio staat niet in dit bestand maar ernaast, in studio.js (zie
    test/bouw.js, LOS): geen kind draait hem, dus hoeft geen tablet hem bij het
