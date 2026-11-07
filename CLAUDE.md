@@ -234,6 +234,11 @@ verjaart niet.
   beeldje na de tik -- nooit binnen de tik zelf, anders tekent een trage tablet
   de tik pas als het nieuwe scherm al gebouwd is. `npm run test:robuust` tikt
   elke knop aan en valt om op een `show()` binnen de tik.
+  En een vierde: **meet in een tik niet wat die tik net veranderde.** Een
+  `getBoundingClientRect` of `offsetHeight` na een schrijfactie dwingt het hele
+  scherm midden in de tik op te maken. Meet eerst en schrijf daarna, meet na de
+  verf (`naOpbouw`), of laat een ResizeObserver het zeggen. Dezelfde ronde van
+  `test:robuust` vangt het (met `MEET_MAG` voor wie het met reden doet).
 * **Duren staan in JavaScript, niet twee keer.** `--t-tik` en `--t-snel` in
   `:root` zijn de twee korte; de twee lange worden uitgerekend in
   `MOTION.totaal` en `VLUCHT.totaal`. Schrijf een duur nooit in een commentaar
