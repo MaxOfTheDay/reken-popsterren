@@ -11,16 +11,41 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 
      Achter in de rij, en pas als er een service worker aan het roer staat: dit is
      opruimwerk, en opruimwerk komt ná het scherm. Zie het bericht-blok in sw.js. */
+  /* En wat er al getoond is (bewaar). Bij het allereerste bezoek draait de
+     service worker nog niet als het spel zijn tekeningen ophaalt: de kaart van
+     haar wereld, het decor van de zaal, de tegeltjes van Werelden gingen
+     buiten hem om en kwamen in geen voorraad. Zonder net daarna -- de app thuis
+     op het beginscherm gezet, in de auto gespeeld -- stond de kaart er zonder
+     tekening. Een iPhone-app is bij elke eerste start zo'n eerste bezoek. Dus
+     zegt het spel welke tekeningen het al heeft opgehaald; die staan nog in de
+     gewone browsercache, dus dit kost geen tweede download. Wat er ná dit
+     bericht komt, loopt vanzelf via de service worker.
+
+     Naar de actieve worker (ready) en niet naar de controller: die is er bij een
+     eerste bezoek pas als clients.claim() klaar is, en dan kwam dit nooit aan. */
   naDeRust(() => {
-    const sw = navigator.serviceWorker.controller;
-    if (!sw) return;
-    const art = [];
-    WORLDS.forEach(w => {
-      [w.art, wereldKleinPad(w.art), w.venue && w.venue.art].forEach(a => {
-        if (a && a.indexOf('blob:') !== 0 && !art.includes(a)) art.push(a);
+    navigator.serviceWorker.ready.then(reg => {
+      const sw = reg.active;
+      if (!sw) return;
+      const art = [];
+      WORLDS.forEach(w => {
+        [w.art, wereldKleinPad(w.art), w.venue && w.venue.art].forEach(a => {
+          if (a && a.indexOf('blob:') !== 0 && !art.includes(a)) art.push(a);
+        });
       });
-    });
-    if (art.length) sw.postMessage({ art: art });
+      /* Wat al binnen is (de resource-lijst), plus de wereld waar elke ster nu
+         staat: haar kaart kan op een trage verbinding nog onderweg zijn als dit
+         bericht vertrekt, en staat dan nog niet in die lijst. */
+      const bewaar = (performance.getEntriesByType ? performance.getEntriesByType('resource') : [])
+        .map(e => e.name).filter(u => u.indexOf(location.origin + '/') === 0 && u.indexOf('/assets/') > 0);
+      Object.values(db.profiles).forEach(p => {
+        const w = worldFor(hereLevel(p)).world;
+        [w.art, wereldKleinPad(w.art), w.venue && w.venue.art].forEach(a => {
+          if (a && a.indexOf('blob:') !== 0) bewaar.push(a);
+        });
+      });
+      sw.postMessage({ art: art, bewaar: bewaar });
+    }).catch(() => {});
   });
 }
 

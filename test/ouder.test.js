@@ -1362,18 +1362,22 @@ function check(ok, label, detail) {
     /* Élke themakaart heeft een ✏️ die hem open zet en een ✓ die hem dicht doet:
        met alle thema's aan, één voor één. De lijst wordt uit de pagina gelezen,
        dus een nieuw thema telt vanzelf mee. Er staat er nooit meer dan één open. */
-    const dood = await page.evaluate(() => {
+    /* De pen hertekent een beeldje na de tik (naTik, zie robuust zaak A), dus
+       hier na elke tik dat beeldje afwachten. */
+    const dood = await page.evaluate(async () => {
+      const beeldje = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
       const s = db.profiles[setKey].settings; s.ops = ['+', '-', 'x', ':']; s.themas = THEMAS.filter(t => !t.ops).map(t => t.id); s.modus = 'pad';
       setOpen = null; renderSettings();
       const kaarten = [...document.querySelectorAll('#settings-body .thema-kaart')].map(k => k.dataset.kaart);
       const pen = k => document.querySelector(`#settings-body .thema-kaart[data-kaart="${k}"] .kaart-pen`);
-      const dood = kaarten.filter(k => {
-        pen(k).click();
+      const dood = [];
+      for (const k of kaarten) {
+        pen(k).click(); await beeldje();
         const open = [...document.querySelectorAll('#settings-body .thema-kaart.open')].map(e => e.dataset.kaart);
         const bediening = !!document.querySelector(`#settings-body .thema-kaart.open [data-instelling]`);
-        pen(k).click();
-        return open.join() !== k || !bediening || document.querySelector('#settings-body .thema-kaart.open');
-      });
+        pen(k).click(); await beeldje();
+        if (open.join() !== k || !bediening || document.querySelector('#settings-body .thema-kaart.open')) dood.push(k);
+      }
       return { kaarten, verwacht: THEMAS.length, dood };
     });
     check(dood.kaarten.length === dood.verwacht && !dood.dood.length, 'S · elke themakaart gaat open met ✏️ en dicht met ✓', JSON.stringify(dood));

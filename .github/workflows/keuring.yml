@@ -13,7 +13,9 @@
 #             lopen: sterren (de kortste die het beginscherm echt opbouwt; die
 #             ziet een const die te vroeg gelezen wordt en een lege pagina geeft,
 #             CLAUDE.md regel 0) en schuiven (geen scherm schuift verder dan er
-#             iets te zien valt, en wat geen lijst is past op elke maat).
+#             iets te zien valt, en wat geen lijst is past op elke maat), en
+#             robuust (de tik komt eerst, tikstormen, offline na het eerste
+#             bezoek -- test/robuust.test.js).
 #             Ze draaien via test/alles.js, dus met dezelfde tweede kans als
 #             npm test en Publiceren: wat omvalt draait nog één keer, en slaagt
 #             het dan wel, dan blijft de PR groen met een gele waarschuwing die
@@ -71,6 +73,7 @@ jobs:
         include:
           - { suite: sterren, bestand: profiles }
           - { suite: schuiven, bestand: schuiven }
+          - { suite: robuust, bestand: robuust }
     name: browser (${{ matrix.suite }})
     runs-on: ubuntu-latest
     steps:

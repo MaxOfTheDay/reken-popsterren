@@ -31,7 +31,7 @@ Eén suite draaien gaat met `npm run test:<naam>`, bijvoorbeeld
 `npm run test:reis`; de hele lijst staat in `docs/TESTEN.md`.
 
 Op GitHub draait bij elke PR en elke push naar main dezelfde keuring, plus `hub`,
-`test:sterren` en `test:schuiven` naast elkaar (`.github/workflows/keuring.yml`; bij het
+`test:sterren`, `test:schuiven` en `test:robuust` naast elkaar (`.github/workflows/keuring.yml`; bij het
 binnenhalen van een PR op main alleen de snelle helft, want de browser zag die
 samenvoeging al in de PR). Dat is het vangnet voor
 wat níét via de studio gaat; het vervangt `npm test` op je eigen machine niet.
@@ -230,6 +230,10 @@ verjaart niet.
   En **haal nooit een deklaag weg voordat wat eronder ligt geverfd is** — een
   grote tekening die nog niet gedecodeerd is, tekent op Android één beeldje leeg.
   `npm run test:flits` bewaakt de vorm hiervan.
+  En een derde: **een knop die van scherm wisselt, doet dat via `naTik`**, een
+  beeldje na de tik -- nooit binnen de tik zelf, anders tekent een trage tablet
+  de tik pas als het nieuwe scherm al gebouwd is. `npm run test:robuust` tikt
+  elke knop aan en valt om op een `show()` binnen de tik.
 * **Duren staan in JavaScript, niet twee keer.** `--t-tik` en `--t-snel` in
   `:root` zijn de twee korte; de twee lange worden uitgerekend in
   `MOTION.totaal` en `VLUCHT.totaal`. Schrijf een duur nooit in een commentaar

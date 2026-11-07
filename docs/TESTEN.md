@@ -59,6 +59,7 @@ npm run test:voortgang
 npm run test:reis
 npm run test:vlucht     # de zoom tussen de wereldkaart en Werelden
 npm run test:flits      # niets half zien: beginscherm, somkaart, eerst bouwen dan bewegen
+npm run test:robuust    # de tik komt eerst, tikstormen, wie vertrekt is inert, offline na het eerste bezoek
 npm run test:beloning
 npm run test:studio      # de wereldstudio (?debug&mapedit)
 npm run test:onderrand   # de zwevende bediening onderaan blijft staan
@@ -602,6 +603,25 @@ lang iets laten zien wat er niet hoort:
   staat de som er al en beweegt er nog niets (`naOpbouw`). Headless bouwt te snel
   om het halve-overgang-beeldje van een tablet zelf te zien, dus dit meet de vorm:
   wie weer in dezelfde taak bouwt als hij beweegt, valt hier om.
+
+### `test/robuust.test.js` — wat een kind van zes met de app doet
+
+Kinderen tikken snel, dubbel en midden in een overgang. Vier zaken:
+
+- **de tik komt eerst**: elke zichtbare knop op elk scherm (en op het
+  Stoppen?-venster) wordt aangetikt, en `show()` mag nooit lopen terwijl die tik
+  nog wordt afgehandeld (`window.event`). Een schermwissel gaat via `naTik`, een
+  beeldje later, zodat een trage tablet de tik eerst tekent. Geen klok, dus geen
+  wiebel: het is een ja of nee;
+- **wie vertrekt, neemt geen tikken meer aan**: een `.wegvallend` scherm is inert
+  (`schermInert`). Haar portret op de kaart en meteen een halte gaf eerst een
+  show zonder ster;
+- **tikstormen**: zes rondes van vijftig willekeurige tikken met af en toe terug,
+  met een vast zaadje. Geen fout, en daarna precies één scherm, geen sluier
+  zonder melding en geen overgang die blijft hangen;
+- **offline na het eerste bezoek**: over een echte lokale server met de service
+  worker. Wat het eerste bezoek al aan tekeningen ophaalde staat in de voorraad
+  (`bewaar` in het bericht aan `sw.js`), dus zonder net staat haar kaart er.
 
 ### `test/beeldverschil.js` — welke schermen zien er anders uit
 
