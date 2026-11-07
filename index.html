@@ -11345,7 +11345,7 @@
          = Overzetten). Die alleen als dat kan (overzetMag); het puntje ertussen is
          van hem (.code-hint::before), dus valt hij weg, dan staat er ook geen punt. -->
     <div class="leeg-regel">
-      <a class="over-hint" id="over-hint" href="over/index.html" onclick="naarOver(event)">Wat is Rekensterren?</a>
+      <a class="over-hint" id="over-hint" href="over/index.html?van=start" onclick="naarOver(event)">Wat is Rekensterren?</a>
       <button class="over-hint code-hint" id="code-hint" type="button" style="display:none" onclick="openCodeBlad(true)">Al gespeeld?</button>
     </div>
     <div class="profile-spacer" aria-hidden="true"></div>
@@ -31957,11 +31957,18 @@ function importInvoerHtml() {
 
 
 
+
+
+
+
+
+
+
 const OVER_URL = 'https://www.rekensterren.be/over/';
 function overKaartHtml() {
   return `
     <div class="set-card geluid-kaart over-kaart">
-      <a class="gear-item" id="set-over" href="over/index.html">
+      <a class="gear-item" id="set-over" href="over/index.html?van=ouders">
         <span class="gi-ico" aria-hidden="true">🎬</span><span class="gi-label">Wat is Rekensterren?</span><span class="gi-pijl" aria-hidden="true">›</span>
       </a>
       <button class="gear-item" id="set-deel" type="button">
@@ -31979,13 +31986,28 @@ function naarOver(e) {
     return;
   }
   save();
+
+  if (e.currentTarget && e.currentTarget.id === 'set-over') {
+    try { history.replaceState(history.state, '', location.href.split('#')[0] + '#ouders'); } catch (e2) { }
+  }
 }
+
+
+
+
+
+function ouderLinkLees() {
+  if (location.hash !== '#ouders') return false;
+  try { history.replaceState(history.state, '', location.href.split('#')[0]); } catch (e) { }
+  return true;
+}
+addEventListener('pageshow', e => { if (e.persisted) ouderLinkLees(); });
 
 
 function deelOver() {
   const melding = t => showToast(t);
   if (navigator.share) {
-    navigator.share({ title: 'Rekensterren', text: 'Een reken- en telspel voor kinderen van 5 tot 8.', url: OVER_URL })
+    navigator.share({ title: 'Rekensterren', text: 'Rekenen en tellen als een show, voor kinderen van 5 tot 8.', url: OVER_URL })
       .catch(() => {});
     return;
   }
@@ -33668,7 +33690,11 @@ landingLeeft();
 
 
 
-opstartTonen(logoIntro);
+
+
+
+const naarOuders = ouderLinkLees();
+opstartTonen(naarOuders ? () => { logoIntro(); openSettings(); } : logoIntro);
 syncBackGuard();
 
 ophaalLinkLees();

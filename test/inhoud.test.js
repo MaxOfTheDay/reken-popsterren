@@ -1033,14 +1033,14 @@ zaak('M', () => {
   // de kaart in het ouderdeel wijst naar dezelfde pagina
   const bron = process.env.RP_INDEX ? fs.readFileSync(path.resolve(process.env.RP_INDEX), 'utf8')
     : fs.readFileSync(path.join(WORTEL, 'index.html'), 'utf8');
-  check(bron.includes('href="over/index.html"'), 'M · het ouderdeel linkt naar over/', '');
+  check(bron.includes('href="over/index.html?van=ouders"'), 'M · het ouderdeel linkt naar over/ (met ?van=ouders: dan staat daar Terug)', '');
   // In hetzelfde venster: een nieuw venster (target="_blank") gooit je in de
   // geïnstalleerde app uit de app, de browser in.
   const overLink = (bron.match(/<a [^>]*id="set-over"[^>]*>/) || [''])[0];
   check(overLink && !/target=/.test(overLink), 'M · en die link blijft in de app (geen target)', overLink);
   // En de stille regel op het lege beginscherm: dezelfde pagina, ook in hetzelfde venster.
   const hintLink = (bron.match(/<a [^>]*id="over-hint"[^>]*>/) || [''])[0];
-  check(/href="over\/index\.html"/.test(hintLink) && !/target=/.test(hintLink),
+  check(/href="over\/index\.html\?van=start"/.test(hintLink) && !/target=/.test(hintLink),
     'M · het lege beginscherm linkt ook naar over/, zonder target', hintLink);
   check(/onclick="naarOver\(event\)"/.test(hintLink), 'M · en gebruikt dezelfde handler (bewaren, en zonder net een melding)', hintLink);
   const sw = fs.readFileSync(path.join(WORTEL, 'sw.js'), 'utf8');

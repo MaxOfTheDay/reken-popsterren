@@ -26,13 +26,31 @@
   ook werkt als voorbeeld van een tak en vanaf file://.
 
   Wat hier beloofd wordt, moet kloppen met het spel. Verandert er iets aan
-  waar de voortgang staat, aan spelen zonder internet, aan de thema's (THEMAS in
-  src/55-vragen.js) of aan het pad naar Overzetten, pas dan ook deze pagina
-  aan. Er staat met opzet geen aantal werelden in: dat groeit.
+  spelen zonder internet, aan de thema's (THEMAS in src/55-vragen.js) of aan
+  wat een show is, pas dan ook deze pagina aan. Er staat met opzet geen aantal
+  werelden in: dat groeit.
 
-  Het filmpje staat in promo/ en wordt pas opgehaald als iemand op spelen tikt
-  (preload="none"). De servicewerker laat video met rust (zie sw.js).
+  Twee soorten bezoekers, en elk krijgt één knop bovenaan:
+    - uit het spel (de rij "Wat is Rekensterren?" in Voor ouders, of de stille
+      regel op het lege beginscherm): die links dragen ?van=ouders of ?van=start.
+      Dan staat er alleen "← Terug", en die gaat écht terug (zie het scriptje
+      onderaan) -- naar dezelfde plek, zonder het spel opnieuw te laden.
+    - via een gedeelde link: geen ?van. Die is nog nooit in het spel geweest, dus
+      geen "Terug", maar "▶ Speel meteen", bovenaan en onderaan.
+  Welke van de twee, dat zet het scriptje in de kop als klasse op <html>, vóór er
+  iets getekend is: anders flitst de verkeerde knop één beeldje.
+
+  Het filmpje staat in promo/ en wordt pas opgehaald als iemand op de laatste
+  kaart tikt (preload="none"). De servicewerker laat video met rust (zie sw.js).
 -->
+<script>
+  // ?van=ouders of ?van=start: uit het spel. Zie hierboven.
+  (function () {
+    var m = /[?&]van=(ouders|start)\b/.exec(location.search);
+    document.documentElement.className = m ? 'uit-spel' : 'nieuw';
+    if (m) document.documentElement.setAttribute('data-van', m[1]);
+  })();
+</script>
 <style>
   @font-face {
     font-family: 'Fredoka'; font-style: normal; font-weight: 400 700; font-display: swap;
@@ -43,111 +61,148 @@
     --goud-top: #ffc23d; --goud-onder: #ff8f00; --goud-schaduw: #b36200; --goud: #ffd740;
     --inkt: #2a0a55; --tekst: #f6ecff; --zacht: #d9c6f2;
     --vlak: rgba(255,255,255,.075); --vlak-rand: rgba(255,255,255,.14);
+    --toestel: #12031f;
+    /* waar de tekst begint: de rij schermen loopt tot de rand van het venster,
+       maar zijn eerste kaart lijnt uit met deze kolom */
+    --kolom: 720px; --rand: max(16px, calc(50vw - var(--kolom) / 2));
   }
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   body {
     margin: 0; font-family: 'Fredoka', system-ui, sans-serif; color: var(--tekst); line-height: 1.5;
     background: var(--nacht) radial-gradient(120% 80% at 50% 0%, #4b1580 0%, var(--nacht) 55%, var(--vloer) 100%) fixed;
+    overflow-x: hidden;
   }
-  a { color: var(--goud); }
-  main { max-width: 720px; margin: 0 auto; padding: 0 16px 64px; }
-  .terug { display: inline-block; margin: 14px 0 0; padding: 8px 12px; border-radius: 999px;
-    color: var(--tekst); text-decoration: none; background: var(--vlak); border: 1px solid var(--vlak-rand); font-weight: 500; }
+  main { max-width: var(--kolom); margin: 0 auto; padding: 0 16px 40px; }
+  h2 { font-size: clamp(20px, 5vw, 24px); margin: 0 0 14px; color: var(--goud); text-align: center; text-wrap: balance; }
 
-  header { text-align: center; padding: 28px 0 8px; }
+  /* één knop bovenaan, en welke hangt af van waar je vandaan komt (zie de uitleg in de kop) */
+  .uit-spel .alleen-nieuw, .nieuw .alleen-uit-spel { display: none; }
+  /* Terug blijft staan als je scrolt: in de geïnstalleerde app is er geen
+     terugknop van de browser, dus dit is daar de enige weg terug */
+  .terug { position: sticky; top: max(10px, env(safe-area-inset-top)); z-index: 5; display: inline-block; margin: 14px 0 0;
+    padding: 8px 14px; border-radius: 999px; color: var(--tekst); text-decoration: none; font-weight: 500;
+    background: rgba(51,8,76,.88); border: 1px solid var(--vlak-rand); }
+
+  header { text-align: center; padding: 6px 0 0; }
+  .nieuw header { padding-top: 24px; }
   header h1 { margin: 0; }
-  header h1 img { width: min(86%, 440px); height: auto; filter: drop-shadow(0 10px 18px rgba(0,0,0,.35)); }
-  .belofte { font-size: clamp(20px, 5vw, 26px); font-weight: 600; margin: 10px auto 22px; max-width: 30ch; }
+  header h1 img { width: min(72%, 340px); height: auto; filter: drop-shadow(0 10px 18px rgba(0,0,0,.35)); }
+  .belofte { font-size: clamp(18px, 4.6vw, 23px); font-weight: 600; margin: 6px auto 0; max-width: 30ch; text-wrap: balance; }
   .knop { display: inline-flex; align-items: center; gap: 8px; padding: 14px 22px; border-radius: 999px;
     font: inherit; font-weight: 700; font-size: 19px; text-decoration: none; cursor: pointer; border: 0; }
   .knop.goud { color: var(--inkt); background: linear-gradient(var(--goud-top), var(--goud-onder)); box-shadow: 0 5px 0 var(--goud-schaduw); }
   .knop.goud:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--goud-schaduw); }
+  header .knop { margin-top: 18px; }
 
-  .film { margin-top: 30px; border-radius: 18px; overflow: hidden; background: #12031f; box-shadow: 0 16px 40px rgba(0,0,0,.45); }
-  .film video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
-  /* staand: zo hoog als past, met wat lucht erboven en eronder */
-  .film.staand { width: min(100%, calc((100svh - 120px) * 9 / 16)); margin-left: auto; margin-right: auto; }
-  .film.staand video { aspect-ratio: 9 / 16; }
+  /* De rij schermen: wat een kind in één keer spelen ziet, en dan wat jij ziet,
+     met het filmpje als laatste kaart. Vegen op een telefoon; met een muis
+     ‹ en ›. De schermen schrijft promo/opname.js (480 breed, webp), dezelfde
+     opname als het filmpje. */
+  .rij { margin: 26px calc(50% - 50vw) 0; }
+  .strip { list-style: none; margin: 0; padding: 4px var(--rand) 16px; display: flex; gap: 14px;
+    overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--rand);
+    scrollbar-width: none; overscroll-behavior-x: contain; }
+  .strip::-webkit-scrollbar { display: none; }
+  .strip li { flex: 0 0 min(54vw, 220px); scroll-snap-align: start; display: flex; flex-direction: column; gap: 8px; }
+  /* Eén regel per kaart, altijd: een kop van twee regels naast een van één zette
+     de schermen eronder op verschillende hoogtes. Dus korte koppen, en een vaste
+     hoogte die nooit breekt. Eén woord in goud, zoals in het filmpje. */
+  .strip .kop { font-weight: 700; font-size: 17px; line-height: 24px; height: 24px; text-align: center;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .strip .kop b { color: var(--goud); font-weight: 700; }
+  /* een dun toestel om elk scherm, zoals de telefoons in het filmpje: zo lees je
+     het als een app, en niet als een los plaatje */
+  .strip img, .filmkaart { display: block; width: 100%; height: auto; aspect-ratio: 390 / 844; padding: 5px;
+    border-radius: 26px; background: var(--toestel); object-fit: cover;
+    box-shadow: 0 14px 30px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.14); }
+  .strip img { clip-path: inset(0 round 26px); }
+  .filmkaart { position: relative; overflow: hidden; border: 0; cursor: pointer; font: inherit; color: var(--tekst); }
+  .filmkaart img { width: 100%; height: 100%; padding: 0; border-radius: 21px; box-shadow: none; clip-path: none; filter: brightness(.55); }
+  .filmkaart .speel { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; font-weight: 700; }
+  .filmkaart .rond { width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; font-size: 28px; padding-left: 5px;
+    color: var(--inkt); background: linear-gradient(var(--goud-top), var(--goud-onder)); box-shadow: 0 5px 0 var(--goud-schaduw); }
+  .filmkaart:focus-visible { outline: 3px solid var(--goud); outline-offset: 3px; }
+  /* het filmpje zelf: pas zichtbaar als het speelt, en dan schermvullend */
+  #film { display: none; }
+  #film.speelt { display: block; position: fixed; inset: 0; width: 100%; height: 100%; z-index: 20; background: #000; }
 
-  section { margin-top: 48px; }
-  h2 { font-size: clamp(20px, 5vw, 24px); margin: 0 0 14px; color: var(--goud); text-align: center; }
-  p { margin: 0 0 10px; }
-  .klein { color: var(--zacht); font-size: 14px; }
+  /* waar je bent in de rij: stipjes (tik om te springen), met ‹ › als je een muis hebt */
+  .bedien { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 2px; }
+  .stipjes { display: flex; gap: 2px; }
+  .stipjes button { width: 22px; height: 22px; border: 0; padding: 0; background: none; cursor: pointer; display: grid; place-items: center; }
+  .stipjes button::after { content: ''; width: 8px; height: 8px; border-radius: 4px; background: rgba(255,255,255,.3); transition: width .2s, background .2s; }
+  .stipjes button[aria-current="true"]::after { width: 20px; background: var(--goud); }
+  .pijl { display: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--vlak-rand);
+    background: var(--vlak); color: var(--tekst); font: inherit; font-size: 20px; cursor: pointer; }
+  @media (hover: hover) and (pointer: fine) { .pijl { display: inline-block; } }
+  @media (prefers-reduced-motion: reduce) { .stipjes button::after { transition: none; } }
 
-  /* de schermen, zonder kaders: drie naast elkaar */
-  .schermen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 0; padding: 0; list-style: none; text-align: center; }
-  .schermen img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; object-position: top;
-    border-radius: 14px; box-shadow: 0 10px 24px rgba(0,0,0,.35); }
-  .schermen span { display: block; margin-top: 8px; font-size: 15px; font-weight: 600; color: var(--zacht); }
-
-  /* twee schermen uit het ouderdeel, iets groter dan de drie erboven */
-  .schermen.twee { grid-template-columns: repeat(2, 1fr); max-width: 480px; margin: 0 auto; }
+  section { margin-top: 44px; }
   /* korte punten als pilletjes: een icoon en een paar woorden, zonder uitleg */
-  .chips { list-style: none; padding: 0; margin: 18px 0 0; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .chips { list-style: none; padding: 0; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
   .chips li { padding: 8px 14px; border-radius: 999px; background: var(--vlak); border: 1px solid var(--vlak-rand); font-weight: 600; font-size: 15px; }
   .chips li span { margin-right: 6px; }
-  /* de thema's: dezelfde pilletjes, in het goud van de koppen, zodat ze als één rij lezen */
+  /* de thema's in het goud van de koppen, en smal genoeg voor twee regels van drie */
+  .chips.themas { max-width: 400px; }
   .chips.themas li { background: rgba(255,215,64,.10); border-color: rgba(255,215,64,.35); }
-  .kbd { display: inline-block; padding: 1px 10px; border-radius: 8px; background: rgba(255,255,255,.14); color: #fff; white-space: nowrap; }
-  .kort { text-align: center; margin: 18px 0 0; }
 
-  .deel { display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap; text-align: center; }
-  .deel img { width: 112px; height: 112px; border-radius: 10px; display: block; }
+  .eind { text-align: center; }
+  /* delen hoort erbij, maar is niet waarvoor je hier bent: een stille knop onderaan */
+  .voet { margin-top: 44px; display: flex; align-items: center; justify-content: center; gap: 16px; }
+  .stil { font: inherit; font-weight: 600; font-size: 15px; color: var(--zacht); background: none; cursor: pointer;
+    border: 1px solid var(--vlak-rand); border-radius: 999px; padding: 9px 16px; }
+  .voet img { width: 60px; height: 60px; border-radius: 6px; opacity: .85; display: block; }
   /* op een telefoon scan je geen QR-code van je eigen scherm */
-  @media (max-width: 640px) { .deel img { display: none; } }
-  #deel-uit { min-height: 1.5em; margin-top: 8px; }
-
+  @media (max-width: 640px) { .voet img { display: none; } }
+  #deel-uit { text-align: center; color: var(--zacht); font-size: 14px; min-height: 1.5em; margin: 8px 0 0; }
 </style>
 </head>
 <body>
 <main>
-  <!-- Vanuit de geïnstalleerde app is er geen terugknop van de browser: de app
-       draait schermvullend. Deze link is dan de enige weg terug. -->
-  <a class="terug" href="../index.html">← Terug naar het spel</a>
+  <a class="terug alleen-uit-spel" id="terug" href="../index.html">← Terug</a>
 
   <header>
     <h1><img src="../assets/branding/wordmark.webp" alt="Rekensterren" width="1080" height="360"></h1>
     <p class="belofte">Rekenen en tellen als een show, voor kinderen van 5 tot 8.</p>
-    <a class="knop goud" href="../index.html">▶ Speel meteen</a>
+    <a class="knop goud alleen-nieuw" href="../index.html">▶ Speel meteen</a>
   </header>
 
+  <!-- De volgorde is die van één keer spelen (een show kiezen, tellen, rekenen,
+       sterren, aankleden), en dan wat jij ziet. Wat hier staat moet kloppen met
+       het spel: zie "= Vragen maken" in src/55-vragen.js en de telmodus. -->
+  <div class="rij">
+    <ul class="strip" id="strip" aria-label="Zo ziet het eruit">
+      <li><div class="kop">Kies een <b>show</b></div><img src="beelden/02-kaart.webp" alt="De wereldkaart met de shows als haltes en hun sterren" width="480" height="1039" loading="lazy"></li>
+      <li><div class="kop">Eerst <b>tellen</b></div><img src="beelden/03-show-tellen.webp" alt="Een show om te tellen: een cijfer, en vier groepjes om uit te kiezen" width="480" height="1039" loading="lazy"></li>
+      <li><div class="kop">Dan <b>rekenen</b></div><img src="beelden/04-show-rekenen.webp" alt="Een show: de ster op het podium en een som met vier antwoorden" width="480" height="1039" loading="lazy"></li>
+      <li><div class="kop">Verdien <b>sterren</b></div><img src="beelden/05-einde.webp" alt="Het einde van een show: drie sterren" width="480" height="1039" loading="lazy"></li>
+      <li><div class="kop">Kleed je <b>ster</b> aan</div><img src="beelden/06-kleedkamer.webp" alt="De kleedkamer: kleren om te kiezen en te sparen" width="480" height="1039" loading="lazy"></li>
+      <li><div class="kop"><b>Jij</b> kiest wat</div><img src="beelden/07-ouder-oefenen.webp" alt="Voor ouders: wat je kind oefent, met de thema's om aan te zetten" width="480" height="1039" loading="lazy"></li>
+      <li><div class="kop">Het <b>groeit</b> mee</div><img src="beelden/08-ouder-voortgang.webp" alt="Voor ouders: per thema een leerpad, met de sommen die nog lastig zijn" width="480" height="1039" loading="lazy"></li>
+      <li><div class="kop">Het <b>filmpje</b></div>
+        <button class="filmkaart" id="filmkaart" type="button" aria-label="Speel het filmpje: vijfentwintig seconden, zonder geluid">
+          <img src="film-kaart.jpg" alt="" width="540" height="960" loading="lazy">
+          <span class="speel"><span class="rond" aria-hidden="true">▶</span><span>25 seconden</span></span>
+        </button></li>
+    </ul>
+    <div class="bedien">
+      <button class="pijl" id="vorige" type="button" aria-label="Vorige">‹</button>
+      <div class="stipjes" id="stipjes"></div>
+      <button class="pijl" id="volgende" type="button" aria-label="Volgende">›</button>
+    </div>
+  </div>
   <!-- Liggend is de standaard; op een smal scherm zet het scriptje onderaan de
        staande versie erin, vóór er iets geladen is (preload="none"). -->
-  <div class="film" id="film">
-    <video controls playsinline preload="none" width="1920" height="1080"
-           poster="../promo/poster.jpg" src="../promo/rekensterren-promo.mp4"
-           data-staand-poster="../promo/poster-staand.jpg" data-staand-src="../promo/rekensterren-promo-staand.mp4"
-           aria-label="Filmpje van vijfentwintig seconden, zonder geluid: het logo en tien schermen uit het spel en het ouderdeel"></video>
-  </div>
+  <video id="film" controls playsinline preload="none" width="1920" height="1080"
+         poster="../promo/poster.jpg" src="../promo/rekensterren-promo.mp4"
+         data-staand-poster="../promo/poster-staand.jpg" data-staand-src="../promo/rekensterren-promo-staand.mp4"
+         aria-label="Filmpje van vijfentwintig seconden, zonder geluid: het logo en tien schermen uit het spel en het ouderdeel"></video>
 
-  <!-- Twee helften die elkaar spiegelen: wat je kind eraan heeft (het plezier)
-     en wat jij eraan hebt (het rekenen). Allebei in beeld, met weinig woorden.
-     De schermen komen uit promo/beelden (node promo/opname.js), op 360 breed
-     als webp, en worden bovenaan afgesneden (3:4), zodat de rij op een telefoon
-     kort blijft. -->
-  <section aria-labelledby="kop-kind">
-    <h2 id="kop-kind">Voor je kind</h2>
-    <ul class="schermen">
-      <li><img src="beelden/04-show-rekenen.webp" alt="Een show: de ster op het podium en een som met vier antwoorden" loading="lazy" width="360" height="779"><span>Optreden met sommen</span></li>
-      <li><img src="beelden/02-kaart.webp" alt="De wereldkaart met de shows als haltes en hun sterren" loading="lazy" width="360" height="779"><span>Werelden ontdekken</span></li>
-      <li><img src="beelden/06-kleedkamer.webp" alt="De kleedkamer: kleren om te kiezen en te sparen" loading="lazy" width="360" height="779"><span>De ster aankleden</span></li>
-    </ul>
-  </section>
-
-  <!-- Wat hier over het rekenen staat, moet kloppen met het spel: zie "= Vragen
-       maken" en "= Extra uitdagingen" in src/55-vragen.js, de telmodus, de stem die
-       voorleest (stemAan), de thema's (THEMAS) en de lastige sommen per leerpad
-     in Voor ouders. De schermen schrijft promo/opname.js, samen met die van het
-     filmpje. -->
-  <section aria-labelledby="kop-jou">
-    <h2 id="kop-jou">Voor jou</h2>
-    <ul class="schermen twee">
-      <li><img src="beelden/07-ouder-oefenen.webp" alt="Voor ouders: wat je kind oefent, met zes thema's om aan te zetten, en hoe" loading="lazy" width="360" height="779"><span>Jij kiest wat</span></li>
-      <li><img src="beelden/08-ouder-voortgang.webp" alt="Voor ouders: per thema een leerpad, met de sommen die nog lastig zijn" loading="lazy" width="360" height="779"><span>Je ziet hoe het groeit</span></li>
-    </ul>
-    <ul class="chips themas" aria-label="Thema's">
+  <!-- De thema's: THEMAS in src/55-vragen.js. Tellen staat er niet bij, dat zegt
+       de tweede kaart hierboven al. Zes, zodat het twee gelijke regels zijn. -->
+  <section aria-labelledby="kop-oefent">
+    <h2 id="kop-oefent">Wat je kind oefent</h2>
+    <ul class="chips themas">
       <li><span aria-hidden="true">➕</span>Rekenen</li>
       <li><span aria-hidden="true">✖️</span>Tafels</li>
       <li><span aria-hidden="true">📏</span>Getallenlijn</li>
@@ -155,69 +210,102 @@
       <li><span aria-hidden="true">🕐</span>Klok</li>
       <li><span aria-hidden="true">📅</span>Kalender</li>
     </ul>
+  </section>
+
+  <!-- Moet kloppen met het spel: de stem die voorleest (stemAan), spelen zonder
+       internet (sw.js), en het blad "⊞ Als app" (= Speel als app in
+       src/70-ouderdeel.js) -- dat kent de stappen per toestel, dus die staan hier
+       niet. Hoe je sterren naar een ander toestel gaan staat in Voor ouders, waar
+       wie het nodig heeft al is. -->
+  <section aria-labelledby="kop-weten">
+    <h2 id="kop-weten">Goed om te weten</h2>
     <ul class="chips">
-      <li><span aria-hidden="true">🧸</span>Eerst leren tellen</li>
-      <li><span aria-hidden="true">🔁</span>Lastige sommen komen terug</li>
       <li><span aria-hidden="true">🔊</span>Leest voor</li>
-    </ul>
-    <p class="kort">Tik in het spel op <b class="kbd">⚙️ Ouders</b>.</p>
-  </section>
-
-  <!-- Geen stappen per browser meer: die verouderen (Safari 26 verstopte Deel
-       achter ···), en het blad "⊞ Als app" in het spel kent ze per toestel al
-       (zie "= Speel als app" in src/70-ouderdeel.js). Hier staat alleen wat het je
-       oplevert, met dezelfde drie woorden als in dat blad, en waar je tikt. -->
-  <section aria-labelledby="kop-app">
-    <h2 id="kop-app">Als app op je tablet</h2>
-    <ul class="chips">
-      <li><span aria-hidden="true">📱</span>Eigen icoon</li>
-      <li><span aria-hidden="true">⛶</span>Heel scherm</li>
       <li><span aria-hidden="true">📶</span>Zonder internet</li>
-    </ul>
-    <p class="kort">Tik in het spel op <b class="kbd">⊞ Als app</b>.<br><span class="klein">Je krijgt de stappen voor jouw toestel.</span></p>
-  </section>
-
-  <!-- Wat een ouder wil weten vóór ze beginnen. Moet kloppen met het spel: de
-       sterren staan alleen op het toestel (= Opslag in src/25-kern.js), en het
-       pad is letterlijk wat het spel bij Overzetten zelf toont (oz-waar in
-       src/70-ouderdeel.js). Overzetten praat alleen met zijn Worker als een
-       ouder erop tikt; zie docs/OVERZETTEN.md. -->
-  <section aria-labelledby="kop-sterren">
-    <h2 id="kop-sterren">Je sterren</h2>
-    <ul class="chips">
-      <li><span aria-hidden="true">👤</span>Geen account</li>
       <li><span aria-hidden="true">🚫</span>Geen reclame</li>
-      <li><span aria-hidden="true">🔁</span>Mee naar een ander toestel</li>
+      <li><span aria-hidden="true">📱</span>Ook als app</li>
     </ul>
-    <p class="kort">Nieuw toestel? <b class="kbd">⚙️ Ouders › Ander toestel en back-up</b><br><span class="klein">Op het oude toestel krijg je een code, die tik je op het nieuwe in.</span></p>
   </section>
 
-  <section aria-labelledby="kop-deel">
-    <h2 id="kop-deel">Vertel het verder</h2>
-    <div class="deel">
-      <div>
-        <button class="knop goud" type="button" id="deel">📤 Deel deze pagina</button>
-        <p class="klein" id="deel-uit" role="status"></p>
-      </div>
-      <img src="qr.svg" alt="QR-code naar deze pagina" width="112" height="112">
-    </div>
-  </section>
+  <section class="eind alleen-nieuw"><a class="knop goud" href="../index.html">▶ Speel meteen</a></section>
 
+  <footer class="voet">
+    <button class="stil" type="button" id="deel">📤 Deel deze pagina</button>
+    <img src="qr.svg" alt="QR-code naar deze pagina" width="60" height="60">
+  </footer>
+  <p id="deel-uit" role="status"></p>
 </main>
 <script>
-  // Op een telefoon het staande filmpje: dat vult het scherm, het liggende is
-  // daar een strookje van een paar honderd pixels hoog.
+  /* Terug: echt terug. Uit het spel staat de vorige stap in de geschiedenis al
+     klaar, op de plek waar je was (Voor ouders, of het beginscherm) -- dus
+     history.back() en niet de link, want de link laadt het spel opnieuw (met het
+     spelogo) en zet er een stap bij, zodat de terugknop van Android je daarna weer
+     hierheen bracht. Is er niets om naar terug te gaan (de pagina is opnieuw
+     geopend in een nieuw venster), dan de link. Vanuit Voor ouders wijst die
+     naar #ouders: dan opent het spel meteen daar (zie ouderLinkLees). */
   (function () {
-    if (!window.matchMedia || !matchMedia('(max-width: 640px)').matches) return;
-    var v = document.querySelector('#film video');
-    v.poster = v.getAttribute('data-staand-poster');
-    v.src = v.getAttribute('data-staand-src');
-    v.width = 1080; v.height = 1920;
-    document.getElementById('film').classList.add('staand');
+    var van = document.documentElement.getAttribute('data-van');
+    var terug = document.getElementById('terug');
+    if (van === 'ouders') terug.href = '../index.html#ouders';
+    terug.addEventListener('click', function (e) {
+      if (!van || history.length < 2) return;
+      e.preventDefault();
+      history.back();
+    });
   })();
+
+  // De rij: stipjes die zeggen waar je bent, en ‹ › voor een muis.
+  (function () {
+    var s = document.getElementById('strip'), kaarten = s.children, bak = document.getElementById('stipjes');
+    for (var i = 0; i < kaarten.length; i++) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.setAttribute('aria-label', 'Kaart ' + (i + 1));
+      b.setAttribute('aria-current', i ? 'false' : 'true');
+      b.onclick = (function (j) { return function () { naar(j); }; })(i);
+      bak.appendChild(b);
+    }
+    var stip = bak.children, nu = 0;
+    function stap() { return kaarten[1].offsetLeft - kaarten[0].offsetLeft; }
+    function naar(i) { s.scrollTo({ left: i * stap(), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }
+    s.addEventListener('scroll', function () {
+      var i = Math.round(s.scrollLeft / stap());
+      // aan het eind past de laatste kaart niet meer helemaal links: dan is hij het
+      if (s.scrollLeft + s.clientWidth >= s.scrollWidth - 4) i = kaarten.length - 1;
+      if (i === nu) return;
+      nu = i;
+      for (var k = 0; k < stip.length; k++) stip[k].setAttribute('aria-current', k === i ? 'true' : 'false');
+    }, { passive: true });
+    document.getElementById('vorige').onclick = function () { naar(Math.max(0, nu - 1)); };
+    document.getElementById('volgende').onclick = function () { naar(Math.min(kaarten.length - 1, nu + 1)); };
+  })();
+
+  /* Het filmpje: de laatste kaart speelt het schermvullend af. Op een telefoon de
+     staande versie (die vult het scherm), anders de liggende. Uit schermvullend
+     = weer weg. Een iPhone kent requestFullscreen niet op een video, wel zijn
+     eigen webkitEnterFullscreen. */
+  (function () {
+    var v = document.getElementById('film');
+    if (window.matchMedia && matchMedia('(max-width: 640px)').matches) {
+      v.poster = v.getAttribute('data-staand-poster');
+      v.src = v.getAttribute('data-staand-src');
+      v.width = 1080; v.height = 1920;
+    }
+    function weg() { v.pause(); v.classList.remove('speelt'); }
+    document.getElementById('filmkaart').addEventListener('click', function () {
+      v.classList.add('speelt');
+      var p = v.play(); if (p && p.catch) p.catch(function () {});
+      if (v.requestFullscreen) v.requestFullscreen().catch(function () {});
+      else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+    });
+    document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement) weg(); });
+    v.addEventListener('webkitendfullscreen', weg);
+    v.addEventListener('ended', function () { if (document.fullscreenElement) document.exitFullscreen(); else weg(); });
+  })();
+
   // Delen: het deelmenu van het toestel als dat er is, anders de link kopiëren,
   // en anders de link gewoon laten zien. Altijd het echte adres, ook vanaf een
-  // voorbeeld of file://: dat is wat een andere ouder moet krijgen.
+  // voorbeeld of file://: dat is wat een andere ouder moet krijgen. Dezelfde zin
+  // als "Rekensterren delen" in het spel (deelOver).
   (function () {
     var URL_ECHT = 'https://www.rekensterren.be/over/';
     var knop = document.getElementById('deel'), uit = document.getElementById('deel-uit');

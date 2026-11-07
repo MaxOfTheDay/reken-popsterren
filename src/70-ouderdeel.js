@@ -1431,12 +1431,19 @@ function importInvoerHtml() {
    "Terug naar het spel" bovenaan de pagina (of de terugknop van Android).
    Zonder net blijft hij hier: over/ staat met opzet niet in de voorraad, en in
    een schermvullende app op een iPhone is er geen terugknop -- je zou vastzitten
-   op een foutpagina van de browser. */
+   op een foutpagina van de browser.
+
+   Terug van over/ is history.back() (zie het scriptje daar): de browser zet je
+   dan terug waar je was, zonder het spel opnieuw te laden. Gooit hij de pagina
+   intussen toch weg, dan laadt hij hem opnieuw op hetzelfde adres -- en daarom
+   zet naarOver vanuit Voor ouders #ouders op dat adres, zodat ook die weg in
+   Voor ouders uitkomt (ouderLinkLees). De ?van= op de link zegt over/ dat je
+   uit het spel komt: dan staat daar "← Terug" en niet "Speel meteen". */
 const OVER_URL = 'https://www.rekensterren.be/over/';
 function overKaartHtml() {
   return `
     <div class="set-card geluid-kaart over-kaart">
-      <a class="gear-item" id="set-over" href="over/index.html">
+      <a class="gear-item" id="set-over" href="over/index.html?van=ouders">
         <span class="gi-ico" aria-hidden="true">🎬</span><span class="gi-label">Wat is Rekensterren?</span><span class="gi-pijl" aria-hidden="true">›</span>
       </a>
       <button class="gear-item" id="set-deel" type="button">
@@ -1454,13 +1461,28 @@ function naarOver(e) {
     return;
   }
   save();
+  // history.state blijft staan: dat is de wacht van de terugknop (= Terug)
+  if (e.currentTarget && e.currentTarget.id === 'set-over') {
+    try { history.replaceState(history.state, '', location.href.split('#')[0] + '#ouders'); } catch (e2) { /* dan het beginscherm */ }
+  }
 }
+/* #ouders: het spel opent meteen in Voor ouders. Zo komt Terug van over/ daar
+   uit, ook als de browser het spel intussen weggooide (zie hierboven). Het hekje
+   gaat er meteen weer af, net als bij een ophaallink: een herlaad later hoort op
+   het beginscherm te beginnen. Kwam de pagina gewoon uit de voorraad terug
+   (pageshow met persisted), dan staat Voor ouders er al -- alleen het hekje weg. */
+function ouderLinkLees() {
+  if (location.hash !== '#ouders') return false;
+  try { history.replaceState(history.state, '', location.href.split('#')[0]); } catch (e) { /* laat staan */ }
+  return true;
+}
+addEventListener('pageshow', e => { if (e.persisted) ouderLinkLees(); });
 // Delen: eerst het deelmenu van het toestel, anders de link naar het klembord,
 // en lukt ook dat niet, dan staat hij in de melding zodat je hem kunt overtikken.
 function deelOver() {
   const melding = t => showToast(t);
   if (navigator.share) {
-    navigator.share({ title: 'Rekensterren', text: 'Een reken- en telspel voor kinderen van 5 tot 8.', url: OVER_URL })
+    navigator.share({ title: 'Rekensterren', text: 'Rekenen en tellen als een show, voor kinderen van 5 tot 8.', url: OVER_URL })
       .catch(() => {});   // wegtikken is geen fout
     return;
   }
