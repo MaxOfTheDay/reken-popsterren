@@ -10186,16 +10186,7 @@
   .sheet-rule::before, .sheet-rule::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.22); }
 
 
-
-
-  .ouder-voet { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 14px; margin: 2px 0 6px; }
-  .ov-link {
-    font-family: inherit; font-size: var(--tx-klein); font-weight: 700; color: var(--c-white);
-    background: transparent; border: none; cursor: pointer; text-decoration: none;
-    display: inline-flex; align-items: center; gap: 5px; min-height: 44px; padding: 0 10px;
-    border-radius: var(--r-pill); opacity: .85; transition: opacity var(--t-tik) ease, background var(--t-tik) ease;
-  }
-  .ov-link:hover, .ov-link:focus-visible { opacity: 1; background: rgba(255,255,255,.1); }
+  a.gear-item { text-decoration: none; }
 
   .set-field { display: flex; flex-direction: column; gap: 7px; }
   .set-field + .set-field { margin-top: 15px; }
@@ -31978,12 +31969,21 @@ function importInvoerHtml() {
 
 
 
+
+
+
+
 const OVER_URL = 'https://www.rekensterren.be/over/';
-function ouderVoetHtml() {
+function overKaartHtml() {
   return `
-    <div class="ouder-voet">
-      <a class="ov-link" id="set-over" href="over/index.html">🎬 Over Rekensterren <span aria-hidden="true">›</span></a>
-      <button class="ov-link" id="set-deel" type="button">📤 Deel de link</button>
+    <div class="sheet-rule"><span>Over het spel</span></div>
+    <div class="set-card geluid-kaart over-kaart">
+      <a class="gear-item" id="set-over" href="over/index.html">
+        <span class="gi-ico" aria-hidden="true">🎬</span><span class="gi-label">Wat is Rekensterren?<span class="gi-sub">Een kort filmpje en wat uitleg</span></span><span class="gi-pijl" aria-hidden="true">›</span>
+      </a>
+      <button class="gear-item" id="set-deel" type="button">
+        <span class="gi-ico" aria-hidden="true">💌</span><span class="gi-label">Tip een andere ouder<span class="gi-sub">Stuur de link naar het spel</span></span><span class="gi-pijl" aria-hidden="true">›</span>
+      </button>
     </div>`;
 }
 
@@ -32041,7 +32041,7 @@ function beheerEmptyHtml() {
       <div class="set-card-head"><div class="ico">🌟</div><div><h2>Nog geen sterren</h2><div class="sub">Al gespeeld op een ander toestel?${overzetMag() ? '' : ' Zet de back-up hier terug.'}</div></div></div>
       ${terug}
       ${importInvoerHtml()}
-    </div>${beginschermKaartHtml(false)}${ouderVoetHtml()}
+    </div>${beginschermKaartHtml(false)}${overKaartHtml()}
   </div>`;
 }
 
@@ -32190,7 +32190,7 @@ function overzichtHtml() {
   return `<div class="settings-panel">
     <div class="set-card ster-lijst" id="set-sterren">${profileKeys().map(rij).join('')}${nieuw}</div>
     <div class="sheet-rule"><span>Voor alle sterren</span></div>
-    ${appWideCardsHtml()}${ouderVoetHtml()}
+    ${appWideCardsHtml()}${overKaartHtml()}
   </div>`;
 }
 

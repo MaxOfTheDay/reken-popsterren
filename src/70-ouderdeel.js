@@ -1409,18 +1409,22 @@ function backupStandHtml(nu) {
 function importInvoerHtml() {
   return `<input type="file" id="set-import-file" accept="application/json,.json" style="display:none">`;
 }
-/* De weg naar over/: de pagina die in twintig seconden zegt wat dit spel is,
+/* De weg naar over/: de pagina die in een halve minuut zegt wat dit spel is,
    met het filmpje erop. Voor de ouder die het aan iemand anders wil laten zien --
    daarom staat hij hier en niet in het spel: een kind komt er zo nooit per
    ongeluk. Hij staat onderaan het overzicht, waar ⚙️ opent (en zonder sterren
    onder de lege pagina, beheerEmptyHtml). Eerder stond hij als allerlaatste
    onder ⋯, twee schermen diep achter de back-up, en dan vond geen ouder hem;
    daarna onder Voortgang, toen ⚙️ daar nog opende.
-   Hij is een voetregel zonder kaart: het is geen
-   instelling maar een verwijzing, en een witte kaart met een volle paarse knop
-   vroeg even hard om aandacht als de back-up erboven. Het filmpje zit niet in de
-   app zelf; het wordt pas opgehaald als iemand op afspelen tikt (en sw.js bewaart
-   het niet).
+
+   EEN EIGEN KAARTJE, MET GEWONE RIJEN. Het zijn geen instellingen maar
+   verwijzingen, dus ze staan niet ín "Voor alle sterren" maar eronder, met een
+   eigen streepje ("Over het spel"). Wel in dezelfde rijen als erboven (icoon,
+   woord, onderregel, ›): als twee losse witte links onder de kaart zagen ze er
+   niet uit als iets van het ouderdeel. De onderregel van delen zegt wát je deelt:
+   "Naar ander toestel" deelt ook een link, maar dan van je sterren, en "Deel de
+   link" las als hetzelfde. Het filmpje zit niet in de app zelf; het wordt pas
+   opgehaald als iemand op afspelen tikt (en sw.js bewaart het niet).
 
    De link opent in hetzelfde venster, niet met target="_blank": over/ valt
    binnen de scope van het manifest, dus in de geïnstalleerde app blijft hij in
@@ -1431,15 +1435,20 @@ function importInvoerHtml() {
    een schermvullende app op een iPhone is er geen terugknop -- je zou vastzitten
    op een foutpagina van de browser. */
 const OVER_URL = 'https://www.rekensterren.be/over/';
-function ouderVoetHtml() {
+function overKaartHtml() {
   return `
-    <div class="ouder-voet">
-      <a class="ov-link" id="set-over" href="over/index.html">🎬 Over Rekensterren <span aria-hidden="true">›</span></a>
-      <button class="ov-link" id="set-deel" type="button">📤 Deel de link</button>
+    <div class="sheet-rule"><span>Over het spel</span></div>
+    <div class="set-card geluid-kaart over-kaart">
+      <a class="gear-item" id="set-over" href="over/index.html">
+        <span class="gi-ico" aria-hidden="true">🎬</span><span class="gi-label">Wat is Rekensterren?<span class="gi-sub">Een kort filmpje en wat uitleg</span></span><span class="gi-pijl" aria-hidden="true">›</span>
+      </a>
+      <button class="gear-item" id="set-deel" type="button">
+        <span class="gi-ico" aria-hidden="true">💌</span><span class="gi-label">Tip een andere ouder<span class="gi-sub">Stuur de link naar het spel</span></span><span class="gi-pijl" aria-hidden="true">›</span>
+      </button>
     </div>`;
 }
 // Naar over/: eerst bewaren (we verlaten de pagina), en zonder net niet weg.
-// Twee ingangen met dezelfde handler: de voetregel onder het overzicht (set-over) en de
+// Twee ingangen met dezelfde handler: de rij onder het overzicht (set-over) en de
 // stille regel op het lege beginscherm (over-hint, in de markup van index.html).
 function naarOver(e) {
   if (navigator.onLine === false) {
@@ -1493,7 +1502,7 @@ function beheerEmptyHtml() {
       <div class="set-card-head"><div class="ico">🌟</div><div><h2>Nog geen sterren</h2><div class="sub">Al gespeeld op een ander toestel?${overzetMag() ? '' : ' Zet de back-up hier terug.'}</div></div></div>
       ${terug}
       ${importInvoerHtml()}
-    </div>${beginschermKaartHtml(false)}${ouderVoetHtml()}
+    </div>${beginschermKaartHtml(false)}${overKaartHtml()}
   </div>`;
 }
 /* = Onomkeerbaar: één vraag, één vorm =========================================
@@ -1642,7 +1651,7 @@ function overzichtHtml() {
   return `<div class="settings-panel">
     <div class="set-card ster-lijst" id="set-sterren">${profileKeys().map(rij).join('')}${nieuw}</div>
     <div class="sheet-rule"><span>Voor alle sterren</span></div>
-    ${appWideCardsHtml()}${ouderVoetHtml()}
+    ${appWideCardsHtml()}${overKaartHtml()}
   </div>`;
 }
 
