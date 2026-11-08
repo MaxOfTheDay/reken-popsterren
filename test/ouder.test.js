@@ -1685,6 +1685,33 @@ function check(ok, label, detail) {
     await e.page.waitForTimeout(400);
     r = await e.page.evaluate(() => document.getElementById('confirm-title').textContent);
     check(/Sterren gevonden/.test(r), 'T · Plakken vindt de code in de gedeelde tekst', r);
+    // Eén stap tegelijk: geen balk en geen "Gekopieerd". Kan het toestel delen,
+    // dan opent het deelvenster meteen, en na het delen staat er stap 2.
+    await a.page.evaluate(() => closeConfirmModal());
+    await a.page.evaluate(() => { window.gedeeld = []; navigator.share = x => { gedeeld.push(x.url); return Promise.resolve(); }; });
+    await naarAnder(a.page);
+    await a.page.waitForTimeout(300);
+    r = await a.page.evaluate(() => ({
+      gedeeld, stap: (document.querySelector('#oz-blad .oz-stap-zin') || {}).textContent,
+      opnieuw: (document.getElementById('oz-opnieuw') || {}).textContent, paars: !!document.getElementById('oz-deel'),
+      code: (document.querySelector('#oz-blad .oz-klein-code') || { dataset: {} }).dataset.code,
+      balk: !!document.querySelector('.oz-tijd'), groen: /Gekopieerd/.test(document.getElementById('oz-blad').textContent),
+    }));
+    check(r.gedeeld.length === 1 && /#ophalen=\d{6}$/.test(r.gedeeld[0]), 'T · Naar ander toestel opent meteen het deelvenster, met de link', JSON.stringify(r));
+    check(/Open de link op het andere toestel/.test(r.stap) && /Opnieuw delen/.test(r.opnieuw) && !r.paars && /^\d{6}$/.test(r.code),
+      'T · na het delen: "Open de link op het andere toestel", klein Opnieuw delen, de code eronder', JSON.stringify(r));
+    check(!r.balk && !r.groen, 'T · geen tijdbalk en geen "Gekopieerd"', JSON.stringify(r));
+    // weigert het toestel (de tik is voorbij) of tikt iemand het weg: stap 1 blijft
+    await a.page.evaluate(() => closeConfirmModal());
+    await a.page.evaluate(() => { navigator.share = () => Promise.reject(new DOMException('nee', 'NotAllowedError')); });
+    await naarAnder(a.page);
+    await a.page.waitForTimeout(300);
+    r = await a.page.evaluate(() => ({ knop: (document.getElementById('oz-deel') || {}).textContent, stap: !!document.querySelector('.oz-stap-zin') }));
+    check(/Deel link/.test(r.knop) && !r.stap, 'T · delen geweigerd: de paarse "Deel link" blijft staan', JSON.stringify(r));
+    await a.page.evaluate(() => { navigator.share = () => Promise.resolve(); });
+    await tik(a.page, '#oz-deel');
+    r = await a.page.evaluate(() => !!document.querySelector('.oz-stap-zin'));
+    check(r, 'T · en een tik op "Deel link" brengt je naar stap 2', String(r));
     for (const x of [a, b, c2, d, e]) await x.ctx.close();
     // Een verkeerde code is een 404 en "geen net" een afgebroken aanvraag: de
     // browser zet die zelf in de console, en dat hoort zo. Alleen díe twee gaan eruit.

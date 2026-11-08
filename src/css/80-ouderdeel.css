@@ -1094,11 +1094,18 @@
     width: 100%; min-height: 54px; margin: 4px 0 0; font-size: var(--tx-body);
   }
   .oz-groot .oz-i { width: 22px; height: 22px; }
-  .oz-ok { min-height: 22px; margin: 6px 0 2px; font-size: var(--tx-klein); font-weight: 700; color: var(--green-deep); }
-  .oz-ok:empty { min-height: 10px; }
+  /* de link komt nog: paars blijven, alleen stiller (geen grijze knop die even opflitst) */
+  .oz-groot:disabled { filter: none; opacity: .55; }
   .oz-of { margin: 14px 0 2px; font-size: var(--tx-klein); color: var(--paper-ink-muted); }
   .oz-klein-code { font-size: var(--tx-label); letter-spacing: .06em; color: var(--purple-deep); }
-  .oz-blad.met-code .oz-tijd { margin-top: 10px; }
+  /* de stappen van "Naar ander toestel" (ozStapDelen, ozStapWacht); de coderegel
+     is ook leeg even hoog, zodat het blad niet springt als de code binnenkomt */
+  .oz-regel { min-height: 26px; margin-top: 10px; }
+  .oz-stap-zin { margin: 4px 0 0; font-size: var(--tx-body); font-weight: 700; color: var(--paper-ink); text-wrap: balance; }
+  .oz-stap-zin + .oz-wacht { margin: 8px 0 14px; }
+  .oz-opnieuw { display: inline-flex; align-items: center; gap: 6px; }
+  .oz-opnieuw .oz-i { width: 18px; height: 18px; }
+  .oz-verlopen { margin: 4px 0 2px; }
   .oz-mee { display: flex; justify-content: center; padding-left: 10px; margin: 0 0 8px; }
   .oz-mini {
     position: relative; display: inline-block; width: 40px; height: 40px; margin-left: -10px;
@@ -1129,15 +1136,6 @@
     position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; /* teken */
     border: 0; background: transparent; color: transparent; caret-color: transparent;
   }
-  /* de tijd die de code nog geldt: een balk die leegloopt (de duur staat op het
-     element zelf, zie ozToonCode) */
-  .oz-tijd { height: 6px; margin: 0 18px 14px; border-radius: 3px; background: var(--paper-border); overflow: hidden; }
-  .oz-tijd i {
-    display: block; height: 100%; border-radius: 3px; transform-origin: left;
-    background: linear-gradient(90deg, var(--purple-deep), var(--purple-light));
-    animation-name: oz-tijd; animation-timing-function: linear; animation-fill-mode: forwards;
-  }
-  @keyframes oz-tijd { from { transform: scaleX(1); } to { transform: scaleX(0); } }
   .oz-waar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; font-size: var(--tx-klein); color: var(--paper-ink-muted); }
   .oz-blad .ab-kbd {
     display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 8px;
