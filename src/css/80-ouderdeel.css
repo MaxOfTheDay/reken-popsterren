@@ -568,12 +568,9 @@
                 0 0 22px rgba(var(--goud-gloed-rgb),.2), var(--e-2);
   }
   .newstar-preview .stage::after { animation: none; opacity: .85; }
-  /* nog niet gekozen wie: een schim met een vraagteken (zie renderNewStar) */
-  .newstar-preview.wacht .avatar-holder { opacity: .22; filter: grayscale(1) brightness(1.7); }
-  .ns-vraag {
-    position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; pointer-events: none;
-    font-size: 54px; font-weight: 700; color: var(--c-white); text-shadow: 0 2px 8px rgba(0,0,0,.35);
-  }
+  /* nog niet gekozen wie: het meisje en de jongen samen (zie renderNewStar), op
+     een breder podium -- dezelfde verhouding als op het lege beginscherm */
+  .newstar-preview.wacht .stage { width: 210px; aspect-ratio: 10 / 8; }
   .newstar-preview .deco { display: none; }
   /* haar podium: dezelfde tegelmaat als op het startscherm (zie .ster-tegel .stage-podium) */
   .newstar-preview .stage-podium { width: 78%; bottom: 6.4%; }
@@ -1114,9 +1111,6 @@
   .settings-panel .oz-groot { margin: 2px 0 10px; }
 
   .oz-blad { text-align: center; }
-  /* "Al gespeeld?" naast "Wat is Rekensterren?" op het lege beginscherm, met het
-     puntje ertussen als zijn eigen voorvoegsel: valt hij weg, dan ook de punt */
-  .over-hint.code-hint::before { content: '·'; margin-right: 8px; opacity: .6; }
   /* de ene grote knop van een blad: "Deel link" en "Plakken" */
   .oz-groot {
     display: flex; align-items: center; justify-content: center; gap: 8px;

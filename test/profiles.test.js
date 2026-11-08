@@ -97,27 +97,43 @@ function check(ok, label, detail) {
     const r = await page.evaluate(() => ({
       n: Object.keys(db.profiles).length,
       cards: document.querySelectorAll('.ster-tegel').length,
-      leeg: document.getElementById('btn-newstar').classList.contains('leeg-tegel'),
-      vraag: !!document.querySelector('#btn-newstar .ns-vraag'),
-      addLabel: document.getElementById('btn-newstar').getAttribute('aria-label'),
+      leeg: document.getElementById('btn-newstar').classList.contains('leeg-knop'),
+      goud: document.getElementById('btn-newstar').classList.contains('big'),
+      duo: [...document.querySelectorAll('#leeg-duo [data-base]')].map(e => e.dataset.base).join(),
+      grijs: [...document.querySelectorAll('#leeg-duo .avatar-holder')].some(e => getComputedStyle(e).filter !== 'none' || +getComputedStyle(e).opacity < 1),
+      addLabel: document.getElementById('btn-newstar').textContent.trim(),
+      hintTekst: document.getElementById('over-hint').textContent.replace('›', '').trim(),
       hintShown: getComputedStyle(document.getElementById('over-hint')).display !== 'none',
       hintHref: document.getElementById('over-hint').getAttribute('href'),
       stored: localStorage.getItem('rekenPopsterren_v1'),
     }));
     check(r.n === 0, 'verse installatie heeft nul sterren', `n=${r.n}`);
     check(r.cards === 0, 'verse installatie toont geen kaarten', `cards=${r.cards}`);
-    check(r.leeg && r.vraag, 'verse installatie toont één lege tegel met het vraagteken', JSON.stringify(r));
-    check(/eerste ster/.test(r.addLabel), 'de knop noemt de eerste ster', r.addLabel);
-    check(r.hintShown && r.hintHref === 'over/index.html?van=start', 'bij nul sterren zegt één stille regel wat het spel is', JSON.stringify(r));
-    // terugzetten zit achter het tandwiel: zonder sterren opent Voor ouders meteen daar
+    check(r.duo === 'meisje,jongen' && !r.grijs, 'verse installatie toont het meisje en de jongen, in kleur', JSON.stringify(r));
+    check(r.leeg && r.goud && r.addLabel === '🌟 Maak je ster', 'en de gouden knop "🌟 Maak je ster"', JSON.stringify(r));
+    check(r.hintShown && r.hintHref === 'over/index.html?van=start' && r.hintTekst === 'Over Rekensterren',
+      'bij nul sterren zegt één stille regel wat het spel is, met de woorden van Voor ouders', JSON.stringify(r));
+    // een tik op de jongen opent het formulier met die keuze al gemaakt, en de kop
+    // zegt wat je aantikte
+    await page.click('#leeg-duo [data-base="jongen"]', { force: true });
+    await page.waitForTimeout(400);
+    const form = await page.evaluate(() => ({
+      scherm: document.querySelector('.screen.active').id, base: newStar.base,
+      kop: document.querySelector('#screen-newstar .header-title').textContent,
+    }));
+    check(form.scherm === 'screen-newstar' && form.base === 'jongen' && form.kop === 'Maak je ster',
+      'een tik op de jongen: het formulier, met Jongen al gekozen en "Maak je ster" erboven', JSON.stringify(form));
+    await page.evaluate(() => closeNewStar());
+    await page.waitForTimeout(300);
+    // terugzetten zit achter het tandwiel: hetzelfde overzicht als met sterren
     await page.click('#btn-gear');
     await page.waitForTimeout(300);
     const naHint = await page.evaluate(() => ({
-      scherm: document.querySelector('.screen.active').id, open: setOpen,
-      terugzetten: !!document.getElementById('set-import'),
+      scherm: document.querySelector('.screen.active').id,
+      overzicht: !!document.getElementById('set-sterren') && !!document.getElementById('set-backup'),
     }));
-    check(naHint.scherm === 'screen-settings' && naHint.terugzetten,
-      'zonder sterren brengt Voor ouders je meteen bij terugzetten', JSON.stringify(naHint));
+    check(naHint.scherm === 'screen-settings' && naHint.overzicht,
+      'zonder sterren opent Voor ouders op hetzelfde overzicht, met de back-uprij', JSON.stringify(naHint));
     check(r.stored === null, 'een verse start schrijft nog niets weg', `stored=${r.stored && r.stored.slice(0, 40)}`);
     await ctx.close();
   });
@@ -178,6 +194,17 @@ function check(ok, label, detail) {
     check(na.scherm === 'screen-map' && na.ster === 'p1',
       'een verse ster staat meteen op haar eigen kaart', JSON.stringify(na));
     check(/Muziekwereld/.test(na.wereld), 'en dat is de eerste wereld van de tournee', na.wereld);
+    /* Het handje bij halte 1: alleen zolang ze nog nooit een show speelde, en
+       alleen bij de halte waar ze nu staat. Met één ster erbij is het weg. */
+    const hand = await page.evaluate(() => {
+      const voor = [...document.querySelectorAll('#screen-map .eerste-tik')].map(e => e.closest('.tour-stop').className);
+      db.profiles[cur].stars[1] = 1; goMap();
+      const na = document.querySelectorAll('#screen-map .eerste-tik').length;
+      db.profiles[cur].stars = {}; goMap();
+      return { voor, na };
+    });
+    check(hand.voor.length === 1 && /\bnext\b/.test(hand.voor[0]) && hand.na === 0,
+      'de eerste kaart wijst halte 1 aan met een handje, tot de eerste show', JSON.stringify(hand));
     const r = await page.evaluate(() => {
       const k = Object.keys(db.profiles)[0];
       const p = db.profiles[k];
@@ -189,7 +216,7 @@ function check(ok, label, detail) {
         startHair: p.startHair, startDress: p.startDress,
         order: p.order, track: p.settings.track, perLevel: p.settings.perLevel,
         stageMax: p.settings.stageMax,
-        bought: p.owned.length - p.freebies,
+        bought: p.owned.length - p.freebies, schoenen: p.equipped.shoes,
         cardText: document.querySelector('.st-naam') ? document.querySelector('.st-naam').textContent : null,
         boldInCard: !!document.querySelector('.st-naam b'),
         fieldValue: document.getElementById('set-name').value,
@@ -207,6 +234,7 @@ function check(ok, label, detail) {
     check(r.order === 0, 'de eerste ster staat vooraan', `order=${r.order}`);
     check(r.track === 'count' && r.perLevel === 5 && r.stageMax === 12, 'telmodus krijgt de hele telvoorinstelling', JSON.stringify(r));
     check(r.bought === 0, 'gratis startspullen tellen niet als gekocht', `bought=${r.bought}`);
+    check(r.schoenen === 'shoes_blauw', 'blauwe kleren, blauwe schoenen', String(r.schoenen));
     // Zodra er een ster staat spreekt het scherm voor zich en verdwijnt de
     // ondertitel; het welkom hoort alleen bij een leeg scherm.
     check(r.plus === 'add-tegel', 'met een ster erbij is de "+" weer een gewone knop', r.plus);
@@ -402,19 +430,23 @@ function check(ok, label, detail) {
     const { ctx, page } = await fresh();
     const r = await page.evaluate(() => {
       openSettings();
-      return {
+      const stip = !!document.querySelector('#set-backup .gi-dot');
+      openBackupBlad();
+      const r = {
         screen: document.querySelector('.screen.active').id,
-        hasImport: !!document.getElementById('set-import'),
-        hasExport: !!document.getElementById('set-export'),
-        importVol: !!document.querySelector('#set-import.purple'),
+        hasImport: !!document.getElementById('bb-terug'),
+        hasExport: !!document.getElementById('bb-maak'),
+        stip,
         hasNewStar: !!document.getElementById('set-newstar'),
         whoHidden: getComputedStyle(document.getElementById('settings-wie')).display === 'none',
         hasName: !!document.getElementById('set-name'),
         hasReset: !!document.getElementById('set-reset'),
       };
+      closeConfirmModal();
+      return r;
     });
     check(r.screen === 'screen-settings', 'het ouderdeel opent zonder sterren', r.screen);
-    check(r.hasImport && r.importVol, 'back-up terugzetten is bereikbaar zonder ster, als de volle knop', JSON.stringify(r));
+    check(r.hasImport && !r.stip, 'back-up terugzetten is bereikbaar zonder ster, en er brandt geen stip', JSON.stringify(r));
     // met nul sterren schreef "Back-up maken" een leeg bestand weg dat eruitzag als een echte back-up
     check(!r.hasExport, 'en er is niets om een back-up van te maken', JSON.stringify(r));
     check(r.hasNewStar, 'een ster maken kan ook vanuit Beheer', 'knop ontbreekt');
@@ -459,13 +491,13 @@ function check(ok, label, detail) {
     r = await page.evaluate(() => ({
       n: Object.keys(db.profiles).length,
       screen: document.querySelector('.screen.active').id,
-      leeg: document.getElementById('btn-newstar').classList.contains('leeg-tegel'),
+      leeg: document.getElementById('btn-newstar').classList.contains('leeg-knop') && !!document.getElementById('leeg-duo'),
     }));
     check(r.n === 0, 'de laatste ster mag ook weg', `n=${r.n}`);
     check(r.screen === 'screen-profile', 'na de laatste ster sta je op het welkomscherm', r.screen);
-    check(r.leeg, 'de lege tegel komt terug', JSON.stringify(r));
+    check(r.leeg, 'het meisje, de jongen en de gouden knop komen terug', JSON.stringify(r));
     // en het ouderdeel doet het daarna nog steeds
-    r = await page.evaluate(() => { openSettings(); return !!document.getElementById('set-import'); });
+    r = await page.evaluate(() => { openSettings(); return !!document.getElementById('set-backup'); });
     check(r, 'het ouderdeel werkt nog na het verwijderen van alles', 'geen back-up-knop');
     await ctx.close();
   });

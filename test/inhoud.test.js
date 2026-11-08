@@ -220,6 +220,16 @@ zaak('E', () => {
   check(vers.owned.every(id => !app.isBeloning(id)), 'E · en een verse ster krijgt geen beloning cadeau',
     JSON.stringify(vers.owned.filter(id => app.isBeloning(id))));
   check(app.boughtCount(vers) === 0, 'E · "spulletjes gekocht" begint op nul', app.boughtCount(vers));
+  // De schoenen volgen de kleren van het formulier: elke startkleur heeft zijn paar,
+  // het komt gratis mee, en "gekocht" blijft op nul.
+  app.START_DRESS.forEach(d => {
+    const p = app.defaultProfile('Keuring', d);
+    const kleur = d.replace('dress_', '');
+    check(p.equipped.shoes === 'shoes_' + kleur && p.owned.includes('shoes_' + kleur) && app.boughtCount(p) === 0,
+      `E · ${d}: schoenen in dezelfde kleur, gratis`, `${p.equipped.shoes} / gekocht ${app.boughtCount(p)}`);
+  });
+  check(app.defaultProfile('Keuring', 'dress_tover').equipped.shoes === 'shoes_roze',
+    'E · geen startkleur: dan de roze schoenen van altijd', '');
 });
 
 /* ================= F · De trofeeën ================= */
@@ -711,7 +721,10 @@ zaak('J', () => {
   };
   const html = (a, ua, extra) => {
     a.run(`navigator = Object.assign({ userAgent: ${JSON.stringify(ua)}, maxTouchPoints: 0 }, ${JSON.stringify(extra || {})});`);
-    return a.run('beginschermKaartHtml(true)');
+    // de uitleg zoals het blad "Als app" hem toont; leeg waar er niets uit te
+    // leggen valt (in de app zelf, of net geïnstalleerd). Het merkteken vooraan
+    // staat voor "hier wordt uitgelegd".
+    return a.run(`(beginschermNetErop || speeltAlsApp()) ? '' : 'set-beginscherm ' + beginschermUitleg(beginschermSoort(), true).join(' ')`);
   };
   // het overzicht van het ouderdeel: daar is het een rij die het blad opent
   const overzicht = (a, ua, extra) => { html(a, ua, extra); return a.run('appWideCardsHtml()'); };
@@ -752,14 +765,13 @@ zaak('J', () => {
   check(geluid > -1 && back > geluid && rij > back, 'J · overzicht: Geluid, dan de back-up, dan Als app', `${geluid} / ${back} / ${rij}`);
   check(!ov.includes('<h2>Back-up</h2>') && !ov.includes('id="set-export"'), 'J · overzicht: de back-up is een rij, geen kaart met knoppen', '');
   check(!ov.includes('set-beginscherm'), 'J · overzicht: de uitleg staat in het blad, niet in een kaart', '');
-  // De kaart zelf (alleen nog op de lege pagina, zie beheerEmptyHtml).
+  // Zonder sterren is het hetzelfde overzicht: geen eigen uitlegkaart meer, wel de rij.
+  a.run('db.profiles = {}');
+  const leegOv = a.run('overzichtHtml()');
+  check(!leegOv.includes('set-beginscherm') && leegOv.includes('id="set-alsapp"'),
+    'J · zonder sterren: hetzelfde overzicht, met de rij Als app en zonder uitlegkaart', '');
+  a.run(`db.profiles.p1 = defaultProfile('Anna', 'dress_roze'); db.profiles.p1.order = 0;`);
   const and = html(a, UA.android), kaart = 0;
-  check(/class="set-card secundair" id="set-beginscherm"/.test(and), 'J · als stille secundaire kaart', '');
-  check(and.includes('Op het beginscherm') && and.includes('Rekensterren als app op dit toestel'),
-    'J · met de kop en de ondertitel', '');
-  // alleen deze kaart: daarna komt nog die naar over/, en die heeft wél knoppen
-  const eigen = and.slice(kaart).split('class="set-card')[0];
-  check(!/<button/.test(eigen), 'J · uitleg, geen knop', eigen);
 
   // Per soort de juiste zin.
   check(and.includes('Chrome stelt soms zelf voor') && and.includes('Geen voorstel gezien? Tik op ⋮ en kies ‘App installeren’ of ‘Toevoegen aan startscherm’.'),
@@ -769,7 +781,7 @@ zaak('J', () => {
   check(ios.includes('Heb je al gespeeld in Safari? Maak dan hierboven eerst een back-up.'),
     'J · iPhone: met sterren komt de back-upwaarschuwing erbij', ios.slice(kaart));
   a.run(`navigator = { userAgent: ${JSON.stringify(UA.iphone)}, maxTouchPoints: 5 };`);
-  check(!a.run('beginschermKaartHtml(false)').includes('Heb je al gespeeld'),
+  check(!a.run('beginschermUitleg(beginschermSoort(), false).join(" ")').includes('Heb je al gespeeld'),
     'J · zonder sterren valt er niets te redden, en blijft de waarschuwing weg', '');
   check(html(a, UA.ipad, { maxTouchPoints: 5 }).includes('Tik in Safari op Deel'), 'J · een iPad die zich als Mac voordoet krijgt de iPad-uitleg', '');
   check(html(a, UA.iosInApp).includes('Open deze pagina in Safari'), 'J · iOS buiten Safari: eerst naar Safari', '');

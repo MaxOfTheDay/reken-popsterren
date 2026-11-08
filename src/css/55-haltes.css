@@ -194,6 +194,18 @@
      de ene overshoot van de app, ná de haltes: "deze wint hem". Met scale en niet
      met transform, zodat niets anders aan zijn stand hoeft te rekenen. */
   .tour-stop .stop-schat { animation: prijsOp .45s var(--ease-plop) .55s backwards; }
+  /* Het handje bij de allereerste show (zie renderTourMap): rechtsonder het
+     rondje, met de vingertop ernaar. Het wipt zacht op en neer tot de eerste show
+     begint en is daarna voorgoed weg -- de enige beweging op de kaart die eindigt
+     zonder dat ze iets hoeft te doen. Wie geen beweging wil, ziet het stilstaan
+     (90-stilstand.css zet alle animaties uit). */
+  .tour-stop .eerste-tik {
+    position: absolute; z-index: 3; left: 50%; top: 9cqw; margin-left: 1cqw;
+    font-size: 8cqw; line-height: 1; pointer-events: none;
+    filter: drop-shadow(0 .4cqw .6cqw rgba(0,0,0,.45));
+    animation: eersteTik 1.1s ease-in-out .8s infinite;
+  }
+  @keyframes eersteTik { 0%, 100% { translate: 0 0; } 50% { translate: -.6cqw -2.2cqw; } }
   @keyframes prijsOp { from { opacity: 0; scale: .3; } to { opacity: 1; scale: 1; } }
   @media (prefers-reduced-motion: reduce) { .tour-stop .stop-schat { animation: none; } }
   /* HET SLOTJE IS WEG. Er hing er een aan de rand van elke halte op slot -- eerst

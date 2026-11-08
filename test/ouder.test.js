@@ -1030,16 +1030,10 @@ function check(ok, label, detail) {
       await page.waitForTimeout(250);
       await open(page, null, null);
       check((await rij(page)).er, 'O · een nieuwe start vraagt het weer aan de browser', '');
-      // Nul sterren: de kaart, direct na de ene kaart die het terugzetten draagt
-      // (zie beheerEmptyHtml), stil en zonder knop.
+      // Nul sterren: hetzelfde overzicht, en dus dezelfde rij -- geen eigen kaart meer.
       await leeg(page);
       await page.waitForTimeout(200);
-      r = await kaart(page);
-      check(r.er && r.vorige === 'Nog geen sterren', 'O · zonder sterren: de kaart, na het terugzetten', JSON.stringify(r));
-      check(r.secundair && r.kop === 'Op het beginscherm' && r.knoppen === 0,
-        'O · een stille secundaire kaart, uitleg zonder knop', JSON.stringify(r));
-      check(/Chrome stelt soms zelf voor/.test(r.tekst) && /Tik op ⋮ en kies ‘App installeren’/.test(r.tekst),
-        'O · Android: het voorstel van Chrome, en anders het ⋮-menu', r.tekst);
+      check((await rij(page)).er && !(await kaart(page)).er, 'O · zonder sterren: dezelfde rij, geen eigen uitlegkaart', '');
       await ctx.close();
     }
 
@@ -1052,18 +1046,20 @@ function check(ok, label, detail) {
       await page.waitForTimeout(200);
       const tekst = await page.evaluate(() => document.getElementById('app-blad').textContent.replace(/\s+/g, ' '));
       check(/Zet op beginscherm/.test(tekst), `O · ${naam}: Deel → Zet op beginscherm`, tekst);
-      check(/De app begint leeg\. Maak eerst een back-up via ⚙️ Ouders › Back-up,/.test(tekst), `O · ${naam}: zonder overzetten (file://) de back-upwaarschuwing`, tekst);
+      check(/De app begint leeg\. Maak eerst een back-up via ⚙️ Ouders › Back.up,/.test(tekst), `O · ${naam}: zonder overzetten (file://) de back-upwaarschuwing`, tekst);
       await ctx.close();
     }
 
-    // Computer en de rest: de kaart op de lege pagina.
+    // Computer en de rest: ook zonder sterren de rij, en het blad met de juiste uitleg.
     for (const [naam, ua, zin] of [['computer', UA.desktop, /installeer-icoon in de adresbalk/],
       ['Firefox', UA.firefox, /Open de pagina dan in Chrome/]]) {
       const { ctx, page } = await fresh(null, toestel(ua));
       await leeg(page);
       await page.waitForTimeout(200);
-      const r = await kaart(page);
-      check(r.er && zin.test(r.tekst), `O · ${naam}: de juiste uitleg`, r.tekst);
+      await page.click('#set-alsapp');
+      await page.waitForTimeout(200);
+      const tekst = await page.evaluate(() => document.getElementById('app-blad').textContent.replace(/\s+/g, ' '));
+      check(zin.test(tekst), `O · ${naam}: de juiste uitleg`, tekst);
       await ctx.close();
     }
 
@@ -1239,20 +1235,22 @@ function check(ok, label, detail) {
     await page.waitForTimeout(300);
     r = await page.evaluate(() => ({
       wacht: document.querySelector('.newstar-preview').classList.contains('wacht'),
-      vraag: !!document.querySelector('.newstar-preview .ns-vraag'),
+      vraag: [...document.querySelectorAll('#newstar-stage [data-base]')].map(e => e.dataset.base).join() === 'meisje,jongen',
+      kop: document.querySelector('#screen-newstar .header-title').textContent,
       bolletjes: [...document.querySelectorAll('#newstar-hair .chip')].every(c => !c.textContent.trim() && c.getAttribute('aria-label')),
       ouder: (document.querySelector('.ns-ouder') || {}).textContent || '',
     }));
-    check(r.wacht && r.vraag, 'Q · nieuwe ster: een vraagteken zolang niemand koos', JSON.stringify(r));
+    check(r.wacht && r.vraag, 'Q · nieuwe ster: het meisje en de jongen zolang niemand koos', JSON.stringify(r));
+    check(r.kop === 'Nieuwe ster', 'Q · vanuit Voor ouders heet het formulier zoals de rij: "Nieuwe ster"', r.kop);
     check(r.bolletjes, 'Q · haar als bolletjes, de naam alleen als label', JSON.stringify(r));
     check(/papa of mama/.test(r.ouder), 'Q · een lijntje waar het ouderdeel van het formulier begint', JSON.stringify(r));
     await page.click('#newstar-base .chip[data-v="meisje"]');
     await page.waitForTimeout(150);
     r = await page.evaluate(() => ({
       wacht: document.querySelector('.newstar-preview').classList.contains('wacht'),
-      vraag: !!document.querySelector('.newstar-preview .ns-vraag'),
+      vraag: document.querySelectorAll('#newstar-stage .avatar-holder').length,
     }));
-    check(!r.wacht && !r.vraag, 'Q · en na "meisje" staat ze er', JSON.stringify(r));
+    check(!r.wacht && r.vraag === 1, 'Q · en na "meisje" staat zij er alleen', JSON.stringify(r));
     await ctx.close();
   }
 
@@ -1557,11 +1555,14 @@ function check(ok, label, detail) {
     await metOverzet(b.page, b.ctx);
     await b.page.evaluate(() => { db.profiles = {}; save(); goProfiles(); });
     await b.page.waitForTimeout(200);
-    r = await b.page.evaluate(() => getComputedStyle(document.getElementById('code-hint')).display);
-    check(r === 'flex', 'T · het lege beginscherm heeft "Code invullen"', r);
-    await tik(b.page, '#code-hint');
+    // de weg zonder link: Ouders › 💾, waar ophalen dan de paarse knop is
+    await open(b.page, null, null);
+    await tik(b.page, '#set-backup');
+    r = await b.page.evaluate(() => ({ paars: !!document.querySelector('#bb-van.oz-groot'), naar: !!document.getElementById('bb-naar'), maak: !!document.getElementById('bb-maak') }));
+    check(r.paars && !r.naar && !r.maak, 'T · zonder sterren: "Van ander toestel" is de paarse knop, niets om te versturen of te bewaren', JSON.stringify(r));
+    await tik(b.page, '#bb-van');
     r = await b.page.evaluate(() => ({ titel: document.getElementById('confirm-title').textContent, plak: !!document.getElementById('oz-plak') }));
-    check(/Sterren ophalen/.test(r.titel) && r.plak, 'T · "Al gespeeld?" opent "Sterren ophalen", met Plakken', JSON.stringify(r));
+    check(/Van ander toestel/.test(r.titel) && r.plak, 'T · "Van ander toestel" opent een blad met dezelfde naam, met Plakken', JSON.stringify(r));
     await b.page.focus('#oz-veld');
     await b.page.keyboard.type('999999');
     await b.page.waitForTimeout(400);
@@ -1590,10 +1591,8 @@ function check(ok, label, detail) {
       namen: profileKeys().map(k => db.profiles[k].name),
       opgeslagen: Object.keys(JSON.parse(localStorage.getItem(LS_KEY)).profiles).length,
       tegels: document.querySelectorAll('#star-grid .ster-tegel, .star-grid .ster-tegel').length,
-      hint: getComputedStyle(document.getElementById('code-hint')).display,
     }));
     check(r.namen.join() === 'Anna,Bas' && r.opgeslagen === 2, 'T · daarna staan Anna en Bas op dit toestel, opgeslagen', JSON.stringify(r));
-    check(r.hint === 'none', 'T · en is "Code invullen" weg van het beginscherm', r.hint);
 
     // A hoort het: de stand komt binnen drie tellen
     await a.page.waitForTimeout(3600);
@@ -1644,7 +1643,7 @@ function check(ok, label, detail) {
     // het blad "als app" op een iPhone met sterren: meenemen met een code
     r = await d.page.evaluate(() => {
       const m = appBladInhoud('ios', false, true, false, true), z = appBladInhoud('ios', false, false, false, true);
-      return { mee: m.meenemen, noot: /Neem je sterren mee/.test(m.html) && /Plakken/.test(m.html), leeg: z.meenemen };
+      return { mee: m.meenemen, noot: /Neem je sterren mee/.test(m.html) && /Van ander toestel.*Plakken/.test(m.html) && !/Al gespeeld/.test(m.html), leeg: z.meenemen };
     });
     check(r.mee && r.noot && !r.leeg, 'T · iPhone met sterren: stap 1 "Neem je sterren mee", en in de app Plakken', JSON.stringify(r));
     // De link: een nieuwe code van A, geopend op een leeg toestel E -- het spel

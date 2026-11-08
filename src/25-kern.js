@@ -786,6 +786,16 @@ const COUNT_OPTS = { track: 'count', stage: 1, stageMax: COUNT_STAGE_MAX, repr: 
 const START_HAIR  = ['hair_blond', 'hair_bruin', 'hair_zwart', 'hair_wit', 'hair_rood'];
 const START_DRESS = ['dress_roze', 'dress_paars', 'dress_geel', 'dress_blauw', 'dress_groen'];
 const MAX_PROFILES = 6;
+/* De schoenen horen bij de kleren die je op het formulier koos. Iedereen begon
+   op roze schoenen, ook een jongen in het blauw -- en dat zag je meteen, op het
+   lege beginscherm en in het voorbeeld van het formulier. Nu krijgt een nieuwe
+   ster het paar in de kleur van haar kleren erbij, gratis (freebies telt het
+   mee, dus "gekocht" begint nog altijd op 0). Alleen voor een nieuwe ster:
+   bestaande opslag wordt niet aangevuld. Roze blijft altijd van iedereen. */
+function startSchoen(dress) {
+  const id = 'shoes_' + String(dress || '').replace(/^dress_/, '');
+  return START_DRESS.includes(dress) && ITEMS.some(it => it.id === id) ? id : 'shoes_roze';
+}
 function defaultProfile(name, dress, opts) {
   opts = opts || {};
   // Gratis starthaar en -kleren zodat elke ster er meteen anders uitziet, zonder de
@@ -797,9 +807,11 @@ function defaultProfile(name, dress, opts) {
      viel. Dit geldt alleen voor een nieuwe ster: een bestaande opslag wordt
      niet aangevuld (en zijn freebies blijven kloppen). */
   const hair = opts.hair || 'hair_blond';
+  const schoen = startSchoen(dress);
   const owned = START_HAIR.concat(START_DRESS, ['shoes_roze', 'stage_disco']);
   if (dress && !owned.includes(dress)) owned.push(dress);
   if (hair && !owned.includes(hair)) owned.push(hair);
+  if (!owned.includes(schoen)) owned.push(schoen);
   return {
     name: name,
     // Welke basisfiguur getekend wordt (zie BASES). Gaat via opts en niet als
@@ -811,7 +823,7 @@ function defaultProfile(name, dress, opts) {
     stars: {},
     owned: owned,
     freebies: owned.length,   // aantal gratis startspullen (5, of 6 met bonusoutfit) — basis voor "gekocht"
-    equipped: { hair: hair, dress: dress, shoes: 'shoes_roze', mic: null, instrument: null, acc: null, pet: null, stage: 'stage_disco' },
+    equipped: { hair: hair, dress: dress, shoes: schoen, mic: null, instrument: null, acc: null, pet: null, stage: 'stage_disco' },
     // Wie ze is, los van wat ze nu toevallig draagt -- zodat "opnieuw beginnen"
     // haar teruggeeft zoals ze gemaakt is en niet als een blonde vreemde.
     // Bewust NIET bijgevuld in migrate(): bestaande profielen houden zo exact hun

@@ -2262,7 +2262,10 @@
 
 
 
-  .star-grid.kol-0 { grid-template-columns: minmax(0, calc(168px + var(--focus-groei) * .54)); }
+
+
+
+  .star-grid.kol-0 { grid-template-columns: minmax(0, min(78vw, 46vh, calc(300px + var(--focus-groei) * .8))); }
   .star-grid.kol-1 { grid-template-columns: minmax(0, calc(148px + var(--focus-groei) * .48)); }
   .star-grid.kol-2 { grid-template-columns: repeat(2, minmax(0, calc(136px + var(--focus-groei) * .44))); }
 
@@ -2431,7 +2434,7 @@
   }
 
 
-  .add-tegel .at-plus, .leeg-tegel .st-ico {
+  .add-tegel .at-plus {
     display: grid; place-items: center; flex: none; line-height: 1;
     border-radius: 50%; border: 2px dashed rgba(255,255,255,.55);
   }
@@ -2448,17 +2451,21 @@
 
 
 
+  .leeg-tegel .st-podium { aspect-ratio: 10 / 8; }
 
 
+  .btn.big.leeg-knop { grid-column: 1 / -1; width: 100%; padding-left: 12px; padding-right: 12px; margin-top: 4px; z-index: 1; }
 
 
-
-  .leeg-tegel .avatar-holder { opacity: .22; filter: grayscale(1) brightness(1.7); }
-  .leeg-tegel .ns-vraag { font-size: clamp(44px, 38cqw, 72px); }
-
-  .leeg-tegel .st-ico { font-weight: 700; color: var(--c-white); background: none; box-shadow: none; }
-
-  .leeg-tegel .st-naam { font-size: clamp(13px, 11cqw, 20px); }
+  .duo {
+    position: relative; z-index: 2; display: flex; align-items: flex-end; justify-content: center;
+    gap: 10%; height: 84%; margin-bottom: 9%;
+  }
+  .stage .duo > .avatar-holder {
+    height: 100%; padding: 0; border: 0; background: none; cursor: pointer; font: inherit; color: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .duo > .avatar-holder:focus-visible { outline: 3px solid var(--c-white); outline-offset: 2px; border-radius: var(--r-sm); }
 
 
 
@@ -2484,6 +2491,13 @@
 
 
     .star-grid.kol-4 { grid-template-columns: repeat(4, minmax(0, 118px)); max-width: 560px; }
+
+
+
+
+    .star-grid.kol-0 { grid-template-columns: minmax(0, clamp(240px, (var(--vh-lock, 100svh) - 185px) * 1.75, 360px)); }
+    .leeg-tegel .st-podium { aspect-ratio: 10 / 5.6; }
+    .btn.big.leeg-knop { font-size: var(--tx-sub); padding-top: 10px; padding-bottom: 10px; margin-top: 0; }
   }
 
 
@@ -2517,6 +2531,8 @@
 
   .leeg-regel { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; margin-top: 8px; position: relative; z-index: 1; }
   .leeg-regel .over-hint { padding: 0 10px; }
+
+  .over-hint .oh-pijl { font-size: 1.3em; line-height: 1; margin-left: .25em; }
 
 
 
@@ -2661,7 +2677,7 @@
     display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 8px;
     background: var(--paper-muted-bg); font-weight: 700; white-space: nowrap;
   }
-  #app-blad .ab-svg, #app-blad .ab-kbd .ico { width: 18px; height: 18px; flex: none; }
+  #app-blad .ab-svg, #app-blad .ab-kbd .ico, #app-blad .ab-kbd .oz-i { width: 18px; height: 18px; flex: none; }
   #app-blad .ab-kbd .ico { stroke-width: 2.2; }
   #confirm-title .ico { display: inline-block; width: 1em; height: 1em; vertical-align: -.12em; stroke-width: 2.6; }
 
@@ -3266,9 +3282,11 @@
 
 
 
-  .ster-tegel .stage-podium, .leeg-tegel .stage-podium { width: 73%; bottom: 10.4%; }
+  .ster-tegel .stage-podium { width: 73%; bottom: 10.4%; }
+
+  .leeg-tegel .stage-podium, .newstar-preview.wacht .stage-podium { width: 90%; bottom: 7%; }
   .ster-tegel .stage-podium .podium, .leeg-tegel .stage-podium .podium, .newstar-preview .stage-podium .podium { --pod-dik: 4px; }
-  .ster-tegel .stage.op-podium .avatar-holder, .leeg-tegel .stage.op-podium .avatar-holder { height: 84%; margin-bottom: 12%; }
+  .ster-tegel .stage.op-podium .avatar-holder { height: 84%; margin-bottom: 12%; }
 
 
 
@@ -6277,6 +6295,18 @@
 
 
   .tour-stop .stop-schat { animation: prijsOp .45s var(--ease-plop) .55s backwards; }
+
+
+
+
+
+  .tour-stop .eerste-tik {
+    position: absolute; z-index: 3; left: 50%; top: 9cqw; margin-left: 1cqw;
+    font-size: 8cqw; line-height: 1; pointer-events: none;
+    filter: drop-shadow(0 .4cqw .6cqw rgba(0,0,0,.45));
+    animation: eersteTik 1.1s ease-in-out .8s infinite;
+  }
+  @keyframes eersteTik { 0%, 100% { translate: 0 0; } 50% { translate: -.6cqw -2.2cqw; } }
   @keyframes prijsOp { from { opacity: 0; scale: .3; } to { opacity: 1; scale: 1; } }
   @media (prefers-reduced-motion: reduce) { .tour-stop .stop-schat { animation: none; } }
 
@@ -10642,11 +10672,8 @@
   }
   .newstar-preview .stage::after { animation: none; opacity: .85; }
 
-  .newstar-preview.wacht .avatar-holder { opacity: .22; filter: grayscale(1) brightness(1.7); }
-  .ns-vraag {
-    position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; pointer-events: none;
-    font-size: 54px; font-weight: 700; color: var(--c-white); text-shadow: 0 2px 8px rgba(0,0,0,.35);
-  }
+
+  .newstar-preview.wacht .stage { width: 210px; aspect-ratio: 10 / 8; }
   .newstar-preview .deco { display: none; }
 
   .newstar-preview .stage-podium { width: 78%; bottom: 6.4%; }
@@ -11188,9 +11215,6 @@
 
   .oz-blad { text-align: center; }
 
-
-  .over-hint.code-hint::before { content: '·'; margin-right: 8px; opacity: .6; }
-
   .oz-groot {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     width: 100%; min-height: 54px; margin: 4px 0 0; font-size: var(--tx-body);
@@ -11479,19 +11503,18 @@
          in het ouderdeel en in de tests), en is er geen los blok onder het raster
          meer dat op een eigen rij om aandacht vraagt. -->
     <div class="star-grid" id="profile-row">
-      <button class="add-tegel" id="btn-newstar" onclick="naTik(() => openNewStar('profile'))" aria-label="Nieuwe ster maken"><span class="at-plus" aria-hidden="true">＋</span><span class="at-tekst">Nieuwe ster</span></button>
+      <button class="add-tegel" id="btn-newstar" onclick="naTik(() => openNewStar('profile'))" aria-label="Nieuwe ster"><span class="at-plus" aria-hidden="true">＋</span><span class="at-tekst">Nieuwe ster</span></button>
     </div>
-    <!-- Alleen zonder sterren (renderProfiles): één stille regel onder de tegel,
-         zodat "Maak je ster" het enige is dat om aandacht vraagt. Links wat dit
-         spel is -- de pagina over/, met dezelfde handler als in Beheer (eerst
-         bewaren, zonder net een melding), een echte link in hetzelfde venster
-         (zie naarOver). Rechts, voor wie al gespeeld heeft op een ander toestel of
-         in Safari vóór de app op het beginscherm stond: sterren ophalen (zie
-         = Overzetten). Die alleen als dat kan (overzetMag); het puntje ertussen is
-         van hem (.code-hint::before), dus valt hij weg, dan staat er ook geen punt. -->
+    <!-- Alleen zonder sterren (renderProfiles): één stille regel onder de gouden
+         knop, zodat "Maak je ster" het enige is dat om aandacht vraagt. Wat dit
+         spel is -- de pagina over/, met dezelfde handler en dezelfde woorden als
+         de rij in Voor ouders (#set-over): "Over Rekensterren ›". Een echte link in
+         hetzelfde venster (zie naarOver).
+         Sterren ophalen staat hier niet meer: wie verhuist, komt bijna altijd
+         binnen via de gedeelde link, en die opent het spel meteen op "Sterren
+         gevonden". Een code intikken kan via Ouders › 💾. -->
     <div class="leeg-regel">
-      <a class="over-hint" id="over-hint" href="over/index.html?van=start" onclick="naarOver(event)">Wat is Rekensterren?</a>
-      <button class="over-hint code-hint" id="code-hint" type="button" style="display:none" onclick="openCodeBlad(true)">Al gespeeld?</button>
+      <a class="over-hint" id="over-hint" href="over/index.html?van=start" onclick="naarOver(event)">Over Rekensterren<span class="oh-pijl" aria-hidden="true">›</span></a>
     </div>
     <div class="profile-spacer" aria-hidden="true"></div>
   </div>
@@ -11714,7 +11737,7 @@
            het tandwiel staat alleen op de sterrenkeuze. De show stopt dan, net als
            met Stoppen -- het staat niet voor niets in dit venster. -->
       <button class="gear-item quit-ouders" id="quit-ouders" onclick="stopNaarOuders()">
-        <span class="gi-ico" aria-hidden="true">👨‍👩‍👧</span><span class="gi-label">Voor ouders<span class="gi-sub" id="quit-ouders-wie"></span></span><span class="gi-pijl" aria-hidden="true">›</span>
+        <span class="gi-ico" aria-hidden="true">⚙️</span><span class="gi-label">Voor ouders<span class="gi-sub" id="quit-ouders-wie"></span></span><span class="gi-pijl" aria-hidden="true">›</span>
       </button>
     </div>
   </div>
@@ -16047,6 +16070,16 @@ const COUNT_OPTS = { track: 'count', stage: 1, stageMax: COUNT_STAGE_MAX, repr: 
 const START_HAIR  = ['hair_blond', 'hair_bruin', 'hair_zwart', 'hair_wit', 'hair_rood'];
 const START_DRESS = ['dress_roze', 'dress_paars', 'dress_geel', 'dress_blauw', 'dress_groen'];
 const MAX_PROFILES = 6;
+
+
+
+
+
+
+function startSchoen(dress) {
+  const id = 'shoes_' + String(dress || '').replace(/^dress_/, '');
+  return START_DRESS.includes(dress) && ITEMS.some(it => it.id === id) ? id : 'shoes_roze';
+}
 function defaultProfile(name, dress, opts) {
   opts = opts || {};
 
@@ -16058,9 +16091,11 @@ function defaultProfile(name, dress, opts) {
 
 
   const hair = opts.hair || 'hair_blond';
+  const schoen = startSchoen(dress);
   const owned = START_HAIR.concat(START_DRESS, ['shoes_roze', 'stage_disco']);
   if (dress && !owned.includes(dress)) owned.push(dress);
   if (hair && !owned.includes(hair)) owned.push(hair);
+  if (!owned.includes(schoen)) owned.push(schoen);
   return {
     name: name,
 
@@ -16072,7 +16107,7 @@ function defaultProfile(name, dress, opts) {
     stars: {},
     owned: owned,
     freebies: owned.length,
-    equipped: { hair: hair, dress: dress, shoes: 'shoes_roze', mic: null, instrument: null, acc: null, pet: null, stage: 'stage_disco' },
+    equipped: { hair: hair, dress: dress, shoes: schoen, mic: null, instrument: null, acc: null, pet: null, stage: 'stage_disco' },
 
 
 
@@ -18702,9 +18737,6 @@ function renderProfiles() {
   const hint = $('over-hint');
   if (hint) hint.style.display = n ? 'none' : 'flex';
   ouderStip();
-
-  const codeHint = $('code-hint');
-  if (codeHint) codeHint.style.display = !n && overzetMag() ? 'flex' : 'none';
   renderGeluid();
   appKnopZet();
 
@@ -18726,26 +18758,63 @@ function selectProfile(key) { cur = key; goMap(); }
 
 
 
+
+
+
+
+
+
 function leegTegel(add) {
-  if (add.classList.contains('leeg-tegel')) return;
-  const schim = defaultProfile('', 'dress_roze', { base: 'jongen' });
-  add.className = 'leeg-tegel';
-  add.innerHTML =
-    `<div class="stage st-podium"><div class="avatar-holder">${pasLaag(avatarSVG(schim, 132, 'klein'))}</div>`
-    + `<span class="ns-vraag" aria-hidden="true">?</span></div>
-     <div class="st-voet"><div class="st-rij">
-       <span class="st-ico" aria-hidden="true">＋</span>
-       <span class="st-naam">Maak je ster</span>
-     </div></div>`;
-  applyWorldTheme(add, WORLDS[0]);
-  applyStage(add.querySelector('.st-podium'), schim);
-  add.setAttribute('aria-label', 'Maak je eerste ster');
+  if (add.classList.contains('leeg-knop')) return;
+  add.className = 'btn big leeg-knop';
+  add.innerHTML = '🌟 Maak je ster';
+  add.setAttribute('aria-label', 'Maak je ster');
+  let duo = $('leeg-duo');
+  if (!duo) {
+    duo = document.createElement('div');
+    duo.id = 'leeg-duo';
+    duo.className = 'leeg-tegel';
+    add.parentNode.insertBefore(duo, add);
+  }
+  const kleren = { meisje: 'dress_roze', jongen: 'dress_blauw' };
+  const haar = { meisje: 'hair_blond', jongen: 'hair_bruin' };
+  duo.innerHTML = `<div class="stage st-podium">${duoHtml(b => defaultProfile('', kleren[b], { base: b, hair: haar[b] }))}</div>`;
+  applyWorldTheme(duo, WORLDS[0]);
+  applyStage(duo.querySelector('.st-podium'), defaultProfile('', 'dress_roze'));
+  duo.onclick = e => {
+    const pop = e.target.closest('[data-base]');
+    naTik(() => openNewStar('profile', pop ? pop.dataset.base : null));
+  };
+  duoZwaai(duo);
+}
+
+
+
+
+
+function duoHtml(wie) {
+  return '<div class="duo">' + BASE_CHOICES.map(b =>
+    `<button type="button" class="avatar-holder idle levend" data-base="${b.id}" aria-label="${b.name}">`
+    + `${pasLaag(avatarSVG(wie(b.id), 132, 'klein'))}</button>`).join('') + '</div>';
+}
+
+
+
+
+
+const DUO_ZWAAI = MOVES.find(m => m.cls === 'move-wave');
+function duoZwaai(duo) {
+  naOpbouw(() => duo.querySelectorAll('.avatar-holder').forEach((el, i) => {
+    setTimeout(() => { if (el.isConnected && zetPas(el, DUO_ZWAAI)) pasUit(el); }, 350 + i * 180);
+  }));
 }
 function plusKnop(add) {
   if (add.classList.contains('add-tegel')) return;
+  const duo = $('leeg-duo');
+  if (duo) duo.remove();
   add.className = 'add-tegel';
   add.innerHTML = '<span class="at-plus" aria-hidden="true">＋</span><span class="at-tekst">Nieuwe ster</span>';
-  add.setAttribute('aria-label', 'Nieuwe ster maken');
+  add.setAttribute('aria-label', 'Nieuwe ster');
 }
 
 
@@ -22518,8 +22587,16 @@ function haltKnop(shown, nodes, i, stand) {
   const schatTeken = (schat && !p.owned.includes(schat.id))
     ? `<span class="stop-schat${n.x > 70 ? ' links' : ''}" aria-hidden="true">`
       + (schat.thumb ? schat.thumb(curBase()) : `<span class="thumb-emo">${schat.emoji || '🎁'}</span>`) + '</span>' : '';
+
+
+
+
+
+
+  const eersteTik = b.classList.contains('next') && !Object.keys(p.stars).length
+    ? '<span class="eerste-tik" aria-hidden="true">👆</span>' : '';
   b.innerHTML = `${hero}<div class="stop-body"><div class="dot">${i + 1}</div>`
-    + `${schatTeken}${sterrenRij}</div>`;
+    + `${schatTeken}${sterrenRij}${eersteTik}</div>`;
 
 
 
@@ -31037,10 +31114,17 @@ function equipShopItem(id, blijf) {
 
 let newStar = null;
 let newStarReturn = 'profile';
-function openNewStar(from) {
+
+
+function openNewStar(from, base) {
   if (Object.keys(db.profiles).length >= MAX_PROFILES) return;
   sndClick();
   newStarReturn = from || 'profile';
+
+
+
+  const kop = document.querySelector('#screen-newstar .header-title');
+  if (kop) kop.textContent = newStarReturn === 'profile' && !profileKeys().length ? 'Maak je ster' : 'Nieuwe ster';
 
 
 
@@ -31049,7 +31133,7 @@ function openNewStar(from) {
 
 
 
-    name: '', base: null, hair: 'hair_blond', dress: 'dress_roze',
+    name: '', base: BASES[base] ? base : null, hair: 'hair_blond', dress: 'dress_roze',
 
 
 
@@ -31090,6 +31174,7 @@ function renderNewStar() {
 
 
 
+
   const wacht = !n.base;
   const preview = defaultProfile(n.name || '…', n.dress, { hair: n.hair, base: n.base || 'jongen' });
   const ok = nieuweSterKlaar();
@@ -31111,7 +31196,9 @@ function renderNewStar() {
 
 
   $('newstar-body').innerHTML = `<div class="settings-panel">
-    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage"><div class="avatar-holder idle levend">${pasLaag(avatarSVG(preview, 132))}</div>${wacht ? '<span class="ns-vraag" aria-hidden="true">?</span>' : ''}</div></div>
+    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage">${wacht
+      ? duoHtml(b => defaultProfile('', n.dress, { hair: n.hair, base: b }))
+      : `<div class="avatar-holder idle levend">${pasLaag(avatarSVG(preview, 132))}</div>`}</div></div>
     <div class="set-card newstar-vel">
       <div class="ns-groep">
         <div class="set-field"><label class="lbl">Wie ben je?</label>
@@ -31148,7 +31235,7 @@ function renderNewStar() {
           <div class="set-reveal-body">
             ${s.track === 'math' ? `<div class="reveal-group">${oeLbl('Wat oefent je ster?')}${themaTegels(s, 'ns-')}</div>` : ''}
             ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${oeLbl(g.kop)}${g.html}</div>`).join('')}
-            <div class="note" style="margin-top:14px">Later te wijzigen bij 👨‍👩‍👧 Voor ouders.</div>
+            <div class="note" style="margin-top:14px">Later te wijzigen bij ⚙️ Ouders.</div>
           </div>
         </details>` : ''}
       </div>
@@ -31163,7 +31250,10 @@ function renderNewStar() {
 
 
 
-  if (klok) klokTerug($('newstar-stage').querySelector('.avatar-holder'), klok);
+  if (klok) $('newstar-stage').querySelectorAll('.avatar-holder').forEach(el => klokTerug(el, klok));
+  $('newstar-stage').querySelectorAll('[data-base]').forEach(el => el.onclick = () => {
+    sndClick(); newStar.base = el.dataset.base; renderNewStar();
+  });
 
 
 
@@ -31337,7 +31427,6 @@ let setOpen = null;
 
 let setUitleg = null;
 function openSettings() {
-
 
 
 
@@ -32469,7 +32558,8 @@ function backupWanneer(nu) {
 
 
 function backupStandHtml(nu) {
-  const oud = backupOud(nu);
+
+  const oud = profileKeys().length > 0 && backupOud(nu);
   return `<span class="backup-stip${oud ? ' oud' : ''}" id="set-backup-stand">`
     + (oud ? '<span class="gi-dot" role="img" aria-label="Al lang geen back-up"></span>' : '') + '</span>';
 }
@@ -32591,37 +32681,6 @@ function deelOver() {
     return;
   }
   melding(esc(OVER_URL));
-}
-
-
-
-
-
-
-
-
-function beheerEmptyHtml() {
-
-
-
-
-  const terug = overzetMag()
-    ? `<button class="btn purple oz-groot" id="oz-code" type="button">${ozIco('zet')} Sterren ophalen</button>
-      <div class="data-btns">
-        <button class="btn small paper" id="set-import" type="button">${ozIco('hier')} Uit back-upbestand</button>
-        <button class="btn small paper" id="set-newstar">➕ Nieuwe ster</button>
-      </div>`
-    : `<div class="data-btns">
-        <button class="btn small purple" id="set-import">📂 Back-up terugzetten…</button>
-        <button class="btn small paper" id="set-newstar">➕ Nieuwe ster maken</button>
-      </div>`;
-  return `<div class="settings-panel">
-    <div class="set-card">
-      <div class="set-card-head"><div class="ico">🌟</div><div><h2>Nog geen sterren</h2><div class="sub">Al gespeeld op een ander toestel?${overzetMag() ? '' : ' Zet de back-up hier terug.'}</div></div></div>
-      ${terug}
-      ${importInvoerHtml()}
-    </div>${beginschermKaartHtml(false)}${overKaartHtml()}
-  </div>`;
 }
 
 
@@ -32854,7 +32913,14 @@ function renderSettings() {
   if (!p) {
     lastWieHtml = null;
     $('settings-wie').innerHTML = '';
-    $('settings-body').innerHTML = profileKeys().length ? overzichtHtml() : beheerEmptyHtml();
+
+
+
+
+
+
+
+    $('settings-body').innerHTML = overzichtHtml();
     bindSettings(null, null);
     return;
   }
@@ -33259,7 +33325,6 @@ function bindSettings(p, s) {
   on('set-alsapp', 'onclick', () => openAppBlad(false));
   on('set-backup', 'onclick', openBackupBlad);
   on('set-overzet', 'onclick', openOverzetBlad);
-  on('oz-code', 'onclick', () => openCodeBlad(false));
 
 
 
@@ -33269,7 +33334,6 @@ function bindSettings(p, s) {
   on('set-export', 'onclick', exportData);
   on('set-deel', 'onclick', deelOver);
   on('set-over', 'onclick', naarOver);
-  on('set-import', 'onclick', () => { const f = $('set-import-file'); if (f) f.click(); });
   on('set-import-file', 'onchange', e => {
     if (e.target.files[0]) importData(e.target.files[0]);
     e.target.value = '';
@@ -33402,21 +33466,28 @@ function openBackupBlad() {
     + `<span class="gi-ico" aria-hidden="true">${ico}</span><span class="gi-label">${label}</span>`
     + (pijl ? '<span class="gi-pijl" aria-hidden="true">›</span>' : '') + '</button>';
   const oz = overzetMag();
+
+
+
+
+  const leeg = !profileKeys().length;
   $('confirm-title').textContent = '💾 ' + sterrenRijNaam();
   $('confirm-body').innerHTML = `<div class="bb-blad">`
-    + (oz ? `<button class="btn purple oz-groot" id="bb-naar" type="button">${ozIco('zet')} Naar ander toestel</button>` : '')
+    + (oz ? (leeg
+      ? `<button class="btn purple oz-groot" id="bb-van" type="button">${ozIco('hier')} Van ander toestel</button>`
+      : `<button class="btn purple oz-groot" id="bb-naar" type="button">${ozIco('zet')} Naar ander toestel</button>`) : '')
     + `<div class="bb-lijst">`
-    + (oz ? rij('bb-van', '🔢', 'Van ander toestel', true) : '')
-    + rij('bb-maak', '📥', 'Back-up maken' + backupBladStandHtml())
+    + (oz && !leeg ? rij('bb-van', '🔢', 'Van ander toestel', true) : '')
+    + (leeg ? '' : rij('bb-maak', '📥', 'Back-up maken' + backupBladStandHtml()))
     + rij('bb-terug', '📤', 'Terugzetten')
     + '</div></div>';
   $('confirm-actions').innerHTML = klaarKnop('bb-dicht');
   $('bb-dicht').onclick = closeConfirmModal;
   if (oz) {
-    $('bb-naar').onclick = openOverzetBlad;
+    if (!leeg) $('bb-naar').onclick = openOverzetBlad;
     $('bb-van').onclick = () => { sndClick(); openCodeBlad(false); };
   }
-  $('bb-maak').onclick = exportData;
+  if (!leeg) $('bb-maak').onclick = exportData;
 
 
   $('bb-terug').onclick = () => { closeConfirmModal(); const f = $('set-import-file'); if (f) f.click(); };
@@ -33676,11 +33747,14 @@ function openCodeBlad(vanStart, code) {
 
 
   const plak = !!(navigator.clipboard && navigator.clipboard.readText);
-  ozToon('<span aria-hidden="true">⭐</span> Sterren ophalen',
+
+
+
+  ozToon(ozIco('hier') + ' Van ander toestel',
     (plak ? `<button class="btn purple oz-groot" id="oz-plak" type="button">${ozIco('plak')} Plakken</button><div class="oz-of">of typ de code</div>` : '')
     + `<div class="oz-invoer">${ozCodeHtml('', '', 0)}
        <input id="oz-veld" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" aria-label="Code van zes cijfers"></div>
-     <div class="oz-onder" id="oz-onder"><div class="oz-waar">Andere toestel: <span class="ab-kbd">⚙️ Ouders › Ander toestel en back-up</span></div></div>`,
+     <div class="oz-onder" id="oz-onder"><div class="oz-waar">Op het andere toestel: <span class="ab-kbd">⚙️ Ouders › ${sterrenRijNaam()}</span></div></div>`,
     '<button class="btn small paper" id="oz-dicht">Annuleer</button>');
   $('oz-blad').dataset.nr = nr;
   $('oz-dicht').onclick = closeConfirmModal;
@@ -33873,22 +33947,9 @@ function beginschermUitleg(soort, hasStars) {
 
 
 let beginschermNetErop = false;
-
-
-
-function beginschermKaartHtml(hasStars) {
-  if (beginschermNetErop || speeltAlsApp()) return '';
-  const [uitleg, tweede] = beginschermUitleg(beginschermSoort(), hasStars);
-  return `
-    <div class="set-card secundair" id="set-beginscherm">
-      <div class="set-card-head"><div class="ico">📲</div><div><h2>Op het beginscherm</h2><div class="sub">Rekensterren als app op dit toestel</div></div></div>
-      <div class="note">${uitleg}</div>${tweede ? `
-      <div class="note" style="margin-top:8px">${tweede}</div>` : ''}
-    </div>`;
-}
 addEventListener('appinstalled', () => {
   beginschermNetErop = true;
-  ['set-beginscherm', 'set-alsapp'].forEach(id => { const k = $(id); if (k) k.remove(); });
+  { const k = $('set-alsapp'); if (k) k.remove(); }
   installVoorstel = null;
   appKnopZet();
   renderGeluid();
@@ -33981,6 +34042,7 @@ function isSafari26(nav) {
 
 
 
+
 function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
   const kbd = t => `<span class="ab-kbd">${t}</span>`;
   const erbij = kbd(ico('erbij') + ' Zet op beginscherm');
@@ -33999,10 +34061,10 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
     if (meenemen) {
       html += stappen(['<button class="btn small purple ab-mee" id="ab-mee" type="button"><span aria-hidden="true">⭐</span> Neem je sterren mee</button>'
           + '<span class="ab-ok" id="ab-mee-ok" aria-live="polite"></span>']
-        .concat(zet, [`Open de app › ${kbd('Al gespeeld?')} › ${kbd('Plakken')}`]));
+        .concat(zet, [`Open de app › ${kbd('⚙️ Ouders')} › ${kbd(sterrenRijNaam())} › ${kbd(ozIco('hier') + ' Van ander toestel')} › ${kbd('Plakken')}`]));
     } else {
       html += stappen(zet);
-      if (hasStars) html += '<div class="ab-noot">⭐ De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › Back-up, en zet hem in de app terug.</div>';
+      if (hasStars) html += '<div class="ab-noot">⭐ De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › ' + sterrenRijNaam() + ', en zet hem in de app terug.</div>';
     }
     return { html, installeer: false, meenemen, kopieer: false };
   }
@@ -34030,8 +34092,10 @@ function openAppBlad() {
   const { html, installeer, meenemen, kopieer: kopieerKnop } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel, isSafari26());
   $('confirm-title').innerHTML = ico('erbij') + ' Rekensterren als app';
   $('confirm-body').innerHTML = `<div id="app-blad">${html}</div>`;
-  $('confirm-actions').innerHTML =
-    '<button class="btn small paper" id="app-blad-dicht">Sluiten</button>'
+
+
+  $('confirm-actions').innerHTML = (installeer || kopieerKnop
+    ? '<button class="btn small paper" id="app-blad-dicht">Sluiten</button>' : klaarKnop('app-blad-dicht'))
     + (installeer ? '<button class="btn small purple" id="app-blad-installeer">Installeren</button>' : '')
     + (kopieerKnop ? '<button class="btn small purple" id="app-blad-kopieer">Kopieer link</button>' : '');
   $('app-blad-dicht').onclick = closeConfirmModal;

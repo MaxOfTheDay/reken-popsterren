@@ -1008,9 +1008,6 @@ function renderProfiles() {
   const hint = $('over-hint');
   if (hint) hint.style.display = n ? 'none' : 'flex';
   ouderStip();   // goud op ⚙️ als er een ster klaar is voor meer
-  // en ernaast: al gespeeld op een ander toestel? (zie = Overzetten)
-  const codeHint = $('code-hint');
-  if (codeHint) codeHint.style.display = !n && overzetMag() ? 'flex' : 'none';
   renderGeluid();
   appKnopZet();
   /* HIER WORDT NIET MEER GEZWAAID. Dit scherm had zijn eigen begroeting: alle
@@ -1026,32 +1023,69 @@ function renderProfiles() {
 }
 function selectProfile(key) { cur = key; goMap(); }
 /* De "+" heeft twee gedaanten, en het is steeds dezelfde knop (#btn-newstar):
-   met sterren een lage gestippelde knop onder de tegels, zonder sterren een lege
-   sterrentegel. Die lege tegel was eerst een welkomstzin boven een knop die
-   hetzelfde zei ("Welkom! Maak je eerste ster." / "Maak je eerste ster"); nu
-   staat er wat je gaat maken -- de gedimde schim met het vraagteken uit het
-   maakformulier (zie renderNewStar), op een podium in de eerste wereld, want daar
-   begint ze. Een tik opent precies diezelfde schim. */
+   met sterren een glazen pil onder de tegels, zonder sterren de gouden hoofdknop
+   "🌟 Maak je ster" -- de enige keer dat dit scherm maar één ding te doen heeft,
+   dus krijgt het de knop die overal in de app "ga" zegt (.btn.big, zie §2 van
+   DE AFSPRAAK).
+
+   Daarboven staat dan het podium met het meisje en de jongen (#leeg-duo, zie
+   duoHtml): je ziet wat je gaat maken, in kleur en levend, en de eerste vraag
+   van het formulier (Meisje of Jongen) staat er al zonder één woord. Hier stond
+   een grijze schim met een vraagteken, en grijs betekent in deze app "op slot"
+   -- het welkom las als iets wat nog niet mocht. Een tik op het meisje of de
+   jongen opent het formulier met die keuze al gemaakt; een tik ernaast of op de
+   knop opent het leeg. */
 function leegTegel(add) {
-  if (add.classList.contains('leeg-tegel')) return;
-  const schim = defaultProfile('', 'dress_roze', { base: 'jongen' });
-  add.className = 'leeg-tegel';
-  add.innerHTML =
-    `<div class="stage st-podium"><div class="avatar-holder">${pasLaag(avatarSVG(schim, 132, 'klein'))}</div>`
-    + `<span class="ns-vraag" aria-hidden="true">?</span></div>
-     <div class="st-voet"><div class="st-rij">
-       <span class="st-ico" aria-hidden="true">＋</span>
-       <span class="st-naam">Maak je ster</span>
-     </div></div>`;
-  applyWorldTheme(add, WORLDS[0]);
-  applyStage(add.querySelector('.st-podium'), schim);
-  add.setAttribute('aria-label', 'Maak je eerste ster');
+  if (add.classList.contains('leeg-knop')) return;
+  add.className = 'btn big leeg-knop';
+  add.innerHTML = '🌟 Maak je ster';
+  add.setAttribute('aria-label', 'Maak je ster');
+  let duo = $('leeg-duo');
+  if (!duo) {
+    duo = document.createElement('div');
+    duo.id = 'leeg-duo';
+    duo.className = 'leeg-tegel';
+    add.parentNode.insertBefore(duo, add);
+  }
+  const kleren = { meisje: 'dress_roze', jongen: 'dress_blauw' };
+  const haar = { meisje: 'hair_blond', jongen: 'hair_bruin' };
+  duo.innerHTML = `<div class="stage st-podium">${duoHtml(b => defaultProfile('', kleren[b], { base: b, hair: haar[b] }))}</div>`;
+  applyWorldTheme(duo, WORLDS[0]);
+  applyStage(duo.querySelector('.st-podium'), defaultProfile('', 'dress_roze'));
+  duo.onclick = e => {
+    const pop = e.target.closest('[data-base]');
+    naTik(() => openNewStar('profile', pop ? pop.dataset.base : null));
+  };
+  duoZwaai(duo);
+}
+/* Het meisje en de jongen naast elkaar op één podium: op het lege beginscherm
+   en bovenaan het formulier zolang "Wie ben je?" nog open staat. Eén vorm op
+   beide plekken, zodat het formulier opent op precies wat je net aantikte.
+   wie(base) geeft het profiel om te tekenen. Elke pop is een knop zonder rand:
+   tikken kiest. */
+function duoHtml(wie) {
+  return '<div class="duo">' + BASE_CHOICES.map(b =>
+    `<button type="button" class="avatar-holder idle levend" data-base="${b.id}" aria-label="${b.name}">`
+    + `${pasLaag(avatarSVG(wie(b.id), 132, 'klein'))}</button>`).join('') + '</div>';
+}
+/* Eén keer zwaaien als het lege beginscherm opengaat, de jongen net na het
+   meisje -- dan knikken ze verder zoals elke pop. Pas na de verf (naOpbouw, zie
+   = Bewegingstaal): wie in dezelfde taak bouwt en beweegt, ziet op een trage
+   tablet de zwaai pas halverwege. Met sterren staan de tegels stil (zie
+   renderProfiles): dit is geen keuze tussen kinderen maar een uitnodiging. */
+const DUO_ZWAAI = MOVES.find(m => m.cls === 'move-wave');
+function duoZwaai(duo) {
+  naOpbouw(() => duo.querySelectorAll('.avatar-holder').forEach((el, i) => {
+    setTimeout(() => { if (el.isConnected && zetPas(el, DUO_ZWAAI)) pasUit(el); }, 350 + i * 180);
+  }));
 }
 function plusKnop(add) {
   if (add.classList.contains('add-tegel')) return;
+  const duo = $('leeg-duo');
+  if (duo) duo.remove();
   add.className = 'add-tegel';
   add.innerHTML = '<span class="at-plus" aria-hidden="true">＋</span><span class="at-tekst">Nieuwe ster</span>';
-  add.setAttribute('aria-label', 'Nieuwe ster maken');
+  add.setAttribute('aria-label', 'Nieuwe ster');
 }
 
 /* ================= Wat er geladen wordt, en wanneer =========================
