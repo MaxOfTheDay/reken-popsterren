@@ -1247,7 +1247,18 @@
     background-repeat: no-repeat;
     color: var(--c-white);
     overflow: hidden;
-    user-select: none;
+
+
+
+    user-select: none; -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+
+
+  input, textarea, [contenteditable] {
+    user-select: text; -webkit-user-select: text;
+    -webkit-touch-callout: default;
   }
 
 
@@ -12392,6 +12403,65 @@ function tapDance(elId, stil) {
   pasUit(el);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const LANG_VAST = 450;
+const LANG_SCHUIF = 10;
+const LOS_UITERLIJK = 8000;
+function vasthouden(houder, kies, op) {
+  let klok = null, los = null, vast = null, x = 0, y = 0, slik = false;
+  const stop = () => {
+    clearTimeout(klok); klok = null;
+    if (los) { const f = los; los = null; f(); }
+  };
+  houder.addEventListener('pointerdown', e => {
+    stop();
+    slik = false;
+    if (!e.isPrimary || e.button > 0) return;
+    const doel = kies ? e.target.closest && e.target.closest(kies) : houder;
+    if (!doel || !houder.contains(doel)) return;
+    x = e.clientX; y = e.clientY;
+    klok = setTimeout(() => {
+      klok = null;
+      slik = true;
+      const f = op(doel);
+      if (typeof f === 'function') { los = f; clearTimeout(vast); vast = setTimeout(stop, LOS_UITERLIJK); }
+    }, LANG_VAST);
+  }, { passive: true });
+  houder.addEventListener('pointermove', e => {
+    if (klok && Math.hypot(e.clientX - x, e.clientY - y) > LANG_SCHUIF) { clearTimeout(klok); klok = null; }
+  }, { passive: true });
+  for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) houder.addEventListener(t, stop, { passive: true });
+  houder.addEventListener('click', e => {
+    if (!slik) return;
+    slik = false;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  }, true);
+}
+
+
+
+document.addEventListener('contextmenu', e => {
+  const t = e.target;
+  if (t && t.closest && t.closest('input, textarea, [contenteditable]')) return;
+  e.preventDefault();
+});
+
 function sparkle(el, emojis) { sparkleAt(el.getBoundingClientRect(), emojis); }
 
 
@@ -18224,6 +18294,8 @@ function sterTegel(key, p) {
   tegel.setAttribute('aria-label', `Speel met ${p.name} — verder in ${w.name}`);
   tegel.onclick = () => kiesSter(key, tegel);
 
+  vasthouden(tegel, null, () => kiesSter(key, tegel));
+
 
 
 
@@ -20311,13 +20383,41 @@ function hierBenIk(el) {
 
 const TIK_PAS = HUPPEL;
 function kaartTik(ster, halte) {
-  const el = ster.querySelector('.avatar-holder');
-  if (!el || el.classList.contains('dancing') || !halte.classList.contains('next')) return;
-  if (overgangBezig || vluchtOp || wereldReisOp || ster.getAnimations().length) return;
-  clearTimeout(groetTimer);
-  groetTimer = null;
+  const el = kaartPopVrij(ster, halte);
+  if (!el) return;
   sndTap();
   if (zetPas(el, TIK_PAS)) pasUit(el);
+}
+
+
+function kaartPopVrij(ster, halte) {
+  const el = ster.querySelector('.avatar-holder');
+  if (!el || el.classList.contains('dancing') || !halte || !halte.classList.contains('next')) return null;
+  if (overgangBezig || vluchtOp || wereldReisOp || ster.getAnimations().length) return null;
+  clearTimeout(groetTimer);
+  groetTimer = null;
+  return el;
+}
+
+
+
+
+
+
+
+
+const NOOT = MOVES.find(m => m.cls === 'move-noot');
+function kaartZing(ster) {
+  const el = kaartPopVrij(ster, ster.closest('.tour-stop'));
+  if (!el) return null;
+  sndTap();
+  let vast = true;
+  const zing = () => {
+    if (!vast || !el.isConnected || !zetPas(el, NOOT)) { stilStaan(el); return; }
+    pasUit(el, zing);
+  };
+  zing();
+  return () => { vast = false; };
 }
 
 
@@ -21995,6 +22095,8 @@ function stofStart() {
 }
 
 $('screen-map').addEventListener('pointerdown', stofWek, { passive: true });
+
+vasthouden($('screen-map'), '.tour-stop.next .tour-hero', kaartZing);
 
 
 
