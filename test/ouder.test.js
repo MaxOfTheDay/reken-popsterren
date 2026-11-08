@@ -760,18 +760,18 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
-  /* ================= K · Eén of meer ================= */
+  /* ================= K · Eén of meer, en haar cijfers ================= */
   /* FASE 5D.1. Alle tellers stonden in het meervoud, dus las een kind dat net
      één show had gespeeld "1 shows gespeeld". Wat hier vastligt is niet de
      tekst maar de regel: enkelvoud alléén bij precies 1 -- óók bij 0
      ("0 shows"), want dat is Nederlands. De tellers staan in het blad achter
-     📊 in de kop (cijfersBladHtml). */
+     de staafjesknop in de kop (cijfersBladHtml): rijen met een label en een getal. */
   {
     const { ctx, page } = await fresh();
     const regel = async () => {
       await page.click('#cijfers-knop');
       await page.waitForTimeout(150);
-      const r = await page.evaluate(() => [...document.querySelectorAll('#confirm-body .ster-cijfers span, #confirm-body .cijfer-voet span, #confirm-body .cijfer-leeg')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
+      const r = await page.evaluate(() => [...document.querySelectorAll('#confirm-body .cijfer-rij, #confirm-body .cijfer-leeg')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
       await page.click('#cijfers-klaar');
       return r;
     };
@@ -780,54 +780,54 @@ function check(ok, label, detail) {
     await page.waitForTimeout(200);
     let r = await regel();
     check(r.join() === '🎬 Nog geen shows gespeeld.', 'nog niets gespeeld: één regel, geen nullen', JSON.stringify(r));
-    // precies één
+    // precies één, en de laatste shows staan er niet (zie cijfersBladHtml)
     await page.evaluate(() => {
       const p = db.profiles.p1;
-      p.stars[1] = 1;
+      p.stars[1] = 1; p.recent = [1];
       p.stats.correct = 1; p.stats.wrong = 0;
       save();
     });
     await open(page, 'p1', 'voortgang');
     await page.waitForTimeout(200);
     r = await regel();
-    check(r[0] === '1 vraag' && r[1] === '100% goed' && !r.some(x => /geleerd/.test(x)), 'één vraag is enkelvoud, en zonder geleerde sommen geen "0 geleerd"', JSON.stringify(r));
-    // twee: weer meervoud
+    check(r.join('|') === 'Vragen1·100% goed', 'één vraag, en zonder geleerde sommen geen "0 geleerd"', JSON.stringify(r));
+    // twee: weer meervoud, en de geleerde sommen klappen open
     await page.evaluate(() => {
       const p = db.profiles.p1; p.stars[1] = 3; p.stars[2] = 3; p.stats.correct = 2;
-      p.learned = { a: { ans: 3, op: '+', iv: 18, due: 20 } }; save();
+      p.learned = { '7 × 8 = @': { ans: 56, op: 'x', iv: 18, due: 20 } }; save();
     });
     await open(page, 'p1', 'voortgang');
     await page.waitForTimeout(200);
     r = await regel();
-    check(r[0] === '2 vragen' && r[2] === '1 som geleerd' && r.includes('6 ⭐'), 'twee is weer meervoud, één geleerde som enkelvoud, en de sterren stil onderaan', JSON.stringify(r));
-    // de laatste shows als staafjes: hoe hoger hoe beter, mislukt een stompje (s0)
-    const staaf = await page.evaluate(() => {
-      db.profiles.p1.recent = [3, 0, 2, 1]; save(); openCijfers();
-      const r = { kop: document.querySelector('#confirm-body .cijfer-kop2 span').textContent,
-        s: [...document.querySelectorAll('#confirm-body .cijfer-staaf i')].map(i => i.className) };
+    check(r[0] === 'Vragen2·100% goed' && r[1] === 'Geleerd1 som›', 'één geleerde som is enkelvoud', JSON.stringify(r));
+    const open1 = await page.evaluate(async () => {
+      openCijfers();
+      const knop = document.getElementById('cijfer-geleerd-knop'), lijst = document.getElementById('cijfer-geleerd');
+      const dicht = lijst.hidden;
+      knop.click();
+      const r = { dicht, open: !lijst.hidden, aria: knop.getAttribute('aria-expanded'), sommen: lijst.textContent };
       closeConfirmModal();
       return r;
     });
-    check(staaf.kop === 'Laatste 4 shows' && staaf.s.join() === 's3,s0,s2,s1', 'cijfers: de laatste shows als staafjes, van eerder naar nu', JSON.stringify(staaf));
-    // per thema (stats.thema, zie telThema): pas vanaf twee thema's, met het percentage erbij
+    check(open1.dicht && open1.open && open1.aria === 'true' && open1.sommen === '7 × 8 = 56', 'cijfers: tik op Geleerd en de sommen staan er, met hun antwoord', JSON.stringify(open1));
+    // per thema (stats.thema, zie telThema): pas vanaf twee thema's; het aantal vragen en het % goed
     const perThema = async th => page.evaluate(th => {
       db.profiles.p1.stats.thema = th; save(); openCijfers();
-      // zonder het icoon: rekenen en de tafels tekenen hun tekens als tekst
-      const r = [...document.querySelectorAll('#confirm-body .cijfer-thema')].map(e => e.querySelector('span').textContent + e.querySelector('b').textContent);
+      const r = [...document.querySelectorAll('#confirm-body .cijfer-thema')].map(e => e.querySelector(':scope > span').textContent + ' ' + e.querySelector('b').textContent);
       closeConfirmModal();
       return r;
     }, th);
     let t = await perThema({ rekenen: [9, 1] });
-    check(!t.length, 'cijfers: met één thema geen "Goed per thema" (dat zegt het totaal al)', JSON.stringify(t));
+    check(!t.length, 'cijfers: met één thema geen "Per thema" (dat zegt het totaal al)', JSON.stringify(t));
     t = await perThema({ geld: [9, 3], rekenen: [9, 1], klok: [2, 1], tafels: [0, 0] });
-    check(JSON.stringify(t) === '["Rekenen90%","Geld75%","Klok–"]', 'cijfers: per thema in de volgorde van de tegels, zonder wat ze niet speelde, en "–" met te weinig vragen', JSON.stringify(t));
+    check(JSON.stringify(t) === '["Rekenen 10 · 90%","Geld 12 · 75%","Klok nog weinig"]', 'cijfers: per thema in de volgorde van de tegels, zonder wat ze niet speelde, en "nog weinig" met te weinig vragen', JSON.stringify(t));
     await ctx.close();
   }
 
   /* ================= L · De trofeeteller heeft één bron ================= */
-  /* Het verdiende aantal in haar cijfers ("3 🏆") en in de kop van de kast
-     ("3 verzameld") moeten hetzelfde getal zijn, en dat getal hoort uit
-     activeTrophies() te komen -- niet uit een tweede lijstje. Zet iemand er een
+  /* Het verdiende aantal in de kop van de kast ("3 verzameld") hoort uit
+     earnedActiveCount() en activeTrophies() te komen -- niet uit een tweede
+     lijstje. (Haar cijfers noemden het ook; daar staat het niet meer.) Zet iemand er een
      trofee bij (of komt er een wereld bij, wat rebuildWorldBadges doet), dan
      lopen ze zonder deze controle stil uit elkaar. */
   {
@@ -835,17 +835,12 @@ function check(ok, label, detail) {
     const r = await page.evaluate(() => {
       const p = db.profiles.p1;
       p.trophies.push('first', 'sums25');
-      p.stars[1] = 3;   // met een show, anders is het blad één regel
+      p.stars[1] = 3;
       save();
-      openSettings(); setKey = 'p1'; renderSettings();
-      openCijfers();
-      const oogst = [...document.querySelectorAll('#confirm-body .cijfer-voet span')].map(e => e.textContent.trim());
-      closeConfirmModal();
       cur = 'p1';        // de kast leest P(), en die heeft een gekozen ster nodig
       openTrophies();
       return {
-        teller: oogst.find(t => /🏆/.test(t)) || '',
-        bron: `${earnedActiveCount(p)} 🏆`,
+        bron: earnedActiveCount(p),
         kast: document.getElementById('trophy-count').getAttribute('aria-label'),
         actief: activeTrophies().length,
         tabel: TROPHIES.length,
@@ -853,14 +848,11 @@ function check(ok, label, detail) {
         verwacht: TROPHIES.filter(t => !t.perfect && !isRetiredTrophy(t.id)).length + WORLD_AVAIL,
       };
     });
-    // Hier stond /2\/18/: twaalf vaste plus zes werelden. Met een wereld erbij
-    // is de teller gewoon 2/19, en dat is geen fout maar het hele punt.
-    check(r.teller === '2 🏆' && r.actief === r.verwacht,
-      'de teller toont het verdiende aantal, zonder totaal (3/38 las als een onvoldoende)', r.teller + ' (verwacht 2, actief ' + r.verwacht + ')');
-    check(r.teller === r.bron, 'en dat komt rechtstreeks uit earnedActiveCount()', `${r.teller} vs ${r.bron}`);
+    check(r.bron === 2 && r.actief === r.verwacht,
+      'earnedActiveCount() telt het verdiende aantal', r.bron + ' (verwacht 2, actief ' + r.verwacht + ')');
     /* De kast zelf noemt alleen wat er verzameld is, zonder totaal (zie
        .kast-chip; de woorden staan in de aria-label): dat totaal groeit met elke wereld, en voor een kind leest
-       dat als een kast die leegloopt. Ook de ouder ziet geen totaal meer (zie cijfersBladHtml). */
+       dat als een kast die leegloopt. */
     check(/^\s*2\s+verzameld\s*$/.test(r.kast),
       'de kast noemt hetzelfde verdiende aantal, zonder totaal', r.kast);
     check(r.actief === r.tabel, 'er staat geen tweede trofeelijst naast de tabel',

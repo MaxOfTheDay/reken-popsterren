@@ -10916,42 +10916,41 @@
 
 
 
-  .cijfer-kop2 {
-    display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0 2px 8px;
-    font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted);
+  .cijfer-rij {
+    display: grid; grid-template-columns: 76px 1fr auto; align-items: center; gap: 12px;
+    width: 100%; padding: 12px 0; text-align: left; border-top: 1px solid var(--lavender-wash);
   }
-  .cijfer-kop2 .sleutel { font-weight: 600; white-space: nowrap; }
-  .cijfer-staaf { display: flex; align-items: flex-end; gap: 5px; height: 40px; padding: 0 2px; border-bottom: 2px solid var(--lavender-wash); }
-  .cijfer-staaf i { flex: 1; max-width: 32px; border-radius: 5px 5px 2px 2px; background: var(--lavender-vul); }
-  .cijfer-staaf i.s3 { height: 100%; background: var(--purple-mid); }
-  .cijfer-staaf i.s2 { height: 66%; }
-  .cijfer-staaf i.s1 { height: 33%; }
-  .cijfer-staaf i.s0 { height: 6px; background: var(--danger-border); }
-  .cijfer-pijl { display: flex; justify-content: space-between; margin: 5px 2px 16px; font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); }
-  .ster-cijfers { display: flex; gap: 6px; }
-  .ster-cijfers span { flex: 1 1 0; }
-  .ster-cijfers span {
-    display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 6px;
-    border-radius: var(--r-md); background: var(--lavender-wash);
-    font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted);
+  .cijfer-rij:first-child { border-top: 0; padding-top: 2px; }
+  button.cijfer-rij { font: inherit; color: inherit; background: none; border-left: 0; border-right: 0; border-bottom: 0; border-radius: 0; cursor: pointer; }
+  button.cijfer-rij:first-child { border-top: 0; }
+  .cijfer-lbl { font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); }
+  .cijfer-w { font-size: var(--tx-label); font-weight: 600; color: var(--paper-ink-muted); font-variant-numeric: tabular-nums; }
+  .cijfer-w b { font-size: 20px; font-weight: 700; color: var(--paper-ink); margin-right: 3px; }
+  .cijfer-punt { margin: 0 8px; opacity: .5; }
+  .cijfer-open { font-size: 18px; font-weight: 700; color: var(--purple-mid); transition: transform var(--t-snel); }
+  .cijfer-rij[aria-expanded="true"] .cijfer-open { transform: rotate(90deg); }
+
+  .cijfer-geleerd { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 0 12px; }
+  .cijfer-geleerd span {
+    padding: 3px 10px; border-radius: var(--r-pill); background: var(--lavender-wash);
+    font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink); font-variant-numeric: tabular-nums;
   }
-  .ster-cijfers b { font-size: 26px; font-weight: 700; color: var(--paper-ink); line-height: 1.1; }
-  .ster-cijfers small { font-size: inherit; line-height: 1.15; text-align: center; }
-  .cijfer-kop { justify-content: center; margin-top: 18px; }
-  .cijfer-kop:first-child { margin-top: 0; }
-  .cijfer-thema { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: var(--tx-klein); }
-  .cijfer-thema .thema-ico { flex: 0 0 22px; }
-  .cijfer-thema span { flex: 0 0 92px; text-align: left; font-weight: 700; color: var(--paper-ink-muted); }
+  .cijfer-geleerd .meer { color: var(--paper-ink-muted); }
+  .cijfer-themas { display: flex; flex-direction: column; gap: 2px; padding-top: 12px; border-top: 1px solid var(--lavender-wash); text-align: left; }
+  .cijfer-themas:first-child { border-top: 0; padding-top: 2px; }
+  .cijfer-themas > .cijfer-lbl { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .cijfer-thema {
+    display: grid; grid-template-columns: 20px 72px minmax(0, 1fr) 84px; align-items: center; gap: 8px;
+    padding: 5px 0; font-size: var(--tx-klein);
+  }
+  .cijfer-thema .thema-ico { width: 20px; height: 20px; }
+  .cijfer-thema > span { font-weight: 600; color: var(--paper-ink); }
   .cijfer-thema i {
-    flex: 1; height: 10px; border-radius: 5px;
-    background: linear-gradient(90deg, var(--purple-mid) var(--pct), var(--lavender-wash) var(--pct));
+    height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, var(--purple-mid) var(--deel), var(--lavender-wash) var(--deel));
   }
-  .cijfer-thema b { flex: 0 0 40px; text-align: right; color: var(--paper-ink); }
-  .cijfer-thema.weinig { opacity: .5; }
-  .cijfer-voet {
-    display: flex; justify-content: center; gap: 18px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--lavender-wash);
-    font-size: var(--tx-klein); font-weight: 600;
-  }
+  .cijfer-thema b { text-align: right; font-weight: 600; color: var(--paper-ink-muted); font-variant-numeric: tabular-nums; }
+  .cijfer-thema b em { font-style: normal; font-weight: 700; color: var(--paper-ink); }
   .cijfer-leeg { padding: 4px 0 2px; text-align: center; font-size: var(--tx-label); font-weight: 600; color: var(--paper-ink-muted); }
 
   .vg-zelf > .fl-rij::before, .vg-zelf > .fl-rij::after { display: none; }
@@ -11051,6 +11050,9 @@
     .modal-actions { flex-direction: column; }
     .modal-actions > * { width: 100%; }
   }
+
+
+  .modal-actions > .klaar-knop { width: 100%; }
 
 
 
@@ -31018,7 +31020,7 @@ function ouderStip() {
 
 
 
-const klaarKnop = id => `<button class="btn small paper" id="${id}" type="button">Klaar</button>`;
+const klaarKnop = id => `<button class="btn small paper klaar-knop" id="${id}" type="button">Klaar</button>`;
 
 
 
@@ -31344,10 +31346,9 @@ function lastigHtml(p, k) {
 
 
 
-
   const op = (tmpl, e) => e.op || (/×/.test(tmpl) ? 'x' : /[÷:]/.test(tmpl) ? ':' : / [-−] /.test(tmpl) ? '-' : '+');
   const sommen = Object.entries(p.weak || {}).filter(([tmpl, e]) => ops.includes(op(tmpl, e))).sort((a, b) => b[1].w - a[1].w).slice(0, 8)
-    .map(([tmpl, e]) => (/ = @$/.test(tmpl) ? tmpl.replace(/ = @$/, '') : tmpl.replace('@', e.ans == null ? '?' : e.ans)).replace(' - ', ' − '));
+    .map(([tmpl, e]) => somTekst(tmpl, e.ans, true));
   if (!sommen.length) return '';
   const zicht = sommen.length > 3 ? 2 : sommen.length;
   return `<div class="vg-lastig"><span>Lastig</span>${sommen.map((t, i) => `<span class="practice-chip${i >= zicht ? ' verborgen' : ''}">${t}</span>`).join('')}${
@@ -31432,39 +31433,67 @@ function zelfVolgende(s) {
 
 
 
+
+
+
+
+
+
 const procent = (goed, fout) => Math.round(100 * goed / (goed + fout));
 const CIJFER_MIN = 10;
+const CIJFER_GELEERD = 30;
+
+
+
+
+function somTekst(tmpl, ans, kort) {
+  const t = kort && / = @$/.test(tmpl) ? tmpl.replace(/ = @$/, '') : tmpl.replace('@', ans == null ? '?' : ans);
+  return t.replace(' - ', ' − ');
+}
 function cijfersBladHtml(p) {
-  const shows = playedCount(p);
-  if (!shows) return '<div class="cijfer-leeg">🎬 Nog geen shows gespeeld.</div>';
+  const leeg = '<div class="cijfer-leeg">🎬 Nog geen shows gespeeld.</div>';
+  if (!playedCount(p)) return leeg;
+  const rij = (lbl, waarde) => `<div class="cijfer-rij"><span class="cijfer-lbl">${lbl}</span><span class="cijfer-w">${waarde}</span></div>`;
+  const delen = [];
   const answered = p.stats.correct + p.stats.wrong;
-  const recent = p.recent || [];
-  const staafjes = recent.length ? `<div class="cijfer-kop2"><span>Laatste ${recent.length} ${mv(recent.length, 'show', 'shows')}</span><span class="sleutel">hoog = ⭐⭐⭐</span></div>`
-    + `<div class="cijfer-staaf" role="img" aria-label="${recent.map(s => s ? s + ' sterren' : 'mislukt').join(', ')}">`
-    + recent.map(s => `<i class="s${Math.max(0, Math.min(3, Number(s) || 0))}"></i>`).join('') + '</div><div class="cijfer-pijl"><span>eerder</span><span>nu</span></div>' : '';
-  const tegels = [];
-  if (answered) tegels.push(`<b>${answered}</b> ${mv(answered, 'vraag', 'vragen')}`, `<b>${procent(p.stats.correct, p.stats.wrong)}%</b> goed`);
-  const geleerd = Object.keys(p.learned || {}).length;
-  if (geleerd) tegels.push(`<b>${geleerd}</b> <small>${mv(geleerd, 'som', 'sommen')} geleerd</small>`);
+  if (answered) delen.push(rij('Vragen', `<b>${answered}</b><span class="cijfer-punt">·</span><b>${procent(p.stats.correct, p.stats.wrong)}%</b> goed`));
+  const geleerd = Object.entries(p.learned || {}).reverse();
+  if (geleerd.length) {
+    const rest = geleerd.length - CIJFER_GELEERD;
+    delen.push(`<button type="button" class="cijfer-rij" id="cijfer-geleerd-knop" aria-expanded="false" aria-controls="cijfer-geleerd">`
+      + `<span class="cijfer-lbl">Geleerd</span><span class="cijfer-w"><b>${geleerd.length}</b> ${mv(geleerd.length, 'som', 'sommen')}</span><span class="cijfer-open" aria-hidden="true">›</span></button>`
+      + `<div class="cijfer-geleerd" id="cijfer-geleerd" hidden>${geleerd.slice(0, CIJFER_GELEERD).map(([tmpl, e]) => `<span>${esc(somTekst(tmpl, e.ans))}</span>`).join('')}${rest > 0 ? `<span class="meer">+${rest}</span>` : ''}</div>`);
+  }
 
 
 
   const t = p.stats.thema || {};
-  const rijen = THEMAS.filter(th => t[th.id] && t[th.id][0] + t[th.id][1] > 0).map(th => {
-    const [goed, fout] = t[th.id], weinig = goed + fout < CIJFER_MIN, pct = weinig ? 0 : procent(goed, fout);
-    return `<div class="cijfer-thema${weinig ? ' weinig' : ''}">${th.icoon ? th.icoon(22) : ''}<span>${th.naam}</span><i style="--pct:${pct}%"></i><b>${weinig ? '–' : pct + '%'}</b></div>`;
-  });
-  return staafjes + (tegels.length ? `<div class="ster-cijfers">${tegels.map(d => `<span>${d}</span>`).join('')}</div>` : '')
-    + (rijen.length > 1 ? `<div class="oe-lbl cijfer-kop">Goed per thema</div>${rijen.join('')}` : '')
-    + `<div class="cijfer-voet"><span><b>${totalStarCount(p)}</b> ⭐</span><span><b>${earnedActiveCount(p)}</b> 🏆</span></div>`;
+  const gespeeld = THEMAS.filter(th => t[th.id] && t[th.id][0] + t[th.id][1] > 0);
+  if (gespeeld.length > 1) {
+    const totaal = gespeeld.reduce((n, th) => n + t[th.id][0] + t[th.id][1], 0);
+    delen.push(`<div class="cijfer-themas"><div class="cijfer-lbl"><span>Per thema</span><span>vragen · goed</span></div>` + gespeeld.map(th => {
+      const [goed, fout] = t[th.id], n = goed + fout, weinig = n < CIJFER_MIN;
+      return `<div class="cijfer-thema${weinig ? ' weinig' : ''}">${th.icoon ? th.icoon(20) : '<span></span>'}<span>${th.naam}</span><i style="--deel:${Math.round(100 * n / totaal)}%"></i>`
+        + `<b>${weinig ? 'nog weinig' : `<em>${n}</em> · ${procent(goed, fout)}%`}</b></div>`;
+    }).join('') + '</div>');
+  }
+  return delen.length ? delen.join('') : leeg;
 }
 function openCijfers() {
   const p = setKey && db.profiles[setKey];
   if (!p) return;
-  $('confirm-title').textContent = `📊 ${p.name} in cijfers`;
+
+  $('confirm-title').innerHTML = `<svg class="ico" aria-hidden="true"><use href="#ico-cijfers"/></svg> ${esc(p.name)} in cijfers`;
   $('confirm-body').innerHTML = cijfersBladHtml(p);
   $('confirm-actions').innerHTML = klaarKnop('cijfers-klaar');
   $('cijfers-klaar').onclick = closeConfirmModal;
+
+  const knop = $('cijfer-geleerd-knop');
+  if (knop) knop.onclick = () => {
+    const open = knop.getAttribute('aria-expanded') !== 'true';
+    knop.setAttribute('aria-expanded', open);
+    $('cijfer-geleerd').hidden = !open;
+  };
   $('confirm-modal').classList.add('open');
   syncBackGuard();
 }

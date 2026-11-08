@@ -429,7 +429,7 @@ function ouderStip() {
 /* EÉN AFSLUITER VOOR ELK BLAD. Een blad met maar één knop eronder sluit met
    deze: breed, stil wit, "Klaar". Paars is voor de ene handeling in een blad
    (Naar ander toestel, Installeren); een blad om te kijken heeft er geen. */
-const klaarKnop = id => `<button class="btn small paper" id="${id}" type="button">Klaar</button>`;
+const klaarKnop = id => `<button class="btn small paper klaar-knop" id="${id}" type="button">Klaar</button>`;
 /* De stem, alleen als er iets mis is: de eerste rij van het glas bovenaan haar
    pagina, in dezelfde vorm als de rij Geluid op het overzicht (geluidRijHtml).
    Staat het geluid uit, dan ís de rij die schakelaar (#stem-aan); de andere
@@ -752,13 +752,12 @@ function lastigHtml(p, k) {
   // alleen de tekens die aan staan: een − die uit staat, oefent ze nu niet
   const ops = (LASTIG_OPS[k] || []).filter(o => p.settings.ops.includes(o));
   if (!ops.length || p.settings.track === 'count') return '';
-  // p.weak wordt op sjabloon gesleuteld ("7 × 8 = @"), met @ als de lege plek.
-  // Staat die achteraan, dan de som zonder uitkomst ("7 × 8"): korter, en de
-  // uitkomst weet een ouder. Staat hij ertussen ("7 + @ = 12"), dan het getal erin.
+  // p.weak wordt op sjabloon gesleuteld ("7 × 8 = @"), met @ als de lege plek;
+  // somTekst maakt er de korte som van ("7 × 8", of "7 + 5 = 12" als hij ertussen staat).
   // e.op ontbreekt in sommen van vóór er per teken bijgehouden werd: lees dan het teken
   const op = (tmpl, e) => e.op || (/×/.test(tmpl) ? 'x' : /[÷:]/.test(tmpl) ? ':' : / [-−] /.test(tmpl) ? '-' : '+');
   const sommen = Object.entries(p.weak || {}).filter(([tmpl, e]) => ops.includes(op(tmpl, e))).sort((a, b) => b[1].w - a[1].w).slice(0, 8)
-    .map(([tmpl, e]) => (/ = @$/.test(tmpl) ? tmpl.replace(/ = @$/, '') : tmpl.replace('@', e.ans == null ? '?' : e.ans)).replace(' - ', ' − '));
+    .map(([tmpl, e]) => somTekst(tmpl, e.ans, true));
   if (!sommen.length) return '';
   const zicht = sommen.length > 3 ? 2 : sommen.length;
   return `<div class="vg-lastig"><span>Lastig</span>${sommen.map((t, i) => `<span class="practice-chip${i >= zicht ? ' verborgen' : ''}">${t}</span>`).join('')}${
@@ -815,67 +814,95 @@ function zelfVolgende(s) {
   }
   return null;
 }
-/* HAAR CIJFERS, in een eigen blad achter 📊 in de kop (openCijfers). Kijken
+/* HAAR CIJFERS, in een eigen blad achter de staafjesknop in de kop (openCijfers). Kijken
    en aanpassen zijn zo twee plekken: de pagina zelf is om te zetten wat ze
-   oefent, en wie wil weten hoe het gaat, tikt op 📊. Van boven naar onder:
-     LAATSTE SHOWS  -- p.recent als staafjes, van eerder naar nu: hoe hoger,
-                       hoe beter. Drie sterren is een volle paarse staaf, één
-                       of twee een lagere lichte, een mislukte show een rood
-                       stompje. Alleen de totalen zeiden niet of het de laatste
-                       tijd beter of slechter ging, en een mislukte show stond
-                       nergens anders. Eerst waren het bolletjes in drie tinten;
-                       die moest een ouder ontcijferen, een hoogte niet -- en
-                       "hoog = ⭐⭐⭐" is de ene sleutel die nog nodig is.
-     DRIE TEGELS    -- vragen, % goed en hoeveel sommen ze geleerd heeft (in
-                       onderhoud, p.learned): dat laatste is iets om blij om te
-                       zijn, waar een percentage alleen een cijfer is. Geen
-                       "shows": playedCount telt verschillende gehaalde shows,
-                       zonder herhalingen of mislukte, en las dan als een fout
-                       onder "Laatste 10 shows". Vragen hoort bij "% goed".
-                       Nog niets geleerd: die tegel weg, geen "0" die treurig staat.
+   oefent, en wie wil weten hoe het gaat, tikt op de staafjes.
+   EÉN VORM voor alles: een rij met links wat het is en rechts het getal, met
+   een haarlijn ertussen. Geen vlakken, geen eigen kleur per deel: paars alleen
+   voor de balkjes en de ›. Tegels, een groene rij, een kaart en een voetregel
+   naast elkaar lazen als losse stukken; zet er niets bij in een nieuwe vorm.
+   Van boven naar onder:
+     VRAGEN         -- hoeveel ze er beantwoordde, en hoeveel % goed.
+     GELEERD        -- de sommen in onderhoud (p.learned): iets om blij om te
+                       zijn, waar een percentage alleen een cijfer is. De rij
+                       gaat open (CIJFER_GELEERD) en dan staan de sommen er
+                       zelf, zodat een ouder haar kan prijzen om "7 × 8" in
+                       plaats van om een getal. Nog niets: de rij is er niet.
      PER THEMA      -- stats.thema (zie telThema), met het icoon van de tegel.
-                       Met te weinig vragen (CIJFER_MIN) staat het thema er
-                       bleek en met "–": drie vragen geven een percentage dat
-                       niets zegt.
-     ⭐ EN 🏆        -- haar beloningen in het spel, één stille regel onderaan:
-                       ze ziet ze zelf al, voor de ouder zijn ze bijzaak. De
-                       trofeeën als getal en niet als "3/38", wat las als een
-                       onvoldoende. Het getal komt uit earnedActiveCount, de
-                       bron van de kast.
-   Nog niets gespeeld: één regel, in plaats van een blad vol nullen. */
+                       Het balkje is haar deel van de vragen, en het getal
+                       ernaast is dat aantal: balkje en getal zeggen hetzelfde.
+                       Het % goed staat er stil achter. Niet het % als balkje:
+                       het spel maakt het moeilijker naarmate ze beter wordt,
+                       dus elk thema komt ongeveer even hoog uit, en vier even
+                       lange balkjes zeiden niets. Met te weinig vragen
+                       (CIJFER_MIN) "nog weinig": drie vragen geven een
+                       percentage dat niets zegt.
+   NIET HIER, met opzet:
+     de laatste shows (p.recent) -- het spel doet er zelf al iets mee
+                       (uitdagingStand: lichter na mislukte shows, de gouden
+                       stip als het vlot gaat), en zonder datum zeggen tien
+                       uitkomsten een ouder niet wanneer. Als staafjes en als
+                       sterren per show las het als ruis.
+     ⭐ en 🏆        -- die ziet ze zelf in het spel; hier waren het sterren
+                       met een andere betekenis dan die van de shows.
+   Nog niets gespeeld: één regel, in plaats van een blad vol nullen.
+   GEEN KALE NUL: een getal dat 0 kan zijn, staat er dan niet (kern zaak PT
+   kijkt het na). */
 const procent = (goed, fout) => Math.round(100 * goed / (goed + fout));
-const CIJFER_MIN = 10;   // vragen per thema voor er een percentage staat
+const CIJFER_MIN = 10;      // vragen per thema voor er een percentage staat
+const CIJFER_GELEERD = 30;  // zoveel geleerde sommen tonen, de nieuwste eerst; de rest als "+N"
+/* Een som uit p.weak of p.learned ("7 × 8 = @") als tekst. Hele som: met het
+   antwoord op de lege plek, voor wat ze geleerd heeft. Kort: zonder uitkomst
+   als de lege plek achteraan staat ("7 × 8"), voor Lastig -- die uitkomst weet
+   een ouder. */
+function somTekst(tmpl, ans, kort) {
+  const t = kort && / = @$/.test(tmpl) ? tmpl.replace(/ = @$/, '') : tmpl.replace('@', ans == null ? '?' : ans);
+  return t.replace(' - ', ' − ');
+}
 function cijfersBladHtml(p) {
-  const shows = playedCount(p);
-  if (!shows) return '<div class="cijfer-leeg">🎬 Nog geen shows gespeeld.</div>';
+  const leeg = '<div class="cijfer-leeg">🎬 Nog geen shows gespeeld.</div>';
+  if (!playedCount(p)) return leeg;
+  const rij = (lbl, waarde) => `<div class="cijfer-rij"><span class="cijfer-lbl">${lbl}</span><span class="cijfer-w">${waarde}</span></div>`;
+  const delen = [];
   const answered = p.stats.correct + p.stats.wrong;
-  const recent = p.recent || [];
-  const staafjes = recent.length ? `<div class="cijfer-kop2"><span>Laatste ${recent.length} ${mv(recent.length, 'show', 'shows')}</span><span class="sleutel">hoog = ⭐⭐⭐</span></div>`
-    + `<div class="cijfer-staaf" role="img" aria-label="${recent.map(s => s ? s + ' sterren' : 'mislukt').join(', ')}">`
-    + recent.map(s => `<i class="s${Math.max(0, Math.min(3, Number(s) || 0))}"></i>`).join('') + '</div><div class="cijfer-pijl"><span>eerder</span><span>nu</span></div>' : '';
-  const tegels = [];
-  if (answered) tegels.push(`<b>${answered}</b> ${mv(answered, 'vraag', 'vragen')}`, `<b>${procent(p.stats.correct, p.stats.wrong)}%</b> goed`);
-  const geleerd = Object.keys(p.learned || {}).length;
-  if (geleerd) tegels.push(`<b>${geleerd}</b> <small>${mv(geleerd, 'som', 'sommen')} geleerd</small>`);
+  if (answered) delen.push(rij('Vragen', `<b>${answered}</b><span class="cijfer-punt">·</span><b>${procent(p.stats.correct, p.stats.wrong)}%</b> goed`));
+  const geleerd = Object.entries(p.learned || {}).reverse();   // de nieuwste eerst
+  if (geleerd.length) {
+    const rest = geleerd.length - CIJFER_GELEERD;
+    delen.push(`<button type="button" class="cijfer-rij" id="cijfer-geleerd-knop" aria-expanded="false" aria-controls="cijfer-geleerd">`
+      + `<span class="cijfer-lbl">Geleerd</span><span class="cijfer-w"><b>${geleerd.length}</b> ${mv(geleerd.length, 'som', 'sommen')}</span><span class="cijfer-open" aria-hidden="true">›</span></button>`
+      + `<div class="cijfer-geleerd" id="cijfer-geleerd" hidden>${geleerd.slice(0, CIJFER_GELEERD).map(([tmpl, e]) => `<span>${esc(somTekst(tmpl, e.ans))}</span>`).join('')}${rest > 0 ? `<span class="meer">+${rest}</span>` : ''}</div>`);
+  }
   /* Per thema in de volgorde van de tegels, en alleen wat ze al speelde --
      ook een thema dat nu uit staat, want wat ze deed blijft waar. Bij minder
      dan twee thema's niet: dan zegt het niets meer dan het totaal. */
   const t = p.stats.thema || {};
-  const rijen = THEMAS.filter(th => t[th.id] && t[th.id][0] + t[th.id][1] > 0).map(th => {
-    const [goed, fout] = t[th.id], weinig = goed + fout < CIJFER_MIN, pct = weinig ? 0 : procent(goed, fout);
-    return `<div class="cijfer-thema${weinig ? ' weinig' : ''}">${th.icoon ? th.icoon(22) : ''}<span>${th.naam}</span><i style="--pct:${pct}%"></i><b>${weinig ? '–' : pct + '%'}</b></div>`;
-  });
-  return staafjes + (tegels.length ? `<div class="ster-cijfers">${tegels.map(d => `<span>${d}</span>`).join('')}</div>` : '')
-    + (rijen.length > 1 ? `<div class="oe-lbl cijfer-kop">Goed per thema</div>${rijen.join('')}` : '')
-    + `<div class="cijfer-voet"><span><b>${totalStarCount(p)}</b> ⭐</span><span><b>${earnedActiveCount(p)}</b> 🏆</span></div>`;
+  const gespeeld = THEMAS.filter(th => t[th.id] && t[th.id][0] + t[th.id][1] > 0);
+  if (gespeeld.length > 1) {
+    const totaal = gespeeld.reduce((n, th) => n + t[th.id][0] + t[th.id][1], 0);
+    delen.push(`<div class="cijfer-themas"><div class="cijfer-lbl"><span>Per thema</span><span>vragen · goed</span></div>` + gespeeld.map(th => {
+      const [goed, fout] = t[th.id], n = goed + fout, weinig = n < CIJFER_MIN;
+      return `<div class="cijfer-thema${weinig ? ' weinig' : ''}">${th.icoon ? th.icoon(20) : '<span></span>'}<span>${th.naam}</span><i style="--deel:${Math.round(100 * n / totaal)}%"></i>`
+        + `<b>${weinig ? 'nog weinig' : `<em>${n}</em> · ${procent(goed, fout)}%`}</b></div>`;
+    }).join('') + '</div>');
+  }
+  return delen.length ? delen.join('') : leeg;
 }
 function openCijfers() {
   const p = setKey && db.profiles[setKey];
   if (!p) return;
-  $('confirm-title').textContent = `📊 ${p.name} in cijfers`;
+  // het getekende staafjesicoon van de knop die dit blad opent, geen 📊 in kleur
+  $('confirm-title').innerHTML = `<svg class="ico" aria-hidden="true"><use href="#ico-cijfers"/></svg> ${esc(p.name)} in cijfers`;
   $('confirm-body').innerHTML = cijfersBladHtml(p);
   $('confirm-actions').innerHTML = klaarKnop('cijfers-klaar');
   $('cijfers-klaar').onclick = closeConfirmModal;
+  // de geleerde sommen klappen open onder hun rij (alleen een vlag: geen nieuw scherm, geen meting)
+  const knop = $('cijfer-geleerd-knop');
+  if (knop) knop.onclick = () => {
+    const open = knop.getAttribute('aria-expanded') !== 'true';
+    knop.setAttribute('aria-expanded', open);
+    $('cijfer-geleerd').hidden = !open;
+  };
   $('confirm-modal').classList.add('open');
   syncBackGuard();
 }

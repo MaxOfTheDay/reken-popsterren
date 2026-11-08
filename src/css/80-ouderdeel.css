@@ -924,46 +924,45 @@
   .vg-lastig .practice-chip { padding: 3px 10px; font-size: var(--tx-klein); }
   .vg-lastig .practice-chip.verborgen { display: none; }
   .vg-lastig .lastig-meer { cursor: pointer; font-family: inherit; background: var(--lavender-wash); border-color: transparent; color: var(--paper-ink-muted); }
-  /* Haar cijfers, in het blad achter 📊 (zie cijfersBladHtml): de laatste
-     shows als staafjes (hoe hoger, hoe beter), drie tegels met het getal groot
-     en het woord eronder, per thema een balkje, en de beloningen stil onderaan.
-     Het venster centreert zijn tekst; wat hier in een rij staat, lijnt zelf uit. */
-  .cijfer-kop2 {
-    display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0 2px 8px;
-    font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted);
+  /* Haar cijfers, in het blad achter de staafjesknop (zie cijfersBladHtml): rijen
+     met links een stil label en rechts het getal, een haarlijn ertussen, en
+     verder niets -- geen vlak, geen eigen kleur. Paars alleen voor de balkjes en
+     de ›. Het venster centreert zijn tekst; hier lijnt alles links uit. */
+  .cijfer-rij {
+    display: grid; grid-template-columns: 76px 1fr auto; align-items: center; gap: 12px;
+    width: 100%; padding: 12px 0; text-align: left; border-top: 1px solid var(--lavender-wash);
   }
-  .cijfer-kop2 .sleutel { font-weight: 600; white-space: nowrap; }
-  .cijfer-staaf { display: flex; align-items: flex-end; gap: 5px; height: 40px; padding: 0 2px; border-bottom: 2px solid var(--lavender-wash); }
-  .cijfer-staaf i { flex: 1; max-width: 32px; border-radius: 5px 5px 2px 2px; background: var(--lavender-vul); }
-  .cijfer-staaf i.s3 { height: 100%; background: var(--purple-mid); }
-  .cijfer-staaf i.s2 { height: 66%; }
-  .cijfer-staaf i.s1 { height: 33%; }
-  .cijfer-staaf i.s0 { height: 6px; background: var(--danger-border); }
-  .cijfer-pijl { display: flex; justify-content: space-between; margin: 5px 2px 16px; font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); }
-  .ster-cijfers { display: flex; gap: 6px; }
-  .ster-cijfers span { flex: 1 1 0; }   /* twee of drie tegels, altijd even breed (zonder geleerde sommen twee) */
-  .ster-cijfers span {
-    display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 6px;
-    border-radius: var(--r-md); background: var(--lavender-wash);
-    font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted);
+  .cijfer-rij:first-child { border-top: 0; padding-top: 2px; }
+  button.cijfer-rij { font: inherit; color: inherit; background: none; border-left: 0; border-right: 0; border-bottom: 0; border-radius: 0; cursor: pointer; }
+  button.cijfer-rij:first-child { border-top: 0; }
+  .cijfer-lbl { font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); }
+  .cijfer-w { font-size: var(--tx-label); font-weight: 600; color: var(--paper-ink-muted); font-variant-numeric: tabular-nums; }
+  .cijfer-w b { font-size: 20px; font-weight: 700; color: var(--paper-ink); margin-right: 3px; }
+  .cijfer-punt { margin: 0 8px; opacity: .5; }
+  .cijfer-open { font-size: 18px; font-weight: 700; color: var(--purple-mid); transition: transform var(--t-snel); }
+  .cijfer-rij[aria-expanded="true"] .cijfer-open { transform: rotate(90deg); }
+  /* de geleerde sommen: dezelfde pillen als Lastig op haar pagina, maar stil (geen goud: dat is "nog oefenen") */
+  .cijfer-geleerd { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 0 12px; }
+  .cijfer-geleerd span {
+    padding: 3px 10px; border-radius: var(--r-pill); background: var(--lavender-wash);
+    font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink); font-variant-numeric: tabular-nums;
   }
-  .ster-cijfers b { font-size: 26px; font-weight: 700; color: var(--paper-ink); line-height: 1.1; }
-  .ster-cijfers small { font-size: inherit; line-height: 1.15; text-align: center; }
-  .cijfer-kop { justify-content: center; margin-top: 18px; }
-  .cijfer-kop:first-child { margin-top: 0; }
-  .cijfer-thema { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: var(--tx-klein); }
-  .cijfer-thema .thema-ico { flex: 0 0 22px; }
-  .cijfer-thema span { flex: 0 0 92px; text-align: left; font-weight: 700; color: var(--paper-ink-muted); }
+  .cijfer-geleerd .meer { color: var(--paper-ink-muted); }
+  .cijfer-themas { display: flex; flex-direction: column; gap: 2px; padding-top: 12px; border-top: 1px solid var(--lavender-wash); text-align: left; }
+  .cijfer-themas:first-child { border-top: 0; padding-top: 2px; }
+  .cijfer-themas > .cijfer-lbl { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .cijfer-thema {
+    display: grid; grid-template-columns: 20px 72px minmax(0, 1fr) 84px; align-items: center; gap: 8px;
+    padding: 5px 0; font-size: var(--tx-klein);
+  }
+  .cijfer-thema .thema-ico { width: 20px; height: 20px; }
+  .cijfer-thema > span { font-weight: 600; color: var(--paper-ink); }
   .cijfer-thema i {
-    flex: 1; height: 10px; border-radius: 5px;
-    background: linear-gradient(90deg, var(--purple-mid) var(--pct), var(--lavender-wash) var(--pct));
+    height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, var(--purple-mid) var(--deel), var(--lavender-wash) var(--deel));
   }
-  .cijfer-thema b { flex: 0 0 40px; text-align: right; color: var(--paper-ink); }
-  .cijfer-thema.weinig { opacity: .5; }
-  .cijfer-voet {
-    display: flex; justify-content: center; gap: 18px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--lavender-wash);
-    font-size: var(--tx-klein); font-weight: 600;
-  }
+  .cijfer-thema b { text-align: right; font-weight: 600; color: var(--paper-ink-muted); font-variant-numeric: tabular-nums; }
+  .cijfer-thema b em { font-style: normal; font-weight: 700; color: var(--paper-ink); }
   .cijfer-leeg { padding: 4px 0 2px; text-align: center; font-size: var(--tx-label); font-weight: 600; color: var(--paper-ink-muted); }
   /* Zelf gekozen: losse keuzes, geen pad -- dus ook geen padlijn tussen de bolletjes */
   .vg-zelf > .fl-rij::before, .vg-zelf > .fl-rij::after { display: none; }
@@ -1063,6 +1062,9 @@
     .modal-actions { flex-direction: column; }
     .modal-actions > * { width: 100%; }
   }
+  /* Klaar onder een blad (klaarKnop) is op elke breedte breed, zoals op een
+     telefoon: op een tablet stond hij er smal en leek hij op een ander soort knop. */
+  .modal-actions > .klaar-knop { width: 100%; }
   /* De geluidsschakelaar in het stopvenster van een show: de schakelaarrij
      (.gear-item, zie 30-onderdelen), onder een haarlijn, zodat hij
      niet als een derde antwoord op "Show stoppen?" leest. */
