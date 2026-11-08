@@ -20,7 +20,6 @@
      75-kleedkamer.css), dezelfde als Nieuwe ster die hiervandaan opengaat: een
      afgeronde balk boven de witte sterrenkaart las als twee blokken op elkaar. */
   #screen-settings .hub-sticky {
-    padding-top: 9px; padding-bottom: 7px;
     transition: background var(--t-snel) ease, box-shadow var(--t-snel) ease;
   }
   /* "Voor ouders" hoeft geen 24px te zijn -- dit scherm heeft geen titel nodig
@@ -42,6 +41,7 @@
     flex: 0 1 auto; min-width: 0; margin-right: auto; display: flex; align-items: center; gap: 10px;
     font-family: inherit; font-size: var(--tx-sub); font-weight: 700; color: var(--c-white);
     border: none; cursor: pointer; padding: 4px 14px 4px 4px; border-radius: var(--r-pill);
+    margin-block: -2px;   /* 48 hoog in een kopregel van 44: hij duwt de rij niet open (--kop-boven) */
     background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.28);
     transition: background var(--t-tik) ease;
   }
@@ -62,7 +62,6 @@
      meteen compact: minder lucht, kleinere knoppen en portretjes. De raakvlakken
      blijven ruim genoeg voor een volwassen vinger (38). */
   @media (max-height: 560px) {
-    #screen-settings .hub-sticky { padding-top: 7px; padding-bottom: 6px; }
     #screen-settings .hub-sticky .screen-header { margin-bottom: 0; }
     #screen-settings .header-title { font-size: var(--tx-body); }
     #screen-settings .hub-sticky .icon-btn,
@@ -134,11 +133,12 @@
   }
   .speel-als[hidden] { display: none; }
   /* De cijfers (zie openCijfers) vlak voor ▶: een gewone ronde kopknop, even
-     groot als ←, met drie staafjes uit dezelfde lijnset als ← en ▶ (#ico-cijfers)
+     groot als ←, met een staafjesgrafiek op een grondlijn (#ico-cijfers; drie oplopende
+     staafjes zonder lijn lazen als wifi)
      in plaats van 📊 -- dat was het enige emoji in een kopknop. De rechterkant
      van de kop wordt daarvoor een rij. */
   #screen-settings .header-right { display: flex; align-items: center; gap: 8px; }
-  .cijfers-knop .ico { width: 20px; height: 20px; }
+  .cijfers-knop .ico { width: 22px; height: 22px; }
   .cijfers-knop[hidden] { display: none; }
   /* Op een smalle telefoon (320) hield haar naam tussen ← en twee knoppen nog
      twee letters over. ← en ▶ blijven 44 (elke terugknop is 44 om te raken, zie
@@ -146,7 +146,7 @@
      📊, en valt de ✏️ in haar pil weg -- de pil blijft de knop naar haar blad. */
   @media (max-width: 359px) {
     #screen-settings .hub-sticky .cijfers-knop { width: 36px; height: 36px; }
-    #screen-settings .hub-sticky .cijfers-knop .ico { width: 17px; height: 17px; }
+    #screen-settings .hub-sticky .cijfers-knop .ico { width: 19px; height: 19px; }
     #screen-settings .header-right { gap: 6px; }
     .ouder-wie .wie-pen { display: none; }
   }

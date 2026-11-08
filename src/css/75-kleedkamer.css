@@ -28,7 +28,7 @@
     display: flex; flex-direction: column; align-items: center;
     width: calc(100% + var(--rand, 12px) * 2);
     margin: calc(var(--rand, 12px) * -1) calc(var(--rand, 12px) * -1) var(--kop-gap, 12px);
-    padding: 12px 12px 10px;
+    padding: var(--kop-boven) 12px 10px;
     /* was .92 -- dat is in de praktijk ondoorzichtig, en straks een balk dwars
        door de tekening heen. Op .82 schuift de inhoud er zichtbaar onderdoor. */
     background: var(--kop-plaat);
@@ -58,7 +58,7 @@
      boven een tekening leesbaar houdt, en hij staat hier op precies één element. */
   #screen-dress .hub-sticky {
     /* de bovenrand is die van de kast, en andersom -- zie #screen-trophies .hub-sticky */
-    padding-top: 9px; padding-bottom: 0;
+    padding-bottom: 0;
     background: var(--kleed-veeg);
     /* Geen rand en geen schaduw: de kop is geen paneel meer. Zij staat in de
        kamer, en wat eronder komt is de lade (zie "Het podium en de lade"). */
@@ -166,7 +166,7 @@
      eronder doorloopt, hangen kop en inhoud in dezelfde ruimte in plaats van als
      twee losse blokken op elkaar. */
   .hub-sticky.sub {
-    padding: 6px 10px 8px;
+    padding: var(--kop-boven) 12px 8px;
     /* Vierkant onderaan, en niet afgerond zoals de spelkop: een afgeronde balk
        bóven een afgeronde witte kaart leest als twee blokken op elkaar. Recht is
        hier een rand waar de inhoud onderdoor schuift. */
@@ -231,7 +231,7 @@
      De raakvlakken blijven: de terugknop en de categorieknoppen houden hun 44px. */
   @media (max-height: 700px) {
     #screen-dress { --pop-h: clamp(112px, 21vh, 146px); }
-    #screen-dress .hub-sticky { padding-top: 8px; padding-bottom: 7px; }
+    #screen-dress .hub-sticky { padding-bottom: 7px; }
     #screen-dress .screen-header { margin-bottom: 2px; }
     #screen-dress .header-title { font-size: var(--tx-sub); }
     #screen-dress .shop-tabs-wrap { margin-top: 4px; }

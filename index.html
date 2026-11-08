@@ -820,6 +820,14 @@
     --hud-h: 44px;
 
 
+
+
+
+
+
+    --kop-boven: 10px;
+
+
     --hud-tx: var(--tx-sub);
 
 
@@ -1191,6 +1199,8 @@
 
 
   html, body { height: 100%; height: 100svh; height: var(--vh-lock, 100svh); }
+
+  @media (max-height: 700px) { :root { --kop-boven: 8px; } }
 
 
 
@@ -3049,6 +3059,7 @@
   .screen-header {
     display: grid; grid-template-columns: minmax(108px, 1fr) auto minmax(108px, 1fr);
     align-items: center; gap: 12px; width: 100%; max-width: var(--kop-kolom, var(--kolom, 680px)); margin-bottom: 8px;
+    height: var(--hud-h);
   }
   .screen-header .header-title {
     font-size: var(--tx-kop); font-weight: 700; text-align: center; white-space: nowrap;
@@ -3287,6 +3298,7 @@
 
   #screen-map .map-id-btn {
     padding: 2px;
+    margin-block: -2px;
     background: none; backdrop-filter: none; box-shadow: none;
   }
 
@@ -7746,9 +7758,8 @@
 
 
 
-
   #screen-trophies .hub-sticky {
-    padding-top: 9px; padding-bottom: 9px;
+    padding-bottom: 9px;
     background: transparent; border-bottom: 0; border-radius: 0; box-shadow: none;
     backdrop-filter: none; -webkit-backdrop-filter: none;
     transition: background var(--t-snel, .22s) ease;
@@ -7779,7 +7790,6 @@
 
 
   @media (max-height: 700px) {
-    #screen-trophies .hub-sticky { padding-top: 8px; }
     #screen-trophies .header-title { font-size: var(--tx-sub); }
   }
 
@@ -8933,7 +8943,7 @@
     display: flex; flex-direction: column; align-items: center;
     width: calc(100% + var(--rand, 12px) * 2);
     margin: calc(var(--rand, 12px) * -1) calc(var(--rand, 12px) * -1) var(--kop-gap, 12px);
-    padding: 12px 12px 10px;
+    padding: var(--kop-boven) 12px 10px;
 
 
     background: var(--kop-plaat);
@@ -8963,7 +8973,7 @@
 
   #screen-dress .hub-sticky {
 
-    padding-top: 9px; padding-bottom: 0;
+    padding-bottom: 0;
     background: var(--kleed-veeg);
 
 
@@ -9071,7 +9081,7 @@
 
 
   .hub-sticky.sub {
-    padding: 6px 10px 8px;
+    padding: var(--kop-boven) 12px 8px;
 
 
 
@@ -9136,7 +9146,7 @@
 
   @media (max-height: 700px) {
     #screen-dress { --pop-h: clamp(112px, 21vh, 146px); }
-    #screen-dress .hub-sticky { padding-top: 8px; padding-bottom: 7px; }
+    #screen-dress .hub-sticky { padding-bottom: 7px; }
     #screen-dress .screen-header { margin-bottom: 2px; }
     #screen-dress .header-title { font-size: var(--tx-sub); }
     #screen-dress .shop-tabs-wrap { margin-top: 4px; }
@@ -9998,7 +10008,6 @@
 
 
   #screen-settings .hub-sticky {
-    padding-top: 9px; padding-bottom: 7px;
     transition: background var(--t-snel) ease, box-shadow var(--t-snel) ease;
   }
 
@@ -10020,6 +10029,7 @@
     flex: 0 1 auto; min-width: 0; margin-right: auto; display: flex; align-items: center; gap: 10px;
     font-family: inherit; font-size: var(--tx-sub); font-weight: 700; color: var(--c-white);
     border: none; cursor: pointer; padding: 4px 14px 4px 4px; border-radius: var(--r-pill);
+    margin-block: -2px;
     background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.28);
     transition: background var(--t-tik) ease;
   }
@@ -10040,7 +10050,6 @@
 
 
   @media (max-height: 560px) {
-    #screen-settings .hub-sticky { padding-top: 7px; padding-bottom: 6px; }
     #screen-settings .hub-sticky .screen-header { margin-bottom: 0; }
     #screen-settings .header-title { font-size: var(--tx-body); }
     #screen-settings .hub-sticky .icon-btn,
@@ -10115,8 +10124,9 @@
 
 
 
+
   #screen-settings .header-right { display: flex; align-items: center; gap: 8px; }
-  .cijfers-knop .ico { width: 20px; height: 20px; }
+  .cijfers-knop .ico { width: 22px; height: 22px; }
   .cijfers-knop[hidden] { display: none; }
 
 
@@ -10124,7 +10134,7 @@
 
   @media (max-width: 359px) {
     #screen-settings .hub-sticky .cijfers-knop { width: 36px; height: 36px; }
-    #screen-settings .hub-sticky .cijfers-knop .ico { width: 17px; height: 17px; }
+    #screen-settings .hub-sticky .cijfers-knop .ico { width: 19px; height: 19px; }
     #screen-settings .header-right { gap: 6px; }
     .ouder-wie .wie-pen { display: none; }
   }
@@ -11318,7 +11328,7 @@
   <symbol id="ico-op" viewBox="0 0 24 24"><path d="M12 19V5.5M5.5 11.5L12 5l6.5 6.5"/></symbol>
   <symbol id="ico-kruis" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
   <symbol id="ico-speel" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.8v12.4L18 12z"/></symbol>
-  <symbol id="ico-cijfers" viewBox="0 0 24 24"><path d="M6 19v-5M12 19V9M18 19V5"/></symbol>
+  <symbol id="ico-cijfers" viewBox="0 0 24 24"><path d="M3.5 20.5h17" stroke-width="2.4"/><g fill="currentColor" stroke="none"><rect x="5" y="11" width="4" height="7.5" rx="1.2"/><rect x="10" y="4" width="4" height="14.5" rx="1.2"/><rect x="15" y="8" width="4" height="10.5" rx="1.2"/></g></symbol>
   <symbol id="ico-erbij" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><path d="M12 8v8M8 12h8"/></symbol>
 </svg>
 <div class="grain" aria-hidden="true"></div>

@@ -867,6 +867,7 @@
   .screen-header {
     display: grid; grid-template-columns: minmax(108px, 1fr) auto minmax(108px, 1fr);
     align-items: center; gap: 12px; width: 100%; max-width: var(--kop-kolom, var(--kolom, 680px)); margin-bottom: 8px;
+    height: var(--hud-h);   /* de kopregel, zie --kop-boven */
   }
   .screen-header .header-title {
     font-size: var(--tx-kop); font-weight: 700; text-align: center; white-space: nowrap;
