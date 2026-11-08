@@ -200,7 +200,7 @@ wereldschat blijft de enige beloning voor het uitspelen. Een emoji-dier,
 vóór 2019: Windows 10 en een oude tablet tonen nieuwere als een leeg vakje. Kies
 je toch een nieuwere (Emoji 12 of later), zet hem dan met een oudere reserve in
 `EMOJI_RESERVE` (`src/12-emoji.js`); daar wisselt de app hem op zo'n toestel
-voor. `npm run check` (inhoud zaak U) zegt het als je dat vergeet.
+voor. `npm run check` (inhoud zaak V) zegt het als je dat vergeet.
 
 **Een wereldschat** (een wereldbeloning — in de app heet hij sinds fase 6E
 *wereldschat*) verschilt op drie punten, en alle drie zijn ze een regel:

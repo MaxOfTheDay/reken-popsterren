@@ -1283,7 +1283,25 @@ zaak('T', () => {
   check(!fout.length, 'T · elke :hover staat in @media (hover: hover), anders blijft hij hangen na een tik', fout.join(' | '));
 });
 
-/* ---- U · emoji die elk toestel kan tekenen ----
+/* zaak U — een antwoordvlak hoort zijn tikken via knopTik (= Antwoordtik in
+   10-feestjes.js), nooit via onclick. Een click gooit de browser weg als de
+   vinger bij het loslaten rolt, en als er een tweede vinger landt voordat de
+   eerste loslaat -- dan zelfs voor allebei. robuust zaak F tikt het na met echte
+   vingers; deze zaak houdt een nieuw antwoordvlak bij de les. */
+const ANTWOORDVLAKKEN = ['choice-btn', 'num-btn', 'count-tile', 'mem-card', 'tap-obj', 'gl-raak'];
+zaak('U', () => {
+  const map = path.join(WORTEL, 'src');
+  const code = fs.readdirSync(map).filter(f => f.endsWith('.js') && f !== '90-wereldstudio.js').sort()
+    .map(f => fs.readFileSync(path.join(map, f), 'utf8')).join('');
+  const vlak = ANTWOORDVLAKKEN.join('|');
+  const klik = new RegExp(`querySelector(?:All)?\\(\\s*['"\`][^'"\`]*\\.(?:${vlak})\\b[^'"\`]*['"\`]\\s*\\)[^;\\n]*\\.onclick|\\.(?:${vlak})\\b[^\\n]*addEventListener\\(\\s*'click'`, 'g');
+  const fout = code.match(klik) || [];
+  check(!fout.length, 'U · geen antwoordvlak hoort zijn tik via onclick of click (gebruik knopTik)', fout.slice(0, 3).join(' | '));
+  const mist = ANTWOORDVLAKKEN.filter(k => !new RegExp(`knopTik\\([^,]+,\\s*'\\.${k}'`).test(code));
+  check(!mist.length, 'U · elk antwoordvlak gaat via knopTik', mist.join(', '));
+});
+
+/* ---- V · emoji die elk toestel kan tekenen ----
    Twee soorten tekens tekent niet elk toestel zoals wij ze bedoelen (zie
    12-emoji.js en test/emoji-tabel.js):
      - een emoji van Emoji 12 of later bestaat niet op Windows 10 of een oudere
@@ -1296,15 +1314,15 @@ zaak('T', () => {
    Gekeken wordt naar wat er écht uitgeleverd wordt: index.html (zonder de
    opmerkingen in de markup) en de over-pagina. De wereldstudio niet; die ziet
    alleen wie hem bouwt. */
-zaak('U', () => {
+zaak('V', () => {
   const { isNieuw, isTekst } = require('./emoji-tabel');
   const zonderOpm = t => t.replace(/<!--[\s\S]*?-->/g, '');
   const bronnen = [['index.html', zonderOpm(fs.readFileSync(path.join(WORTEL, 'index.html'), 'utf8'))],
                    ['over/index.html', zonderOpm(fs.readFileSync(path.join(WORTEL, 'over', 'index.html'), 'utf8'))]];
   const reserve = app.EMOJI_RESERVE;
-  check(reserve && Object.keys(reserve).length > 0, 'U · EMOJI_RESERVE komt mee uit de app', '');
+  check(reserve && Object.keys(reserve).length > 0, 'V · EMOJI_RESERVE komt mee uit de app', '');
   const oudGenoeg = Object.entries(reserve).filter(([, r]) => [...r].some(c => isNieuw(c.codePointAt(0))));
-  check(!oudGenoeg.length, 'U · elke reserve-emoji is zelf oud genoeg', oudGenoeg.map(([k, r]) => k + '→' + r).join(' '));
+  check(!oudGenoeg.length, 'V · elke reserve-emoji is zelf oud genoeg', oudGenoeg.map(([k, r]) => k + '→' + r).join(' '));
   const nieuw = new Set(), kaal = new Set();
   for (const [naam, tekst] of bronnen) {
     const tekens = [...tekst];
@@ -1317,8 +1335,8 @@ zaak('U', () => {
       }
     });
   }
-  check(!nieuw.size, 'U · elke emoji van Emoji 12 of later heeft een reserve in EMOJI_RESERVE', [...nieuw].join(' '));
-  check(!kaal.size, 'U · een tekst-of-emoji-teken heeft altijd U+FE0F of U+FE0E erachter', [...kaal].join(' '));
+  check(!nieuw.size, 'V · elke emoji van Emoji 12 of later heeft een reserve in EMOJI_RESERVE', [...nieuw].join(' '));
+  check(!kaal.size, 'V · een tekst-of-emoji-teken heeft altijd U+FE0F of U+FE0E erachter', [...kaal].join(' '));
 });
 
 klaar();

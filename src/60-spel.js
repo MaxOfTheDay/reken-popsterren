@@ -217,19 +217,16 @@ function renderQuestion() {
   }
   if (q.tik) {
     area.innerHTML = lijnTikvlak(q);
-    const raak = area.querySelector('.gl-raak');
-    raak.onclick = e => {
+    knopTik(area, '.gl-raak', (raak, e) => {
       const r = raak.getBoundingClientRect(), v = lijnRaak(q, e.clientX - r.left, r.width);
       const merk = area.querySelector(`.gl-tik[data-v="${v}"]`);
       if (!merk.classList.contains('bad')) submitAnswer(v, merk);   // een streepje dat al fout was telt niet nog eens
-    };
+    });
   } else if (G.mode === 'kies') {
     const choices = makeChoices(q, keuzeGrens(q, G.inst, G.lvl));
     area.innerHTML = '<div class="choices">' +
       choices.map(c => `<button class="choice-btn${q.knop ? ' ' + q.knop : ''}" data-v="${c}"${vraagThema(q).aria ? ` aria-label="${vraagThema(q).aria(q, c)}"` : ''}>${toonKeuze(q, c)}</button>`).join('') + '</div>';
-    area.querySelectorAll('.choice-btn').forEach(b => {
-      b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
-    });
+    knopTik(area, '.choice-btn', b => submitAnswer(parseInt(b.dataset.v, 10), b));   // zie = Antwoordtik
   } else {
     area.innerHTML = `<div class="numpad">
       ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="num-btn" data-n="${n}">${n}</button>`).join('')}
@@ -237,9 +234,7 @@ function renderQuestion() {
       <button class="num-btn" data-n="0">0</button>
       <button class="num-btn ok" data-n="ok" aria-label="Klaar"><svg class="ico"><use href="#ico-vink"/></svg></button>
     </div>`;
-    area.querySelectorAll('.num-btn').forEach(b => {
-      b.onclick = () => numpadPress(b.dataset.n);
-    });
+    knopTik(area, '.num-btn', b => numpadPress(b.dataset.n));
   }
   antwoordOpMaat(area);
   klokZoekRuim(area);

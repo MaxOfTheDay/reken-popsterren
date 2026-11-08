@@ -947,6 +947,8 @@ function sterTegel(key, p) {
   // label zegt in woorden wat de tegel doet en waar hij heen gaat.
   tegel.setAttribute('aria-label', `Speel met ${p.name} — verder in ${w.name}`);
   tegel.onclick = () => kiesSter(key, tegel);
+  // Vasthouden is hier ook kiezen: wie haar vasthoudt, wil met haar spelen.
+  vasthouden(tegel, null, () => kiesSter(key, tegel));
   /* Een vinger op een tegel is een wereld die zo in beeld komt. Hier gaat die ene
      tekening alvast de leiding in -- niet bij het opbouwen van dit scherm, want
      dan zou het startscherm van een gezin met zes sterren zes wereldkaarten

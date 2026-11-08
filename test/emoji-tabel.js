@@ -1,6 +1,6 @@
 /*
  * Twee lijsten uit de Unicode-emojigegevens (emoji-datasource 15.1, Emoji 15.1),
- * voor inhoud zaak U. Als bereiken [van, tot] van codepunten.
+ * voor inhoud zaak V. Als bereiken [van, tot] van codepunten.
  *
  *   NIEUW  emoji van Emoji 12.0 of later (2019+). Windows 10 en Android-
  *          toestellen van vóór Android 10 kennen ze niet en tekenen een leeg

@@ -2055,19 +2055,17 @@ function bindTap(card, q, drawId) {
   let geteld = 0;
   // geen cijfers zolang de ouder "tot" onder de cijferfase (6) houdt
   const cijfers = countMaxStage(P().settings) >= 6;
-  card.querySelectorAll('.tap-obj').forEach(b => {
-    b.onclick = () => {
-      if (!G || !G.count || drawId !== countDrawId || b.classList.contains('geteld')) return;
-      geteld++;
-      b.classList.add('geteld');
-      b.dataset.nr = cijfers ? geteld : '✓';
-      sndClick();
-      if (geteld < q.card.n) { speak(numWord(geteld), { rate: 0.95 }); return; }
-      q.getikt = true;
-      const rij = document.querySelector('#answer-area .count-tiles');
-      if (rij) rij.classList.remove('wacht');
-      speak(numWord(geteld) + '! Hoeveel zijn het er?', { rate: 0.95 });
-    };
+  knopTik(card, '.tap-obj', b => {
+    if (!G || !G.count || drawId !== countDrawId || b.classList.contains('geteld')) return;
+    geteld++;
+    b.classList.add('geteld');
+    b.dataset.nr = cijfers ? geteld : '✓';
+    sndClick();
+    if (geteld < q.card.n) { speak(numWord(geteld), { rate: 0.95 }); return; }
+    q.getikt = true;
+    const rij = document.querySelector('#answer-area .count-tiles');
+    if (rij) rij.classList.remove('wacht');
+    speak(numWord(geteld) + '! Hoeveel zijn het er?', { rate: 0.95 });
   });
 }
 // Elke getekende telvraag krijgt een eigen volgnummer. Vertraagde acties (meetellen,
@@ -2261,9 +2259,7 @@ function telTegelsHTML(q) {
 }
 function renderCountAnswers(q, area) {
   area.innerHTML = telTegelsHTML(q);
-  area.querySelectorAll('.count-tile').forEach(b => {
-    b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
-  });
+  knopTik(area, '.count-tile', b => submitAnswer(parseInt(b.dataset.v, 10), b));   // zie = Antwoordtik
 }
 // Meetellen: elk object popt op maat op; de getallen worden achter elkaar gezegd.
 function countAlong(objs, n, lead, drawId) {
@@ -2548,7 +2544,7 @@ function startMemory() {
   grid.innerHTML = cards.map((c, i) =>
     `<button class="mem-card" data-i="${i}"><span class="mem-inner"><span class="mem-back"><span class="mem-munt">${rug}</span></span><span class="mem-face">${memFaceHTML(c)}</span></span></button>`
   ).join('');
-  grid.querySelectorAll('.mem-card').forEach(b => b.onclick = () => flipCard(parseInt(b.dataset.i, 10), b));
+  knopTik(grid, '.mem-card', b => flipCard(parseInt(b.dataset.i, 10), b));
   renderSegBar($('mem-progress'), pairs, 0, false);
   toonHub('screen-memory');
   // pas ná show() heeft de arena een maat: kies dan het aantal kolommen dat de

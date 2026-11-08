@@ -3246,6 +3246,58 @@ function check(ok, label, detail) {
     await c2.close();
   });
 
+  /* ---- Vasthouden -----------------------------------------------------
+     Een kind dat haar vasthoudt in plaats van aantikt (zie vasthouden). Op het
+     startscherm is dat kiezen; op de kaart zingt ze de hoge noot zolang de
+     vinger blijft liggen, en houdt daarna op. De tik die een toestel na het
+     loslaten nog stuurt, telt niet nog eens: geen huppel achter het zingen aan.
+     En een gewone tik blijft gewoon de huppel. */
+  zaak(async () => {
+    const { ctx, page } = await fresh();
+    await makeStar(page, { name: 'Vast', base: 'meisje', hair: 'hair_blond' });
+    await page.evaluate(() => goProfiles());
+    await page.waitForTimeout(900);
+    const midden = sel => page.$eval(sel, el => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height * .45 }; });
+    let p = await midden('.ster-tegel .avatar-holder');
+    await page.mouse.move(p.x, p.y);
+    await page.mouse.down();
+    await page.waitForTimeout(900);
+    await page.mouse.up();
+    await page.waitForFunction(() => document.getElementById('screen-map').classList.contains('active'), null, { timeout: 4000 }).catch(() => {});
+    const kaart = await page.evaluate(() => document.querySelector('.screen.active').id);
+    check(kaart === 'screen-map', 'vasthouden: op het startscherm kiest vasthouden haar ster', kaart);
+
+    await page.waitForTimeout(3500);   // de opkomst en haar groet zijn voorbij
+    await page.evaluate(() => {
+      const el = document.querySelector('.tour-stop.next .tour-hero .avatar-holder');
+      window.__pas = [];
+      new MutationObserver(() => __pas.push([...el.classList].filter(c => c.startsWith('move-')).join(',')))
+        .observe(el, { attributes: true, attributeFilter: ['class'] });
+    });
+    p = await midden('.tour-stop.next .tour-hero');
+    await page.mouse.move(p.x, p.y);
+    await page.mouse.down();
+    await page.waitForTimeout(2300);
+    const tijdens = await page.evaluate(() => document.querySelector('.tour-stop.next .tour-hero .avatar-holder').className);
+    await page.mouse.up();
+    await page.waitForTimeout(1600);
+    const na = await page.evaluate(() => ({ klas: document.querySelector('.tour-stop.next .tour-hero .avatar-holder').className,
+      pas: __pas.filter(Boolean), scherm: document.querySelector('.screen.active').id }));
+    const noten = na.pas.filter(c => c === 'move-noot').length;
+    check(/move-noot/.test(tijdens) && noten >= 2, 'vasthouden: op de kaart zingt ze zolang je haar vasthoudt', JSON.stringify({ tijdens, noten }));
+    check(!/move-/.test(na.klas) && !na.pas.includes('move-huppel') && na.scherm === 'screen-map',
+      'vasthouden: loslaten laat haar ophouden, zonder huppel of show erachteraan', JSON.stringify(na));
+
+    await page.evaluate(() => { __pas = []; });
+    await page.mouse.down();
+    await page.waitForTimeout(60);
+    await page.mouse.up();
+    await page.waitForTimeout(300);
+    const tik = await page.evaluate(() => __pas.filter(Boolean));
+    check(tik[0] === 'move-huppel', 'vasthouden: een gewone tik is nog steeds de huppel', JSON.stringify(tik));
+    await ctx.close();
+  });
+
   /* ---- De pop blijft in de maat --------------------------------------
      Het lijf wiegt op de houder, het hoofd knikt en de staartjes slingeren ín
      de tekening. Wordt de tekening vervangen, dan mogen die twee niet opnieuw

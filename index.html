@@ -1247,7 +1247,18 @@
     background-repeat: no-repeat;
     color: var(--c-white);
     overflow: hidden;
-    user-select: none;
+
+
+
+    user-select: none; -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+
+
+  input, textarea, [contenteditable] {
+    user-select: text; -webkit-user-select: text;
+    -webkit-touch-callout: default;
   }
 
 
@@ -4121,6 +4132,12 @@
   .question-card.golden .spot-rail { background: rgba(var(--purple-shadow-rgb), .28); }
   .question-card.golden .spotlight-bar { background: linear-gradient(90deg, var(--purple-light), var(--purple-golden-accent)); }
 
+
+
+
+
+
+  .knop-tik { touch-action: none; }
   .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: min(88vw, 400px); margin-top: 4px; }
   .choice-btn {
     font-family: inherit; font-size: 34px; font-weight: 700; color: var(--c-white); border: none; cursor: pointer;
@@ -4138,7 +4155,7 @@
     border-radius: var(--r-pill); pointer-events: none;
     background: linear-gradient(rgba(255,255,255,.22), rgba(255,255,255,0));
   }
-  .choice-btn:active { transform: translateY(4px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
+  .choice-btn:is(:active, .ingedrukt) { transform: translateY(4px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
   .choice-btn.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
   .choice-btn.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--red-answer-shadow), var(--btn-diep); }
 
@@ -4153,7 +4170,7 @@
     padding: 13px 0; border-radius: var(--r-md);
     background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
   }
-  .num-btn:active { transform: translateY(3px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
+  .num-btn:is(:active, .ingedrukt) { transform: translateY(3px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
   .num-btn.ok { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
 
   .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); font-size: 22px; }
@@ -4703,9 +4720,9 @@
 
 
 
-  .count-tile .cframe .tf-cell { width: 15px; height: 15px; width: min(28px, 17cqw, 4.5vh); height: min(28px, 17cqw, 4.5vh); border-width: 1.5px; border-radius: 5px; }
-  .count-tile .cframe .cg-obj { font-size: 11px; font-size: min(20px, 12.5cqw, 3.3vh); }
-  .count-tile .cframe .cg-dot { width: 8px; height: 8px; width: min(14px, 10cqw); height: min(14px, 10cqw); }
+  .count-tile .cframe .tf-cell { width: 15px; height: 15px; width: min(52px, 17cqw, 4.5vh); height: min(52px, 17cqw, 4.5vh); border-width: 1.5px; border-radius: 5px; }
+  .count-tile .cframe .cg-obj { font-size: 11px; font-size: min(38px, 12.5cqw, 3.3vh); }
+  .count-tile .cframe .cg-dot { width: 8px; height: 8px; width: min(26px, 10cqw, 2.7vh); height: min(26px, 10cqw, 2.7vh); }
 
 
 
@@ -4740,7 +4757,7 @@
   .count-tile .dframe:not(.mini) { column-gap: 4px; row-gap: 7px; column-gap: min(5px, 2cqw); row-gap: min(8px, 6cqw); }
 
 
-  .count-tile .dframe:not(.mini) .df-cell { width: 20px; height: 20px; width: min(28px, 18cqw, 4.5vh); height: min(28px, 18cqw, 4.5vh); border-radius: 45%; }
+  .count-tile .dframe:not(.mini) .df-cell { width: 20px; height: 20px; width: min(52px, 18cqw, 4.5vh); height: min(52px, 18cqw, 4.5vh); border-radius: 45%; }
 
   .count-tile .df-cell { border-color: rgba(255,255,255,.3); }
   .count-tile .df-cell.on { border-color: rgba(255,255,255,.5); }
@@ -4818,7 +4835,7 @@
 
     container-type: inline-size;
   }
-  .count-tile:active { transform: translateY(4px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
+  .count-tile:is(:active, .ingedrukt) { transform: translateY(4px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
   .count-tile.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
   .count-tile.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--red-answer-shadow), var(--btn-diep); }
   .count-tile .cg-obj { font-size: 27px; }
@@ -4837,13 +4854,18 @@
 
   .count-tiles.vergelijk .cgroup { max-width: 100%; gap: 1cqw 2cqw; }
   .count-tiles.vergelijk .count-tile { min-height: 0; padding: 10px 8px; }
-  .count-tiles.vergelijk .count-tile .cg-obj { font-size: min(34px, 8.6cqw, 4.4vh); }
-  .count-tiles.vergelijk .count-tile .cg-dot { width: min(26px, 7cqw); height: min(26px, 7cqw); }
+  .count-tiles.vergelijk .count-tile .cg-obj { font-size: min(64px, 8.6cqw, 4.4vh); }
+  .count-tiles.vergelijk .count-tile .cg-dot { width: min(48px, 7cqw, 3.4vh); height: min(48px, 7cqw, 3.4vh); }
 
 
-  .count-tiles.vergelijk .count-tile .dframe:not(.mini) .df-cell, .count-tiles.vergelijk .count-tile .cframe .tf-cell { width: min(24px, 6.4cqw, 3.2vh); height: min(24px, 6.4cqw, 3.2vh); }
-  .count-tiles.vergelijk .count-tile .cgroup.groot .cg-obj { font-size: min(48px, 10.5cqw, 6vh); }
-  .count-tiles.vergelijk .count-tile .cgroup.klein .cg-obj { font-size: min(22px, 6cqw, 3vh); }
+  .count-tiles.vergelijk .count-tile .dframe:not(.mini) .df-cell, .count-tiles.vergelijk .count-tile .cframe .tf-cell { width: min(44px, 6.4cqw, 3.2vh); height: min(44px, 6.4cqw, 3.2vh); }
+  .count-tiles.vergelijk .count-tile .cgroup.groot .cg-obj { font-size: min(90px, 10.5cqw, 6vh); }
+  .count-tiles.vergelijk .count-tile .cgroup.klein .cg-obj { font-size: min(40px, 6cqw, 3vh); }
+
+
+
+
+  .count-tiles.vergelijk .count-tile .cframe .cg-obj { font-size: min(31px, 4.5cqw, 2.24vh); }
 
   .count-q:has(> .cq-label) { min-height: 0; }
 
@@ -5104,7 +5126,9 @@
     @media (max-height: 340px) { .question-card { padding: 5px 12px 11px; } }
     .question-card .gl { width: 100%; }
     .numpad { grid-template-columns: repeat(3, 1fr); width: 100%; gap: 7px; }
-    .num-btn { padding: 7px 0; font-size: 22px; order: 0; }
+
+
+    .num-btn { padding: 7px 0; font-size: 22px; order: 0; min-height: 44px; }
   }
 
 
@@ -5167,6 +5191,37 @@
     .count-tiles { gap: 2vh; }
     .count-tile { min-height: 15vh; }
     .count-tile .cg-obj { font-size: min(4.6vh, 40px); }
+
+
+
+
+
+
+
+    .count-q, .count-tile { --obj: min(5.6vh, 60px); }
+    .count-q .cg-obj, .count-tile .cg-obj, .count-q .tap-obj .cg-obj { font-size: var(--obj); }
+    .count-q .cgroup.big .cg-obj { font-size: calc(var(--obj) * 1.35); }
+    .count-q .cgroup, .count-tile .cgroup { max-width: calc(var(--obj) * 7.6); }
+    .count-q .cgroup.n4, .count-q .cgroup.n5, .count-q .cgroup.n6,
+    .count-tile .cgroup.n4, .count-tile .cgroup.n5, .count-tile .cgroup.n6 { max-width: calc(var(--obj) * 4.95); }
+    .count-q .cgroup { gap: calc(var(--obj) * .18) calc(var(--obj) * .3); }
+    .count-q .cg-dot { width: calc(var(--obj) * .76); height: calc(var(--obj) * .76); }
+    .count-q .cgroup.big .cg-dot { width: var(--obj); height: var(--obj); }
+    .count-q .cframe .tf-cell { width: calc(var(--obj) * .82); height: calc(var(--obj) * .82); }
+    .count-q .cframe.big .tf-cell { width: var(--obj); height: var(--obj); }
+    .count-q .cframe .cg-obj { font-size: calc(var(--obj) * .6); }
+    .count-q .cframe.big .cg-obj { font-size: calc(var(--obj) * .7); }
+    .count-q .cframe .cg-dot { width: calc(var(--obj) * .47); height: calc(var(--obj) * .47); }
+    .count-q .dframe:not(.mini) .df-cell { width: calc(var(--obj) * .65); height: calc(var(--obj) * .65); }
+    .count-q .dframe.big:not(.mini) .df-cell { width: calc(var(--obj) * .8); height: calc(var(--obj) * .8); }
+    .count-q .sum-eq .cgroup.big { max-width: calc(var(--obj) * 3.8); }
+    .count-q .sum-eq .cgroup.big .cg-obj { font-size: calc(var(--obj) * .95); }
+    .count-q .sum-eq .dframe.big { --df-som: calc(var(--obj) * .72); }
+    .count-q .sum-num { font-size: var(--obj); }
+    .count-q .sum-op { font-size: calc(var(--obj) * .8); }
+    .count-q .sum-eq-q { font-size: calc(var(--obj) * 1.1); }
+    .count-tiles:not(.vergelijk) .count-tile .cgroup.groot .cg-obj { font-size: calc(var(--obj) * 1.3); }
+    .count-tiles:not(.vergelijk) .count-tile .cgroup.klein .cg-obj { font-size: calc(var(--obj) * .5); }
     .numpad { width: var(--kaart-w); gap: 1.6vh; }
     .num-btn { font-size: min(4.6vh, 40px); padding: 1.9vh 0; }
   }
@@ -5185,6 +5240,21 @@
     .choice-btn { font-size: 44px; padding: 26px 8px; }
     .numpad { width: min(64vw, 420px); gap: 14px; }
     .num-btn { font-size: 36px; padding: 18px 0; }
+
+    .count-q, .count-tile { --obj: 48px; }
+    .count-q .cg-obj, .count-tile .cg-obj { font-size: var(--obj); }
+    .count-q .cgroup.big .cg-obj { font-size: calc(var(--obj) * 1.35); }
+    .count-q .cgroup, .count-tile .cgroup { max-width: calc(var(--obj) * 7.6); }
+    .count-q .cgroup.n4, .count-q .cgroup.n5, .count-q .cgroup.n6,
+    .count-tile .cgroup.n4, .count-tile .cgroup.n5, .count-tile .cgroup.n6 { max-width: calc(var(--obj) * 4.95); }
+    .count-q .cframe.big .tf-cell { width: var(--obj); height: var(--obj); }
+    .count-q .cframe.big .cg-obj { font-size: calc(var(--obj) * .7); }
+    .count-q .cframe .tf-cell { width: calc(var(--obj) * .82); height: calc(var(--obj) * .82); }
+    .count-q .cframe .cg-obj { font-size: calc(var(--obj) * .6); }
+    .count-q .dframe.big:not(.mini) .df-cell { width: calc(var(--obj) * .8); height: calc(var(--obj) * .8); }
+    .count-q .sum-eq .cgroup.big { max-width: calc(var(--obj) * 3.8); }
+    .count-q .sum-eq .cgroup.big .cg-obj { font-size: calc(var(--obj) * .95); }
+    .count-q .sum-eq .dframe.big { --df-som: calc(var(--obj) * .72); }
   }
 
 
@@ -12409,6 +12479,160 @@ function tapDance(elId, stil) {
   pasUit(el);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const LANG_VAST = 450;
+const LANG_SCHUIF = 10;
+const LOS_UITERLIJK = 8000;
+function vasthouden(houder, kies, op) {
+  let klok = null, los = null, vast = null, x = 0, y = 0, slik = false;
+  const stop = () => {
+    clearTimeout(klok); klok = null;
+    if (los) { const f = los; los = null; f(); }
+  };
+  houder.addEventListener('pointerdown', e => {
+    stop();
+    slik = false;
+    if (!e.isPrimary || e.button > 0) return;
+    const doel = kies ? e.target.closest && e.target.closest(kies) : houder;
+    if (!doel || !houder.contains(doel)) return;
+    x = e.clientX; y = e.clientY;
+    klok = setTimeout(() => {
+      klok = null;
+      slik = true;
+      const f = op(doel);
+      if (typeof f === 'function') { los = f; clearTimeout(vast); vast = setTimeout(stop, LOS_UITERLIJK); }
+    }, LANG_VAST);
+  }, { passive: true });
+  houder.addEventListener('pointermove', e => {
+    if (klok && Math.hypot(e.clientX - x, e.clientY - y) > LANG_SCHUIF) { clearTimeout(klok); klok = null; }
+  }, { passive: true });
+  for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) houder.addEventListener(t, stop, { passive: true });
+  houder.addEventListener('click', e => {
+    if (!slik) return;
+    slik = false;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  }, true);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const TIK_MARGE = 28;
+const TIK_KIER = 12;
+function knopTik(houder, kies, doe) {
+  houder._tik = { kies, doe };
+  if (houder._tikOpen) return;
+  const open = houder._tikOpen = new Map();
+  houder.classList.add('knop-tik');
+  const vind = (e) => {
+    const { kies } = houder._tik;
+    const raak = e.target.closest && e.target.closest(kies);
+    if (raak && houder.contains(raak)) return raak;
+    let best = null, bijna = TIK_KIER;
+    for (const k of houder.querySelectorAll(kies)) {
+      if (k.disabled || getComputedStyle(k).pointerEvents === 'none') continue;
+      const r = k.getBoundingClientRect();
+      const d = Math.hypot(Math.max(r.left - e.clientX, 0, e.clientX - r.right), Math.max(r.top - e.clientY, 0, e.clientY - r.bottom));
+      if (d < bijna) { bijna = d; best = k; }
+    }
+    return best;
+  };
+  const tel = (stip, x, y) => {
+    if (!stip.el.isConnected || stip.el.disabled) return;
+    houder._tik.doe(stip.el, { clientX: x, clientY: y });
+  };
+  const los = (stip) => stip.el.classList.remove('ingedrukt');
+  const binnen = (stip, x, y) => {
+    const r = stip.el.getBoundingClientRect();
+    return x > r.left - TIK_MARGE && x < r.right + TIK_MARGE && y > r.top - TIK_MARGE && y < r.bottom + TIK_MARGE;
+  };
+  houder.addEventListener('pointerdown', e => {
+    if (e.button > 0) return;
+
+    const el = vind(e);
+
+    const vorig = [...open.values()].map(stip => [stip, binnen(stip, stip.x, stip.y)]);
+    open.clear();
+    for (const [stip, telt] of vorig) { if (telt) tel(stip, stip.x, stip.y); los(stip); }
+    if (!el) return;
+    open.set(e.pointerId, { el, x: e.clientX, y: e.clientY });
+
+
+    if (e.pointerType === 'mouse') try { houder.setPointerCapture(e.pointerId); } catch (_) {}
+    el.classList.add('ingedrukt');
+  });
+  houder.addEventListener('pointermove', e => {
+    const stip = open.get(e.pointerId);
+    if (stip) { stip.x = e.clientX; stip.y = e.clientY; }
+  }, { passive: true });
+  houder.addEventListener('pointerup', e => {
+    const stip = open.get(e.pointerId);
+    if (!stip) return;
+    open.delete(e.pointerId);
+    if (binnen(stip, e.clientX, e.clientY)) tel(stip, e.clientX, e.clientY);
+    los(stip);
+  });
+  houder.addEventListener('pointercancel', e => {
+    const stip = open.get(e.pointerId);
+    if (stip) { open.delete(e.pointerId); los(stip); }
+  });
+  houder.addEventListener('click', e => {
+    if (e.detail !== 0) return;
+    const el = e.target.closest && e.target.closest(houder._tik.kies);
+    if (el && houder.contains(el)) houder._tik.doe(el, e);
+  });
+}
+
+
+
+document.addEventListener('contextmenu', e => {
+  const t = e.target;
+  if (t && t.closest && t.closest('input, textarea, [contenteditable]')) return;
+  e.preventDefault();
+});
+
 function sparkle(el, emojis) { sparkleAt(el.getBoundingClientRect(), emojis); }
 
 
@@ -18417,6 +18641,8 @@ function sterTegel(key, p) {
   tegel.setAttribute('aria-label', `Speel met ${p.name} — verder in ${w.name}`);
   tegel.onclick = () => kiesSter(key, tegel);
 
+  vasthouden(tegel, null, () => kiesSter(key, tegel));
+
 
 
 
@@ -20504,13 +20730,41 @@ function hierBenIk(el) {
 
 const TIK_PAS = HUPPEL;
 function kaartTik(ster, halte) {
-  const el = ster.querySelector('.avatar-holder');
-  if (!el || el.classList.contains('dancing') || !halte.classList.contains('next')) return;
-  if (overgangBezig || vluchtOp || wereldReisOp || ster.getAnimations().length) return;
-  clearTimeout(groetTimer);
-  groetTimer = null;
+  const el = kaartPopVrij(ster, halte);
+  if (!el) return;
   sndTap();
   if (zetPas(el, TIK_PAS)) pasUit(el);
+}
+
+
+function kaartPopVrij(ster, halte) {
+  const el = ster.querySelector('.avatar-holder');
+  if (!el || el.classList.contains('dancing') || !halte || !halte.classList.contains('next')) return null;
+  if (overgangBezig || vluchtOp || wereldReisOp || ster.getAnimations().length) return null;
+  clearTimeout(groetTimer);
+  groetTimer = null;
+  return el;
+}
+
+
+
+
+
+
+
+
+const NOOT = MOVES.find(m => m.cls === 'move-noot');
+function kaartZing(ster) {
+  const el = kaartPopVrij(ster, ster.closest('.tour-stop'));
+  if (!el) return null;
+  sndTap();
+  let vast = true;
+  const zing = () => {
+    if (!vast || !el.isConnected || !zetPas(el, NOOT)) { stilStaan(el); return; }
+    pasUit(el, zing);
+  };
+  zing();
+  return () => { vast = false; };
 }
 
 
@@ -22188,6 +22442,8 @@ function stofStart() {
 }
 
 $('screen-map').addEventListener('pointerdown', stofWek, { passive: true });
+
+vasthouden($('screen-map'), '.tour-stop.next .tour-hero', kaartZing);
 
 
 
@@ -26271,19 +26527,17 @@ function bindTap(card, q, drawId) {
   let geteld = 0;
 
   const cijfers = countMaxStage(P().settings) >= 6;
-  card.querySelectorAll('.tap-obj').forEach(b => {
-    b.onclick = () => {
-      if (!G || !G.count || drawId !== countDrawId || b.classList.contains('geteld')) return;
-      geteld++;
-      b.classList.add('geteld');
-      b.dataset.nr = cijfers ? geteld : '✓';
-      sndClick();
-      if (geteld < q.card.n) { speak(numWord(geteld), { rate: 0.95 }); return; }
-      q.getikt = true;
-      const rij = document.querySelector('#answer-area .count-tiles');
-      if (rij) rij.classList.remove('wacht');
-      speak(numWord(geteld) + '! Hoeveel zijn het er?', { rate: 0.95 });
-    };
+  knopTik(card, '.tap-obj', b => {
+    if (!G || !G.count || drawId !== countDrawId || b.classList.contains('geteld')) return;
+    geteld++;
+    b.classList.add('geteld');
+    b.dataset.nr = cijfers ? geteld : '✓';
+    sndClick();
+    if (geteld < q.card.n) { speak(numWord(geteld), { rate: 0.95 }); return; }
+    q.getikt = true;
+    const rij = document.querySelector('#answer-area .count-tiles');
+    if (rij) rij.classList.remove('wacht');
+    speak(numWord(geteld) + '! Hoeveel zijn het er?', { rate: 0.95 });
   });
 }
 
@@ -26477,9 +26731,7 @@ function telTegelsHTML(q) {
 }
 function renderCountAnswers(q, area) {
   area.innerHTML = telTegelsHTML(q);
-  area.querySelectorAll('.count-tile').forEach(b => {
-    b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
-  });
+  knopTik(area, '.count-tile', b => submitAnswer(parseInt(b.dataset.v, 10), b));
 }
 
 function countAlong(objs, n, lead, drawId) {
@@ -26764,7 +27016,7 @@ function startMemory() {
   grid.innerHTML = cards.map((c, i) =>
     `<button class="mem-card" data-i="${i}"><span class="mem-inner"><span class="mem-back"><span class="mem-munt">${rug}</span></span><span class="mem-face">${memFaceHTML(c)}</span></span></button>`
   ).join('');
-  grid.querySelectorAll('.mem-card').forEach(b => b.onclick = () => flipCard(parseInt(b.dataset.i, 10), b));
+  knopTik(grid, '.mem-card', b => flipCard(parseInt(b.dataset.i, 10), b));
   renderSegBar($('mem-progress'), pairs, 0, false);
   toonHub('screen-memory');
 
@@ -27599,19 +27851,16 @@ function renderQuestion() {
   }
   if (q.tik) {
     area.innerHTML = lijnTikvlak(q);
-    const raak = area.querySelector('.gl-raak');
-    raak.onclick = e => {
+    knopTik(area, '.gl-raak', (raak, e) => {
       const r = raak.getBoundingClientRect(), v = lijnRaak(q, e.clientX - r.left, r.width);
       const merk = area.querySelector(`.gl-tik[data-v="${v}"]`);
       if (!merk.classList.contains('bad')) submitAnswer(v, merk);
-    };
+    });
   } else if (G.mode === 'kies') {
     const choices = makeChoices(q, keuzeGrens(q, G.inst, G.lvl));
     area.innerHTML = '<div class="choices">' +
       choices.map(c => `<button class="choice-btn${q.knop ? ' ' + q.knop : ''}" data-v="${c}"${vraagThema(q).aria ? ` aria-label="${vraagThema(q).aria(q, c)}"` : ''}>${toonKeuze(q, c)}</button>`).join('') + '</div>';
-    area.querySelectorAll('.choice-btn').forEach(b => {
-      b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
-    });
+    knopTik(area, '.choice-btn', b => submitAnswer(parseInt(b.dataset.v, 10), b));
   } else {
     area.innerHTML = `<div class="numpad">
       ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="num-btn" data-n="${n}">${n}</button>`).join('')}
@@ -27619,9 +27868,7 @@ function renderQuestion() {
       <button class="num-btn" data-n="0">0</button>
       <button class="num-btn ok" data-n="ok" aria-label="Klaar"><svg class="ico"><use href="#ico-vink"/></svg></button>
     </div>`;
-    area.querySelectorAll('.num-btn').forEach(b => {
-      b.onclick = () => numpadPress(b.dataset.n);
-    });
+    knopTik(area, '.num-btn', b => numpadPress(b.dataset.n));
   }
   antwoordOpMaat(area);
   klokZoekRuim(area);

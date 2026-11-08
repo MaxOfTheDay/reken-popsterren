@@ -36,7 +36,7 @@
    een span hoort daar niet -- en zo ook een invoerveld.
 
    EMOJI_RESERVE: elke emoji van Emoji 12 of later die de app toont, met een
-   oudere die hetzelfde zegt. inhoud zaak U houdt de lijst compleet; zet je een
+   oudere die hetzelfde zegt. inhoud zaak V houdt de lijst compleet; zet je een
    nieuwe emoji in een wereld of spulletje, zet hem er dan bij. */
 const EMOJI_RESERVE = {
   '🫧': '💧', '🪸': '🐠', '🪩': '🌟', '🪗': '🎹', '🪘': '🥁', '🪄': '✨',
