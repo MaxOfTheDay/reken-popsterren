@@ -444,6 +444,15 @@ function icoonSvg(maat, binnen) {
 }
 const ICOON_TEGEL = '<rect x="2" y="2" width="36" height="36" rx="10" fill="#f3e5f5" stroke="#d9b8e8" stroke-width="1.5"/>';
 // twee tekens op het lichtpaarse tegeltje: de icoontjes van rekenen en de tafels
+/* Tellen is geen thema uit het register, maar staat wel overal naast de
+   thema's (het overzicht, haar themakaart, het blad met haar naam, Nieuwe ster).
+   Daarom hetzelfde tegeltje, met drie stippen zoals in de telshows -- een 🧸
+   ernaast was het enige emoji tussen getekende icoontjes. */
+function telIcoon(maat) {
+  return icoonSvg(maat, ICOON_TEGEL + '<g style="fill:var(--purple-mid)"><circle cx="11" cy="20" r="4"/><circle cx="20" cy="20" r="4"/><circle cx="29" cy="20" r="4"/></g>');
+}
+// het icoontje van een spoor (tellen of rekenen), voor de keuze tussen die twee
+function spoorIcoon(track, maat) { return track === 'count' ? telIcoon(maat) : themaIcoon('rekenen', maat); }
 function tekenIcoon(a, b) {
   return maat => icoonSvg(maat, ICOON_TEGEL + '<g style="fill:var(--purple-mid)" font-weight="700" font-size="21" text-anchor="middle" dominant-baseline="central">'
     + `<text x="13.5" y="14">${a}</text><text x="26.5" y="26">${b}</text></g>`);
