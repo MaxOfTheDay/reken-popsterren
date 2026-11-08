@@ -100,8 +100,8 @@ function renderNewStar() {
         <div class="ns-ouder">Voor papa of mama</div>
         <div class="set-field"><label class="lbl">Hoe speel je?</label>
           <div class="chip-row mode-row" id="newstar-track">
-            ${halfChip('count', '🧸', 'Leren tellen', s.track === 'count')}
-            ${halfChip('math', '🧮', 'Rekenen', s.track === 'math')}
+            ${halfChip('count', spoorIcoon('count', 30), 'Leren tellen', s.track === 'count')}
+            ${halfChip('math', spoorIcoon('math', 30), 'Rekenen', s.track === 'math')}
           </div>
           ${s.track ? `<div class="note">${s.track === 'count'
             ? 'Nog niet lezen: tellen met plaatjes.'
@@ -426,11 +426,24 @@ function ouderStip() {
   knop.classList.toggle('has-new', ja);
   knop.setAttribute('aria-label', ja ? 'Voor ouders, er is iets nieuws' : 'Voor ouders');
 }
-// De notitie over de stem staat los boven het leerpad, en alleen als er iets mis is.
-function stemKaartHtml(p) {
-  const stem = stemAan(p) ? stemNotitie(p.name) : '';
-  return stem ? `<div class="set-card vg-kaart"><div class="note stem-notitie">${stem}${!db.sound
-    ? '<button class="btn small purple stem-aan" id="stem-aan" type="button">🔊 Zet aan</button>' : ''}</div></div>` : '';
+/* EÉN AFSLUITER VOOR ELK BLAD. Een blad met maar één knop eronder sluit met
+   deze: breed, stil wit, "Klaar". Paars is voor de ene handeling in een blad
+   (Naar ander toestel, Installeren); een blad om te kijken heeft er geen. */
+const klaarKnop = id => `<button class="btn small paper" id="${id}" type="button">Klaar</button>`;
+/* De stem, alleen als er iets mis is: de eerste rij van het glas bovenaan haar
+   pagina, in dezelfde vorm als de rij Geluid op het overzicht (geluidRijHtml).
+   Staat het geluid uit, dan ís de rij die schakelaar (#stem-aan); de andere
+   twee meldingen zijn een rij om te lezen. Een eigen witte kaart met een paarse
+   knop was hier een derde soort kaart, boven het glas. */
+function stemRijHtml(p) {
+  const n = stemAan(p) ? stemNotitie(p.name) : null;
+  if (!n) return '';
+  const binnen = `<span class="gi-ico" aria-hidden="true">${n.ico}</span>`
+    + `<span class="gi-label">${n.titel}<span class="gi-sub">${n.sub}</span></span>`;
+  return db.sound
+    ? `<div class="gear-item stem-rij stem-notitie">${binnen}</div>`
+    : `<button class="gear-item stem-rij stem-notitie" id="stem-aan" type="button" role="switch" aria-checked="false">${binnen}`
+      + '<span class="gi-state off">Uit</span></button>';
 }
 /* Het leerpad van rekenen staat in 55-vragen (LEERPAD, padRijen): de themakaart
    tekent die rijen, met naam en voorbeeld, dicht om te lezen en open om aan te
@@ -579,7 +592,7 @@ const themaKaarten = s => s.track === 'count' ? ['tellen'] : THEMAS.map(t => t.i
 function sterPaginaHtml(p, s) {
   const groepen = oefenGroups(s, '', p, { deel: k => k === 'tellen' || k === 'rekenen' ? stapNu(p).deel : ladderStap(p, k).deel });
   const show = groepen.find(g => g.kaart === 'show');
-  return `<div class="settings-panel">${stemKaartHtml(p)}${themaKaartHtml(s, p, show)}${themaKaarten(s).map(k => themaKaart(p, k, groepen)).join('')}</div>`;
+  return `<div class="settings-panel">${themaKaartHtml(s, p, show)}${themaKaarten(s).map(k => themaKaart(p, k, groepen)).join('')}</div>`;
 }
 /* EÉN THEMA, ÉÉN KAART. Dicht staat de ladder om te lezen (leesLadder); ✏️
    rechtsboven zet dezelfde kaart open (setOpen), met wat oefenGroups voor dat
@@ -595,7 +608,7 @@ function sterPaginaHtml(p, s) {
 function themaKaart(p, k, groepen) {
   const open = setOpen === true || setOpen === k;
   const naam = k === 'tellen' ? 'Tellen' : THEMA[k].naam;
-  const ico = k === 'tellen' ? '<span class="kaart-emoji" aria-hidden="true">🧸</span>' : themaIcoon(k, 30);
+  const ico = k === 'tellen' ? telIcoon(30) : themaIcoon(k, 30);
   const pen = `<button class="kaart-pen${open ? ' aan' : ''}" type="button" data-kaart="${k}" aria-expanded="${open}" aria-label="${open ? 'Klaar' : naam + ' aanpassen'}">${open ? '✓' : '✏️'}</button>`;
   if (!open) {
     const grens = kaartGrens(p, k);
@@ -666,7 +679,7 @@ function rekenLadderHtml(p) {
     if (tussen > 0) rijen.push(flRij(' later vg-gat', '⋮', `nog ${tussen} ${mv(tussen, 'fase', 'fases')}`));
     if (hi > st + 2) rijen.push(flRij(' later', hi, COUNT_STAGE_LABELS[hi], COUNT_STAGE_VB[hi]));
     // dezelfde "tot"-lijn als in de open kaart; zonder grens is rekenen de volgende stap
-    rijen.push(hi < COUNT_STAGE_MAX ? '<div class="fl-lijn">tot</div>' : flRij(' later', '🧮', 'Daarna rekenen'));
+    rijen.push(hi < COUNT_STAGE_MAX ? '<div class="fl-lijn">tot</div>' : flRij(' later', themaIcoon('rekenen', 22), 'Daarna rekenen'));
   } else {
     const alle = padRijen(s).rijen;
     const nuId = padNu(p);
@@ -859,10 +872,9 @@ function cijfersBladHtml(p) {
 function openCijfers() {
   const p = setKey && db.profiles[setKey];
   if (!p) return;
-  $('confirm-title').textContent = `${p.name} in cijfers`;
+  $('confirm-title').textContent = `📊 ${p.name} in cijfers`;
   $('confirm-body').innerHTML = cijfersBladHtml(p);
-  // een kleine Klaar: het blad is om te kijken, er valt niets te bevestigen
-  $('confirm-actions').innerHTML = '<button class="btn small purple klaar-klein" id="cijfers-klaar">Klaar</button>';
+  $('confirm-actions').innerHTML = klaarKnop('cijfers-klaar');
   $('cijfers-klaar').onclick = closeConfirmModal;
   $('confirm-modal').classList.add('open');
   syncBackGuard();
@@ -872,20 +884,20 @@ function openCijfers() {
    weg en klinkt er geen telwoord meer. Leeg als alles in orde is. Het geluid
    eerst: dat is één tik, en dan doet de rest er niet toe.
 
-   Die tik zit er nu ook bij (#stem-aan, zie stemKaartHtml): hier stond "zet het
+   Die tik zit er nu ook bij (#stem-aan, zie stemRijHtml): hier stond "zet het
    aan met het tandwiel op het beginscherm", en dan moest een ouder het ouderdeel
    uit, het tandwiel in en weer terug -- voor één schakelaar. (De schakelaar zelf
    staat inmiddels ook in het ouderdeel, onder ⋯.) */
 function stemNotitie(naam) {
-  if (!db.sound) return `🔇 Het geluid staat uit, dus ${esc(naam || 'je ster')} hoort de vragen niet.`;
-  if (!hasSpeech()) return '🔇 Dit toestel kan niet voorlezen. Alles blijft speelbaar, maar de luisteroefening (fase 5) wordt overgeslagen.';
+  if (!db.sound) return { ico: '🔇', titel: 'Geluid', sub: `${esc(naam || 'Je ster')} hoort de vragen niet` };
+  if (!hasSpeech()) return { ico: '🔇', titel: 'Geen voorlezen', sub: 'Alles blijft speelbaar, maar de luisteroefening (fase 5) wordt overgeslagen.' };
   /* Eén regel; de uitleg pas als een ouder erom vraagt. Hier stond een zin van
      vijfendertig woorden, de langste tekst op haar pagina, over een instelling
      van het toestel en niet van het spel. */
-  if (!nlVoice()) return '🗣️ Geen Nederlandse stem op dit toestel.'
-    + '<details class="stem-hoe"><summary>Hoe?</summary>Kies een Nederlandse stem bij de spraakinstellingen van het toestel'
-    + ' (tekst-naar-spraak). Zonder klinkt het voorlezen met een vreemde uitspraak, en valt de luisteroefening (fase 5) weg.</details>';
-  return '';
+  if (!nlVoice()) return { ico: '🗣️', titel: 'Geen Nederlandse stem',
+    sub: '<details class="stem-hoe"><summary>Hoe?</summary>Kies een Nederlandse stem bij de spraakinstellingen van het toestel'
+    + ' (tekst-naar-spraak). Zonder klinkt het voorlezen met een vreemde uitspraak, en valt de luisteroefening (fase 5) weg.</details>' };
+  return null;
 }
 /* Een tip voor de ouder: de getallengrens omhoog.
 
@@ -1298,8 +1310,8 @@ function themaKaartHtml(s, p, show) {
   const kleinKop = t => kaartKop(t).replace('class="kaart-kop"', 'class="kaart-kop klein"');
   const modus = `<div class="oe-seg" id="set-modus" data-instelling="modus">${chip('pad', 'Leerpad', !vrij)}${chip('vrij', 'Zelf kiezen', vrij)}</div>`;
   return `${tellen ? '' : `
-    <div class="set-card oefen-kaart primary wat-kaart" data-kaart="wat">${kleinKop(`Wat oefent ${naam}?`)}${themaTegels(s, '')}</div>`}
-    <div class="set-card oefen-kaart primary modus-kaart" data-kaart="hoe">${kleinKop(`Hoe oefent ${naam}?`)}${regel('Niveau', modus)}${
+    <div class="set-card oefen-kaart primary wat-kaart" data-kaart="wat">${p ? stemRijHtml(p) : ''}${kleinKop(`Wat oefent ${naam}?`)}${themaTegels(s, '')}</div>`}
+    <div class="set-card oefen-kaart primary modus-kaart" data-kaart="hoe">${tellen && p ? stemRijHtml(p) : ''}${kleinKop(`Hoe oefent ${naam}?`)}${regel('Niveau', modus)}${
       (show ? show.regels : []).map(([l, h, b]) => regel(l, h, b)).join('')}</div>`;
 }
 
@@ -1353,8 +1365,9 @@ function geluidRijHtml() {
        blad als het knopje op de sterrenkeuze (openAppBlad). Hij staat als laatste
        omdat hij verdwijnt zodra het spel geïnstalleerd is: dan schuift er niets.
 
-   Elke rij heeft een emoji als icoon, zoals de rest van de app; de getekende
-   iconen (ozIco) horen bij de bladen erachter. */
+   Elke rij heeft een emoji als icoon, zoals de rest van de app -- ook de rijen
+   in het blad erachter. De getekende iconen (ozIco) staan alleen nog in de
+   knoppen en de titels van het overzetten. */
 // back‑up met een harde streep (U+2011): op een smalle telefoon breekt de titel
 // van het blad anders midden in het woord, als "back-" en "up".
 function sterrenRijNaam() { return overzetMag() ? 'Ander toestel en back\u2011up' : 'Back\u2011up'; }
@@ -1631,9 +1644,9 @@ function wieBladHtml(p) {
       + `<span class="mc-ico" aria-hidden="true">${b.emoji}</span><span class="mc-label">${b.name}</span></button>`).join('')}</div>
     <div class="name-edit-wrap"><input type="text" id="set-name" aria-label="Naam" value="${esc(p.name)}" maxlength="12" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div>
     <div class="set-field wb-modus"><div class="lbl">Hoe speelt <span class="set-naam">${esc(p.name)}</span>?</div>
-      <div class="chip-row mode-row" id="set-track" role="group" aria-label="Tellen of rekenen">${[['count', '🧸', 'Leren tellen'], ['math', '🧮', 'Rekenen']].map(([v, ico, woord]) =>
+      <div class="chip-row mode-row" id="set-track" role="group" aria-label="Tellen of rekenen">${[['count', 'Leren tellen'], ['math', 'Rekenen']].map(([v, woord]) =>
         `<button class="chip gestapeld${(p.settings.track === 'count') === (v === 'count') ? ' on' : ''}" data-v="${v}">`
-        + `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${woord}</span></button>`).join('')}</div></div>
+        + `<span class="mc-ico" aria-hidden="true">${spoorIcoon(v, 30)}</span><span class="mc-label">${woord}</span></button>`).join('')}</div></div>
     <!-- twee rijen in rode letters: ze zeggen wat er gebeurt en openen elk één
          vraag (gevaarVraag). Geen openklapper meer ervoor -- die herhaalde
          dezelfde uitleg als de vraag erachter, en klapte het blad open tot de knop
@@ -1653,7 +1666,7 @@ function openWieBlad() {
   if (!p) return;
   $('confirm-title').textContent = '';
   $('confirm-body').innerHTML = wieBladHtml(p);
-  $('confirm-actions').innerHTML = '<button class="btn small purple" id="wie-klaar">Klaar</button>';
+  $('confirm-actions').innerHTML = klaarKnop('wie-klaar');
   $('wie-klaar').onclick = closeConfirmModal;
   bindWie(p);
   $('confirm-modal').classList.add('open');
@@ -1671,7 +1684,7 @@ function overzichtHtml() {
   const rij = key => {
     const p = db.profiles[key];
     /* Naast haar naam: wát ze oefent, als kleine grijze icoontjes van de tegels
-       op haar pagina (bij tellen de 🧸), op dezelfde regel -- de naam voorop,
+       op haar pagina (bij tellen de stippen, telIcoon), op dezelfde regel -- de naam voorop,
        zodat de rij laag blijft en de naam leidt. Hier stond haar stap met "Stap 3 van 5" en
        een label ("Net begonnen", "Past goed" ...) bij elk kind: het label was
        meestal grijs en voor iedereen hetzelfde, en "Stap 3 van 5" telde iets
@@ -1683,7 +1696,7 @@ function overzichtHtml() {
        dezelfde goudkleur, als knop in haar rij (kaartTip). Een label met
        tekst was hier te veel: het staat er juist omdat het er anders niet staat. */
     const iconen = p.settings.track === 'count'
-      ? '<span class="kaart-emoji">🧸</span>'
+      ? telIcoon(18)
       : themasAan(p.settings).map(k => themaIcoon(k, 18)).join('');
     return `<button class="ster-rij" type="button" data-key="${key}">`
       + `<span class="who-portrait" aria-hidden="true">${avatarSVG(p, 90)}</span>`
@@ -1744,7 +1757,7 @@ function speelAlsGekozen() {
 function speelAlsKnop(p) {
   const b = $('speel-als');
   if (!b) return;
-  b.hidden = $('cijfers-knop').hidden = !p;   // 📊 staat ernaast, en alleen op haar pagina (zie openCijfers)
+  b.hidden = $('cijfers-knop').hidden = !p;   // de cijfers staan ernaast, en alleen op haar pagina (zie openCijfers)
   if (!p) return;
   b.setAttribute('aria-label', 'Speel als ' + p.name);
   b.title = 'Speel als ' + p.name;
@@ -2325,19 +2338,20 @@ function backupBladStandHtml() {
 }
 function openBackupBlad() {
   sndClick();
+  // emoji als icoon, net als elke andere rij in het ouderdeel
   const rij = (id, ico, label, pijl) => `<button class="gear-item" id="${id}" type="button">`
-    + `<span class="gi-ico" aria-hidden="true">${ozIco(ico)}</span><span class="gi-label">${label}</span>`
+    + `<span class="gi-ico" aria-hidden="true">${ico}</span><span class="gi-label">${label}</span>`
     + (pijl ? '<span class="gi-pijl" aria-hidden="true">›</span>' : '') + '</button>';
   const oz = overzetMag();
   $('confirm-title').textContent = '💾 ' + sterrenRijNaam();
   $('confirm-body').innerHTML = `<div class="bb-blad">`
     + (oz ? `<button class="btn purple oz-groot" id="bb-naar" type="button">${ozIco('zet')} Naar ander toestel</button>` : '')
     + `<div class="bb-lijst">`
-    + (oz ? rij('bb-van', 'code', 'Van ander toestel', true) : '')
-    + rij('bb-maak', 'maak', 'Back-up maken' + backupBladStandHtml())
-    + rij('bb-terug', 'terug', 'Terugzetten')
+    + (oz ? rij('bb-van', '🔢', 'Van ander toestel', true) : '')
+    + rij('bb-maak', '📥', 'Back-up maken' + backupBladStandHtml())
+    + rij('bb-terug', '📤', 'Terugzetten')
     + '</div></div>';
-  $('confirm-actions').innerHTML = '<button class="btn small paper" id="bb-dicht">Sluiten</button>';
+  $('confirm-actions').innerHTML = klaarKnop('bb-dicht');
   $('bb-dicht').onclick = closeConfirmModal;
   if (oz) {
     $('bb-naar').onclick = openOverzetBlad;
@@ -2389,9 +2403,6 @@ function ozIco(naam) {
   const i = d => `<svg class="oz-i" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
   return i({
     zet: '<rect x="2" y="5" width="8" height="14" rx="2"/><rect x="14" y="5" width="8" height="14" rx="2"/><path d="M8 12h8M13.5 9.5 16 12l-2.5 2.5"/>',
-    code: '<rect x="3" y="6" width="18" height="12" rx="3"/><path d="M7 12h.01M10.5 12h.01M14 12h.01M17.5 12h.01"/>',
-    maak: '<path d="M12 3v11M7.5 9.5 12 14l4.5-4.5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
-    terug: '<path d="M12 14V3M7.5 7.5 12 3l4.5 4.5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
     // een telefoon met een pijl erin: de back-up, die op dít toestel blijft
     hier: '<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M12 6v7M9 10.5l3 3 3-3M10 18h4"/>',
     plak: '<rect x="7" y="4" width="10" height="4" rx="1.5"/><path d="M7 6H5.5A1.5 1.5 0 0 0 4 7.5v12A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5v-12A1.5 1.5 0 0 0 18.5 6H17"/>',
@@ -2504,7 +2515,7 @@ function openOverzetBlad() {
   const gezichten = profileKeys().map(k => `<span class="oz-mini">${avatarSVG(db.profiles[k], 60)}</span>`).join('');
   ozToon(ozIco('zet') + ' Naar ander toestel',
     `<div class="oz-mee">${gezichten}</div><div id="oz-stap"></div>`,
-    '<button class="btn small paper" id="oz-dicht">Sluiten</button>');
+    klaarKnop('oz-dicht'));
   $('oz-blad').dataset.nr = nr;
   $('oz-dicht').onclick = closeConfirmModal;
   ozStapDelen(null);
@@ -2580,7 +2591,7 @@ function ozWachtOpOphalen(nr, { code, sleutel }) {
 function ozOvergezet() {
   $('confirm-title').innerHTML = ozIco('zet') + ' Overgezet';
   $('oz-blad').innerHTML = `<div class="oz-sterren">${profileKeys().map(k => ozKaart(db.profiles[k], 'ok')).join('')}</div>`;
-  $('confirm-actions').innerHTML = '<button class="btn small purple" id="oz-dicht">Klaar</button>';
+  $('confirm-actions').innerHTML = klaarKnop('oz-dicht');
   $('oz-dicht').onclick = closeConfirmModal;
   sndClick();
 }
