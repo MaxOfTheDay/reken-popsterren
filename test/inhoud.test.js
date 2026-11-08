@@ -1295,4 +1295,22 @@ zaak('T', () => {
   check(!fout.length, 'T · elke :hover staat in @media (hover: hover), anders blijft hij hangen na een tik', fout.join(' | '));
 });
 
+/* zaak U — een antwoordvlak hoort zijn tikken via knopTik (= Antwoordtik in
+   10-feestjes.js), nooit via onclick. Een click gooit de browser weg als de
+   vinger bij het loslaten rolt, en als er een tweede vinger landt voordat de
+   eerste loslaat -- dan zelfs voor allebei. robuust zaak F tikt het na met echte
+   vingers; deze zaak houdt een nieuw antwoordvlak bij de les. */
+const ANTWOORDVLAKKEN = ['choice-btn', 'num-btn', 'count-tile', 'mem-card', 'tap-obj', 'gl-raak'];
+zaak('U', () => {
+  const map = path.join(WORTEL, 'src');
+  const code = fs.readdirSync(map).filter(f => f.endsWith('.js') && f !== '90-wereldstudio.js').sort()
+    .map(f => fs.readFileSync(path.join(map, f), 'utf8')).join('');
+  const vlak = ANTWOORDVLAKKEN.join('|');
+  const klik = new RegExp(`querySelector(?:All)?\\(\\s*['"\`][^'"\`]*\\.(?:${vlak})\\b[^'"\`]*['"\`]\\s*\\)[^;\\n]*\\.onclick|\\.(?:${vlak})\\b[^\\n]*addEventListener\\(\\s*'click'`, 'g');
+  const fout = code.match(klik) || [];
+  check(!fout.length, 'U · geen antwoordvlak hoort zijn tik via onclick of click (gebruik knopTik)', fout.slice(0, 3).join(' | '));
+  const mist = ANTWOORDVLAKKEN.filter(k => !new RegExp(`knopTik\\([^,]+,\\s*'\\.${k}'`).test(code));
+  check(!mist.length, 'U · elk antwoordvlak gaat via knopTik', mist.join(', '));
+});
+
 klaar();

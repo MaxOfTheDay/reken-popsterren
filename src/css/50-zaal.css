@@ -647,7 +647,7 @@
        vw-maat zou bij 2 tegels te klein en bij 4 te groot uitvallen */
     container-type: inline-size;
   }
-  .count-tile:active { transform: translateY(4px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
+  .count-tile:is(:active, .ingedrukt) { transform: translateY(4px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
   .count-tile.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
   .count-tile.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--red-answer-shadow), var(--btn-diep); }
   .count-tile .cg-obj { font-size: 27px; }
@@ -938,7 +938,9 @@
     @media (max-height: 340px) { .question-card { padding: 5px 12px 11px; } }
     .question-card .gl { width: 100%; }
     .numpad { grid-template-columns: repeat(3, 1fr); width: 100%; gap: 7px; }
-    .num-btn { padding: 7px 0; font-size: 22px; order: 0; }
+    /* 44 hoog en niet 40: een kleinere toets mist een duim die snel tikt (zie
+       = Antwoordtik), en op een liggende telefoon is dit het kleinste vlak */
+    .num-btn { padding: 7px 0; font-size: 22px; order: 0; min-height: 44px; }
   }
   /* Ruimte over? Dan groeit de sóm, niet de paspop. De paspop is decor; de
      vraagkaart is waar het kind naar moet kijken -- en die was op een telefoon
