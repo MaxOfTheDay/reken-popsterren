@@ -2413,18 +2413,33 @@ function ozToon(titel, body, acties) {
 const ozOpen = nr => { const b = $('oz-blad'); return !!b && b.dataset.nr === String(nr) && $('confirm-modal').classList.contains('open'); };
 let ozNr = 0;   // elk blad een eigen nummer: een antwoord voor een gesloten blad doet niets
 
-/* ---- Toestel A: de code tonen ---- */
 /* ---- Toestel A: een ophaallink maken ----
    Wat er weggaat is een link (ozLinkVan): wie hem op het andere toestel aantikt,
-   opent het spel met de code al ingevuld (ophaalLinkLees). De link gaat met de
-   knop "Deel link" langs het deelvenster van de telefoon (WhatsApp, Berichten,
-   AirDrop...), en staat bovendien al op het klembord. De zes cijfers blijven
-   eronder staan, klein: voor wie hem toch overtypt.
+   opent het spel met de code al ingevuld (ophaalLinkLees). De zes cijfers staan
+   er klein onder, voor wie liever overtypt.
+
+   EEN STAP TEGELIJK. Het blad toont nooit meer dan één ding om te doen:
+     1 delen      één paarse knop "Deel link" (of "Kopieer link" waar het toestel
+                  niet kan delen)
+     2 wachten    zodra er gedeeld is: "Open de link op het andere toestel" met
+                  drie puntjes, en klein "Opnieuw delen"
+     3 klaar      de ontvanger meldt dat hij opgehaald is: "Overgezet"
+   Er staat geen klok of balk bij: een link leeft een kwartier, en pas als hij
+   verlopen is zegt het blad dat (ozVerlopen). Eerder stond er een balk die
+   leegliep en een groene "Gekopieerd"; samen met de knop en de code was dat te
+   veel tegelijk, en niemand wist waar de balk voor was.
+
+   METEEN DELEN. De tik op "Naar ander toestel" probeert het deelvenster meteen
+   te openen, zodra de link er is (een halve tel later). Een browser mag dat
+   weigeren, want delen hoort bij een tik en die tik is dan net voorbij; dan
+   blijft gewoon stap 1 staan en is "Deel link" de tik. Wegtikken van het
+   deelvenster laat ook stap 1 staan.
 
    KOPIËREN IN DEZELFDE TIK. Safari kopieert alleen tijdens een tik, en de code
-   komt pas een halve tel later van de ontvanger. kopieerBelofte geeft het
-   klembord daarom meteen een belofte (ClipboardItem), die vult als de code er
-   is. Lukt dat niet, dan staat er gewoon niets van "Gekopieerd". */
+   komt pas later van de ontvanger. kopieerBelofte geeft het klembord daarom
+   meteen een belofte (ClipboardItem), die vult als de code er is. Dat gebeurt
+   stil: het is er voor Plakken in de app op een iPhone (openCodeBlad), en wie
+   deelt hoeft er niets van te weten. */
 function ozMaakLink() {
   return ozVraag('zet', JSON.stringify(db)).then(r => {
     if (r.status !== 201 || !r.data || !/^\d{6}$/.test(r.data.code)) throw r.status;
@@ -2461,14 +2476,20 @@ function openOverzetBlad() {
   const nr = ++ozNr;
   const gezichten = profileKeys().map(k => `<span class="oz-mini">${avatarSVG(db.profiles[k], 60)}</span>`).join('');
   ozToon(ozIco('zet') + ' Naar ander toestel',
-    `<div class="oz-mee">${gezichten}</div>${ozCodeHtml('', 'laden')}<div class="oz-onder" id="oz-onder"></div>`,
+    `<div class="oz-mee">${gezichten}</div><div id="oz-stap"></div>`,
     '<button class="btn small paper" id="oz-dicht">Sluiten</button>');
   $('oz-blad').dataset.nr = nr;
   $('oz-dicht').onclick = closeConfirmModal;
+  ozStapDelen(null);
   const link = ozMaakLink();
-  const gekopieerd = kopieerBelofte(link.then(d => ozLinkVan(d.code))).catch(() => false);
+  kopieerBelofte(link.then(d => ozLinkVan(d.code))).catch(() => false);
   link.then(
-    d => { if (ozOpen(nr)) ozToonCode(nr, d, gekopieerd); },
+    d => {
+      if (!ozOpen(nr)) return;
+      ozStapDelen(nr, d);
+      ozWachtOpOphalen(nr, d);
+      if (navigator.share) ozDeel(nr, d);
+    },
     st => { if (ozOpen(nr)) ozZetFout(nr, st); });
 }
 function ozZetFout(nr, status) {
@@ -2479,29 +2500,44 @@ function ozZetFout(nr, status) {
 }
 // Het deel-icoon, in de lijn van ozIco maar in de kleur van de knop.
 const OZ_DEEL = '<svg class="oz-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
-function ozToonCode(nr, { code, tot, sleutel }, gekopieerd) {
-  const duur = 15 * 60 * 1000;
-  const rest = Math.max(0, Math.min(duur, tot - Date.now()));
-  const mee = $('oz-blad').querySelector('.oz-mee');
-  const url = ozLinkVan(code);
-  $('oz-blad').innerHTML = (mee ? mee.outerHTML : '')
-    + `<button class="btn purple oz-groot" id="oz-deel" type="button">${OZ_DEEL} Deel link</button>`
-    + '<div class="oz-ok" id="oz-ok" aria-live="polite"></div>'
-    + `<div class="oz-waar">of typ daar de code <b class="oz-klein-code" data-code="${code}">${code.slice(0, 3)} ${code.slice(3)}</b></div>`
-    // de balk loopt leeg in de tijd die nog rest: een animatie van een kwartier die
-    // al (duur - rest) gevorderd is
-    + `<div class="oz-tijd"><i style="animation-duration:${duur}ms;animation-delay:-${duur - rest}ms"></i></div>`;
-  $('oz-blad').classList.add('met-code');
-  const meld = ok => { const o = $('oz-ok'); if (o && ok) o.textContent = '✓ Gekopieerd'; };
-  if (gekopieerd) gekopieerd.then(meld);
-  /* Deel: het deelvenster van het toestel, met de cijfers ook in de tekst -- dan
-     vindt Plakken ze ook als iemand alleen de tekst kopieert. Waar delen niet kan
-     (een computer, een oude browser), kopieert de knop de link. */
-  $('oz-deel').onclick = () => {
-    const tekst = `Rekensterren: ${code.slice(0, 3)} ${code.slice(3)} · een kwartier geldig`;
-    if (navigator.share) navigator.share({ title: 'Rekensterren', text: tekst, url }).catch(() => {});
-    else kopieer(url).then(meld);
-  };
+// De code klein, voor wie overtypt. Leeg zolang hij er nog niet is, maar even
+// hoog: dan springt het blad niet als hij binnenkomt.
+function ozCodeRegel(code) {
+  return code
+    ? `<div class="oz-waar oz-regel">of typ daar <b class="oz-klein-code" data-code="${code}">${code.slice(0, 3)} ${code.slice(3)}</b></div>`
+    : '<div class="oz-waar oz-regel"></div>';
+}
+// Stap 1: de paarse knop. Zonder d (de link komt nog) staat hij er al, uit.
+function ozStapDelen(nr, d) {
+  const kan = !!navigator.share;
+  $('oz-stap').innerHTML = `<button class="btn purple oz-groot" id="oz-deel" type="button"${d ? '' : ' disabled'}>`
+    + `${OZ_DEEL} ${kan ? 'Deel link' : 'Kopieer link'}</button>` + ozCodeRegel(d && d.code);
+  if (d) $('oz-deel').onclick = () => ozDeel(nr, d);
+}
+// Stap 2: gedeeld, nu op het andere toestel.
+function ozStapWacht(nr, d) {
+  const kan = !!navigator.share;
+  $('oz-stap').innerHTML = '<div class="oz-stap-zin">Open de link op het andere toestel</div>'
+    + '<div class="oz-wacht" aria-hidden="true"><i></i><i></i><i></i></div>'
+    + `<button class="btn small paper oz-opnieuw" id="oz-opnieuw" type="button">${OZ_DEEL} ${kan ? 'Opnieuw delen' : 'Kopieer opnieuw'}</button>`
+    + ozCodeRegel(d.code);
+  $('oz-opnieuw').onclick = () => ozDeel(nr, d);
+}
+/* Delen: het deelvenster van het toestel, met de cijfers ook in de tekst -- dan
+   vindt Plakken ze ook als iemand alleen de tekst kopieert. Waar delen niet kan
+   (een computer, een oude browser), kopieert de knop de link. Pas als het gelukt
+   is, gaat het blad naar stap 2. */
+function ozDeel(nr, d) {
+  const url = ozLinkVan(d.code);
+  const verder = ok => { if (ok && ozOpen(nr) && $('oz-stap')) ozStapWacht(nr, d); };
+  if (!navigator.share) { kopieer(url).then(verder); return; }
+  const tekst = `Rekensterren: ${d.code.slice(0, 3)} ${d.code.slice(3)} · een kwartier geldig`;
+  let p;
+  try { p = navigator.share({ title: 'Rekensterren', text: tekst, url }); } catch (e) { return; }
+  Promise.resolve(p).then(() => verder(true), () => {});   // geweigerd of weggetikt: stap 1 blijft
+}
+// Vraagt de ontvanger om de paar tellen of de link al opgehaald is.
+function ozWachtOpOphalen(nr, { code, sleutel }) {
   const vraag = () => {
     if (!ozOpen(nr)) return;
     if (document.hidden) { setTimeout(vraag, OVERZET_POLL); return; }
@@ -2516,16 +2552,15 @@ function ozToonCode(nr, { code, tot, sleutel }, gekopieerd) {
 }
 function ozOvergezet() {
   $('confirm-title').innerHTML = ozIco('zet') + ' Overgezet';
-  $('oz-blad').classList.remove('met-code');
   $('oz-blad').innerHTML = `<div class="oz-sterren">${profileKeys().map(k => ozKaart(db.profiles[k], 'ok')).join('')}</div>`;
   $('confirm-actions').innerHTML = '<button class="btn small purple" id="oz-dicht">Klaar</button>';
   $('oz-dicht').onclick = closeConfirmModal;
   sndClick();
 }
 function ozVerlopen() {
-  $('oz-blad').classList.remove('met-code');
-  $('oz-blad').innerHTML = '<div class="oz-fout">Deze code is verlopen.</div>';
-  $('confirm-actions').innerHTML = '<button class="btn small paper" id="oz-dicht">Sluiten</button><button class="btn small purple" id="oz-weer">Nieuwe code</button>';
+  const s = $('oz-stap');
+  if (s) s.innerHTML = '<div class="oz-waar oz-verlopen">Deze link is verlopen</div>';
+  $('confirm-actions').innerHTML = '<button class="btn small paper" id="oz-dicht">Sluiten</button><button class="btn small purple" id="oz-weer">Nieuwe link</button>';
   $('oz-dicht').onclick = closeConfirmModal;
   $('oz-weer').onclick = openOverzetBlad;
 }
