@@ -11053,11 +11053,18 @@
     width: 100%; min-height: 54px; margin: 4px 0 0; font-size: var(--tx-body);
   }
   .oz-groot .oz-i { width: 22px; height: 22px; }
-  .oz-ok { min-height: 22px; margin: 6px 0 2px; font-size: var(--tx-klein); font-weight: 700; color: var(--green-deep); }
-  .oz-ok:empty { min-height: 10px; }
+
+  .oz-groot:disabled { filter: none; opacity: .55; }
   .oz-of { margin: 14px 0 2px; font-size: var(--tx-klein); color: var(--paper-ink-muted); }
   .oz-klein-code { font-size: var(--tx-label); letter-spacing: .06em; color: var(--purple-deep); }
-  .oz-blad.met-code .oz-tijd { margin-top: 10px; }
+
+
+  .oz-regel { min-height: 26px; margin-top: 10px; }
+  .oz-stap-zin { margin: 4px 0 0; font-size: var(--tx-body); font-weight: 700; color: var(--paper-ink); text-wrap: balance; }
+  .oz-stap-zin + .oz-wacht { margin: 8px 0 14px; }
+  .oz-opnieuw { display: inline-flex; align-items: center; gap: 6px; }
+  .oz-opnieuw .oz-i { width: 18px; height: 18px; }
+  .oz-verlopen { margin: 4px 0 2px; }
   .oz-mee { display: flex; justify-content: center; padding-left: 10px; margin: 0 0 8px; }
   .oz-mini {
     position: relative; display: inline-block; width: 40px; height: 40px; margin-left: -10px;
@@ -11088,15 +11095,6 @@
     position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px;
     border: 0; background: transparent; color: transparent; caret-color: transparent;
   }
-
-
-  .oz-tijd { height: 6px; margin: 0 18px 14px; border-radius: 3px; background: var(--paper-border); overflow: hidden; }
-  .oz-tijd i {
-    display: block; height: 100%; border-radius: 3px; transform-origin: left;
-    background: linear-gradient(90deg, var(--purple-deep), var(--purple-light));
-    animation-name: oz-tijd; animation-timing-function: linear; animation-fill-mode: forwards;
-  }
-  @keyframes oz-tijd { from { transform: scaleX(1); } to { transform: scaleX(0); } }
   .oz-waar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; font-size: var(--tx-klein); color: var(--paper-ink-muted); }
   .oz-blad .ab-kbd {
     display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 8px;
@@ -32950,6 +32948,21 @@ let ozNr = 0;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function ozMaakLink() {
   return ozVraag('zet', JSON.stringify(db)).then(r => {
     if (r.status !== 201 || !r.data || !/^\d{6}$/.test(r.data.code)) throw r.status;
@@ -32986,14 +32999,20 @@ function openOverzetBlad() {
   const nr = ++ozNr;
   const gezichten = profileKeys().map(k => `<span class="oz-mini">${avatarSVG(db.profiles[k], 60)}</span>`).join('');
   ozToon(ozIco('zet') + ' Naar ander toestel',
-    `<div class="oz-mee">${gezichten}</div>${ozCodeHtml('', 'laden')}<div class="oz-onder" id="oz-onder"></div>`,
+    `<div class="oz-mee">${gezichten}</div><div id="oz-stap"></div>`,
     '<button class="btn small paper" id="oz-dicht">Sluiten</button>');
   $('oz-blad').dataset.nr = nr;
   $('oz-dicht').onclick = closeConfirmModal;
+  ozStapDelen(null);
   const link = ozMaakLink();
-  const gekopieerd = kopieerBelofte(link.then(d => ozLinkVan(d.code))).catch(() => false);
+  kopieerBelofte(link.then(d => ozLinkVan(d.code))).catch(() => false);
   link.then(
-    d => { if (ozOpen(nr)) ozToonCode(nr, d, gekopieerd); },
+    d => {
+      if (!ozOpen(nr)) return;
+      ozStapDelen(nr, d);
+      ozWachtOpOphalen(nr, d);
+      if (navigator.share) ozDeel(nr, d);
+    },
     st => { if (ozOpen(nr)) ozZetFout(nr, st); });
 }
 function ozZetFout(nr, status) {
@@ -33004,29 +33023,44 @@ function ozZetFout(nr, status) {
 }
 
 const OZ_DEEL = '<svg class="oz-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
-function ozToonCode(nr, { code, tot, sleutel }, gekopieerd) {
-  const duur = 15 * 60 * 1000;
-  const rest = Math.max(0, Math.min(duur, tot - Date.now()));
-  const mee = $('oz-blad').querySelector('.oz-mee');
-  const url = ozLinkVan(code);
-  $('oz-blad').innerHTML = (mee ? mee.outerHTML : '')
-    + `<button class="btn purple oz-groot" id="oz-deel" type="button">${OZ_DEEL} Deel link</button>`
-    + '<div class="oz-ok" id="oz-ok" aria-live="polite"></div>'
-    + `<div class="oz-waar">of typ daar de code <b class="oz-klein-code" data-code="${code}">${code.slice(0, 3)} ${code.slice(3)}</b></div>`
 
 
-    + `<div class="oz-tijd"><i style="animation-duration:${duur}ms;animation-delay:-${duur - rest}ms"></i></div>`;
-  $('oz-blad').classList.add('met-code');
-  const meld = ok => { const o = $('oz-ok'); if (o && ok) o.textContent = '✓ Gekopieerd'; };
-  if (gekopieerd) gekopieerd.then(meld);
+function ozCodeRegel(code) {
+  return code
+    ? `<div class="oz-waar oz-regel">of typ daar <b class="oz-klein-code" data-code="${code}">${code.slice(0, 3)} ${code.slice(3)}</b></div>`
+    : '<div class="oz-waar oz-regel"></div>';
+}
+
+function ozStapDelen(nr, d) {
+  const kan = !!navigator.share;
+  $('oz-stap').innerHTML = `<button class="btn purple oz-groot" id="oz-deel" type="button"${d ? '' : ' disabled'}>`
+    + `${OZ_DEEL} ${kan ? 'Deel link' : 'Kopieer link'}</button>` + ozCodeRegel(d && d.code);
+  if (d) $('oz-deel').onclick = () => ozDeel(nr, d);
+}
+
+function ozStapWacht(nr, d) {
+  const kan = !!navigator.share;
+  $('oz-stap').innerHTML = '<div class="oz-stap-zin">Open de link op het andere toestel</div>'
+    + '<div class="oz-wacht" aria-hidden="true"><i></i><i></i><i></i></div>'
+    + `<button class="btn small paper oz-opnieuw" id="oz-opnieuw" type="button">${OZ_DEEL} ${kan ? 'Opnieuw delen' : 'Kopieer opnieuw'}</button>`
+    + ozCodeRegel(d.code);
+  $('oz-opnieuw').onclick = () => ozDeel(nr, d);
+}
 
 
 
-  $('oz-deel').onclick = () => {
-    const tekst = `Rekensterren: ${code.slice(0, 3)} ${code.slice(3)} · een kwartier geldig`;
-    if (navigator.share) navigator.share({ title: 'Rekensterren', text: tekst, url }).catch(() => {});
-    else kopieer(url).then(meld);
-  };
+
+function ozDeel(nr, d) {
+  const url = ozLinkVan(d.code);
+  const verder = ok => { if (ok && ozOpen(nr) && $('oz-stap')) ozStapWacht(nr, d); };
+  if (!navigator.share) { kopieer(url).then(verder); return; }
+  const tekst = `Rekensterren: ${d.code.slice(0, 3)} ${d.code.slice(3)} · een kwartier geldig`;
+  let p;
+  try { p = navigator.share({ title: 'Rekensterren', text: tekst, url }); } catch (e) { return; }
+  Promise.resolve(p).then(() => verder(true), () => {});
+}
+
+function ozWachtOpOphalen(nr, { code, sleutel }) {
   const vraag = () => {
     if (!ozOpen(nr)) return;
     if (document.hidden) { setTimeout(vraag, OVERZET_POLL); return; }
@@ -33041,16 +33075,15 @@ function ozToonCode(nr, { code, tot, sleutel }, gekopieerd) {
 }
 function ozOvergezet() {
   $('confirm-title').innerHTML = ozIco('zet') + ' Overgezet';
-  $('oz-blad').classList.remove('met-code');
   $('oz-blad').innerHTML = `<div class="oz-sterren">${profileKeys().map(k => ozKaart(db.profiles[k], 'ok')).join('')}</div>`;
   $('confirm-actions').innerHTML = '<button class="btn small purple" id="oz-dicht">Klaar</button>';
   $('oz-dicht').onclick = closeConfirmModal;
   sndClick();
 }
 function ozVerlopen() {
-  $('oz-blad').classList.remove('met-code');
-  $('oz-blad').innerHTML = '<div class="oz-fout">Deze code is verlopen.</div>';
-  $('confirm-actions').innerHTML = '<button class="btn small paper" id="oz-dicht">Sluiten</button><button class="btn small purple" id="oz-weer">Nieuwe code</button>';
+  const s = $('oz-stap');
+  if (s) s.innerHTML = '<div class="oz-waar oz-verlopen">Deze link is verlopen</div>';
+  $('confirm-actions').innerHTML = '<button class="btn small paper" id="oz-dicht">Sluiten</button><button class="btn small purple" id="oz-weer">Nieuwe link</button>';
   $('oz-dicht').onclick = closeConfirmModal;
   $('oz-weer').onclick = openOverzetBlad;
 }
