@@ -532,9 +532,9 @@
   /* de mini-raampjes houden hun eigen kleine ronding: dat is de tekening van het
      reken-hulpmiddel, niet de UI-schaal -- --r-sm op een vakje van 10-15px maakt
      er een rondje van */
-  .count-tile .cframe .tf-cell { width: 15px; height: 15px; width: min(28px, 17cqw, 4.5vh); height: min(28px, 17cqw, 4.5vh); border-width: 1.5px; border-radius: 5px; }
-  .count-tile .cframe .cg-obj { font-size: 11px; font-size: min(20px, 12.5cqw, 3.3vh); } /* teken */
-  .count-tile .cframe .cg-dot { width: 8px; height: 8px; width: min(14px, 10cqw); height: min(14px, 10cqw); }
+  .count-tile .cframe .tf-cell { width: 15px; height: 15px; width: min(52px, 17cqw, 4.5vh); height: min(52px, 17cqw, 4.5vh); border-width: 1.5px; border-radius: 5px; }
+  .count-tile .cframe .cg-obj { font-size: 11px; font-size: min(38px, 12.5cqw, 3.3vh); } /* teken */
+  .count-tile .cframe .cg-dot { width: 8px; height: 8px; width: min(26px, 10cqw, 2.7vh); height: min(26px, 10cqw, 2.7vh); }
 
   /* ---- Stippenraam (leer-aid): vijf-/tienraam met VASTE plekken ----
      Vaste vulvolgorde (bovenrij eerst, links→rechts); lege vakjes blijven zichtbaar,
@@ -569,7 +569,7 @@
   .count-tile .dframe:not(.mini) { column-gap: 4px; row-gap: 7px; column-gap: min(5px, 2cqw); row-gap: min(8px, 6cqw); }
   /* ronding in procenten i.p.v. --r-sm: het vakje is nu geen vaste 22px meer, en
      een vaste 10px ronding maakt van een geslonken vakje een rondje */
-  .count-tile .dframe:not(.mini) .df-cell { width: 20px; height: 20px; width: min(28px, 18cqw, 4.5vh); height: min(28px, 18cqw, 4.5vh); border-radius: 45%; }
+  .count-tile .dframe:not(.mini) .df-cell { width: 20px; height: 20px; width: min(52px, 18cqw, 4.5vh); height: min(52px, 18cqw, 4.5vh); border-radius: 45%; }
   /* op paarse knoppen: witte stippen + lichtere randjes (i.p.v. donker op wit) */
   .count-tile .df-cell { border-color: rgba(255,255,255,.3); }
   .count-tile .df-cell.on { border-color: rgba(255,255,255,.5); }
@@ -666,13 +666,18 @@
   /* één regel per groep (tot acht): de maat volgt de breedte van de rij */
   .count-tiles.vergelijk .cgroup { max-width: 100%; gap: 1cqw 2cqw; }
   .count-tiles.vergelijk .count-tile { min-height: 0; padding: 10px 8px; }
-  .count-tiles.vergelijk .count-tile .cg-obj { font-size: min(34px, 8.6cqw, 4.4vh); }
-  .count-tiles.vergelijk .count-tile .cg-dot { width: min(26px, 7cqw); height: min(26px, 7cqw); }
+  .count-tiles.vergelijk .count-tile .cg-obj { font-size: min(64px, 8.6cqw, 4.4vh); }
+  .count-tiles.vergelijk .count-tile .cg-dot { width: min(48px, 7cqw, 3.4vh); height: min(48px, 7cqw, 3.4vh); }
   /* een raampje in zo'n rij: vakjes zo groot als een voorwerp, niet groter -- de
      rij moet laag blijven, de breedte heeft hij al */
-  .count-tiles.vergelijk .count-tile .dframe:not(.mini) .df-cell, .count-tiles.vergelijk .count-tile .cframe .tf-cell { width: min(24px, 6.4cqw, 3.2vh); height: min(24px, 6.4cqw, 3.2vh); }
-  .count-tiles.vergelijk .count-tile .cgroup.groot .cg-obj { font-size: min(48px, 10.5cqw, 6vh); }
-  .count-tiles.vergelijk .count-tile .cgroup.klein .cg-obj { font-size: min(22px, 6cqw, 3vh); }
+  .count-tiles.vergelijk .count-tile .dframe:not(.mini) .df-cell, .count-tiles.vergelijk .count-tile .cframe .tf-cell { width: min(44px, 6.4cqw, 3.2vh); height: min(44px, 6.4cqw, 3.2vh); }
+  .count-tiles.vergelijk .count-tile .cgroup.groot .cg-obj { font-size: min(90px, 10.5cqw, 6vh); }
+  .count-tiles.vergelijk .count-tile .cgroup.klein .cg-obj { font-size: min(40px, 6cqw, 3vh); }
+  /* een voorwerp in zo'n raampje: kleiner dan zijn vakje (zeven tiende, zoals
+     overal). Zonder deze regel gold de maat van een raampje in een gewone
+     tegel, en die is groter dan een vakje hier: de voorwerpen schoven over
+     elkaar heen tot één klont. */
+  .count-tiles.vergelijk .count-tile .cframe .cg-obj { font-size: min(31px, 4.5cqw, 2.24vh); }
   /* de kaart van die vraag is één regel: hij staat zijn hoogte af aan de tegels */
   .count-q:has(> .cq-label) { min-height: 0; }
   /* de twee staafjes op de kaart: het gouden is de groep die je zoekt (vergelijkTeken) */
@@ -996,6 +1001,37 @@
     .count-tiles { gap: 2vh; }
     .count-tile { min-height: 15vh; }
     .count-tile .cg-obj { font-size: min(4.6vh, 40px); }
+
+    /* DE VOORWERPEN GROEIEN MEE. De kaart en de tegels groeien hier met het
+       scherm, maar de voorwerpen erin stonden in vaste pixels (34px op een kaart
+       van 600 breed, 20px in een raampje): op een groot scherm leken ze verloren
+       in een witte kaart. Nu is --obj de maat van één voorwerp, en volgt alles
+       erin (raampje, stip, de breedte van een groepje) dezelfde verhouding als
+       de oude pixelmaten tegenover 34px. */
+    .count-q, .count-tile { --obj: min(5.6vh, 60px); }
+    .count-q .cg-obj, .count-tile .cg-obj, .count-q .tap-obj .cg-obj { font-size: var(--obj); }
+    .count-q .cgroup.big .cg-obj { font-size: calc(var(--obj) * 1.35); }
+    .count-q .cgroup, .count-tile .cgroup { max-width: calc(var(--obj) * 7.6); }
+    .count-q .cgroup.n4, .count-q .cgroup.n5, .count-q .cgroup.n6,
+    .count-tile .cgroup.n4, .count-tile .cgroup.n5, .count-tile .cgroup.n6 { max-width: calc(var(--obj) * 4.95); }
+    .count-q .cgroup { gap: calc(var(--obj) * .18) calc(var(--obj) * .3); }
+    .count-q .cg-dot { width: calc(var(--obj) * .76); height: calc(var(--obj) * .76); }
+    .count-q .cgroup.big .cg-dot { width: var(--obj); height: var(--obj); }
+    .count-q .cframe .tf-cell { width: calc(var(--obj) * .82); height: calc(var(--obj) * .82); }
+    .count-q .cframe.big .tf-cell { width: var(--obj); height: var(--obj); }
+    .count-q .cframe .cg-obj { font-size: calc(var(--obj) * .6); }
+    .count-q .cframe.big .cg-obj { font-size: calc(var(--obj) * .7); }
+    .count-q .cframe .cg-dot { width: calc(var(--obj) * .47); height: calc(var(--obj) * .47); }
+    .count-q .dframe:not(.mini) .df-cell { width: calc(var(--obj) * .65); height: calc(var(--obj) * .65); }
+    .count-q .dframe.big:not(.mini) .df-cell { width: calc(var(--obj) * .8); height: calc(var(--obj) * .8); }
+    .count-q .sum-eq .cgroup.big { max-width: calc(var(--obj) * 3.8); }
+    .count-q .sum-eq .cgroup.big .cg-obj { font-size: calc(var(--obj) * .95); }
+    .count-q .sum-eq .dframe.big { --df-som: calc(var(--obj) * .72); }
+    .count-q .sum-num { font-size: var(--obj); }
+    .count-q .sum-op { font-size: calc(var(--obj) * .8); }
+    .count-q .sum-eq-q { font-size: calc(var(--obj) * 1.1); }
+    .count-tiles:not(.vergelijk) .count-tile .cgroup.groot .cg-obj { font-size: calc(var(--obj) * 1.3); }
+    .count-tiles:not(.vergelijk) .count-tile .cgroup.klein .cg-obj { font-size: calc(var(--obj) * .5); }
     .numpad { width: var(--kaart-w); gap: 1.6vh; }
     .num-btn { font-size: min(4.6vh, 40px); padding: 1.9vh 0; }
   }
@@ -1014,6 +1050,21 @@
     .choice-btn { font-size: 44px; padding: 26px 8px; }
     .numpad { width: min(64vw, 420px); gap: 14px; }
     .num-btn { font-size: 36px; padding: 18px 0; }
+    /* de voorwerpen groeien mee (zie het brede scherm hierboven) */
+    .count-q, .count-tile { --obj: 48px; }
+    .count-q .cg-obj, .count-tile .cg-obj { font-size: var(--obj); }
+    .count-q .cgroup.big .cg-obj { font-size: calc(var(--obj) * 1.35); }
+    .count-q .cgroup, .count-tile .cgroup { max-width: calc(var(--obj) * 7.6); }
+    .count-q .cgroup.n4, .count-q .cgroup.n5, .count-q .cgroup.n6,
+    .count-tile .cgroup.n4, .count-tile .cgroup.n5, .count-tile .cgroup.n6 { max-width: calc(var(--obj) * 4.95); }
+    .count-q .cframe.big .tf-cell { width: var(--obj); height: var(--obj); }
+    .count-q .cframe.big .cg-obj { font-size: calc(var(--obj) * .7); }
+    .count-q .cframe .tf-cell { width: calc(var(--obj) * .82); height: calc(var(--obj) * .82); }
+    .count-q .cframe .cg-obj { font-size: calc(var(--obj) * .6); }
+    .count-q .dframe.big:not(.mini) .df-cell { width: calc(var(--obj) * .8); height: calc(var(--obj) * .8); }
+    .count-q .sum-eq .cgroup.big { max-width: calc(var(--obj) * 3.8); }
+    .count-q .sum-eq .cgroup.big .cg-obj { font-size: calc(var(--obj) * .95); }
+    .count-q .sum-eq .dframe.big { --df-som: calc(var(--obj) * .72); }
   }
 
   /* feedback-kaarten (praise/toast): kregen vroeger een vaste viewport-%
