@@ -100,13 +100,14 @@
     border-bottom: 0; border-radius: 0; box-shadow: none; padding-bottom: 0; }
   #screen-journey .screen-header { margin-bottom: 0;
     grid-template-columns: minmax(56px, 1fr) auto minmax(56px, 1fr); gap: 10px;
-    /* Even hoog als de koprij van de kaart, en dat is precies zo hoog als het
-       portretje daar (50px). Dat is geen opmaakdetail: bij het uit- en inzoomen
-       wisselen deze twee koppen elkaar af, en de diamantenpil hoort daarbij stil
-       te blijven staan (zie zelfdePlek). Stond deze rij 6px lager, dan zakte die
-       pil aan het eind van élke overgang een paar pixels -- klein genoeg om niet
-       te kunnen benoemen en groot genoeg om te zien. */
-    min-height: 50px; }
+    /* Even hoog als de koprij van de kaart: allebei precies --hud-h (zie
+       --kop-boven); het portretje op de kaart hangt er met een negatieve marge
+       buiten. Geen eigen min-height hier. Dat is geen opmaakdetail: bij het uit-
+       en inzoomen wisselen deze twee koppen elkaar af, en de diamantenpil hoort
+       daarbij stil te blijven staan (zie zelfdePlek, vlucht zaak C). Stond deze
+       rij hoger, dan zakte die pil aan het eind van élke overgang een paar
+       pixels -- klein genoeg om niet te kunnen benoemen en groot genoeg om te zien. */
+  }
   /* De sluier onder de kop, en hij is niet decoratief: hier schuift een
      wereldtekening met zijn naam erin onderdoor, en die was op .86 nog net te
      lezen achter "Werelden". Dat leest als een foutje, niet als diepte.

@@ -1762,6 +1762,14 @@
 
 
 
+  .emo-m { display: inline-block; transform: translateY(var(--emo-dy, 0em)); }
+
+
+
+
+
+
+
 
 
 
@@ -4166,6 +4174,12 @@
   .num-btn.ok { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
 
   .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); font-size: 22px; }
+
+
+
+  .num-btn .ico { margin: 0 auto; width: 1.1em; height: 1.1em; }
+  .num-btn.del .ico { width: 1.25em; height: 1.25em; stroke-width: 2.3; }
+  .num-btn.ok .ico { stroke-width: 3.4; }
 
 
 
@@ -7115,7 +7129,8 @@
 
 
 
-    min-height: 50px; }
+
+  }
 
 
 
@@ -11390,8 +11405,9 @@
 </head>
 <body class="start">
 <!-- De pijlen en het kruisje van de terugknoppen (en de ▶ en de staafjes van het
-     ouderdeel, en het plus-vierkantje van "Als app"), één
-     keer getekend. Ze stonden er als tekst (← ↑ ↓ ✕ ▶), maar die tekens zitten niet in Fredoka: elk toestel
+     ouderdeel, het plus-vierkantje van "Als app", en wissen en klaar
+     op de cijfertoetsen), één
+     keer getekend. Ze stonden er als tekst (← ↑ ↓ ✕ ▶ ⌫ ✔), maar die tekens zitten niet in Fredoka: elk toestel
      tekende ze dan in zijn eigen systeemletter, dun en klein en overal anders.
      Nu is het één lijn met ronde uiteinden, zo dik als de letter van de knoppen
      ernaast, en elke knop leent hem met <use>. Zie .ico in het stijlblad. -->
@@ -11401,6 +11417,8 @@
   <symbol id="ico-kruis" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
   <symbol id="ico-speel" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.8v12.4L18 12z"/></symbol>
   <symbol id="ico-cijfers" viewBox="0 0 24 24"><path d="M3.5 20.5h17" stroke-width="2.4"/><g fill="currentColor" stroke="none"><rect x="5" y="11" width="4" height="7.5" rx="1.2"/><rect x="10" y="4" width="4" height="14.5" rx="1.2"/><rect x="15" y="8" width="4" height="10.5" rx="1.2"/></g></symbol>
+  <symbol id="ico-wis" viewBox="0 0 24 24"><path d="M9.2 5.5H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9.2L3 12z"/><path d="M12.5 9.5l5 5M17.5 9.5l-5 5"/></symbol>
+  <symbol id="ico-vink" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7"/></symbol>
   <symbol id="ico-erbij" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><path d="M12 8v8M8 12h8"/></symbol>
 </svg>
 <div class="grain" aria-hidden="true"></div>
@@ -12853,6 +12871,181 @@ function confettiBurst(cx, cy, n, hero) {
     setTimeout(() => b.remove(), 1050);
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const EMOJI_RESERVE = {
+  '🫧': '💧', '🪸': '🐠', '🪩': '🌟', '🪗': '🎹', '🪘': '🥁', '🪄': '✨',
+  '🩴': '👡', '🦩': '🦢', '🧊': '❄️', '🦦': '🦡', '🪐': '🚀', '🤍': '♡︎',
+};
+
+
+
+const EMOJI_RE = (() => {
+  try { return new RegExp('\\p{Extended_Pictographic}(?:\\uFE0F|\\p{Emoji_Modifier}|\\u200D\\p{Extended_Pictographic}\\uFE0F?)*(?!\\uFE0E)', 'gu'); }
+  catch (e) { return null; }
+})();
+
+
+
+
+
+let emojiDoek = null;
+function emojiInkt(teken) {
+  const M = 40, B = M * 2;
+  if (!emojiDoek) {
+    const c = document.createElement('canvas');
+    c.width = c.height = B;
+    emojiDoek = c.getContext('2d', { willReadFrequently: true });
+    emojiDoek.textBaseline = 'alphabetic';
+  }
+  const ctx = emojiDoek;
+  ctx.clearRect(0, 0, B, B);
+  ctx.font = M + 'px ' + getComputedStyle(document.body).fontFamily;
+  ctx.fillStyle = '#000';
+  ctx.fillText(teken, M / 4, M * 1.4);
+  const d = ctx.getImageData(0, 0, B, B).data;
+  let boven = -1, onder = -1, kleur = false;
+  for (let y = 0; y < B; y++) {
+    let rij = false;
+    for (let x = 0; x < B; x++) {
+      const i = (y * B + x) * 4;
+      if (d[i + 3] > 40) { rij = true; if (d[i] + d[i + 1] + d[i + 2] > 90) kleur = true; }
+    }
+    if (rij) { if (boven < 0) boven = y; onder = y; }
+  }
+  return { midden: boven < 0 ? null : (boven + onder) / 2 / M, kleur };
+}
+
+
+
+const emojiToestel = { midden: false, ontbreekt: [], nul: null, dy: new Map(), meet: emojiInkt };
+function emojiMeetToestel() {
+  const sleutel = 'rekenPopsterren_emoji', ua = navigator.userAgent;
+  try {
+    const oud = JSON.parse(localStorage.getItem(sleutel) || 'null');
+    if (oud && oud.ua === ua) return oud;
+  } catch (e) { }
+  const nul = emojiInkt('⬛️').midden;
+  const zakt = ['👕', '💎'].some(t => {
+    const m = emojiInkt(t).midden;
+    return nul != null && m != null && Math.abs(m - nul) > 0.03;
+  });
+  const uit = { ua, midden: zakt, nul, ontbreekt: Object.keys(EMOJI_RESERVE).filter(t => !emojiInkt(t).kleur) };
+  try { localStorage.setItem(sleutel, JSON.stringify(uit)); } catch (e) { }
+  return uit;
+}
+
+
+function emojiDy(teken) {
+  const st = emojiToestel;
+  if (!st.dy.has(teken)) {
+    const m = st.meet(teken).midden;
+    const dy = m == null || st.nul == null ? 0 : st.nul - m;
+    st.dy.set(teken, Math.abs(dy) < 0.02 ? 0 : +dy.toFixed(3));
+  }
+  return st.dy.get(teken);
+}
+
+const EMOJI_OVERSLAAN = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT', 'OPTION', 'TITLE', 'NOSCRIPT']);
+let emojiVervang = null;
+function emojiTekst(node) {
+  const ouder = node.parentNode, st = emojiToestel;
+  if (!ouder || !(ouder instanceof HTMLElement) || EMOJI_OVERSLAAN.has(ouder.nodeName)) return;
+  if (emojiVervang && emojiVervang.test(node.data)) {
+    emojiVervang.lastIndex = 0;
+    node.data = node.data.replace(emojiVervang, t => EMOJI_RESERVE[t]);
+  }
+  if (!st.midden || !EMOJI_RE || ouder.classList.contains('emo-m')) return;
+  const tekst = node.data;
+  EMOJI_RE.lastIndex = 0;
+  if (!EMOJI_RE.test(tekst)) return;
+  EMOJI_RE.lastIndex = 0;
+  const frag = document.createDocumentFragment();
+  let vanaf = 0, iets = false;
+  for (const m of tekst.matchAll(EMOJI_RE)) {
+    const dy = emojiDy(m[0]);
+    if (!dy) continue;
+    iets = true;
+    if (m.index > vanaf) frag.appendChild(document.createTextNode(tekst.slice(vanaf, m.index)));
+    const s = document.createElement('span');
+    s.className = 'emo-m';
+    s.style.setProperty('--emo-dy', dy + 'em');
+    s.textContent = m[0];
+    frag.appendChild(s);
+    vanaf = m.index + m[0].length;
+  }
+  if (!iets) return;
+  if (vanaf < tekst.length) frag.appendChild(document.createTextNode(tekst.slice(vanaf)));
+  ouder.replaceChild(frag, node);
+}
+function emojiLangs(wortel) {
+  if (wortel.nodeType === 3) { emojiTekst(wortel); return; }
+  if (wortel.nodeType !== 1 || !(wortel instanceof HTMLElement)) return;
+  const loper = document.createTreeWalker(wortel, NodeFilter.SHOW_TEXT);
+  const lijst = [];
+  for (let n = loper.nextNode(); n; n = loper.nextNode()) lijst.push(n);
+  lijst.forEach(emojiTekst);
+}
+let emojiWacht = null;
+
+
+
+function emojiOpToestel(stand) {
+  Object.assign(emojiToestel, stand);
+  emojiToestel.dy.clear();
+  const st = emojiToestel;
+  emojiVervang = st.ontbreekt.length
+    ? new RegExp(st.ontbreekt.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'gu') : null;
+  if (!st.midden && !emojiVervang) return;
+  emojiLangs(document.body);
+  if (emojiWacht) return;
+  emojiWacht = new MutationObserver(lijst => {
+    for (const r of lijst) {
+      if (r.type === 'characterData') emojiTekst(r.target);
+      else r.addedNodes.forEach(emojiLangs);
+    }
+  });
+  emojiWacht.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+try { emojiOpToestel(emojiMeetToestel()); } catch (e) { }
 
 
 
@@ -17130,8 +17323,8 @@ const PAT_JURK = {
           <text x="78" y="185" font-size="12" fill="#fff176">★</text><text x="112" y="192" font-size="14" fill="#fff176">★</text>`,
   disco: `<circle cx="90" cy="140" r="4" fill="#fff" opacity="0.8"/><circle cx="110" cy="155" r="4" fill="#80deea" opacity="0.8"/>
           <circle cx="85" cy="175" r="4" fill="#f48fb1" opacity="0.8"/><circle cx="113" cy="182" r="4" fill="#fff59d" opacity="0.8"/>`,
-  hearts: `<text x="84" y="146" font-size="13" fill="#fff">♥</text><text x="106" y="164" font-size="11" fill="#ffcdd2">♥</text>
-          <text x="79" y="184" font-size="11" fill="#ffcdd2">♥</text><text x="110" y="190" font-size="13" fill="#fff">♥</text>`,
+  hearts: `<text x="84" y="146" font-size="13" fill="#fff">♥︎</text><text x="106" y="164" font-size="11" fill="#ffcdd2">♥︎</text>
+          <text x="79" y="184" font-size="11" fill="#ffcdd2">♥︎</text><text x="110" y="190" font-size="13" fill="#fff">♥︎</text>`,
 
   magic: `<text x="85" y="148" font-size="15" fill="#ffd54f">★</text><text x="108" y="172" font-size="11" fill="#ffd54f">★</text>
           <text x="80" y="188" font-size="11" fill="#ffd54f">★</text>
@@ -17158,8 +17351,8 @@ const PAT_SHIRT = {
           <text x="82" y="200" font-size="11" fill="#fff176">★</text><text x="106" y="204" font-size="12" fill="#fff176">★</text>`,
   disco: `<circle cx="89" cy="128" r="4" fill="#fff" opacity="0.8"/><circle cx="110" cy="145" r="4" fill="#80deea" opacity="0.8"/>
           <circle cx="86" cy="196" r="4" fill="#f48fb1" opacity="0.8"/><circle cx="113" cy="200" r="4" fill="#fff59d" opacity="0.8"/>`,
-  hearts: `<text x="87" y="132" font-size="13" fill="#fff">♥</text><text x="105" y="152" font-size="11" fill="#ffcdd2">♥</text>
-          <text x="83" y="200" font-size="10" fill="#ffcdd2">♥</text><text x="107" y="204" font-size="11" fill="#fff">♥</text>`,
+  hearts: `<text x="87" y="132" font-size="13" fill="#fff">♥︎</text><text x="105" y="152" font-size="11" fill="#ffcdd2">♥︎</text>
+          <text x="83" y="200" font-size="10" fill="#ffcdd2">♥︎</text><text x="107" y="204" font-size="11" fill="#fff">♥︎</text>`,
 
   magic: `<text x="84" y="140" font-size="15" fill="#ffd54f">★</text><text x="84" y="201" font-size="10" fill="#ffd54f">★</text>
           <text x="107" y="205" font-size="9" fill="#ffd54f">★</text>
@@ -17754,6 +17947,7 @@ function navGo(t, wasActiveAl, stil) {
   else if (t === 'dress') (wasActive ? openKleedkamer : resumeKleedkamer)();
   else (wasActive ? openTrophies : resumeTrophies)();
 }
+
 
 
 
@@ -27671,9 +27865,9 @@ function renderQuestion() {
   } else {
     area.innerHTML = `<div class="numpad">
       ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="num-btn" data-n="${n}">${n}</button>`).join('')}
-      <button class="num-btn del" data-n="del" aria-label="Wissen">⌫</button>
+      <button class="num-btn del" data-n="del" aria-label="Wissen"><svg class="ico"><use href="#ico-wis"/></svg></button>
       <button class="num-btn" data-n="0">0</button>
-      <button class="num-btn ok" data-n="ok" aria-label="Klaar">✔</button>
+      <button class="num-btn ok" data-n="ok" aria-label="Klaar"><svg class="ico"><use href="#ico-vink"/></svg></button>
     </div>`;
     knopTik(area, '.num-btn', b => numpadPress(b.dataset.n));
   }
@@ -29553,7 +29747,7 @@ const OUTFIT_THUMBS = {
     shape: dc => `<path d="M84 106 L66 196 Q100 209 134 196 L116 106 Q100 113 84 106 Z" fill="${dc}" stroke="rgba(0,0,0,.2)" stroke-width="1.5"/>`,
     pat: {
       stars: `<text x="86" y="145" font-size="14" fill="#fff176">★</text><text x="108" y="165" font-size="12" fill="#fff176">★</text><text x="78" y="185" font-size="12" fill="#fff176">★</text><text x="112" y="192" font-size="14" fill="#fff176">★</text>`,
-      hearts: `<text x="84" y="146" font-size="13" fill="#fff">♥</text><text x="106" y="164" font-size="11" fill="#ffcdd2">♥</text><text x="79" y="184" font-size="11" fill="#ffcdd2">♥</text><text x="110" y="190" font-size="13" fill="#fff">♥</text>`,
+      hearts: `<text x="84" y="146" font-size="13" fill="#fff">♥︎</text><text x="106" y="164" font-size="11" fill="#ffcdd2">♥︎</text><text x="79" y="184" font-size="11" fill="#ffcdd2">♥︎</text><text x="110" y="190" font-size="13" fill="#fff">♥︎</text>`,
       magic: `<text x="85" y="148" font-size="15" fill="#ffd54f">★</text><text x="108" y="172" font-size="11" fill="#ffd54f">★</text><text x="80" y="188" font-size="11" fill="#ffd54f">★</text><path d="M112 138 a9 9 0 1 0 6 15 a11 11 0 1 1 -6 -15 Z" fill="#ffe082"/>`,
       disco: `<circle cx="90" cy="140" r="4" fill="#fff" opacity=".8"/><circle cx="110" cy="155" r="4" fill="#80deea" opacity=".8"/><circle cx="85" cy="175" r="4" fill="#f48fb1" opacity=".8"/><circle cx="113" cy="182" r="4" fill="#fff59d" opacity=".8"/>`,
       ohl: `<path d="M84 107 L67 194 L75 197 L89 110 Z" fill="#2e7d32"/><path d="M116 107 L133 194 L125 197 L111 110 Z" fill="#c62828"/><text x="100" y="140" text-anchor="middle" font-size="11.5" font-weight="900" fill="#1b1b1b">OHL</text><path d="M67 190 Q100 205 133 190 L134 196 Q100 209 66 196 Z" fill="#1b1b1b"/>`,

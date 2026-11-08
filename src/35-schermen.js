@@ -254,6 +254,7 @@ function navGo(t, wasActiveAl, stil) {
   else (wasActive ? openTrophies : resumeTrophies)();
 }
 
+
 /* ================= De sterrenkeuze leeft ==================================
    Dit scherm heeft één taak -- kies een ster -- en het houdt zich daar bewust
    stil voor. Er stond hier ooit een begroeting waarin álle sterren na elkaar
