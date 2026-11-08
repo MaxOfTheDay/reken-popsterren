@@ -317,6 +317,65 @@ function tapDance(elId, stil) {
   sparkleAt(r);
   pasUit(el);
 }
+/* ================= Vasthouden ==============================================
+   Een kind dat de pop niet aantikt maar haar vasthoudt. Zonder dit deed elk
+   toestel er iets anders mee, en niets daarvan was een antwoord: Chrome op
+   Android ziet het als lang drukken en slikt de tik in (de ster ging niet open,
+   ze huppelde niet), en Safari begon een selectie of zette zijn Kopieer-bubbel
+   neer. Die twee zet het stijlblad uit (zie body in 10-basis.css), het
+   systeemmenu gaat hieronder uit, en dan blijft er alleen het gebaar zelf over.
+
+   vasthouden(houder, kies, op): houdt de vinger LANG_VAST stil op een element
+   binnen `houder` dat `kies` raakt (een selector; null = de houder zelf), dan
+   gaat op(doel) af. Wat op teruggeeft (een functie) gaat af als de vinger loslaat.
+   De tik die een toestel daarna nog stuurt (Safari doet dat, Chrome niet) wordt
+   ingeslikt: vasthouden ís het antwoord al, er komt geen tweede achteraan.
+
+   Schuift de vinger, dan is het geen vasthouden maar vegen -- die gaat gewoon
+   naar de kaart. LOS_UITERLIJK is het vangnet voor een toestel dat het loslaten
+   nooit meldt: dan houdt het zingen toch een keer op. */
+const LANG_VAST = 450;
+const LANG_SCHUIF = 10;
+const LOS_UITERLIJK = 8000;
+function vasthouden(houder, kies, op) {
+  let klok = null, los = null, vast = null, x = 0, y = 0, slik = false;
+  const stop = () => {
+    clearTimeout(klok); klok = null;
+    if (los) { const f = los; los = null; f(); }
+  };
+  houder.addEventListener('pointerdown', e => {
+    stop();
+    slik = false;
+    if (!e.isPrimary || e.button > 0) return;
+    const doel = kies ? e.target.closest && e.target.closest(kies) : houder;
+    if (!doel || !houder.contains(doel)) return;
+    x = e.clientX; y = e.clientY;
+    klok = setTimeout(() => {
+      klok = null;
+      slik = true;
+      const f = op(doel);
+      if (typeof f === 'function') { los = f; clearTimeout(vast); vast = setTimeout(stop, LOS_UITERLIJK); }
+    }, LANG_VAST);
+  }, { passive: true });
+  houder.addEventListener('pointermove', e => {
+    if (klok && Math.hypot(e.clientX - x, e.clientY - y) > LANG_SCHUIF) { clearTimeout(klok); klok = null; }
+  }, { passive: true });
+  for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) houder.addEventListener(t, stop, { passive: true });
+  houder.addEventListener('click', e => {
+    if (!slik) return;
+    slik = false;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  }, true);
+}
+/* Het systeemmenu bij lang drukken (Android) en de rechtermuisknop: in een spel
+   voor kinderen is daar niets te halen. Behalve in een invulvak -- daar plakt
+   een ouder de overzetcode of typt hij een naam, en dat menu is het plakken. */
+document.addEventListener('contextmenu', e => {
+  const t = e.target;
+  if (t && t.closest && t.closest('input, textarea, [contenteditable]')) return;
+  e.preventDefault();
+});
 // klein sterretje dat oppopt bij een tik-dans
 function sparkle(el, emojis) { sparkleAt(el.getBoundingClientRect(), emojis); }
 /* Het sterretje komt óp en is dan weg, vlak bij wat er aangetikt werd. Het was

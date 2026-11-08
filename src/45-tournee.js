@@ -1229,6 +1229,8 @@ function stofStart() {
 }
 // Elke tik op de kaart wekt het stof, of houdt het wakker.
 $('screen-map').addEventListener('pointerdown', stofWek, { passive: true });
+// Haar vasthouden op de kaart: ze zingt (zie kaartZing).
+vasthouden($('screen-map'), '.tour-stop.next .tour-hero', kaartZing);
 /* En zodra er iets anders op de kaart gaat bewegen (haar huppel na een tik, de
    ring van een halte) gaat het stof weer liggen tot dat voorbij is: één ding
    tegelijk, ook na de opkomst. Het scheelt ook werk. Zonder GPU (een trage

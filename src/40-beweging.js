@@ -1874,13 +1874,41 @@ function hierBenIk(el) {
    de sprong. test/profiles.test.js meet dat de huppel helemaal uitspeelt. */
 const TIK_PAS = HUPPEL;
 function kaartTik(ster, halte) {
-  const el = ster.querySelector('.avatar-holder');
-  if (!el || el.classList.contains('dancing') || !halte.classList.contains('next')) return;
-  if (overgangBezig || vluchtOp || wereldReisOp || ster.getAnimations().length) return;
-  clearTimeout(groetTimer);
-  groetTimer = null;
+  const el = kaartPopVrij(ster, halte);
+  if (!el) return;
   sndTap();
   if (zetPas(el, TIK_PAS)) pasUit(el);
+}
+/* Mag ze nu antwoorden? Voor de tik en voor het vasthouden dezelfde vraag (zie
+   WANNEER NIET hierboven). Zegt ja, dan is de groet die nog wachtte vervallen. */
+function kaartPopVrij(ster, halte) {
+  const el = ster.querySelector('.avatar-holder');
+  if (!el || el.classList.contains('dancing') || !halte || !halte.classList.contains('next')) return null;
+  if (overgangBezig || vluchtOp || wereldReisOp || ster.getAnimations().length) return null;
+  clearTimeout(groetTimer);
+  groetTimer = null;
+  return el;
+}
+/* ================= Vasthouden op de kaart ==================================
+   Houdt een kind haar vast (zie vasthouden), dan zingt ze: de hoge noot uit
+   MOVES, met de gouden noten, en die zingt ze opnieuw zolang de vinger blijft
+   liggen. Laat de vinger los, dan zingt ze de noot van dat moment nog uit en
+   staat ze weer stil -- afknippen zou haar halverwege terug laten klikken.
+   Een tik blijft de huppel; vasthouden is iets dat je ontdekt, en dan doet ze
+   iets anders terug. Bij beperkte beweging is het alleen het klankje, net als
+   bij de tik. */
+const NOOT = MOVES.find(m => m.cls === 'move-noot');
+function kaartZing(ster) {
+  const el = kaartPopVrij(ster, ster.closest('.tour-stop'));
+  if (!el) return null;
+  sndTap();
+  let vast = true;
+  const zing = () => {
+    if (!vast || !el.isConnected || !zetPas(el, NOOT)) { stilStaan(el); return; }
+    pasUit(el, zing);
+  };
+  zing();
+  return () => { vast = false; };
 }
 
 /* ================= Kaart op de kaart =======================================
