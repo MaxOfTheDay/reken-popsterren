@@ -777,6 +777,14 @@
        was hij met een onzichtbaar vlakje pas een kindervinger. Eén maat voor de
        hele app, zodat de 💎-pil op elk tabblad op dezelfde plek even groot is. */
     --hud-h: 44px;
+    /* DE KOPREGEL. Op elk scherm met een kop (.hub-sticky) begint de rij met ←,
+       titel en knoppen op dezelfde hoogte, en is hij precies --hud-h hoog. Zo
+       staat de ← op een vaste plek, wat er ook in de rij staat, en verspringt er
+       niets bij een wissel van scherm. Wat in de rij groter is (haar pil in het
+       ouderdeel, het portretje op de kaart) hangt er met een negatieve marge
+       buiten, en duwt de rij niet open. Op een laag scherm een stap minder lucht
+       (zie hieronder). test/kop.test.js zaak F meet het op elk scherm. */
+    --kop-boven: 10px;
     /* de letter in die kop (de 💎-teller): groeit mee als --hud-h op een tablet
        groeit, zie de tabletstap bij de kop in 40-kaart.css */
     --hud-tx: var(--tx-sub);
@@ -1150,3 +1158,5 @@
      100svh en 100% blijven staan als terugval voor het beeldje vóórdat dat
      scriptje geweest is en voor een browser die custom properties niet kent. */
   html, body { height: 100%; height: 100svh; height: var(--vh-lock, 100svh); }
+  /* een lage telefoon (of liggend): de kopregel een stap hoger, op elk scherm gelijk */
+  @media (max-height: 700px) { :root { --kop-boven: 8px; } }

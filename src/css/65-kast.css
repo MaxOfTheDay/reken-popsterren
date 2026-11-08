@@ -63,13 +63,12 @@
      meet nog steeds wat de kop krimpt (nu niets), en de marge hieronder telt dat
      erbij -- zodat een latere wijziging die de kop wél laat krimpen niet
      ongemerkt de kaartjes laat meeschuiven. */
-  /* 9 en niet 10 bovenaan: dezelfde rand als de kleedkamer (#screen-dress
-     .hub-sticky). Die twee zijn buren in de tabbladbalk, en bij een wissel
-     vloeien hun koppen op dezelfde plek in elkaar over -- terugknop, naam en
-     saldo. Stond de ene rij een pixel lager, dan was dat het enige dat bij die
-     wissel bewoog. Houd ze gelijk; ook in de lage stand hieronder. */
+  /* Bovenaan --kop-boven, zoals elk scherm: de kast, de kleedkamer en de kaart
+     zijn buren in de tabbladbalk, en bij een wissel vloeien hun koppen op
+     dezelfde plek in elkaar over -- terugknop, naam en saldo. Stond de ene rij
+     een pixel lager, dan was dat het enige dat bij die wissel bewoog. */
   #screen-trophies .hub-sticky {
-    padding-top: 9px; padding-bottom: 9px;
+    padding-bottom: 9px;
     background: transparent; border-bottom: 0; border-radius: 0; box-shadow: none;
     backdrop-filter: none; -webkit-backdrop-filter: none;
     transition: background var(--t-snel, .22s) ease;
@@ -100,7 +99,6 @@
      terug, en de rij zakte 2px. Staat vóór de smalle-telefoonregels hieronder,
      zodat op een kleine telefoon die van 360 het laatste woord heeft. */
   @media (max-height: 700px) {
-    #screen-trophies .hub-sticky { padding-top: 8px; }
     #screen-trophies .header-title { font-size: var(--tx-sub); }
   }
   /* Smalle telefoon. Hetzelfde dat de kleedkamer al deed, en om dezelfde reden:
