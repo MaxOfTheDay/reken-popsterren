@@ -368,6 +368,101 @@ function vasthouden(houder, kies, op) {
     e.stopImmediatePropagation();
   }, true);
 }
+/* ================= Antwoordtik =============================================
+   Hoe een antwoord (een knop, een cijfer, een kaartje, een voorwerp om te
+   tellen) een tik hoort. Niet via click: die gooit de browser weg op precies
+   de manier waarop een kind snel tikt. Nagemeten met echte aanrakingen:
+     * rolt de vinger bij het loslaten een stukje (voorbij de "tap slop": op
+       Android zo'n 8 px, een halve vingertop), dan wordt de tik een poging om
+       te schuiven en komt er geen click;
+     * landt de volgende vinger vóór de vorige loslaat (1 en 2 snel met twee
+       vingers), dan ziet de browser een gebaar met twee vingers en stuurt hij
+       voor GEEN VAN BEIDE een click.
+   De aanraking zelf komt wél altijd door (pointerdown/pointerup). Dus luisteren
+   we daarnaar:
+
+   knopTik(houder, kies, doe): elk element binnen `houder` dat `kies` raakt,
+   telt als de vinger loslaat -- voor het element waar hij NEERKWAM, zolang hij
+   nog binnen TIK_MARGE px daarvan is. Wie duidelijk wegschuift, breekt af zoals
+   vroeger. Elke vinger apart; landt er een nieuwe terwijl een vorige nog ligt,
+   dan telt die vorige meteen (de volgorde blijft die van het neerkomen). Een
+   tik in een kier telt voor de dichtste knop, tot TIK_KIER px ver. doe(el, punt)
+   krijgt de plek van het loslaten als { clientX, clientY } (de getallenlijn
+   leest daar uit welk streepje).
+   Het toetsenbord (Enter op een knop) komt als click met detail 0 en gaat
+   gewoon door; elke andere click wordt genegeerd, anders telde een tik dubbel.
+
+   Opnieuw aanroepen op dezelfde houder (elke vraag bouwt zijn knoppen nieuw)
+   vervangt alleen kies en doe; de luisteraars hangen er één keer.
+   .knop-tik (50-zaal.css) zet touch-action op none: anders maakt de browser van
+   een rollende vinger alsnog een schuifgebaar en breekt hij hem af.
+   inhoud zaak U kijkt na dat geen antwoordvlak nog onclick gebruikt; robuust
+   zaak F tikt het na met echte vingers. */
+const TIK_MARGE = 28;
+const TIK_KIER = 12;
+function knopTik(houder, kies, doe) {
+  houder._tik = { kies, doe };
+  if (houder._tikOpen) return;
+  const open = houder._tikOpen = new Map();   // pointerId -> { el, x, y }
+  houder.classList.add('knop-tik');
+  const vind = (e) => {
+    const { kies } = houder._tik;
+    const raak = e.target.closest && e.target.closest(kies);
+    if (raak && houder.contains(raak)) return raak;
+    let best = null, bijna = TIK_KIER;
+    for (const k of houder.querySelectorAll(kies)) {
+      if (k.disabled || getComputedStyle(k).pointerEvents === 'none') continue;   // .count-tiles.wacht: nog niet tikbaar
+      const r = k.getBoundingClientRect();
+      const d = Math.hypot(Math.max(r.left - e.clientX, 0, e.clientX - r.right), Math.max(r.top - e.clientY, 0, e.clientY - r.bottom));
+      if (d < bijna) { bijna = d; best = k; }
+    }
+    return best;
+  };
+  const tel = (stip, x, y) => {
+    if (!stip.el.isConnected || stip.el.disabled) return;
+    houder._tik.doe(stip.el, { clientX: x, clientY: y });
+  };
+  const los = (stip) => stip.el.classList.remove('ingedrukt');
+  const binnen = (stip, x, y) => {
+    const r = stip.el.getBoundingClientRect();
+    return x > r.left - TIK_MARGE && x < r.right + TIK_MARGE && y > r.top - TIK_MARGE && y < r.bottom + TIK_MARGE;
+  };
+  houder.addEventListener('pointerdown', e => {
+    if (e.button > 0) return;
+    // eerst alles meten, dan pas schrijven (zie robuust zaak A)
+    const el = vind(e);
+    // een nieuwe vinger: wie er nog lag, was een tik (de volgorde van neerkomen)
+    const vorig = [...open.values()].map(stip => [stip, binnen(stip, stip.x, stip.y)]);
+    open.clear();
+    for (const [stip, telt] of vorig) { if (telt) tel(stip, stip.x, stip.y); los(stip); }
+    if (!el) return;
+    open.set(e.pointerId, { el, x: e.clientX, y: e.clientY });
+    // een vinger houdt zijn element vanzelf vast; een muis die buiten de houder
+    // loslaat, zou anders nooit pointerup melden
+    if (e.pointerType === 'mouse') try { houder.setPointerCapture(e.pointerId); } catch (_) {}
+    el.classList.add('ingedrukt');
+  });
+  houder.addEventListener('pointermove', e => {
+    const stip = open.get(e.pointerId);
+    if (stip) { stip.x = e.clientX; stip.y = e.clientY; }
+  }, { passive: true });
+  houder.addEventListener('pointerup', e => {
+    const stip = open.get(e.pointerId);
+    if (!stip) return;
+    open.delete(e.pointerId);
+    if (binnen(stip, e.clientX, e.clientY)) tel(stip, e.clientX, e.clientY);
+    los(stip);
+  });
+  houder.addEventListener('pointercancel', e => {
+    const stip = open.get(e.pointerId);
+    if (stip) { open.delete(e.pointerId); los(stip); }
+  });
+  houder.addEventListener('click', e => {
+    if (e.detail !== 0) return;   // een aanraking of muis: die telde al bij het loslaten
+    const el = e.target.closest && e.target.closest(houder._tik.kies);
+    if (el && houder.contains(el)) houder._tik.doe(el, e);
+  });
+}
 /* Het systeemmenu bij lang drukken (Android) en de rechtermuisknop: in een spel
    voor kinderen is daar niets te halen. Behalve in een invulvak -- daar plakt
    een ouder de overzetcode of typt hij een naam, en dat menu is het plakken. */
