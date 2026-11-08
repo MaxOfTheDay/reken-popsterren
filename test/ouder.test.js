@@ -1643,7 +1643,7 @@ function check(ok, label, detail) {
     // het blad "als app" op een iPhone met sterren: meenemen met een code
     r = await d.page.evaluate(() => {
       const m = appBladInhoud('ios', false, true, false, true), z = appBladInhoud('ios', false, false, false, true);
-      return { mee: m.meenemen, noot: /Neem je sterren mee/.test(m.html) && /Plakken/.test(m.html), leeg: z.meenemen };
+      return { mee: m.meenemen, noot: /Neem je sterren mee/.test(m.html) && /Van ander toestel.*Plakken/.test(m.html) && !/Al gespeeld/.test(m.html), leeg: z.meenemen };
     });
     check(r.mee && r.noot && !r.leeg, 'T · iPhone met sterren: stap 1 "Neem je sterren mee", en in de app Plakken', JSON.stringify(r));
     // De link: een nieuwe code van A, geopend op een leeg toestel E -- het spel

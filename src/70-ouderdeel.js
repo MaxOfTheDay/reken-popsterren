@@ -2931,7 +2931,8 @@ function isSafari26(nav) {
    NEEM JE STERREN MEE. Een app op het beginscherm van een iPhone of iPad krijgt
    een eigen, lege opslag, los van Safari. Wie al sterren heeft, neemt ze dus
    eerst mee: stap 1 maakt een ophaallink (= Overzetten) en kopieert hem, de
-   laatste stap plakt hem in de app (Al gespeeld? › Plakken). Kan overzetten hier
+   laatste stap plakt hem in de app, langs dezelfde weg als op elk ander toestel
+   (⚙️ Ouders › Ander toestel en back-up › Van ander toestel › Plakken). Kan overzetten hier
    niet (overzetMag), dan blijft het de weg via een back-upbestand. */
 function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
   const kbd = t => `<span class="ab-kbd">${t}</span>`;
@@ -2951,7 +2952,7 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
     if (meenemen) {
       html += stappen(['<button class="btn small purple ab-mee" id="ab-mee" type="button"><span aria-hidden="true">⭐</span> Neem je sterren mee</button>'
           + '<span class="ab-ok" id="ab-mee-ok" aria-live="polite"></span>']
-        .concat(zet, [`Open de app › ${kbd('Al gespeeld?')} › ${kbd('Plakken')}`]));
+        .concat(zet, [`Open de app › ${kbd('⚙️ Ouders')} › ${kbd(sterrenRijNaam())} › ${kbd(ozIco('hier') + ' Van ander toestel')} › ${kbd('Plakken')}`]));
     } else {
       html += stappen(zet);
       if (hasStars) html += '<div class="ab-noot">⭐ De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › ' + sterrenRijNaam() + ', en zet hem in de app terug.</div>';

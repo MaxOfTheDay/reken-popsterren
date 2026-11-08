@@ -2677,7 +2677,7 @@
     display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 8px;
     background: var(--paper-muted-bg); font-weight: 700; white-space: nowrap;
   }
-  #app-blad .ab-svg, #app-blad .ab-kbd .ico { width: 18px; height: 18px; flex: none; }
+  #app-blad .ab-svg, #app-blad .ab-kbd .ico, #app-blad .ab-kbd .oz-i { width: 18px; height: 18px; flex: none; }
   #app-blad .ab-kbd .ico { stroke-width: 2.2; }
   #confirm-title .ico { display: inline-block; width: 1em; height: 1em; vertical-align: -.12em; stroke-width: 2.6; }
 
@@ -34042,6 +34042,7 @@ function isSafari26(nav) {
 
 
 
+
 function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
   const kbd = t => `<span class="ab-kbd">${t}</span>`;
   const erbij = kbd(ico('erbij') + ' Zet op beginscherm');
@@ -34060,7 +34061,7 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
     if (meenemen) {
       html += stappen(['<button class="btn small purple ab-mee" id="ab-mee" type="button"><span aria-hidden="true">⭐</span> Neem je sterren mee</button>'
           + '<span class="ab-ok" id="ab-mee-ok" aria-live="polite"></span>']
-        .concat(zet, [`Open de app › ${kbd('Al gespeeld?')} › ${kbd('Plakken')}`]));
+        .concat(zet, [`Open de app › ${kbd('⚙️ Ouders')} › ${kbd(sterrenRijNaam())} › ${kbd(ozIco('hier') + ' Van ander toestel')} › ${kbd('Plakken')}`]));
     } else {
       html += stappen(zet);
       if (hasStars) html += '<div class="ab-noot">⭐ De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › ' + sterrenRijNaam() + ', en zet hem in de app terug.</div>';

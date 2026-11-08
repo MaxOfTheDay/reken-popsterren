@@ -11,9 +11,8 @@ toestel A   ⚙️ › Ander toestel en back-up
                                            "Deel link" deelt …/#ophalen=<code>, en
                                            de link staat ook op het klembord
 toestel B   de link aantikken           -> het spel opent op "Sterren ophalen", ingevuld
-            of: Al gespeeld? / Ophalen  -> Plakken (de link of de cijfers), of typen
-            (leeg beginscherm, leeg Voor ouders, of
-             ⚙️ › Ander toestel en back-up › Van ander toestel)
+            of: ⚙️ › Ander toestel en back-up › Van ander toestel
+                                        -> Plakken (de link of de cijfers), of typen
             de save terug, de Worker gooit hem weg
             "Zet op dit toestel" / "Vervangen" -> backupToepassen, zoals een bestand
 ```

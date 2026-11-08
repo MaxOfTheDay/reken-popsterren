@@ -466,7 +466,7 @@
     display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 8px;
     background: var(--paper-muted-bg); font-weight: 700; white-space: nowrap;
   }
-  #app-blad .ab-svg, #app-blad .ab-kbd .ico { width: 18px; height: 18px; flex: none; }
+  #app-blad .ab-svg, #app-blad .ab-kbd .ico, #app-blad .ab-kbd .oz-i { width: 18px; height: 18px; flex: none; }
   #app-blad .ab-kbd .ico { stroke-width: 2.2; }
   #confirm-title .ico { display: inline-block; width: 1em; height: 1em; vertical-align: -.12em; stroke-width: 2.6; }
   /* een nagetekende werkbalk van Safari op een iPhone, met de deelknop omcirkeld */
