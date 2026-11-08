@@ -4124,6 +4124,12 @@
   .question-card.golden .spot-rail { background: rgba(var(--purple-shadow-rgb), .28); }
   .question-card.golden .spotlight-bar { background: linear-gradient(90deg, var(--purple-light), var(--purple-golden-accent)); }
 
+
+
+
+
+
+  .knop-tik { touch-action: none; }
   .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: min(88vw, 400px); margin-top: 4px; }
   .choice-btn {
     font-family: inherit; font-size: 34px; font-weight: 700; color: var(--c-white); border: none; cursor: pointer;
@@ -4141,7 +4147,7 @@
     border-radius: var(--r-pill); pointer-events: none;
     background: linear-gradient(rgba(255,255,255,.22), rgba(255,255,255,0));
   }
-  .choice-btn:active { transform: translateY(4px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
+  .choice-btn:is(:active, .ingedrukt) { transform: translateY(4px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
   .choice-btn.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
   .choice-btn.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--red-answer-shadow), var(--btn-diep); }
 
@@ -4156,7 +4162,7 @@
     padding: 13px 0; border-radius: var(--r-md);
     background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
   }
-  .num-btn:active { transform: translateY(3px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
+  .num-btn:is(:active, .ingedrukt) { transform: translateY(3px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
   .num-btn.ok { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
 
   .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); font-size: 22px; }
@@ -4815,7 +4821,7 @@
 
     container-type: inline-size;
   }
-  .count-tile:active { transform: translateY(4px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
+  .count-tile:is(:active, .ingedrukt) { transform: translateY(4px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
   .count-tile.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
   .count-tile.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--red-answer-shadow), var(--btn-diep); }
   .count-tile .cg-obj { font-size: 27px; }
@@ -5106,7 +5112,9 @@
     @media (max-height: 340px) { .question-card { padding: 5px 12px 11px; } }
     .question-card .gl { width: 100%; }
     .numpad { grid-template-columns: repeat(3, 1fr); width: 100%; gap: 7px; }
-    .num-btn { padding: 7px 0; font-size: 22px; order: 0; }
+
+
+    .num-btn { padding: 7px 0; font-size: 22px; order: 0; min-height: 44px; }
   }
 
 
@@ -12503,6 +12511,101 @@ function vasthouden(houder, kies, op) {
     e.preventDefault();
     e.stopImmediatePropagation();
   }, true);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const TIK_MARGE = 28;
+const TIK_KIER = 12;
+function knopTik(houder, kies, doe) {
+  houder._tik = { kies, doe };
+  if (houder._tikOpen) return;
+  const open = houder._tikOpen = new Map();
+  houder.classList.add('knop-tik');
+  const vind = (e) => {
+    const { kies } = houder._tik;
+    const raak = e.target.closest && e.target.closest(kies);
+    if (raak && houder.contains(raak)) return raak;
+    let best = null, bijna = TIK_KIER;
+    for (const k of houder.querySelectorAll(kies)) {
+      if (k.disabled || getComputedStyle(k).pointerEvents === 'none') continue;
+      const r = k.getBoundingClientRect();
+      const d = Math.hypot(Math.max(r.left - e.clientX, 0, e.clientX - r.right), Math.max(r.top - e.clientY, 0, e.clientY - r.bottom));
+      if (d < bijna) { bijna = d; best = k; }
+    }
+    return best;
+  };
+  const tel = (stip, x, y) => {
+    if (!stip.el.isConnected || stip.el.disabled) return;
+    houder._tik.doe(stip.el, { clientX: x, clientY: y });
+  };
+  const los = (stip) => stip.el.classList.remove('ingedrukt');
+  const binnen = (stip, x, y) => {
+    const r = stip.el.getBoundingClientRect();
+    return x > r.left - TIK_MARGE && x < r.right + TIK_MARGE && y > r.top - TIK_MARGE && y < r.bottom + TIK_MARGE;
+  };
+  houder.addEventListener('pointerdown', e => {
+    if (e.button > 0) return;
+
+    const el = vind(e);
+
+    const vorig = [...open.values()].map(stip => [stip, binnen(stip, stip.x, stip.y)]);
+    open.clear();
+    for (const [stip, telt] of vorig) { if (telt) tel(stip, stip.x, stip.y); los(stip); }
+    if (!el) return;
+    open.set(e.pointerId, { el, x: e.clientX, y: e.clientY });
+
+
+    if (e.pointerType === 'mouse') try { houder.setPointerCapture(e.pointerId); } catch (_) {}
+    el.classList.add('ingedrukt');
+  });
+  houder.addEventListener('pointermove', e => {
+    const stip = open.get(e.pointerId);
+    if (stip) { stip.x = e.clientX; stip.y = e.clientY; }
+  }, { passive: true });
+  houder.addEventListener('pointerup', e => {
+    const stip = open.get(e.pointerId);
+    if (!stip) return;
+    open.delete(e.pointerId);
+    if (binnen(stip, e.clientX, e.clientY)) tel(stip, e.clientX, e.clientY);
+    los(stip);
+  });
+  houder.addEventListener('pointercancel', e => {
+    const stip = open.get(e.pointerId);
+    if (stip) { open.delete(e.pointerId); los(stip); }
+  });
+  houder.addEventListener('click', e => {
+    if (e.detail !== 0) return;
+    const el = e.target.closest && e.target.closest(houder._tik.kies);
+    if (el && houder.contains(el)) houder._tik.doe(el, e);
+  });
 }
 
 
@@ -26231,19 +26334,17 @@ function bindTap(card, q, drawId) {
   let geteld = 0;
 
   const cijfers = countMaxStage(P().settings) >= 6;
-  card.querySelectorAll('.tap-obj').forEach(b => {
-    b.onclick = () => {
-      if (!G || !G.count || drawId !== countDrawId || b.classList.contains('geteld')) return;
-      geteld++;
-      b.classList.add('geteld');
-      b.dataset.nr = cijfers ? geteld : '✓';
-      sndClick();
-      if (geteld < q.card.n) { speak(numWord(geteld), { rate: 0.95 }); return; }
-      q.getikt = true;
-      const rij = document.querySelector('#answer-area .count-tiles');
-      if (rij) rij.classList.remove('wacht');
-      speak(numWord(geteld) + '! Hoeveel zijn het er?', { rate: 0.95 });
-    };
+  knopTik(card, '.tap-obj', b => {
+    if (!G || !G.count || drawId !== countDrawId || b.classList.contains('geteld')) return;
+    geteld++;
+    b.classList.add('geteld');
+    b.dataset.nr = cijfers ? geteld : '✓';
+    sndClick();
+    if (geteld < q.card.n) { speak(numWord(geteld), { rate: 0.95 }); return; }
+    q.getikt = true;
+    const rij = document.querySelector('#answer-area .count-tiles');
+    if (rij) rij.classList.remove('wacht');
+    speak(numWord(geteld) + '! Hoeveel zijn het er?', { rate: 0.95 });
   });
 }
 
@@ -26437,9 +26538,7 @@ function telTegelsHTML(q) {
 }
 function renderCountAnswers(q, area) {
   area.innerHTML = telTegelsHTML(q);
-  area.querySelectorAll('.count-tile').forEach(b => {
-    b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
-  });
+  knopTik(area, '.count-tile', b => submitAnswer(parseInt(b.dataset.v, 10), b));
 }
 
 function countAlong(objs, n, lead, drawId) {
@@ -26724,7 +26823,7 @@ function startMemory() {
   grid.innerHTML = cards.map((c, i) =>
     `<button class="mem-card" data-i="${i}"><span class="mem-inner"><span class="mem-back"><span class="mem-munt">${rug}</span></span><span class="mem-face">${memFaceHTML(c)}</span></span></button>`
   ).join('');
-  grid.querySelectorAll('.mem-card').forEach(b => b.onclick = () => flipCard(parseInt(b.dataset.i, 10), b));
+  knopTik(grid, '.mem-card', b => flipCard(parseInt(b.dataset.i, 10), b));
   renderSegBar($('mem-progress'), pairs, 0, false);
   toonHub('screen-memory');
 
@@ -27559,19 +27658,16 @@ function renderQuestion() {
   }
   if (q.tik) {
     area.innerHTML = lijnTikvlak(q);
-    const raak = area.querySelector('.gl-raak');
-    raak.onclick = e => {
+    knopTik(area, '.gl-raak', (raak, e) => {
       const r = raak.getBoundingClientRect(), v = lijnRaak(q, e.clientX - r.left, r.width);
       const merk = area.querySelector(`.gl-tik[data-v="${v}"]`);
       if (!merk.classList.contains('bad')) submitAnswer(v, merk);
-    };
+    });
   } else if (G.mode === 'kies') {
     const choices = makeChoices(q, keuzeGrens(q, G.inst, G.lvl));
     area.innerHTML = '<div class="choices">' +
       choices.map(c => `<button class="choice-btn${q.knop ? ' ' + q.knop : ''}" data-v="${c}"${vraagThema(q).aria ? ` aria-label="${vraagThema(q).aria(q, c)}"` : ''}>${toonKeuze(q, c)}</button>`).join('') + '</div>';
-    area.querySelectorAll('.choice-btn').forEach(b => {
-      b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
-    });
+    knopTik(area, '.choice-btn', b => submitAnswer(parseInt(b.dataset.v, 10), b));
   } else {
     area.innerHTML = `<div class="numpad">
       ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="num-btn" data-n="${n}">${n}</button>`).join('')}
@@ -27579,9 +27675,7 @@ function renderQuestion() {
       <button class="num-btn" data-n="0">0</button>
       <button class="num-btn ok" data-n="ok" aria-label="Klaar">✔</button>
     </div>`;
-    area.querySelectorAll('.num-btn').forEach(b => {
-      b.onclick = () => numpadPress(b.dataset.n);
-    });
+    knopTik(area, '.num-btn', b => numpadPress(b.dataset.n));
   }
   antwoordOpMaat(area);
   klokZoekRuim(area);

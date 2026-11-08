@@ -40,6 +40,12 @@
  *      een liggend scherm (2,5 tot 5px) kostte gemeten niets. Dus: geen blur van
  *      WAAS_MAX px of meer op iets dat meer dan een derde van het venster beslaat.
  *      Wil je zo'n waas, teken hem dan in de tekening zelf (zie --kleed-tekening).
+ *   F  snel tikken telt. Een antwoord hoort zijn tik via knopTik (= Antwoordtik),
+ *      en dat tikken we na met echte aanrakingen op het cijferblok en de
+ *      antwoordknoppen: een vinger die bij het loslaten 20 px rolt, twee vingers
+ *      die elkaar overlappen (allebei tellen, in de volgorde van neerkomen), een
+ *      tik in de kier, lang vasthouden -- en wie ver wegschuift, breekt af. Met
+ *      click ging de rol en de overlap verloren (de overlap zelfs voor allebei).
  *
  * Draaien:
  *   npm run test:robuust      (of: npm test voor alle suites)
@@ -309,6 +315,70 @@ const NIET = /set-reset|set-delete|delete|wis|import|export|backup|deel|kopieer|
         return uit;
       }, WAAS_MAX);
       check(!zwaar.length, `E · geen blur van ${WAAS_MAX}px of meer over een groot deel van het scherm`, `${scherm} ${maat.width}x${maat.height}: ${zwaar.join(', ')}`);
+    }
+    await ctx.close();
+  }
+
+  /* ---- F · snel tikken telt ---- */
+  {
+    const { ctx, page } = await nieuw();
+    const cdp = await ctx.newCDPSession(page);
+    const T = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map(([x, y, id]) => ({ x, y, id })) });
+    const W = ms => page.waitForTimeout(ms);
+    for (const mode of ['typ', 'kies']) {
+      await page.goto(APP_URL + '&demo&star=p1');
+      await page.waitForTimeout(900);
+      await page.evaluate(m => {
+        const s = P().settings; s.track = 'math'; s.ops = ['+']; s.themas = []; s.modus = 'vrij'; s.mode = m; s.perLevel = 50;
+        startLevel(P().level);
+      }, mode);
+      await page.waitForTimeout(1500);
+      const sel = mode === 'typ' ? '.num-btn' : '.choice-btn';
+      // wat er telt, zonder dat de show verder gaat
+      const knop = await page.evaluate(sel => {
+        window.__tel = [];
+        window.numpadPress = n => __tel.push(n);
+        window.submitAnswer = (v, b) => __tel.push(b ? b.textContent.trim() : String(v));
+        return [...document.querySelectorAll(sel)].slice(0, 2).map(b => {
+          const r = b.getBoundingClientRect();
+          return { x: r.x + r.width / 2, y: r.y + r.height / 2, rechts: r.right, w: r.width, t: b.textContent.trim() };
+        });
+      }, sel);
+      const [a, b] = knop;
+      const kier = (a.rechts + (b.x - b.w / 2)) / 2;
+      const zaken = [
+        ['een gewone tik', [a.t], async () => { await T('touchStart', [[a.x, a.y, 1]]); await W(40); await T('touchEnd', []); }],
+        ['de vinger rolt 20 px bij het loslaten', [a.t], async () => {
+          await T('touchStart', [[a.x, a.y, 1]]);
+          for (let i = 1; i <= 4; i++) await T('touchMove', [[a.x + 5 * i, a.y, 1]]);
+          await T('touchEnd', []);
+        }],
+        ['twee vingers overlappen (de tweede laat eerst los)', [a.t, b.t], async () => {
+          await T('touchStart', [[a.x, a.y, 1]]); await W(30);
+          await T('touchStart', [[a.x, a.y, 1], [b.x, b.y, 2]]); await W(30);
+          await T('touchEnd', [[a.x, a.y, 1]]); await W(30);
+          await T('touchEnd', []);
+        }],
+        ['een tik in de kier', null, async () => { await T('touchStart', [[kier, a.y, 1]]); await T('touchEnd', []); }],
+        ['lang vasthouden', [a.t], async () => { await T('touchStart', [[a.x, a.y, 1]]); await W(800); await T('touchEnd', []); }],
+        ['ver wegschuiven breekt af', [], async () => {
+          await T('touchStart', [[a.x, a.y, 1]]);
+          for (let i = 1; i <= 4; i++) await T('touchMove', [[a.x, a.y - 30 * i, 1]]);
+          await T('touchEnd', []);
+        }],
+      ];
+      for (const [naam, verwacht, doe] of zaken) {
+        await page.evaluate(() => { __tel.length = 0; });
+        await doe();
+        await W(300);
+        const tel = await page.evaluate(() => __tel.slice());
+        const goed = verwacht ? JSON.stringify(tel) === JSON.stringify(verwacht) : tel.length === 1 && (tel[0] === a.t || tel[0] === b.t);
+        check(goed, `F · ${naam} (${mode})`, `telde ${JSON.stringify(tel)}, verwacht ${JSON.stringify(verwacht || [a.t + ' of ' + b.t])}`);
+      }
+      // het toetsenbord: Enter op een knop is een click zonder aanraking, en telt één keer
+      await page.evaluate(() => { __tel.length = 0; });
+      await page.evaluate(sel => document.querySelector(sel).click(), sel);
+      check(JSON.stringify(await page.evaluate(() => __tel.slice())) === JSON.stringify([a.t]), `F · een click zonder aanraking (toetsenbord) telt één keer (${mode})`, '');
     }
     await ctx.close();
   }
