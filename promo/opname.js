@@ -114,6 +114,24 @@ const SCHERMEN = [
       do q = genCount(p); while ((q.ctype !== 'numquant' || q.ans !== 4) && ++n < 400);
       G.qs[G.idx] = q; renderQuestion();
     } },
+  /* Twee alleen voor over/: daar staan de schermen in een rij, en die vertelt
+     het verhaal van één ster. Dus tellen met Marie's uiterlijk (Anna blijft in
+     het filmpje), en het leerpad dichterbij: op een smaller venster wordt alles
+     groter in hetzelfde kader, zodat je "Tot 10, Tot 20" en de lastige sommen
+     kunt lezen. Dat is waar de kaart "Het groeit mee" om draait. */
+  { key: 'over-tellen', go: () => {
+      const a = db.profiles.p1, b = db.profiles.p2;
+      b.base = a.base; b.equipped = Object.assign({}, a.equipped);
+      selectProfile('p2');
+      const p = P();
+      p.settings.stageMax = Math.max(p.settings.stageMax || 0, 6);
+      p.countTrack = Object.assign(p.countTrack || {}, { stage: 6 });
+      startLevel(2);
+      let q, n = 0;
+      do q = genCount(p); while ((q.ctype !== 'numquant' || q.ans !== 4) && ++n < 400);
+      G.qs[G.idx] = q; renderQuestion();
+    } },
+  { key: 'over-leerpad', venster: { width: 300, height: 649 }, go: () => { marieRekent(); marieThemas(); openSettings(); setKey = 'p1'; renderSettings(); }, na: () => naarLeerpad() },
   // de podia: in de kleedkamer, naast de kleren
   { key: '10-podia', go: () => { selectProfile('p1'); openKleedkamer(); openPodia(); } },
 ];
@@ -127,6 +145,8 @@ const SCHERMEN = [
   await cacheFonts(page);
 
   for (const s of SCHERMEN) {
+    // zelfde verhouding als 390 × 844, dus hetzelfde kader; alleen dichterbij
+    await page.setViewportSize(s.venster || { width: 390, height: 844 });
     await page.goto(APP_URL + '&demo&star=p1');
     await page.waitForFunction(() => typeof selectProfile === 'function');
     await page.evaluate('(' + zetSterren + ')()');

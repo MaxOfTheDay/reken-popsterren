@@ -142,9 +142,24 @@
   .chips { list-style: none; padding: 0; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
   .chips li { padding: 8px 14px; border-radius: 999px; background: var(--vlak); border: 1px solid var(--vlak-rand); font-weight: 600; font-size: 15px; }
   .chips li span { margin-right: 6px; }
-  /* de thema's in het goud van de koppen, en smal genoeg voor twee regels van drie */
-  .chips.themas { max-width: 400px; }
-  .chips.themas li { background: rgba(255,215,64,.10); border-color: rgba(255,215,64,.35); }
+  /* Vaste kolommen, geen vrije terugloop: hoe een rij pilletjes breekt hangt anders
+     af van hoe breed de woorden en de emoji op dat toestel zijn (een iPhone tekent
+     ze breder), en dan krijg je 3 + 1 of 2 + 3 + 1. */
+  /* de thema's in het goud van de koppen, in twee gelijke regels van drie. Onder
+     420 breed past "📏 Getallenlijn" niet in een derde (dan wordt die kolom breder
+     dan de rest), dus daar drie regels van twee. minmax(0, …): elke kolom even
+     breed, wat er ook in staat. */
+  .chips.themas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 420px; }
+  .chips.themas li { background: rgba(255,215,64,.10); border-color: rgba(255,215,64,.35);
+    text-align: center; white-space: nowrap; padding: 8px 8px; }
+  @media (max-width: 419px) { .chips.themas { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 300px; } }
+  /* goed om te weten: vier tegeltjes op één rij, op elke breedte. Icoon boven,
+     twee korte regels eronder (de <br> in de markup), zodat ze even hoog zijn
+     en het niet nog een rij pilletjes lijkt naast de thema's */
+  .chips.weten { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 480px; }
+  .chips.weten li { border-radius: 18px; padding: 12px 4px 10px; display: flex; flex-direction: column; align-items: center;
+    gap: 6px; text-align: center; font-size: 14px; line-height: 1.2; }
+  .chips.weten li span { margin: 0; font-size: 26px; line-height: 1; }
 
   .eind { text-align: center; }
   /* delen hoort erbij, maar is niet waarvoor je hier bent: een stille knop onderaan */
@@ -167,18 +182,21 @@
     <a class="knop goud alleen-nieuw" href="../index.html">▶ Speel meteen</a>
   </header>
 
-  <!-- De volgorde is die van één keer spelen (een show kiezen, tellen, rekenen,
-       sterren, aankleden), en dan wat jij ziet. Wat hier staat moet kloppen met
-       het spel: zie "= Vragen maken" in src/55-vragen.js en de telmodus. -->
+  <!-- De volgorde is die van een ouder die het spel nog niet kent: eerst het idee
+       (rekenen als een show), dan waarom een kind blijft spelen (sterren, kleren,
+       de tournee), en dan wat jij ziet. De koppen zeggen wat het oplevert, niet
+       wat er op het scherm staat. Wat hier staat moet kloppen met het spel: zie
+       "= Vragen maken" in src/55-vragen.js en de telmodus. Overal dezelfde ster
+       (Marie): de twee over-* schermen neemt promo/opname.js daarvoor apart op. -->
   <div class="rij">
     <ul class="strip" id="strip" aria-label="Zo ziet het eruit">
-      <li><div class="kop">Kies een <b>show</b></div><img src="beelden/02-kaart.webp" alt="De wereldkaart met de shows als haltes en hun sterren" width="480" height="1039" loading="lazy"></li>
-      <li><div class="kop">Eerst <b>tellen</b></div><img src="beelden/03-show-tellen.webp" alt="Een show om te tellen: een cijfer, en vier groepjes om uit te kiezen" width="480" height="1039" loading="lazy"></li>
-      <li><div class="kop">Dan <b>rekenen</b></div><img src="beelden/04-show-rekenen.webp" alt="Een show: de ster op het podium en een som met vier antwoorden" width="480" height="1039" loading="lazy"></li>
-      <li><div class="kop">Verdien <b>sterren</b></div><img src="beelden/05-einde.webp" alt="Het einde van een show: drie sterren" width="480" height="1039" loading="lazy"></li>
-      <li><div class="kop">Kleed je <b>ster</b> aan</div><img src="beelden/06-kleedkamer.webp" alt="De kleedkamer: kleren om te kiezen en te sparen" width="480" height="1039" loading="lazy"></li>
+      <li><div class="kop">Rekenen is een <b>show</b></div><img src="beelden/04-show-rekenen.webp" alt="Een show: de ster op het podium en een som met vier antwoorden" width="480" height="1039" loading="lazy"></li>
+      <li><div class="kop">Eerst <b>tellen</b></div><img src="beelden/over-tellen.webp" alt="Een show om te tellen: een cijfer, en vier groepjes om uit te kiezen" width="480" height="1039" loading="lazy"></li>
+      <li><div class="kop">Elke keer <b>sterren</b></div><img src="beelden/05-einde.webp" alt="Het einde van een show: drie sterren" width="480" height="1039" loading="lazy"></li>
+      <li><div class="kop">Sparen voor <b>kleren</b></div><img src="beelden/06-kleedkamer.webp" alt="De kleedkamer: kleren om te kiezen en te sparen" width="480" height="1039" loading="lazy"></li>
+      <li><div class="kop">Op <b>tournee</b></div><img src="beelden/02-kaart.webp" alt="De wereldkaart met de shows als haltes en hun sterren" width="480" height="1039" loading="lazy"></li>
       <li><div class="kop"><b>Jij</b> kiest wat</div><img src="beelden/07-ouder-oefenen.webp" alt="Voor ouders: wat je kind oefent, met de thema's om aan te zetten" width="480" height="1039" loading="lazy"></li>
-      <li><div class="kop">Het <b>groeit</b> mee</div><img src="beelden/08-ouder-voortgang.webp" alt="Voor ouders: per thema een leerpad, met de sommen die nog lastig zijn" width="480" height="1039" loading="lazy"></li>
+      <li><div class="kop">Het <b>groeit</b> mee</div><img src="beelden/over-leerpad.webp" alt="Voor ouders: per thema een leerpad van tot 10 naar tot 20, met de sommen die nog lastig zijn" width="480" height="1038" loading="lazy"></li>
       <li><div class="kop">Het <b>filmpje</b></div>
         <button class="filmkaart" id="filmkaart" type="button" aria-label="Speel het filmpje: vijfentwintig seconden, zonder geluid">
           <img src="film-kaart.jpg" alt="" width="540" height="960" loading="lazy">
@@ -219,18 +237,18 @@
        wie het nodig heeft al is. -->
   <section aria-labelledby="kop-weten">
     <h2 id="kop-weten">Goed om te weten</h2>
-    <ul class="chips">
-      <li><span aria-hidden="true">🔊</span>Leest voor</li>
-      <li><span aria-hidden="true">📶</span>Zonder internet</li>
-      <li><span aria-hidden="true">🚫</span>Geen reclame</li>
-      <li><span aria-hidden="true">📱</span>Ook als app</li>
+    <ul class="chips weten">
+      <li><span aria-hidden="true">🔊</span>Leest<br>voor</li>
+      <li><span aria-hidden="true">📶</span>Zonder<br>internet</li>
+      <li><span aria-hidden="true">🚫</span>Geen<br>reclame</li>
+      <li><span aria-hidden="true">📱</span>Ook als<br>app</li>
     </ul>
   </section>
 
   <section class="eind alleen-nieuw"><a class="knop goud" href="../index.html">▶ Speel meteen</a></section>
 
   <footer class="voet">
-    <button class="stil" type="button" id="deel">📤 Deel deze pagina</button>
+    <button class="stil" type="button" id="deel">💌 Rekensterren delen</button>
     <img src="qr.svg" alt="QR-code naar deze pagina" width="60" height="60">
   </footer>
   <p id="deel-uit" role="status"></p>
