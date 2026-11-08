@@ -15,7 +15,10 @@
 #             CLAUDE.md regel 0) en schuiven (geen scherm schuift verder dan er
 #             iets te zien valt, en wat geen lijst is past op elke maat), en
 #             robuust (de tik komt eerst, tikstormen, offline na het eerste
-#             bezoek -- test/robuust.test.js).
+#             bezoek -- test/robuust.test.js), en vlucht (de zoom tussen kaart
+#             en Werelden; wat op allebei staat -- balk, diamantenpil -- staat
+#             stil. Een kopregel die op één scherm hoger werd, viel daar om
+#             zonder dat iemand het zag, omdat hij hier niet draaide).
 #             Ze draaien via test/alles.js, dus met dezelfde tweede kans als
 #             npm test en Publiceren: wat omvalt draait nog één keer, en slaagt
 #             het dan wel, dan blijft de PR groen met een gele waarschuwing die
@@ -74,6 +77,7 @@ jobs:
           - { suite: sterren, bestand: profiles }
           - { suite: schuiven, bestand: schuiven }
           - { suite: robuust, bestand: robuust }
+          - { suite: vlucht, bestand: vlucht }
     name: browser (${{ matrix.suite }})
     runs-on: ubuntu-latest
     steps:
