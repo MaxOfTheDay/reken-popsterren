@@ -508,7 +508,10 @@
     position: relative; z-index: 1;   /* boven .nav-sel */
     transition: transform var(--t-tik), background .15s, opacity .15s;
   }
-  .nav-item .nav-ico { font-size: var(--tab-ico); line-height: 1.1; filter: var(--emoji-schaduw); }
+  /* --ico-dy zet iconenOpLijn (35-schermen.js): het lettertype van het toestel
+     zet niet elke emoji even hoog, en zo liggen ze toch op één lijn. */
+  .nav-item .nav-ico { font-size: var(--tab-ico); line-height: 1.1; filter: var(--emoji-schaduw);
+    transform: translateY(var(--ico-dy, 0em)); }
   .nav-item:active { transform: scale(var(--druk-plat)); }
   .nav-item.active { opacity: 1; }
   /* Muis: een zacht vlak onder wat je aanwijst. Alleen waar zweven bestaat, anders

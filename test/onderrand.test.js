@@ -44,6 +44,9 @@
  *   L  op een bureaublad staat de balk bij een tabwissel stil, ook op een hoog
  *      venster waar hij mee het podium op zakt, en knipt de veeg eronder niet
  *      van maat (zie --balk-op)
+ *   M  de drie iconen in de balk liggen op één lijn: hun inkt, niet hun letterkader
+ *      (👕 zakte op Windows, zie iconenOpLijn) -- en zet je er tekens in die
+ *      elk anders in hun kader staan, dan trekt iconenOpLijn ze ook recht
  *
  * De reden voor C: --vh-drift mag nooit onder nul lopen. Zou hij dat wel doen,
  * dan schoof de bediening bij een openschuivend toetsenbord juist eráchter.
@@ -553,6 +556,58 @@ async function zetOnderrandAan(page) {
     else check(Math.abs(r.kader - 1215) <= 1 && r.lucht > 0, `L · ${w}x${h} · de kaart stopt op ware grootte en de balk zakt mee`,
       `kader ${r.kader}px, lucht ${r.lucht}`);
     check(fouten.length === 0, `L · ${w}x${h} · geen javascript-fouten`, fouten.join(' | '));
+    await ctx.close();
+  }
+
+  /* ---- M · de iconen in de balk op één lijn ----
+     Wat telt is waar de inkt staat, niet het kader: met Segoe UI Emoji staat het
+     shirt op de grondlijn met lucht erboven, en dan zakt 👕 tussen 🗺️ en 🏆.
+     Alle drie hebben dezelfde letter en regelhoogte, dus het letterkader staat
+     in elk icoon even ver van zijn bovenkant; het inktmidden op het scherm is dan
+     de bovenkant van het icoon (mét --ico-dy) plus zijn inktmidden in em.
+     Deze browser heeft Noto, waar ze al recht staan -- daarom zet de tweede
+     helft er tekens in die elk anders in hun kader staan, zodat de rechttrekker
+     zelf iets te doen krijgt. */
+  for (const [w, h] of [[1440, 900], [412, 887]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    const fouten = [];
+    page.on('pageerror', e => fouten.push(e.message));
+    await page.goto(APP_URL + '&demo&star=p1&screen=map');
+    await page.waitForTimeout(700);
+    const r = await page.evaluate(async () => {
+      const wacht = ms => new Promise(res => setTimeout(res, ms));
+      const iconen = () => [...document.querySelectorAll('.nav-item .nav-ico')];
+      const doek = document.createElement('canvas');
+      doek.width = doek.height = 200;
+      const c2 = doek.getContext('2d', { willReadFrequently: true });
+      const spreiding = () => {
+        const ys = iconen().map(el => {
+          const maat = parseFloat(getComputedStyle(el).fontSize);
+          return el.getBoundingClientRect().top + inktMidden(el.textContent, getComputedStyle(el).fontFamily, c2, 100) * maat;
+        });
+        return +(Math.max(...ys) - Math.min(...ys)).toFixed(2);
+      };
+      for (let i = 0; i < 40 && !iconen()[0].style.getPropertyValue('--ico-dy'); i++) await wacht(100);
+      const gezet = iconen().map(el => el.style.getPropertyValue('--ico-dy'));
+      const echt = spreiding();
+      // tekens die elk anders in hun kader staan: hoog, midden, laag
+      const was = iconen().map(el => el.textContent);
+      ['¯', 'x', '_'].forEach((t, i) => { iconen()[i].textContent = t; iconen()[i].style.removeProperty('--ico-dy'); });
+      const scheef = spreiding();
+      iconenOpLijn(iconen());
+      const recht = spreiding();
+      iconen().forEach((el, i) => { el.textContent = was[i]; });
+      iconenOpLijn(iconen());
+      return { gezet, echt, scheef, recht };
+    });
+    check(r.gezet.every(v => /^-?\d+\.\d+em$/.test(v)), `M · ${w}x${h} · elk icoon in de balk is na het opstarten nagemeten`,
+      r.gezet.join(' '));
+    check(r.echt <= 1, `M · ${w}x${h} · 🗺️ 👕 🏆 liggen op één lijn (inktmidden)`, `${r.echt}px verschil`);
+    check(r.scheef > 4 && r.recht <= 1, `M · ${w}x${h} · scheve tekens worden rechtgetrokken`,
+      `zonder ${r.scheef}px, met ${r.recht}px verschil`);
+    check(fouten.length === 0, `M · ${w}x${h} · geen javascript-fouten`, fouten.join(' | '));
     await ctx.close();
   }
 
