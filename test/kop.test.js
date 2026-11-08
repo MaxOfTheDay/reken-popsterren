@@ -17,6 +17,10 @@
  *   D  de ronde kopknoppen zijn per rij even groot: ← naast 🌍 op Werelden, ← en ▶
  *      in het ouderdeel, ⚙️ op de sterrenkeuze -- op elke maat (de ← op Werelden
  *      kromp op een smalle telefoon, de ▶ en het ⚙️ groeiden op een tablet niet mee)
+ *   F  de kopregel staat op elk scherm op dezelfde hoogte en is --hud-h hoog,
+ *      en de ← staat erin op dezelfde plek: van het overzicht van Voor ouders
+ *      naar haar pagina zakte de rij 2px (haar pil was 48 hoog), en de kast,
+ *      de kleedkamer, de kaart en de show hadden elk hun eigen bovenrand
  *   E  een tik op de 🎲 in de kleedkamer komt op de 🎲 aan, en een tik op de schijf
  *      naast haar voeten op het podium (de spiegel lag eroverheen, en haar tekening
  *      ving met haar hele rechthoek)
@@ -158,6 +162,53 @@ async function zetKaart(page, { wereld, diamanten, wens }) {
     // ⚙️ Ouders is een pil: even hoog als de knoppen in de kop, en breder
     check(tandwiel[1] === hud[0][1] && tandwiel[0] > tandwiel[1], `D · ${w}x${h} ⚙️ Ouders is zo hoog als de knoppen in de kop`,
       JSON.stringify({ tandwiel, hud: hud[0] }));
+    await ctx.close();
+  }
+
+  /* ---- F · één kopregel: zelfde hoogte, zelfde plek ---- */
+  const KOPPEN = [
+    ['kaart', () => selectProfile('p1')],
+    ['kleedkamer', () => { selectProfile('p1'); openKleedkamer(); }],
+    ['kast', () => { selectProfile('p1'); openTrophies(); }],
+    ['show', () => { selectProfile('p1'); startLevel(6); }],
+    ['memory', () => { selectProfile('p1'); startMemory(); }],
+    ['ouders', () => { cur = null; goProfiles(); openSettings(); }],
+    ['haar pagina', () => { cur = null; goProfiles(); openSettings(); openSter('p1'); }],
+    ['nieuwe ster', () => { cur = null; goProfiles(); openSettings(); openNewStar('settings'); }],
+  ];
+  for (const [w, h] of [[320, 568], [390, 844], [768, 1024], [1024, 768]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    page.on('pageerror', e => fouten.push(e.message));
+    const rijen = {};
+    for (const [naam, ga] of KOPPEN) {
+      await page.goto(APP_URL + '&demo&star=p1');
+      await page.waitForFunction(() => typeof selectProfile === 'function');
+      await page.evaluate(f => new Function('(' + f + ')()')(), ga.toString());   // eslint-disable-line no-new-func
+      await page.waitForTimeout(1300);
+      rijen[naam] = await page.evaluate(() => {
+        const sc = document.querySelector('.screen.active');
+        const kop = sc.querySelector('.hub-sticky'), rij = kop.querySelector('.screen-header');
+        const terug = rij.querySelector('.header-left');
+        const r = rij.getBoundingClientRect(), t = terug && terug.getBoundingClientRect();
+        return {
+          top: Math.round(r.top), hoog: Math.round(r.height),
+          hud: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hud-h')),
+          terugTop: t ? Math.round(t.top) : null, terugLinks: t ? Math.round(t.left - kop.getBoundingClientRect().left) : null,
+          plaat: Math.round(kop.getBoundingClientRect().height),
+        };
+      });
+    }
+    const tops = Object.values(rijen).map(r => r.top);
+    check(tops.every(t => t === tops[0]), `F · ${w}x${h} de kopregel begint op elk scherm op dezelfde hoogte`, JSON.stringify(rijen));
+    const mis = Object.entries(rijen).filter(([, r]) => r.hoog !== r.hud).map(([n, r]) => `${n} ${r.hoog}`);
+    check(!mis.length, `F · ${w}x${h} de kopregel is overal --hud-h hoog`, mis.join(' | '));
+    const scheef = Object.entries(rijen).filter(([n, r]) => n !== 'kaart' && r.terugTop !== null && r.terugTop !== r.top).map(([n]) => n);
+    check(!scheef.length, `F · ${w}x${h} de ← staat bovenaan in de kopregel`, scheef.join(', '));
+    const o = ['ouders', 'haar pagina', 'nieuwe ster'].map(n => rijen[n]);
+    check(o.every(r => r.plaat === o[0].plaat && r.terugLinks === o[0].terugLinks),
+      `F · ${w}x${h} Voor ouders, haar pagina en Nieuwe ster: dezelfde kop, de ← op dezelfde plek`, JSON.stringify(o));
     await ctx.close();
   }
 
