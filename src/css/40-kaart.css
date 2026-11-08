@@ -46,6 +46,7 @@
      pil, want die dragen tekst die over elke tekening leesbaar moet blijven. */
   #screen-map .map-id-btn {
     padding: 2px;   /* onzichtbaar, maar maakt het raakvlak 48px */
+    margin-block: -2px;   /* en duwt de kopregel niet open (zie --kop-boven) */
     background: none; backdrop-filter: none; box-shadow: none;
   }
   /* Het portretje krijgt een ring van hetzelfde materiaal als de pillen -- geen pil
