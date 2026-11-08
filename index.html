@@ -2376,6 +2376,8 @@
 
 
 
+
+
   .add-tegel {
 
 
@@ -2385,18 +2387,29 @@
 
 
     grid-column: 1 / -1; justify-self: center;
-    max-width: calc(196px + var(--focus-groei) * .62);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 2px; width: 100%; min-height: calc(60px + var(--focus-groei) * .2); padding: 10px 8px;
-    font-family: inherit; font-weight: 700; line-height: 1.15;
-    font-size: calc(var(--tx-klein) + var(--focus-groei) * .03);
-    color: var(--c-white); text-align: center; cursor: pointer; z-index: 1;
-    border: 1.5px dashed rgba(255,255,255,.35); border-radius: var(--r-md);
-    background: rgba(255,255,255,.1);
-    transition: transform var(--t-tik), background .12s;
+    display: flex; flex-direction: row; align-items: center; justify-content: center;
+    gap: calc(10px + var(--focus-groei) * .02);
+    min-height: calc(52px + var(--focus-groei) * .1);
+    padding: 0 calc(22px + var(--focus-groei) * .04) 0 8px;
+    font-family: inherit; font-weight: 700; line-height: 1.15; white-space: nowrap;
+    font-size: calc(var(--tx-label) + var(--focus-groei) * .03);
+    color: var(--c-white); cursor: pointer; z-index: 1;
+    border: 0; border-radius: var(--r-pill); background: var(--hud-bg);
+    backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
+    box-shadow: var(--hud-shadow), inset 0 0 0 1px rgba(255,255,255,.16);
+    text-shadow: var(--hud-ink);
+    transition: transform var(--t-tik);
   }
-  .add-tegel .at-plus { font-size: calc(21px + var(--focus-groei) * .05); line-height: 1; opacity: .9; }
-  @media (hover: hover) { .add-tegel:hover { background: rgba(255,255,255,.18); } }
+
+
+  .add-tegel .at-plus, .leeg-tegel .st-ico {
+    display: grid; place-items: center; flex: none; line-height: 1;
+    border-radius: 50%; border: 2px dashed rgba(255,255,255,.55);
+  }
+  .add-tegel .at-plus {
+    width: calc(36px + var(--focus-groei) * .06); height: calc(36px + var(--focus-groei) * .06);
+    font-size: calc(20px + var(--focus-groei) * .04);
+  }
   .add-tegel:active { transform: scale(var(--druk-plat)); }
 
 
@@ -2413,7 +2426,8 @@
 
   .leeg-tegel .avatar-holder { opacity: .22; filter: grayscale(1) brightness(1.7); }
   .leeg-tegel .ns-vraag { font-size: clamp(44px, 38cqw, 72px); }
-  .leeg-tegel .st-ico { font-weight: 700; color: var(--c-white); }
+
+  .leeg-tegel .st-ico { font-weight: 700; color: var(--c-white); background: none; box-shadow: none; }
 
   .leeg-tegel .st-naam { font-size: clamp(13px, 11cqw, 20px); }
 
