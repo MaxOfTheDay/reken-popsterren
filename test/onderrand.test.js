@@ -44,6 +44,10 @@
  *   L  op een bureaublad staat de balk bij een tabwissel stil, ook op een hoog
  *      venster waar hij mee het podium op zakt, en knipt de veeg eronder niet
  *      van maat (zie --balk-op)
+ *   M  emoji op elk toestel (zie 12-emoji.js): hier, met Noto, verandert er
+ *      niets; op een nagebootst Windows (emoji zakken) schuift elke emoji terug
+ *      naar het midden, ook in wat er later getekend wordt; op een nagebootst
+ *      oud toestel staat er nergens een emoji die het niet kent
  *
  * De reden voor C: --vh-drift mag nooit onder nul lopen. Zou hij dat wel doen,
  * dan schoof de bediening bij een openschuivend toetsenbord juist eráchter.
@@ -553,6 +557,52 @@ async function zetOnderrandAan(page) {
     else check(Math.abs(r.kader - 1215) <= 1 && r.lucht > 0, `L · ${w}x${h} · de kaart stopt op ware grootte en de balk zakt mee`,
       `kader ${r.kader}px, lucht ${r.lucht}`);
     check(fouten.length === 0, `L · ${w}x${h} · geen javascript-fouten`, fouten.join(' | '));
+    await ctx.close();
+  }
+
+  /* ---- M · emoji op elk toestel ----
+     Op Windows zakt 👕 in de balk (Segoe UI Emoji zet emoji op de grondlijn), en
+     een oud toestel kent 🪸 niet. Deze browser heeft Noto, waar alles al goed
+     staat: daar hoort 12-emoji.js dus niets te doen. Daarna bootst de suite de
+     twee toestellen na met een eigen meetlat (emojiOpToestel) en kijkt of het
+     rechtzetten ook werkt voor wat er ná het aanzetten getekend wordt. */
+  for (const [w, h] of [[1440, 900], [412, 887]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    const fouten = [];
+    page.on('pageerror', e => fouten.push(e.message));
+    await page.goto(APP_URL + '&demo&star=p1&screen=map');
+    await page.waitForTimeout(700);
+    const r = await page.evaluate(async () => {
+      const wacht = ms => new Promise(res => setTimeout(res, ms));
+      const out = {};
+      out.hier = { midden: emojiToestel.midden, ontbreekt: emojiToestel.ontbreekt.join(''), spans: document.querySelectorAll('.emo-m').length };
+      out.notoMidden = Math.abs(emojiInkt('👕').midden - emojiInkt('⬛\uFE0F').midden);
+      // een nagebootst Windows: 👕 zit 0,11 letter te laag, de rest staat goed; en een toestel zonder 🪸 en 🤍
+      emojiOpToestel({ midden: true, nul: 0.5, ontbreekt: ['🪸', '🤍'],
+        meet: t => ({ midden: t.startsWith('👕') ? 0.61 : 0.5, kleur: true }) });
+      const shirt = document.querySelector('#nav-dress .emo-m');
+      out.navDy = shirt ? +parseFloat(getComputedStyle(shirt).transform.split(',')[5]).toFixed(2) : null;
+      out.navMaat = parseFloat(getComputedStyle(document.querySelector('#nav-dress .nav-ico')).fontSize);
+      out.kaartRecht = !document.querySelector('#nav-map .emo-m');
+      navTik('dress'); await wacht(1000);
+      out.laterGetekend = [...document.querySelectorAll('#screen-dress .emo-m')].filter(s => s.textContent.startsWith('👕')).length;
+      const tekst = [];
+      const loper = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      for (let n = loper.nextNode(); n; n = loper.nextNode()) if (!n.parentNode.closest('script, style')) tekst.push(n.data);
+      out.onbekend = /🪸|🤍/.test(tekst.join(''));
+      return out;
+    });
+    check(!r.hier.midden && !r.hier.ontbreekt && r.hier.spans === 0, `M · ${w}x${h} · met Noto doet 12-emoji.js niets`,
+      JSON.stringify(r.hier));
+    check(r.notoMidden < 0.03, `M · ${w}x${h} · Noto zet 👕 in het midden van zijn vakje, net als ⬛`, r.notoMidden.toFixed(3));
+    check(r.navDy != null && Math.abs(r.navDy + 0.11 * r.navMaat) < 0.5, `M · ${w}x${h} · een zakkende 👕 in de balk schuift terug naar het midden`,
+      `${r.navDy}px bij ${r.navMaat}px`);
+    check(r.kaartRecht, `M · ${w}x${h} · wat al in het midden staat, blijft ongemoeid`, '');
+    check(r.laterGetekend > 0, `M · ${w}x${h} · ook wat er later getekend wordt (de kleedkamer) schuift mee`, String(r.laterGetekend));
+    check(!r.onbekend, `M · ${w}x${h} · een oud toestel krijgt nergens een emoji die het niet kent`, '');
+    check(fouten.length === 0, `M · ${w}x${h} · geen javascript-fouten`, fouten.join(' | '));
     await ctx.close();
   }
 

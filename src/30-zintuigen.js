@@ -682,8 +682,8 @@ const PAT_JURK = {
           <text x="78" y="185" font-size="12" fill="#fff176">★</text><text x="112" y="192" font-size="14" fill="#fff176">★</text>`,
   disco: `<circle cx="90" cy="140" r="4" fill="#fff" opacity="0.8"/><circle cx="110" cy="155" r="4" fill="#80deea" opacity="0.8"/>
           <circle cx="85" cy="175" r="4" fill="#f48fb1" opacity="0.8"/><circle cx="113" cy="182" r="4" fill="#fff59d" opacity="0.8"/>`,
-  hearts: `<text x="84" y="146" font-size="13" fill="#fff">♥</text><text x="106" y="164" font-size="11" fill="#ffcdd2">♥</text>
-          <text x="79" y="184" font-size="11" fill="#ffcdd2">♥</text><text x="110" y="190" font-size="13" fill="#fff">♥</text>`,
+  hearts: `<text x="84" y="146" font-size="13" fill="#fff">♥︎</text><text x="106" y="164" font-size="11" fill="#ffcdd2">♥︎</text>
+          <text x="79" y="184" font-size="11" fill="#ffcdd2">♥︎</text><text x="110" y="190" font-size="13" fill="#fff">♥︎</text>`,
   // gouden sterren + maantje: de toverjurk
   magic: `<text x="85" y="148" font-size="15" fill="#ffd54f">★</text><text x="108" y="172" font-size="11" fill="#ffd54f">★</text>
           <text x="80" y="188" font-size="11" fill="#ffd54f">★</text>
@@ -710,8 +710,8 @@ const PAT_SHIRT = {
           <text x="82" y="200" font-size="11" fill="#fff176">★</text><text x="106" y="204" font-size="12" fill="#fff176">★</text>`,
   disco: `<circle cx="89" cy="128" r="4" fill="#fff" opacity="0.8"/><circle cx="110" cy="145" r="4" fill="#80deea" opacity="0.8"/>
           <circle cx="86" cy="196" r="4" fill="#f48fb1" opacity="0.8"/><circle cx="113" cy="200" r="4" fill="#fff59d" opacity="0.8"/>`,
-  hearts: `<text x="87" y="132" font-size="13" fill="#fff">♥</text><text x="105" y="152" font-size="11" fill="#ffcdd2">♥</text>
-          <text x="83" y="200" font-size="10" fill="#ffcdd2">♥</text><text x="107" y="204" font-size="11" fill="#fff">♥</text>`,
+  hearts: `<text x="87" y="132" font-size="13" fill="#fff">♥︎</text><text x="105" y="152" font-size="11" fill="#ffcdd2">♥︎</text>
+          <text x="83" y="200" font-size="10" fill="#ffcdd2">♥︎</text><text x="107" y="204" font-size="11" fill="#fff">♥︎</text>`,
   // gouden sterren + maantje: het toveroutfit
   magic: `<text x="84" y="140" font-size="15" fill="#ffd54f">★</text><text x="84" y="201" font-size="10" fill="#ffd54f">★</text>
           <text x="107" y="205" font-size="9" fill="#ffd54f">★</text>
