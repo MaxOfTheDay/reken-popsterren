@@ -190,10 +190,12 @@
   }
 
   /* "+" is geen ster. Hij staat in hetzelfde raster (en dus vanzelf ná de laatste
-     tegel) maar is veel lager en heeft geen podium, geen naam en geen kleur: een
-     leeg plekje, geen kind. Gestippeld en glazen, zoals elke "hier kan nog iets
-     bij" in dit spel -- en bewust niet de taal van het tandwiel, want dit is geen
-     instelling. */
+     tegel) maar heeft geen podium, geen naam en geen kleur: een knop, geen kind.
+     Het is dezelfde glazen pil als "⚙ Ouders" rechtsboven (.corner-btns, hieronder),
+     met het gestreepte rondje met "+" dat ook voor "Nieuwe ster" in Voor ouders
+     staat (.sr-plus) en op de lege tegel hieronder. Zo zegt de app "er kan nog een
+     ster bij" overal op één manier. Hier stond een gestippeld vak met een klein
+     plusje: het las als een leeg uploadveld en was het enige vak in die taal. */
   .add-tegel {
     /* Een eigen rij onder de sterren, en niet het eerstvolgende lege vakje: dan
        staat hij naast een kind alsof hij er ook een is, en bij vijf sterren vult
@@ -203,18 +205,29 @@
        blijft staan onder tegels van 175 leest als een voetnoot in plaats van als
        de tweede mogelijkheid op dit scherm. */
     grid-column: 1 / -1; justify-self: center;
-    max-width: calc(196px + var(--focus-groei) * .62);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 2px; width: 100%; min-height: calc(60px + var(--focus-groei) * .2); padding: 10px 8px;
-    font-family: inherit; font-weight: 700; line-height: 1.15;
-    font-size: calc(var(--tx-klein) + var(--focus-groei) * .03);
-    color: var(--c-white); text-align: center; cursor: pointer; z-index: 1;
-    border: 1.5px dashed rgba(255,255,255,.35); border-radius: var(--r-md);
-    background: rgba(255,255,255,.1);
-    transition: transform var(--t-tik), background .12s;
+    display: flex; flex-direction: row; align-items: center; justify-content: center;
+    gap: calc(10px + var(--focus-groei) * .02);
+    min-height: calc(52px + var(--focus-groei) * .1);
+    padding: 0 calc(22px + var(--focus-groei) * .04) 0 8px;
+    font-family: inherit; font-weight: 700; line-height: 1.15; white-space: nowrap;
+    font-size: calc(var(--tx-label) + var(--focus-groei) * .03);
+    color: var(--c-white); cursor: pointer; z-index: 1;
+    border: 0; border-radius: var(--r-pill); background: var(--hud-bg);
+    backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
+    box-shadow: var(--hud-shadow), inset 0 0 0 1px rgba(255,255,255,.16);
+    text-shadow: var(--hud-ink);
+    transition: transform var(--t-tik);
   }
-  .add-tegel .at-plus { font-size: calc(21px + var(--focus-groei) * .05); line-height: 1; opacity: .9; }
-  @media (hover: hover) { .add-tegel:hover { background: rgba(255,255,255,.18); } }
+  /* het gestreepte rondje: dezelfde vorm als .sr-plus in Voor ouders, in wit
+     omdat het hier op glas staat en niet op papier */
+  .add-tegel .at-plus, .leeg-tegel .st-ico {
+    display: grid; place-items: center; flex: none; line-height: 1;
+    border-radius: 50%; border: 2px dashed rgba(255,255,255,.55);
+  }
+  .add-tegel .at-plus {
+    width: calc(36px + var(--focus-groei) * .06); height: calc(36px + var(--focus-groei) * .06);
+    font-size: calc(20px + var(--focus-groei) * .04);
+  }
   .add-tegel:active { transform: scale(var(--druk-plat)); }
   /* Nog geen enkele ster: dan is dit het enige op het scherm en mag het ook zo
      groot zijn. Geen leeg raster met zes lege vakjes -- één uitnodiging. */
@@ -231,7 +244,8 @@
      .leeg-tegel hierboven bij elke tegelregel naast .ster-tegel. */
   .leeg-tegel .avatar-holder { opacity: .22; filter: grayscale(1) brightness(1.7); }
   .leeg-tegel .ns-vraag { font-size: clamp(44px, 38cqw, 72px); }
-  .leeg-tegel .st-ico { font-weight: 700; color: var(--c-white); }
+  /* het rondje zelf (gestreept, geen wereldkleur) staat bij .add-tegel hierboven */
+  .leeg-tegel .st-ico { font-weight: 700; color: var(--c-white); background: none; box-shadow: none; }
   /* "Maak je ster" is langer dan een naam: een slag kleiner, zodat hij heel blijft */
   .leeg-tegel .st-naam { font-size: clamp(13px, 11cqw, 20px); }
   /* Liggend (of een heel lage viewport) passen twee rijen tegels er niet bij.
