@@ -240,7 +240,7 @@
     border: none; background: none; padding: 0; cursor: pointer; font-family: inherit;
     color: inherit; text-align: left; transition: transform var(--t-tik);
   }
-  .map-id-btn:hover { transform: scale(1.02); }
+  @media (hover: hover) { .map-id-btn:hover { transform: scale(1.02); } }
   .map-id-btn:active { transform: scale(var(--druk-plat)); }
   /* gedeeld rond portretkader: kaartkop (.map-portrait) en de kindkiezer in het
      ouderdeel (.who-portrait, zie daar) tonen allebei hetzelfde echte avatartje */

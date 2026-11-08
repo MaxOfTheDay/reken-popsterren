@@ -1238,4 +1238,49 @@ zaak('S', () => {
   check(!dubbel.length, 'S · geen functienaam twee keer op het hoogste niveau (de laatste wint stil)', dubbel.join(' | '));
 });
 
+/* T · ZWEVEN ALLEEN MET EEN MUIS. Op een telefoon of tablet blijft :hover
+   hangen op de plek waar je het laatst tikte, tot je ergens anders tikt. En
+   omdat een tik vaak het scherm opnieuw opbouwt, springt die zweeftint dan op
+   wat er nú onder je vinger ligt: in de open ladder van het ouderdeel leek een
+   aangetikte stap zo een tweede "hier is ze". Elke :hover staat daarom in een
+   @media (hover: hover). Uitgezonderd: een lijst die een selector mét en
+   zonder :hover allebei op hetzelfde zet (".oe-seg .chip, .oe-seg .chip:hover"):
+   die zet een tint juist uit, en dat mag overal. */
+function zweefZonderMuis(css) {
+  const code = css.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+  const fout = [], stapel = [];
+  let begin = 0;
+  for (let i = 0; i < code.length; i++) {
+    const c = code[i];
+    if (c === '{') {
+      const kop = code.slice(begin, i).trim().replace(/\s+/g, ' ');
+      const regel = code.slice(0, i).split('\n').length;
+      if (kop.startsWith('@')) stapel.push(/^@media[^{]*\(\s*hover\s*:\s*hover\s*\)/.test(kop) ? 'muis' : 'at');
+      else {
+        stapel.push('regel');
+        if (kop.includes(':hover') && !stapel.includes('muis')) {
+          const lijst = kop.split(',').map(x => x.trim());
+          const los = lijst.filter(x => x.includes(':hover') && !lijst.includes(x.replace(/:hover/g, '')));
+          if (los.length) fout.push(`${regel} ${los[0]}`);
+        }
+      }
+      begin = i + 1;
+    } else if (c === '}') { stapel.pop(); begin = i + 1; }
+    else if (c === ';' && stapel[stapel.length - 1] !== 'regel') begin = i + 1;
+  }
+  return fout;
+}
+zaak('T', () => {
+  check(zweefZonderMuis('.a:hover { x: 1 }').length === 1
+     && zweefZonderMuis('@media (hover: hover) { .a:hover { x: 1 } }').length === 0
+     && zweefZonderMuis('.b .a, .b .a:hover { x: 1 }').length === 0
+     && zweefZonderMuis('@media (max-width: 9px) { .a:hover { x: 1 } }').length === 1,
+     'T · de zweefwacht herkent een losse :hover, een muisblok en een uitzetter', '');
+  const map = path.join(WORTEL, 'src', 'css');
+  const fout = [];
+  for (const f of fs.readdirSync(map).filter(f => f.endsWith('.css')).sort())
+    for (const w of zweefZonderMuis(fs.readFileSync(path.join(map, f), 'utf8'))) fout.push(`${f}:${w}`);
+  check(!fout.length, 'T · elke :hover staat in @media (hover: hover), anders blijft hij hangen na een tik', fout.join(' | '));
+});
+
 klaar();

@@ -332,7 +332,7 @@
     color: var(--purple-mid); background: var(--c-white);
     border: 1.5px solid var(--paper-border); box-shadow: 0 2px 0 var(--paper-border);
   }
-  .btn.small.paper:hover { border-color: var(--purple-light); }
+  @media (hover: hover) { .btn.small.paper:hover { border-color: var(--purple-light); } }
   .btn.small.paper:active { transform: translateY(2px); box-shadow: none; }
   /* secundaire knoppen: rustig, maar met een vleugje kleur (lichter dan de gouden hoofdknop) */
   .btn.soft {

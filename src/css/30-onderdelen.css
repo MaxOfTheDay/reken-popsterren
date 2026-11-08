@@ -98,9 +98,11 @@
                 0 0 20px rgba(var(--w-glow-rgb), .26), var(--e-2);
     transition: transform var(--t-tik), box-shadow .14s;
   }
-  .ster-tegel:hover, .leeg-tegel:hover { transform: translateY(-4px);
-    box-shadow: 0 0 0 1.25px rgba(255,255,255,.24), 0 0 0 2.5px rgba(var(--nacht-1-rgb),.45),
-                0 0 24px rgba(var(--w-glow-rgb), .36), var(--e-3); }
+  @media (hover: hover) {
+    .ster-tegel:hover, .leeg-tegel:hover { transform: translateY(-4px);
+      box-shadow: 0 0 0 1.25px rgba(255,255,255,.24), 0 0 0 2.5px rgba(var(--nacht-1-rgb),.45),
+                  0 0 24px rgba(var(--w-glow-rgb), .36), var(--e-3); }
+  }
   .ster-tegel:active, .leeg-tegel:active { transform: scale(var(--druk-plat)); }
   /* De tik zelf: even indrukken en oplichten, en dán pas het spel in (zie
      kiesSter). Kort genoeg om antwoord te zijn en niet om een animatie te zijn. */
@@ -212,7 +214,7 @@
     transition: transform var(--t-tik), background .12s;
   }
   .add-tegel .at-plus { font-size: calc(21px + var(--focus-groei) * .05); line-height: 1; opacity: .9; }
-  .add-tegel:hover { background: rgba(255,255,255,.18); }
+  @media (hover: hover) { .add-tegel:hover { background: rgba(255,255,255,.18); } }
   .add-tegel:active { transform: scale(var(--druk-plat)); }
   /* Nog geen enkele ster: dan is dit het enige op het scherm en mag het ook zo
      groot zijn. Geen leeg raster met zes lege vakjes -- één uitnodiging. */
@@ -285,7 +287,8 @@
     cursor: pointer; min-height: 44px; padding: 0 14px; border-radius: var(--r-pill);
     transition: opacity var(--t-tik) ease, background var(--t-tik) ease;
   }
-  .over-hint:hover, .over-hint:focus-visible { opacity: 1; background: rgba(255,255,255,.1); }
+  .over-hint:focus-visible { opacity: 1; background: rgba(255,255,255,.1); }
+  @media (hover: hover) { .over-hint:hover { opacity: 1; background: rgba(255,255,255,.1); } }
   /* de regel waar ze samen in staan: één stille zin onder de tegel (zie de opmaak) */
   .leeg-regel { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; margin-top: 8px; position: relative; z-index: 1; }
   .leeg-regel .over-hint { padding: 0 10px; }
@@ -333,7 +336,7 @@
     display: flex; align-items: center; gap: 11px; padding: 0 11px; min-height: 48px;
     border-radius: var(--r-md); transition: background var(--t-tik) ease;
   }
-  .gear-item:hover { background: var(--paper-tint); }
+  @media (hover: hover) { .gear-item:hover { background: var(--paper-tint); } }
   /* Niet krimpen maar oplichten: een rij van 48px die 2% kleiner wordt zie je
      niet, een rij die even paars oplicht wél -- en dat is precies wat een tik op
      een schakelaar moet bevestigen. */
