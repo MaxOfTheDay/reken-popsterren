@@ -59,7 +59,7 @@ const KNOPPEN = 'button, [onclick], .tour-stop, .item-card, .trophy-card, .ster-
    pas als het getal erin staat (meten, schrijven, meten). */
 const MEET_MAG = /^(somVult|vakNaar)$/;
 const WAAS_MAX = 6;   // px blur; zie zaak E
-const NIET = /set-reset|set-delete|delete|wis|import|export|backup|deel|kopieer|installeer|oz-|set-over|over-hint|naarOver|app-knop|alsapp|speel-als|set-beginscherm/i;
+const NIET = /set-reset|set-delete|delete|wis|import|export|backup|deel|kopieer|installeer|oz-|set-over|set-mail|over-hint|naarOver|app-knop|alsapp|speel-als|set-beginscherm/i;
 
 (async () => {
   const browser = await launch();
