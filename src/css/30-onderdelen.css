@@ -49,9 +49,12 @@
      uitnodiging krijgt de maat van een knop en niet die van een tegel. Zonder deze
      regel perste de kolom van één tegel (148px) "Maak je eerste ster" over twee
      regels. */
-  /* Nog geen enkele ster: dan staat er één lege tegel (zie .leeg-tegel), iets
-     breder dan een eenzame ster -- hij is het enige op het scherm. */
-  .star-grid.kol-0 { grid-template-columns: minmax(0, calc(168px + var(--focus-groei) * .54)); }
+  /* Nog geen enkele ster: dan staat er één breed podium met het meisje en de
+     jongen (zie .leeg-tegel), met de gouden knop eronder. Het is het enige op het
+     scherm, dus mag het groot zijn: tot 300 op een telefoon, en op een tablet
+     groeit het mee met de hoogte (46vh) in plaats van op telefoonmaat midden in
+     een lege paarse vlakte te blijven staan. */
+  .star-grid.kol-0 { grid-template-columns: minmax(0, min(78vw, 46vh, calc(300px + var(--focus-groei) * .8))); }
   .star-grid.kol-1 { grid-template-columns: minmax(0, calc(148px + var(--focus-groei) * .48)); }
   .star-grid.kol-2 { grid-template-columns: repeat(2, minmax(0, calc(136px + var(--focus-groei) * .44))); }
   /* Vier sterren staan 2+2 op de maat van twee. Twee rijen van 136 zijn wel
@@ -220,7 +223,7 @@
   }
   /* het gestreepte rondje: dezelfde vorm als .sr-plus in Voor ouders, in wit
      omdat het hier op glas staat en niet op papier */
-  .add-tegel .at-plus, .leeg-tegel .st-ico {
+  .add-tegel .at-plus {
     display: grid; place-items: center; flex: none; line-height: 1;
     border-radius: 50%; border: 2px dashed rgba(255,255,255,.55);
   }
@@ -229,25 +232,29 @@
     font-size: calc(20px + var(--focus-groei) * .04);
   }
   .add-tegel:active { transform: scale(var(--druk-plat)); }
-  /* Nog geen enkele ster: dan is dit het enige op het scherm en mag het ook zo
-     groot zijn. Geen leeg raster met zes lege vakjes -- één uitnodiging. */
-  /* Breder dan hoog, en breed genoeg voor "Maak je eerste ster" op één regel: een
-     uitnodiging leest als een knop, niet als een leeg vierkant. */
-  /* Nog geen enkele ster: dan is de "+" geen gestippelde knop maar een lege
-     sterrentegel -- hetzelfde podium, met de gedimde schim en het vraagteken van
-     het maakformulier (.newstar-preview.wacht). Je ziet wat je gaat maken, en een
-     tik opent precies diezelfde schim. Hier stond een welkomstzin boven een knop
-     die hetzelfde zei; de tegel zegt het nu zonder te lezen.
+  /* Nog geen enkele ster: het podium met het meisje en de jongen (#leeg-duo),
+     zonder voetband -- er staat geen naam, en "Maak je ster" staat op de knop
+     eronder. Breder dan een sterrentegel (10/8), zodat ze er met z'n tweeën op
+     passen.
 
      Een eigen klasse en niet .ster-tegel: wat .ster-tegel heet is een kind (de
      tests tellen ze, en de danspasjes zoeken er hun poppen in). Daarom staat
      .leeg-tegel hierboven bij elke tegelregel naast .ster-tegel. */
-  .leeg-tegel .avatar-holder { opacity: .22; filter: grayscale(1) brightness(1.7); }
-  .leeg-tegel .ns-vraag { font-size: clamp(44px, 38cqw, 72px); }
-  /* het rondje zelf (gestreept, geen wereldkleur) staat bij .add-tegel hierboven */
-  .leeg-tegel .st-ico { font-weight: 700; color: var(--c-white); background: none; box-shadow: none; }
-  /* "Maak je ster" is langer dan een naam: een slag kleiner, zodat hij heel blijft */
-  .leeg-tegel .st-naam { font-size: clamp(13px, 11cqw, 20px); }
+  .leeg-tegel .st-podium { aspect-ratio: 10 / 8; }
+  /* De gouden knop eronder: dezelfde .btn.big als "🌟 Klaar!" en elke andere
+     "ga" in de app. Over de hele breedte van het podium, zodat ze één blok zijn. */
+  .btn.big.leeg-knop { grid-column: 1 / -1; width: 100%; padding-left: 12px; padding-right: 12px; margin-top: 4px; z-index: 1; }
+  /* het meisje en de jongen samen op één podium -- zie duoHtml. Op een telefoon
+     liggend (onderaan) krimpt de knop mee met de lage hoogte. */
+  .duo {
+    position: relative; z-index: 2; display: flex; align-items: flex-end; justify-content: center;
+    gap: 10%; height: 84%; margin-bottom: 9%;
+  }
+  .stage .duo > .avatar-holder {
+    height: 100%; padding: 0; border: 0; background: none; cursor: pointer; font: inherit; color: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .duo > .avatar-holder:focus-visible { outline: 3px solid var(--c-white); outline-offset: 2px; border-radius: var(--r-sm); }
   /* Liggend (of een heel lage viewport) passen twee rijen tegels er niet bij.
      De auto-marges hierboven centreren het blok en laten het dan langs de
      bovenkant weglopen zonder scrollbalk -- dus daar zetten we het centreren uit
@@ -273,6 +280,13 @@
     /* Vier sterren op één rij: 2+2 was hier anderhalf scherm hoog, terwijl de
        breedte er vier naast elkaar makkelijk draagt. */
     .star-grid.kol-4 { grid-template-columns: repeat(4, minmax(0, 118px)); max-width: 560px; }
+    /* Zonder sterren: een lager, breder podium (10/5,6), zo breed als de hoogte
+       toelaat na logo, knop en de regel eronder (samen ± 185), maar nooit smaller
+       dan de knop zelf. En de knop een maat kleiner. Zo past het lege scherm op
+       een liggende telefoon van 640x360 zonder te schuiven. */
+    .star-grid.kol-0 { grid-template-columns: minmax(0, clamp(240px, (var(--vh-lock, 100svh) - 185px) * 1.75, 360px)); }
+    .leeg-tegel .st-podium { aspect-ratio: 10 / 5.6; }
+    .btn.big.leeg-knop { font-size: var(--tx-sub); padding-top: 10px; padding-bottom: 10px; margin-top: 0; }
   }
   /* Een lage telefoon staand (een kleine, of een gewone met de balken van de
      browser erbij): vier sterren nog een slag kleiner, en het podium iets lager,
@@ -306,6 +320,8 @@
   /* de regel waar ze samen in staan: één stille zin onder de tegel (zie de opmaak) */
   .leeg-regel { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; margin-top: 8px; position: relative; z-index: 1; }
   .leeg-regel .over-hint { padding: 0 10px; }
+  /* dezelfde › als elke rij in Voor ouders die een pagina opent (.gi-pijl) */
+  .over-hint .oh-pijl { font-size: 1.3em; line-height: 1; margin-left: .25em; }
 
   /* --balk-rand en niet twee keer 10: dit is dezelfde afstand tot de schermrand
      als waarop de navigatiebalk onderaan zweeft, en dat is geen toeval maar de
@@ -1055,6 +1071,8 @@
      uit: liggend (10/8) een twaalfde van haar hoogte, en de tegel knipt af. Daar
      valt meestal alleen lucht weg, maar een tovenaarshoed of feesthoedje verloor
      zijn punt. 84% plus 12% van de breedte past ook in de liggende tegel. */
-  .ster-tegel .stage-podium, .leeg-tegel .stage-podium { width: 73%; bottom: 10.4%; }
+  .ster-tegel .stage-podium { width: 73%; bottom: 10.4%; }
+  /* breed genoeg voor twee: het meisje en de jongen staan er samen op */
+  .leeg-tegel .stage-podium, .newstar-preview.wacht .stage-podium { width: 90%; bottom: 7%; }
   .ster-tegel .stage-podium .podium, .leeg-tegel .stage-podium .podium, .newstar-preview .stage-podium .podium { --pod-dik: 4px; }
-  .ster-tegel .stage.op-podium .avatar-holder, .leeg-tegel .stage.op-podium .avatar-holder { height: 84%; margin-bottom: 12%; }
+  .ster-tegel .stage.op-podium .avatar-holder { height: 84%; margin-bottom: 12%; }

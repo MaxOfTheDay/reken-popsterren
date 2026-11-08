@@ -1304,8 +1304,16 @@ function haltKnop(shown, nodes, i, stand) {
   const schatTeken = (schat && !p.owned.includes(schat.id))
     ? `<span class="stop-schat${n.x > 70 ? ' links' : ''}" aria-hidden="true">`
       + (schat.thumb ? schat.thumb(curBase()) : `<span class="thumb-emo">${schat.emoji || '🎁'}</span>`) + '</span>' : '';
+  /* Het handje bij de allereerste show. Verder beweegt er met opzet niets op de
+     kaart (zie de haltes in 55-haltes.css), en een kind van vijf dat hier voor
+     het eerst staat weet niet dat het gouden rondje een knop is. Het staat er
+     alleen zolang ze nog nooit een show speelde -- afgeleid uit p.stars, er
+     wordt niets voor bewaard -- en is daarna voorgoed weg. Hetzelfde 👆 als bij
+     de getallenlijn (.gl-hand). */
+  const eersteTik = b.classList.contains('next') && !Object.keys(p.stars).length
+    ? '<span class="eerste-tik" aria-hidden="true">👆</span>' : '';
   b.innerHTML = `${hero}<div class="stop-body"><div class="dot">${i + 1}</div>`
-    + `${schatTeken}${sterrenRij}</div>`;
+    + `${schatTeken}${sterrenRij}${eersteTik}</div>`;
   /* Het slotje is weg; de voorleesnaam zegt het nog wél. Wie de kaart met een
      schermlezer doorloopt heeft geen kleur en geen plek op de route -- daar is
      "nog op slot" het enige wat de staat draagt, en dat is geen beeldruis. */

@@ -5,10 +5,17 @@
    tegelijk de belangrijkste -- een kleuter in de rekenmodus loopt meteen vast. */
 let newStar = null;
 let newStarReturn = 'profile';   // waar ← en Android-terug naartoe gaan
-function openNewStar(from) {
+/* base: van een tik op het meisje of de jongen (zie duoHtml) -- dan is "Wie ben
+   je?" al beantwoord, door wie er net op tikte. Zonder blijft het open. */
+function openNewStar(from, base) {
   if (Object.keys(db.profiles).length >= MAX_PROFILES) return;
   sndClick();
   newStarReturn = from || 'profile';
+  /* De kop zegt wat je aantikte. Op het lege beginscherm is dat de gouden
+     "Maak je ster"; overal anders (de pil onder de tegels, de rij in Voor ouders)
+     staat er "Nieuwe ster". */
+  const kop = document.querySelector('#screen-newstar .header-title');
+  if (kop) kop.textContent = newStarReturn === 'profile' && !profileKeys().length ? 'Maak je ster' : 'Nieuwe ster';
   // De oefeninstellingen komen uit defaultProfile zelf, zodat het concept en de
   // echte standaarden niet uit elkaar kunnen lopen: wie de openklapper dicht
   // laat, krijgt exact wat de app anders stilletjes had gekozen.
@@ -17,7 +24,7 @@ function openNewStar(from) {
     // enige zonder voorkeuze. Zou hier 'meisje' staan, dan zou een ouder die
     // doorklikt nooit merken dat er iets te kiezen valt -- precies de aanname
     // waar deze versie vanaf wil.
-    name: '', base: null, hair: 'hair_blond', dress: 'dress_roze',
+    name: '', base: BASES[base] ? base : null, hair: 'hair_blond', dress: 'dress_roze',
     /* De modus ook bewust leeg, om dezelfde reden als base. Hier stond Rekenen
        al aan, en "Hoe speel je?" staat op een telefoon en een liggende tablet
        onder de Klaar-balk: een ouder kon klaar zijn zonder de vraag gezien te
@@ -53,11 +60,12 @@ function renderNewStar() {
   const n = newStar;
   const s = n.settings;
   // een echt profiel als voorbeeld: precies wat de ster straks wordt, geen namaak
-  /* Zolang "wie ben je?" open staat, zegt het voorbeeld ook niets: een gedimde
-     figuur met een vraagteken. Hier stond meteen een meisje -- de standaardfiguur
-     -- terwijl die vraag met opzet géén voorkeuze heeft (zie openNewStar). De korte
-     haren van de jongen zijn als schim het minst uitgesproken; welke figuur het
-     ook is, je ziet er alleen de omtrek van. */
+  /* Zolang "wie ben je?" open staat, staan ze er allebei: het meisje en de
+     jongen, in het haar en de kleren die je al koos (duoHtml, dezelfde twee als op
+     het lege beginscherm). Een tik op een van de twee is het antwoord. Er stond
+     één meisje -- terwijl die vraag met opzet géén voorkeuze heeft (zie
+     openNewStar) -- en daarna een grijze schim met een vraagteken; grijs zegt in
+     deze app "op slot", en een pop is nooit op slot. */
   const wacht = !n.base;
   const preview = defaultProfile(n.name || '…', n.dress, { hair: n.hair, base: n.base || 'jongen' });
   const ok = nieuweSterKlaar();
@@ -79,7 +87,9 @@ function renderNewStar() {
      papier, erbuiten is het dezelfde pop op dezelfde poort als op de
      sterrenkeuze, en het vel eronder is er een schermhoogte korter van. */
   $('newstar-body').innerHTML = `<div class="settings-panel">
-    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage"><div class="avatar-holder idle levend">${pasLaag(avatarSVG(preview, 132))}</div>${wacht ? '<span class="ns-vraag" aria-hidden="true">?</span>' : ''}</div></div>
+    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage">${wacht
+      ? duoHtml(b => defaultProfile('', n.dress, { hair: n.hair, base: b }))
+      : `<div class="avatar-holder idle levend">${pasLaag(avatarSVG(preview, 132))}</div>`}</div></div>
     <div class="set-card newstar-vel">
       <div class="ns-groep">
         <div class="set-field"><label class="lbl">Wie ben je?</label>
@@ -116,7 +126,7 @@ function renderNewStar() {
           <div class="set-reveal-body">
             ${s.track === 'math' ? `<div class="reveal-group">${oeLbl('Wat oefent je ster?')}${themaTegels(s, 'ns-')}</div>` : ''}
             ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${oeLbl(g.kop)}${g.html}</div>`).join('')}
-            <div class="note" style="margin-top:14px">Later te wijzigen bij 👨‍👩‍👧 Voor ouders.</div>
+            <div class="note" style="margin-top:14px">Later te wijzigen bij ⚙️ Ouders.</div>
           </div>
         </details>` : ''}
       </div>
@@ -131,7 +141,10 @@ function renderNewStar() {
      terug in haar beginhouding. De nieuwe pop neemt dus de klok van de oude over
      (zie popKleren). De oude houder bewaren helpt niet: wie hem even uit de
      pagina haalt, breekt zijn animaties net zo goed af. */
-  if (klok) klokTerug($('newstar-stage').querySelector('.avatar-holder'), klok);
+  if (klok) $('newstar-stage').querySelectorAll('.avatar-holder').forEach(el => klokTerug(el, klok));
+  $('newstar-stage').querySelectorAll('[data-base]').forEach(el => el.onclick = () => {
+    sndClick(); newStar.base = el.dataset.base; renderNewStar();
+  });
   // bindChips en niet chip: de sjabloon hierboven gebruikt de globale chip(v, label, on)
   // uit het ouderdeel, en een gelijknamige const hier zou die in dit hele bereik
   // afdekken (ReferenceError, nog vóór de eerste regel van de sjabloon).
@@ -306,9 +319,8 @@ let setOpen = null;
 let setUitleg = null;
 function openSettings() {
   // Altijd het overzicht: daar staat elk kind met hoe het gaat, dus wie even wil
-  // kijken heeft aan één scherm genoeg. Nul sterren mag ook: dan is er alleen de
-  // lege pagina, want dáár zit "Back-up terugzetten" -- de reden dat een nieuw
-  // toestel hier komt.
+  // kijken heeft aan één scherm genoeg. Nul sterren mag ook: hetzelfde overzicht,
+  // met sterren ophalen achter 💾 -- de reden dat een nieuw toestel hier komt.
   setKey = null;
   setOpen = setUitleg = null;
   renderSettings();
@@ -1355,8 +1367,8 @@ function themaKaartHtml(s, p, show) {
    hare. Nu staat er boven het app-brede deel geen ster meer.
    Terugzetten bestaat óók als er nog geen enkele ster is, en dat is niet
    theoretisch: een familie met een nieuwe telefoon heeft nul sterren en wil
-   juist dán bij "Back-up terugzetten" -- zie beheerEmptyHtml, dat daar zijn
-   eigen, kortere kaart voor heeft.
+   juist dán bij "Back-up terugzetten". Daarom staat het overzicht er ook
+   zonder sterren, en zet openBackupBlad dan ophalen vooraan.
 
    HIËRARCHIE IN DE KNOPPEN.
      vol paars  -- de knop die iets maakt en niets kan kwijtmaken (back-up maken;
@@ -1437,7 +1449,8 @@ function backupWanneer(nu) {
 // datum zelf staat in het blad erachter (backupBladStandHtml). Het lege vak blijft
 // staan, zodat exportData het ter plekke kan vervangen.
 function backupStandHtml(nu) {
-  const oud = backupOud(nu);
+  // zonder sterren is er niets om kwijt te raken, dus ook geen amberen stip
+  const oud = profileKeys().length > 0 && backupOud(nu);
   return `<span class="backup-stip${oud ? ' oud' : ''}" id="set-backup-stand">`
     + (oud ? '<span class="gi-dot" role="img" aria-label="Al lang geen back-up"></span>' : '') + '</span>';
 }
@@ -1450,8 +1463,8 @@ function importInvoerHtml() {
 /* De weg naar over/: de pagina die in een halve minuut zegt wat dit spel is,
    met het filmpje erop. Voor de ouder die het aan iemand anders wil laten zien --
    daarom staat hij hier en niet in het spel: een kind komt er zo nooit per
-   ongeluk. Hij staat onderaan het overzicht, waar ⚙️ opent (en zonder sterren
-   onder de lege pagina, beheerEmptyHtml). Eerder stond hij als allerlaatste
+   ongeluk. Hij staat onderaan het overzicht, waar ⚙️ opent (ook zonder
+   sterren). Eerder stond hij als allerlaatste
    onder ⋯, twee schermen diep achter de back-up, en dan vond geen ouder hem;
    daarna onder Voortgang, toen ⚙️ daar nog opende.
 
@@ -1559,37 +1572,6 @@ function deelOver() {
     return;
   }
   melding(esc(OVER_URL));
-}
-/* Nul sterren: geen naam om te wijzigen, geen voortgang om te wissen -- en ook
-   niets om een back-up van te maken. Wie hier zonder sterren komt, komt bijna
-   altijd om een back-up terug te zetten: een nieuw toestel, of de app op het
-   beginscherm na Safari (het blad "als app" wijst hierheen: ⚙️ → Voor ouders). Dus is terugzetten hier de volle knop, en staat
-   er geen "Back-up maken" -- die schreef met nul sterren een leeg bestand weg dat
-   er precies zo uitzag als een echte back-up. Eén kaart, want het is één vraag:
-   waar begin je? Een ster maken is de tweede mogelijkheid, en die staat hier
-   gewoon als knop (de kiezer met zijn "+" is er zonder sterren niet). */
-function beheerEmptyHtml() {
-  /* Met overzetten erbij (zie = Overzetten) zijn er twee manieren om je sterren
-     terug te krijgen: van het andere toestel, of uit een bestand. Ophalen is de
-     volle knop, want zo gaat het meestal; het bestand en een nieuwe ster staan
-     er stil onder. Zonder overzetten (vanaf file://) is terugzetten de volle knop. */
-  const terug = overzetMag()
-    ? `<button class="btn purple oz-groot" id="oz-code" type="button">${ozIco('zet')} Sterren ophalen</button>
-      <div class="data-btns">
-        <button class="btn small paper" id="set-import" type="button">${ozIco('hier')} Uit back-upbestand</button>
-        <button class="btn small paper" id="set-newstar">➕ Nieuwe ster</button>
-      </div>`
-    : `<div class="data-btns">
-        <button class="btn small purple" id="set-import">📂 Back-up terugzetten…</button>
-        <button class="btn small paper" id="set-newstar">➕ Nieuwe ster maken</button>
-      </div>`;
-  return `<div class="settings-panel">
-    <div class="set-card">
-      <div class="set-card-head"><div class="ico">🌟</div><div><h2>Nog geen sterren</h2><div class="sub">Al gespeeld op een ander toestel?${overzetMag() ? '' : ' Zet de back-up hier terug.'}</div></div></div>
-      ${terug}
-      ${importInvoerHtml()}
-    </div>${beginschermKaartHtml(false)}${overKaartHtml()}
-  </div>`;
 }
 /* = Onomkeerbaar: één vraag, één vorm =========================================
    Alles wat sterren weggooit (voortgang wissen, een ster verwijderen, een
@@ -1822,7 +1804,14 @@ function renderSettings() {
   if (!p) {
     lastWieHtml = null;
     $('settings-wie').innerHTML = '';
-    $('settings-body').innerHTML = profileKeys().length ? overzichtHtml() : beheerEmptyHtml();
+    /* Eén overzicht, ook zonder sterren. Er was een aparte lege pagina, en die
+       liep op alles achter: witte kaarten, drie knoppen in drie stijlen, een
+       eigen uitlegkaart voor het beginscherm en nog eens "Al gespeeld op een
+       ander toestel?". Nu staat er gewoon het overzicht met alleen "＋ Nieuwe
+       ster" in de witte kaart; sterren terughalen zit waar het altijd zit, in
+       💾 Ander toestel en back-up (openBackupBlad weet dat er niets te bewaren
+       valt). Eén bron, dus kan de lege versie niet meer afdrijven. */
+    $('settings-body').innerHTML = overzichtHtml();
     bindSettings(null, null);
     return;
   }
@@ -2227,7 +2216,6 @@ function bindSettings(p, s) {
   on('set-alsapp', 'onclick', () => openAppBlad(false));
   on('set-backup', 'onclick', openBackupBlad);
   on('set-overzet', 'onclick', openOverzetBlad);
-  on('oz-code', 'onclick', () => openCodeBlad(false));
   // het overzicht: een tik op een ster opent haar pagina
   /* Haar pagina wordt in z'n geheel opgebouwd: een beeldje later (naTik), zodat
      de tik eerst getekend wordt. Op een trage tablet was dat anders 150 ms stil. */
@@ -2237,7 +2225,6 @@ function bindSettings(p, s) {
   on('set-export', 'onclick', exportData);
   on('set-deel', 'onclick', deelOver);
   on('set-over', 'onclick', naarOver);
-  on('set-import', 'onclick', () => { const f = $('set-import-file'); if (f) f.click(); });
   on('set-import-file', 'onchange', e => {
     if (e.target.files[0]) importData(e.target.files[0]);
     e.target.value = '';   // zelfde bestand opnieuw kunnen kiezen
@@ -2347,9 +2334,9 @@ function importData(file) {
    (een nieuwe telefoon, de app op het beginscherm na Safari), dus dat is de enige
    paarse knop. Daaronder dezelfde rijen als op de pagina zelf:
 
-     Van ander toestel ›   de code invullen (openCodeBlad) -- zeldzaam: op een
-                           toestel zonder sterren staat "Sterren ophalen" al
-                           groot op de lege pagina. Met ›, want er gaat een blad open.
+     Van ander toestel ›   de code invullen (openCodeBlad). Met ›, want er gaat
+                           een blad open. Zonder sterren is dit de paarse knop
+                           (zie hieronder).
      Back-up maken         het bestand (exportData), met de datum eronder
      Terugzetten           het bestand terug (importData)
 
@@ -2370,21 +2357,28 @@ function openBackupBlad() {
     + `<span class="gi-ico" aria-hidden="true">${ico}</span><span class="gi-label">${label}</span>`
     + (pijl ? '<span class="gi-pijl" aria-hidden="true">›</span>' : '') + '</button>';
   const oz = overzetMag();
+  /* Zonder sterren valt er niets te versturen of te bewaren: dan is ophalen de
+     paarse knop (de sterren van het andere toestel hierheen), en blijft alleen
+     Terugzetten als rij. Een back-up van nul sterren schreef een leeg bestand
+     weg dat er precies zo uitzag als een echte. */
+  const leeg = !profileKeys().length;
   $('confirm-title').textContent = '💾 ' + sterrenRijNaam();
   $('confirm-body').innerHTML = `<div class="bb-blad">`
-    + (oz ? `<button class="btn purple oz-groot" id="bb-naar" type="button">${ozIco('zet')} Naar ander toestel</button>` : '')
+    + (oz ? (leeg
+      ? `<button class="btn purple oz-groot" id="bb-van" type="button">${ozIco('hier')} Van ander toestel</button>`
+      : `<button class="btn purple oz-groot" id="bb-naar" type="button">${ozIco('zet')} Naar ander toestel</button>`) : '')
     + `<div class="bb-lijst">`
-    + (oz ? rij('bb-van', '🔢', 'Van ander toestel', true) : '')
-    + rij('bb-maak', '📥', 'Back-up maken' + backupBladStandHtml())
+    + (oz && !leeg ? rij('bb-van', '🔢', 'Van ander toestel', true) : '')
+    + (leeg ? '' : rij('bb-maak', '📥', 'Back-up maken' + backupBladStandHtml()))
     + rij('bb-terug', '📤', 'Terugzetten')
     + '</div></div>';
   $('confirm-actions').innerHTML = klaarKnop('bb-dicht');
   $('bb-dicht').onclick = closeConfirmModal;
   if (oz) {
-    $('bb-naar').onclick = openOverzetBlad;
+    if (!leeg) $('bb-naar').onclick = openOverzetBlad;
     $('bb-van').onclick = () => { sndClick(); openCodeBlad(false); };
   }
-  $('bb-maak').onclick = exportData;
+  if (!leeg) $('bb-maak').onclick = exportData;
   // het bestandsveld staat in het paneel (importInvoerHtml); de vraag erna gebruikt
   // dit venster opnieuw, dus eerst dicht
   $('bb-terug').onclick = () => { closeConfirmModal(); const f = $('set-import-file'); if (f) f.click(); };
@@ -2644,11 +2638,14 @@ function openCodeBlad(vanStart, code) {
   // zelf met een "Plakken"-bubbel). Het is de weg voor de app op het beginscherm
   // van een iPhone: een link opent daar Safari, nooit de app.
   const plak = !!(navigator.clipboard && navigator.clipboard.readText);
-  ozToon('<span aria-hidden="true">⭐</span> Sterren ophalen',
+  /* De kop zegt wat je aantikte: "Van ander toestel", het spiegelbeeld van
+     "Naar ander toestel" aan de andere kant, met hetzelfde getekende icoon als
+     de knop. */
+  ozToon(ozIco('hier') + ' Van ander toestel',
     (plak ? `<button class="btn purple oz-groot" id="oz-plak" type="button">${ozIco('plak')} Plakken</button><div class="oz-of">of typ de code</div>` : '')
     + `<div class="oz-invoer">${ozCodeHtml('', '', 0)}
        <input id="oz-veld" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" aria-label="Code van zes cijfers"></div>
-     <div class="oz-onder" id="oz-onder"><div class="oz-waar">Andere toestel: <span class="ab-kbd">⚙️ Ouders › Ander toestel en back-up</span></div></div>`,
+     <div class="oz-onder" id="oz-onder"><div class="oz-waar">Op het andere toestel: <span class="ab-kbd">⚙️ Ouders › ${sterrenRijNaam()}</span></div></div>`,
     '<button class="btn small paper" id="oz-dicht">Annuleer</button>');
   $('oz-blad').dataset.nr = nr;
   $('oz-dicht').onclick = closeConfirmModal;
@@ -2704,7 +2701,7 @@ function openCodeBlad(vanStart, code) {
    Opent iemand het spel via een link van "Deel link" (#ophalen=482913), dan gaat
    het hekje meteen uit de adresbalk -- anders zou een herlaad of een bladwijzer
    dezelfde, intussen verbruikte code nog eens proberen -- en opent het blad
-   "Sterren ophalen" met de code al ingevuld. Ná het spelogo, dat bij het
+   "Van ander toestel" met de code al ingevuld. Ná het spelogo, dat bij het
    opstarten binnenkomt. */
 function ophaalLinkLees() {
   const c = /[#&]ophalen=(\d{6})(?!\d)/.exec(location.hash || '');
@@ -2841,22 +2838,9 @@ function beginschermUitleg(soort, hasStars) {
    nee -- maar de kaart heeft haar werk gedaan. Bij de volgende start wordt het
    gewoon weer aan de browser gevraagd. */
 let beginschermNetErop = false;
-/* De uitleg als kaart staat alleen nog op de lege pagina (beheerEmptyHtml). Met
-   sterren is het de rij "Als app ›" op het overzicht, die het blad hieronder
-   opent (appWideCardsHtml). */
-function beginschermKaartHtml(hasStars) {
-  if (beginschermNetErop || speeltAlsApp()) return '';
-  const [uitleg, tweede] = beginschermUitleg(beginschermSoort(), hasStars);
-  return `
-    <div class="set-card secundair" id="set-beginscherm">
-      <div class="set-card-head"><div class="ico">📲</div><div><h2>Op het beginscherm</h2><div class="sub">Rekensterren als app op dit toestel</div></div></div>
-      <div class="note">${uitleg}</div>${tweede ? `
-      <div class="note" style="margin-top:8px">${tweede}</div>` : ''}
-    </div>`;
-}
 addEventListener('appinstalled', () => {
   beginschermNetErop = true;
-  ['set-beginscherm', 'set-alsapp'].forEach(id => { const k = $(id); if (k) k.remove(); });
+  { const k = $('set-alsapp'); if (k) k.remove(); }
   installVoorstel = null;
   appKnopZet();
   renderGeluid();
@@ -2970,7 +2954,7 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
         .concat(zet, [`Open de app › ${kbd('Al gespeeld?')} › ${kbd('Plakken')}`]));
     } else {
       html += stappen(zet);
-      if (hasStars) html += '<div class="ab-noot">⭐ De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › Back-up, en zet hem in de app terug.</div>';
+      if (hasStars) html += '<div class="ab-noot">⭐ De app begint leeg. Maak eerst een back-up via ⚙️ Ouders › ' + sterrenRijNaam() + ', en zet hem in de app terug.</div>';
     }
     return { html, installeer: false, meenemen, kopieer: false };
   }
@@ -2998,8 +2982,10 @@ function openAppBlad() {
   const { html, installeer, meenemen, kopieer: kopieerKnop } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel, isSafari26());
   $('confirm-title').innerHTML = ico('erbij') + ' Rekensterren als app';
   $('confirm-body').innerHTML = `<div id="app-blad">${html}</div>`;
-  $('confirm-actions').innerHTML =
-    '<button class="btn small paper" id="app-blad-dicht">Sluiten</button>'
+  /* Sluiten naast een paarse knop; alleen is het de ene afsluiter van elk blad,
+     "Klaar" (zie klaarKnop). */
+  $('confirm-actions').innerHTML = (installeer || kopieerKnop
+    ? '<button class="btn small paper" id="app-blad-dicht">Sluiten</button>' : klaarKnop('app-blad-dicht'))
     + (installeer ? '<button class="btn small purple" id="app-blad-installeer">Installeren</button>' : '')
     + (kopieerKnop ? '<button class="btn small purple" id="app-blad-kopieer">Kopieer link</button>' : '');
   $('app-blad-dicht').onclick = closeConfirmModal;
