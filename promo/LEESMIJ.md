@@ -50,7 +50,8 @@ node promo/opname.js               # -> beelden/*.jpg, beelden/werelden.js en ov
 
 `opname.js` schrijft ook de schermen van de over-pagina (`over/beelden/`): welke,
 dat leest hij uit `over/index.html`. Pagina en filmpje komen zo uit één opname
-en kunnen niet apart verouderen.
+en kunnen niet apart verouderen. Twee schermen (`over-*`) zijn alleen voor de
+pagina: tellen met dezelfde ster als de rest, en het leerpad van dichterbij.
 
 Het filmpje noemt nergens een aantal werelden. De achtergronden lopen de lijst
 in `werelden.js` af, dus een nieuwe wereld komt vanzelf mee.
