@@ -156,6 +156,26 @@
      ›, want er gaat een blad achter open. */
   .set-card.geluid-kaart { padding: 6px 8px; }
   .geluid-kaart .gear-item + .gear-item { border-top: 1px solid var(--paper-border); border-radius: 0; }
+  /* KINDEREN WIT, DE REST GLAS. Op het overzicht is de sterrenkaart waar je voor
+     komt; wat eronder staat (de toestelkaart en de over-kaart) doe je zelden. Die
+     twee zijn daarom glas, zoals Wat/Hoe op haar pagina (#settings-body
+     .wat-kaart): ze vallen terug zonder dat er een kopje nodig is. Er stond eerst
+     een streepje met "Voor alle sterren", maar dat stond boven maar één van de
+     twee kaarten, en drie witte kaarten wogen even zwaar.
+     Alleen ná #set-sterren: op de lege pagina (beheerEmptyHtml) staat de
+     over-kaart onder witte uitlegkaarten en blijft hij wit. En "Show stoppen?"
+     gebruikt dezelfde geluidsrij op papier -- die raakt dit niet. */
+  #set-sterren ~ .geluid-kaart {
+    background: var(--vlak); box-shadow: var(--vlak-top); border: 1.5px solid var(--paneel-rand); color: var(--c-white);
+  }
+  #set-sterren ~ .geluid-kaart .gear-item { color: var(--c-white); }
+  #set-sterren ~ .geluid-kaart .gear-item + .gear-item { border-top-color: var(--paneel-rand); }
+  #set-sterren ~ .geluid-kaart .gear-item:hover, #set-sterren ~ .geluid-kaart .gear-item:active { background: var(--vlak-hover); }
+  #set-sterren ~ .geluid-kaart .gi-pijl { color: var(--c-white); opacity: .6; }
+  #set-sterren ~ .geluid-kaart .gi-state.off { background: var(--vlak-hover); color: var(--c-white); box-shadow: inset 0 0 0 1px var(--paneel-rand); }
+  #set-sterren ~ .geluid-kaart .gi-state.off::before { box-shadow: inset 0 0 0 2px var(--c-white); opacity: .7; }
+  /* een iets groter gat na de kinderen: daar begint de rest */
+  #set-sterren { margin-bottom: 8px; }
   .gear-item .gi-pijl { font-size: 24px; font-weight: 700; color: var(--purple-mid); line-height: 1; padding-right: 4px; }
   .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--e-2); }
   .set-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
@@ -222,12 +242,7 @@
   /* twee groepen (Wat oefenen / Hoe spelen) zonder er twee kaarten ín een kaart
      van te maken: een streepje en een kleinere kop doen hier hetzelfde werk */
   .reveal-group + .reveal-group { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--paper-border); }
-  /* streepje tussen de kindkaarten en het app-brede blok eronder: het staat op de
-     paarse schermachtergrond, niet op een witte kaart, vandaar de witte tekst */
-  .sheet-rule { display: flex; align-items: center; gap: 10px; margin: 4px 2px 0;
-    color: var(--c-white); opacity: .8; font-size: var(--tx-klein); font-weight: 700; }
-  .sheet-rule::before, .sheet-rule::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.22); }
-  /* "Over het spel" (overKaartHtml): dezelfde rijen als in "Voor alle sterren",
+  /* "Over het spel" (overKaartHtml): dezelfde rijen als in de toestelkaart,
      maar de eerste is een echte link naar over/ -- dus zonder onderstreping. */
   a.gear-item { text-decoration: none; }
 
