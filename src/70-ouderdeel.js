@@ -2929,13 +2929,14 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
 function openAppBlad() {
   sndClick();
   const hasStars = profileKeys().length > 0;   // zoals in Beheer: wie een ster heeft, heeft iets te redden
-  const { html, installeer, meenemen, kopieer } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel, isSafari26());
+  // kopieer heet hier anders: die naam zou de functie kopieer() verbergen.
+  const { html, installeer, meenemen, kopieer: kopieerKnop } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel, isSafari26());
   $('confirm-title').innerHTML = ico('erbij') + ' Rekensterren als app';
   $('confirm-body').innerHTML = `<div id="app-blad">${html}</div>`;
   $('confirm-actions').innerHTML =
     '<button class="btn small paper" id="app-blad-dicht">Sluiten</button>'
     + (installeer ? '<button class="btn small purple" id="app-blad-installeer">Installeren</button>' : '')
-    + (kopieer ? '<button class="btn small purple" id="app-blad-kopieer">Kopieer link</button>' : '');
+    + (kopieerKnop ? '<button class="btn small purple" id="app-blad-kopieer">Kopieer link</button>' : '');
   $('app-blad-dicht').onclick = closeConfirmModal;
   const mee = $('ab-mee');
   if (mee && meenemen) mee.onclick = () => neemSterrenMee(mee);
