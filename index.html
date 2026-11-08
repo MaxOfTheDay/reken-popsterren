@@ -31963,16 +31963,43 @@ function importInvoerHtml() {
 
 
 const OVER_URL = 'https://www.rekensterren.be/over/';
+
+
+
+
+
 function overKaartHtml() {
   return `
     <div class="set-card geluid-kaart over-kaart">
       <a class="gear-item" id="set-over" href="over/index.html?van=ouders">
-        <span class="gi-ico" aria-hidden="true">🎬</span><span class="gi-label">Wat is Rekensterren?</span><span class="gi-pijl" aria-hidden="true">›</span>
+        <span class="gi-ico" aria-hidden="true">⭐</span><span class="gi-label">Over Rekensterren</span><span class="gi-pijl" aria-hidden="true">›</span>
       </a>
       <button class="gear-item" id="set-deel" type="button">
         <span class="gi-ico" aria-hidden="true">💌</span><span class="gi-label">Rekensterren delen</span><span class="gi-pijl" aria-hidden="true">›</span>
       </button>
+      <a class="gear-item" id="set-mail" href="${mailAdres()}">
+        <span class="gi-ico" aria-hidden="true">💬</span><span class="gi-label">Idee of foutje melden</span><span class="gi-pijl" aria-hidden="true">›</span>
+      </a>
     </div>`;
+}
+
+
+
+
+
+
+
+
+
+const MAIL_ADRES = 'maxmakes.app@gmail.com';
+function mailAdres() {
+  let toestel = '';
+  try { toestel = Math.min(screen.width, screen.height) < 600 ? 'telefoon' : 'tablet'; } catch (e) { }
+  let soort = '';
+  try { soort = beginschermSoort(); } catch (e) { }
+  const voet = [foutVersie(), soort, speeltAlsApp() ? 'app' : 'browser', toestel].filter(Boolean).join(' · ');
+  return 'mailto:' + MAIL_ADRES + '?subject=' + encodeURIComponent('Rekensterren')
+    + '&body=' + encodeURIComponent('\n\n\n-- \n' + voet);
 }
 
 

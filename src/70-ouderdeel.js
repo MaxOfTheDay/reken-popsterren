@@ -1440,16 +1440,43 @@ function importInvoerHtml() {
    Voor ouders uitkomt (ouderLinkLees). De ?van= op de link zegt over/ dat je
    uit het spel komt: dan staat daar "← Terug" en niet "Speel meteen". */
 const OVER_URL = 'https://www.rekensterren.be/over/';
+/* DRIE RIJEN, ÉÉN VORM. Elke rij is een korte zin zonder vraagteken, en elk
+   icoon is iets anders: een vraag tussen twee zinnen las als een rommeltje, en
+   💌 (delen) en ✉️ (mailen) onder elkaar waren twee keer dezelfde envelop. Daarom
+   ⭐ voor het spel zelf en 💬 voor iets zeggen. Een regel met © of de versie
+   eronder wilde Max niet: de versie gaat mee in de mail, waar hij nodig is. */
 function overKaartHtml() {
   return `
     <div class="set-card geluid-kaart over-kaart">
       <a class="gear-item" id="set-over" href="over/index.html?van=ouders">
-        <span class="gi-ico" aria-hidden="true">🎬</span><span class="gi-label">Wat is Rekensterren?</span><span class="gi-pijl" aria-hidden="true">›</span>
+        <span class="gi-ico" aria-hidden="true">⭐</span><span class="gi-label">Over Rekensterren</span><span class="gi-pijl" aria-hidden="true">›</span>
       </a>
       <button class="gear-item" id="set-deel" type="button">
         <span class="gi-ico" aria-hidden="true">💌</span><span class="gi-label">Rekensterren delen</span><span class="gi-pijl" aria-hidden="true">›</span>
       </button>
+      <a class="gear-item" id="set-mail" href="${mailAdres()}">
+        <span class="gi-ico" aria-hidden="true">💬</span><span class="gi-label">Idee of foutje melden</span><span class="gi-pijl" aria-hidden="true">›</span>
+      </a>
     </div>`;
+}
+/* Een idee of foutje: gewoon een mail, met de mail-app van het toestel. Geen
+   formulier (dat vraagt een server) en niets in het spel zelf, waar kinderen
+   tikken -- alleen hier, in het ouderdeel. Onderaan de mail staat al wat een
+   foutje terugvindbaar maakt: dezelfde versie als de foutmelder (zie
+   src/05-foutmelder.js en docs/FOUTEN.md), het soort browser, app of niet, en
+   telefoon of tablet. Geen naam, geen sterren, niets van het kind -- en de ouder
+   ziet die regel staan en kan hem weghalen. Een gewone link en geen
+   location.href: zo opent iOS de mail ook vanuit de geïnstalleerde app, en de
+   pagina zelf blijft staan. */
+const MAIL_ADRES = 'maxmakes.app@gmail.com';
+function mailAdres() {
+  let toestel = '';
+  try { toestel = Math.min(screen.width, screen.height) < 600 ? 'telefoon' : 'tablet'; } catch (e) { /* geen scherm */ }
+  let soort = '';
+  try { soort = beginschermSoort(); } catch (e) { /* geen navigator */ }
+  const voet = [foutVersie(), soort, speeltAlsApp() ? 'app' : 'browser', toestel].filter(Boolean).join(' · ');
+  return 'mailto:' + MAIL_ADRES + '?subject=' + encodeURIComponent('Rekensterren')
+    + '&body=' + encodeURIComponent('\n\n\n-- \n' + voet);
 }
 // Naar over/: eerst bewaren (we verlaten de pagina), en zonder net niet weg.
 // Twee ingangen met dezelfde handler: de rij onder het overzicht (set-over) en de
