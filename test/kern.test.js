@@ -2864,7 +2864,7 @@ zaak('VV', () => {
   check(p.diamonds === 77 && p.level === 3 && JSON.stringify(p.stars) === JSON.stringify({ 1: 3, 2: 2 }), 'VV · een gezonde voortgang blijft precies staan');
 });
 
-/* ================= PT · Goed per thema =================
+/* ================= PT · Goed per thema, en haar cijfers =================
    Elk antwoord telt bij het thema van zijn vraag (telThema, het plan van de
    show), met dezelfde maat als stats.correct en stats.wrong. Tellen telt niet
    mee, en een show zonder plan is rekenen. */
@@ -2878,6 +2878,28 @@ zaak('PT', () => {
   app.run('G = { count: true, idx: 0 }'); app.telThema(p, true);
   app.run('G = { count: false, idx: 0 }'); app.telThema(p, false);
   check(JSON.stringify(p.stats.thema) === '{"rekenen":[2,1],"klok":[1,1]}', 'PT · tellen telt niet, zonder plan is het rekenen', JSON.stringify(p.stats.thema));
+  /* Haar cijfers (cijfersBladHtml): geen kale nul. Een getal dat 0 kan zijn --
+     vragen, geleerde sommen, vragen per thema -- staat er dan niet; een blad
+     vol nullen leest als een onvoldoende. En een geleerde som staat er heel,
+     met het antwoord op de lege plek. */
+  const nul = [];
+  for (let i = 0; i < 300; i++) {
+    const q = app.defaultProfile('Nul', 'dress_roze', {});
+    q.stars[1] = 1 + (i % 3);
+    q.stats.correct = i % 4 ? i % 7 : 0; q.stats.wrong = i % 5 ? i % 3 : 0;
+    if (i % 2) q.learned = { '7 × 8 = @': { ans: 56, op: 'x', iv: 5, due: 9 }, '9 + @ = 15': { ans: 6, op: '+', iv: 5, due: 9 } };
+    q.stats.thema = {};
+    ['rekenen', 'tafels', 'klok'].forEach((k, j) => { if ((i >> j) & 1) q.stats.thema[k] = [(i * (j + 1)) % 13, i % (j + 2)]; });
+    const html = app.cijfersBladHtml(q);
+    if (/<(b|em)>0<\/\1>/.test(html) || /NaN|undefined|@/.test(html)) nul.push(html.slice(0, 200));
+  }
+  check(!nul.length, 'PT · haar cijfers: geen kale nul, geen NaN, en geen @ in een geleerde som', nul[0] || '');
+  const twee = app.defaultProfile('Som', 'dress_roze', {});
+  twee.stars[1] = 3; twee.stats.correct = 9; twee.stats.wrong = 1;
+  twee.learned = { '7 × 8 = @': { ans: 56 }, '9 + @ = 15': { ans: 6 } };
+  const blad = app.cijfersBladHtml(twee);
+  check(blad.includes('<span>9 + 6 = 15</span><span>7 × 8 = 56</span>'), 'PT · de geleerde sommen heel, de nieuwste eerst', blad.slice(blad.indexOf('cijfer-geleerd"'), blad.indexOf('cijfer-geleerd"') + 160));
+  check(app.cijfersBladHtml(app.defaultProfile('Leeg', 'dress_roze', {})).includes('Nog geen shows gespeeld'), 'PT · nog niets gespeeld: één regel', '');
 });
 
 /* ================= KS · De klok blijft heel =================
