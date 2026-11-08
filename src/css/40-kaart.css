@@ -508,10 +508,7 @@
     position: relative; z-index: 1;   /* boven .nav-sel */
     transition: transform var(--t-tik), background .15s, opacity .15s;
   }
-  /* --ico-dy zet iconenOpLijn (35-schermen.js): het lettertype van het toestel
-     zet niet elke emoji even hoog, en zo liggen ze toch op één lijn. */
-  .nav-item .nav-ico { font-size: var(--tab-ico); line-height: 1.1; filter: var(--emoji-schaduw);
-    transform: translateY(var(--ico-dy, 0em)); }
+  .nav-item .nav-ico { font-size: var(--tab-ico); line-height: 1.1; filter: var(--emoji-schaduw); }
   .nav-item:active { transform: scale(var(--druk-plat)); }
   .nav-item.active { opacity: 1; }
   /* Muis: een zacht vlak onder wat je aanwijst. Alleen waar zweven bestaat, anders
@@ -900,6 +897,12 @@
   .num-btn.ok { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
   /* wissen is neutraal (grijs), niet rood: rood = fout antwoord, dat verwarren we niet */
   .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); font-size: 22px; }
+  /* wissen en klaar zijn getekend (#ico-wis, #ico-vink), niet uit een
+     systeemletter: die zitten niet in Fredoka. Zo groot als de cijfers en niet
+     hoger dan hun regel, zodat de knoppen even hoog blijven. */
+  .num-btn .ico { margin: 0 auto; width: 1.1em; height: 1.1em; }
+  .num-btn.del .ico { width: 1.25em; height: 1.25em; stroke-width: 2.3; }
+  .num-btn.ok .ico { stroke-width: 3.4; }
   /* ⌫ en ✔ slapen tot er een cijfer staat (zie drawQuestion): dan nodigen alleen
      de cijfers uit, en zie je meteen wanneer je klaar kunt zeggen. Ingedrukt en
      zonder lip, zodat ze ook niet als knop ogen. */

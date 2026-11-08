@@ -233,9 +233,9 @@ function renderQuestion() {
   } else {
     area.innerHTML = `<div class="numpad">
       ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="num-btn" data-n="${n}">${n}</button>`).join('')}
-      <button class="num-btn del" data-n="del" aria-label="Wissen">⌫</button>
+      <button class="num-btn del" data-n="del" aria-label="Wissen"><svg class="ico"><use href="#ico-wis"/></svg></button>
       <button class="num-btn" data-n="0">0</button>
-      <button class="num-btn ok" data-n="ok" aria-label="Klaar">✔</button>
+      <button class="num-btn ok" data-n="ok" aria-label="Klaar"><svg class="ico"><use href="#ico-vink"/></svg></button>
     </div>`;
     area.querySelectorAll('.num-btn').forEach(b => {
       b.onclick = () => numpadPress(b.dataset.n);

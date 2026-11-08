@@ -1283,4 +1283,42 @@ zaak('T', () => {
   check(!fout.length, 'T · elke :hover staat in @media (hover: hover), anders blijft hij hangen na een tik', fout.join(' | '));
 });
 
+/* ---- U · emoji die elk toestel kan tekenen ----
+   Twee soorten tekens tekent niet elk toestel zoals wij ze bedoelen (zie
+   12-emoji.js en test/emoji-tabel.js):
+     - een emoji van Emoji 12 of later bestaat niet op Windows 10 of een oudere
+       Android-tablet. 12-emoji.js wisselt hem daar voor zijn reserve, dus elke
+       nieuwe emoji die de app toont moet in EMOJI_RESERVE staan -- met een
+       reserve die zelf wél oud is;
+     - een teken dat standaard tekst is (♥ ▶ ✔ ...) wordt op een iPhone vaak een
+       emoji en op Windows een zwart teken. Er hoort altijd een kiezer achter:
+       U+FE0F voor de emoji, U+FE0E voor het teken.
+   Gekeken wordt naar wat er écht uitgeleverd wordt: index.html (zonder de
+   opmerkingen in de markup) en de over-pagina. De wereldstudio niet; die ziet
+   alleen wie hem bouwt. */
+zaak('U', () => {
+  const { isNieuw, isTekst } = require('./emoji-tabel');
+  const zonderOpm = t => t.replace(/<!--[\s\S]*?-->/g, '');
+  const bronnen = [['index.html', zonderOpm(fs.readFileSync(path.join(WORTEL, 'index.html'), 'utf8'))],
+                   ['over/index.html', zonderOpm(fs.readFileSync(path.join(WORTEL, 'over', 'index.html'), 'utf8'))]];
+  const reserve = app.EMOJI_RESERVE;
+  check(reserve && Object.keys(reserve).length > 0, 'U · EMOJI_RESERVE komt mee uit de app', '');
+  const oudGenoeg = Object.entries(reserve).filter(([, r]) => [...r].some(c => isNieuw(c.codePointAt(0))));
+  check(!oudGenoeg.length, 'U · elke reserve-emoji is zelf oud genoeg', oudGenoeg.map(([k, r]) => k + '→' + r).join(' '));
+  const nieuw = new Set(), kaal = new Set();
+  for (const [naam, tekst] of bronnen) {
+    const tekens = [...tekst];
+    tekens.forEach((c, i) => {
+      const cp = c.codePointAt(0);
+      if (isNieuw(cp) && !(c in reserve)) nieuw.add(`${c} (${naam})`);
+      if (isTekst(cp) && !/[︎️]/.test(tekens[i + 1] || '')) {
+        const regel = tekst.slice(0, tekst.indexOf(c)).split('\n').length;
+        kaal.add(`${c} U+${cp.toString(16).toUpperCase()} (${naam}:${regel})`);
+      }
+    });
+  }
+  check(!nieuw.size, 'U · elke emoji van Emoji 12 of later heeft een reserve in EMOJI_RESERVE', [...nieuw].join(' '));
+  check(!kaal.size, 'U · een tekst-of-emoji-teken heeft altijd U+FE0F of U+FE0E erachter', [...kaal].join(' '));
+});
+
 klaar();

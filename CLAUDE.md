@@ -157,6 +157,7 @@ en waarop je het vindt:
 | `src/00-vh-lock.js` | de vensterhoogte vastleggen. Moet als eerste draaien — vandaar het volgnummer |
 | `src/05-foutmelder.js` | de **foutmelder**: telt anoniem de scriptfouten die kinderen tegenkomen, voor de zondagrapportage. Zo vroeg mogelijk, zodat ook een fout bij het opstarten meetelt. Zie `docs/FOUTEN.md` |
 | `src/10-feestjes.js` | de **gedeelde feestjes**: `motionOff`, toast, praise, confetti, sparkle, danspasjes, confirm/notice. Wat élk scherm mag gebruiken om te zeggen dat er iets gebeurd is |
+| `src/12-emoji.js` | **emoji op elk toestel**: meet één keer hoe dit toestel emoji tekent, zet ze op Windows terug in het midden en wisselt wat een oud toestel niet kent voor een reserve (`EMOJI_RESERVE`) |
 | `src/15-kaart-en-weg.js` | de **vormleer van de wereldkaart**: haltes, de weg erlangs, het streeppatroon, `ZONE`, `showWorld`. Rekent in procenten van de tekening en kent geen scherm. De kaart, de reis én de wereldstudio leunen erop |
 | `src/17-kaartstand.js` | de **kaartstand**: vijftien namen die zeggen waar de kaart naar kijkt (`viewWorldIdx`), wat de eerstvolgende opbouw moet doen (`pendingTravel`, `reisDoel`, `kaartFocus`, `netAf`) en wat er nu loopt (`overgangBezig`, `vluchtOp`, `wereldReisOp`). Begin hier als je aan een overgang werkt |
 | `src/20-gegevens.js` | **het spel** begint hier: bovenaan de inhoudsopgave van álle secties tot en met `80-start.js`, met het bestand waar elk in staat. Daaronder de tabellen: `ITEMS`, `WORLDS` (het machinale blok), `wereldControle` |

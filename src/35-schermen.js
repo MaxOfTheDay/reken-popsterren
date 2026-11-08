@@ -254,53 +254,6 @@ function navGo(t, wasActiveAl, stil) {
   else (wasActive ? openTrophies : resumeTrophies)();
 }
 
-/* ================= Iconen op één lijn =====================================
-   De tabbladen zijn emoji, en waar een emoji binnen zijn letterkader staat
-   kiest het lettertype van het toestel, niet wij. Met Noto (Android, Linux)
-   staan 🗺️ 👕 🏆 netjes op dezelfde hoogte; met Segoe UI Emoji (Windows)
-   staat het shirt op de grondlijn met een lege strook erboven, zo'n 6% van de
-   letter lager dan de kaart en 11% lager dan de beker -- op een desktop zie je
-   dat 👕 zakt. Een vaste verschuiving in het stijlblad repareert het ene
-   lettertype en zet het andere scheef.
-
-   Dus meten we het: elk teken één keer op een doekje, de rijen met inkt zijn
-   zijn echte boven- en onderkant. Elk icoon schuift dan naar het gemiddelde
-   inktmidden van de rij (--ico-dy, in em, zodat het meegroeit met --tab-ico).
-   Het gemiddelde en niet het midden van de knop: wat al goed stond, blijft
-   precies staan, en een rij die al op één lijn ligt krijgt overal 0.
-
-   Eén keer, in de rust na het opstarten: het zijn systeemletters, die laden
-   niet na. Lukt het doekje niet, dan blijft alles staan zoals het stond. */
-function inktMidden(teken, fam, ctx, maat) {
-  ctx.clearRect(0, 0, maat * 2, maat * 2);
-  ctx.font = maat + 'px ' + fam;
-  ctx.fillText(teken, maat / 2, maat * 1.4);
-  const d = ctx.getImageData(0, 0, maat * 2, maat * 2).data, breed = maat * 2;
-  let boven = -1, onder = -1;
-  for (let y = 0; y < breed; y++) {
-    for (let x = 0; x < breed; x++) {
-      if (d[(y * breed + x) * 4 + 3] > 20) { if (boven < 0) boven = y; onder = y; break; }
-    }
-  }
-  return boven < 0 ? null : (boven + onder) / 2 / maat;   // in em
-}
-function iconenOpLijn(iconen) {
-  try {
-    const maat = 100, doek = document.createElement('canvas');
-    doek.width = doek.height = maat * 2;
-    const ctx = doek.getContext('2d', { willReadFrequently: true });
-    const midden = iconen.map(el =>
-      inktMidden(el.textContent, getComputedStyle(el).fontFamily, ctx, maat));
-    const gemeten = midden.filter(m => m != null);
-    if (gemeten.length < 2) return;
-    const doel = gemeten.reduce((a, b) => a + b, 0) / gemeten.length;
-    iconen.forEach((el, i) => {
-      if (midden[i] == null) return;
-      el.style.setProperty('--ico-dy', (doel - midden[i]).toFixed(3) + 'em');
-    });
-  } catch (e) { /* geen doekje: dan staan ze zoals het lettertype ze zet */ }
-}
-naDeRust(() => iconenOpLijn([...document.querySelectorAll('.nav-item .nav-ico')]));
 
 /* ================= De sterrenkeuze leeft ==================================
    Dit scherm heeft één taak -- kies een ster -- en het houdt zich daar bewust

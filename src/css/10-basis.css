@@ -541,3 +541,11 @@
     .spellogo.intro-wacht > img { opacity: 1; animation: none; }
   }
 
+
+  /* ================= Emoji in het midden =================
+     Een emoji die het lettertype van dit toestel uit het midden zet (Windows:
+     op de grondlijn), schuift 12-emoji.js in zo'n span terug: --emo-dy is de
+     afstand tot het midden, in em, zodat hij meegroeit met de letter. Een
+     inline-block omdat een gewone inline span geen transform aanneemt; zijn
+     grondlijn blijft die van de regel, dus er schuift verder niets. */
+  .emo-m { display: inline-block; transform: translateY(var(--emo-dy, 0em)); }
