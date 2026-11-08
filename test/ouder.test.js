@@ -98,7 +98,7 @@ function check(ok, label, detail) {
   /* ================= A · Het tandwiel en het geluid ================= */
   /* Het tandwiel opent meteen Voor ouders (geen menu ertussen). Het geluid is
      app-breed (het staat náást de profielen in db), staat in het ouderdeel als
-     eerste rij onder "Voor alle sterren" (op het overzicht), en moet een herstart overleven. */
+     eerste rij in de kaart onder de sterren (op het overzicht), en moet een herstart overleven. */
   {
     const { ctx, page } = await fresh();
     await page.click('#btn-gear');
@@ -110,16 +110,16 @@ function check(ok, label, detail) {
     }));
     check(r.scherm === 'screen-settings' && !r.menu && !r.weg.length, 'het tandwiel opent meteen Voor ouders, zonder menu', JSON.stringify(r));
     r = await page.evaluate(() => {
-      const regel = [...document.querySelectorAll('#settings-body .sheet-rule')].pop();
-      const kaart = regel && regel.nextElementSibling;
+      const sterren = document.getElementById('set-sterren');
+      const kaart = sterren && sterren.nextElementSibling;
       return {
-        eerst: !!kaart && kaart.contains(document.getElementById('set-sound')),
+        eerst: !!kaart && kaart.querySelector('.gear-item') === document.getElementById('set-sound'),
         geluid: db.sound, tekst: document.getElementById('set-sound-state').textContent,
         uit: document.getElementById('set-sound-state').classList.contains('off'),
         aria: document.getElementById('set-sound').getAttribute('aria-checked'),
       };
     });
-    check(r.eerst, 'Geluid is de eerste rij onder "Voor alle sterren"', JSON.stringify(r));
+    check(r.eerst, 'Geluid is de eerste rij in de kaart onder de sterren', JSON.stringify(r));
     check(r.geluid === true && r.tekst === 'Aan' && !r.uit && r.aria === 'true',
       'geluid staat standaard aan en zegt dat ook', JSON.stringify(r));
     await page.click('#set-sound');

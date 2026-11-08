@@ -251,7 +251,7 @@ reset die de oefeninstellingen meesleept, merkt een ouder pas als haar kind
 vastloopt.
 
 - **het tandwiel en het geluid** — het tandwiel opent meteen Voor ouders; de
-  geluidsrij (het overzicht, "Voor alle sterren", en in "Show stoppen?") zet `db.sound` om,
+  geluidsrij (het overzicht, onder de sterren, en in "Show stoppen?") zet `db.sound` om,
   zegt in woorden én in `aria-checked` welke stand dat is, en overleeft een
   herstart;
 - **oefeninstellingen zijn van één kind** — instellen bij Anna laat Bas byte voor

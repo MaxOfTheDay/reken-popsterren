@@ -1328,7 +1328,7 @@ function themaKaartHtml(s, p, show) {
    Overzetten naar een ander toestel staat er als eigen rij naast, niet ín de
    back-up: het is wat een ouder hier het vaakst komt doen, en wie een nieuw
    toestel heeft zoekt niet onder "Back-up" (zie appWideCardsHtml). */
-/* Geluid: één rij, de eerste onder "Voor alle sterren" -- het geldt voor het
+/* Geluid: één rij, de eerste onder de sterren -- het geldt voor het
    hele toestel, niet voor één kind. Dezelfde rij als in "Show stoppen?" (zie
    renderGeluid); de hele rij is de schakelaar. */
 function geluidRijHtml() {
@@ -1337,7 +1337,7 @@ function geluidRijHtml() {
         <span class="gi-ico" aria-hidden="true">${db.sound ? '🔊' : '🔇'}</span><span class="gi-label">Geluid</span><span class="gi-state${db.sound ? '' : ' off'}" id="set-sound-state">${db.sound ? 'Aan' : 'Uit'}</span>
       </button>`;
 }
-/* Wat voor alle sterren geldt, onderaan het overzicht: één kaart met stille
+/* Wat voor alle sterren geldt, onder de sterren op het overzicht: één glazen kaart met stille
    rijen zonder onderregel, in deze volgorde:
 
      * Geluid -- de schakelaar.
@@ -1416,7 +1416,7 @@ function importInvoerHtml() {
    daarna onder Voortgang, toen ⚙️ daar nog opende.
 
    EEN EIGEN KAARTJE, MET GEWONE RIJEN. Het zijn geen instellingen maar
-   verwijzingen, dus ze staan niet ín "Voor alle sterren" maar in een kaart
+   verwijzingen, dus ze staan niet ín de toestelkaart maar in een kaart
    eronder -- zonder eigen kopje: de twee rijen zeggen zelf waar ze over gaan.
    Wel in dezelfde rijen als erboven (icoon, woord, ›): als twee losse witte
    links onder de kaart zagen ze er niet uit als iets van het ouderdeel. Delen
@@ -1665,7 +1665,8 @@ function openWieBlad() {
    opent haar pagina. "Nieuwe ster" is de laatste rij, met dezelfde gestreepte
    cirkel als de "+"-tegel op de sterrenkeuze; bij zes sterren is er geen plek
    meer, en dan staat hij er niet (openNewStar weigert dan toch).
-   Daaronder, na het streepje, wat voor álle sterren geldt. */
+   Daaronder, in glas, wat voor het hele toestel geldt, en de over-kaart: geen
+   kopje, de kleur zegt al dat dit de rest is (zie #set-sterren ~ .geluid-kaart). */
 function overzichtHtml() {
   const rij = key => {
     const p = db.profiles[key];
@@ -1696,7 +1697,6 @@ function overzichtHtml() {
     : '';
   return `<div class="settings-panel">
     <div class="set-card ster-lijst" id="set-sterren">${profileKeys().map(rij).join('')}${nieuw}</div>
-    <div class="sheet-rule"><span>Voor alle sterren</span></div>
     ${appWideCardsHtml()}${overKaartHtml()}
   </div>`;
 }
