@@ -499,7 +499,7 @@
      dit ging een tik midden op de dobbelsteen naar de spiegel -- ze danste, en er
      kwam geen outfit; alleen de rechterrand deed het. */
   .shuffle-btn { z-index: 2; }
-  .shuffle-btn:hover { transform: scale(1.06); box-shadow: 0 4px 16px rgba(var(--nacht-0-rgb),.5), inset 0 0 0 1.5px rgba(255,255,255,.4); }
+  @media (hover: hover) { .shuffle-btn:hover { transform: scale(1.06); box-shadow: 0 4px 16px rgba(var(--nacht-0-rgb),.5), inset 0 0 0 1.5px rgba(255,255,255,.4); } }
   .shuffle-btn:active { transform: scale(var(--druk-plat)); }
   /* DE BALK MET DE LADEN (renderShop). Acht knoppen in één stuk, zonder scrollen
      en zonder woorden: de zeven kledingsoorten en 🎪 Podia. Hetzelfde materiaal
@@ -685,7 +685,7 @@
     box-shadow: var(--vlak-top);
     transition: transform var(--t-tik), background .12s, border-color .12s, box-shadow .12s;
   }
-  .item-card:hover { background: var(--vlak-hover); }
+  @media (hover: hover) { .item-card:hover { background: var(--vlak-hover); } }
   .item-card:active { transform: scale(var(--druk-plat)); }
   /* Kaart-staten: blauw = "hier kijk je naar", goud = "dit staat aan". De blauwe
      variant had ook nog een 3px ring én een schaalsprong; dat was een vierde
@@ -718,10 +718,12 @@
      helemaal niet op hover terwijl een niet-bezeten kaartje wél oplichtte.
      Hier expliciet per staat een eigen, iets lichtere hover-tint (in de eigen
      kleur van die staat) zodat ieder kaartje evengoed op hover reageert. */
-  .item-card.owned:hover { background: rgba(255,255,255,.18); }
-  .item-card.equipped:hover { background: rgba(var(--goud-rgb),.24); }
-  .item-card.selected:hover, .item-card.owned.selected:hover { background: rgba(56,189,248,.3); }
-  .item-card.selected.equipped:hover { background: rgba(var(--goud-rgb),.24); }
+  @media (hover: hover) {
+    .item-card.owned:hover { background: rgba(255,255,255,.18); }
+    .item-card.equipped:hover { background: rgba(var(--goud-rgb),.24); }
+    .item-card.selected:hover, .item-card.owned.selected:hover { background: rgba(56,189,248,.3); }
+    .item-card.selected.equipped:hover { background: rgba(var(--goud-rgb),.24); }
+  }
   /* NET GEKOCHT. Twee korte dingen tegelijk, en allebei op het kaartje zelf --
      daar is het om te doen en nergens anders.
 
@@ -903,7 +905,7 @@
      Net gekocht (.just-bought) blijft zoals het was: het "Nieuw!"-pilletje en de
      glans gebruiken dezelfde plekken. */
   .item-card:not(.owned):not(.equipped):not(.horizon-mist) { background: rgba(0,0,0,.16); border-color: rgba(255,255,255,.07); }
-  .item-card:not(.owned):not(.equipped):not(.horizon-mist):hover { background: rgba(255,255,255,.06); }
+  @media (hover: hover) { .item-card:not(.owned):not(.equipped):not(.horizon-mist):hover { background: rgba(255,255,255,.06); } }
   .item-card:not(.owned):not(.equipped).selected { background: var(--cyaan-tint); border-color: var(--cyaan-rand); }
   .item-card.owned { border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.13); }
   .item-card.owned .item-status, .item-card.equipped:not(.just-bought) .item-status { visibility: hidden; }

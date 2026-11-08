@@ -659,7 +659,7 @@
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     cursor: default;
   }
-  .horizon-mist:hover { background: transparent; }
+  @media (hover: hover) { .horizon-mist:hover { background: transparent; } }
   .horizon-mist:active { transform: none; }
   /* in de kast: een vak zo hoog als de rij */
   .trophy-grid .horizon-mist { border-radius: var(--r-md); min-height: 100px; align-self: stretch; padding: 8px; }
