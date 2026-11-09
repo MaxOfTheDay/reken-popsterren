@@ -267,6 +267,12 @@
     -webkit-tap-highlight-color: transparent;
   }
   .stage.op-podium .duo > .avatar-holder { margin-bottom: 0; }
+  /* En haar schaduw mee in het midden. Die ligt in .prop-laag, een eigen laag
+     over de hele houder (zie avatarSVG), en daar centreert "margin: 0 auto" de
+     tekening -- maar alleen zolang die smaller is dan de houder. Hier is ze
+     breder, dus begon de schaduwlaag links en lag de schaduw een kwart pop
+     rechts naast haar schoenen. Flex centreert ook wat te breed is. */
+  .duo > .avatar-holder > .prop-laag { display: flex; justify-content: center; }
   .duo > .avatar-holder:focus-visible { outline: 3px solid var(--c-white); outline-offset: 2px; border-radius: var(--r-sm); }
   /* Liggend (of een heel lage viewport) passen twee rijen tegels er niet bij.
      De auto-marges hierboven centreren het blok en laten het dan langs de
