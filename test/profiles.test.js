@@ -123,12 +123,16 @@ function check(ok, label, detail) {
       return [...st.querySelectorAll('.avatar-holder')].map(h => {
         const zool = Math.max(...[...h.querySelectorAll('.pas-laag ellipse')].map(e => e.getBoundingClientRect().bottom));
         const r = h.getBoundingClientRect(), mid = (r.left + r.right) / 2;
-        return { diep: +((zool - d.top) / d.height).toFixed(2), binnen: mid > d.left + d.width * .15 && mid < d.right - d.width * .15 };
+        // en haar schaduw (in de prop-laag, zie .av-sch) ligt onder haar schoenen
+        const midden = l => { const q = [...l].map(e => e.getBoundingClientRect()); return (Math.min(...q.map(x => x.left)) + Math.max(...q.map(x => x.right))) / 2; };
+        const sch = h.querySelectorAll('.prop-laag .av-sch');
+        const schuif = sch.length ? Math.round(Math.abs(midden(sch) - midden(h.querySelectorAll('.pas-laag ellipse')))) : 0;
+        return { diep: +((zool - d.top) / d.height).toFixed(2), binnen: mid > d.left + d.width * .15 && mid < d.right - d.width * .15, schuif };
       });
     }, sel);
-    const staan = v => v.length && v.every(x => x.diep >= 0.1 && x.diep <= 0.7 && x.binnen);
+    const staan = v => v.length && v.every(x => x.diep >= 0.1 && x.diep <= 0.7 && x.binnen && x.schuif <= 3);
     const duoVoet = await opSchijf('#leeg-duo .st-podium');
-    check(duoVoet.length === 2 && staan(duoVoet), 'het meisje en de jongen staan op het podium, niet erboven', JSON.stringify(duoVoet));
+    check(duoVoet.length === 2 && staan(duoVoet), 'het meisje en de jongen staan op het podium, niet erboven, met hun schaduw onder hun schoenen', JSON.stringify(duoVoet));
     // een tik op de jongen opent het formulier met die keuze al gemaakt, en de kop
     // zegt wat je aantikte
     await page.click('#leeg-duo [data-base="jongen"]', { force: true });
