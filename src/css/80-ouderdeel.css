@@ -582,6 +582,19 @@
     .newstar-preview.wacht .stage-podium { width: 66%; bottom: 7%; }
     .newstar-preview .duo { width: 56%; height: 66%; margin-bottom: 9%; }
   }
+  /* EEN TELEFOON LIGGEND: TWEE KOLOMMEN. Met de kaart boven het papier begon het
+     papier daar pas onder de vouw, en dan kon Klaar niet eens onderaan plakken --
+     een plakkende voet blijft binnen zijn eigen vel, en dat vel stond nog helemaal
+     onder de rand. Een liggende telefoon is breed genoeg voor de kaart links en het
+     papier rechts; het podium wordt daar iets lager (2:1), zodat de kaart bijna in
+     één keer in beeld staat. */
+  @media (orientation: landscape) and (max-height: 500px) {
+    #screen-newstar { --kolom: 820px; }
+    #screen-newstar .settings-panel { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 14px; }
+    .newstar-preview .stage { aspect-ratio: 2 / 1; }
+    .newstar-preview:not(.wacht) .stage.op-podium .avatar-holder { height: 62%; }
+    .newstar-preview .duo { height: 62%; }
+  }
   /* De ander stapt opzij weg (nsGlij): een kopie van haar tekening op de plek waar
      ze stond, die even blijft staan terwijl ze vervaagt. */
   .ns-weg { position: absolute; z-index: 1; pointer-events: none; display: flex; justify-content: center; }

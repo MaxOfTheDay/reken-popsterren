@@ -10732,6 +10732,19 @@
   }
 
 
+
+
+
+
+  @media (orientation: landscape) and (max-height: 500px) {
+    #screen-newstar { --kolom: 820px; }
+    #screen-newstar .settings-panel { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 14px; }
+    .newstar-preview .stage { aspect-ratio: 2 / 1; }
+    .newstar-preview:not(.wacht) .stage.op-podium .avatar-holder { height: 62%; }
+    .newstar-preview .duo { height: 62%; }
+  }
+
+
   .ns-weg { position: absolute; z-index: 1; pointer-events: none; display: flex; justify-content: center; }
   .ns-weg svg { height: 100%; width: auto; display: block; }
 
