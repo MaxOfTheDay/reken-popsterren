@@ -3414,6 +3414,52 @@ function check(ok, label, detail) {
     await ctx.close();
   });
 
+  /* ========== Op het podium, overal ==========
+   * Elke pop staat met haar zolen op ±45% van haar schijf, en haar eigen
+   * schaduw (.av-sch-pop) ligt onder haar schoenen -- op de sterrentegels (2, 4
+   * en 6 sterren), in de kleedkamer en in de show, staand, op een tablet en
+   * liggend. De schijf staat met bottom in procenten van de hoogte en zij met
+   * een marge in procenten van de breedte: elke nieuwe tegelverhouding kan haar
+   * dus stil laten zweven of door de voorrand laten zakken. Het eindscherm
+   * niet: daar danst ze. Het lege beginscherm en het formulier staan in zaak 1. */
+  zaak(async () => {
+    const meet = () => [...document.querySelectorAll('.stage-podium, .spiegel-podium')].filter(d => d.offsetParent && d.getBoundingClientRect().width).flatMap(d => {
+      const dr = d.getBoundingClientRect(), plek = (d.parentElement.closest('[id]') || {}).id;
+      return [...d.parentElement.querySelectorAll('.avatar-holder')].map(h => {
+        const sch = [...h.querySelectorAll('.pas-laag ellipse')].map(e => e.getBoundingClientRect()).filter(r => r.width);
+        const sh = [...h.querySelectorAll('.prop-laag .av-sch-pop')].map(e => e.getBoundingClientRect()).filter(r => r.width);
+        const mid = q => (Math.min(...q.map(r => r.left)) + Math.max(...q.map(r => r.right))) / 2;
+        return { plek, diep: +((Math.max(...sch.map(r => r.bottom)) - dr.top) / dr.height).toFixed(2),
+                 schuif: sh.length ? Math.round(Math.abs(mid(sh) - mid(sch))) : 0 };
+      });
+    });
+    const mis = [];
+    for (const [w, h] of [[390, 844], [375, 640], [1024, 768], [640, 360]]) {
+      for (const [scherm, n] of [['profile', 2], ['profile', 4], ['profile', 6], ['dress', 0], ['game', 0]]) {
+        const c = await browser.newContext({ viewport: { width: w, height: h } });
+        await cacheFonts(c);
+        const page = await c.newPage();
+        page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+        await page.goto(APP_URL + '&demo&star=p1&screen=' + scherm);
+        await page.waitForTimeout(900);
+        if (n) await page.evaluate(n => {
+          const k0 = Object.keys(db.profiles)[0];
+          for (let i = Object.keys(db.profiles).length; i < n; i++) {
+            db.profiles['x' + i] = Object.assign(JSON.parse(JSON.stringify(db.profiles[k0])), { name: 'Kind' + i, order: 50 + i });
+          }
+          renderProfiles();
+        }, n);
+        await page.waitForTimeout(500);
+        const r = await page.evaluate(meet);
+        if (!r.length) mis.push(`${w}x${h} ${scherm}: geen pop op een podium`);
+        r.filter(x => x.diep < 0.35 || x.diep > 0.6 || x.schuif > 4)
+         .forEach(x => mis.push(`${w}x${h} ${scherm}${n ? ' ' + n : ''} ${x.plek}: ${JSON.stringify(x)}`));
+        await c.close();
+      }
+    }
+    check(!mis.length, 'overal staat ze óp haar podium, met haar schaduw onder haar schoenen', mis.slice(0, 4).join(' | '));
+  });
+
   const wachtrij = [...zaken];
   await Promise.all(Array.from({ length: TEGELIJK }, async () => {
     for (let z; (z = wachtrij.shift());) await z();
