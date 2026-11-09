@@ -1035,6 +1035,14 @@ function selectProfile(key) { cur = key; goMap(); }
    -- het welkom las als iets wat nog niet mocht. Een tik op het meisje of de
    jongen opent het formulier met die keuze al gemaakt; een tik ernaast of op de
    knop opent het leeg. */
+/* Hoe het meisje en de jongen eruitzien zolang niemand een kleur koos: zo staan
+   ze op het lege beginscherm, en zo staan ze in het formulier tot er een haar of
+   een kleur aangetikt wordt (zie nsLook). Eén lijst, zodat wie de blauwe jongen
+   aantikt ook de blauwe jongen krijgt -- en geen blonde in het roze. */
+const POP_START = {
+  meisje: { hair: 'hair_blond', dress: 'dress_roze' },
+  jongen: { hair: 'hair_bruin', dress: 'dress_blauw' },
+};
 function leegTegel(add) {
   if (add.classList.contains('leeg-knop')) return;
   add.className = 'btn big leeg-knop';
@@ -1047,9 +1055,7 @@ function leegTegel(add) {
     duo.className = 'leeg-tegel';
     add.parentNode.insertBefore(duo, add);
   }
-  const kleren = { meisje: 'dress_roze', jongen: 'dress_blauw' };
-  const haar = { meisje: 'hair_blond', jongen: 'hair_bruin' };
-  duo.innerHTML = `<div class="stage st-podium">${duoHtml(b => defaultProfile('', kleren[b], { base: b, hair: haar[b] }))}</div>`;
+  duo.innerHTML = `<div class="stage st-podium">${duoHtml(b => defaultProfile('', POP_START[b].dress, { base: b, hair: POP_START[b].hair }))}</div>`;
   applyWorldTheme(duo, WORLDS[0]);
   applyStage(duo.querySelector('.st-podium'), defaultProfile('', 'dress_roze'));
   duo.onclick = e => {

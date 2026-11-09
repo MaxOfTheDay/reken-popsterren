@@ -562,26 +562,39 @@
      zet de 14px tussen zijn blokken al (gap). */
   .newstar-preview { display: flex; justify-content: center; }
   .newstar-preview .stage {
-    width: 124px; aspect-ratio: 10 / 11;
+    width: 210px; aspect-ratio: 10 / 8;
     border: 0; border-radius: var(--r-md);
     box-shadow: 0 0 0 1.25px rgba(255,255,255,.15), 0 0 0 2.5px rgba(var(--nacht-1-rgb),.45),
                 0 0 22px rgba(var(--goud-gloed-rgb),.2), var(--e-2);
   }
   .newstar-preview .stage::after { animation: none; opacity: .85; }
-  /* nog niet gekozen wie: het meisje en de jongen samen (zie renderNewStar), op
-     een breder podium -- dezelfde verhouding als op het lege beginscherm */
-  .newstar-preview.wacht .stage { width: 210px; aspect-ratio: 10 / 8; }
+  /* EÉN PODIUM, OOK ALS JE KIEST. Zolang "Wie ben je?" open staat staan het
+     meisje en de jongen er samen op (zie renderNewStar), en daarna alleen wie je
+     koos. Dat waren eerst twee vlakken: een breed van 210 voor het duo en een
+     smal van 124 voor één, en bij de keuze kromp het podium en schoof het hele
+     vel 32px omhoog -- precies op het moment dat een kind kijkt wat er gebeurt.
+     Nu blijft het vlak staan; zij stapt naar het midden, op een kleinere schijf,
+     in een zacht licht (::before hieronder). Dezelfde verhouding als het lege
+     beginscherm (10/8). */
   .newstar-preview .deco { display: none; }
-  /* haar podium: dezelfde tegelmaat als op het startscherm (zie .ster-tegel .stage-podium) */
-  .newstar-preview .stage-podium { width: 78%; bottom: 6.4%; }
-  /* 90% en niet 92%: met de 9% marge onderaan (een procent van de breedte) stak
-     haar hoofddeksel anders net boven het vlak uit (zie .ster-tegel) */
-  .newstar-preview .stage.op-podium .avatar-holder { height: 90%; }
+  /* Alleen zij: een schijf van 62% (de 90% van het duo staat bij .leeg-tegel in
+     30-onderdelen), haar voeten op 45% ervan zoals overal, en ze is 78% van het
+     vlak hoog -- lucht genoeg boven haar hoofd voor een hoed of een pet. */
+  .newstar-preview .stage-podium { width: 62%; bottom: 7%; }
+  .newstar-preview:not(.wacht) .stage.op-podium .avatar-holder { height: 78%; margin-bottom: 11%; }
+  /* Het zachte licht op wie je koos: een warme vlek achter haar, niet over haar
+     heen. Geen bundel zoals in de show -- dit is een kleedhokje, geen zaal. */
+  .newstar-preview:not(.wacht) .stage::before {
+    content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(38% 58% at 50% 62%, rgba(var(--goud-glans-rgb), .34), transparent 70%);
+  }
   /* Een laag scherm: een kleine telefoon staand, elke telefoon liggend, en het
      toestel waarop de browser bij een open toetsenbord de indeling meekrimpt.
-     Kop (59) plus voorbeeld (136) is daar de helft van het beeld voordat er één
-     vraag in zicht komt. Dezelfde grens als de rest van de app (620). */
-  @media (max-height: 620px) { .newstar-preview .stage { width: 96px; } }
+     Kop (59) plus het voorbeeld van 168 hoog is daar de helft van het beeld
+     voordat er één vraag in zicht komt; op 150 breed is het 120, en het meisje
+     en de jongen passen er samen nog op. Dezelfde grens als de rest van de app
+     (620). */
+  @media (max-height: 620px) { .newstar-preview .stage { width: 150px; } }
   /* ---- Het vel: papier dat in de scène ligt, niet erop ---------------------
      De kaart was .set-card zoals in het ouderdeel: vol wit, één slagschaduw, en
      omdat het voorbeeld er nog in stond liep hij van vlak onder de kop tot de
@@ -657,6 +670,15 @@
     justify-content: center; border-radius: 50%;
   }
   #screen-newstar .chip.swatch .sw { width: 30px; height: 30px; }
+  /* Vijf naast elkaar, altijd. Op een telefoon van 320 breed is het vel 264
+     binnenin, en vijf keer 48 plus de tussenruimte paste daar net niet: de vijfde
+     kleur viel alleen op een nieuwe regel, bij haar én bij kleren. Nu krimpen
+     de bolletjes daar een paar pixel (nooit onder de 44 van een kinderhand) in
+     plaats van af te breken. */
+  #newstar-hair, #newstar-dress { display: grid; grid-template-columns: repeat(5, minmax(0, 48px)); gap: 7px; }
+  #screen-newstar #newstar-hair .chip.swatch, #screen-newstar #newstar-dress .chip.swatch {
+    width: 100%; height: auto; min-height: 0; aspect-ratio: 1;
+  }
   #screen-newstar .chip.swatch.on { box-shadow: 0 0 0 3px var(--c-white), 0 0 0 6px var(--purple-mid); }
   /* "Voor papa of mama": waar het kinderdeel ophoudt (zie renderNewStar) */
   .ns-ouder {

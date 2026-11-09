@@ -139,7 +139,15 @@ function check(ok, label, detail) {
     await page.waitForTimeout(400);
     const formVoet = await opSchijf('#newstar-stage');
     check(formVoet.length === 1 && staan(formVoet), 'in het formulier staat de gekozen pop op haar podium', JSON.stringify(formVoet));
+    // wie je aantikt is wie je krijgt: de blauwe jongen met bruin haar, niet een
+    // blonde in het roze (POP_START), en het vel springt niet bij de keuze (één
+    // podiummaat voor het duo en voor één)
+    const kijk = await page.evaluate(() => ({ hair: newStar.hair, dress: newStar.dress,
+      vel: Math.round(document.querySelector('.newstar-vel').getBoundingClientRect().top) }));
+    check(kijk.hair === 'hair_bruin' && kijk.dress === 'dress_blauw', 'wie de jongen aantikt, krijgt de jongen zoals hij er stond', JSON.stringify(kijk));
     await page.evaluate(() => { newStar.base = null; renderNewStar(); });
+    const velDuo = await page.evaluate(() => Math.round(document.querySelector('.newstar-vel').getBoundingClientRect().top));
+    check(velDuo === kijk.vel, 'kiezen wie je bent laat het formulier niet verspringen', `duo ${velDuo}, één ${kijk.vel}`);
     const formDuo = await opSchijf('#newstar-stage');
     check(formDuo.length === 2 && staan(formDuo), 'en zolang er niets gekozen is staan ze er met z\'n tweeën op', JSON.stringify(formDuo));
     await page.evaluate(() => { newStar.base = 'jongen'; renderNewStar(); });
