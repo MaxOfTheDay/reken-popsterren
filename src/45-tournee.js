@@ -1314,6 +1314,8 @@ function haltKnop(shown, nodes, i, stand) {
     ? '<span class="eerste-tik" aria-hidden="true">👆</span>' : '';
   b.innerHTML = `${hero}<div class="stop-body"><div class="dot">${i + 1}</div>`
     + `${schatTeken}${sterrenRij}${eersteTik}</div>`;
+  // de gouden ring die bij elke tik van het handje uit de halte rolt (55-haltes)
+  b.classList.toggle('eerste-keer', !!eersteTik);
   /* Het slotje is weg; de voorleesnaam zegt het nog wél. Wie de kaart met een
      schermlezer doorloopt heeft geen kleur en geen plek op de route -- daar is
      "nog op slot" het enige wat de staat draagt, en dat is geen beeldruis. */

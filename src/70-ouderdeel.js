@@ -24,7 +24,10 @@ function openNewStar(from, base) {
     // enige zonder voorkeuze. Zou hier 'meisje' staan, dan zou een ouder die
     // doorklikt nooit merken dat er iets te kiezen valt -- precies de aanname
     // waar deze versie vanaf wil.
-    name: '', base: BASES[base] ? base : null, hair: 'hair_blond', dress: 'dress_roze',
+    /* hair en dress zijn wat er straks bewaard wordt; gekozen zegt welke van de
+       twee er al aangetikt is. Tot dan draagt elk zijn eigen beginkleuren (zie
+       POP_START en nsLook), en volgt de ster wie je kiest. */
+    name: '', base: null, hair: POP_START.meisje.hair, dress: POP_START.meisje.dress, gekozen: {},
     /* De modus ook bewust leeg, om dezelfde reden als base. Hier stond Rekenen
        al aan, en "Hoe speel je?" staat op een telefoon en een liggende tablet
        onder de Klaar-balk: een ouder kon klaar zijn zonder de vraag gezien te
@@ -33,10 +36,23 @@ function openNewStar(from, base) {
     settings: Object.assign(defaultProfile('', 'dress_roze').settings, { track: null }),
     open: false          // de openklapper begint dicht, elke keer opnieuw
   };
+  if (BASES[base]) nsZetBase(base);
   renderNewStar();
   toonHub('screen-newstar');
   const el = $('screen-newstar');
   if (el) el.scrollTop = 0;
+}
+/* Haar en kleren van het meisje of de jongen in het formulier: wat er gekozen
+   is, en anders de eigen beginkleuren. Zo staan ze er samen in hun eigen kleren
+   zolang er niets aangetikt is, en volgen ze allebei wat je wél aantikt. */
+function nsLook(b) {
+  const n = newStar, st = POP_START[b] || POP_START.meisje;
+  return { hair: n.gekozen.hair ? n.hair : st.hair, dress: n.gekozen.dress ? n.dress : st.dress };
+}
+/* Wie je bent kiezen neemt diens kleren mee, zolang je die nog niet zelf koos. */
+function nsZetBase(b) {
+  newStar.base = b;
+  Object.assign(newStar, nsLook(b));
 }
 function closeNewStar() {
   newStar = null;
@@ -68,6 +84,10 @@ function renderNewStar() {
      deze app "op slot", en een pop is nooit op slot. */
   const wacht = !n.base;
   const preview = defaultProfile(n.name || '…', n.dress, { hair: n.hair, base: n.base || 'jongen' });
+  /* Welk bolletje aanstaat: zolang ze er met z'n tweeën in hun eigen kleuren
+     staan, geen -- het meisje is blond en de jongen bruin, dus "blond" aanvinken
+     zou over maar één van de twee gaan. */
+  const toon = g => (n.base || n.gekozen[g]) ? n[g] : null;
   const ok = nieuweSterKlaar();
   // Elke chip-tik bouwt dit paneel opnieuw op. Met een opengeklapt paneel eronder
   // is dat merkbaar: zonder de scrolstand vast te houden springt het formulier
@@ -88,7 +108,7 @@ function renderNewStar() {
      sterrenkeuze, en het vel eronder is er een schermhoogte korter van. */
   $('newstar-body').innerHTML = `<div class="settings-panel">
     <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage">${wacht
-      ? duoHtml(b => defaultProfile('', n.dress, { hair: n.hair, base: b }))
+      ? duoHtml(b => defaultProfile('', nsLook(b).dress, { hair: nsLook(b).hair, base: b }))
       : `<div class="avatar-holder idle levend">${pasLaag(avatarSVG(preview, 132))}</div>`}</div></div>
     <div class="set-card newstar-vel">
       <div class="ns-groep">
@@ -100,9 +120,9 @@ function renderNewStar() {
       </div>
       <div class="ns-groep">
         <div class="set-field"><label class="lbl">Haar</label>
-          <div class="chip-row" id="newstar-hair">${swatchChips('hair', START_HAIR, n.hair)}</div></div>
+          <div class="chip-row" id="newstar-hair">${swatchChips('hair', START_HAIR, toon('hair'))}</div></div>
         <div class="set-field"><label class="lbl">Kleren</label>
-          <div class="chip-row" id="newstar-dress">${swatchChips('dress', START_DRESS, n.dress)}</div></div>
+          <div class="chip-row" id="newstar-dress">${swatchChips('dress', START_DRESS, toon('dress'))}</div></div>
       </div>
       <div class="ns-groep">
         <!-- Tot hier kiest het kind; vanaf hier de ouder. Dezelfde woorden als
@@ -143,15 +163,15 @@ function renderNewStar() {
      pagina haalt, breekt zijn animaties net zo goed af. */
   if (klok) $('newstar-stage').querySelectorAll('.avatar-holder').forEach(el => klokTerug(el, klok));
   $('newstar-stage').querySelectorAll('[data-base]').forEach(el => el.onclick = () => {
-    sndClick(); newStar.base = el.dataset.base; renderNewStar();
+    sndClick(); nsZetBase(el.dataset.base); renderNewStar();
   });
   // bindChips en niet chip: de sjabloon hierboven gebruikt de globale chip(v, label, on)
   // uit het ouderdeel, en een gelijknamige const hier zou die in dit hele bereik
   // afdekken (ReferenceError, nog vóór de eerste regel van de sjabloon).
   const bindChips = (id, fn) => { const el = $(id); if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => { sndClick(); fn(c.dataset.v); renderNewStar(); }); };
-  bindChips('newstar-base',  v => newStar.base = v);
-  bindChips('newstar-hair',  v => newStar.hair = v);
-  bindChips('newstar-dress', v => newStar.dress = v);
+  bindChips('newstar-base',  v => nsZetBase(v));
+  bindChips('newstar-hair',  v => { newStar.hair = v; newStar.gekozen.hair = true; });
+  bindChips('newstar-dress', v => { newStar.dress = v; newStar.gekozen.dress = true; });
   bindChips('newstar-track', v => {
     s.track = v;
     // De standaardlengte verschilt per modus (kleuters krijgen een kortere ronde).

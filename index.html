@@ -6319,13 +6319,30 @@
 
 
 
+
+
+
+
+
   .tour-stop .eerste-tik {
-    position: absolute; z-index: 3; left: 50%; top: 9cqw; margin-left: 1cqw;
-    font-size: 8cqw; line-height: 1; pointer-events: none;
+    position: absolute; z-index: 4; left: 50%; top: 5.2cqw; margin-left: 1.2cqw;
+    font-size: 11cqw; line-height: 1; pointer-events: none;
     filter: drop-shadow(0 .4cqw .6cqw rgba(0,0,0,.45));
-    animation: eersteTik 1.1s ease-in-out .8s infinite;
+    transform-origin: 30% 10%;
+    animation: eersteIn .35s ease-out 1.2s backwards, eersteTik 1.8s ease-in-out 1.2s infinite;
   }
-  @keyframes eersteTik { 0%, 100% { translate: 0 0; } 50% { translate: -.6cqw -2.2cqw; } }
+  @keyframes eersteIn { from { opacity: 0; } }
+  @keyframes eersteTik {
+    0%, 100% { translate: 2.6cqw 2.6cqw; scale: 1; }
+    35%, 60% { translate: 0 0; scale: 1; }
+    45%      { translate: 0 0; scale: .86; }
+  }
+  .tour-stop.eerste-keer .dot::after {
+    content: ""; position: absolute; inset: -.55cqw; border-radius: 50%; pointer-events: none;
+    border: .8cqw solid rgba(var(--goud-gloed-rgb), .95); box-shadow: 0 0 2cqw rgba(var(--goud-gloed-rgb), .7);
+    opacity: 0; animation: eersteRing 1.8s ease-out 1.2s infinite;
+  }
+  @keyframes eersteRing { 0%, 44% { scale: 1; opacity: 0; } 46% { scale: 1; opacity: 1; } 100% { scale: 2.1; opacity: 0; } }
   @keyframes prijsOp { from { opacity: 0; scale: .3; } to { opacity: 1; scale: 1; } }
   @media (prefers-reduced-motion: reduce) { .tour-stop .stop-schat { animation: none; } }
 
@@ -10684,7 +10701,7 @@
 
   .newstar-preview { display: flex; justify-content: center; }
   .newstar-preview .stage {
-    width: 124px; aspect-ratio: 10 / 11;
+    width: 210px; aspect-ratio: 10 / 8;
     border: 0; border-radius: var(--r-md);
     box-shadow: 0 0 0 1.25px rgba(255,255,255,.15), 0 0 0 2.5px rgba(var(--nacht-1-rgb),.45),
                 0 0 22px rgba(var(--goud-gloed-rgb),.2), var(--e-2);
@@ -10692,18 +10709,31 @@
   .newstar-preview .stage::after { animation: none; opacity: .85; }
 
 
-  .newstar-preview.wacht .stage { width: 210px; aspect-ratio: 10 / 8; }
+
+
+
+
+
+
   .newstar-preview .deco { display: none; }
 
-  .newstar-preview .stage-podium { width: 78%; bottom: 6.4%; }
 
 
-  .newstar-preview .stage.op-podium .avatar-holder { height: 90%; }
+  .newstar-preview .stage-podium { width: 62%; bottom: 7%; }
+  .newstar-preview:not(.wacht) .stage.op-podium .avatar-holder { height: 78%; margin-bottom: 11%; }
+
+
+  .newstar-preview:not(.wacht) .stage::before {
+    content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(38% 58% at 50% 62%, rgba(var(--goud-glans-rgb), .34), transparent 70%);
+  }
 
 
 
 
-  @media (max-height: 620px) { .newstar-preview .stage { width: 96px; } }
+
+
+  @media (max-height: 620px) { .newstar-preview .stage { width: 150px; } }
 
 
 
@@ -10779,6 +10809,15 @@
     justify-content: center; border-radius: 50%;
   }
   #screen-newstar .chip.swatch .sw { width: 30px; height: 30px; }
+
+
+
+
+
+  #newstar-hair, #newstar-dress { display: grid; grid-template-columns: repeat(5, minmax(0, 48px)); gap: 7px; }
+  #screen-newstar #newstar-hair .chip.swatch, #screen-newstar #newstar-dress .chip.swatch {
+    width: 100%; height: auto; min-height: 0; aspect-ratio: 1;
+  }
   #screen-newstar .chip.swatch.on { box-shadow: 0 0 0 3px var(--c-white), 0 0 0 6px var(--purple-mid); }
 
   .ns-ouder {
@@ -18783,6 +18822,14 @@ function selectProfile(key) { cur = key; goMap(); }
 
 
 
+
+
+
+
+const POP_START = {
+  meisje: { hair: 'hair_blond', dress: 'dress_roze' },
+  jongen: { hair: 'hair_bruin', dress: 'dress_blauw' },
+};
 function leegTegel(add) {
   if (add.classList.contains('leeg-knop')) return;
   add.className = 'btn big leeg-knop';
@@ -18795,9 +18842,7 @@ function leegTegel(add) {
     duo.className = 'leeg-tegel';
     add.parentNode.insertBefore(duo, add);
   }
-  const kleren = { meisje: 'dress_roze', jongen: 'dress_blauw' };
-  const haar = { meisje: 'hair_blond', jongen: 'hair_bruin' };
-  duo.innerHTML = `<div class="stage st-podium">${duoHtml(b => defaultProfile('', kleren[b], { base: b, hair: haar[b] }))}</div>`;
+  duo.innerHTML = `<div class="stage st-podium">${duoHtml(b => defaultProfile('', POP_START[b].dress, { base: b, hair: POP_START[b].hair }))}</div>`;
   applyWorldTheme(duo, WORLDS[0]);
   applyStage(duo.querySelector('.st-podium'), defaultProfile('', 'dress_roze'));
   duo.onclick = e => {
@@ -22616,6 +22661,8 @@ function haltKnop(shown, nodes, i, stand) {
     ? '<span class="eerste-tik" aria-hidden="true">👆</span>' : '';
   b.innerHTML = `${hero}<div class="stop-body"><div class="dot">${i + 1}</div>`
     + `${schatTeken}${sterrenRij}${eersteTik}</div>`;
+
+  b.classList.toggle('eerste-keer', !!eersteTik);
 
 
 
@@ -31152,7 +31199,10 @@ function openNewStar(from, base) {
 
 
 
-    name: '', base: BASES[base] ? base : null, hair: 'hair_blond', dress: 'dress_roze',
+
+
+
+    name: '', base: null, hair: POP_START.meisje.hair, dress: POP_START.meisje.dress, gekozen: {},
 
 
 
@@ -31161,10 +31211,23 @@ function openNewStar(from, base) {
     settings: Object.assign(defaultProfile('', 'dress_roze').settings, { track: null }),
     open: false
   };
+  if (BASES[base]) nsZetBase(base);
   renderNewStar();
   toonHub('screen-newstar');
   const el = $('screen-newstar');
   if (el) el.scrollTop = 0;
+}
+
+
+
+function nsLook(b) {
+  const n = newStar, st = POP_START[b] || POP_START.meisje;
+  return { hair: n.gekozen.hair ? n.hair : st.hair, dress: n.gekozen.dress ? n.dress : st.dress };
+}
+
+function nsZetBase(b) {
+  newStar.base = b;
+  Object.assign(newStar, nsLook(b));
 }
 function closeNewStar() {
   newStar = null;
@@ -31196,6 +31259,10 @@ function renderNewStar() {
 
   const wacht = !n.base;
   const preview = defaultProfile(n.name || '…', n.dress, { hair: n.hair, base: n.base || 'jongen' });
+
+
+
+  const toon = g => (n.base || n.gekozen[g]) ? n[g] : null;
   const ok = nieuweSterKlaar();
 
 
@@ -31216,7 +31283,7 @@ function renderNewStar() {
 
   $('newstar-body').innerHTML = `<div class="settings-panel">
     <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage">${wacht
-      ? duoHtml(b => defaultProfile('', n.dress, { hair: n.hair, base: b }))
+      ? duoHtml(b => defaultProfile('', nsLook(b).dress, { hair: nsLook(b).hair, base: b }))
       : `<div class="avatar-holder idle levend">${pasLaag(avatarSVG(preview, 132))}</div>`}</div></div>
     <div class="set-card newstar-vel">
       <div class="ns-groep">
@@ -31228,9 +31295,9 @@ function renderNewStar() {
       </div>
       <div class="ns-groep">
         <div class="set-field"><label class="lbl">Haar</label>
-          <div class="chip-row" id="newstar-hair">${swatchChips('hair', START_HAIR, n.hair)}</div></div>
+          <div class="chip-row" id="newstar-hair">${swatchChips('hair', START_HAIR, toon('hair'))}</div></div>
         <div class="set-field"><label class="lbl">Kleren</label>
-          <div class="chip-row" id="newstar-dress">${swatchChips('dress', START_DRESS, n.dress)}</div></div>
+          <div class="chip-row" id="newstar-dress">${swatchChips('dress', START_DRESS, toon('dress'))}</div></div>
       </div>
       <div class="ns-groep">
         <!-- Tot hier kiest het kind; vanaf hier de ouder. Dezelfde woorden als
@@ -31271,15 +31338,15 @@ function renderNewStar() {
 
   if (klok) $('newstar-stage').querySelectorAll('.avatar-holder').forEach(el => klokTerug(el, klok));
   $('newstar-stage').querySelectorAll('[data-base]').forEach(el => el.onclick = () => {
-    sndClick(); newStar.base = el.dataset.base; renderNewStar();
+    sndClick(); nsZetBase(el.dataset.base); renderNewStar();
   });
 
 
 
   const bindChips = (id, fn) => { const el = $(id); if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => { sndClick(); fn(c.dataset.v); renderNewStar(); }); };
-  bindChips('newstar-base',  v => newStar.base = v);
-  bindChips('newstar-hair',  v => newStar.hair = v);
-  bindChips('newstar-dress', v => newStar.dress = v);
+  bindChips('newstar-base',  v => nsZetBase(v));
+  bindChips('newstar-hair',  v => { newStar.hair = v; newStar.gekozen.hair = true; });
+  bindChips('newstar-dress', v => { newStar.dress = v; newStar.gekozen.dress = true; });
   bindChips('newstar-track', v => {
     s.track = v;
 

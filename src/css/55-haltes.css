@@ -195,17 +195,34 @@
      met transform, zodat niets anders aan zijn stand hoeft te rekenen. */
   .tour-stop .stop-schat { animation: prijsOp .45s var(--ease-plop) .55s backwards; }
   /* Het handje bij de allereerste show (zie renderTourMap): rechtsonder het
-     rondje, met de vingertop ernaar. Het wipt zacht op en neer tot de eerste show
-     begint en is daarna voorgoed weg -- de enige beweging op de kaart die eindigt
-     zonder dat ze iets hoeft te doen. Wie geen beweging wil, ziet het stilstaan
-     (90-stilstand.css zet alle animaties uit). */
+     rondje, en het TIKT -- het gebaar dat een kind van een tablet kent. Om de 1,8
+     tel schuift het naar de halte, de vingertop drukt even in, en uit de halte
+     rolt een gouden ring (.eerste-keer .dot::after, op hetzelfde ritme). Een
+     handje dat alleen op en neer deinde las als een plaatje, niet als "tik hier".
+     Het komt pas na de aankomst (1,2 tel): eerst landt zij, dan wijst de hand.
+     Het staat er tot de eerste show begint en is daarna voorgoed weg -- de enige
+     beweging op de kaart die eindigt zonder dat ze iets hoeft te doen. Wie geen
+     beweging wil, ziet het stilstaan met de vinger óp de halte en zonder ring
+     (90-stilstand.css zet alle animaties uit; de ring is dan onzichtbaar). */
   .tour-stop .eerste-tik {
-    position: absolute; z-index: 3; left: 50%; top: 9cqw; margin-left: 1cqw;
-    font-size: 8cqw; line-height: 1; pointer-events: none;
+    position: absolute; z-index: 4; left: 50%; top: 5.2cqw; margin-left: 1.2cqw;
+    font-size: 11cqw; line-height: 1; pointer-events: none;
     filter: drop-shadow(0 .4cqw .6cqw rgba(0,0,0,.45));
-    animation: eersteTik 1.1s ease-in-out .8s infinite;
+    transform-origin: 30% 10%;
+    animation: eersteIn .35s ease-out 1.2s backwards, eersteTik 1.8s ease-in-out 1.2s infinite;
   }
-  @keyframes eersteTik { 0%, 100% { translate: 0 0; } 50% { translate: -.6cqw -2.2cqw; } }
+  @keyframes eersteIn { from { opacity: 0; } }
+  @keyframes eersteTik {
+    0%, 100% { translate: 2.6cqw 2.6cqw; scale: 1; }
+    35%, 60% { translate: 0 0; scale: 1; }
+    45%      { translate: 0 0; scale: .86; }
+  }
+  .tour-stop.eerste-keer .dot::after {
+    content: ""; position: absolute; inset: -.55cqw; border-radius: 50%; pointer-events: none;
+    border: .8cqw solid rgba(var(--goud-gloed-rgb), .95); box-shadow: 0 0 2cqw rgba(var(--goud-gloed-rgb), .7);
+    opacity: 0; animation: eersteRing 1.8s ease-out 1.2s infinite;
+  }
+  @keyframes eersteRing { 0%, 44% { scale: 1; opacity: 0; } 46% { scale: 1; opacity: 1; } 100% { scale: 2.1; opacity: 0; } }
   @keyframes prijsOp { from { opacity: 0; scale: .3; } to { opacity: 1; scale: 1; } }
   @media (prefers-reduced-motion: reduce) { .tour-stop .stop-schat { animation: none; } }
   /* HET SLOTJE IS WEG. Er hing er een aan de rand van elke halte op slot -- eerst
