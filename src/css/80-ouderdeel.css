@@ -571,10 +571,14 @@
   .newstar-preview .duo { width: 46%; height: 64%; margin-bottom: 7.6%; }
   /* Het zachte licht op wie je koos: een warme vlek achter haar, niet over haar
      heen. Geen bundel zoals in de show -- dit is een kleedhokje, geen zaal. */
-  .newstar-preview:not(.wacht) .stage::before {
+  /* Het licht gaat áán als ze naar voren stapt (een overgang op opacity), en
+     floept er niet in één beeldje bij. */
+  .newstar-preview .stage::before {
     content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
     background: radial-gradient(30% 58% at 50% 62%, rgba(var(--goud-glans-rgb), .34), transparent 70%);
+    opacity: 0; transition: opacity .5s ease-out .1s;
   }
+  .newstar-preview:not(.wacht) .stage::before { opacity: 1; }
   @media (orientation: portrait) and (min-height: 780px) {
     .newstar-preview .stage { aspect-ratio: 4 / 3; }
     .newstar-preview .stage-podium { width: 42%; bottom: 8%; }
@@ -606,7 +610,7 @@
   /* De ander stapt opzij weg (nsGlij): een kopie van haar tekening op de plek waar
      ze stond, die even blijft staan terwijl ze vervaagt. */
   .ns-weg { position: absolute; z-index: 1; pointer-events: none; display: flex; justify-content: center; }
-  .ns-weg svg { height: 100%; width: auto; display: block; }
+  .ns-weg svg { width: 100%; height: 100%; display: block; }
 
   /* ---- Haar naam, in de lichtjes boven haar hoofd -----------------------
      Het naamveld ís de naam: één pil van vaste maat bovenaan het podium. Leeg
@@ -682,7 +686,7 @@
      vlak. Een violette knop zakte op dit violette glas weg. Een gekozen kleur
      krijgt een witte ring, geen gouden: goud is in deze app "verdiend". */
   .ns-kind {
-    display: flex; flex-direction: column; gap: 12px; padding: 14px 14px 16px;
+    display: flex; flex-direction: column; gap: 6px; padding: 16px;
     background: rgba(255,255,255,.05); box-shadow: var(--vlak-top);
     border-top: 1px solid rgba(255,255,255,.09); color: var(--c-white);
   }
@@ -695,7 +699,9 @@
   }
   /* Wie: twee pillen met het hoofdje van onze eigen pop, in de kleuren die er nu
      gekozen zijn -- wie op "Jongen" tikt, ziet de jongen die hij krijgt. */
-  .ns-wie { display: flex; gap: 10px; }
+  /* Wie staat apart (er is lucht onder), haar en kleren horen bij elkaar (dicht op
+     elkaar): twee groepjes, zonder een kopje ertussen. */
+  .ns-wie { display: flex; gap: 10px; margin-bottom: 10px; }
   #screen-newstar .ns-wie .chip {
     flex: 1; min-width: 0; min-height: 48px; padding: 4px 12px 4px 6px; gap: 8px;
     display: flex; align-items: center; justify-content: center;
@@ -716,12 +722,24 @@
   #newstar-hair, #newstar-dress {
     display: grid; grid-template-columns: repeat(5, minmax(0, 48px)); gap: 8px; justify-content: space-between;
   }
+  /* Het bolletje IS de knop: geen grijs bordje erachter. Met een bordje, een
+     bolletje en een ring om het gekozene stonden er drie cirkels in elkaar, en
+     raakten de ringen van de twee rijen elkaar bijna. De tikvlakte blijft 48px
+     (de chip), alleen het zichtbare is het bolletje.
+     Gekozen = een witte ring met een spleetje van het glas ertussen. */
   #screen-newstar .ns-kind .chip.swatch {
     width: 100%; height: auto; min-height: 0; aspect-ratio: 1; padding: 0; gap: 0;
-    justify-content: center; border-radius: 50%;
+    justify-content: center; border-radius: 50%; background: none;
   }
-  #screen-newstar .chip.swatch .sw { width: 64%; height: 64%; box-shadow: inset 0 -2px 3px rgba(0,0,0,.2); }
-  #screen-newstar .ns-kind .chip.swatch.on { box-shadow: 0 0 0 3px var(--c-white); }
+  @media (hover: hover) { #screen-newstar .ns-kind .chip.swatch:hover { background: rgba(255,255,255,.08); } }
+  #screen-newstar .chip.swatch .sw {
+    width: 72%; height: 72%; border: 0;
+    box-shadow: inset 0 -2px 3px rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,255,255,.18);
+  }
+  #screen-newstar .ns-kind .chip.swatch.on { background: none; box-shadow: none; }
+  #screen-newstar .ns-kind .chip.swatch.on .sw {
+    box-shadow: inset 0 -2px 3px rgba(0,0,0,.22), 0 0 0 3px rgba(var(--w-deep-rgb), .9), 0 0 0 6px var(--c-white);
+  }
 
   /* ---- Het papier: wat de ouder kiest ------------------------------------
      Eén kop, en die noemt haar ("Hoe speelt Noor?", dezelfde vraag als in haar

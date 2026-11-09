@@ -6333,8 +6333,10 @@
 
 
 
+
+
   .tour-stop .eerste-tik {
-    position: absolute; z-index: 4; left: 50%; top: 5.2cqw; margin-left: 1.2cqw;
+    position: absolute; z-index: 4; left: 50%; top: 3.4cqw; margin-left: -3cqw;
     font-size: 11cqw; line-height: 1; pointer-events: none;
     filter: drop-shadow(0 .4cqw .6cqw rgba(0,0,0,.45));
     transform-origin: 30% 10%;
@@ -10719,10 +10721,14 @@
   .newstar-preview .duo { width: 46%; height: 64%; margin-bottom: 7.6%; }
 
 
-  .newstar-preview:not(.wacht) .stage::before {
+
+
+  .newstar-preview .stage::before {
     content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
     background: radial-gradient(30% 58% at 50% 62%, rgba(var(--goud-glans-rgb), .34), transparent 70%);
+    opacity: 0; transition: opacity .5s ease-out .1s;
   }
+  .newstar-preview:not(.wacht) .stage::before { opacity: 1; }
   @media (orientation: portrait) and (min-height: 780px) {
     .newstar-preview .stage { aspect-ratio: 4 / 3; }
     .newstar-preview .stage-podium { width: 42%; bottom: 8%; }
@@ -10754,7 +10760,7 @@
 
 
   .ns-weg { position: absolute; z-index: 1; pointer-events: none; display: flex; justify-content: center; }
-  .ns-weg svg { height: 100%; width: auto; display: block; }
+  .ns-weg svg { width: 100%; height: 100%; display: block; }
 
 
 
@@ -10830,7 +10836,7 @@
 
 
   .ns-kind {
-    display: flex; flex-direction: column; gap: 12px; padding: 14px 14px 16px;
+    display: flex; flex-direction: column; gap: 6px; padding: 16px;
     background: rgba(255,255,255,.05); box-shadow: var(--vlak-top);
     border-top: 1px solid rgba(255,255,255,.09); color: var(--c-white);
   }
@@ -10843,7 +10849,9 @@
   }
 
 
-  .ns-wie { display: flex; gap: 10px; }
+
+
+  .ns-wie { display: flex; gap: 10px; margin-bottom: 10px; }
   #screen-newstar .ns-wie .chip {
     flex: 1; min-width: 0; min-height: 48px; padding: 4px 12px 4px 6px; gap: 8px;
     display: flex; align-items: center; justify-content: center;
@@ -10864,12 +10872,24 @@
   #newstar-hair, #newstar-dress {
     display: grid; grid-template-columns: repeat(5, minmax(0, 48px)); gap: 8px; justify-content: space-between;
   }
+
+
+
+
+
   #screen-newstar .ns-kind .chip.swatch {
     width: 100%; height: auto; min-height: 0; aspect-ratio: 1; padding: 0; gap: 0;
-    justify-content: center; border-radius: 50%;
+    justify-content: center; border-radius: 50%; background: none;
   }
-  #screen-newstar .chip.swatch .sw { width: 64%; height: 64%; box-shadow: inset 0 -2px 3px rgba(0,0,0,.2); }
-  #screen-newstar .ns-kind .chip.swatch.on { box-shadow: 0 0 0 3px var(--c-white); }
+  @media (hover: hover) { #screen-newstar .ns-kind .chip.swatch:hover { background: rgba(255,255,255,.08); } }
+  #screen-newstar .chip.swatch .sw {
+    width: 72%; height: 72%; border: 0;
+    box-shadow: inset 0 -2px 3px rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,255,255,.18);
+  }
+  #screen-newstar .ns-kind .chip.swatch.on { background: none; box-shadow: none; }
+  #screen-newstar .ns-kind .chip.swatch.on .sw {
+    box-shadow: inset 0 -2px 3px rgba(0,0,0,.22), 0 0 0 3px rgba(var(--w-deep-rgb), .9), 0 0 0 6px var(--c-white);
+  }
 
 
 
@@ -31344,7 +31364,8 @@ function swatchChips(group, ids, sel) {
 const NS_ICO = (() => {
   const i = d => `<svg class="oz-i" viewBox="0 0 24 24">${d}</svg>`;
   return {
-    haar: i('<path class="vul" d="M5.5 12.2C5.5 7.9 8.4 4.8 12 4.8s6.5 3.1 6.5 7.4c-2.6-.2-5.1-1.5-6.5-3.6-1.4 2.1-3.9 3.4-6.5 3.6Z"/><path d="M6.6 12.4c.4 3.8 2.6 6.6 5.4 6.6s5-2.8 5.4-6.6"/><circle class="vul" cx="3.6" cy="12.6" r="2.2"/><circle class="vul" cx="20.4" cy="12.6" r="2.2"/>'),
+
+    haar: i('<circle class="vul" cx="4.2" cy="9.6" r="2.6"/><circle class="vul" cx="19.8" cy="9.6" r="2.6"/><path class="vul" d="M5.6 12.6C5.2 7.8 8.2 4.6 12 4.6s6.8 3.2 6.4 8c-1.6-1.9-3.8-3.2-6.4-3.4-2.6.2-4.8 1.5-6.4 3.4Z"/><path d="M6 13.2c.6 3.6 3 6.2 6 6.2s5.4-2.6 6-6.2"/>'),
     kleren: i('<path d="M8.5 3.5 4 6 2 10.5l3.2 1.4V20.5h13.6v-8.6l3.2-1.4L20 6l-4.5-2.5c-.6 1.7-1.9 2.7-3.5 2.7s-2.9-1-3.5-2.7Z"/>'),
   };
 })();
@@ -31559,15 +31580,18 @@ function nsKies(b) {
     const s0 = stage.getBoundingClientRect();
     duo = [...stage.querySelectorAll('[data-base]')].map(h => {
       const r = h.getBoundingClientRect(), laag = h.querySelector('.pas-laag');
-      return { wie: h.dataset.base, x: r.left - s0.left, y: r.top - s0.top, w: r.width, h: r.height,
-        rechts: r.left + r.width / 2 > s0.left + s0.width / 2, svg: laag ? laag.innerHTML : '',
-        pop: laag && laag.querySelector('svg') ? laag.querySelector('svg').getBoundingClientRect() : null };
+      const svg = laag && laag.querySelector('svg'), t = svg ? svg.getBoundingClientRect() : null;
+      return { wie: h.dataset.base, rechts: r.left + r.width / 2 > s0.left + s0.width / 2, svg: laag ? laag.innerHTML : '',
+        pop: t, x: t ? t.left - s0.left : 0, y: t ? t.top - s0.top : 0, w: t ? t.width : 0, h: t ? t.height : 0 };
     });
     if (!duo.every(d => d.svg && d.pop)) duo = null;
   }
   nsZetBase(b);
   renderNewStar();
   if (!duo) { naOpbouw(() => nsBuig()); return; }
+
+
+
 
 
 
@@ -31594,30 +31618,41 @@ function nsGlij(zij, zijKopie, ander, anderKopie) {
   const schijf = stage && stage.querySelector('.stage-podium');
   const opruimen = () => { zijKopie.remove(); anderKopie.remove(); if (pop) pop.style.opacity = ''; if (stage) stage.parentElement.classList.remove('wacht'); };
   if (!pop || !schijf || !pop.animate) { opruimen(); return; }
+
   const breed = schijf.getBoundingClientRect().width;
   stage.parentElement.classList.remove('wacht');
   const smal = schijf.getBoundingClientRect().width;
   const svg = pop.querySelector('.pas-laag svg'), naar = svg && svg.getBoundingClientRect();
+  const thuis = pop.getBoundingClientRect();
   zijKopie.remove();
   pop.style.opacity = '';
   const vorm = { duration: NS_GLIJ, easing: 'cubic-bezier(.3,.7,.2,1)' };
-  if (smal) schijf.animate([{ transform: `scaleX(${breed / smal})` }, { transform: 'none' }], vorm);
-  if (naar && naar.height) {
-    const van = zij.pop;
-    const dx = (van.left + van.width / 2) - (naar.left + naar.width / 2), dy = van.bottom - naar.bottom;
-    pop.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${van.height / naar.height})` }, { transform: 'none' }], vorm);
-  }
-  anderKopie.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${ander.rechts ? 45 : -45}%)` }],
-    { duration: NS_GLIJ * .7, easing: 'ease-in', fill: 'forwards' }).onfinish = () => anderKopie.remove();
 
-  setTimeout(nsBuig, NS_GLIJ);
+
+
+
+  if (smal) schijf.animate([{ transform: `translateX(-50%) scaleX(${breed / smal})` }, { transform: 'translateX(-50%)' }], vorm);
+  if (naar && naar.height) {
+
+
+
+    const van = zij.pop, ox = naar.left + naar.width / 2, oy = naar.bottom;
+    pop.style.transformOrigin = `${ox - thuis.left}px ${oy - thuis.top}px`;
+    const dx = (van.left + van.width / 2) - ox, dy = van.bottom - oy;
+    pop.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${van.height / naar.height})` }, { transform: 'none' }], vorm)
+      .onfinish = () => { pop.style.transformOrigin = ''; };
+  }
+  anderKopie.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${ander.rechts ? 40 : -40}%) scale(.92)` }],
+    { duration: NS_GLIJ * .75, easing: 'ease-in', fill: 'forwards' }).onfinish = () => anderKopie.remove();
+
+  setTimeout(nsBuig, NS_GLIJ + 60);
 }
 function nsBuig() {
   const stage = $('newstar-stage');
   const pop = stage && stage.querySelector('.avatar-holder');
   if (pop && !pop.closest('.wacht') && zetPas(pop, BUIGING)) pasUit(pop);
 }
-const NS_GLIJ = 320;
+const NS_GLIJ = 420;
 
 
 
