@@ -580,7 +580,7 @@
   /* Alleen zij: een schijf van 62% (de 90% van het duo staat bij .leeg-tegel in
      30-onderdelen), haar voeten op 45% ervan zoals overal, en ze is 78% van het
      vlak hoog -- lucht genoeg boven haar hoofd voor een hoed of een pet. */
-  .newstar-preview .stage-podium { width: 62%; bottom: 7%; }
+  .newstar-preview .stage-podium { width: 62%; bottom: 10%; }
   .newstar-preview:not(.wacht) .stage.op-podium .avatar-holder { height: 78%; margin-bottom: 11%; }
   /* Het zachte licht op wie je koos: een warme vlek achter haar, niet over haar
      heen. Geen bundel zoals in de show -- dit is een kleedhokje, geen zaal. */

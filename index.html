@@ -3301,7 +3301,16 @@
 
 
 
-  .ster-tegel .stage-podium { width: 73%; bottom: 10.4%; }
+  .ster-tegel .stage-podium { width: 73%; bottom: 8.5%; }
+
+
+
+
+
+  @media (orientation: portrait) and (min-height: 481px) and (max-height: 660px) {
+    .star-grid.kol-4 .ster-tegel .stage-podium { bottom: 9.3%; }
+  }
+  @media (max-height: 480px) { .ster-tegel .stage-podium { bottom: 10.4%; } }
 
   .leeg-tegel .stage-podium, .newstar-preview.wacht .stage-podium { width: 90%; bottom: 7%; }
   .ster-tegel .stage-podium .podium, .leeg-tegel .stage-podium .podium, .newstar-preview .stage-podium .podium { --pod-dik: 4px; }
@@ -10719,7 +10728,7 @@
 
 
 
-  .newstar-preview .stage-podium { width: 62%; bottom: 7%; }
+  .newstar-preview .stage-podium { width: 62%; bottom: 10%; }
   .newstar-preview:not(.wacht) .stage.op-podium .avatar-holder { height: 78%; margin-bottom: 11%; }
 
 
