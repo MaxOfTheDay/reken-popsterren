@@ -1101,6 +1101,6 @@
   }
   @media (max-height: 480px) { .ster-tegel .stage-podium { bottom: 10.4%; } }
   /* breed genoeg voor twee: het meisje en de jongen staan er samen op */
-  .leeg-tegel .stage-podium, .newstar-preview.wacht .stage-podium { width: 90%; bottom: 7%; }
+  .leeg-tegel .stage-podium { width: 90%; bottom: 7%; }
   .ster-tegel .stage-podium .podium, .leeg-tegel .stage-podium .podium, .newstar-preview .stage-podium .podium { --pod-dik: 4px; }
   .ster-tegel .stage.op-podium .avatar-holder { height: 84%; margin-bottom: 12%; }

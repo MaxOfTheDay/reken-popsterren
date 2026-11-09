@@ -2680,7 +2680,7 @@ function check(ok, label, detail) {
       val: document.querySelector('#newstar-oefen .sr-val').textContent,
     }));
     check(r.open === false, 'de openklapper begint dicht', `open=${r.open}`);
-    check(r.val === '+ − · tot 20 · kiezen · 8 vragen', 'de dichte openklapper vertelt de standaard', r.val);
+    check(r.val === 'Plus en min tot 20', 'de dichte openklapper vertelt de standaard, in gewone woorden', r.val);
     await ctx.close();
   });
 
@@ -2752,7 +2752,7 @@ function check(ok, label, detail) {
       val: document.querySelector('#newstar-oefen .sr-val').textContent,
     }));
     check(velden.stage && !velden.ops, 'de telmodus toont fases in plaats van bewerkingen', JSON.stringify(velden));
-    check(/^fase 1–12/.test(velden.val), 'de samenvatting schakelt mee naar de telmodus', velden.val);
+    check(velden.val === 'Tellen tot 10', 'de samenvatting schakelt mee naar de telmodus', velden.val);
     await page.click('#ns-set-fase .chip[data-v="3"]');   // dichter bij vanaf dan bij tot
     await page.waitForTimeout(150);
     await page.click('#newstar-base .chip[data-v="jongen"]');
@@ -2848,7 +2848,7 @@ function check(ok, label, detail) {
       return {
         n: Object.keys(db.profiles).length,
         wijst: document.querySelectorAll('#newstar-base .chip.vraagt').length,
-        naamWijst: document.getElementById('newstar-name').classList.contains('vraagt'),
+        naamWijst: document.getElementById('newstar-name').parentElement.classList.contains('vraagt'),   // de pil om het veld
         melding: document.getElementById('toast').textContent,
         opScherm: document.getElementById('screen-newstar').classList.contains('active'),
       };
@@ -2865,7 +2865,7 @@ function check(ok, label, detail) {
       await new Promise(r => setTimeout(r, 120));
       return {
         n: Object.keys(db.profiles).length,
-        naamWijst: document.getElementById('newstar-name').classList.contains('vraagt'),
+        naamWijst: document.getElementById('newstar-name').parentElement.classList.contains('vraagt'),   // de pil om het veld
         basisWijst: document.querySelectorAll('#newstar-base .chip.vraagt').length,
         melding: document.getElementById('toast').textContent,
       };
@@ -2884,7 +2884,7 @@ function check(ok, label, detail) {
         n: Object.keys(db.profiles).length,
         aria: document.getElementById('newstar-go').getAttribute('aria-disabled'),
         modusWijst: document.querySelectorAll('#newstar-track .chip.vraagt').length,
-        naamWijst: document.getElementById('newstar-name').classList.contains('vraagt'),
+        naamWijst: document.getElementById('newstar-name').parentElement.classList.contains('vraagt'),   // de pil om het veld
       };
     });
     check(modus.n === 0 && modus.aria === 'true' && modus.modusWijst === 2 && !modus.naamWijst,
@@ -3406,7 +3406,11 @@ function check(ok, label, detail) {
     await page.waitForTimeout(300);
     await page.evaluate(() => document.querySelector('#newstar-base .chip').click());
     await page.waitForTimeout(700);
-    await page.evaluate(() => document.querySelectorAll('#newstar-hair .chip')[1].click());
+    // de hertekening zelf, zonder de tik: een tik op een kleur laat haar met opzet
+    // een pasje maken (nsDans), en dat pasje begint natuurlijk nu. Wat hier telt is
+    // dat het nieuwe paneel haar wiegen en knikken van het oude overneemt -- ook
+    // terwijl de buiging van het kiezen nog loopt.
+    await page.evaluate(() => { newStar.hair = START_HAIR[1]; newStar.gekozen.hair = true; renderNewStar(); });
     await page.waitForTimeout(250);
     const maak = await uitDeMaat('#newstar-stage .avatar-holder');
     const wieg = await page.evaluate(() => document.querySelector('#newstar-stage .avatar-holder').getAnimations()[0].currentTime);
@@ -3421,7 +3425,8 @@ function check(ok, label, detail) {
    * liggend. De schijf staat met bottom in procenten van de hoogte en zij met
    * een marge in procenten van de breedte: elke nieuwe tegelverhouding kan haar
    * dus stil laten zweven of door de voorrand laten zakken. Het eindscherm
-   * niet: daar danst ze. Het lege beginscherm en het formulier staan in zaak 1. */
+   * niet: daar danst ze. Het maakformulier wel, met z'n tweeën en alleen; het
+   * lege beginscherm staat in zaak 1. */
   zaak(async () => {
     const meet = () => [...document.querySelectorAll('.stage-podium, .spiegel-podium')].filter(d => d.offsetParent && d.getBoundingClientRect().width).flatMap(d => {
       const dr = d.getBoundingClientRect(), plek = (d.parentElement.closest('[id]') || {}).id;
@@ -3435,13 +3440,15 @@ function check(ok, label, detail) {
     });
     const mis = [];
     for (const [w, h] of [[390, 844], [375, 640], [1024, 768], [640, 360]]) {
-      for (const [scherm, n] of [['profile', 2], ['profile', 4], ['profile', 6], ['dress', 0], ['game', 0]]) {
+      for (const [scherm, n] of [['profile', 2], ['profile', 4], ['profile', 6], ['dress', 0], ['game', 0], ['nieuw', 0], ['nieuw-meisje', 0]]) {
         const c = await browser.newContext({ viewport: { width: w, height: h } });
         await cacheFonts(c);
         const page = await c.newPage();
         page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
-        await page.goto(APP_URL + '&demo&star=p1&screen=' + scherm);
+        await page.goto(APP_URL + '&demo&star=p1&screen=' + (scherm.startsWith('nieuw') ? 'profile' : scherm));
         await page.waitForTimeout(900);
+        // het maakformulier: met z'n tweeën, en alleen zij (16:9, en 4:3 staand op een lange telefoon)
+        if (scherm.startsWith('nieuw')) await page.evaluate(b => openNewStar('profile', b), scherm.split('-')[1]);
         if (n) await page.evaluate(n => {
           const k0 = Object.keys(db.profiles)[0];
           for (let i = Object.keys(db.profiles).length; i < n; i++) {

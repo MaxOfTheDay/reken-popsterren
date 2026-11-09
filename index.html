@@ -3312,7 +3312,7 @@
   }
   @media (max-height: 480px) { .ster-tegel .stage-podium { bottom: 10.4%; } }
 
-  .leeg-tegel .stage-podium, .newstar-preview.wacht .stage-podium { width: 90%; bottom: 7%; }
+  .leeg-tegel .stage-podium { width: 90%; bottom: 7%; }
   .ster-tegel .stage-podium .podium, .leeg-tegel .stage-podium .podium, .newstar-preview .stage-podium .podium { --pod-dik: 4px; }
   .ster-tegel .stage.op-podium .avatar-holder { height: 84%; margin-bottom: 12%; }
 
@@ -10699,42 +10699,44 @@
 
 
 
-
-
-
-
-
-
-
-
-
-  .newstar-preview { display: flex; justify-content: center; }
-  .newstar-preview .stage {
-    width: 210px; aspect-ratio: 10 / 8;
-    border: 0; border-radius: var(--r-md);
+  .ns-kaart {
+    border-radius: var(--r-lg); overflow: hidden;
+    background: rgba(var(--w-deep-rgb), .94);
     box-shadow: 0 0 0 1.25px rgba(255,255,255,.15), 0 0 0 2.5px rgba(var(--nacht-1-rgb),.45),
-                0 0 22px rgba(var(--goud-gloed-rgb),.2), var(--e-2);
+                0 0 26px rgba(var(--goud-gloed-rgb),.18), var(--e-2);
+  }
+  .newstar-preview .stage {
+    width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 0; box-shadow: none;
   }
   .newstar-preview .stage::after { animation: none; opacity: .85; }
-
-
-
-
-
-
-
-
   .newstar-preview .deco { display: none; }
 
 
+  .newstar-preview .stage-podium { width: 34%; bottom: 9%; }
+  .newstar-preview:not(.wacht) .stage.op-podium .avatar-holder { height: 64%; margin-bottom: 6.6%; }
 
-  .newstar-preview .stage-podium { width: 62%; bottom: 10%; }
-  .newstar-preview:not(.wacht) .stage.op-podium .avatar-holder { height: 78%; margin-bottom: 11%; }
+  .newstar-preview.wacht .stage-podium { width: 56%; bottom: 7%; }
+  .newstar-preview .duo { width: 46%; height: 64%; margin-bottom: 7.6%; }
 
 
   .newstar-preview:not(.wacht) .stage::before {
     content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
-    background: radial-gradient(38% 58% at 50% 62%, rgba(var(--goud-glans-rgb), .34), transparent 70%);
+    background: radial-gradient(30% 58% at 50% 62%, rgba(var(--goud-glans-rgb), .34), transparent 70%);
+  }
+  @media (orientation: portrait) and (min-height: 780px) {
+    .newstar-preview .stage { aspect-ratio: 4 / 3; }
+    .newstar-preview .stage-podium { width: 42%; bottom: 8%; }
+    .newstar-preview:not(.wacht) .stage.op-podium .avatar-holder { height: 66%; margin-bottom: 7.8%; }
+    .newstar-preview.wacht .stage-podium { width: 66%; bottom: 7%; }
+    .newstar-preview .duo { width: 56%; height: 66%; margin-bottom: 9%; }
+  }
+
+
+
+  @media (orientation: portrait) and (max-height: 700px) {
+    .newstar-preview .stage { aspect-ratio: 2 / 1; }
+    .newstar-preview:not(.wacht) .stage.op-podium .avatar-holder { height: 62%; margin-bottom: 6.25%; }
+    .newstar-preview .duo { height: 62%; margin-bottom: 7.25%; }
   }
 
 
@@ -10742,7 +10744,56 @@
 
 
 
-  @media (max-height: 620px) { .newstar-preview .stage { width: 150px; } }
+  @media (orientation: landscape) and (max-height: 500px) {
+    #screen-newstar { --kolom: 820px; }
+    #screen-newstar .settings-panel { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 14px; }
+    .newstar-preview .stage { aspect-ratio: 2 / 1; }
+    .newstar-preview:not(.wacht) .stage.op-podium .avatar-holder { height: 62%; margin-bottom: 6.25%; }
+    .newstar-preview .duo { height: 62%; margin-bottom: 7.25%; }
+  }
+
+
+  .ns-weg { position: absolute; z-index: 1; pointer-events: none; display: flex; justify-content: center; }
+  .ns-weg svg { height: 100%; width: auto; display: block; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  .ns-naam {
+    position: absolute; z-index: 3; left: 50%; top: 5%; transform: translateX(-50%);
+    width: 64%; height: 44px; box-sizing: border-box; padding: 0 12px;
+    display: flex; align-items: center; gap: 6px; cursor: text;
+    border-radius: var(--r-pill);
+    background: rgba(var(--nacht-1-rgb), .35); border: 1.5px solid rgba(var(--goud-gloed-rgb), .42);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    transition: border-color var(--t-snel), box-shadow var(--t-snel), background-color var(--t-snel);
+  }
+  .ns-naam-pen { flex: none; width: 18px; font-size: 15px; line-height: 1; text-align: center; opacity: .85; }
+
+  .settings-sheet .ns-naam input[type=text], .settings-sheet .ns-naam input[type=text]:focus-visible {
+    flex: 1; min-width: 0; width: 100%; height: 100%; padding: 0; margin: 0;
+    border: 0; background: none; outline: none; box-shadow: none;
+    font: inherit; font-size: 21px; font-weight: 700; text-align: center;
+    color: rgb(var(--goud-rgb)); caret-color: rgb(var(--goud-rgb));
+    text-shadow: 0 1px 0 rgba(60,20,0,.55);
+  }
+  .settings-sheet .ns-naam input::placeholder { color: rgba(var(--goud-gloed-rgb), .55); text-shadow: none; opacity: 1; }
+  .ns-naam:not(.leeg) {
+    background: rgba(var(--nacht-1-rgb), .55); border-color: rgba(var(--goud-gloed-rgb), .75);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 0 0 3px rgba(var(--goud-gloed-rgb), .10),
+                0 0 18px rgba(var(--goud-gloed-rgb), .35);
+  }
+  .ns-naam:focus-within { border-color: rgba(var(--goud-gloed-rgb), .9); }
 
 
 
@@ -10778,83 +10829,88 @@
 
 
 
-
-  #screen-newstar .set-field + .set-field { margin-top: 10px; }
-  #screen-newstar .set-field { gap: 6px; }
-
-
-
-
-
-
-
-
-
-
-
-  #screen-newstar .ns-groep + .ns-groep { margin-top: 20px; }
-
-
-
-
-
-  #screen-newstar .set-field .lbl { font-size: var(--tx-label); }
-  #screen-newstar .chip {
-    border-width: 1.5px; border-color: var(--paper-border); background: var(--paper-tint);
+  .ns-kind {
+    display: flex; flex-direction: column; gap: 12px; padding: 14px 14px 16px;
+    background: rgba(255,255,255,.05); box-shadow: var(--vlak-top);
+    border-top: 1px solid rgba(255,255,255,.09); color: var(--c-white);
   }
-  @media (hover: hover) { #screen-newstar .chip:hover { border-color: var(--purple-light); background: var(--c-white); } }
+  #screen-newstar .ns-kind .chip {
+    border: 0; background: var(--vlak-hover); color: rgba(255,255,255,.72); box-shadow: none;
+  }
+  @media (hover: hover) { #screen-newstar .ns-kind .chip:hover { background: rgba(255,255,255,.22); } }
+  #screen-newstar .ns-kind .chip.on:not(.swatch) {
+    background: var(--c-white); color: var(--purple-mid); box-shadow: 0 2px 6px rgba(0,0,0,.3);
+  }
+
+
+  .ns-wie { display: flex; gap: 10px; }
+  #screen-newstar .ns-wie .chip {
+    flex: 1; min-width: 0; min-height: 48px; padding: 4px 12px 4px 6px; gap: 8px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: var(--r-pill); font-size: var(--tx-body); font-weight: 700;
+  }
+  .ns-wie .who-portrait { width: 34px; height: 34px; background: rgba(0,0,0,.3); border-color: rgba(255,255,255,.85); box-shadow: none; }
+  .ns-wie .who-portrait svg { top: -3px; width: 62px; height: auto; }
+
+  .ns-kleur-rij { display: flex; align-items: center; gap: 10px; }
+  .ns-ico { flex: none; width: 28px; display: flex; justify-content: center; color: rgba(255,255,255,.72); }
+  .ns-ico .oz-i { width: 28px; height: 28px; stroke-width: 1.8; }
+  .ns-ico .oz-i .vul { fill: currentColor; }
+  .ns-kleur-rij .chip-row { flex: 1; min-width: 0; }
 
 
 
 
-
-
-
-  #screen-newstar .chip.swatch { min-height: 44px; box-sizing: border-box; }
-
-
-  #screen-newstar .chip.swatch {
-    width: 48px; height: 48px; min-height: 48px; padding: 0; gap: 0;
+  #newstar-hair, #newstar-dress {
+    display: grid; grid-template-columns: repeat(5, minmax(0, 48px)); gap: 8px; justify-content: space-between;
+  }
+  #screen-newstar .ns-kind .chip.swatch {
+    width: 100%; height: auto; min-height: 0; aspect-ratio: 1; padding: 0; gap: 0;
     justify-content: center; border-radius: 50%;
   }
-  #screen-newstar .chip.swatch .sw { width: 30px; height: 30px; }
+  #screen-newstar .chip.swatch .sw { width: 64%; height: 64%; box-shadow: inset 0 -2px 3px rgba(0,0,0,.2); }
+  #screen-newstar .ns-kind .chip.swatch.on { box-shadow: 0 0 0 3px var(--c-white); }
 
 
 
 
 
-  #newstar-hair, #newstar-dress { display: grid; grid-template-columns: repeat(5, minmax(0, 48px)); gap: 7px; }
-  #screen-newstar #newstar-hair .chip.swatch, #screen-newstar #newstar-dress .chip.swatch {
-    width: 100%; height: auto; min-height: 0; aspect-ratio: 1;
+
+  .ns-kop { margin: 0 0 10px; font-size: var(--tx-body); font-weight: 700; color: var(--paper-ink); }
+
+
+
+
+  #screen-newstar .newstar-vel .chip {
+    border-width: 1.5px; border-color: var(--paper-border); background: var(--paper-tint);
   }
-  #screen-newstar .chip.swatch.on { box-shadow: 0 0 0 3px var(--c-white), 0 0 0 6px var(--purple-mid); }
+  @media (hover: hover) { #screen-newstar .newstar-vel .chip:hover { border-color: var(--purple-light); background: var(--c-white); } }
+  #screen-newstar .newstar-vel .chip.on { border-color: transparent; background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: none; }
 
-  .ns-ouder {
-    display: flex; align-items: center; gap: 10px; margin: 2px 0 10px;
-    font-size: var(--tx-klein); font-weight: 700; color: var(--purple-mid); opacity: .75;
+
+  .ns-spoor { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  #screen-newstar .ns-spoor .chip {
+    display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 64px; padding: 8px 10px;
+    border-radius: var(--r-md); text-align: left;
+    background: var(--c-white); box-shadow: 0 2px 0 var(--paper-border);
   }
-  .ns-ouder::before, .ns-ouder::after { content: ''; flex: 1; height: 1px; background: var(--paper-border); }
+  #screen-newstar .ns-spoor .chip.on { box-shadow: 0 2px 6px rgba(var(--nacht-1-rgb),.25); }
+  .ns-spoor .mc-ico { flex: none; line-height: 0; }
+  .ns-spoor .mc-ico svg { width: 34px; height: 34px; }
+  .ns-spoor .mc-label {
+    display: flex; flex-direction: column; min-width: 0; line-height: 1.15;
+    font-size: var(--tx-body); font-weight: 700; color: var(--purple-mid); white-space: nowrap;
+  }
+  .ns-spoor .mc-label small { font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); }
+  .ns-spoor .chip.on .mc-label, .ns-spoor .chip.on .mc-label small { color: var(--c-white); }
 
 
-
-
-
-
-
-
-  #screen-newstar .chip.on { border-color: transparent; background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: none; }
-  #screen-newstar .set-reveal { margin-top: 16px; }
-  #screen-newstar input[type=text] { border-width: 1.5px; }
-
-
-
-
-
-
-
-
-
-  #screen-newstar .mode-row .chip.gestapeld { min-width: 0; }
+  @media (max-width: 380px) {
+    .ns-spoor .mc-ico svg { width: 28px; height: 28px; }
+    #screen-newstar .ns-spoor .chip { gap: 8px; padding: 8px; }
+    .ns-spoor .mc-label { font-size: var(--tx-label); }
+  }
+  #screen-newstar .set-reveal { margin-top: 10px; }
 
 
 
@@ -10908,6 +10964,9 @@
   }
 
 
+  #screen-newstar.past .newstar-voet { border-top-color: transparent; box-shadow: none; }
+
+
 
 
 
@@ -10956,6 +11015,15 @@
 
     .vraagt { animation: none; box-shadow: 0 0 0 3px rgba(var(--purple-mid-rgb), .5); }
   }
+
+
+  .ns-kind .vraagt, .ns-naam.vraagt { animation-name: vraagtLicht; }
+  @keyframes vraagtLicht {
+    0%   { box-shadow: 0 0 0 0 rgba(255,255,255,.6); }
+    65%  { box-shadow: 0 0 0 11px rgba(255,255,255,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+  }
+  @media (prefers-reduced-motion: reduce) { .ns-kind .vraagt, .ns-naam.vraagt { box-shadow: 0 0 0 3px rgba(255,255,255,.6); } }
 
 
 
@@ -31222,6 +31290,7 @@ function openNewStar(from, base) {
   };
   if (BASES[base]) nsZetBase(base);
   renderNewStar();
+  nsPasVolgen();
   toonHub('screen-newstar');
   const el = $('screen-newstar');
   if (el) el.scrollTop = 0;
@@ -31237,6 +31306,19 @@ function nsLook(b) {
 function nsZetBase(b) {
   newStar.base = b;
   Object.assign(newStar, nsLook(b));
+}
+
+
+
+
+let nsPasWacht = null;
+function nsPasVolgen() {
+  if (nsPasWacht || typeof ResizeObserver === 'undefined') return;
+  const scr = $('screen-newstar'), body = $('newstar-body');
+  if (!scr || !body) return;
+  nsPasWacht = new ResizeObserver(() => scr.classList.toggle('past', scr.scrollHeight <= scr.clientHeight + 1));
+  nsPasWacht.observe(scr);
+  nsPasWacht.observe(body);
 }
 function closeNewStar() {
   newStar = null;
@@ -31255,6 +31337,40 @@ function swatchChips(group, ids, sel) {
       + ` aria-label="${esc(it.name)}" aria-pressed="${id === sel}" title="${esc(it.name)}">`
       + `<span class="sw" style="background:${it.color}"></span></button>`;
   }).join('');
+}
+
+
+
+const NS_ICO = (() => {
+  const i = d => `<svg class="oz-i" viewBox="0 0 24 24">${d}</svg>`;
+  return {
+    haar: i('<path class="vul" d="M5.5 12.2C5.5 7.9 8.4 4.8 12 4.8s6.5 3.1 6.5 7.4c-2.6-.2-5.1-1.5-6.5-3.6-1.4 2.1-3.9 3.4-6.5 3.6Z"/><path d="M6.6 12.4c.4 3.8 2.6 6.6 5.4 6.6s5-2.8 5.4-6.6"/><circle class="vul" cx="3.6" cy="12.6" r="2.2"/><circle class="vul" cx="20.4" cy="12.6" r="2.2"/>'),
+    kleren: i('<path d="M8.5 3.5 4 6 2 10.5l3.2 1.4V20.5h13.6v-8.6l3.2-1.4L20 6l-4.5-2.5c-.6 1.7-1.9 2.7-3.5 2.7s-2.9-1-3.5-2.7Z"/>'),
+  };
+})();
+
+
+function nsKop() {
+  const naam = newStar && newStar.name.trim();
+  return naam ? `Hoe speelt ${naam}?` : 'Hoe speelt je ster?';
+}
+
+
+
+
+
+
+function nsSamenvatting(s) {
+  if (s.track === 'count') return `Tellen tot ${s.qmax || 10}`;
+  const woord = { '+': 'plus', '-': 'min', 'x': 'keer', ':': 'delen' };
+  const ops = ['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => woord[o]);
+  const lijst = ops.length > 1 ? ops.slice(0, -1).join(', ') + ' en ' + ops[ops.length - 1] : (ops[0] || '');
+  const totRij = s.padTot && padRijen(s).rijen.slice(-1)[0];
+  const tot = (s.ops.includes('+') || s.ops.includes('-')) ? ` tot ${totRij ? totRij.naam.toLowerCase() : s.max}` : '';
+  const tafels = themaAan(s, 'tafels') && zelfGekozen(s) ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
+  const themas = PLAATJE.filter(k => themaAan(s, k)).map(k => ' · ' + THEMA[k].naam).join('');
+  const zin = (lijst + tot + tafels + themas).replace(/^ · /, '');
+  return zin.charAt(0).toUpperCase() + zin.slice(1);
 }
 function renderNewStar() {
   const n = newStar;
@@ -31279,61 +31395,78 @@ function renderNewStar() {
   const scr = $('screen-newstar');
   const keep = scr ? scr.scrollTop : 0;
   const pop = $('newstar-body').querySelector('#newstar-stage .avatar-holder');
-  const klok = pop ? animatieKlok(pop) : null;
 
 
 
 
-  const halfChip = (v, ico, label, on) => `<button class="chip gestapeld${on ? ' on' : ''}" data-v="${v}">`
-    + `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${label}</span></button>`;
+
+
+  const klok = pop ? new Map([...animatieKlok(pop)].map(([k, t]) => [k.replace(/ (dancing|move-[a-z]+)/g, ''), t])) : null;
+
+
+
+
+
+
+
+
+
+
+
+  const wieKnop = b => {
+    const k = nsLook(b.id);
+    return `<button class="chip ns-wie-knop${b.id === n.base ? ' on' : ''}" data-v="${b.id}">`
+      + `<span class="who-portrait" aria-hidden="true">${avatarSVG(defaultProfile('', k.dress, { hair: k.hair, base: b.id }), 54)}</span>`
+      + `<span>${b.name}</span></button>`;
+  };
+
+
+
+  const spoorKnop = (v, woord, sub) => `<button class="chip ns-spoor-knop${s.track === v ? ' on' : ''}" data-v="${v}">`
+    + `<span class="mc-ico" aria-hidden="true">${spoorIcoon(v, 34)}</span><span class="mc-label">${woord}<small>${sub}</small></span></button>`;
 
 
 
 
   $('newstar-body').innerHTML = `<div class="settings-panel">
-    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage">${wacht
-      ? duoHtml(b => defaultProfile('', nsLook(b).dress, { hair: nsLook(b).hair, base: b }))
-      : `<div class="avatar-holder idle levend">${pasLaag(avatarSVG(preview, 132))}</div>`}</div></div>
+    <div class="ns-kaart">
+      <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage">
+        <label class="ns-naam${n.name.trim() ? '' : ' leeg'}"><span class="ns-naam-pen" aria-hidden="true">✏️</span>`
+        + `<input type="text" id="newstar-name" value="${esc(n.name)}" maxlength="12" placeholder="Jouw naam" aria-label="Naam" autocomplete="off" spellcheck="false" enterkeyhint="done">`
+        + `<span class="ns-naam-pen" aria-hidden="true"></span></label>
+        ${wacht
+        ? duoHtml(b => defaultProfile('', nsLook(b).dress, { hair: nsLook(b).hair, base: b }))
+        : `<div class="avatar-holder idle levend">${pasLaag(avatarSVG(preview, 132))}</div>`}</div></div>
+      <div class="ns-kind">
+        <div class="ns-wie" id="newstar-base" role="group" aria-label="Wie ben je?">${BASE_CHOICES.map(wieKnop).join('')}</div>
+        <div class="ns-kleur-rij"><span class="ns-ico" aria-hidden="true">${NS_ICO.haar}</span>
+          <div class="chip-row" id="newstar-hair" role="group" aria-label="Haar">${swatchChips('hair', START_HAIR, toon('hair'))}</div></div>
+        <div class="ns-kleur-rij"><span class="ns-ico" aria-hidden="true">${NS_ICO.kleren}</span>
+          <div class="chip-row" id="newstar-dress" role="group" aria-label="Kleren">${swatchChips('dress', START_DRESS, toon('dress'))}</div></div>
+      </div>
+    </div>
     <div class="set-card newstar-vel">
-      <div class="ns-groep">
-        <div class="set-field"><label class="lbl">Wie ben je?</label>
-          <div class="chip-row mode-row" id="newstar-base">${BASE_CHOICES.map(b =>
-            halfChip(b.id, b.emoji, b.name, b.id === n.base)).join('')}</div></div>
-        <div class="set-field"><label class="lbl" for="newstar-name">Naam</label>
-          <div class="name-edit-wrap"><input type="text" id="newstar-name" value="${esc(n.name)}" maxlength="12" placeholder="Hoe heet je ster?" autocomplete="off" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
+      <!-- Vanaf hier de ouder. Eén kop, en die noemt haar (dezelfde vraag als in
+           haar blad bij Voor ouders); het papier zegt al voor wie dit is. -->
+      <div class="ns-kop" id="newstar-kop">👪 ${esc(nsKop())}</div>
+      <div class="ns-spoor" id="newstar-track" role="group" aria-label="Tellen of rekenen">
+        ${spoorKnop('count', 'Leren tellen', 'met plaatjes')}
+        ${spoorKnop('math', 'Rekenen', 'met sommen')}
       </div>
-      <div class="ns-groep">
-        <div class="set-field"><label class="lbl">Haar</label>
-          <div class="chip-row" id="newstar-hair">${swatchChips('hair', START_HAIR, toon('hair'))}</div></div>
-        <div class="set-field"><label class="lbl">Kleren</label>
-          <div class="chip-row" id="newstar-dress">${swatchChips('dress', START_DRESS, toon('dress'))}</div></div>
-      </div>
-      <div class="ns-groep">
-        <!-- Tot hier kiest het kind; vanaf hier de ouder. Dezelfde woorden als
-             bovenaan het blad "als app". Geen kaart en geen uitleg: één lijntje. -->
-        <div class="ns-ouder">Voor papa of mama</div>
-        <div class="set-field"><label class="lbl">Hoe speel je?</label>
-          <div class="chip-row mode-row" id="newstar-track">
-            ${halfChip('count', spoorIcoon('count', 30), 'Leren tellen', s.track === 'count')}
-            ${halfChip('math', spoorIcoon('math', 30), 'Rekenen', s.track === 'math')}
-          </div>
-          ${s.track ? `<div class="note">${s.track === 'count'
-            ? 'Nog niet lezen: tellen met plaatjes.'
-            : 'Met cijfers en sommen.'}</div>` : ''}</div>
-        <!-- De oefening hangt van de modus af, dus pas zichtbaar als die gekozen is. -->
-        ${s.track ? `<details class="set-reveal" id="newstar-oefen"${n.open ? ' open' : ''}>
-          <summary>
-            <span class="sr-ico" aria-hidden="true">⚙️</span>
-            <span class="sr-text"><span class="sr-title">Oefening</span>
-              <span class="sr-val">${oefenSamenvatting(s)}</span></span>
-          </summary>
-          <div class="set-reveal-body">
-            ${s.track === 'math' ? `<div class="reveal-group">${oeLbl('Wat oefent je ster?')}${themaTegels(s, 'ns-')}</div>` : ''}
-            ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${oeLbl(g.kop)}${g.html}</div>`).join('')}
-            <div class="note" style="margin-top:14px">Later te wijzigen bij ⚙️ Ouders.</div>
-          </div>
-        </details>` : ''}
-      </div>
+      <!-- De oefening hangt van de modus af, dus pas zichtbaar als die gekozen is.
+           Dicht zegt hij in gewone woorden waar ze mee begint (nsSamenvatting). -->
+      ${s.track ? `<details class="set-reveal" id="newstar-oefen"${n.open ? ' open' : ''}>
+        <summary>
+          <span class="sr-ico" aria-hidden="true">⚙️</span>
+          <span class="sr-text"><span class="sr-title">Oefening</span>
+            <span class="sr-val">${esc(nsSamenvatting(s))}</span></span>
+        </summary>
+        <div class="set-reveal-body">
+          ${s.track === 'math' ? `<div class="reveal-group">${oeLbl('Wat oefent je ster?')}${themaTegels(s, 'ns-')}</div>` : ''}
+          ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${oeLbl(g.kop)}${g.html}</div>`).join('')}
+          <div class="note" style="margin-top:14px">Later te wijzigen bij ⚙️ Ouders.</div>
+        </div>
+      </details>` : ''}
       <div class="newstar-voet">
         <button class="btn newstar-go" id="newstar-go" aria-disabled="${ok ? 'false' : 'true'}">🌟 Klaar!</button>
       </div>
@@ -31346,16 +31479,17 @@ function renderNewStar() {
 
 
   if (klok) $('newstar-stage').querySelectorAll('.avatar-holder').forEach(el => klokTerug(el, klok));
-  $('newstar-stage').querySelectorAll('[data-base]').forEach(el => el.onclick = () => {
-    sndClick(); nsZetBase(el.dataset.base); renderNewStar();
-  });
+  $('newstar-stage').querySelectorAll('[data-base]').forEach(el => el.onclick = () => { sndClick(); nsKies(el.dataset.base); });
 
 
 
   const bindChips = (id, fn) => { const el = $(id); if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => { sndClick(); fn(c.dataset.v); renderNewStar(); }); };
-  bindChips('newstar-base',  v => nsZetBase(v));
-  bindChips('newstar-hair',  v => { newStar.hair = v; newStar.gekozen.hair = true; });
-  bindChips('newstar-dress', v => { newStar.dress = v; newStar.gekozen.dress = true; });
+
+
+  const wie = $('newstar-base');
+  if (wie) wie.querySelectorAll('.chip').forEach(c => c.onclick = () => { sndClick(); nsKies(c.dataset.v); });
+  bindChips('newstar-hair',  v => { newStar.hair = v; newStar.gekozen.hair = true; nsDans(); });
+  bindChips('newstar-dress', v => { newStar.dress = v; newStar.gekozen.dress = true; nsDans(); });
   bindChips('newstar-track', v => {
     s.track = v;
 
@@ -31376,6 +31510,11 @@ function renderNewStar() {
   const nm = $('newstar-name');
   nm.oninput = e => {
     newStar.name = e.target.value;
+
+
+    nm.parentElement.classList.toggle('leeg', !newStar.name.trim());
+    const kop = $('newstar-kop');
+    if (kop) kop.textContent = '👪 ' + nsKop();
     merkKlaarKnop();
   };
 
@@ -31402,6 +31541,95 @@ function renderNewStar() {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+function nsKies(b) {
+  const stage = $('newstar-stage');
+  let duo = null;
+  if (!newStar.base && stage && !motionOff()) {
+    const s0 = stage.getBoundingClientRect();
+    duo = [...stage.querySelectorAll('[data-base]')].map(h => {
+      const r = h.getBoundingClientRect(), laag = h.querySelector('.pas-laag');
+      return { wie: h.dataset.base, x: r.left - s0.left, y: r.top - s0.top, w: r.width, h: r.height,
+        rechts: r.left + r.width / 2 > s0.left + s0.width / 2, svg: laag ? laag.innerHTML : '',
+        pop: laag && laag.querySelector('svg') ? laag.querySelector('svg').getBoundingClientRect() : null };
+    });
+    if (!duo.every(d => d.svg && d.pop)) duo = null;
+  }
+  nsZetBase(b);
+  renderNewStar();
+  if (!duo) { naOpbouw(() => nsBuig()); return; }
+
+
+
+
+
+  const nu = $('newstar-stage'), pop = nu.querySelector('.avatar-holder');
+  nu.parentElement.classList.add('wacht');
+  pop.style.opacity = '0';
+  const kopie = duo.map(d => {
+    const g = document.createElement('div');
+    g.className = 'ns-weg';
+    g.setAttribute('aria-hidden', 'true');
+    g.style.cssText = `left:${d.x}px;top:${d.y}px;width:${d.w}px;height:${d.h}px`;
+    g.innerHTML = d.svg;
+    nu.appendChild(g);
+    return g;
+  });
+  naOpbouw(() => nsGlij(duo.find(d => d.wie === b), kopie[duo.findIndex(d => d.wie === b)],
+    duo.find(d => d.wie !== b), kopie[duo.findIndex(d => d.wie !== b)]));
+}
+function nsGlij(zij, zijKopie, ander, anderKopie) {
+  const stage = $('newstar-stage');
+  const pop = stage && stage.querySelector('.avatar-holder');
+  const schijf = stage && stage.querySelector('.stage-podium');
+  const opruimen = () => { zijKopie.remove(); anderKopie.remove(); if (pop) pop.style.opacity = ''; if (stage) stage.parentElement.classList.remove('wacht'); };
+  if (!pop || !schijf || !pop.animate) { opruimen(); return; }
+  const breed = schijf.getBoundingClientRect().width;
+  stage.parentElement.classList.remove('wacht');
+  const smal = schijf.getBoundingClientRect().width;
+  const svg = pop.querySelector('.pas-laag svg'), naar = svg && svg.getBoundingClientRect();
+  zijKopie.remove();
+  pop.style.opacity = '';
+  const vorm = { duration: NS_GLIJ, easing: 'cubic-bezier(.3,.7,.2,1)' };
+  if (smal) schijf.animate([{ transform: `scaleX(${breed / smal})` }, { transform: 'none' }], vorm);
+  if (naar && naar.height) {
+    const van = zij.pop;
+    const dx = (van.left + van.width / 2) - (naar.left + naar.width / 2), dy = van.bottom - naar.bottom;
+    pop.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${van.height / naar.height})` }, { transform: 'none' }], vorm);
+  }
+  anderKopie.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${ander.rechts ? 45 : -45}%)` }],
+    { duration: NS_GLIJ * .7, easing: 'ease-in', fill: 'forwards' }).onfinish = () => anderKopie.remove();
+
+  setTimeout(nsBuig, NS_GLIJ);
+}
+function nsBuig() {
+  const stage = $('newstar-stage');
+  const pop = stage && stage.querySelector('.avatar-holder');
+  if (pop && !pop.closest('.wacht') && zetPas(pop, BUIGING)) pasUit(pop);
+}
+const NS_GLIJ = 320;
+
+
+
+function nsDans() {
+  const pas = pick(MOVES.filter(m => m.cls !== 'move-noot'));
+  naOpbouw(() => {
+    const stage = $('newstar-stage');
+    if (stage) stage.querySelectorAll('.avatar-holder').forEach(el => { if (zetPas(el, pas)) pasUit(el); });
+  });
+}
+
+
 function nieuweSterKlaar() { return !!(newStar && newStar.name.trim() && newStar.base && newStar.settings.track); }
 function merkKlaarKnop() {
   const go = $('newstar-go');
@@ -31425,7 +31653,7 @@ function wijsOntbrekende() {
 
   const chips = id => [...($(id) || { querySelectorAll: () => [] }).querySelectorAll('.chip')];
   const doelen = !newStar.base ? chips('newstar-base')
-    : !newStar.name.trim() ? [$('newstar-name')].filter(Boolean)
+    : !newStar.name.trim() ? [$('newstar-name') && $('newstar-name').parentElement].filter(Boolean)
     : chips('newstar-track');
   if (!doelen.length) return;
   sndClick();

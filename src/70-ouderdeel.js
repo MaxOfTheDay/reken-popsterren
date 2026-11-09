@@ -38,6 +38,7 @@ function openNewStar(from, base) {
   };
   if (BASES[base]) nsZetBase(base);
   renderNewStar();
+  nsPasVolgen();
   toonHub('screen-newstar');
   const el = $('screen-newstar');
   if (el) el.scrollTop = 0;
@@ -53,6 +54,19 @@ function nsLook(b) {
 function nsZetBase(b) {
   newStar.base = b;
   Object.assign(newStar, nsLook(b));
+}
+/* Past het formulier op één scherm? Dan krijgt het scherm .past en verliest de
+   plakkende voet zijn naad (zie .newstar-voet). Een ResizeObserver zegt het,
+   zodat er nooit midden in een tik gemeten wordt: hij vuurt na het opmaken, bij
+   een hertekening, een openklapper, een draai of een toetsenbord. */
+let nsPasWacht = null;
+function nsPasVolgen() {
+  if (nsPasWacht || typeof ResizeObserver === 'undefined') return;
+  const scr = $('screen-newstar'), body = $('newstar-body');
+  if (!scr || !body) return;
+  nsPasWacht = new ResizeObserver(() => scr.classList.toggle('past', scr.scrollHeight <= scr.clientHeight + 1));
+  nsPasWacht.observe(scr);
+  nsPasWacht.observe(body);
 }
 function closeNewStar() {
   newStar = null;
@@ -71,6 +85,40 @@ function swatchChips(group, ids, sel) {
       + ` aria-label="${esc(it.name)}" aria-pressed="${id === sel}" title="${esc(it.name)}">`
       + `<span class="sw" style="background:${it.color}"></span></button>`;
   }).join('');
+}
+/* Haar en kleren: een getekend icoontje voor de rij in plaats van een woord, in
+   de lijn van de andere lijniconen (ozIco). Een hoofdje met staartjes, en een
+   T-shirt. */
+const NS_ICO = (() => {
+  const i = d => `<svg class="oz-i" viewBox="0 0 24 24">${d}</svg>`;
+  return {
+    haar: i('<path class="vul" d="M5.5 12.2C5.5 7.9 8.4 4.8 12 4.8s6.5 3.1 6.5 7.4c-2.6-.2-5.1-1.5-6.5-3.6-1.4 2.1-3.9 3.4-6.5 3.6Z"/><path d="M6.6 12.4c.4 3.8 2.6 6.6 5.4 6.6s5-2.8 5.4-6.6"/><circle class="vul" cx="3.6" cy="12.6" r="2.2"/><circle class="vul" cx="20.4" cy="12.6" r="2.2"/>'),
+    kleren: i('<path d="M8.5 3.5 4 6 2 10.5l3.2 1.4V20.5h13.6v-8.6l3.2-1.4L20 6l-4.5-2.5c-.6 1.7-1.9 2.7-3.5 2.7s-2.9-1-3.5-2.7Z"/>'),
+  };
+})();
+/* De kop boven het ouderdeel: "Hoe speelt Noor?", zodra er een naam is. Loopt mee
+   met het typen (zie nm.oninput). */
+function nsKop() {
+  const naam = newStar && newStar.name.trim();
+  return naam ? `Hoe speelt ${naam}?` : 'Hoe speelt je ster?';
+}
+/* Wat de dichte Oefening op het maakformulier zegt: in gewone woorden, zonder
+   tekens. Een ouder die hier voor het eerst komt leest "Plus en min tot 20", en
+   niet "+ − · tot 20 · kiezen · 8 vragen" -- dat is de taal van Voor ouders,
+   waar de velden er meteen naast staan (oefenSamenvatting). Hoe een kind
+   antwoordt en hoeveel vragen er in een show zitten staan in de openklapper zelf;
+   die zijn voor de eerste show niet de vraag. */
+function nsSamenvatting(s) {
+  if (s.track === 'count') return `Tellen tot ${s.qmax || 10}`;
+  const woord = { '+': 'plus', '-': 'min', 'x': 'keer', ':': 'delen' };
+  const ops = ['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => woord[o]);
+  const lijst = ops.length > 1 ? ops.slice(0, -1).join(', ') + ' en ' + ops[ops.length - 1] : (ops[0] || '');
+  const totRij = s.padTot && padRijen(s).rijen.slice(-1)[0];
+  const tot = (s.ops.includes('+') || s.ops.includes('-')) ? ` tot ${totRij ? totRij.naam.toLowerCase() : s.max}` : '';
+  const tafels = themaAan(s, 'tafels') && zelfGekozen(s) ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
+  const themas = PLAATJE.filter(k => themaAan(s, k)).map(k => ' · ' + THEMA[k].naam).join('');
+  const zin = (lijst + tot + tafels + themas).replace(/^ · /, '');
+  return zin.charAt(0).toUpperCase() + zin.slice(1);
 }
 function renderNewStar() {
   const n = newStar;
@@ -95,61 +143,78 @@ function renderNewStar() {
   const scr = $('screen-newstar');
   const keep = scr ? scr.scrollTop : 0;
   const pop = $('newstar-body').querySelector('#newstar-stage .avatar-holder');
-  const klok = pop ? animatieKlok(pop) : null;
-  /* De twee zwaarste keuzes ("wie ben je?" en "hoe speel je?") als twee volle
-     helften met het icoon boven het woord: exact het onderdeel dat het ouderdeel
-     voor dezelfde vragen gebruikt (zie de moduskeuze in themaKaartHtml). Ze stonden
-     hier als gewone pillen -- dezelfde vraag, twee verschillende bedieningen. */
-  const halfChip = (v, ico, label, on) => `<button class="chip gestapeld${on ? ' on' : ''}" data-v="${v}">`
-    + `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${label}</span></button>`;
-  /* Het voorbeeld staat BUITEN het vel, op de tekening -- zie .newstar-preview in
-     het stijlblad. Daar staat ook waarom: binnen het vel is het een icoontje op
-     papier, erbuiten is het dezelfde pop op dezelfde poort als op de
-     sterrenkeuze, en het vel eronder is er een schermhoogte korter van. */
+  /* Een pasje dat nog loopt (de buiging, een dansje bij een kleur) breekt de
+     hertekening af. animatieKlok onthoudt het wiegen onder de klassen van de
+     houder, en met "dancing move-…" erop vond de nieuwe houder (zonder pasje) zijn
+     wiegen niet terug en begon ze opnieuw. Dus de klok zonder die klassen. Niet
+     eerst stilStaan: dat herstart het knikken in de tekening, en dan liep haar
+     hoofd een tel achter op haar lijf. */
+  const klok = pop ? new Map([...animatieKlok(pop)].map(([k, t]) => [k.replace(/ (dancing|move-[a-z]+)/g, ''), t])) : null;
+  /* EEN TEGEL, EN DAARONDER HET PAPIER. Wat het kind kiest (wie, haar, kleren)
+     en wat het ziet (zij, op haar podium, met haar naam erboven) zijn samen één
+     kaart, gebouwd zoals de sterrentegel op het beginscherm: bovenaan het podium,
+     daaronder een donkere band. Zo bouw je zichtbaar de tegel waar je straks op
+     tikt. Wat de ouder kiest (hoe ze speelt, de oefening, Klaar) staat eronder op
+     wit papier, net als in Voor ouders. Donker glas is van het kind, papier van de
+     ouder -- dezelfde afspraak als in de rest van de app.
+
+     Geen kopjes boven de keuzes van het kind: het leest nog niet. Wie kies je met
+     twee hoofdjes, haar en kleren met een getekend icoontje, de naam met een
+     potloodje. De woorden staan er wel voor de schermlezer (aria-label). */
+  const wieKnop = b => {
+    const k = nsLook(b.id);
+    return `<button class="chip ns-wie-knop${b.id === n.base ? ' on' : ''}" data-v="${b.id}">`
+      + `<span class="who-portrait" aria-hidden="true">${avatarSVG(defaultProfile('', k.dress, { hair: k.hair, base: b.id }), 54)}</span>`
+      + `<span>${b.name}</span></button>`;
+  };
+  /* "Hoe speelt ze?" als twee knoppen naast elkaar, met icoon, naam en een kleine
+     regel die zegt wat het verschil is. Een segmentbalk was compacter, maar de
+     helft die niet aanstond leek daar op gewone tekst. */
+  const spoorKnop = (v, woord, sub) => `<button class="chip ns-spoor-knop${s.track === v ? ' on' : ''}" data-v="${v}">`
+    + `<span class="mc-ico" aria-hidden="true">${spoorIcoon(v, 34)}</span><span class="mc-label">${woord}<small>${sub}</small></span></button>`;
+  /* De naam staat in de lichtjes boven haar hoofd, en het veld ís die lichtjes:
+     één pil van vaste maat. Leeg staat er "Jouw naam" in gedempt goud; wie typt,
+     ziet dezelfde letters in dezelfde maat fel goud worden. Er verschuift niets --
+     alleen het licht gaat aan (.ns-naam:not(.leeg), zie het stijlblad). */
   $('newstar-body').innerHTML = `<div class="settings-panel">
-    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage">${wacht
-      ? duoHtml(b => defaultProfile('', nsLook(b).dress, { hair: nsLook(b).hair, base: b }))
-      : `<div class="avatar-holder idle levend">${pasLaag(avatarSVG(preview, 132))}</div>`}</div></div>
+    <div class="ns-kaart">
+      <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage">
+        <label class="ns-naam${n.name.trim() ? '' : ' leeg'}"><span class="ns-naam-pen" aria-hidden="true">✏️</span>`
+        + `<input type="text" id="newstar-name" value="${esc(n.name)}" maxlength="12" placeholder="Jouw naam" aria-label="Naam" autocomplete="off" spellcheck="false" enterkeyhint="done">`
+        + `<span class="ns-naam-pen" aria-hidden="true"></span></label>
+        ${wacht
+        ? duoHtml(b => defaultProfile('', nsLook(b).dress, { hair: nsLook(b).hair, base: b }))
+        : `<div class="avatar-holder idle levend">${pasLaag(avatarSVG(preview, 132))}</div>`}</div></div>
+      <div class="ns-kind">
+        <div class="ns-wie" id="newstar-base" role="group" aria-label="Wie ben je?">${BASE_CHOICES.map(wieKnop).join('')}</div>
+        <div class="ns-kleur-rij"><span class="ns-ico" aria-hidden="true">${NS_ICO.haar}</span>
+          <div class="chip-row" id="newstar-hair" role="group" aria-label="Haar">${swatchChips('hair', START_HAIR, toon('hair'))}</div></div>
+        <div class="ns-kleur-rij"><span class="ns-ico" aria-hidden="true">${NS_ICO.kleren}</span>
+          <div class="chip-row" id="newstar-dress" role="group" aria-label="Kleren">${swatchChips('dress', START_DRESS, toon('dress'))}</div></div>
+      </div>
+    </div>
     <div class="set-card newstar-vel">
-      <div class="ns-groep">
-        <div class="set-field"><label class="lbl">Wie ben je?</label>
-          <div class="chip-row mode-row" id="newstar-base">${BASE_CHOICES.map(b =>
-            halfChip(b.id, b.emoji, b.name, b.id === n.base)).join('')}</div></div>
-        <div class="set-field"><label class="lbl" for="newstar-name">Naam</label>
-          <div class="name-edit-wrap"><input type="text" id="newstar-name" value="${esc(n.name)}" maxlength="12" placeholder="Hoe heet je ster?" autocomplete="off" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
+      <!-- Vanaf hier de ouder. Eén kop, en die noemt haar (dezelfde vraag als in
+           haar blad bij Voor ouders); het papier zegt al voor wie dit is. -->
+      <div class="ns-kop" id="newstar-kop">👪 ${esc(nsKop())}</div>
+      <div class="ns-spoor" id="newstar-track" role="group" aria-label="Tellen of rekenen">
+        ${spoorKnop('count', 'Leren tellen', 'met plaatjes')}
+        ${spoorKnop('math', 'Rekenen', 'met sommen')}
       </div>
-      <div class="ns-groep">
-        <div class="set-field"><label class="lbl">Haar</label>
-          <div class="chip-row" id="newstar-hair">${swatchChips('hair', START_HAIR, toon('hair'))}</div></div>
-        <div class="set-field"><label class="lbl">Kleren</label>
-          <div class="chip-row" id="newstar-dress">${swatchChips('dress', START_DRESS, toon('dress'))}</div></div>
-      </div>
-      <div class="ns-groep">
-        <!-- Tot hier kiest het kind; vanaf hier de ouder. Dezelfde woorden als
-             bovenaan het blad "als app". Geen kaart en geen uitleg: één lijntje. -->
-        <div class="ns-ouder">Voor papa of mama</div>
-        <div class="set-field"><label class="lbl">Hoe speel je?</label>
-          <div class="chip-row mode-row" id="newstar-track">
-            ${halfChip('count', spoorIcoon('count', 30), 'Leren tellen', s.track === 'count')}
-            ${halfChip('math', spoorIcoon('math', 30), 'Rekenen', s.track === 'math')}
-          </div>
-          ${s.track ? `<div class="note">${s.track === 'count'
-            ? 'Nog niet lezen: tellen met plaatjes.'
-            : 'Met cijfers en sommen.'}</div>` : ''}</div>
-        <!-- De oefening hangt van de modus af, dus pas zichtbaar als die gekozen is. -->
-        ${s.track ? `<details class="set-reveal" id="newstar-oefen"${n.open ? ' open' : ''}>
-          <summary>
-            <span class="sr-ico" aria-hidden="true">⚙️</span>
-            <span class="sr-text"><span class="sr-title">Oefening</span>
-              <span class="sr-val">${oefenSamenvatting(s)}</span></span>
-          </summary>
-          <div class="set-reveal-body">
-            ${s.track === 'math' ? `<div class="reveal-group">${oeLbl('Wat oefent je ster?')}${themaTegels(s, 'ns-')}</div>` : ''}
-            ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${oeLbl(g.kop)}${g.html}</div>`).join('')}
-            <div class="note" style="margin-top:14px">Later te wijzigen bij ⚙️ Ouders.</div>
-          </div>
-        </details>` : ''}
-      </div>
+      <!-- De oefening hangt van de modus af, dus pas zichtbaar als die gekozen is.
+           Dicht zegt hij in gewone woorden waar ze mee begint (nsSamenvatting). -->
+      ${s.track ? `<details class="set-reveal" id="newstar-oefen"${n.open ? ' open' : ''}>
+        <summary>
+          <span class="sr-ico" aria-hidden="true">⚙️</span>
+          <span class="sr-text"><span class="sr-title">Oefening</span>
+            <span class="sr-val">${esc(nsSamenvatting(s))}</span></span>
+        </summary>
+        <div class="set-reveal-body">
+          ${s.track === 'math' ? `<div class="reveal-group">${oeLbl('Wat oefent je ster?')}${themaTegels(s, 'ns-')}</div>` : ''}
+          ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${oeLbl(g.kop)}${g.html}</div>`).join('')}
+          <div class="note" style="margin-top:14px">Later te wijzigen bij ⚙️ Ouders.</div>
+        </div>
+      </details>` : ''}
       <div class="newstar-voet">
         <button class="btn newstar-go" id="newstar-go" aria-disabled="${ok ? 'false' : 'true'}">🌟 Klaar!</button>
       </div>
@@ -162,16 +227,17 @@ function renderNewStar() {
      (zie popKleren). De oude houder bewaren helpt niet: wie hem even uit de
      pagina haalt, breekt zijn animaties net zo goed af. */
   if (klok) $('newstar-stage').querySelectorAll('.avatar-holder').forEach(el => klokTerug(el, klok));
-  $('newstar-stage').querySelectorAll('[data-base]').forEach(el => el.onclick = () => {
-    sndClick(); nsZetBase(el.dataset.base); renderNewStar();
-  });
+  $('newstar-stage').querySelectorAll('[data-base]').forEach(el => el.onclick = () => { sndClick(); nsKies(el.dataset.base); });
   // bindChips en niet chip: de sjabloon hierboven gebruikt de globale chip(v, label, on)
   // uit het ouderdeel, en een gelijknamige const hier zou die in dit hele bereik
   // afdekken (ReferenceError, nog vóór de eerste regel van de sjabloon).
   const bindChips = (id, fn) => { const el = $(id); if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => { sndClick(); fn(c.dataset.v); renderNewStar(); }); };
-  bindChips('newstar-base',  v => nsZetBase(v));
-  bindChips('newstar-hair',  v => { newStar.hair = v; newStar.gekozen.hair = true; });
-  bindChips('newstar-dress', v => { newStar.dress = v; newStar.gekozen.dress = true; });
+  // wie je bent bouwt zelf (nsKies meet eerst waar het duo stond); haar en
+  // kleren laten haar na de hertekening een pasje maken (nsDans)
+  const wie = $('newstar-base');
+  if (wie) wie.querySelectorAll('.chip').forEach(c => c.onclick = () => { sndClick(); nsKies(c.dataset.v); });
+  bindChips('newstar-hair',  v => { newStar.hair = v; newStar.gekozen.hair = true; nsDans(); });
+  bindChips('newstar-dress', v => { newStar.dress = v; newStar.gekozen.dress = true; nsDans(); });
   bindChips('newstar-track', v => {
     s.track = v;
     // De standaardlengte verschilt per modus (kleuters krijgen een kortere ronde).
@@ -192,6 +258,11 @@ function renderNewStar() {
   const nm = $('newstar-name');
   nm.oninput = e => {
     newStar.name = e.target.value;
+    // de lichtjes gaan aan (of uit) en de kop van het ouderdeel noemt haar --
+    // alleen een klasse en een tekst, geen hertekening (zie hierboven)
+    nm.parentElement.classList.toggle('leeg', !newStar.name.trim());
+    const kop = $('newstar-kop');
+    if (kop) kop.textContent = '👪 ' + nsKop();
     merkKlaarKnop();
   };
   /* Enter is op een telefoon de enige knop die het toetsenbord zelf aanbiedt, en
@@ -215,6 +286,95 @@ function renderNewStar() {
   };
   $('newstar-go').onclick = createStar;
   if (scr) { scr.scrollTop = keep; requestAnimationFrame(() => { scr.scrollTop = keep; }); }
+}
+/* WIE JE KIEST, STAPT NAAR VOREN. Zolang niemand gekozen is staan het meisje en
+   de jongen er samen; kies je er één, dan stond er eerst in één keer een ander,
+   groter kind in het midden. Nu stapt de ander opzij weg, schuift wie je koos van
+   haar plek naar het midden en groeit ze naar haar maat, en dan maakt ze een
+   buiging.
+
+   Eerst bouwen, dan bewegen (zie = Bewegingstaal): hier wordt alleen gemeten,
+   vóór er iets verandert, en daarna gebouwd. De beweging zelf start pas in
+   naOpbouw, als het nieuwe paneel geverfd is. Ze begint óp de plek waar ze stond
+   (een FLIP: de nieuwe pop krijgt de oude plek als beginstand), dus er is geen
+   beeldje waarin ze al in het midden staat.
+
+   Zonder beweging (motionOff) wordt er niet gemeten en staat ze er meteen. */
+function nsKies(b) {
+  const stage = $('newstar-stage');
+  let duo = null;
+  if (!newStar.base && stage && !motionOff()) {
+    const s0 = stage.getBoundingClientRect();
+    duo = [...stage.querySelectorAll('[data-base]')].map(h => {
+      const r = h.getBoundingClientRect(), laag = h.querySelector('.pas-laag');
+      return { wie: h.dataset.base, x: r.left - s0.left, y: r.top - s0.top, w: r.width, h: r.height,
+        rechts: r.left + r.width / 2 > s0.left + s0.width / 2, svg: laag ? laag.innerHTML : '',
+        pop: laag && laag.querySelector('svg') ? laag.querySelector('svg').getBoundingClientRect() : null };
+    });
+    if (!duo.every(d => d.svg && d.pop)) duo = null;
+  }
+  nsZetBase(b);
+  renderNewStar();
+  if (!duo) { naOpbouw(() => nsBuig()); return; }
+  /* De eerste beeldjes na de bouw zien er precies zo uit als ervoor: de schijf
+     houdt zijn brede maat (.wacht blijft nog even staan), de nieuwe pop is nog
+     onzichtbaar, en op de plek van het duo staan twee kopieën van hun tekening.
+     Pas in naOpbouw beweegt er iets -- zo is er geen beeldje waarin zij al in het
+     midden staat en de ander al weg is. */
+  const nu = $('newstar-stage'), pop = nu.querySelector('.avatar-holder');
+  nu.parentElement.classList.add('wacht');
+  pop.style.opacity = '0';
+  const kopie = duo.map(d => {
+    const g = document.createElement('div');
+    g.className = 'ns-weg';
+    g.setAttribute('aria-hidden', 'true');
+    g.style.cssText = `left:${d.x}px;top:${d.y}px;width:${d.w}px;height:${d.h}px`;
+    g.innerHTML = d.svg;
+    nu.appendChild(g);
+    return g;
+  });
+  naOpbouw(() => nsGlij(duo.find(d => d.wie === b), kopie[duo.findIndex(d => d.wie === b)],
+    duo.find(d => d.wie !== b), kopie[duo.findIndex(d => d.wie !== b)]));
+}
+function nsGlij(zij, zijKopie, ander, anderKopie) {
+  const stage = $('newstar-stage');
+  const pop = stage && stage.querySelector('.avatar-holder');
+  const schijf = stage && stage.querySelector('.stage-podium');
+  const opruimen = () => { zijKopie.remove(); anderKopie.remove(); if (pop) pop.style.opacity = ''; if (stage) stage.parentElement.classList.remove('wacht'); };
+  if (!pop || !schijf || !pop.animate) { opruimen(); return; }
+  const breed = schijf.getBoundingClientRect().width;
+  stage.parentElement.classList.remove('wacht');
+  const smal = schijf.getBoundingClientRect().width;
+  const svg = pop.querySelector('.pas-laag svg'), naar = svg && svg.getBoundingClientRect();
+  zijKopie.remove();
+  pop.style.opacity = '';
+  const vorm = { duration: NS_GLIJ, easing: 'cubic-bezier(.3,.7,.2,1)' };
+  if (smal) schijf.animate([{ transform: `scaleX(${breed / smal})` }, { transform: 'none' }], vorm);
+  if (naar && naar.height) {
+    const van = zij.pop;
+    const dx = (van.left + van.width / 2) - (naar.left + naar.width / 2), dy = van.bottom - naar.bottom;
+    pop.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${van.height / naar.height})` }, { transform: 'none' }], vorm);
+  }
+  anderKopie.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${ander.rechts ? 45 : -45}%)` }],
+    { duration: NS_GLIJ * .7, easing: 'ease-in', fill: 'forwards' }).onfinish = () => anderKopie.remove();
+  // de buiging pas als ze staat: een buiging midden in de schuif leest als struikelen
+  setTimeout(nsBuig, NS_GLIJ);
+}
+function nsBuig() {
+  const stage = $('newstar-stage');
+  const pop = stage && stage.querySelector('.avatar-holder');
+  if (pop && !pop.closest('.wacht') && zetPas(pop, BUIGING)) pasUit(pop);
+}
+const NS_GLIJ = 320;
+/* Een kleur kiezen = ze laat het zien: één pasje, na de hertekening. Met z'n
+   tweeën doen ze hetzelfde pasje. De hoge noot niet: die stuurt noten omhoog, en
+   dat is een feestje voor een goed antwoord, niet voor een kleur. */
+function nsDans() {
+  const pas = pick(MOVES.filter(m => m.cls !== 'move-noot'));
+  naOpbouw(() => {
+    const stage = $('newstar-stage');
+    if (stage) stage.querySelectorAll('.avatar-holder').forEach(el => { if (zetPas(el, pas)) pasUit(el); });
+  });
 }
 /* Staat de Klaar-knop op "kan"? Eén bron, gelezen door de knop zelf en door het
    naamveld terwijl er getypt wordt. */
@@ -241,7 +401,7 @@ function wijsOntbrekende() {
   // van boven naar onder: wie ben je, de naam, en dan hoe je speelt
   const chips = id => [...($(id) || { querySelectorAll: () => [] }).querySelectorAll('.chip')];
   const doelen = !newStar.base ? chips('newstar-base')
-    : !newStar.name.trim() ? [$('newstar-name')].filter(Boolean)
+    : !newStar.name.trim() ? [$('newstar-name') && $('newstar-name').parentElement].filter(Boolean)   // de pil, niet het kale veld erin
     : chips('newstar-track');
   if (!doelen.length) return;
   sndClick();
