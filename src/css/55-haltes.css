@@ -195,8 +195,10 @@
      met transform, zodat niets anders aan zijn stand hoeft te rekenen. */
   .tour-stop .stop-schat { animation: prijsOp .45s var(--ease-plop) .55s backwards; }
   /* Het handje bij de allereerste show (zie renderTourMap): rechtsonder het
-     rondje, en het TIKT -- het gebaar dat een kind van een tablet kent. Om de 1,8
-     tel schuift het naar de halte, de vingertop drukt even in, en uit de halte
+     rondje, en het TIKT -- het gebaar dat een kind van een tablet kent. De
+     vingertop landt ÓP de munt, rechts naast het cijfer (dat blijft leesbaar);
+     stopte hij vlak naast de rand, dan wees het handje naar de weg en niet naar
+     de halte. Om de 1,8 tel schuift het naar de halte, de vingertop drukt even in, en uit de halte
      rolt een gouden ring (.eerste-keer .dot::after, op hetzelfde ritme). Een
      handje dat alleen op en neer deinde las als een plaatje, niet als "tik hier".
      Het komt pas na de aankomst (1,2 tel): eerst landt zij, dan wijst de hand.
@@ -205,7 +207,7 @@
      beweging wil, ziet het stilstaan met de vinger óp de halte en zonder ring
      (90-stilstand.css zet alle animaties uit; de ring is dan onzichtbaar). */
   .tour-stop .eerste-tik {
-    position: absolute; z-index: 4; left: 50%; top: 5.2cqw; margin-left: 1.2cqw;
+    position: absolute; z-index: 4; left: 50%; top: 3.4cqw; margin-left: -3cqw;
     font-size: 11cqw; line-height: 1; pointer-events: none;
     filter: drop-shadow(0 .4cqw .6cqw rgba(0,0,0,.45));
     transform-origin: 30% 10%;

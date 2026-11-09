@@ -92,7 +92,8 @@ function swatchChips(group, ids, sel) {
 const NS_ICO = (() => {
   const i = d => `<svg class="oz-i" viewBox="0 0 24 24">${d}</svg>`;
   return {
-    haar: i('<path class="vul" d="M5.5 12.2C5.5 7.9 8.4 4.8 12 4.8s6.5 3.1 6.5 7.4c-2.6-.2-5.1-1.5-6.5-3.6-1.4 2.1-3.9 3.4-6.5 3.6Z"/><path d="M6.6 12.4c.4 3.8 2.6 6.6 5.4 6.6s5-2.8 5.4-6.6"/><circle class="vul" cx="3.6" cy="12.6" r="2.2"/><circle class="vul" cx="20.4" cy="12.6" r="2.2"/>'),
+    // de staartjes hoog, zoals bij onze pop: op ooghoogte lazen ze als een bril
+    haar: i('<circle class="vul" cx="4.2" cy="9.6" r="2.6"/><circle class="vul" cx="19.8" cy="9.6" r="2.6"/><path class="vul" d="M5.6 12.6C5.2 7.8 8.2 4.6 12 4.6s6.8 3.2 6.4 8c-1.6-1.9-3.8-3.2-6.4-3.4-2.6.2-4.8 1.5-6.4 3.4Z"/><path d="M6 13.2c.6 3.6 3 6.2 6 6.2s5.4-2.6 6-6.2"/>'),
     kleren: i('<path d="M8.5 3.5 4 6 2 10.5l3.2 1.4V20.5h13.6v-8.6l3.2-1.4L20 6l-4.5-2.5c-.6 1.7-1.9 2.7-3.5 2.7s-2.9-1-3.5-2.7Z"/>'),
   };
 })();
@@ -307,9 +308,9 @@ function nsKies(b) {
     const s0 = stage.getBoundingClientRect();
     duo = [...stage.querySelectorAll('[data-base]')].map(h => {
       const r = h.getBoundingClientRect(), laag = h.querySelector('.pas-laag');
-      return { wie: h.dataset.base, x: r.left - s0.left, y: r.top - s0.top, w: r.width, h: r.height,
-        rechts: r.left + r.width / 2 > s0.left + s0.width / 2, svg: laag ? laag.innerHTML : '',
-        pop: laag && laag.querySelector('svg') ? laag.querySelector('svg').getBoundingClientRect() : null };
+      const svg = laag && laag.querySelector('svg'), t = svg ? svg.getBoundingClientRect() : null;
+      return { wie: h.dataset.base, rechts: r.left + r.width / 2 > s0.left + s0.width / 2, svg: laag ? laag.innerHTML : '',
+        pop: t, x: t ? t.left - s0.left : 0, y: t ? t.top - s0.top : 0, w: t ? t.width : 0, h: t ? t.height : 0 };
     });
     if (!duo.every(d => d.svg && d.pop)) duo = null;
   }
@@ -320,7 +321,10 @@ function nsKies(b) {
      houdt zijn brede maat (.wacht blijft nog even staan), de nieuwe pop is nog
      onzichtbaar, en op de plek van het duo staan twee kopieën van hun tekening.
      Pas in naOpbouw beweegt er iets -- zo is er geen beeldje waarin zij al in het
-     midden staat en de ander al weg is. */
+     midden staat en de ander al weg is.
+     De kopieën krijgen de maat van de TEKENING, niet die van haar houder: in het
+     duo is de houder breder dan zij, en een kopie op de maat van de houder stond
+     het eerste beeldje kleiner en hoger dan het kind dat er net nog stond. */
   const nu = $('newstar-stage'), pop = nu.querySelector('.avatar-holder');
   nu.parentElement.classList.add('wacht');
   pop.style.opacity = '0';
@@ -342,30 +346,41 @@ function nsGlij(zij, zijKopie, ander, anderKopie) {
   const schijf = stage && stage.querySelector('.stage-podium');
   const opruimen = () => { zijKopie.remove(); anderKopie.remove(); if (pop) pop.style.opacity = ''; if (stage) stage.parentElement.classList.remove('wacht'); };
   if (!pop || !schijf || !pop.animate) { opruimen(); return; }
+  // eerst alles meten (breed, dan smal), daarna pas schrijven
   const breed = schijf.getBoundingClientRect().width;
   stage.parentElement.classList.remove('wacht');
   const smal = schijf.getBoundingClientRect().width;
   const svg = pop.querySelector('.pas-laag svg'), naar = svg && svg.getBoundingClientRect();
+  const thuis = pop.getBoundingClientRect();
   zijKopie.remove();
   pop.style.opacity = '';
   const vorm = { duration: NS_GLIJ, easing: 'cubic-bezier(.3,.7,.2,1)' };
-  if (smal) schijf.animate([{ transform: `scaleX(${breed / smal})` }, { transform: 'none' }], vorm);
+  /* De schijf staat in het midden met translateX(-50%) (zie .stage-podium). Een
+     animatie op transform vervangt die hele waarde: zonder die -50% erin schoot de
+     schijf tijdens het krimpen een halve breedte naar rechts, en aan het eind
+     terug. */
+  if (smal) schijf.animate([{ transform: `translateX(-50%) scaleX(${breed / smal})` }, { transform: 'translateX(-50%)' }], vorm);
   if (naar && naar.height) {
-    const van = zij.pop;
-    const dx = (van.left + van.width / 2) - (naar.left + naar.width / 2), dy = van.bottom - naar.bottom;
-    pop.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${van.height / naar.height})` }, { transform: 'none' }], vorm);
+    /* Schalen rond haar VOETEN (midden onder), niet rond het midden van de houder:
+       dan staat ze het eerste beeldje precies waar ze in het duo stond, en blijven
+       haar voeten de hele schuif op de schijf. */
+    const van = zij.pop, ox = naar.left + naar.width / 2, oy = naar.bottom;
+    pop.style.transformOrigin = `${ox - thuis.left}px ${oy - thuis.top}px`;
+    const dx = (van.left + van.width / 2) - ox, dy = van.bottom - oy;
+    pop.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${van.height / naar.height})` }, { transform: 'none' }], vorm)
+      .onfinish = () => { pop.style.transformOrigin = ''; };
   }
-  anderKopie.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${ander.rechts ? 45 : -45}%)` }],
-    { duration: NS_GLIJ * .7, easing: 'ease-in', fill: 'forwards' }).onfinish = () => anderKopie.remove();
+  anderKopie.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${ander.rechts ? 40 : -40}%) scale(.92)` }],
+    { duration: NS_GLIJ * .75, easing: 'ease-in', fill: 'forwards' }).onfinish = () => anderKopie.remove();
   // de buiging pas als ze staat: een buiging midden in de schuif leest als struikelen
-  setTimeout(nsBuig, NS_GLIJ);
+  setTimeout(nsBuig, NS_GLIJ + 60);
 }
 function nsBuig() {
   const stage = $('newstar-stage');
   const pop = stage && stage.querySelector('.avatar-holder');
   if (pop && !pop.closest('.wacht') && zetPas(pop, BUIGING)) pasUit(pop);
 }
-const NS_GLIJ = 320;
+const NS_GLIJ = 420;
 /* Een kleur kiezen = ze laat het zien: één pasje, na de hertekening. Met z'n
    tweeën doen ze hetzelfde pasje. De hoge noot niet: die stuurt noten omhoog, en
    dat is een feestje voor een goed antwoord, niet voor een kleur. */
