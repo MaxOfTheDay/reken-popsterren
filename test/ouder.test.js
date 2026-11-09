@@ -1238,12 +1238,12 @@ function check(ok, label, detail) {
       vraag: [...document.querySelectorAll('#newstar-stage [data-base]')].map(e => e.dataset.base).join() === 'meisje,jongen',
       kop: document.querySelector('#screen-newstar .header-title').textContent,
       bolletjes: [...document.querySelectorAll('#newstar-hair .chip')].every(c => !c.textContent.trim() && c.getAttribute('aria-label')),
-      ouder: (document.querySelector('.ns-ouder') || {}).textContent || '',
+      ouder: (document.getElementById('newstar-kop') || {}).textContent || '',
     }));
     check(r.wacht && r.vraag, 'Q · nieuwe ster: het meisje en de jongen zolang niemand koos', JSON.stringify(r));
     check(r.kop === 'Nieuwe ster', 'Q · vanuit Voor ouders heet het formulier zoals de rij: "Nieuwe ster"', r.kop);
     check(r.bolletjes, 'Q · haar als bolletjes, de naam alleen als label', JSON.stringify(r));
-    check(/papa of mama/.test(r.ouder), 'Q · een lijntje waar het ouderdeel van het formulier begint', JSON.stringify(r));
+    check(/Hoe speelt/.test(r.ouder), 'Q · één kop waar het ouderdeel van het formulier begint', JSON.stringify(r));
     await page.click('#newstar-base .chip[data-v="meisje"]');
     await page.waitForTimeout(150);
     r = await page.evaluate(() => ({

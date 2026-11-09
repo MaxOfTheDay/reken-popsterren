@@ -527,74 +527,104 @@
   }
   .oe-rij.on .oe-stand { background: var(--purple-mid); }
   .oe-rij.on .oe-stand::after { transform: translateX(16px); }
-  /* ---- Het voorbeeld is een kind, geen app-icoon -------------------------
-     Het voorbeeld staat vóór de keuzes -- je maakt iemand, je vult geen formulier
-     in -- maar het is niet het onderwerp. Op 148px vulde het een derde van de
-     telefoon en begonnen de échte keuzes pas onder de vouw; op 124px staat "Wie
-     ben je?" er meteen naast in beeld en is de pop nog steeds goed te zien.
+  /* ---- De tegel: zij, haar naam en wat het kind kiest ----------------------
+     Het maakformulier begint met één kaart, gebouwd zoals de sterrentegel op het
+     beginscherm (.ster-tegel): bovenaan het podium, daaronder een donkere band met
+     wat het kind zelf tikt. Zo bouw je zichtbaar de tegel waar je straks op tikt.
 
-     WAT ER VERANDERD IS, en waarom het alle drie dezelfde fout was. Het stond als
-     124px vierkantje met een violette gloed eromheen bovenin een wit vel, mét de
-     drie podium-emoji (discobol, sterretjes, noten) en met de ademende
-     discolichtjes eroverheen. Dat is precies de beschrijving van een app-icoon:
-     een afgerond vierkant met een gloed en drie tekens in de hoeken. Wat het moet
-     zijn is het kind waar dit scherm over gaat.
+     1. DE KAART HEEFT EEN EIGEN KAMER. Hij is dicht: het vlak van een sterrentegel
+        (--w-deep), met de drie lichtjes van het podium erop. Hiervoor was het
+        podium een raam op de tekening erachter, en liepen de sterren en noten van
+        de poort achter haar en achter de bolletjes door. Nu is de tekening de zaal
+        en de kaart de kamer erin.
+     2. DEZELFDE RAND ALS EEN STERRENTEGEL: een lichte haarlijn, een donkere
+        keylijn, en een gloed erachter -- warm (het amber van de app), want deze
+        ster heeft nog geen wereld.
+     3. BREED EN LAAG (16:9), en op een lange telefoon staand hoger (4:3). Boven
+        haar is plaats voor haar naam in lichtjes; op een lange telefoon bleef
+        onderaan anders een kwart van het scherm leeg, en zij is de beloning van dit
+        scherm. Kleiner kan altijd: het podium rekent in procenten van de kaart.
+     4. DE VERSIERING EN DE LICHTJES STAAN STIL, net als op de sterrentegel: een
+        vlak dat eeuwig staat te pulseren beweegt een scherm waarop niets gebeurt.
 
-     1. HIJ STAAT NIET MEER OP HET VEL MAAR IN DE SCÈNE. Hiervoor lag hij bovenin
-        de witte kaart, en dan is een 124px plaatje op 380px papier hoe dan ook een
-        icoontje. Nu staat hij erboven, op de poort, precies zoals de pop op de
-        sterrenkeuze en in de kleedkamer op de tekening staat. Dat scheelt meteen
-        een schermhoogte aan wit -- zie .newstar-vel hieronder.
-     2. HIJ DRAAGT DE RAND VAN DE STERRENTEGEL EN NIET DIE VAN EEN PODIUM. Exact
-        dezelfde drie lagen als .ster-tegel op de sterrenkeuze: een lichte haarlijn
-        die hem begrenst, een donkere keylijn die hem van de tekening losmaakt, en
-        een zachte gloed erachter. Alleen is die gloed hier warm (het amber van de
-        app) in plaats van de kleur van een wereld -- deze ster heeft er nog geen.
-        Weg is dus de violette gloed van .stage-frame: die stond als enige gloed in
-        de app op rgba(123,47,247,...) en hoorde bij niets.
-     3. DE VERSIERING EN DE LICHTJES STAAN STIL. Dezelfde twee regels als op de
-        sterrentegel, met dezelfde reden: op een podium van 124px vallen drie
-        emoji over de pop heen, precies waar een kind moet zien of het klopt, en
-        een vlak dat eeuwig staat te pulseren beweegt een scherm waarop niets
-        gebeurt. In de kleedkamer, de show en op het eindscherm staat hetzelfde
-        podium mét versiering -- daar is het podium ook echt het podium. */
-  /* Geen eigen marge: het voorbeeld is nu een kind van .settings-panel en die
-     zet de 14px tussen zijn blokken al (gap). */
-  .newstar-preview { display: flex; justify-content: center; }
-  .newstar-preview .stage {
-    width: 210px; aspect-ratio: 10 / 8;
-    border: 0; border-radius: var(--r-md);
+     WAAR HAAR VOETEN STAAN. Overal op ±45% van de schijf (zie .stage-podium). De
+     schijf staat met bottom in procenten van de HOOGTE, haar marge in procenten
+     van de BREEDTE: daarom heeft elke verhouding hieronder zijn eigen paar
+     getallen. profiles meet het na, op elk formaat. */
+  .ns-kaart {
+    border-radius: var(--r-lg); overflow: hidden;
+    background: rgba(var(--w-deep-rgb), .94);
     box-shadow: 0 0 0 1.25px rgba(255,255,255,.15), 0 0 0 2.5px rgba(var(--nacht-1-rgb),.45),
-                0 0 22px rgba(var(--goud-gloed-rgb),.2), var(--e-2);
+                0 0 26px rgba(var(--goud-gloed-rgb),.18), var(--e-2);
+  }
+  .newstar-preview .stage {
+    width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 0; box-shadow: none;
   }
   .newstar-preview .stage::after { animation: none; opacity: .85; }
-  /* EÉN PODIUM, OOK ALS JE KIEST. Zolang "Wie ben je?" open staat staan het
-     meisje en de jongen er samen op (zie renderNewStar), en daarna alleen wie je
-     koos. Dat waren eerst twee vlakken: een breed van 210 voor het duo en een
-     smal van 124 voor één, en bij de keuze kromp het podium en schoof het hele
-     vel 32px omhoog -- precies op het moment dat een kind kijkt wat er gebeurt.
-     Nu blijft het vlak staan; zij stapt naar het midden, op een kleinere schijf,
-     in een zacht licht (::before hieronder). Dezelfde verhouding als het lege
-     beginscherm (10/8). */
   .newstar-preview .deco { display: none; }
-  /* Alleen zij: een schijf van 62% (de 90% van het duo staat bij .leeg-tegel in
-     30-onderdelen), haar voeten op 45% ervan zoals overal, en ze is 78% van het
-     vlak hoog -- lucht genoeg boven haar hoofd voor een hoed of een pet. */
-  .newstar-preview .stage-podium { width: 62%; bottom: 10%; }
-  .newstar-preview:not(.wacht) .stage.op-podium .avatar-holder { height: 78%; margin-bottom: 11%; }
+  /* Alleen zij: een schijf van een derde van de kaart, en zij 64% van het podium
+     hoog -- daarboven staat haar naam, en daar hoort lucht tussen. */
+  .newstar-preview .stage-podium { width: 34%; bottom: 9%; }
+  .newstar-preview:not(.wacht) .stage.op-podium .avatar-holder { height: 64%; margin-bottom: 6.6%; }
+  /* Met z'n tweeën: één brede schijf. .duo draagt de afstand (zie daar). */
+  .newstar-preview.wacht .stage-podium { width: 56%; bottom: 7%; }
+  .newstar-preview .duo { width: 46%; height: 64%; margin-bottom: 7.6%; }
   /* Het zachte licht op wie je koos: een warme vlek achter haar, niet over haar
      heen. Geen bundel zoals in de show -- dit is een kleedhokje, geen zaal. */
   .newstar-preview:not(.wacht) .stage::before {
     content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
-    background: radial-gradient(38% 58% at 50% 62%, rgba(var(--goud-glans-rgb), .34), transparent 70%);
+    background: radial-gradient(30% 58% at 50% 62%, rgba(var(--goud-glans-rgb), .34), transparent 70%);
   }
-  /* Een laag scherm: een kleine telefoon staand, elke telefoon liggend, en het
-     toestel waarop de browser bij een open toetsenbord de indeling meekrimpt.
-     Kop (59) plus het voorbeeld van 168 hoog is daar de helft van het beeld
-     voordat er één vraag in zicht komt; op 150 breed is het 120, en het meisje
-     en de jongen passen er samen nog op. Dezelfde grens als de rest van de app
-     (620). */
-  @media (max-height: 620px) { .newstar-preview .stage { width: 150px; } }
+  @media (orientation: portrait) and (min-height: 780px) {
+    .newstar-preview .stage { aspect-ratio: 4 / 3; }
+    .newstar-preview .stage-podium { width: 42%; bottom: 8%; }
+    .newstar-preview:not(.wacht) .stage.op-podium .avatar-holder { height: 66%; margin-bottom: 7.8%; }
+    .newstar-preview.wacht .stage-podium { width: 66%; bottom: 7%; }
+    .newstar-preview .duo { width: 56%; height: 66%; margin-bottom: 9%; }
+  }
+  /* De ander stapt opzij weg (nsGlij): een kopie van haar tekening op de plek waar
+     ze stond, die even blijft staan terwijl ze vervaagt. */
+  .ns-weg { position: absolute; z-index: 1; pointer-events: none; display: flex; justify-content: center; }
+  .ns-weg svg { height: 100%; width: auto; display: block; }
+
+  /* ---- Haar naam, in de lichtjes boven haar hoofd -----------------------
+     Het naamveld ís de naam: één pil van vaste maat bovenaan het podium. Leeg
+     staat er "Jouw naam" in gedempt goud; wie typt, ziet dezelfde letters in
+     dezelfde maat fel goud worden. Er verschuift en verspringt niets -- alleen het
+     licht gaat aan.
+
+     HET LICHT ZIT IN DE PIL, NIET OP DE LETTERS. Een gloed óp de letters maakt ze
+     wazig; de naam is effen goud met een dun donker randje eronder, en de pil zelf
+     krijgt de fellere rand en de zachte gloed eromheen.
+
+     44 hoog, de maat van alles waar een vinger op mikt. Het potloodje links zegt
+     dat je erop kunt tikken; rechts staat een even breed leeg vakje, zodat de naam
+     precies in het midden van de pil staat en dus boven haar hoofd. */
+  .ns-naam {
+    position: absolute; z-index: 3; left: 50%; top: 5%; transform: translateX(-50%);
+    width: 64%; height: 44px; box-sizing: border-box; padding: 0 12px;
+    display: flex; align-items: center; gap: 6px; cursor: text;
+    border-radius: var(--r-pill);
+    background: rgba(var(--nacht-1-rgb), .35); border: 1.5px solid rgba(var(--goud-gloed-rgb), .42);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    transition: border-color var(--t-snel), box-shadow var(--t-snel), background-color var(--t-snel);
+  }
+  .ns-naam-pen { flex: none; width: 18px; font-size: 15px;   /* teken */ line-height: 1; text-align: center; opacity: .85; }
+  /* .settings-sheet geeft elk tekstveld wit papier met een rand: hier niet */
+  .settings-sheet .ns-naam input[type=text], .settings-sheet .ns-naam input[type=text]:focus-visible {
+    flex: 1; min-width: 0; width: 100%; height: 100%; padding: 0; margin: 0;
+    border: 0; background: none; outline: none; box-shadow: none;
+    font: inherit; font-size: 21px; font-weight: 700; text-align: center;
+    color: rgb(var(--goud-rgb)); caret-color: rgb(var(--goud-rgb));
+    text-shadow: 0 1px 0 rgba(60,20,0,.55);
+  }
+  .settings-sheet .ns-naam input::placeholder { color: rgba(var(--goud-gloed-rgb), .55); text-shadow: none; opacity: 1; }
+  .ns-naam:not(.leeg) {
+    background: rgba(var(--nacht-1-rgb), .55); border-color: rgba(var(--goud-gloed-rgb), .75);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 0 0 3px rgba(var(--goud-gloed-rgb), .10),
+                0 0 18px rgba(var(--goud-gloed-rgb), .35);
+  }
+  .ns-naam:focus-within { border-color: rgba(var(--goud-gloed-rgb), .9); }
   /* ---- Het vel: papier dat in de scène ligt, niet erop ---------------------
      De kaart was .set-card zoals in het ouderdeel: vol wit, één slagschaduw, en
      omdat het voorbeeld er nog in stond liep hij van vlak onder de kop tot de
@@ -622,91 +652,96 @@
     box-shadow: var(--e-2), 0 0 34px rgba(var(--goud-gloed-rgb),.14),
                 0 0 0 1px var(--paper-ring);
   }
-  /* ---- Het maakformulier leest als keuzes, niet als een formulier ----------
-     Vijf rijen label-plus-pillen onder elkaar, elk met een volle 2px-rand om
-     élke pil: dat gaf veertig omlijnde vakjes waar de gekozen pil het in zijn
-     eentje van moest winnen. Hier is de níet gekozen pil stiller (dunnere rand,
-     zacht vlak in plaats van wit) en blijft de gekozen pil precies zoals hij was.
-     Het verschil doet nu het werk, niet de omlijning.
+  /* ---- De band: wat het kind tikt, op donker glas -------------------------
+     Onder het podium, in dezelfde kaart: wie, haar, kleren. Geen kopjes -- het kind
+     leest nog niet -- maar twee hoofdjes en twee getekende icoontjes.
 
-     Alleen binnen dit scherm: in het ouderdeel staan dezelfde pillen op een
-     scherm dat wél een instellingenformulier ís, en daar horen ze zoals ze zijn. */
-  #screen-newstar .set-field + .set-field { margin-top: 10px; }
-  #screen-newstar .set-field { gap: 6px; }
-  /* ---- Drie groepen, en het verschil is lucht en geen streepje ------------
-     De zes vragen stonden als één lijst van zes gelijke rijen, elk 12px uit
-     elkaar: alles even belangrijk, dus niets belangrijk. Ze beantwoorden in
-     werkelijkheid drie vragen -- WIE ben je (basis + naam), hoe ZIE je eruit
-     (haar + kleren), en hoe SPEEL je (modus + oefening) -- en dat is precies de
-     volgorde waarin een ouder ze invult.
-
-     Het verschil zit in de tussenruimte en nergens anders: binnen een groep 10px,
-     ertussen 20px. Geen streepjes en geen kopjes erbij, want dat zou dit scherm
-     langer en drukker maken terwijl het al dicht is -- en twee lucht-maten zijn
-     genoeg om drie blokken te zien. */
-  #screen-newstar .ns-groep + .ns-groep { margin-top: 20px; }
-  /* Eén sport omhoog (13 -> 15). Deze labels zijn geen bijschriften bij een
-     instelling maar de vrágen van het scherm, en ze zijn het enige dat de drie
-     groepen hierboven benoemt. Op 13px stonden ze kleiner dan de pillen die ze
-     aankondigen; op 15px dragen ze de rij eronder, en dat is precies het gewicht
-     waar §5 --tx-label voor heeft. */
-  #screen-newstar .set-field .lbl { font-size: var(--tx-label); }
-  #screen-newstar .chip {
-    border-width: 1.5px; border-color: var(--paper-border); background: var(--paper-tint);
+     DE STANDEN ZIJN DIE VAN HET DONKERE GLAS IN VOOR OUDERS (zie .wat-kaart): wat
+     gekozen is, is een witte knop met violette letter; de rest staat gedimd op het
+     vlak. Een violette knop zakte op dit violette glas weg. Een gekozen kleur
+     krijgt een witte ring, geen gouden: goud is in deze app "verdiend". */
+  .ns-kind {
+    display: flex; flex-direction: column; gap: 12px; padding: 14px 14px 16px;
+    background: rgba(255,255,255,.05); box-shadow: var(--vlak-top);
+    border-top: 1px solid rgba(255,255,255,.09); color: var(--c-white);
   }
-  @media (hover: hover) { #screen-newstar .chip:hover { border-color: var(--purple-light); background: var(--c-white); } }
-  /* Haar en kleren kiest het kind zelf, en die pillen stonden op 35px hoog -- de
-     maat van een chip in het ouderdeel, waar een volwassen vinger op mikt. In deze
-     app is 44px overal de ondergrens voor een kinderhand (zie .icon-btn), en dit
-     zijn tien van de weinige knoppen op dit scherm die een kleuter aantikt. De
-     pillen ín de openklapper blijven wél 35: dat is de oefening, en die stelt een
-     ouder in -- precies hetzelfde verschil als in het ouderdeel zelf, en meteen
-     een rangorde op het vel (wat het kind kiest is groter dan wat de ouder zet). */
-  #screen-newstar .chip.swatch { min-height: 44px; box-sizing: border-box; }
-  /* ...en sinds het woord eraf is, is het bolletje zelf de knop: 48 rond, de kleur
-     30 groot erin. Gekozen = de paarse vulling als ring, zoals elke keuze hier. */
-  #screen-newstar .chip.swatch {
-    width: 48px; height: 48px; min-height: 48px; padding: 0; gap: 0;
+  #screen-newstar .ns-kind .chip {
+    border: 0; background: var(--vlak-hover); color: rgba(255,255,255,.72); box-shadow: none;
+  }
+  @media (hover: hover) { #screen-newstar .ns-kind .chip:hover { background: rgba(255,255,255,.22); } }
+  #screen-newstar .ns-kind .chip.on:not(.swatch) {
+    background: var(--c-white); color: var(--purple-mid); box-shadow: 0 2px 6px rgba(0,0,0,.3);
+  }
+  /* Wie: twee pillen met het hoofdje van onze eigen pop, in de kleuren die er nu
+     gekozen zijn -- wie op "Jongen" tikt, ziet de jongen die hij krijgt. */
+  .ns-wie { display: flex; gap: 10px; }
+  #screen-newstar .ns-wie .chip {
+    flex: 1; min-width: 0; min-height: 48px; padding: 4px 12px 4px 6px; gap: 8px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: var(--r-pill); font-size: var(--tx-body); font-weight: 700;
+  }
+  .ns-wie .who-portrait { width: 34px; height: 34px; background: rgba(0,0,0,.3); border-color: rgba(255,255,255,.85); box-shadow: none; }
+  .ns-wie .who-portrait svg { top: -3px; width: 62px; height: auto; }
+  /* Haar en kleren: een icoontje voor de rij, dan vijf bolletjes. */
+  .ns-kleur-rij { display: flex; align-items: center; gap: 10px; }
+  .ns-ico { flex: none; width: 28px; display: flex; justify-content: center; color: rgba(255,255,255,.72); }
+  .ns-ico .oz-i { width: 28px; height: 28px; stroke-width: 1.8; }
+  .ns-ico .oz-i .vul { fill: currentColor; }
+  .ns-kleur-rij .chip-row { flex: 1; min-width: 0; }
+  /* Haar en kleren kiest het kind zelf: 44px is in deze app de ondergrens voor een
+     kinderhand (zie .icon-btn). Vijf naast elkaar, altijd: op een telefoon van 320
+     breed krimpen de bolletjes een paar pixel in plaats van een vijfde op een
+     nieuwe regel te zetten. */
+  #newstar-hair, #newstar-dress {
+    display: grid; grid-template-columns: repeat(5, minmax(0, 48px)); gap: 8px; justify-content: space-between;
+  }
+  #screen-newstar .ns-kind .chip.swatch {
+    width: 100%; height: auto; min-height: 0; aspect-ratio: 1; padding: 0; gap: 0;
     justify-content: center; border-radius: 50%;
   }
-  #screen-newstar .chip.swatch .sw { width: 30px; height: 30px; }
-  /* Vijf naast elkaar, altijd. Op een telefoon van 320 breed is het vel 264
-     binnenin, en vijf keer 48 plus de tussenruimte paste daar net niet: de vijfde
-     kleur viel alleen op een nieuwe regel, bij haar én bij kleren. Nu krimpen
-     de bolletjes daar een paar pixel (nooit onder de 44 van een kinderhand) in
-     plaats van af te breken. */
-  #newstar-hair, #newstar-dress { display: grid; grid-template-columns: repeat(5, minmax(0, 48px)); gap: 7px; }
-  #screen-newstar #newstar-hair .chip.swatch, #screen-newstar #newstar-dress .chip.swatch {
-    width: 100%; height: auto; min-height: 0; aspect-ratio: 1;
+  #screen-newstar .chip.swatch .sw { width: 64%; height: 64%; box-shadow: inset 0 -2px 3px rgba(0,0,0,.2); }
+  #screen-newstar .ns-kind .chip.swatch.on { box-shadow: 0 0 0 3px var(--c-white); }
+
+  /* ---- Het papier: wat de ouder kiest ------------------------------------
+     Eén kop, en die noemt haar ("Hoe speelt Noor?", dezelfde vraag als in haar
+     blad bij Voor ouders). Er stond eerst nog een lijntje "Voor papa of mama"
+     boven een tweede kop in een andere stijl; het papier en het gezinnetje zeggen
+     al voor wie dit is. */
+  .ns-kop { margin: 0 0 10px; font-size: var(--tx-body); font-weight: 700; color: var(--paper-ink); }
+  /* De chips op het papier: stiller dan in het ouderdeel (dunnere rand, zacht
+     vlak), want hier staan er naast de twee knoppen alleen die in de openklapper.
+     De gekozen chip houdt zijn volle paarse vulling -- dát is "gekozen" op papier
+     -- maar zonder de gekleurde gloed eronder. */
+  #screen-newstar .newstar-vel .chip {
+    border-width: 1.5px; border-color: var(--paper-border); background: var(--paper-tint);
   }
-  #screen-newstar .chip.swatch.on { box-shadow: 0 0 0 3px var(--c-white), 0 0 0 6px var(--purple-mid); }
-  /* "Voor papa of mama": waar het kinderdeel ophoudt (zie renderNewStar) */
-  .ns-ouder {
-    display: flex; align-items: center; gap: 10px; margin: 2px 0 10px;
-    font-size: var(--tx-klein); font-weight: 700; color: var(--purple-mid); opacity: .75;
+  @media (hover: hover) { #screen-newstar .newstar-vel .chip:hover { border-color: var(--purple-light); background: var(--c-white); } }
+  #screen-newstar .newstar-vel .chip.on { border-color: transparent; background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: none; }
+  /* Tellen of rekenen: twee echte knoppen naast elkaar, wit tot je kiest. Icoon,
+     naam, en een kleine regel die het verschil zegt. */
+  .ns-spoor { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  #screen-newstar .ns-spoor .chip {
+    display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 64px; padding: 8px 10px;
+    border-radius: var(--r-md); text-align: left;
+    background: var(--c-white); box-shadow: 0 2px 0 var(--paper-border);
   }
-  .ns-ouder::before, .ns-ouder::after { content: ''; flex: 1; height: 1px; background: var(--paper-border); }
-  /* De gekozen pil houdt zijn volle paarse vulling -- dát is de taal van "dit
-     staat aan" in de hele app en die hoort hier niet anders te zijn. Wat wél
-     weggaat is de gekleurde slagschaduw eronder (.chip.on zet er een paarse
-     gloed van .32 bij). Eén gekozen pil met een gloed is een accent; vier ervan
-     onder elkaar op één vel -- basis, haar, kleren, modus -- zijn vier violette
-     lampjes, en dát is waar "overal paars en roze" vandaan komt. Zonder gloed
-     blijft de vulling onmiskenbaar en wordt het vel rustiger; de rij is nog
-     steeds in één blik te lezen. */
-  #screen-newstar .chip.on { border-color: transparent; background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: none; }
-  #screen-newstar .set-reveal { margin-top: 16px; }
-  #screen-newstar input[type=text] { border-width: 1.5px; }
-  /* De twee zwaarste keuzes van dit scherm ("wie ben je?" en "hoe speel je?")
-     staan als twee volle helften met het icoon boven het woord, en dat is niet
-     nieuw: het is letterlijk .mode-row + .chip.gestapeld, het onderdeel dat het
-     ouderdeel voor precies dezelfde twee vragen gebruikt. Zie de noot daar. Ze
-     stonden hier als gewone pillen, dus dezelfde vraag zag er in het ouderdeel
-     anders uit dan op het scherm waar hij voor het eerst gesteld wordt.
-     De eigen maat is die van .mode-row zelf; hier alleen de bodembreedte eraf,
-     want dit vel is smaller (--kolom 460) en twee helften van 96px minimum
-     zouden op een telefoon van 320 naast elkaar niet meer passen. */
-  #screen-newstar .mode-row .chip.gestapeld { min-width: 0; }
+  #screen-newstar .ns-spoor .chip.on { box-shadow: 0 2px 6px rgba(var(--nacht-1-rgb),.25); }
+  .ns-spoor .mc-ico { flex: none; line-height: 0; }
+  .ns-spoor .mc-ico svg { width: 34px; height: 34px; }
+  .ns-spoor .mc-label {
+    display: flex; flex-direction: column; min-width: 0; line-height: 1.15;
+    font-size: var(--tx-body); font-weight: 700; color: var(--purple-mid); white-space: nowrap;
+  }
+  .ns-spoor .mc-label small { font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink-muted); }
+  .ns-spoor .chip.on .mc-label, .ns-spoor .chip.on .mc-label small { color: var(--c-white); }
+  /* Op een smalle telefoon (iPhone SE en kleiner) bleef "Leren tellen" niet op één
+     regel: daar een kleiner icoon en iets minder ruimte. */
+  @media (max-width: 380px) {
+    .ns-spoor .mc-ico svg { width: 28px; height: 28px; }
+    #screen-newstar .ns-spoor .chip { gap: 8px; padding: 8px; }
+    .ns-spoor .mc-label { font-size: var(--tx-label); }
+  }
+  #screen-newstar .set-reveal { margin-top: 10px; }
   /* De oefenvelden in de openklapper zijn dezelfde als op Oefenen (zie
      oefenGroups), maar de id-regels hierboven geven elke .chip hier een vulling
      en een rand. De balk, de rijen en het kleine keuzerijtje hebben die niet,
@@ -758,6 +793,9 @@
        doorlopend. .11 is precies genoeg om te zeggen "hier gaat het verder". */
     box-shadow: 0 -9px 16px rgba(var(--nacht-3-rgb),.11);
   }
+  /* Past alles op één scherm (.past, zie nsPasVolgen), dan schuift er niets onder
+     de voet door en zijn de haarlijn en de schaduw een naad zonder reden. */
+  #screen-newstar.past .newstar-voet { border-top-color: transparent; box-shadow: none; }
   /* De knop is goud, en dat is geen smaakkwestie maar §2: goud is de hoofdknop en
      "spelen". Deze tik maakt de ster én stapt er meteen mee de eerste wereld in
      (zie createStar) -- het is dezelfde handeling als "Volgende show" op het
@@ -808,6 +846,15 @@
     /* geen klop, maar de aanwijzing zelf mag niet verdwijnen: een stille ring */
     .vraagt { animation: none; box-shadow: 0 0 0 3px rgba(var(--purple-mid-rgb), .5); }
   }
+  /* Op het donkere glas van het maakformulier (de band en de naampil) zakt een
+     violette ring weg in het violet: daar klopt hij in wit. */
+  .ns-kind .vraagt, .ns-naam.vraagt { animation-name: vraagtLicht; }
+  @keyframes vraagtLicht {
+    0%   { box-shadow: 0 0 0 0 rgba(255,255,255,.6); }
+    65%  { box-shadow: 0 0 0 11px rgba(255,255,255,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+  }
+  @media (prefers-reduced-motion: reduce) { .ns-kind .vraagt, .ns-naam.vraagt { box-shadow: 0 0 0 3px rgba(255,255,255,.6); } }
 
   /* de naam is het enige tekstveld in de hele app -- zonder duidelijk signaal
      ziet het eruit als platte tekst i.p.v. iets aantikbaars, dus een potloodje
