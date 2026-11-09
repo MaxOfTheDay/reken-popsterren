@@ -245,15 +245,28 @@
      "ga" in de app. Over de hele breedte van het podium, zodat ze één blok zijn. */
   .btn.big.leeg-knop { grid-column: 1 / -1; width: 100%; padding-left: 12px; padding-right: 12px; margin-top: 4px; z-index: 1; }
   /* het meisje en de jongen samen op één podium -- zie duoHtml. Op een telefoon
-     liggend (onderaan) krimpt de knop mee met de lage hoogte. */
+     liggend (onderaan) krimpt de knop mee met de lage hoogte.
+     Ze staan OP de schijf, niet erboven: hun zolen op 45% van de bovenkant, net
+     als elke pop (zie .stage-podium in 50-zaal.css). Twee dingen hielden ze
+     eerst in de lucht. De marge van .stage.op-podium .avatar-holder (9%) gold
+     ook voor elk van de twee, bovenop de 9% van .duo zelf -- dus staat die hier
+     op 0 en draagt .duo alleen de afstand. En een pop is in haar tekening veel
+     breder dan zij zelf (de viewBox heeft plaats voor armen, pet en
+     instrument): met een tussenruimte stonden ze daardoor op de uiterste randen
+     van de schijf. Nu krijgt elk precies de helft van een strook van 72% en
+     staat ze in het midden ervan -- dat is op 32% en 68% van het vlak, dicht
+     genoeg bij elkaar om samen op één podium te staan, en elke helft blijft
+     een grote tikplek. Haar tekening mag over de rand van die helft lopen. */
   .duo {
     position: relative; z-index: 2; display: flex; align-items: flex-end; justify-content: center;
-    gap: 10%; height: 84%; margin-bottom: 9%;
+    width: 72%; height: 80%; margin: 0 auto 11%;
   }
   .stage .duo > .avatar-holder {
+    flex: 1 1 0; min-width: 0; display: flex; justify-content: center;
     height: 100%; padding: 0; border: 0; background: none; cursor: pointer; font: inherit; color: inherit;
     -webkit-tap-highlight-color: transparent;
   }
+  .stage.op-podium .duo > .avatar-holder { margin-bottom: 0; }
   .duo > .avatar-holder:focus-visible { outline: 3px solid var(--c-white); outline-offset: 2px; border-radius: var(--r-sm); }
   /* Liggend (of een heel lage viewport) passen twee rijen tegels er niet bij.
      De auto-marges hierboven centreren het blok en laten het dan langs de

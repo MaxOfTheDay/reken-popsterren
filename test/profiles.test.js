@@ -113,10 +113,32 @@ function check(ok, label, detail) {
     check(r.leeg && r.goud && r.addLabel === '🌟 Maak je ster', 'en de gouden knop "🌟 Maak je ster"', JSON.stringify(r));
     check(r.hintShown && r.hintHref === 'over/index.html?van=start' && r.hintTekst === 'Over Rekensterren',
       'bij nul sterren zegt één stille regel wat het spel is, met de woorden van Voor ouders', JSON.stringify(r));
+    /* Elke pop staat óp haar schijf: de onderkant van haar laagste schoen tussen
+       de bovenrand van de schijf en 70% van zijn hoogte, en haar midden binnen de
+       schijf. Het meisje en de jongen zweefden er eerst boven, op de uiterste
+       randen (een marge die dubbel gold). Eén meting voor elk vlak met een
+       podium dat hier langskomt. */
+    const opSchijf = sel => page.evaluate(sel => {
+      const st = document.querySelector(sel), d = st.querySelector('.stage-podium').getBoundingClientRect();
+      return [...st.querySelectorAll('.avatar-holder')].map(h => {
+        const zool = Math.max(...[...h.querySelectorAll('.pas-laag ellipse')].map(e => e.getBoundingClientRect().bottom));
+        const r = h.getBoundingClientRect(), mid = (r.left + r.right) / 2;
+        return { diep: +((zool - d.top) / d.height).toFixed(2), binnen: mid > d.left + d.width * .15 && mid < d.right - d.width * .15 };
+      });
+    }, sel);
+    const staan = v => v.length && v.every(x => x.diep >= 0.1 && x.diep <= 0.7 && x.binnen);
+    const duoVoet = await opSchijf('#leeg-duo .st-podium');
+    check(duoVoet.length === 2 && staan(duoVoet), 'het meisje en de jongen staan op het podium, niet erboven', JSON.stringify(duoVoet));
     // een tik op de jongen opent het formulier met die keuze al gemaakt, en de kop
     // zegt wat je aantikte
     await page.click('#leeg-duo [data-base="jongen"]', { force: true });
     await page.waitForTimeout(400);
+    const formVoet = await opSchijf('#newstar-stage');
+    check(formVoet.length === 1 && staan(formVoet), 'in het formulier staat de gekozen pop op haar podium', JSON.stringify(formVoet));
+    await page.evaluate(() => { newStar.base = null; renderNewStar(); });
+    const formDuo = await opSchijf('#newstar-stage');
+    check(formDuo.length === 2 && staan(formDuo), 'en zolang er niets gekozen is staan ze er met z\'n tweeën op', JSON.stringify(formDuo));
+    await page.evaluate(() => { newStar.base = 'jongen'; renderNewStar(); });
     const form = await page.evaluate(() => ({
       scherm: document.querySelector('.screen.active').id, base: newStar.base,
       kop: document.querySelector('#screen-newstar .header-title').textContent,
