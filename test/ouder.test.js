@@ -968,6 +968,7 @@ function check(ok, label, detail) {
       ipad: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15',
       desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
       firefox: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0',
+      samsung: 'Mozilla/5.0 (Linux; Android 16; SM-S931B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/28.0 Chrome/130.0.0.0 Mobile Safari/537.36',
     };
     // Vóór de app: een display-mode die "aan" staat, en de iOS-velden.
     const doeNa = o => {
@@ -1052,7 +1053,8 @@ function check(ok, label, detail) {
 
     // Computer en de rest: ook zonder sterren de rij, en het blad met de juiste uitleg.
     for (const [naam, ua, zin] of [['computer', UA.desktop, /installeer-icoon in de adresbalk/],
-      ['Firefox', UA.firefox, /Open de pagina dan in Chrome/]]) {
+      ['Firefox op Windows', UA.firefox, /knopje voor webapps/],
+      ['Samsung Internet', UA.samsung, /Open de pagina dan in Chrome/]]) {
       const { ctx, page } = await fresh(null, toestel(ua));
       await leeg(page);
       await page.waitForTimeout(200);
