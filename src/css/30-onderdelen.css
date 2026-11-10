@@ -507,6 +507,7 @@
   }
   #app-blad .ab-rond.ab-doel { padding: 0; border-radius: 50%; }
   #app-blad .ab-uitleg { margin: 4px 0; }
+  #app-blad .ab-stil { color: var(--paper-ink-muted); font-size: var(--tx-klein); }
   #app-blad .ab-noot {
     margin-top: 10px; padding: 8px 11px; border-radius: var(--r-sm);
     background: var(--paper-tint); border: 1px solid var(--paper-border); color: var(--paper-ink-muted); font-size: var(--tx-klein);
