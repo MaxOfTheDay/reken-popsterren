@@ -2724,7 +2724,14 @@ function kopieerBelofte(belofte) {
   const cb = navigator.clipboard;
   if (cb && cb.write && typeof ClipboardItem === 'function') {
     try {
-      const item = new ClipboardItem({ 'text/plain': belofte.then(t => new Blob([t], { type: 'text/plain' })) });
+      /* De blob-belofte krijgt een eigen lege catch: weigert het klembord meteen
+         (geen tik meer, geen rechten), dan wacht niemand er nog op, en een
+         ontvanger die daarna ook nog wegblijft gaf anders een onafgehandelde
+         weigering -- een "fout" voor de foutmelder, terwijl het blad gewoon
+         "Opnieuw" zegt. */
+      const blob = belofte.then(t => new Blob([t], { type: 'text/plain' }));
+      blob.catch(() => {});
+      const item = new ClipboardItem({ 'text/plain': blob });
       return cb.write([item]).then(() => true, () => belofte.then(kopieer));
     } catch (e) { /* een oude browser: hieronder */ }
   }

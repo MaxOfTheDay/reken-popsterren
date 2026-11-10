@@ -34008,7 +34008,14 @@ function kopieerBelofte(belofte) {
   const cb = navigator.clipboard;
   if (cb && cb.write && typeof ClipboardItem === 'function') {
     try {
-      const item = new ClipboardItem({ 'text/plain': belofte.then(t => new Blob([t], { type: 'text/plain' })) });
+
+
+
+
+
+      const blob = belofte.then(t => new Blob([t], { type: 'text/plain' }));
+      blob.catch(() => {});
+      const item = new ClipboardItem({ 'text/plain': blob });
       return cb.write([item]).then(() => true, () => belofte.then(kopieer));
     } catch (e) { }
   }
