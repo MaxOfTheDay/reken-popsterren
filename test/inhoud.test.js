@@ -738,6 +738,10 @@ zaak('J', () => {
     desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
     edge: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
     firefox: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0',
+    firefoxOud: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
+    firefoxMac: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:144.0) Gecko/20100101 Firefox/144.0',
+    firefoxAndroid: 'Mozilla/5.0 (Android 16; Mobile; rv:144.0) Gecko/144.0 Firefox/144.0',
+    firefoxIos: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/144.0 Mobile/15E148 Safari/605.1.15',
     samsung: 'Mozilla/5.0 (Linux; Android 16; SM-S931B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/28.0 Chrome/130.0.0.0 Mobile Safari/537.36',
     androidWebView: 'Mozilla/5.0 (Linux; Android 16; Pixel 10; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/140.0.0.0 Mobile Safari/537.36',
   };
@@ -749,9 +753,12 @@ zaak('J', () => {
     ['android', UA.android, 'android'], ['iphone', UA.iphone, 'ios'],
     ['ipad (als Mac, met aanraken)', UA.ipad, 'ios', { maxTouchPoints: 5 }],
     ['een echte Mac met Safari', UA.macSafari, 'anders'],
-    ['Chrome op iOS', UA.iosChrome, 'ios-elders'], ['Facebook op iOS', UA.iosInApp, 'ios-elders'],
+    ['Chrome op iOS', UA.iosChrome, 'ios-chrome'], ['Firefox op iOS', UA.firefoxIos, 'ios-firefox'],
+    ['Facebook op iOS', UA.iosInApp, 'ios-elders'],
+    ['Firefox op Android', UA.firefoxAndroid, 'firefox-android'],
+    ['Firefox op een Mac', UA.firefoxMac, 'geen'], ['Firefox 140 op Windows', UA.firefoxOud, 'geen'],
     ['Chrome op een computer', UA.desktop, 'desktop'], ['Edge', UA.edge, 'desktop'],
-    ['Firefox op een computer', UA.firefox, 'anders'], ['Samsung Internet', UA.samsung, 'anders'],
+    ['Firefox 143 op Windows', UA.firefox, 'firefox-windows'], ['Samsung Internet', UA.samsung, 'anders'],
     ['een ingebouwde browser op Android', UA.androidWebView, 'inapp'],
   ].forEach(([naam, ua, wil, extra]) => {
     const is = soort(ua, extra);
@@ -787,7 +794,15 @@ zaak('J', () => {
   check(html(a, UA.iosInApp).includes('Open deze pagina in Safari'), 'J · iOS buiten Safari: eerst naar Safari', '');
   check(html(a, UA.desktop).includes('installeer-icoon in de adresbalk'), 'J · computer: het icoon in de adresbalk', '');
   check(html(a, UA.androidWebView).includes('Open hem in Chrome'), 'J · ingebouwde browser: open hem in Chrome', '');
-  check(html(a, UA.firefox).includes('Open de pagina dan in Chrome'), 'J · de rest: het menu, en anders Chrome', '');
+  check(html(a, UA.samsung).includes('Open de pagina dan in Chrome'), 'J · de rest: het menu, en anders Chrome', '');
+  // Firefox: nergens "open in Chrome" -- daar blijven de sterren achter.
+  [UA.firefox, UA.firefoxAndroid, UA.firefoxIos].forEach(ua => {
+    check(!html(a, ua).includes('Chrome'), 'J · Firefox wordt niet naar Chrome gestuurd', html(a, ua));
+  });
+  check(html(a, UA.firefoxIos).includes('Heb je al gespeeld in Firefox?'), 'J · Firefox op iOS: met sterren de waarschuwing, want de app begint leeg', '');
+  // Waar het niet kan (Firefox op een Mac), is er geen rij en geen knop Als app.
+  check(!overzicht(a, UA.firefoxMac).includes('set-alsapp') && !a.run('appKnopTonen()'), 'J · Firefox op een Mac: geen Als app, want het kan er niet', '');
+  check(overzicht(a, UA.firefox).includes('set-alsapp'), 'J · Firefox 143 op Windows: wel Als app', '');
 
   // Draait het spel als app, dan is er niets uit te leggen -- in alle vier de standen.
   ['fullscreen', 'standalone', 'minimal-ui'].forEach(stand => {
@@ -869,6 +884,15 @@ zaak('J', () => {
   check(inap.kopieer && /Chrome/.test(inap.html) && blad('ios-elders', false, true, false).kopieer && /Safari/.test(blad('ios-elders', false, true, false).html),
     'J · blad in WhatsApp en co: Kopieer link, naar Chrome (Android) of Safari (iOS)', inap.html);
   check(!blad('anders', false, true, true).installeer, 'J · blad: Installeren alleen in Chrome op Android', '');
+  const fxa = blad('firefox-android', false, true, false);
+  check(fxa.html.includes('⋮') && fxa.html.includes('Meer') && fxa.html.includes('Toevoegen aan startscherm') && fxa.html.includes('ab-nr') && !fxa.kopieer && !fxa.installeer,
+    'J · blad Firefox Android: ⋮ › Meer › Toevoegen aan startscherm, genummerd', fxa.html);
+  const fxi = blad('ios-firefox', false, false, false, true);
+  check(fxi.html.includes('Tik in Firefox op') && fxi.html.includes('Zet op beginscherm') && !fxi.html.includes('···') && !fxi.kopieer,
+    'J · blad Firefox iOS: Deel in Firefox zelf, niet eerst naar Safari', fxi.html);
+  check(blad('ios-chrome', false, false, false).html.includes('Tik in Chrome op'), 'J · blad Chrome iOS: Deel in Chrome zelf', '');
+  const fxw = blad('firefox-windows', false, true, false);
+  check(fxw.html.includes('adresbalk') && !fxw.html.includes('Chrome'), 'J · blad Firefox Windows: het knopje in de adresbalk, zonder Chrome', fxw.html);
   check(isIpadVan(a, UA.ipad, 5) && !isIpadVan(a, UA.iphone, 5) && !isIpadVan(a, UA.macSafari, 0),
     'J · een iPad wordt herkend, ook als hij zich als Mac voordoet', '');
 });

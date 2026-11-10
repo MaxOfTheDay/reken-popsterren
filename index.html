@@ -2718,6 +2718,7 @@
   }
   #app-blad .ab-rond.ab-doel { padding: 0; border-radius: 50%; }
   #app-blad .ab-uitleg { margin: 4px 0; }
+  #app-blad .ab-stil { color: var(--paper-ink-muted); font-size: var(--tx-klein); }
   #app-blad .ab-noot {
     margin-top: 10px; padding: 8px 11px; border-radius: var(--r-sm);
     background: var(--paper-tint); border: 1px solid var(--paper-border); color: var(--paper-ink-muted); font-size: var(--tx-klein);
@@ -32878,7 +32879,7 @@ function geluidRijHtml() {
 
 function sterrenRijNaam() { return overzetMag() ? 'Ander toestel en back\u2011up' : 'Back\u2011up'; }
 function appWideCardsHtml() {
-  const alsApp = (beginschermNetErop || speeltAlsApp()) ? '' : `
+  const alsApp = !appUitlegNodig() ? '' : `
       <button class="gear-item" id="set-alsapp" type="button">
         <span class="gi-ico" aria-hidden="true">📲</span><span class="gi-label">Als app</span><span class="gi-pijl" aria-hidden="true">›</span>
       </button>`;
@@ -34267,20 +34268,37 @@ function speeltAlsApp(w) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 function beginschermSoort(nav) {
   nav = nav || navigator;
   const ua = String(nav.userAgent || '');
   const inApp = /FBAN|FBAV|FB_IAB|Instagram|Line\/|WhatsApp|Snapchat|Pinterest|LinkedInApp|musical_ly|TikTok|GSA\/|; wv\)/.test(ua);
   const ipadAlsMac = /Macintosh/.test(ua) && (nav.maxTouchPoints || 0) > 1;
   if (/iPhone|iPad|iPod/.test(ua) || ipadAlsMac) {
-    const safari = /Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|DuckDuckGo/.test(ua) && !inApp;
+    if (inApp) return 'ios-elders';
+    if (/FxiOS\//.test(ua)) return 'ios-firefox';
+    if (/CriOS\//.test(ua)) return 'ios-chrome';
+    const safari = /Safari\//.test(ua) && !/EdgiOS|OPiOS|YaBrowser|DuckDuckGo/.test(ua);
     return safari ? 'ios' : 'ios-elders';
   }
   if (inApp) return 'inapp';
   if (/Android/.test(ua)) {
+    if (/Firefox\//.test(ua) && !/Focus|Klar/.test(ua)) return 'firefox-android';
     return /Chrome\//.test(ua) && !/SamsungBrowser|OPR\/|Firefox|EdgA|YaBrowser|UCBrowser/.test(ua) ? 'android' : 'anders';
   }
   if (/Mobi/.test(ua)) return 'anders';
+  const fx = /Firefox\/(\d+)/.exec(ua);
+  if (fx) return /Windows/.test(ua) && +fx[1] >= 143 ? 'firefox-windows' : 'geen';
   return /Chrome\/|Edg\//.test(ua) && !/OPR\//.test(ua) ? 'desktop' : 'anders';
 }
 
@@ -34293,8 +34311,15 @@ function beginschermUitleg(soort, hasStars) {
     case 'android': return ['Chrome stelt soms zelf voor om Rekensterren te installeren.',
       'Geen voorstel gezien? Tik op ⋮ en kies ‘App installeren’ of ‘Toevoegen aan startscherm’.'];
     case 'ios': return ['Tik in Safari op Deel en kies ‘Zet op beginscherm’.', redden('Safari')];
+    case 'ios-firefox': case 'ios-chrome': {
+      const b = soort === 'ios-firefox' ? 'Firefox' : 'Chrome';
+      return [`Tik in ${b} op Deel en kies ‘Zet op beginscherm’.`, redden(b)];
+    }
     case 'ios-elders': return ['Open deze pagina in Safari. Tik daar op Deel en kies ‘Zet op beginscherm’.',
       redden('deze browser')];
+    case 'firefox-android': return ['Tik in Firefox op ⋮ en kies ‘Meer’ › ‘Toevoegen aan startscherm’.'];
+    case 'firefox-windows': return ['Klik in Firefox rechts in de adresbalk op het knopje voor webapps.'];
+    case 'geen': return ['Firefox kan op deze computer geen apps maken. Speel gewoon hier verder: je sterren blijven bewaard.'];
     case 'desktop': return ['Klik op het installeer-icoon in de adresbalk, of kies ‘App installeren’ in het menu van je browser.'];
     case 'inapp': return ['Je bekijkt deze pagina in een andere app. Open hem in Chrome om Rekensterren als app te installeren.'];
     default: return ['Kies in het menu van je browser ‘App installeren’ of ‘Toevoegen aan startscherm’. Staat dat er niet bij? Open de pagina dan in Chrome.'];
@@ -34357,7 +34382,11 @@ addEventListener('beforeinstallprompt', e => { installVoorstel = e; });
 
 try { localStorage.removeItem('rekenPopsterren_appknop'); } catch (e) { }
 
-function appUitlegNodig() { return !beginschermNetErop && !speeltAlsApp(); }
+
+function appUitlegNodig() {
+  if (beginschermNetErop || speeltAlsApp()) return false;
+  try { return beginschermSoort() !== 'geen'; } catch (e) { return true; }
+}
 function appKnopTonen() {
   if (!appUitlegNodig()) return false;
   const zoek = location.search || '';
@@ -34406,9 +34435,16 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
   const erbij = kbd(ico('erbij') + ' Zet op beginscherm');
   const stappen = l => l.map((t, i) => `<div class="ab-stap"><span class="ab-nr">${i + 1}</span><span class="ab-tekst">${t}</span></div>`).join('');
   let html = '<div class="ab-voor">Voor papa of mama</div>';
-  if (soort === 'ios') {
+  if (soort === 'ios' || soort === 'ios-firefox' || soort === 'ios-chrome') {
     let zet;
-    if (ipad) zet = [`Tik in Safari rechtsboven op ${kbd(DEEL_SVG + ' Deel')}`, `${erbij} › ${kbd('Voeg toe')}`];
+
+
+
+
+    if (soort !== 'ios') zet = [`Tik in ${soort === 'ios-firefox' ? 'Firefox' : 'Chrome'} op ${kbd(DEEL_SVG + ' Deel')}`
+        + '<span class="ab-balk26" aria-hidden="true"><span class="ab-adres">rekensterren.be</span><span class="ab-rond ab-doel">' + DEEL_SVG + '</span></span>',
+      `${erbij} › ${kbd('Voeg toe')}`];
+    else if (ipad) zet = [`Tik in Safari rechtsboven op ${kbd(DEEL_SVG + ' Deel')}`, `${erbij} › ${kbd('Voeg toe')}`];
     else if (nieuw) zet = [`Tik onderaan op ${kbd('···')}`
         + '<span class="ab-balk26" aria-hidden="true"><span class="ab-rond">‹</span><span class="ab-adres">rekensterren.be</span><span class="ab-rond ab-doel">···</span></span>',
       `${kbd(DEEL_SVG + ' Deel')} › ${erbij} › ${kbd('Voeg toe')}`];
@@ -34431,6 +34467,22 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
     html += stappen([`Tik in Chrome rechtsboven op ${kbd('⋮')}`
         + '<span class="ab-balk26" aria-hidden="true"><span class="ab-adres">rekensterren.be</span><span class="ab-rond ab-doel">⋮</span></span>',
       `${kbd(ico('erbij') + ' App installeren')} › ${kbd('Installeren')}`]);
+    return { html, installeer: false, meenemen: false, kopieer: false };
+  }
+
+
+  if (soort === 'firefox-android') {
+    html += stappen([`Tik in Firefox op ${kbd('⋮')}`
+        + '<span class="ab-balk26" aria-hidden="true"><span class="ab-adres">rekensterren.be</span><span class="ab-rond ab-doel">⋮</span></span>',
+      `${kbd('Meer')} › ${kbd(ico('erbij') + ' Toevoegen aan startscherm')} › ${kbd('Toevoegen')}`]);
+    return { html, installeer: false, meenemen: false, kopieer: false };
+  }
+
+
+
+  if (soort === 'firefox-windows') {
+    html += `<p class="ab-uitleg">${beginschermUitleg(soort, false)[0]} Rekensterren krijgt dan een eigen venster in je taakbalk.</p>`
+      + '<p class="ab-uitleg ab-stil">Geen knopje? Speel gewoon hier verder: je sterren blijven bewaard.</p>';
     return { html, installeer: false, meenemen: false, kopieer: false };
   }
 

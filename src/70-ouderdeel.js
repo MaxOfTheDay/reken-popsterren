@@ -1606,7 +1606,7 @@ function geluidRijHtml() {
 // van het blad anders midden in het woord, als "back-" en "up".
 function sterrenRijNaam() { return overzetMag() ? 'Ander toestel en back\u2011up' : 'Back\u2011up'; }
 function appWideCardsHtml() {
-  const alsApp = (beginschermNetErop || speeltAlsApp()) ? '' : `
+  const alsApp = !appUitlegNodig() ? '' : `
       <button class="gear-item" id="set-alsapp" type="button">
         <span class="gi-ico" aria-hidden="true">📲</span><span class="gi-label">Als app</span><span class="gi-pijl" aria-hidden="true">›</span>
       </button>`;
@@ -2986,10 +2986,21 @@ function speeltAlsApp(w) {
    mag: er hangt geen gedrag aan, alleen een zin, en de 'anders'-zin klopt overal.
 
      ios          Safari op iPhone of iPad
+     ios-firefox  Firefox op iOS, en ios-chrome: Chrome op iOS. Sinds iOS 16.4
+     ios-chrome   kunnen die zelf een app op het beginscherm zetten (Deel in de
+                  adresbalk), en dat is béter dan naar Safari sturen: de sterren
+                  staan in déze browser, en Safari ziet ze niet
      ios-elders   een andere browser of een app-in-app op iOS: daar kan het
                   niet (betrouwbaar), dus eerst naar Safari
      android      Chrome op Android
+     firefox-android  Firefox op Android: ⋮ › Meer › Toevoegen aan startscherm.
+                  Niet naar Chrome sturen: de sterren blijven in Firefox achter
      desktop      Chrome of Edge op een computer
+     firefox-windows  Firefox 143 of nieuwer op Windows: een knopje voor webapps
+                  in de adresbalk
+     geen         Firefox op een Mac, Linux of een oudere Windows-Firefox: daar
+                  kán het niet. Dan is er ook geen knop Als app (appUitlegNodig),
+                  want een blad dat "dat lukt hier niet" zegt helpt niemand
      inapp        een ingebouwde browser (WhatsApp, Facebook, Gmail...) op Android
      anders       de rest: het menu, en anders Chrome
 
@@ -3001,14 +3012,20 @@ function beginschermSoort(nav) {
   const inApp = /FBAN|FBAV|FB_IAB|Instagram|Line\/|WhatsApp|Snapchat|Pinterest|LinkedInApp|musical_ly|TikTok|GSA\/|; wv\)/.test(ua);
   const ipadAlsMac = /Macintosh/.test(ua) && (nav.maxTouchPoints || 0) > 1;
   if (/iPhone|iPad|iPod/.test(ua) || ipadAlsMac) {
-    const safari = /Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|DuckDuckGo/.test(ua) && !inApp;
+    if (inApp) return 'ios-elders';
+    if (/FxiOS\//.test(ua)) return 'ios-firefox';
+    if (/CriOS\//.test(ua)) return 'ios-chrome';
+    const safari = /Safari\//.test(ua) && !/EdgiOS|OPiOS|YaBrowser|DuckDuckGo/.test(ua);
     return safari ? 'ios' : 'ios-elders';
   }
   if (inApp) return 'inapp';
   if (/Android/.test(ua)) {
+    if (/Firefox\//.test(ua) && !/Focus|Klar/.test(ua)) return 'firefox-android';
     return /Chrome\//.test(ua) && !/SamsungBrowser|OPR\/|Firefox|EdgA|YaBrowser|UCBrowser/.test(ua) ? 'android' : 'anders';
   }
   if (/Mobi/.test(ua)) return 'anders';
+  const fx = /Firefox\/(\d+)/.exec(ua);
+  if (fx) return /Windows/.test(ua) && +fx[1] >= 143 ? 'firefox-windows' : 'geen';
   return /Chrome\/|Edg\//.test(ua) && !/OPR\//.test(ua) ? 'desktop' : 'anders';
 }
 // De zinnen per soort. De eerste is de uitleg; een tweede staat er los onder.
@@ -3021,8 +3038,15 @@ function beginschermUitleg(soort, hasStars) {
     case 'android': return ['Chrome stelt soms zelf voor om Rekensterren te installeren.',
       'Geen voorstel gezien? Tik op ⋮ en kies ‘App installeren’ of ‘Toevoegen aan startscherm’.'];
     case 'ios': return ['Tik in Safari op Deel en kies ‘Zet op beginscherm’.', redden('Safari')];
+    case 'ios-firefox': case 'ios-chrome': {
+      const b = soort === 'ios-firefox' ? 'Firefox' : 'Chrome';
+      return [`Tik in ${b} op Deel en kies ‘Zet op beginscherm’.`, redden(b)];
+    }
     case 'ios-elders': return ['Open deze pagina in Safari. Tik daar op Deel en kies ‘Zet op beginscherm’.',
       redden('deze browser')];
+    case 'firefox-android': return ['Tik in Firefox op ⋮ en kies ‘Meer’ › ‘Toevoegen aan startscherm’.'];
+    case 'firefox-windows': return ['Klik in Firefox rechts in de adresbalk op het knopje voor webapps.'];
+    case 'geen': return ['Firefox kan op deze computer geen apps maken. Speel gewoon hier verder: je sterren blijven bewaard.'];
     case 'desktop': return ['Klik op het installeer-icoon in de adresbalk, of kies ‘App installeren’ in het menu van je browser.'];
     case 'inapp': return ['Je bekijkt deze pagina in een andere app. Open hem in Chrome om Rekensterren als app te installeren.'];
     default: return ['Kies in het menu van je browser ‘App installeren’ of ‘Toevoegen aan startscherm’. Staat dat er niet bij? Open de pagina dan in Chrome.'];
@@ -3084,8 +3108,12 @@ addEventListener('beforeinstallprompt', e => { installVoorstel = e; });
 /* Een oude sleutel van dit knopje (een bezoekteller en een rustdatum), waar
    geen code meer bij hoort: bij het opstarten opruimen. */
 try { localStorage.removeItem('rekenPopsterren_appknop'); } catch (e) { /* dicht: dan blijft hij staan */ }
-// Mag er iets over "als app" staan: niet in de app zelf, en niet net na installeren.
-function appUitlegNodig() { return !beginschermNetErop && !speeltAlsApp(); }
+// Mag er iets over "als app" staan: niet in de app zelf, niet net na installeren,
+// en niet waar de browser het niet kan (soort 'geen', zie beginschermSoort).
+function appUitlegNodig() {
+  if (beginschermNetErop || speeltAlsApp()) return false;
+  try { return beginschermSoort() !== 'geen'; } catch (e) { return true; }
+}
 function appKnopTonen() {
   if (!appUitlegNodig()) return false;
   const zoek = location.search || '';
@@ -3134,9 +3162,16 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
   const erbij = kbd(ico('erbij') + ' Zet op beginscherm');
   const stappen = l => l.map((t, i) => `<div class="ab-stap"><span class="ab-nr">${i + 1}</span><span class="ab-tekst">${t}</span></div>`).join('');
   let html = '<div class="ab-voor">Voor papa of mama</div>';
-  if (soort === 'ios') {
+  if (soort === 'ios' || soort === 'ios-firefox' || soort === 'ios-chrome') {
     let zet;
-    if (ipad) zet = [`Tik in Safari rechtsboven op ${kbd(DEEL_SVG + ' Deel')}`, `${erbij} › ${kbd('Voeg toe')}`];
+    /* Firefox en Chrome op iOS hebben Deel in hun eigen adresbalk (boven of
+       onder, wat de ouder zelf koos): dus geen plek noemen, wel de balk tekenen
+       met het deel-icoon als doel. Daarna is het het deelblad van iOS zelf,
+       en dat is hetzelfde als vanuit Safari. */
+    if (soort !== 'ios') zet = [`Tik in ${soort === 'ios-firefox' ? 'Firefox' : 'Chrome'} op ${kbd(DEEL_SVG + ' Deel')}`
+        + '<span class="ab-balk26" aria-hidden="true"><span class="ab-adres">rekensterren.be</span><span class="ab-rond ab-doel">' + DEEL_SVG + '</span></span>',
+      `${erbij} › ${kbd('Voeg toe')}`];
+    else if (ipad) zet = [`Tik in Safari rechtsboven op ${kbd(DEEL_SVG + ' Deel')}`, `${erbij} › ${kbd('Voeg toe')}`];
     else if (nieuw) zet = [`Tik onderaan op ${kbd('···')}`
         + '<span class="ab-balk26" aria-hidden="true"><span class="ab-rond">‹</span><span class="ab-adres">rekensterren.be</span><span class="ab-rond ab-doel">···</span></span>',
       `${kbd(DEEL_SVG + ' Deel')} › ${erbij} › ${kbd('Voeg toe')}`];
@@ -3159,6 +3194,22 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
     html += stappen([`Tik in Chrome rechtsboven op ${kbd('⋮')}`
         + '<span class="ab-balk26" aria-hidden="true"><span class="ab-adres">rekensterren.be</span><span class="ab-rond ab-doel">⋮</span></span>',
       `${kbd(ico('erbij') + ' App installeren')} › ${kbd('Installeren')}`]);
+    return { html, installeer: false, meenemen: false, kopieer: false };
+  }
+  /* Firefox op Android: het zit onder Meer. Een app van Firefox deelt zijn
+     opslag met Firefox zelf, dus de sterren zijn er gewoon -- geen meenemen. */
+  if (soort === 'firefox-android') {
+    html += stappen([`Tik in Firefox op ${kbd('⋮')}`
+        + '<span class="ab-balk26" aria-hidden="true"><span class="ab-adres">rekensterren.be</span><span class="ab-rond ab-doel">⋮</span></span>',
+      `${kbd('Meer')} › ${kbd(ico('erbij') + ' Toevoegen aan startscherm')} › ${kbd('Toevoegen')}`]);
+    return { html, installeer: false, meenemen: false, kopieer: false };
+  }
+  /* Firefox op Windows: hoe het knopje eruitziet, beschrijft Mozilla zelf niet,
+     dus het wordt hier ook niet nagetekend. Eén zin, en een uitweg zonder
+     "open in Chrome" (de sterren staan in Firefox). */
+  if (soort === 'firefox-windows') {
+    html += `<p class="ab-uitleg">${beginschermUitleg(soort, false)[0]} Rekensterren krijgt dan een eigen venster in je taakbalk.</p>`
+      + '<p class="ab-uitleg ab-stil">Geen knopje? Speel gewoon hier verder: je sterren blijven bewaard.</p>';
     return { html, installeer: false, meenemen: false, kopieer: false };
   }
   // In WhatsApp, Facebook... kan het niet: de link naar de echte browser brengen.
