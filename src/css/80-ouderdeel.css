@@ -686,7 +686,7 @@
      vlak. Een violette knop zakte op dit violette glas weg. Een gekozen kleur
      krijgt een witte ring, geen gouden: goud is in deze app "verdiend". */
   .ns-kind {
-    display: flex; flex-direction: column; gap: 6px; padding: 16px;
+    display: flex; flex-direction: column; gap: 8px; padding: 16px;
     background: rgba(255,255,255,.05); box-shadow: var(--vlak-top);
     border-top: 1px solid rgba(255,255,255,.09); color: var(--c-white);
   }
@@ -699,9 +699,11 @@
   }
   /* Wie: twee pillen met het hoofdje van onze eigen pop, in de kleuren die er nu
      gekozen zijn -- wie op "Jongen" tikt, ziet de jongen die hij krijgt. */
-  /* Wie staat apart (er is lucht onder), haar en kleren horen bij elkaar (dicht op
-     elkaar): twee groepjes, zonder een kopje ertussen. */
-  .ns-wie { display: flex; gap: 10px; margin-bottom: 10px; }
+  /* Drie groepjes: wie, haar, kleren. Haar en kleren staan elk in een eigen
+     donker bakje, even breed en even rond als de pillen erboven, met het icoon
+     vooraan in het bakje. Zonder bakje zweefden de bolletjes los op het glas: op
+     een breed scherm ver uit elkaar, en de rij liep niet op met de pillen. */
+  .ns-wie { display: flex; gap: 10px; margin-bottom: 8px; }
   #screen-newstar .ns-wie .chip {
     flex: 1; min-width: 0; min-height: 48px; padding: 4px 12px 4px 6px; gap: 8px;
     display: flex; align-items: center; justify-content: center;
@@ -709,19 +711,28 @@
   }
   .ns-wie .who-portrait { width: 34px; height: 34px; background: rgba(0,0,0,.3); border-color: rgba(255,255,255,.85); box-shadow: none; }
   .ns-wie .who-portrait svg { top: -3px; width: 62px; height: auto; }
-  /* Haar en kleren: een icoontje voor de rij, dan vijf bolletjes. */
-  .ns-kleur-rij { display: flex; align-items: center; gap: 10px; }
-  .ns-ico { flex: none; width: 28px; display: flex; justify-content: center; color: rgba(255,255,255,.72); }
-  .ns-ico .oz-i { width: 28px; height: 28px; stroke-width: 1.8; }
-  .ns-ico .oz-i .vul { fill: currentColor; }
-  .ns-kleur-rij .chip-row { flex: 1; min-width: 0; }
-  /* Haar en kleren kiest het kind zelf: 44px is in deze app de ondergrens voor een
-     kinderhand (zie .icon-btn). Vijf naast elkaar, altijd: op een telefoon van 320
-     breed krimpen de bolletjes een paar pixel in plaats van een vijfde op een
-     nieuwe regel te zetten. */
-  #newstar-hair, #newstar-dress {
-    display: grid; grid-template-columns: repeat(5, minmax(0, 48px)); gap: 8px; justify-content: space-between;
+  /* Het bakje is één raster: icoon, dan vijf bolletjes. De chip-row doet niet
+     mee als eigen vak (display: contents), zodat icoon en bolletjes dezelfde
+     kolommen delen en de twee bakjes recht onder elkaar lopen. */
+  .ns-kleur-rij {
+    display: grid; grid-template-columns: 40px repeat(5, minmax(0, 46px));
+    justify-content: space-between; align-items: center; gap: 0 4px;
+    padding: 6px 10px 6px 8px; border-radius: var(--r-pill);
+    background: rgba(0,0,0,.2); box-shadow: inset 0 1px 2px rgba(0,0,0,.25), 0 1px 0 rgba(255,255,255,.06);
   }
+  .ns-kleur-rij .chip-row { display: contents; }
+  .ns-ico { display: flex; justify-content: center; color: rgba(255,255,255,.85); }
+  .ns-ico .oz-i { width: 30px; height: 30px; stroke-width: 1.8; }
+  .ns-ico .oz-i .vul { fill: currentColor; }
+  /* Gekozen: het haar en het shirtje in die kleur, met een witte lijn eromheen
+     zodat ook zwart haar op het donkere bakje te zien is. */
+  .ns-ico.gekleurd .oz-i { stroke: rgba(255,255,255,.9); }
+  .ns-ico.gekleurd .oz-i .vul { fill: var(--vk); stroke-width: 1.4; }
+  .ns-kleur-rij:last-child .ns-ico.gekleurd .oz-i path { fill: var(--vk); }
+  /* Haar en kleren kiest het kind zelf: 44px is in deze app de ondergrens voor een
+     kinderhand (zie .icon-btn); de chip is tot 46px breed. Vijf naast elkaar,
+     altijd: op een telefoon van 320 breed krimpen de bolletjes een paar pixel in
+     plaats van een vijfde op een nieuwe regel te zetten. */
   /* Het bolletje IS de knop: geen grijs bordje erachter. Met een bordje, een
      bolletje en een ring om het gekozene stonden er drie cirkels in elkaar, en
      raakten de ringen van de twee rijen elkaar bijna. De tikvlakte blijft 48px

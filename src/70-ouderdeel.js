@@ -87,13 +87,16 @@ function swatchChips(group, ids, sel) {
   }).join('');
 }
 /* Haar en kleren: een getekend icoontje voor de rij in plaats van een woord, in
-   de lijn van de andere lijniconen (ozIco). Een hoofdje met staartjes, en een
-   T-shirt. */
+   de lijn van de andere lijniconen (ozIco). Een hoofdje met haar, en een
+   T-shirt. Het haar en het shirtje kleuren mee met wat er gekozen is (--vk, zie
+   renderNewStar): het icoon zegt zo zonder woord "dit is jouw haar". Een jongen
+   krijgt een kort kapsel; staartjes boven een jongen klopten niet met de pop. */
 const NS_ICO = (() => {
   const i = d => `<svg class="oz-i" viewBox="0 0 24 24">${d}</svg>`;
   return {
     // de staartjes hoog, zoals bij onze pop: op ooghoogte lazen ze als een bril
     haar: i('<circle class="vul" cx="4.2" cy="9.6" r="2.6"/><circle class="vul" cx="19.8" cy="9.6" r="2.6"/><path class="vul" d="M5.6 12.6C5.2 7.8 8.2 4.6 12 4.6s6.8 3.2 6.4 8c-1.6-1.9-3.8-3.2-6.4-3.4-2.6.2-4.8 1.5-6.4 3.4Z"/><path d="M6 13.2c.6 3.6 3 6.2 6 6.2s5.4-2.6 6-6.2"/>'),
+    haarKort: i('<path class="vul" d="M5.4 13C4.6 7.4 7.8 3.8 12 3.8s7.4 3.6 6.6 9.2c-1-2.6-3-3.8-5.2-4-1.4 1.4-3.6 2-6 1.6-.8.6-1.5 1.4-2 2.4Z"/><path d="M6 13.2c.6 3.6 3 6.2 6 6.2s5.4-2.6 6-6.2"/>'),
     kleren: i('<path d="M8.5 3.5 4 6 2 10.5l3.2 1.4V20.5h13.6v-8.6l3.2-1.4L20 6l-4.5-2.5c-.6 1.7-1.9 2.7-3.5 2.7s-2.9-1-3.5-2.7Z"/>'),
   };
 })();
@@ -137,6 +140,8 @@ function renderNewStar() {
      staan, geen -- het meisje is blond en de jongen bruin, dus "blond" aanvinken
      zou over maar één van de twee gaan. */
   const toon = g => (n.base || n.gekozen[g]) ? n[g] : null;
+  // het rij-icoon in de gekozen kleur; zolang er niets aanstaat blijft het een lijntje
+  const icoKleur = g => toon(g) ? ` style="--vk:${item(toon(g)).color}"` : '';
   const ok = nieuweSterKlaar();
   // Elke chip-tik bouwt dit paneel opnieuw op. Met een opengeklapt paneel eronder
   // is dat merkbaar: zonder de scrolstand vast te houden springt het formulier
@@ -188,9 +193,9 @@ function renderNewStar() {
         : `<div class="avatar-holder idle levend">${pasLaag(avatarSVG(preview, 132))}</div>`}</div></div>
       <div class="ns-kind">
         <div class="ns-wie" id="newstar-base" role="group" aria-label="Wie ben je?">${BASE_CHOICES.map(wieKnop).join('')}</div>
-        <div class="ns-kleur-rij"><span class="ns-ico" aria-hidden="true">${NS_ICO.haar}</span>
+        <div class="ns-kleur-rij"><span class="ns-ico${toon('hair') ? ' gekleurd' : ''}" aria-hidden="true"${icoKleur('hair')}>${n.base === 'jongen' ? NS_ICO.haarKort : NS_ICO.haar}</span>
           <div class="chip-row" id="newstar-hair" role="group" aria-label="Haar">${swatchChips('hair', START_HAIR, toon('hair'))}</div></div>
-        <div class="ns-kleur-rij"><span class="ns-ico" aria-hidden="true">${NS_ICO.kleren}</span>
+        <div class="ns-kleur-rij"><span class="ns-ico${toon('dress') ? ' gekleurd' : ''}" aria-hidden="true"${icoKleur('dress')}>${NS_ICO.kleren}</span>
           <div class="chip-row" id="newstar-dress" role="group" aria-label="Kleren">${swatchChips('dress', START_DRESS, toon('dress'))}</div></div>
       </div>
     </div>
