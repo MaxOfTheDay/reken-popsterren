@@ -27,7 +27,7 @@
  *   C  tikstormen: een paar rondes van willekeurige tikken met af en toe
  *      "terug", met een vast zaadje zodat een fout terug te spelen is. Geen
  *      enkele fout, en na afloop staat er precies één scherm, geen sluier
- *      zonder melding, geen overgang die blijft hangen.
+ *      zonder melding (of 👆), geen overgang die blijft hangen.
  *   D  offline na het allereerste bezoek: de tekeningen die het spel bij dat
  *      bezoek al ophaalde (vóór de service worker meekeek) staan in de voorraad,
  *      dus zonder net staat haar kaart er met tekening. Over een echte lokale
@@ -74,7 +74,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { launch, cacheFonts, APP_URL } = require('./browser');
+const { launch, cacheFonts, rust, APP_URL } = require('./browser');
 const { check, klaar } = require('./meld')('robuust');
 
 const TELEFOON = { width: 390, height: 844 };
@@ -262,7 +262,10 @@ const NIET = /set-reset|set-delete|delete|wis|import|export|backup|deel|kopieer|
         const veil = document.getElementById('tap-veil'), toast = document.getElementById('toast');
         return {
           schermen: [...document.querySelectorAll('.screen.active')].map(x => x.id),
-          sluier: veil.style.display === 'block' && toast.style.display === 'none',
+          // een sluier wacht op een tik; dan hoort er iets te zeggen wáár: de
+          // melding, of de 👆 op de goede knop na een tweede misser (toonVerder)
+          sluier: veil.style.display === 'block' && toast.style.display === 'none'
+            && !document.querySelector('.screen.active .wijs-hand'),
           blijft: [overgangBezig, !!vluchtOp, !!wereldReisOp].some(Boolean),
           wegvallend: document.querySelectorAll('.screen.wegvallend').length,
           inert: [...document.querySelectorAll('.screen.active')].some(x => x.inert),
@@ -429,7 +432,7 @@ const NIET = /set-reset|set-delete|delete|wis|import|export|backup|deel|kopieer|
       ['end', '&screen=end'], ['dress', '&screen=dress'], ['tro', '&screen=tro'], ['ouders', '&screen=ouders']];
     for (const [naam, scherm] of SCHERMEN) {
       await page.goto(APP_URL + '&demo' + (scherm ? '&star=p1' + scherm : ''));
-      await page.waitForTimeout(2200);
+      await rust(page, { minstens: 2200 });   // de aankomst, en wat het eindscherm in stappen opbouwt
       // elke zichtbare knop, met een teller die de click opvangt vóór hij iets doet
       const knoppen = await page.evaluate(([sel, niet]) => {
         const re = new RegExp(niet, 'i');
