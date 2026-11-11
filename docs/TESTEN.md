@@ -30,6 +30,20 @@ dan telt hij als geslaagd maar meldt het verslag "pas bij de tweede keer" --
 gebeurt dat vaker bij dezelfde suite, dan wiebelt er een controle: laat die
 wachten op een stand in plaats van op een aantal milliseconden.
 
+**Na het laden: `rust(page)`, geen vaste tel.** Een scherm komt binnen met een
+overgang, en hoe lang die duurt hangt af van de machine. `rust(page)` uit
+`test/browser.js` wacht tot er geen animatie meer loopt. Een vaste
+`waitForTimeout` direct na een `goto` of `reload` meet op een drukke machine een
+scherm dat nog schuift: zo werd main drie keer rood op de wereldpil, en viel "het
+formulier verspringt" alleen om als alle suites tegelijk draaiden (niet door
+gedeelde toestand: elke suite heeft een eigen proces en browser, ze delen alleen
+de processor). `inhoud` zaak Y telt de vaste tellen die er nog staan; dat mag
+minder worden, niet meer. Wie met opzet midden in een opkomst meet, zet
+`// vast:` met de reden op die regel. Hetzelfde geldt na een tik: wacht op de
+stand die je wilt meten (de lade aan, het licht stil), niet op een aantal ms.
+En tel geen beeldjes waar de app in milliseconden plant: één beeldje duurt op
+een drukke machine soms langer dan de 140 ms tussen twee pasjes.
+
 De browserjobs op GitHub (`.github/workflows/keuring.yml`) gaan ook via
 `test/suites.js`, met `node test/alles.js <bestand>`: één suite per job, met
 dezelfde tweede kans. Slaagt hij pas de tweede keer, dan blijft de PR groen en

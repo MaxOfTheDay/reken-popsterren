@@ -136,7 +136,10 @@ function check(ok, label, detail) {
     // een tik op de jongen opent het formulier met die keuze al gemaakt, en de kop
     // zegt wat je aantikte
     await page.click('#leeg-duo [data-base="jongen"]', { force: true });
-    await page.waitForTimeout(400);
+    /* Wachten tot het formulier binnen is, niet een vaste tel: op een drukke
+       machine schoof het na 400 ms nog en stond het vel 4px lager (585 tegen
+       589), en dan leek "het formulier verspringt" om te vallen. */
+    await rust(page);
     const formVoet = await opSchijf('#newstar-stage');
     check(formVoet.length === 1 && staan(formVoet), 'in het formulier staat de gekozen pop op haar podium', JSON.stringify(formVoet));
     // wie je aantikt is wie je krijgt: de blauwe jongen met bruin haar, niet een
@@ -2328,7 +2331,11 @@ function check(ok, label, detail) {
       const page = await c.newPage();
       page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
       await page.goto(APP_URL + '&demo&star=p1&screen=map');
-      await page.waitForTimeout(400);
+      /* Wachten tot de kaart stilstaat. Met een vaste 400 ms schoof hij op een
+         trage machine nog binnen: de kop stond dan 3,4px boven de rand van het
+         scherm, elementFromPoint vond daar niets, en de eerste wereld (muziek)
+         mat 43px in plaats van 47. Zo werd main drie keer rood. */
+      await rust(page);
       const r = await page.evaluate(() => {
         const uit = { kleinste: Infinity, ico: [], buren: [], wie: '-' };
         const pil = document.getElementById('map-tournee-label');
@@ -2997,17 +3004,31 @@ function check(ok, label, detail) {
     });
 
     const groet = await page.evaluate(async () => {
+      /* Wanneer elke pop begint, geteld in taken en niet in beeldjes. De pasjes
+         liggen LANDING.tussen (140 ms) uit elkaar, en op een drukke machine duurt
+         één beeldje soms langer dan dat: dan begonnen er twee in hetzelfde
+         beeldje ([6,8,8]) terwijl ze wel netjes na elkaar kwamen. Elke timer is
+         een eigen taak, dus elke start komt in een eigen ronde van de observer;
+         alle drie in één ronde zou wél "allemaal tegelijk" zijn. */
+      const starts = [-1, -1, -1];
+      let ronde = 0;
+      const mo = new MutationObserver(() => {
+        ronde++;
+        window.__poppen().forEach((x, i) => { if (x !== '-' && starts[i] < 0) starts[i] = ronde; });
+      });
+      mo.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
       goProfiles();
       const reeks = await window.__volg(2600);
+      mo.disconnect();
       return {
         wie: [0, 1, 2].map(i => reeks.some(r => r[i] !== '-')),
-        // elke pop begint op een ánder beeldje: de groet loopt door de rij
-        starts: [0, 1, 2].map(i => reeks.findIndex(r => r[i] !== '-')),
+        // elke pop begint in een ándere ronde: de groet loopt door de rij
+        starts,
         stilAanEind: reeks[reeks.length - 1].every(x => x === '-'),
       };
     });
     check(groet.wie.every(Boolean), 'bij binnenkomst groet elke ster één keer', JSON.stringify(groet));
-    check(groet.starts[0] < groet.starts[1] && groet.starts[1] < groet.starts[2],
+    check(groet.starts[0] > 0 && groet.starts[0] < groet.starts[1] && groet.starts[1] < groet.starts[2],
       'en ze doen het na elkaar, niet allemaal tegelijk', JSON.stringify(groet.starts));
     check(groet.stilAanEind, 'daarna is het stil -- de groet is geen lus', JSON.stringify(groet));
 
@@ -3261,7 +3282,10 @@ function check(ok, label, detail) {
 
     // met &intro wel -- en de kop blijft een kop
     await p1.goto(APP_URL + '&intro');
-    await p1.waitForTimeout(250);
+    /* Wachten tot de intro zijn laag heeft neergezet, niet een vaste 250 ms: op
+       een drukke machine stond hij dan nog in zijn wachtstand (loopt, maar nog
+       zonder laag). Komt de laag er nooit, dan zegt de controle het. */
+    await p1.waitForFunction(() => !!document.querySelector('.logo-intro'), null, { timeout: 4000 }).catch(() => {});
     const bezig = await staat(p1);
     check(bezig.loopt && bezig.laag, 'met &intro speelt de logo-intro', JSON.stringify(bezig));
     check(bezig.alt === 'Rekensterren' && bezig.zicht === 'visible' && bezig.weer !== 'none',
