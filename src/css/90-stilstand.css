@@ -35,59 +35,15 @@
     #screen-map .hub-sticky, #screen-journey .hub-sticky {
       width: var(--balk-w); margin-left: auto; margin-right: auto;
     }
-    /* ---- En de kop en de balk zakken mee het podium op ---------------------
-       Zodra --stage-spel bindt is het podium smaller dan de hoogte toelaat, en
-       dan blijft er lucht boven en onder over. De kop plakt aan de bovenrand van
-       het schérm en de balk zweeft boven de onderrand ervan, dus die twee bleven
-       daar achter, los van de wereldkaart in het onscherpe. Sinds --stage-spel
-       de tekening op ware grootte is gebeurt dat pas op een venster van ruim
-       2180 punten hoog (hoger dan 4K); daaronder is de lucht nul.
-
-       Dat is precies de gelaagdheid die dit scherm juist goed had (omgeving --
-       podium -- bediening), alleen viel de bediening van het podium af. Dus
-       rekent het scherm die lucht uit en schuiven ze allebei mee naar binnen.
-       Op een venster waar het podium de hoogte vult is --podium-lucht nul en
-       staat alles waar het altijd stond -- ook op elke telefoon, want daar geldt
-       dit hele blok niet.
-
-       Waarom dat mag terwijl de balk verder overal hetzelfde hoort te staan: de
-       balk hoort onderaan het PODIUM en niet onderaan het vénster. Op elk ander
-       scherm is dat hetzelfde punt (het podium vult daar de hoogte), en dan
-       verandert er ook niets. Zijn maat, zijn ronding, zijn glas en zijn
-       knoprij blijven bovendien hoe dan ook gelijk -- alleen zijn voet volgt het
-       toestel waar hij bij hoort.
-
-       De som is dezelfde als die van .world-frame hieronder, met dezelfde bron
-       voor de verhouding (--art-w/--art-h) en dezelfde twee knoppen
-       (--podium-rand, --podium-groei): --podium-h is de hoogte van het kaartvak
-       (de app minus zijn lucht boven en onder), daaruit volgt de breedte van het
-       podium, daaruit zijn hoogte, en het verschil valt in tweeën. max(0px, ...)
-       vangt het geval af waarin het podium juist groter is dan het vak -- een krap
-       venster waar de ondergrens van 340 wint, en sinds --podium-groei ook elk
-       gewoon bureaubladvenster: dan is er geen lucht maar overloop, en hoort er
-       niets te schuiven. De kop en de balk staan daar dus weer gewoon aan de
-       vensterrand, precies zoals op een telefoon. */
-    :root {
-      --podium-h: calc(var(--vh-lock, 100svh) - var(--podium-rand) * 2);
-      --podium-w: clamp(min(340px, 100vw),
-                        min(calc(var(--podium-h) * var(--podium-groei) * var(--art-w) / var(--art-h)), var(--stage-spel)),
-                        100vw);
-      --podium-lucht: max(0px, calc((var(--podium-h) - var(--podium-w) * var(--art-h) / var(--art-w)) / 2));
-      --balk-op: var(--podium-lucht);
-    }
-    /* De kop draagt al een negatieve bovenmarge (de overbloeding uit .hub-sticky);
-       die blijft staan en de lucht komt erbij. */
-    #screen-map .hub-sticky { margin-top: calc(var(--rand, 12px) * -1 + var(--podium-lucht)); }
-    /* En de balk zakt mee, op élk scherm waar hij staat en niet alleen op de
-       kaart (--balk-op, zie de margin-bottom bij .main-nav). Hij hoort onderaan
-       het podium, en de kaart is het enige scherm waar je dat podium ziet --
-       maar zat hij alleen dáár hoger, dan sprong hij bij elke tik tussen Kaart
-       en Kleedkamer of Trofeeën een stuk op en neer -- toen de grens nog 560 was
-       al vanaf 1920x1080, en tot 212px ver. Een overgang op bottom maakte er een glijden van, maar die
-       liep op de hoofddraad, precies terwijl die het nieuwe scherm opbouwt, en
-       haperde dus (en meetChroom mat de balk halverwege). Eén hoogte voor alle
-       tabbladen: de balk is het enige dat bij een tabwissel blíjft staan.
-       Daarom staat er hier ook geen transition meer op de balk. */
+    /* ---- Hoe breed de kaart staat -------------------------------------------
+       Dezelfde som als .world-frame (zoek op "DE KAART ZO BREED ALS HET
+       VENSTER"), maar dan voor wat buiten het kaartvak hangt: de veeg onder de
+       balk en de memory-knop. Tot --stage-spel is dat gewoon het venster; pas
+       op een nog breder venster staat de kaart als een baan in het midden. De
+       hoogte telt niet mee: een liggend venster is altijd lager dan de kaart,
+       dus de kop en de balk staan aan de vensterrand, precies zoals op een
+       telefoon. */
+    :root { --podium-w: min(100vw, var(--stage-spel)); }
     /* En de veeg ónder de balk hoort bij dezelfde wereld. Hij is 100vw breed --
        op een telefoon klopt dat, want daar ís de wereld het scherm -- maar op een
        podium dat smaller is dan het venster trok hij een donkere streep dwars
@@ -103,8 +59,7 @@
        lichte veeg toch onzichtbaar (zie .main-nav::after), en hangt hij aan een
        scherm, dan knipt hij van breedte op het moment van de tik -- terwijl de
        kaart nog wegvloeit. Alleen de reis houdt hem vensterbreed; die wissel
-       valt weg in de vlucht ernaartoe. Hij houdt op aan de voet van het podium
-       en niet aan de vensterrand, dus zonder --balk-op. */
+       valt weg in de vlucht ernaartoe. */
     body:not(:has(#screen-journey.active)) .main-nav::before {
       width: var(--podium-w); margin-left: calc(var(--podium-w) / -2);
       border-bottom-left-radius: var(--r-md); border-bottom-right-radius: var(--r-md);

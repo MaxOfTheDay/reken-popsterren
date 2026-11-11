@@ -1380,9 +1380,7 @@
      veilige zone -- zie docs/PROGRESSION-REVIEW.md §E8. */
   /* De maat van een wereldtekening stond hier, op .tour-map. Hij staat nu in
      :root (zoek op --art-w daar) en wordt door de JS ook op <html> gezet in
-     plaats van op het kaartvak: niet alleen de kaart heeft hem nodig maar ook
-     het scherm eromheen, dat er in liggende stand mee uitrekent hoeveel lucht er
-     boven en onder het podium overblijft (zie --podium-lucht). Eén bron voor die
+     plaats van op het kaartvak, zodat élke laag dezelfde bron leest. Eén bron voor die
      verhouding is geen netheid maar noodzaak -- de weg-SVG gebruikt hem als
      viewBox, en liepen ze uiteen dan viel de weg naast de haltes (zie VB_W). */
   .world-frame {
@@ -1531,35 +1529,14 @@
      omhoog bij het loskomen en weer omlaag bij de landing. */
   .globe-vlucht { position: fixed; z-index: 5; pointer-events: none;
     transform-origin: 50% 50%; will-change: transform; }
-  /* Staat het venster rechtop, dan vult de kaart het gewoon en schuif je verticaal
-     -- net als op een telefoon, alleen is er meer te schuiven. Ligt het venster op
-     zijn kant, dan wordt het een podium: de kaart zo groot als de hóógte toelaat,
-     met een zachte rand, en ernaast dezelfde tekening nog een keer -- uitvergroot,
-     onscherp en donker, zodat de randen de wereld zelf zijn en geen leegte.
-
-     De grens was eerder "liggend én breder dan 1215px" (= ART_W, het punt waarop de
-     tekening uitgerekt zou worden). Dat klonk logisch en was het niet: het podium is
-     in béide gevallen kleiner dan de tekening, dus er werd sowieso nooit iets
-     uitgerekt -- die 1215 koos alleen wáár de omslag lag, niet óf de kwaliteit
-     bewaard bleef. En ertussen zat een band waar het stil misging: een liggend
-     venster smaller dan 1216 stond in telefoonstand op een breed scherm. Opgemeten
-     hoeveel van de kaart je daar zag: 1000x900 51%, 1215x950 44%, en een liggende
-     tablet op 1024x768 maar 42% -- de rest moest je eronderuit schuiven.
-
-     Nu op de verhouding alleen. Dat is ook de enige grens die je als mens vóélt:
-     het moment dat een venster breder wordt dan hoog. 1216 was een getal over
-     bestandsafmetingen dat niemand ervaart.
-
-     De omslag zelf blijft een sprong, en dat is niet op te lossen: "vul het scherm
-     en schuif" en "laat alles in één keer zien" zijn twee verschillende manieren om
-     hetzelfde te tonen, en daartussen bestaat geen geleidelijke weg.
-
-     min-height staat er omdat een podium alleen iets oplevert als het er ook in
-     past. Het kader kan niet smaller dan 340px (anders wordt een halte kleiner dan
-     een vingertop), en 340 breed is 604 hoog. Op een telefoon in liggende stand --
-     844x390 -- past dat niet: dan schuift het podium alsnog, zie je 65% van de
-     kaart en vallen haltes 1, 2, 7 en 8 achter de kop of de balk. Daar is
-     volledig-vullen gewoon beter. Opgemeten grens: vanaf 600px hoog past het. */
+  /* De kaart vult altijd de breedte en je schuift verticaal, op elk toestel.
+     Dit blok geldt voor een breed, liggend venster (dezelfde grens als de kop in
+     90-stilstand.css en BREED_PODIUM in de JS) en legt daar twee dingen vast:
+     een bovengrens aan de breedte (--stage-spel), en de wereld nog een keer
+     onscherp en donker eronder, voor het venster dat nog breder is en voor de
+     vluchten van en naar Werelden, waar de kaart even kleiner is dan het scherm.
+     Op een liggende telefoon (lager dan 600) staat die rand er niet: daar vult de
+     kaart het scherm altijd, ook tijdens een vlucht. */
   @media (min-aspect-ratio: 1/1) and (min-height: 600px) {
     /* De onscherpe wereld ligt op #screen-map en niet op .tour-map: dat laatste is
        een scrollvak, en een laagje daarin zou met de kaart mee wegschuiven. */
@@ -1618,52 +1595,26 @@
            kale, felle gloed van <body> (de rand stond pas op een vijfde).
        Een knip heeft dat gat niet: de rand gaat aan in hetzelfde beeldje als de
        klasse eraf gaat, met de identieke .vlucht-doek er nog onder. */
-    /* Het podium is zo groot als de hóógte toelaat, en niet kleiner.
-       Hier stond padding: var(--kop-h) 0 var(--nav-h) -- het podium werd dus vrij
-       gehouden van de kop en de balk. Dat is precies andersom dan op een telefoon,
-       waar die twee juist óver de kaart zweven: daar is de doorzichtige kop voor
-       bedacht en daar gaat de veilige zone van uit. Het kostte 14 tot 17% van het
-       podium (443 in plaats van 519 breed op 1780x950) zonder dat er iets mee
-       gewonnen werd. Nu alleen nog een randje lucht (--podium-rand), zodat de
-       ronde hoek en de schaduw niet tegen de vensterrand aan liggen op de
-       vensters waar het podium smaller is dan de hoogte toelaat. */
-    /* En er valt hier niets meer te schuiven. Het basisvak staat op
-       overflow-y: auto, want op een telefoon ís schuiven de manier waarop je de
-       hele wereld ziet. Op een podium is dat niet zo: alles staat al in beeld,
-       en het enige dat --podium-groei aan schuifruimte oplevert zijn de ~25px
-       die boven en onder buiten het vak vallen. Dat is geen schuifruimte maar
-       een snede, en hem laten schuiven betekent dat één veeg over een muisplaat
-       de kaart scheef zet zonder dat er iets te zien valt. hidden neemt die veeg
-       weg en verandert verder niets: het kader staat nog steeds gecentreerd
-       (align-items: center knipt boven en onder evenveel weg), en scrollTop laat
-       zich nog gewoon zetten -- wat renderTourMap doet als de kaart wél schuift,
-       en wat hier nu op nul blijft omdat er niets te centreren valt. */
-    .tour-map { align-items: center; padding: var(--podium-rand) 0; overflow-y: hidden; }
-    /* Het podium houdt twee grenzen, en ze doen om beurten hun werk.
+    /* DE KAART ZO BREED ALS HET VENSTER. Hier stond een podium: de kaart zo
+       groot als de hóógte toeliet, alles in één keer in beeld. Op een liggende
+       tablet (1024x768) was dat een strook van een derde van het scherm met
+       haltes van een vingertop, en op een bureaublad een telefoon in een zee van
+       waas. Nu doet de kaart wat hij op een liggende telefoon al deed: hij vult
+       de breedte, je schuift verticaal, en renderTourMap zet haar halte in beeld.
 
-       --stage-spel is de bovengrens (zie het skelet bovenaan: de tekening op
-       ware grootte, en niet groter). De min() zit ín de clamp en niet
-       eromheen: de ondergrens van 340 -- waaronder een halte kleiner wordt dan
-       een vingertop -- moet ook daarna nog de ondergrens zijn.
+       Hoe ver dat gaat, zegt --stage-spel (de tekening tot twee keer haar ware
+       grootte, zie het skelet). Dat is dezelfde vergroting die een liggende
+       telefoon al jaren toont (844 punten op 3x is ruim twee keer 1215), dus
+       daaronder wordt er niets zachter dan wat er al stond. Pas op een venster
+       dat nog breder is, staat de kaart als een baan in het midden, en is de
+       rand ernaast weer de onscherpe wereld (#screen-map::after hierboven).
 
-       --podium-groei is wat erbij kwam. Zonder die factor staat hier precies
-       "pas de tekening helemaal in de hoogte", en dat levert op een gewoon
-       bureaublad een wereldkaart ter grootte van een telefoon op. Met 1,08 mag
-       het kader een slag hóger zijn dan het vak waar het in staat; wat er boven
-       en onder wegvalt is lucht en nooit een halte. Het rekenwerk en de
-       nagemeten getallen staan bij --podium-groei in het skelet.
-
-       Dat betekent wel dat op zo'n venster de bovenste en onderste rand van het
-       kader búiten beeld liggen, en de ronde hoeken dus ook: het podium leest
-       daar als een staande baan tussen twee onscherpe marges. Pas waar
-       --stage-spel bindt (een venster van ruim 2180 punten hoog, hoger dan 4K) past het kader
-       weer helemaal in het vak en staat het toestel er compleet, met hoek en
-       schaduw. */
+       Het vak zelf (.tour-map) houdt zijn basisregels: verticaal schuiven, safe
+       center. Geen min-height hier: de breedte ligt vast, de hoogte volgt uit de
+       verhouding, en een liggend venster is altijd lager dan dat. */
     .world-frame { min-width: 0; min-height: 0;
-      width: clamp(min(340px, 100cqw),
-                   min(100cqh * var(--podium-groei) * var(--art-w) / var(--art-h), var(--stage-spel)),
-                   100cqw);
-      border-radius: var(--r-md); box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 20px 70px rgba(0,0,0,.6); }
+      width: min(100cqw, var(--stage-spel));
+      box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 20px 70px rgba(0,0,0,.6); }
   }
   /* De weg: twee lagen over de volle tekening. Het hele pad dof ("nog te
      ontdekken"), het afgelegde stuk daar bovenop vol goud ("al gehaald") --

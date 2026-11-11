@@ -403,8 +403,8 @@
   .main-nav::before, .main-nav::after {
     content: ''; position: absolute; z-index: -1; pointer-events: none;
     left: 50%; width: 100vw; margin-left: -50vw;
-    bottom: calc(0px - var(--balk-rand) - var(--veilig-onder) - var(--vh-drift, 0px) - var(--balk-op, 0px));
-    height: calc(var(--balk-ruimte) + 44px + var(--vh-drift, 0px) + var(--balk-op, 0px));
+    bottom: calc(0px - var(--balk-rand) - var(--veilig-onder) - var(--vh-drift, 0px));
+    height: calc(var(--balk-ruimte) + 44px + var(--vh-drift, 0px));
     transition: opacity .18s ease;
   }
   .main-nav::before {
@@ -415,7 +415,7 @@
         rgba(var(--nacht-1-rgb),.44) 70%,
         rgba(var(--nacht-1-rgb),.62) 100%) top / 100% calc(var(--balk-ruimte) + 44px) no-repeat,
       linear-gradient(rgba(var(--nacht-1-rgb),.62), rgba(var(--nacht-1-rgb),.62))
-        bottom / 100% calc(var(--vh-drift, 0px) + var(--balk-op, 0px)) no-repeat;
+        bottom / 100% calc(var(--vh-drift, 0px)) no-repeat;
   }
   /* Op de kleedkamer en de trofeeënkast schuift er tekst ónder de balk door --
      prijzen, trofeenamen, de uitleg eronder -- en daar is de veeg van de kaart te
@@ -440,7 +440,7 @@
         rgba(var(--nacht-1-rgb),.86) 62%,
         rgba(var(--nacht-1-rgb),.92) 100%) top / 100% calc(var(--balk-ruimte) + 44px) no-repeat,
       linear-gradient(rgba(var(--nacht-1-rgb),.92), rgba(var(--nacht-1-rgb),.92))
-        bottom / 100% calc(var(--vh-drift, 0px) + var(--balk-op, 0px)) no-repeat;
+        bottom / 100% calc(var(--vh-drift, 0px)) no-repeat;
   }
   /* Twee veegen en geen veeg die van gedaante wisselt: :has() springt om op het
      moment dat je tikt, terwijl het oude scherm nog .18s staat weg te vloeien.
@@ -475,10 +475,7 @@
      bewust niet bij: die zet zichzelf af tegen --fab-onder, en dat getal meet
      meetChroom() aan de balk zelf op -- hij schuift dus vanzelf mee zodra de balk
      hier verzet is, en de drift er nóg eens bij zou hem dubbel optillen. */
-  /* --balk-op komt erbij: hoeveel de balk op een hoog bureaubladvenster mee het
-     podium op zakt (zie --podium-lucht onderaan het blad). Op élk scherm met de
-     balk evenveel, zodat hij tussen zijn tabbladen nooit van hoogte verandert. */
-  .main-nav, .dress-bar, .reis-terug { margin-bottom: calc(var(--vh-drift, 0px) + var(--balk-op, 0px)); }
+  .main-nav, .dress-bar, .reis-terug { margin-bottom: calc(var(--vh-drift, 0px)); }
   /* ---- De maat van de balk ----
      Hij is zo breed als zijn drie knoppen en niet meer (oktober 2026). Toen er nog
      woorden onder de iconen stonden ("Kleedkamer") had hij die breedte nodig; sinds
