@@ -38,6 +38,7 @@
     "test:onderrand": "node test/onderrand.test.js",
     "test:schuiven": "node test/schuiven.test.js",
     "test:kop": "node test/kop.test.js",
+    "test:toestel": "node test/toestel.test.js",
     "test:snel": "node test/alles.js"
   },
   "devDependencies": {

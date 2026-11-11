@@ -1620,12 +1620,23 @@ function appWideCardsHtml() {
         <span class="gi-ico" aria-hidden="true">📲</span><span class="gi-label">Als app</span><span class="gi-pijl" aria-hidden="true">›</span>
       </button>`;
   return `
-    <div class="set-card geluid-kaart">${geluidRijHtml()}
+    <div class="set-card geluid-kaart">${opslagRijHtml()}${geluidRijHtml()}
       <button class="gear-item" id="set-backup" type="button">
         <span class="gi-ico" aria-hidden="true">💾</span><span class="gi-label">${sterrenRijNaam()}</span>${backupStandHtml()}<span class="gi-pijl" aria-hidden="true">›</span>
       </button>${alsApp}
     </div>
     ${importInvoerHtml()}`;
+}
+/* De opslag, alleen als die het niet doet (zie opslagWerkt): de eerste rij van
+   de toestelkaart, om te lezen, in de vorm van de stemrij op haar pagina. Het is
+   een instelling van de browser en niet van het spel, dus het enige wat het spel
+   kan doen is het zeggen -- en zeggen dat een back-up hier dan het vangnet is. */
+function opslagRijHtml() {
+  if (opslagWerkt()) return '';
+  return `
+      <div class="gear-item opslag-rij"><span class="gi-ico" aria-hidden="true">⚠️</span>`
+    + '<span class="gi-label">Dit toestel bewaart niets<span class="gi-sub">De browser laat het spel niets opslaan:'
+    + ' de sterren zijn weg als het dichtgaat. Sta opslaan toe voor deze site in de instellingen van de browser.</span></span></div>';
 }
 /* Wanneer de laatste back-up was. Amber zolang er nooit een was of de laatste
    langer dan vier weken geleden is -- vier weken spelen is te veel om kwijt te

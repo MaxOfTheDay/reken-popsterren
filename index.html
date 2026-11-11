@@ -10339,6 +10339,11 @@
   #set-sterren ~ .geluid-kaart .gi-state.off { background: var(--vlak-hover); color: var(--c-white); box-shadow: inset 0 0 0 1px var(--paneel-rand); }
   #set-sterren ~ .geluid-kaart .gi-state.off::before { box-shadow: inset 0 0 0 2px var(--c-white); opacity: .7; }
 
+  .geluid-kaart div.opslag-rij { cursor: default; }
+  .geluid-kaart div.opslag-rij:active, #set-sterren ~ .geluid-kaart div.opslag-rij:active { background: none; }
+  @media (hover: hover) { #set-sterren ~ .geluid-kaart div.opslag-rij:hover { background: none; } }
+  #set-sterren ~ .geluid-kaart .opslag-rij .gi-sub { color: rgba(255,255,255,.72); font-weight: 500; }
+
   #set-sterren { margin-bottom: 8px; }
   .gear-item .gi-pijl { font-size: 24px; font-weight: 700; color: var(--purple-mid); line-height: 1; padding-right: 4px; }
   .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--e-2); }
@@ -16762,11 +16767,37 @@ function save() {
   } catch (e) {
     if (!saveFailed) {
       saveFailed = true;
+
+
+      try { meldFout('opslag: ' + ((e && e.name) || 'fout')); } catch (e2) { }
       try {
         showToast('⚠️ Opslaan lukt niet', null, 'Spelen kan wel', null, 3000);
       } catch (e2) { }
     }
   }
+}
+
+
+
+
+
+
+
+let opslagProef = null;
+function opslagWerkt() {
+  if (saveFailed) return false;
+  if (opslagProef !== null) return opslagProef;
+  try {
+    const k = LS_KEY + '.proef';
+    localStorage.setItem(k, '1');
+    localStorage.removeItem(k);
+    opslagProef = true;
+  } catch (e) {
+
+
+    opslagProef = !(e && e.name === 'SecurityError');
+  }
+  return opslagProef;
 }
 
 
@@ -16895,14 +16926,47 @@ function audioHerstel() {
   setTimeout(() => {
     try {
       if (!actx || actx.state === 'running' || document.hidden || !actx._liep) return;
-      const oud = actx;
-      actx = null; bus = null;
-      try { oud.close(); } catch (e) { }
-      audioBus();
+      audioNieuw();
     } catch (e) { }
   }, AUDIO_HERSTEL);
 }
+
+function audioNieuw() {
+  const oud = actx;
+  actx = null; bus = null;
+  try { if (oud) oud.close(); } catch (e) { }
+  audioBus();
+
+  if (!db.sound) busNaar(0, 0.01);
+}
 document.addEventListener('pointerdown', audioWakker, { passive: true });
+
+
+
+
+
+
+
+
+
+
+
+const AUDIO_TIK_KIJK = 1000;
+let audioTikKlok = null, audioNieuwKeer = 0;
+function audioNaTik() {
+  audioWakker();
+  if (!actx || !db.sound || audioTikKlok) return;
+  const ctx = actx;
+  audioTikKlok = setTimeout(() => {
+    audioTikKlok = null;
+    try {
+      if (actx !== ctx || !db.sound || ctx.state === 'running' || document.hidden) return;
+      if (audioNieuwKeer++ < 1) audioNieuw();
+      else meldFout('klank: ' + actx.state);
+    } catch (e) { }
+  }, AUDIO_TIK_KIJK);
+}
+['touchend', 'click', 'keydown'].forEach(t => document.addEventListener(t, audioNaTik, { capture: true, passive: true }));
 
 
 
@@ -17304,7 +17368,7 @@ function zegNu(text, opts, v) {
     stemZegtHet(false);
     if (opts.onEnd) opts.onEnd();
   };
-  u.onstart = () => { stemZegtHet(true); if (opts.onStart) opts.onStart(); };
+  u.onstart = () => { stemBegon = Date.now(); stemZonderStart = 0; stemZegtHet(true); if (opts.onStart) opts.onStart(); };
   u.onend = einde;
   u.onerror = e => {
     const fout = e && e.error;
@@ -17312,6 +17376,32 @@ function zegNu(text, opts, v) {
     else opnieuw(fout || 'fout');
   };
   speechSynthesis.speak(u);
+  stemStartWacht(() => af);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+const STEM_START_MAX = 4000;
+let stemBegon = 0, stemZonderStart = 0;
+function stemStartWacht(isAf) {
+  if (!stemMagAl() || document.hidden) return;
+  const gezegd = Date.now();
+  setTimeout(() => {
+    if (isAf() || document.hidden || stemBegon >= gezegd) return;
+    if (++stemZonderStart < 2) return;
+    meldFout('stem: begint niet');
+    stemZegtHet(false);
+  }, STEM_START_MAX);
 }
 
 
@@ -27090,6 +27180,8 @@ function replayPrompt() {
 
 
 
+
+  if (!hasSpeech()) { showNotice('🔇 Geen stem', 'Deze browser kan niet voorlezen. Open Rekensterren in Chrome of Safari.'); return; }
   if (stemStuk) { showNotice('🔇 Geen stem', STEM_STUK_ZIN, '🔊 Probeer opnieuw', leesVraagOpnieuw); return; }
   leesVraagOpnieuw();
 }
@@ -28658,6 +28750,9 @@ function drawQuestion() {
 
 
   $('btn-replay').style.display = G.count ? 'flex' : 'none';
+
+
+  if (G.count && !hasSpeech()) { stemZegtHet(false); meldFout('stem: geen spraak'); }
   somVluchtWeg();
   if (G.count) {
 
@@ -33046,12 +33141,23 @@ function appWideCardsHtml() {
         <span class="gi-ico" aria-hidden="true">📲</span><span class="gi-label">Als app</span><span class="gi-pijl" aria-hidden="true">›</span>
       </button>`;
   return `
-    <div class="set-card geluid-kaart">${geluidRijHtml()}
+    <div class="set-card geluid-kaart">${opslagRijHtml()}${geluidRijHtml()}
       <button class="gear-item" id="set-backup" type="button">
         <span class="gi-ico" aria-hidden="true">💾</span><span class="gi-label">${sterrenRijNaam()}</span>${backupStandHtml()}<span class="gi-pijl" aria-hidden="true">›</span>
       </button>${alsApp}
     </div>
     ${importInvoerHtml()}`;
+}
+
+
+
+
+function opslagRijHtml() {
+  if (opslagWerkt()) return '';
+  return `
+      <div class="gear-item opslag-rij"><span class="gi-ico" aria-hidden="true">⚠️</span>`
+    + '<span class="gi-label">Dit toestel bewaart niets<span class="gi-sub">De browser laat het spel niets opslaan:'
+    + ' de sterren zijn weg als het dichtgaat. Sta opslaan toe voor deze site in de instellingen van de browser.</span></span></div>';
 }
 
 
@@ -35207,7 +35313,13 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 
 
 
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+
+
+
+
+  navigator.serviceWorker.register('sw.js').catch(e => {
+    try { meldFout('sw: ' + ((e && (e.name + ' ' + (e.message || '')).trim()) || 'geweigerd')); } catch (e2) { }
+  });
 
 
 

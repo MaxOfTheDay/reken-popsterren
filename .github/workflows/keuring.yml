@@ -80,6 +80,10 @@ jobs:
           - { suite: vlucht, bestand: vlucht }
           # de telmodus: de enige plek waar de stem nagemeten wordt
           - { suite: tellen, bestand: counting }
+          # wat het toestel stil laat mislukken (stem, geluid, opslag, voorraad):
+          # elke weigering geeft een teken in beeld of een briefje, en elke
+          # toestelfunctie in src/ heeft een rij (test/toestel.test.js)
+          - { suite: toestel, bestand: toestel }
     name: browser (${{ matrix.suite }})
     runs-on: ubuntu-latest
     steps:

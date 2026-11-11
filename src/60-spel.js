@@ -686,6 +686,9 @@ function drawQuestion() {
   // "nog eens voorlezen" hoort alleen bij de lees-vrije telmodus (in de rekenmodus
   // staat de som gewoon te lezen en wordt er niets uitgesproken, zie stemAan)
   $('btn-replay').style.display = G.count ? 'flex' : 'none';
+  /* Een browser zonder spraak (ingebouwde browsers van sommige apps): dan staat
+     er meteen een 🔇 en geen 🔊 die bij een tik niets doet. Zie replayPrompt. */
+  if (G.count && !hasSpeech()) { stemZegtHet(false); meldFout('stem: geen spraak'); }
   somVluchtWeg();   // een getal dat nog naar de vorige som vloog, hoort daar niet meer bij
   if (G.count) {
     // de maat van een som uit een vorige show hoort niet bij een telvraag (zie kaartOpMaat)

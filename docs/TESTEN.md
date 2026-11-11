@@ -65,6 +65,7 @@ npm run test:studio      # de wereldstudio (?debug&mapedit)
 npm run test:onderrand   # de zwevende bediening onderaan blijft staan
 npm run test:schuiven    # geen scherm schuift verder dan er iets te zien valt
 npm run test:kop         # de kop van de kaart: niets overlapt, op geen enkele maat
+npm run test:toestel     # wat het toestel stil laat mislukken geeft een teken of een briefje
 npm run test:hub         # de Dev Studio (npm run studio) — kaal Node
 npm run test:overzetten  # de ontvanger van Overzetten (worker/overzetten.js) — kaal Node
 npm run test:tekeningen  # een vervangen tekening liet ART_CACHE omhoog gaan — kaal Node, tegen origin/main
@@ -629,6 +630,24 @@ Kinderen tikken snel, dubbel en midden in een overgang. Vijf zaken:
   CSS-`blur` van `WAAS_MAX` px of meer op iets dat meer dan een derde van het
   venster beslaat. Zo'n filter wordt bij elk beeldje opnieuw uitgerekend zodra
   de pop erover wiegt; een waas hoort dan in de tekening zelf.
+
+### `test/toestel.test.js` — wat het toestel stil laat mislukken
+
+Het spel leunt op dingen die het niet in de hand heeft: de stem en de
+geluidsuitgang van het toestel, de opslag, de voorraad voor zonder net, het
+scherm wakker houden, delen en het klembord. Die kunnen weigeren zonder één fout
+te gooien -- de spraakdienst van Android die zwijgt terwijl een andere app de
+uitvoer vasthoudt, een browser die niets laat bewaren -- en dan slaagt elke
+andere suite terwijl het spel er voor een kind stuk uitziet.
+
+Deze suite bootst elke weigering na in Chromium en eist per rij: geen
+javascript-fout, en een teken (de 🔇, een toast, een rij bij Voor ouders) of een
+briefje voor de foutmelder (`meldFout`, de zondagrapportage). Bovenaan staat de
+lijst `TOESTEL`: elke toestelfunctie met de rijen die haar weigering nabootsen.
+Gebruikt `src/` een functie uit die lijst zonder rij, dan valt de suite om vóór
+er een browser start (zaak A). Iets nieuws van het toestel vragen begint dus met
+een rij: wat ziet een kind als het nee zegt? Trillen mag stil mislukken (het
+toestel beslist); die rij kijkt alleen dat er niets omvalt.
 
 ### `test/beeldverschil.js` — welke schermen zien er anders uit
 
