@@ -2408,7 +2408,33 @@
   .leeg-tegel .st-podium { aspect-ratio: 10 / 8; }
 
 
-  .btn.big.leeg-knop { grid-column: 1 / -1; width: 100%; padding-left: 12px; padding-right: 12px; margin-top: 4px; z-index: 1; }
+
+
+
+
+
+
+  .leeg-tegel { background: none; box-shadow: none; overflow: visible; }
+  @media (hover: hover) { .leeg-tegel:hover { box-shadow: none; } }
+  .leeg-tegel .st-podium { background: none; }
+  .leeg-tegel .st-podium::before { display: none; }
+  .leeg-tegel .st-podium::after {
+    opacity: 1;
+    -webkit-mask-image: linear-gradient(transparent, #000 30%);
+            mask-image: linear-gradient(transparent, #000 30%);
+    background:
+      radial-gradient(ellipse 48% 60% at 50% 58%, rgba(var(--goud-glans-rgb), .2), transparent 70%),
+      radial-gradient(ellipse 22% 85% at 34% -8%, rgba(var(--goud-glans-rgb), .22), transparent 72%),
+      radial-gradient(ellipse 22% 85% at 66% -8%, rgba(var(--goud-glans-rgb), .22), transparent 72%);
+  }
+
+
+
+
+
+
+  .btn.big.leeg-knop { grid-column: 1 / -1; justify-self: center; width: 86%; font-size: var(--tx-kop);
+    padding: 13px 12px; margin-top: 10px; z-index: 1; }
 
 
 
@@ -2438,6 +2464,11 @@
 
 
   .duo > .avatar-holder > .prop-laag { display: flex; justify-content: center; }
+
+
+
+
+  .duo > .avatar-holder > .prop-laag > svg { flex: none; }
   .duo > .avatar-holder:focus-visible { outline: 3px solid var(--c-white); outline-offset: 2px; border-radius: var(--r-sm); }
 
 

@@ -241,9 +241,35 @@
      tests tellen ze, en de danspasjes zoeken er hun poppen in). Daarom staat
      .leeg-tegel hierboven bij elke tegelregel naast .ster-tegel. */
   .leeg-tegel .st-podium { aspect-ratio: 10 / 8; }
+  /* Een open podium, geen kaart. De tegel hierboven (donker vlak, keylijn,
+     gloed) betekent "hier woont een kind" -- en hier woont nog niemand. Als
+     donker vlak las het als een gat in de tekening, met drie vage vlekken erin.
+     Nu staat de schijf ín het decor onder het logo, en vallen er twee zachte
+     bundels van boven op het meisje en de jongen, met een warme plas licht op
+     de schijf. Het masker laat de bundels uit het niets beginnen: zonder
+     tekende de bovenrand van het vlak een rechte lijn door de lucht.
+     Zodra er een ster is, staat zij in een tegel: dan krijgt ze de kaart wel. */
+  .leeg-tegel { background: none; box-shadow: none; overflow: visible; }
+  @media (hover: hover) { .leeg-tegel:hover { box-shadow: none; } }
+  .leeg-tegel .st-podium { background: none; }
+  .leeg-tegel .st-podium::before { display: none; }
+  .leeg-tegel .st-podium::after {
+    opacity: 1;
+    -webkit-mask-image: linear-gradient(transparent, #000 30%);
+            mask-image: linear-gradient(transparent, #000 30%);
+    background:
+      radial-gradient(ellipse 48% 60% at 50% 58%, rgba(var(--goud-glans-rgb), .2), transparent 70%),
+      radial-gradient(ellipse 22% 85% at 34% -8%, rgba(var(--goud-glans-rgb), .22), transparent 72%),
+      radial-gradient(ellipse 22% 85% at 66% -8%, rgba(var(--goud-glans-rgb), .22), transparent 72%);
+  }
   /* De gouden knop eronder: dezelfde .btn.big als "🌟 Klaar!" en elke andere
-     "ga" in de app. Over de hele breedte van het podium, zodat ze één blok zijn. */
-  .btn.big.leeg-knop { grid-column: 1 / -1; width: 100%; padding-left: 12px; padding-right: 12px; margin-top: 4px; z-index: 1; }
+     "ga" in de app -- het enige wat je hier kunt doen, dus goud. Maar één maat
+     kleiner en niet over de hele breedte: op een telefoon was hij het grootste
+     ding op het scherm, groter dan de twee poppen. Zij zijn wat je eerst moet
+     zien; de knop zegt wat je ermee doet. Nog altijd ± 58px hoog, ruim genoeg
+     voor een vinger van vijf. */
+  .btn.big.leeg-knop { grid-column: 1 / -1; justify-self: center; width: 86%; font-size: var(--tx-kop);
+    padding: 13px 12px; margin-top: 10px; z-index: 1; }
   /* het meisje en de jongen samen op één podium -- zie duoHtml. Op een telefoon
      liggend (onderaan) krimpt de knop mee met de lage hoogte.
      Ze staan OP de schijf, niet erboven: hun zolen op 45% van de bovenkant, net
@@ -273,6 +299,11 @@
      breder, dus begon de schaduwlaag links en lag de schaduw een kwart pop
      rechts naast haar schoenen. Flex centreert ook wat te breed is. */
   .duo > .avatar-holder > .prop-laag { display: flex; justify-content: center; }
+  /* ...maar als flex-kind krimpt de tekening dan mee tot de breedte van de
+     houder, terwijl de pas-laag erboven op volle breedte blijft. De schaduw
+     kwam daardoor kleiner én een stuk hoger uit dan de schoenen: op
+     scheenhoogte, achter de benen, onzichtbaar. Niet laten krimpen. */
+  .duo > .avatar-holder > .prop-laag > svg { flex: none; }
   .duo > .avatar-holder:focus-visible { outline: 3px solid var(--c-white); outline-offset: 2px; border-radius: var(--r-sm); }
   /* Liggend (of een heel lage viewport) passen twee rijen tegels er niet bij.
      De auto-marges hierboven centreren het blok en laten het dan langs de
