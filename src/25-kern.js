@@ -1348,11 +1348,37 @@ function save() {
   } catch (e) {
     if (!saveFailed) {
       saveFailed = true;
+      /* Eén briefje voor de zondagrapportage: dit gooit niets naar buiten, dus
+         zonder dit zagen we nooit hoeveel toestellen niets bewaren. */
+      try { meldFout('opslag: ' + ((e && e.name) || 'fout')); } catch (e2) { /* melder stil */ }
       try {
         showToast('⚠️ Opslaan lukt niet', null, 'Spelen kan wel', null, 3000);
       } catch (e2) { /* UI nog niet klaar: stil doorgaan */ }
     }
   }
+}
+/* BEWAART DIT TOESTEL IETS? De toast hierboven staat er drie seconden, één keer,
+   en vaak voor een kind -- de ouder ziet hem niet. En de volgende dag is alles
+   weg, zonder dat iets ooit "fout" zei. Dat gebeurt als de browser opslag voor
+   deze site weigert: Safari met "Blokkeer alle cookies", Chrome met "Sites
+   mogen geen gegevens opslaan", sommige schoolbeheerde tablets. Voor ouders
+   vraagt het daarom zelf na (opslagRijHtml), met een proefje dat niets laat
+   staan. Eén keer per bezoek: het antwoord verandert niet terwijl je speelt. */
+let opslagProef = null;
+function opslagWerkt() {
+  if (saveFailed) return false;
+  if (opslagProef !== null) return opslagProef;
+  try {
+    const k = LS_KEY + '.proef';
+    localStorage.setItem(k, '1');
+    localStorage.removeItem(k);
+    opslagProef = true;
+  } catch (e) {
+    /* Vol is iets anders dan dicht: een volle opslag laat nog lezen, en de
+       toast zegt dan al genoeg. Hier alleen: de browser laat ons er niet bij. */
+    opslagProef = !(e && e.name === 'SecurityError');
+  }
+  return opslagProef;
 }
 
 /* ---- De opslag laten vasthouden ---------------------------------------------

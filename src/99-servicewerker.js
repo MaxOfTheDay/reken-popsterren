@@ -1,8 +1,14 @@
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   /* Een browser mag het aanmelden weigeren (een privévenster, uitgezette
-     sitegegevens). Het spel draait dan gewoon zonder voorraad verder; de catch
-     houdt dat stil, zodat de foutmelder het niet als fout telt. */
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+     sitegegevens, een toestel dat het zomaar "Rejected" noemt -- dat laatste
+     kwam eind oktober drie keer binnen van Android). Het spel draait dan gewoon
+     door, maar zonder voorraad: zonder net is er dan geen spel. Dat is stil,
+     dus geen onopgevangen belofte (die telde als een crash), maar wel één
+     briefje "sw: ..." zodat de zondagrapportage telt hoeveel toestellen zonder
+     voorraad spelen. */
+  navigator.serviceWorker.register('sw.js').catch(e => {
+    try { meldFout('sw: ' + ((e && (e.name + ' ' + (e.message || '')).trim()) || 'geweigerd')); } catch (e2) { /* melder stil */ }
+  });
   /* Welke tekeningen er vandaag bestaan weet alleen dit bestand -- sw.js kent
      geen werelden en hoort ze ook niet te kennen. Deze lijst laat hem opruimen wat
      er niet meer bij hoort (een wereld die weg is, een tekening die hernoemd is),

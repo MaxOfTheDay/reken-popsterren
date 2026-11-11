@@ -181,6 +181,11 @@
   #set-sterren ~ .geluid-kaart .gi-pijl { color: var(--c-white); opacity: .6; }
   #set-sterren ~ .geluid-kaart .gi-state.off { background: var(--vlak-hover); color: var(--c-white); box-shadow: inset 0 0 0 1px var(--paneel-rand); }
   #set-sterren ~ .geluid-kaart .gi-state.off::before { box-shadow: inset 0 0 0 2px var(--c-white); opacity: .7; }
+  /* De opslag die het niet doet (opslagRijHtml): een rij om te lezen, geen knop. */
+  .geluid-kaart div.opslag-rij { cursor: default; }
+  .geluid-kaart div.opslag-rij:active, #set-sterren ~ .geluid-kaart div.opslag-rij:active { background: none; }
+  @media (hover: hover) { #set-sterren ~ .geluid-kaart div.opslag-rij:hover { background: none; } }
+  #set-sterren ~ .geluid-kaart .opslag-rij .gi-sub { color: rgba(255,255,255,.72); font-weight: 500; }
   /* een iets groter gat na de kinderen: daar begint de rest */
   #set-sterren { margin-bottom: 8px; }
   .gear-item .gi-pijl { font-size: 24px; font-weight: 700; color: var(--purple-mid); line-height: 1; padding-right: 4px; }

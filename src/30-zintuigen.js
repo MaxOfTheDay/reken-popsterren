@@ -89,14 +89,47 @@ function audioHerstel() {
   setTimeout(() => {
     try {
       if (!actx || actx.state === 'running' || document.hidden || !actx._liep) return;
-      const oud = actx;
-      actx = null; bus = null;
-      try { oud.close(); } catch (e) { /* weg is weg */ }
-      audioBus();
+      audioNieuw();
     } catch (e) { /* dan maar stil */ }
   }, AUDIO_HERSTEL);
 }
+// De oude context dicht en een nieuwe erin, met zijn eigen kraan.
+function audioNieuw() {
+  const oud = actx;
+  actx = null; bus = null;
+  try { if (oud) oud.close(); } catch (e) { /* weg is weg */ }
+  audioBus();
+  /* De kraan van de nieuwe staat open; stond het geluid net uit, dan dicht. */
+  if (!db.sound) busNaar(0, 0.01);
+}
 document.addEventListener('pointerdown', audioWakker, { passive: true });
+/* EEN CONTEXT DIE NA EEN TIK NIET OPSTAAT. audioHerstel kijkt bij terugkomst,
+   en alleen naar een context die al eens liep. Maar een context kan ook na een
+   gewone tik blijven liggen -- een toestel dat de geluidsuitgang niet vrijgeeft,
+   of een iPhone die pointerdown niet als toestemming telt (Safari telt pas het
+   loslaten, net als bij de stem, zie STEM_SLEUTELS). Dan zijn alle klankjes weg
+   en zegt de schakelaar "Aan".
+
+   Dus wekken we óók op het loslaten, en kijken we een seconde na een tik of hij
+   loopt. Zo niet: één keer een nieuwe (audioNieuw, dezelfde als audioHerstel
+   doet), die bij de volgende tik gewekt wordt. Blijft ook die liggen, dan één
+   briefje "klank: ..." voor de zondagrapportage -- meer kan een webpagina niet. */
+const AUDIO_TIK_KIJK = 1000;
+let audioTikKlok = null, audioNieuwKeer = 0;
+function audioNaTik() {
+  audioWakker();
+  if (!actx || !db.sound || audioTikKlok) return;
+  const ctx = actx;   // de context van deze tik; is hij intussen vervangen, dan is dat al gebeurd
+  audioTikKlok = setTimeout(() => {
+    audioTikKlok = null;
+    try {
+      if (actx !== ctx || !db.sound || ctx.state === 'running' || document.hidden) return;
+      if (audioNieuwKeer++ < 1) audioNieuw();
+      else meldFout('klank: ' + actx.state);
+    } catch (e) { /* dan maar stil */ }
+  }, AUDIO_TIK_KIJK);
+}
+['touchend', 'click', 'keydown'].forEach(t => document.addEventListener(t, audioNaTik, { capture: true, passive: true }));
 /* De context alvast maken, in een rustig moment na het opstarten -- niet pas bij
    de eerste tik. Een AudioContext aanmaken zet de geluidsuitgang van het toestel
    aan, en dat kost op een trage tablet al gauw honderden milliseconden. Gebeurde
@@ -498,7 +531,7 @@ function zegNu(text, opts, v) {
     stemZegtHet(false);
     if (opts.onEnd) opts.onEnd();
   };
-  u.onstart = () => { stemZegtHet(true); if (opts.onStart) opts.onStart(); };
+  u.onstart = () => { stemBegon = Date.now(); stemZonderStart = 0; stemZegtHet(true); if (opts.onStart) opts.onStart(); };
   u.onend = einde;
   u.onerror = e => {
     const fout = e && e.error;
@@ -506,6 +539,32 @@ function zegNu(text, opts, v) {
     else opnieuw(fout || 'fout');
   };
   speechSynthesis.speak(u);
+  stemStartWacht(() => af);
+}
+/* DE STEM DIE NIETS ZEGT, OOK GEEN NEE. Sommige toestellen nemen een zin aan en
+   doen er daarna niets mee: geen begin, geen einde, geen fout. Zo doen
+   ingebouwde browsers van apps op Android het (Instagram, Gmail), en een toestel
+   waarvan de spraakdienst uit staat. opnieuw() hierboven hoort dan nooit iets,
+   dus bleef de 🔊 staan en zweeg de telmodus zonder één teken.
+
+   Dus kijken we na STEM_START_MAX of er sinds deze zin íéts begonnen is. Is dat
+   twee zinnen na elkaar niet zo, dan zegt de 🔇 het, met één briefje voor de
+   zondagrapportage. Twee en niet één: een koude spraakdienst op Android doet over
+   zijn eerste zin soms seconden (daarom staat er geen klok die de Vlaamse stem
+   laat vallen, zie hierboven). Er wordt hier ook niets aan de stem veranderd --
+   alleen gezegd dat hij zwijgt. Begint er later toch een zin, dan zet onstart
+   de 🔊 terug. Een zin die afgebroken is (af) of een scherm dat weg is, telt niet. */
+const STEM_START_MAX = 4000;
+let stemBegon = 0, stemZonderStart = 0;
+function stemStartWacht(isAf) {
+  if (!stemMagAl() || document.hidden) return;
+  const gezegd = Date.now();
+  setTimeout(() => {
+    if (isAf() || document.hidden || stemBegon >= gezegd) return;
+    if (++stemZonderStart < 2) return;
+    meldFout('stem: begint niet');
+    stemZegtHet(false);
+  }, STEM_START_MAX);
 }
 /* DE STEM IS STUK, EN DAT MAG JE ZIEN. Weigert de spraak van het toestel ook
    zonder gekozen stem, dan kan geen website of app hem laten praten -- op
