@@ -25,7 +25,7 @@
  * Draaien:
  *   npm run test:zintuigen      (of: npm test voor alle suites)
  */
-const { launch, cacheFonts, APP_URL } = require('./browser');
+const { launch, cacheFonts, rust, APP_URL } = require('./browser');
 const { check, klaar } = require('./meld')('zintuigen');
 
 const TELEFOON = { width: 390, height: 844 };
@@ -81,14 +81,21 @@ const LUISTER = `addEventListener('DOMContentLoaded', () => {
           naam: (b.id ? '#' + b.id : String(b.className.baseVal ?? b.className).split(' ')[0]) + ' "' + (b.getAttribute('aria-label') || b.textContent).trim().replace(/\s+/g, ' ').slice(0, 24) + '"' };
       });
     }, NIET.source);
+    // het eindscherm bouwt in stappen op (sterren, 💎, trofee): eerst laten uitdelen, die tonen zijn geen antwoord op de tik
+    const opRust = () => rust(page, { minstens: scherm === 'end' ? 3200 : 0 });
     await page.goto(url);
-    await page.waitForTimeout(scherm === 'end' ? 3200 : 1200);
+    await opRust();
     const knoppen = await zoek();
     check(knoppen.length > 0, `A · ${scherm}: er staan knoppen om aan te tikken`, '');
     for (let i = 0; i < knoppen.length; i++) {
-      // het eindscherm eerst zijn sterren laten uitdelen: die tonen zijn geen antwoord op de tik
-      if (i) { await page.goto(url); await page.waitForTimeout(scherm === 'end' ? 3200 : 900); }
-      const k = knoppen[i];
+      // na het herladen opnieuw opzoeken: wat de vorige tik bewaarde (een trofee
+      // gezien, een kaartje gekozen) kan de knoppen een rij laten opschuiven
+      let k = knoppen[i];
+      if (i) {
+        await page.goto(url); await opRust();
+        k = (await zoek()).find(n => n.naam === k.naam);
+        if (!k) continue;
+      }
       const klank = await tikOp(k.x, k.y);
       check(klank.length > 0, 'A · elke knop die iets doet, tikt', `${scherm}: ${k.naam} bleef stil`);
       const samen = klank.filter(x => x.t - klank[0].t < SAMEN);
@@ -100,7 +107,7 @@ const LUISTER = `addEventListener('DOMContentLoaded', () => {
   /* ---- B · "nog niet" klinkt overal hetzelfde ---- */
   {
     await page.goto(APP_URL + '&demo&star=p1');
-    await page.waitForTimeout(1200);
+    await rust(page);
     const slot = await page.evaluate(() => { const r = document.querySelector('.tour-stop.locked').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
     const klank = await tikOp(slot.x, slot.y);
     check(klank[0] && klank[0].naam === 'nog.niet', 'B · een halte op slot zegt "nog niet"', JSON.stringify(klank.map(x => x.naam)));
@@ -109,7 +116,7 @@ const LUISTER = `addEventListener('DOMContentLoaded', () => {
        podiumlade houdt zijn koopknop: confirmShopBuy is de deur waar het slot
        op zit, dus die vragen we rechtstreeks. */
     await page.goto(APP_URL + '&demo&star=p1&diamanten=0&screen=dress');
-    await page.waitForTimeout(1200);
+    await rust(page);
     const namen = await page.evaluate(async () => {
       const it = ITEMS.find(i => i.price > 0 && !P().owned.includes(i.id) && !isBeloning(i.id) && i.cat !== PODIA_CAT);
       if (!it) return null;
@@ -124,7 +131,7 @@ const LUISTER = `addEventListener('DOMContentLoaded', () => {
   /* ---- C · een antwoordknop geeft geen tikring ---- */
   {
     await page.goto(APP_URL + '&demo&star=p1');
-    await page.waitForTimeout(1200);
+    await rust(page);
     const halte = await page.evaluate(() => { const r = document.querySelector('.tour-stop.next').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
     await page.touchscreen.tap(halte.x, halte.y);
     for (const goed of [true, false]) {
@@ -146,7 +153,7 @@ const LUISTER = `addEventListener('DOMContentLoaded', () => {
   /* ---- D · een tik op haar midden in een dans wordt gehoord ---- */
   {
     await page.goto(APP_URL + '&demo&star=p1&screen=dress');
-    await page.waitForTimeout(1200);
+    await rust(page);
     const pop = await page.evaluate(() => { const r = document.getElementById('shop-spiegel').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
     await tikOp(pop.x, pop.y);                       // ze begint te dansen
     const danst = await page.evaluate(() => document.getElementById('shop-avatar').classList.contains('dancing'));
