@@ -240,6 +240,11 @@ verjaart niet.
   scherm midden in de tik op te maken. Meet eerst en schrijf daarna, meet na de
   verf (`naOpbouw`), of laat een ResizeObserver het zeggen. Dezelfde ronde van
   `test:robuust` vangt het (met `MEET_MAG` voor wie het met reden doet).
+  En een vijfde: **wat je kunt aantikken, is een knop** -- een `<button>`, of
+  `knopRol(el)` op een kaartje. Dan vangt "= Elke tik telt" (`10-feestjes.js`)
+  de tik ook als er een duim op het glas ligt of de vinger rolt, komt Tab
+  erop, en is hij minstens `--tik-kind` raak. `test:robuust` zaak G en
+  `test:schuiven` zaak L kijken het na.
 * **Geen grote waas onder wat beweegt.** Een CSS-`filter: blur()` op een laag
   zo groot als het venster rekent de browser bij elk beeldje opnieuw uit zodra
   er iets overheen beweegt. Wil je een kamer uit focus, zet de waas dan in de

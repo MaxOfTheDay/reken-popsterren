@@ -777,6 +777,11 @@
        was hij met een onzichtbaar vlakje pas een kindervinger. Eén maat voor de
        hele app, zodat de 💎-pil op elk tabblad op dezelfde plek even groot is. */
     --hud-h: 44px;
+    /* DE KINDERVINGER. Wat een kind aantikt, is minstens zo groot -- in beide
+       richtingen, en gemeten op het raakvlak (een onzichtbare ::after die
+       verder reikt dan de knop telt mee). test:schuiven zaak L meet het op elk
+       scherm van het kind, op elke maat. */
+    --tik-kind: 44px;
     /* DE KOPREGEL. Op elk scherm met een kop (.hub-sticky) begint de rij met ←,
        titel en knoppen op dezelfde hoogte, en is hij precies --hud-h hoog. Zo
        staat de ← op een vaste plek, wat er ook in de rij staat, en verspringt er
