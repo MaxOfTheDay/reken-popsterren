@@ -285,6 +285,7 @@ function trophyCard(t, p) {
   // De beschrijving staat niet meer op het kaartje (zie normalCardHTML), wel hier.
   // Klaar: het 🎁 vervangt het icoon, dus zegt het label wat een tik doet.
   card.setAttribute('aria-label', status === 'ready' ? `Open ${t.name}` : `${t.name}: ${t.desc}`);
+  knopRol(card);
   card.onclick = () => tapTrophy(t, card);
   return card;
 }
@@ -326,6 +327,7 @@ function ladderCard(ladder, p) {
       + `<div class="tname">${ladder.name}</div>`;
     card.setAttribute('aria-label', niveau ? `${trappen[niveau - 1].name}` : `${ladder.name}: ${trappen[0].desc}`);
   }
+  knopRol(card);
   card.onclick = () => tapLadder(ladder, card);
   return card;
 }

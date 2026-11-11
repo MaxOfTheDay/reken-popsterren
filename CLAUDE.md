@@ -240,10 +240,19 @@ verjaart niet.
   scherm midden in de tik op te maken. Meet eerst en schrijf daarna, meet na de
   verf (`naOpbouw`), of laat een ResizeObserver het zeggen. Dezelfde ronde van
   `test:robuust` vangt het (met `MEET_MAG` voor wie het met reden doet).
+  En een vijfde: **wat je kunt aantikken, is een knop** -- een `<button>`, of
+  `knopRol(el)` op een kaartje. Dan vangt "= Elke tik telt" (`10-feestjes.js`)
+  de tik ook als er een duim op het glas ligt of de vinger rolt, komt Tab
+  erop, en is hij minstens `--tik-kind` raak. `test:robuust` zaak G en
+  `test:schuiven` zaak L kijken het na.
 * **Geen grote waas onder wat beweegt.** Een CSS-`filter: blur()` op een laag
   zo groot als het venster rekent de browser bij elk beeldje opnieuw uit zodra
   er iets overheen beweegt. Wil je een kamer uit focus, zet de waas dan in de
   tekening zelf (zoals `--kleed-tekening`). `test:robuust` zaak E bewaakt het.
+* **Een scherm in rust doet niets.** Geen animatie die elk beeldje laat
+  hertekenen (iets dat ín een SVG beweegt), niets dat beweegt buiten beeld, geen
+  `setInterval` dat doortikt. Wiegen en schuiven van een eigen laag kost niets.
+  `test:robuust` zaak H telt het; een uitzondering staat in `RUST_MAG` met reden.
 * **Duren staan in JavaScript, niet twee keer.** `--t-tik` en `--t-snel` in
   `:root` zijn de twee korte; de twee lange worden uitgerekend in
   `MOTION.totaal` en `VLUCHT.totaal`. Schrijf een duur nooit in een commentaar

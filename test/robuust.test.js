@@ -2,7 +2,7 @@
  * Robuust: wat een kind van zes met de app doet, en waar die niet van mag omvallen.
  *
  * Kinderen tikken snel, dubbel, en midden in een overgang. De andere suites
- * spelen netjes: één tik, wachten, nakijken. Deze niet. Vier zaken:
+ * spelen netjes: één tik, wachten, nakijken. Deze niet. De zaken:
  *
  *   A  de tik komt eerst. Een knop die van scherm wisselt, wisselt een beeldje
  *      ná de tik (naTik), nooit binnen de tik zelf. Anders staat een trage
@@ -46,6 +46,27 @@
  *      die elkaar overlappen (allebei tellen, in de volgorde van neerkomen), een
  *      tik in de kier, lang vasthouden -- en wie ver wegschuift, breekt af. Met
  *      click ging de rol en de overlap verloren (de overlap zelfs voor allebei).
+ *   G  elke andere knop telt net zo (= Elke tik telt). Op elk scherm van het
+ *      kind, en in Voor ouders, krijgt elke zichtbare knop drie tikken met
+ *      echte aanrakingen: een gewone, een terwijl er een duim op de rand van het
+ *      glas blijft liggen, en -- buiten de lijsten die schuiven -- een die bij
+ *      het loslaten 20 px rolt. Elke keer precies één click: nul is een
+ *      verloren tik, twee is een dubbele. En alles met een onclick is een knop
+ *      (een <button>, of knopRol): bereikbaar met Tab, een knop voor een
+ *      schermlezer, en dus ook gedekt door Elke tik telt.
+ *   H  een scherm in rust doet niets. Wie op een scherm blijft staan zonder te
+ *      tikken, hoort de processor niet bezig te houden: geen scherm dat elk
+ *      beeldje opnieuw getekend wordt, geen animatie op iets dat je niet ziet,
+ *      geen setInterval dat doortikt. Dat was in zes snelheidsrondes steeds
+ *      dezelfde oorzaak van een trage oude tablet en een warme batterij: een waas
+ *      die elk beeldje opnieuw rekende, een vaste achtergrond die bij elke scroll
+ *      hertekende, kastanimaties buiten beeld, een knippertimer op elk scherm, een
+ *      spotlight-interval. Geteld en niet getimed (hoeveel keer er getekend wordt
+ *      in RUST_DUUR), dus het hangt niet af van hoe snel de machine is.
+ *      Wegen van een wiegende pop of stof kost niets: dat zijn eigen lagen die
+ *      alleen verschuiven. Wat wél telt is een stuk dat ín een tekening beweegt
+ *      (haar knikkende hoofd in de SVG): dan wordt de hele pop elk beeldje
+ *      opnieuw getekend. Een scherm waar dat met reden mag, staat in RUST_MAG.
  *
  * Draaien:
  *   npm run test:robuust      (of: npm test voor alle suites)
@@ -65,6 +86,21 @@ const KNOPPEN = 'button, [onclick], .tour-stop, .item-card, .trophy-card, .ster-
    pas als het getal erin staat (meten, schrijven, meten). */
 const MEET_MAG = /^(somVult|vakNaar)$/;
 const WAAS_MAX = 6;   // px blur; zie zaak E
+/* Zaak H: hoe vaak een scherm in rust mag tekenen, per seconde. Een
+   compositoranimatie (wiegen, stof) tekent niet; een scherm dat stilstaat tekent
+   een paar keer bij toeval. Wat elk beeldje tekent, zit rond de 60. */
+const RUST_TEKEN_MAX = 10;
+const RUST_DUUR = 2000;
+/* Schermen waar het mag, met de reden. Haar hoofd knikt en haar staart zwaait
+   ín de SVG (knik, slinger in 30-onderdelen.css), en een SVG kan geen eigen
+   lagen hebben: de hele pop wordt dan elk beeldje getekend. Hier staat ze
+   centraal, dus dat is de prijs. Komt er een scherm bij, dan is dat een
+   keuze, geen vergissing. */
+const RUST_MAG = {
+  game: 'de pop knikt tijdens de show (knik + slinger tekenen de hele SVG)',
+  end: 'de pop knikt op het eindscherm',
+  dress: 'de pop knikt in de spiegel van de kleedkamer',
+};
 const NIET = /set-reset|set-delete|delete|wis|import|export|backup|deel|kopieer|installeer|oz-|set-over|set-mail|over-hint|naarOver|app-knop|alsapp|speel-als|set-beginscherm/i;
 
 (async () => {
@@ -379,6 +415,141 @@ const NIET = /set-reset|set-delete|delete|wis|import|export|backup|deel|kopieer|
       await page.evaluate(() => { __tel.length = 0; });
       await page.evaluate(sel => document.querySelector(sel).click(), sel);
       check(JSON.stringify(await page.evaluate(() => __tel.slice())) === JSON.stringify([a.t]), `F · een click zonder aanraking (toetsenbord) telt één keer (${mode})`, '');
+    }
+    await ctx.close();
+  }
+
+  /* ---- G · elke andere knop telt net zo ---- */
+  {
+    const { ctx, page } = await nieuw();
+    const cdp = await ctx.newCDPSession(page);
+    const T = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map(([x, y, id]) => ({ x, y, id })) });
+    const W = ms => page.waitForTimeout(ms);
+    const SCHERMEN = [['profile', ''], ['map', '&screen=map'], ['reis', '&screen=reis'], ['game', '&screen=game'],
+      ['end', '&screen=end'], ['dress', '&screen=dress'], ['tro', '&screen=tro'], ['ouders', '&screen=ouders']];
+    for (const [naam, scherm] of SCHERMEN) {
+      await page.goto(APP_URL + '&demo' + (scherm ? '&star=p1' + scherm : ''));
+      await page.waitForTimeout(2200);
+      // elke zichtbare knop, met een teller die de click opvangt vóór hij iets doet
+      const knoppen = await page.evaluate(([sel, niet]) => {
+        const re = new RegExp(niet, 'i');
+        window.__klik = [];
+        const uit = [];
+        [...document.querySelectorAll(sel)].forEach(b => {
+          if (b.closest('.knop-tik, [inert], input, a[href]')) return;
+          // een kaartje zonder iets erachter (de wolk "Nog meer werelden") is geen knop
+          if (!b.matches('button, [role]') && !b.onclick && !b.hasAttribute('onclick')) return;
+          const r = b.getBoundingClientRect();
+          if (r.width < 8 || r.height < 8 || r.top < 0 || r.bottom > innerHeight || r.left < 0 || r.right > innerWidth) return;
+          if (re.test((b.id || '') + ' ' + (typeof b.className === 'string' ? b.className : '') + ' ' + (b.getAttribute('onclick') || ''))) return;
+          const x = r.left + r.width / 2, y = r.top + r.height / 2;
+          const top = document.elementFromPoint(x, y);
+          if (!top || !(b === top || b.contains(top))) return;
+          const i = uit.length;
+          b.addEventListener('click', e => { __klik.push(i); e.preventDefault(); e.stopImmediatePropagation(); }, true);
+          uit.push({ i, x, y, naam: b.id || (b.getAttribute('aria-label') || b.textContent || b.className).trim().slice(0, 24), lijst: !!elkeTikRol(b) });
+        });
+        return uit;
+      }, [KNOPPEN, NIET.source]);
+      // een plek voor de duim: links op halve hoogte, op niets tikbaars
+      const duim = await page.evaluate(sel => {
+        for (const x of [4, 10, 20]) for (const y of [0.5, 0.4, 0.6, 0.3]) {
+          const el = document.elementFromPoint(x, innerHeight * y);
+          if (el && !el.closest(sel)) return [x, Math.round(innerHeight * y)];
+        }
+        return null;
+      }, KNOPPEN);
+      const mis = [];
+      for (const k of knoppen) {
+        const zaken = [
+          ['gewoon', async () => { await T('touchStart', [[k.x, k.y, 1]]); await W(40); await T('touchEnd', []); }],
+        ];
+        if (duim) zaken.push(['duim op het glas', async () => {
+          // de duim ligt er al een tijdje: langer dan een tik (KORT_DRUK)
+          await T('touchStart', [[duim[0], duim[1], 1]]); await W(800);
+          await T('touchStart', [[duim[0], duim[1], 1], [k.x, k.y, 2]]); await W(40);
+          await T('touchEnd', [[duim[0], duim[1], 1]]); await W(40);
+          await T('touchEnd', []);
+        }]);
+        if (!k.lijst) zaken.push(['rolt 20 px', async () => {
+          await T('touchStart', [[k.x, k.y, 1]]);
+          for (let i = 1; i <= 4; i++) await T('touchMove', [[k.x + 5 * i, k.y + i, 1]]);
+          await T('touchEnd', []);
+        }]);
+        for (const [hoe, doe] of zaken) {
+          await page.evaluate(() => { __klik.length = 0; });
+          await doe();
+          await W(250);
+          const n = await page.evaluate(i => __klik.filter(x => x === i).length, k.i);
+          if (n !== 1) mis.push(`${k.naam} (${hoe}): ${n}x`);
+        }
+      }
+      check(knoppen.length > 0 && !mis.length, `G · elke knop telt één keer (${naam}, ${knoppen.length} knoppen)`, mis.slice(0, 8).join(' | '));
+      /* En wat je kunt aantikken, is een knop: een <button>, of iets met een
+         knoprol dat het toetsenbord kan bereiken (knopRol). Anders slaat Elke tik
+         telt het over, komt Tab er niet op en noemt een schermlezer het tekst.
+         Uitgezonderd, met reden: de achtergrond van een venster (tik ernaast =
+         sluiten, Escape doet hetzelfde), en zij zelf (tik = een dansje; een
+         speeltje, geen opdracht). */
+      const geenKnop = await page.evaluate(() => {
+        const MAG = '.modal-bg, .tappable, .spiegel, #trophy-shelves';
+        return [...document.querySelectorAll('body *')].filter(el => {
+          if (!(el.onclick || el.hasAttribute('onclick'))) return false;
+          if (/^(BUTTON|A|INPUT|LABEL|SELECT|TEXTAREA)$/.test(el.tagName) || el.matches(MAG)) return false;
+          const r = el.getBoundingClientRect();
+          if (!r.width || !r.height || el.closest('[inert], [hidden]')) return false;
+          if (el.closest('.screen') && !el.closest('.screen.active')) return false;
+          return !(/^(button|switch|menuitem|menuitemcheckbox|checkbox|tab)$/.test(el.getAttribute('role') || '') && el.tabIndex >= 0);
+        }).map(el => el.id || (typeof el.className === 'string' ? el.className : el.tagName)).slice(0, 8);
+      });
+      check(!geenKnop.length, `G · wat je kunt aantikken is een knop (${naam})`, geenKnop.join(' | '));
+    }
+    await ctx.close();
+  }
+
+  /* ---- H · een scherm in rust doet niets ---- */
+  {
+    const { ctx, page } = await nieuw();
+    // elke setInterval die nog loopt, bijhouden
+    await ctx.addInitScript(() => {
+      const aan = new Set(), si = setInterval, ci = clearInterval;
+      window.__intervallen = aan;
+      window.setInterval = function (f, t, ...r) { const id = si.call(this, f, t, ...r); aan.add(id); return id; };
+      window.clearInterval = function (id) { aan.delete(id); return ci.call(this, id); };
+    });
+    const SCHERMEN = [['profile', ''], ['map', '&screen=map'], ['game', '&screen=game'], ['end', '&screen=end'],
+      ['dress', '&screen=dress'], ['tro', '&screen=tro'], ['reis', '&screen=reis'], ['ouders', '&screen=ouders']];
+    for (const [naam, scherm] of SCHERMEN) {
+      await page.goto(APP_URL + '&demo' + (scherm ? '&star=p1' + scherm : ''));
+      await page.waitForTimeout(3500);   // de aankomst, een feestje, een eerste vraag: voorbij
+      await browser.startTracing(page, { categories: ['devtools.timeline', 'disabled-by-default-devtools.timeline'] });
+      // Een zichtbaar tabblad maakt elk beeldje; headless doet dat alleen als iemand
+      // erom vraagt. Zonder deze lus tekent een knikkende pop hier nul keer.
+      await page.evaluate(duur => new Promise(klaar => {
+        const t0 = performance.now();
+        (function beeld() { if (performance.now() - t0 < duur) requestAnimationFrame(beeld); else klaar(); })();
+      }), RUST_DUUR);
+      const spoor = JSON.parse((await browser.stopTracing()).toString());
+      const ev = spoor.traceEvents || spoor;
+      const hoofd = ev.find(e => e.name === 'thread_name' && e.args.name === 'CrRendererMain'
+        && ev.some(x => x.pid === e.pid && x.tid === e.tid && x.name === 'Paint'));
+      const keer = hoofd ? ev.filter(e => e.pid === hoofd.pid && e.tid === hoofd.tid && e.name === 'Paint' && e.ph === 'X').length : 0;
+      const perSec = Math.round(keer * 1000 / RUST_DUUR);
+      if (RUST_MAG[naam]) check(true, `H · ${naam} tekent in rust ${perSec}x per seconde (mag: ${RUST_MAG[naam]})`, '');
+      else check(perSec <= RUST_TEKEN_MAX, `H · ${naam} in rust tekent niet elk beeldje opnieuw`, `${perSec}x per seconde, de grens is ${RUST_TEKEN_MAX}`);
+      const stil = await page.evaluate(() => {
+        const onzichtbaar = [];
+        for (const a of document.getAnimations()) {
+          if (a.playState !== 'running' || !a.effect || !a.effect.target) continue;
+          const t = a.effect.target, r = t.getBoundingClientRect();
+          const weg = !t.isConnected || r.width === 0 || r.height === 0 || r.bottom < 0 || r.top > innerHeight
+            || r.right < 0 || r.left > innerWidth || (t.checkVisibility && !t.checkVisibility({ visibilityProperty: true }));
+          if (weg) onzichtbaar.push((a.animationName || 'waapi') + ' op ' + (t.id || String(t.className && t.className.baseVal != null ? t.className.baseVal : t.className).split(' ')[0] || t.tagName));
+        }
+        return { onzichtbaar, intervallen: window.__intervallen ? window.__intervallen.size : 0 };
+      });
+      check(!stil.onzichtbaar.length, `H · ${naam}: geen animatie op iets dat je niet ziet`, stil.onzichtbaar.slice(0, 5).join(' | '));
+      check(!stil.intervallen, `H · ${naam}: geen setInterval dat doortikt`, `${stil.intervallen} lopen er`);
     }
     await ctx.close();
   }

@@ -546,6 +546,9 @@
     position: relative; min-width: 0; min-height: 50px; padding: 0;
     border-radius: var(--r-md); opacity: .78;
   }
+  /* De kier tussen twee laden is geen dood plekje: het raakvlak reikt tot de
+     buur, en tot de rand van de balk (test:schuiven zaak L). */
+  .shop-tabs .tab-btn::after { content: ''; position: absolute; inset: -4px -2px; }
   .shop-tabs .tab-btn.active { opacity: 1; }
   .shop-tabs .tab-btn .tab-ico { font-size: 24px; }
   @media (min-width: 1000px) and (orientation: landscape) and (min-height: 501px) {
@@ -967,9 +970,9 @@
     backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
     -webkit-backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
     border: 0; border-radius: var(--r-md);
-    /* 8 en niet 7 verticaal: de knop is 37 hoog en draagt een lip van 3, dus zo
-       komt hij onderin op 5px van de rand uit. Minder, en hij lijkt uit het
-       laatje te barsten. */
+    /* 8 en niet 7 verticaal: de knop is --tik-kind hoog en draagt een lip van
+       3, dus zo komt hij onderin op 5px van de rand uit. Minder, en hij lijkt
+       uit het laatje te barsten. */
     padding: 8px 13px;
     box-shadow: 0 6px 20px rgba(var(--nacht-0-rgb), .3), inset 0 0 0 1px rgba(255, 255, 255, .1);
     text-shadow: var(--nav-ink);
@@ -978,7 +981,7 @@
   .dress-bar .db-name { font-size: var(--tx-body); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dress-bar .db-sub { flex: 0 1 auto; min-width: 0; font-size: var(--tx-klein); opacity: .92; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dress-bar .db-highlight { color: var(--gold-accent); font-weight: 700; }
-  .dress-bar .btn.small { white-space: nowrap; flex-shrink: 0; }
+  .dress-bar .btn.small { white-space: nowrap; flex-shrink: 0; min-height: var(--tik-kind); }
   /* Op de smalste telefoons past "naam · Nog 190 💎" niet naast het hartje en
      Speel: allebei werden ze afgekapt, en dan was juist het bedrag weg. Daar valt
      de naam (met zijn puntje) weg en blijft het emoji staan -- het blauwe kaartje
@@ -987,7 +990,7 @@
   /* Mijn wens: het hartje in de lade (zie "= Mijn wens" in de app). Een rond
      knopje naast "Speel", leeg (🤍) of vol (💖). Geen tekst: het hart zegt het. */
   .wens-knop {
-    flex-shrink: 0; width: 37px; height: 37px; border-radius: 50%; cursor: pointer;
+    flex-shrink: 0; width: var(--tik-kind); height: var(--tik-kind); border-radius: 50%; cursor: pointer;
     border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.1);
     font-size: 19px; line-height: 1; padding: 0; font-family: inherit;
   }

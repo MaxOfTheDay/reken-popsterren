@@ -307,7 +307,7 @@ function renderShop() {
        je iets kiest om te kopen, even als bordje in de spiegel als je iets aandoet
        (naamBordje), hardop waar de stem aan staat, en voor een schermlezer in het
        aria-label hieronder. */
-    card.setAttribute('role', 'button');
+    knopRol(card);
     card.setAttribute('aria-label', it.full || it.name);
     card.innerHTML = itemThumb(it) + `<div class="item-status"></div>`;
     /* Tikken op kleren die van je zijn = ze aandoen. Er zat een stap tussen --
