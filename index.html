@@ -4739,6 +4739,10 @@
   }
   .replay-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.28); }
 
+
+
+  .replay-btn.stuk { border-color: rgba(255,255,255,.35); background: rgba(255,255,255,.07); }
+
   .cg-obj.pre, .cg-dot.pre { opacity: .22; transform: scale(.7); }
   .cg-obj.pop, .cg-dot.pop { animation: cpop .4s ease; opacity: 1; }
   @keyframes cpop { 0% { transform: scale(.5); opacity: .3; } 60% { transform: scale(1.25); } 100% { transform: scale(1); opacity: 1; } }
@@ -17236,9 +17240,10 @@ function speak(text, opts) {
 
 
 
+
+
 let stemKaal = false;
 let stemNr = 0;
-const STEM_STIL = 1500;
 function zegNu(text, opts, v) {
   if (!opts.wacht) stemNr++;
   const mijn = stemNr;
@@ -17249,7 +17254,7 @@ function zegNu(text, opts, v) {
   u.lang = v ? v.lang.replace('_', '-') : 'nl-BE';
   u.rate = opts.rate || 0.85;
   u.pitch = opts.pitch || 1.15;
-  let begon = false, af = false;
+  let af = false;
 
 
   const einde = () => { if (!af) { af = true; if (opts.onEnd) opts.onEnd(); } };
@@ -17264,9 +17269,10 @@ function zegNu(text, opts, v) {
     af = true;
     meldFout('stem: ' + waarom + (v ? ' (' + v.lang + ')' : ''));
     if (v && !stemKaal) { stemKaal = true; try { zegNu(text, opts, null); return; } catch (e) { } }
+    stemZegtHet(false);
     if (opts.onEnd) opts.onEnd();
   };
-  u.onstart = () => { begon = true; if (opts.onStart) opts.onStart(); };
+  u.onstart = () => { stemZegtHet(true); if (opts.onStart) opts.onStart(); };
   u.onend = einde;
   u.onerror = e => {
     const fout = e && e.error;
@@ -17274,12 +17280,27 @@ function zegNu(text, opts, v) {
     else opnieuw(fout || 'fout');
   };
   speechSynthesis.speak(u);
-  setTimeout(() => {
-    if (begon || af || document.hidden) return;
-    let bezig = true;
-    try { bezig = speechSynthesis.speaking || speechSynthesis.pending; } catch (e) { }
-    if (!bezig) opnieuw('begint niet');
-  }, STEM_STIL);
+}
+
+
+
+
+
+
+
+
+
+let stemStuk = false;
+function stemZegtHet(ja) {
+  if (stemStuk === !ja) return;
+  stemStuk = !ja;
+  const b = $('btn-replay');
+  if (!b) return;
+  b.textContent = ja ? '🔊' : '🔇';
+  b.classList.toggle('stuk', !ja);
+  const lab = ja ? 'Nog eens voorlezen' : 'De stem van dit toestel doet het niet';
+  b.setAttribute('aria-label', lab);
+  b.title = lab;
 }
 
 
@@ -27023,6 +27044,10 @@ function countAlong(objs, n, lead, drawId) {
 }
 function replayPrompt() {
   sndClick();
+
+
+  if (stemStuk) showNotice('🔇 De stem doet het niet',
+    'Dit toestel laat de stem nu niet praten. Speelt er muziek via een andere app, zoals Sonos of een Bluetooth-box? Zet die even op pauze.');
   leesVraagOpnieuw();
 }
 function leesVraagOpnieuw() {

@@ -433,8 +433,10 @@ function speak(text, opts) {
 /* DE STEM DIE NIET KOMT. Een gekozen stem kan op het toestel staan en toch niet
    spreken: op Android hoort "Nederlands (België)" bij de spraakdienst van
    Google, en die werkt zichzelf bij zonder te vragen -- daarna kan juist die
-   stem ontbreken of het net nodig hebben. Dan meldt de browser een fout, of
-   hij zegt helemaal niets: geen begin, geen einde. Zonder iets te kiezen pakt
+   stem ontbreken of het net nodig hebben. Dan meldt de browser een fout
+   (synthesis-failed). Op een zin die alleen traag begint wachten we níét met
+   een klok: een koude spraakdienst op Android doet daar soms seconden over,
+   en dan zou een gezonde Vlaamse stem voor de rest van het bezoek wegvallen. Zonder iets te kiezen pakt
    het toestel zijn eigen standaardstem, en die doet het bijna altijd. Dus: gaat
    een zin met een gekozen stem mis, dan zeggen we hem meteen nog eens zonder
    keuze (alleen de taal), en kiezen we de rest van het bezoek niet meer zelf.
@@ -442,7 +444,6 @@ function speak(text, opts) {
    en zou anders nooit in de zondagrapportage staan. */
 let stemKaal = false;
 let stemNr = 0;           // de hoeveelste zin die de vorige mocht afbreken
-const STEM_STIL = 1500;   // zo lang mag een zin erover doen om te beginnen
 function zegNu(text, opts, v) {
   if (!opts.wacht) stemNr++;
   const mijn = stemNr;
@@ -453,7 +454,7 @@ function zegNu(text, opts, v) {
   u.lang = v ? v.lang.replace('_', '-') : 'nl-BE';
   u.rate = opts.rate || 0.85;   // rustig tempo voor jonge kinderen
   u.pitch = opts.pitch || 1.15; // iets hoger/vrolijker
-  let begon = false, af = false;
+  let af = false;
   // Ook een fout (of een zin die afgebroken wordt) is een einde: wie erop wacht,
   // mag niet blijven hangen. Eén keer, ook als een browser allebei stuurt.
   const einde = () => { if (!af) { af = true; if (opts.onEnd) opts.onEnd(); } };
@@ -468,9 +469,10 @@ function zegNu(text, opts, v) {
     af = true;
     meldFout('stem: ' + waarom + (v ? ' (' + v.lang + ')' : ''));
     if (v && !stemKaal) { stemKaal = true; try { zegNu(text, opts, null); return; } catch (e) { /* door */ } }
+    stemZegtHet(false);
     if (opts.onEnd) opts.onEnd();
   };
-  u.onstart = () => { begon = true; if (opts.onStart) opts.onStart(); };
+  u.onstart = () => { stemZegtHet(true); if (opts.onStart) opts.onStart(); };
   u.onend = einde;
   u.onerror = e => {
     const fout = e && e.error;
@@ -478,12 +480,27 @@ function zegNu(text, opts, v) {
     else opnieuw(fout || 'fout');
   };
   speechSynthesis.speak(u);
-  setTimeout(() => {
-    if (begon || af || document.hidden) return;
-    let bezig = true;
-    try { bezig = speechSynthesis.speaking || speechSynthesis.pending; } catch (e) { /* weet niet */ }
-    if (!bezig) opnieuw('begint niet');
-  }, STEM_STIL);
+}
+/* DE STEM IS STUK, EN DAT MAG JE ZIEN. Weigert de spraak van het toestel ook
+   zonder gekozen stem, dan kan geen website of app hem laten praten -- op
+   Android gebeurt dat bijvoorbeeld als een andere app (Sonos, een
+   Bluetooth-box) de geluidsuitvoer vasthoudt. De klankjes klinken dan gewoon
+   (die maakt het spel zelf), en zonder teken leek het spel stuk. Dus wordt de
+   🔊 onder de telvraag een 🔇, en wie erop tikt krijgt één korte uitleg voor
+   de ouder (zie replayPrompt). Zodra er weer een zin begint, staat hij terug.
+   Alleen na een echte weigering van het toestel; nooit omdat het geluid uit
+   staat of omdat er nog niet getikt is. */
+let stemStuk = false;
+function stemZegtHet(ja) {
+  if (stemStuk === !ja) return;
+  stemStuk = !ja;
+  const b = $('btn-replay');
+  if (!b) return;
+  b.textContent = ja ? '🔊' : '🔇';
+  b.classList.toggle('stuk', !ja);
+  const lab = ja ? 'Nog eens voorlezen' : 'De stem van dit toestel doet het niet';
+  b.setAttribute('aria-label', lab);
+  b.title = lab;
 }
 /* Zeg een zin en ga daarna pas verder -- maar nooit eerder dan `rust` en nooit
    later dan STEM_MAX. Elke speak() breekt af wat er nog klonk (cancel), dus wie

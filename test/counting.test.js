@@ -556,8 +556,7 @@ function check(ok, label, detail) {
     'stem: de eerste tik met geluid aan ontgrendelt de stem met één stille zin', JSON.stringify(open));
 
   /* ---- een gekozen stem die niet komt (Android) ----
-     De Vlaamse stem staat in de lijst maar spreekt niet: een fout, of helemaal
-     niets. Dan dezelfde zin meteen nog eens zonder gekozen stem, en de rest van
+     De Vlaamse stem staat in de lijst maar spreekt niet: hij meldt een fout. Dan dezelfde zin meteen nog eens zonder gekozen stem, en de rest van
      het bezoek niet meer zelf kiezen. Een weigering (nog geen tik) is iets
      anders: dan blijft de keuze staan. */
   const kaal = await page.evaluate(async () => {
@@ -581,7 +580,12 @@ function check(ok, label, detail) {
       return { log, klaar, kaal: stemKaal };
     };
     r.fout = await ronde(u => u.voice ? 'fout' : 'goed', 200);
-    r.stil = await ronde(u => u.voice ? 'niets' : 'goed', 1900);
+    // het toestel weigert ook zonder keuze: de 🔊 wordt een 🔇, en terug zodra er weer iets klinkt
+    const knop = document.getElementById('btn-replay');
+    r.alles = await ronde(() => 'fout', 200);
+    r.alles.knop = knop.textContent; r.alles.stuk = knop.classList.contains('stuk');
+    const r2 = await ronde(() => 'goed', 200);
+    r.terug = { knop: knop.textContent, stuk: knop.classList.contains('stuk'), log: r2.log };
     r.weiger = await ronde(() => 'weiger', 200);
     r.goed = await ronde(() => 'goed', 200);
     Object.assign(speechSynthesis, { speak: echt.speak, getVoices: echt.getVoices });
@@ -592,7 +596,9 @@ function check(ok, label, detail) {
   const tweeKeer = x => x.log.length === 2 && x.log[0].stem === 'nl-BE' && x.log[1].stem === null
     && x.log[1].t === x.log[0].t && x.klaar === 1 && x.kaal;
   check(tweeKeer(kaal.fout), 'stem: een fout van de gekozen stem = dezelfde zin nog eens zonder keuze', JSON.stringify(kaal.fout));
-  check(tweeKeer(kaal.stil), 'stem: een gekozen stem die niet begint = dezelfde zin nog eens zonder keuze', JSON.stringify(kaal.stil));
+  check(kaal.alles.log.length === 2 && kaal.alles.knop === '🔇' && kaal.alles.stuk
+    && kaal.terug.knop === '🔊' && !kaal.terug.stuk,
+    'stem: weigert het toestel helemaal, dan wordt de 🔊 een 🔇 (en terug zodra hij weer praat)', JSON.stringify([kaal.alles, kaal.terug]));
   check(kaal.weiger.log.length === 1 && !kaal.weiger.kaal && kaal.weiger.klaar === 1,
     'stem: een weigering (nog geen tik) laat de stemkeuze staan', JSON.stringify(kaal.weiger));
   check(kaal.goed.log.length === 1 && !kaal.goed.kaal && kaal.goed.klaar === 1,
