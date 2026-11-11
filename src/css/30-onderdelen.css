@@ -354,6 +354,28 @@
     .star-grid.kol-4 { grid-template-columns: repeat(2, minmax(0, 112px)); margin-top: 8px; }
     .star-grid.kol-4 .ster-tegel .st-podium { aspect-ratio: 10 / 9; }
   }
+  /* Een tablet of bureaublad: de tegels groeien mee met het scherm. Zonder dit
+     stond het lege beginscherm daar op een podium van ± 370px (kol-0 groeit al
+     met de hoogte), en zodra de eerste ster gemaakt was kromp zij tot een tegel
+     van ± 190px midden in een lege paarse vlakte. Nu rekent elke telling in vh
+     (met een grens in vw voor een smal, hoog venster), en houden de verhoudingen
+     tussen de tellingen dezelfde volgorde als op een telefoon: één is het
+     grootst, zes het kleinst. Twee rijen van zes passen dan nog met logo en de
+     "+" in 800 hoog. Een telefoon (staand smaller dan 700, liggend lager dan
+     600) haalt deze grenzen nooit en blijft precies zoals hierboven. */
+  @media (min-width: 700px) and (min-height: 600px) {
+    .star-grid { max-width: none; grid-template-columns: repeat(3, minmax(0, min(23vh, 27vw))); }
+    .star-grid.kol-1 { grid-template-columns: minmax(0, min(34vh, 40vw)); }
+    .star-grid.kol-2 { grid-template-columns: repeat(2, minmax(0, min(29vh, 34vw))); }
+    .star-grid.kol-4 { grid-template-columns: repeat(2, minmax(0, min(23vh, 30vw))); }
+    /* drie op één rij: zo groot als vier, niet zo klein als zes (zie renderProfiles) */
+    .star-grid.kol-3 { grid-template-columns: repeat(3, minmax(0, min(29vh, 30vw))); }
+  }
+  /* liggend blijven vier sterren op één rij, zoals al op een liggende tablet */
+  @media (min-width: 700px) and (min-height: 600px) and (orientation: landscape) {
+    .star-grid.kol-4 { grid-template-columns: repeat(4, minmax(0, min(27vh, 20vw))); }
+    .star-grid.kol-3 { grid-template-columns: repeat(3, minmax(0, min(27vh, 24vw))); }
+  }
   /* alleen zichtbaar als er nog niets is: dan staat hier een gezin dat net
      begint, en is "wat is dit spel?" het andere ding dat een ouder kan willen */
   .over-hint {

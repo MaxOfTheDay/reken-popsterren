@@ -998,6 +998,10 @@ function renderProfiles() {
   row.classList.toggle('kol-1', kol === 1);
   row.classList.toggle('kol-2', kol === 2);
   row.classList.toggle('kol-4', kol === 4);
+  /* Drie staan op één rij en zes op twee, met dezelfde kolommen. Op een telefoon
+     maakt dat niets uit (de breedte bepaalt de maat), maar op een tablet rekent de
+     tegel in vh: daar mogen drie zo groot als vier, en niet zo klein als zes. */
+  row.classList.toggle('kol-3', n === 3);
   // Verse installatie: het keuzescherm ís het welkom. Geen apart onthaalscherm --
   // dezelfde knop en hetzelfde formulier als later.
   if (add) {

@@ -2521,6 +2521,28 @@
   }
 
 
+
+
+
+
+
+
+
+  @media (min-width: 700px) and (min-height: 600px) {
+    .star-grid { max-width: none; grid-template-columns: repeat(3, minmax(0, min(23vh, 27vw))); }
+    .star-grid.kol-1 { grid-template-columns: minmax(0, min(34vh, 40vw)); }
+    .star-grid.kol-2 { grid-template-columns: repeat(2, minmax(0, min(29vh, 34vw))); }
+    .star-grid.kol-4 { grid-template-columns: repeat(2, minmax(0, min(23vh, 30vw))); }
+
+    .star-grid.kol-3 { grid-template-columns: repeat(3, minmax(0, min(29vh, 30vw))); }
+  }
+
+  @media (min-width: 700px) and (min-height: 600px) and (orientation: landscape) {
+    .star-grid.kol-4 { grid-template-columns: repeat(4, minmax(0, min(27vh, 20vw))); }
+    .star-grid.kol-3 { grid-template-columns: repeat(3, minmax(0, min(27vh, 24vw))); }
+  }
+
+
   .over-hint {
     display: none; align-items: center; justify-content: center; gap: .3em; width: fit-content; text-decoration: none;
     margin: 0; font-size: var(--tx-klein); opacity: .82; text-align: center; z-index: 1;
@@ -18897,6 +18919,10 @@ function renderProfiles() {
   row.classList.toggle('kol-1', kol === 1);
   row.classList.toggle('kol-2', kol === 2);
   row.classList.toggle('kol-4', kol === 4);
+
+
+
+  row.classList.toggle('kol-3', n === 3);
 
 
   if (add) {
