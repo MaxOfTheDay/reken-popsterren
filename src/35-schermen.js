@@ -42,6 +42,8 @@ function show(id) {
   if (id !== 'screen-map' && id !== 'screen-journey') vluchtKlaar();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'komt-op'));
   $(id).classList.add('active');
+  // de donkere veeg achter de tabbladbalk (zie body.op-kamer in 40-kaart.css)
+  document.body.classList.toggle('op-kamer', id === 'screen-dress' || id === 'screen-trophies');
   /* Een statusbalk die na het opstarten wegvaagde, maakte het venster hoger dan de
      vastgelegde hoogte. Die ruimte nemen we hier pas: het oude scherm is net weg en
      het nieuwe nog niet getekend -- zie vhVolg in 00-vh-lock.js. */
@@ -974,8 +976,18 @@ function kiesSter(key, tegel) {
   tegel.classList.add('kiest');
   // Eerst antwoord geven, dán pas het spel in. Het is opzettelijk kort: dit is een
   // reactie op een tik en geen overgang -- die zit al tussen de kaart en de zaal.
-  setTimeout(() => selectProfile(key), 150);
+  /* Twee voorwaarden, niet één klok: de ingedrukte tegel staat getekend (een
+     beeldje na de tik, zoals naTik -- maar niet naTik zelf: die laat een tweede
+     verzoek vallen terwijl er een wacht, en dan bleef kiesBezig dicht) én er is
+     KIES_ANTWOORD voorbij. Met alleen een klok
+     viel de kaart op een trage tablet nog in hetzelfde beeldje als de tik -- de
+     tegel was na 150 ms nog niet getekend -- en dan wachtte het indrukken op de
+     hele kaart: 1,5 s bij een echte speler (Cloudflare, nov 2026). De kaart is de
+     zwaarste wissel van de app. */
+  const t0 = performance.now();
+  requestAnimationFrame(() => setTimeout(() => selectProfile(key), Math.max(0, KIES_ANTWOORD - (performance.now() - t0))));
 }
+const KIES_ANTWOORD = 150;   // ms dat de ingedrukte tegel minstens staat
 function renderProfiles() {
   const row = $('profile-row');
   // alleen de tegels verversen: de "+" hoort bij het raster en blijft staan (zie

@@ -2689,6 +2689,8 @@
 
 
 
+
+
   body:has(.modal-bg.open) .app-knop,
   body:has(.modal-bg.open) #corner-btns { visibility: hidden; }
 
@@ -3783,8 +3785,12 @@
 
 
 
-  body:has(#screen-dress.active, #screen-trophies.active) .main-nav::before { opacity: 0; }
-  body:has(#screen-dress.active, #screen-trophies.active) .main-nav::after { opacity: 1; }
+
+
+
+
+  body.op-kamer .main-nav::before { opacity: 0; }
+  body.op-kamer .main-nav::after { opacity: 1; }
   @media (prefers-reduced-motion: reduce) { .main-nav::before, .main-nav::after { transition: none; } }
 
 
@@ -18251,6 +18257,8 @@ function show(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'komt-op'));
   $(id).classList.add('active');
 
+  document.body.classList.toggle('op-kamer', id === 'screen-dress' || id === 'screen-trophies');
+
 
 
   vhVolg();
@@ -19182,8 +19190,18 @@ function kiesSter(key, tegel) {
   tegel.classList.add('kiest');
 
 
-  setTimeout(() => selectProfile(key), 150);
+
+
+
+
+
+
+
+
+  const t0 = performance.now();
+  requestAnimationFrame(() => setTimeout(() => selectProfile(key), Math.max(0, KIES_ANTWOORD - (performance.now() - t0))));
 }
+const KIES_ANTWOORD = 150;
 function renderProfiles() {
   const row = $('profile-row');
 

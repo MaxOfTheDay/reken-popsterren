@@ -249,6 +249,10 @@ verjaart niet.
   zo groot als het venster rekent de browser bij elk beeldje opnieuw uit zodra
   er iets overheen beweegt. Wil je een kamer uit focus, zet de waas dan in de
   tekening zelf (zoals `--kleed-tekening`). `test:robuust` zaak E bewaakt het.
+* **Een scherm in rust doet niets.** Geen animatie die elk beeldje laat
+  hertekenen (iets dat ín een SVG beweegt), niets dat beweegt buiten beeld, geen
+  `setInterval` dat doortikt. Wiegen en schuiven van een eigen laag kost niets.
+  `test:robuust` zaak H telt het; een uitzondering staat in `RUST_MAG` met reden.
 * **Duren staan in JavaScript, niet twee keer.** `--t-tik` en `--t-snel` in
   `:root` zijn de twee korte; de twee lange worden uitgerekend in
   `MOTION.totaal` en `VLUCHT.totaal`. Schrijf een duur nooit in een commentaar

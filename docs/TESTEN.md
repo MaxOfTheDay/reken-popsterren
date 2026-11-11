@@ -59,7 +59,7 @@ npm run test:voortgang
 npm run test:reis
 npm run test:vlucht     # de zoom tussen de wereldkaart en Werelden
 npm run test:flits      # niets half zien: beginscherm, somkaart, eerst bouwen dan bewegen
-npm run test:robuust    # de tik komt eerst (en meet niet na), tikstormen, wie vertrekt is inert, offline na het eerste bezoek, geen zware waas, elke tik telt
+npm run test:robuust    # de tik komt eerst (en meet niet na), tikstormen, wie vertrekt is inert, offline na het eerste bezoek, geen zware waas, elke tik telt, een scherm in rust doet niets
 npm run test:beloning
 npm run test:studio      # de wereldstudio (?debug&mapedit)
 npm run test:onderrand   # de zwevende bediening onderaan blijft staan
@@ -634,7 +634,7 @@ Kinderen tikken snel, dubbel en midden in een overgang. De zaken:
 - **geen zware waas onder wat beweegt**: op elk scherm, staand en liggend, geen
   CSS-`blur` van `WAAS_MAX` px of meer op iets dat meer dan een derde van het
   venster beslaat. Zo'n filter wordt bij elk beeldje opnieuw uitgerekend zodra
-  de pop erover wiegt; een waas hoort dan in de tekening zelf.
+  de pop erover wiegt; een waas hoort dan in de tekening zelf;
 - **snel tikken telt** (zaak F): de antwoorden, met echte aanrakingen;
 - **elke andere knop telt net zo** (zaak G): op elk scherm van het kind en in
   Voor ouders krijgt elke zichtbare knop een gewone tik, een tik terwijl er een
@@ -644,6 +644,12 @@ Kinderen tikken snel, dubbel en midden in een overgang. De zaken:
   `10-feestjes.js`. En alles met een onclick is een echte knop: een `<button>`,
   of `knopRol` (Tab komt erop, Enter tikt het aan, een schermlezer noemt het een
   knop).
+- **een scherm in rust doet niets** (zaak H): op elk scherm, na de aankomst,
+  twee seconden kijken. Geteld en niet getimed: hoe vaak er getekend wordt (een
+  scherm dat stilstaat of alleen een laag laat wiegen zit op 0 à 2 per seconde,
+  een scherm dat elk beeldje hertekent op 120), geen animatie op iets dat je niet
+  ziet, geen `setInterval` dat doortikt. Een scherm waar het met reden mag (haar
+  knikkende hoofd in de SVG) staat in `RUST_MAG`, met de reden erbij.
 
 ### `test/toestel.test.js` — wat het toestel stil laat mislukken
 
