@@ -334,14 +334,36 @@ function buiging(elId) {
 // niet nog het tikje bovenop -- twee klankjes tegelijk lezen als één rommel.
 function tapDance(elId, stil) {
   const el = $(elId);
-  if (!el || el.classList.contains('dancing')) return;
+  if (!el) return;
   // De tik wordt altijd beantwoord -- het klankje is het antwoord, het pasje de
-  // versiering. Dus eerst het geluid, en pas daarna kijken of er gedanst wordt.
+  // versiering. Dus eerst het geluid, en pas daarna kijken of er gedanst wordt:
+  // ook een tik midden in haar slotdans op het eindscherm krijgt zijn noot.
   if (!stil) sndTap();
+  if (el.classList.contains('dancing')) return;
   const r = el.getBoundingClientRect();   // vóór het pasje: meten na een wijziging dwingt een opmaak af
   if (!zetPas(el, pick(MOVES))) return;
   sparkleAt(r);
   pasUit(el);
+}
+/* NOG NIET: het ene antwoord op een slot. Een halte of wereld op slot, een
+   podiumstuk van een wereld die nog moet komen, te weinig 💎 -- overal hetzelfde
+   houten tokje ('nog.niet') en hetzelfde gebaar (nogNiet uit de afspraak: een
+   wiebel om het midden, nooit rood en nooit zijwaarts, want "later" is geen
+   fout). el krijgt de klasse .nee; elk scherm zegt in zijn stijlblad zelf wélk
+   ding er wiebelt (.dot.nee, .reis-zegel.nee, ...).
+   Opnieuw beginnen zonder offsetWidth: de klasse eraf, en een beeldje later
+   erbij. Een lezing van de opmaak midden in de tik dwingt het hele scherm op te
+   maken (zie test:robuust). */
+const NEE_DUUR = 600;
+function nogNiet(el) {
+  sndNogNiet();
+  if (!el) return;
+  el.classList.remove('nee');
+  clearTimeout(el._neeKlok);
+  requestAnimationFrame(() => {
+    el.classList.add('nee');
+    el._neeKlok = setTimeout(() => el.classList.remove('nee'), NEE_DUUR);
+  });
 }
 /* ================= Vasthouden ==============================================
    Een kind dat de pop niet aantikt maar haar vasthoudt. Zonder dit deed elk

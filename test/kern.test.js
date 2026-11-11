@@ -745,7 +745,7 @@ zaak('O', () => {
      altijd op of boven de grondtoon, zodat de ondergrens hieronder ook voor hen
      geldt. */
   const kastKlanken = ['kast.brons', 'kast.klink', 'kast.goud', 'kast.diamant'];
-  for (const naam of kastKlanken.concat('kast.tok'))
+  for (const naam of kastKlanken.concat('nog.niet'))
     check(!!sfx[naam], `O · ${naam} staat in de tabel`, '');
   const kastVorm = naam => JSON.stringify([sfx[naam].noten, sfx[naam].boven]);
   check(new Set(kastKlanken.map(kastVorm)).size === kastKlanken.length,
@@ -756,6 +756,33 @@ zaak('O', () => {
     const ok = sfx[naam].ladder && boven.every(b => Array.isArray(b) && b.length === 5 && b[0] >= 1 && b[1] > 0 && b[2] >= 0 && b[4] > 0);
     check(ok, `O · ${naam}: de boventonen liggen boven een toon uit de ladder`, JSON.stringify(boven));
   }
+
+  /* Hoe hard, ten opzichte van elkaar. Gemeten op een tabletluidspreker klonk
+     een tik op een trofee in de kast harder dan een goed antwoord -- speelgoed
+     waar een kind tien keer op tikt, boven de beloning van het spel. En "probeer
+     nog eens" was het zachtste klankje van de app, zachter dan een gewone tik.
+     Twee getallen uit de tabel houden die volgorde vast. */
+  const luidst = naam => Math.max(...sfx[naam].noten.map(n => n[4]), ...(sfx[naam].boven || []).map(b => b[4]));
+  for (const naam of kastKlanken)
+    check(luidst(naam) < luidst('answer.correct'), `O · ${naam} klinkt zachter dan een goed antwoord`,
+      `${luidst(naam)} vs ${luidst('answer.correct')}`);
+  check(luidst('answer.retry') >= luidst('tap'), 'O · "probeer nog eens" is niet zachter dan een gewone tik',
+    `${luidst('answer.retry')} vs ${luidst('tap')}`);
+
+  /* Eén betekenis per klankje, en de app houdt zich eraan. De misser van een som
+     hoort alleen bij een som: hij klonk ook bij te weinig 💎, en dat is "later",
+     geen fout -- dat is 'nog.niet', via nogNiet(). En een tik vlak voor
+     tapDance geeft twee klankjes tegelijk: tapDance speelt zelf haar noot. */
+  const appCode = harnas.appScript();
+  const retry = (appCode.match(/(?<!function )\bsndWrong\(\)/g) || []).length;
+  check(retry === 1, 'O · de misser van een som klinkt alleen bij een som (sndWrong één keer)', `${retry} keer`);
+  const dubbel = appCode.match(/sndClick\(\);?\s*tapDance\(/g) || [];
+  check(dubbel.length === 0, 'O · geen tik vlak voor tapDance: dan klinken er twee tegelijk', dubbel.join(' '));
+  /* De ring betekent "hier kwam het aan". Een antwoordknop zakt al op zijn lip
+     als tikreactie, en op een fout antwoord las een gouden ring als "geland". */
+  const antwoord = (appCode.match(/function submitAnswer\([^]*?\n}/) || [''])[0];
+  check(antwoord && !/tapRipple\(/.test(antwoord), 'O · een antwoordknop krijgt geen tikring', '');
+  check(/function nogNiet\(/.test(appCode) && /sndNogNiet\(\)/.test(appCode), 'O · elk slot heeft één antwoord: nogNiet() met het tokje', '');
 
   /* De laagste toon in de hele app. Een tabletluidspreker begint ruim boven de
      311 Hz die hier ooit stond, dus daar bleef van de zachtste helft van

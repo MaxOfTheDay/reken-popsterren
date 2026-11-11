@@ -840,7 +840,7 @@ function kastNoot(card, trap) {
   setTimeout(() => n.remove(), 850);
 }
 function kastDof(card) {
-  playSfx('kast.tok');
+  sndNogNiet();   // het tokje van elk slot; het gebaar is hier de boog die bijloopt (dof)
   if (motionOff()) return;
   opnieuw(card, 'dof');
   /* de boog opnieuw laten vollopen: --p van 0 naar wat er stond, met een uitloop.

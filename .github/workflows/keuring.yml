@@ -85,6 +85,9 @@ jobs:
           # elke weigering geeft een teken in beeld of een briefje, en elke
           # toestelfunctie in src/ heeft een rij (test/toestel.test.js)
           - { suite: toestel, bestand: toestel }
+          # elke tik één klankje en nooit twee tegelijk, een slot zegt "nog niet",
+          # een antwoordknop geeft geen tikring (test/zintuigen.test.js)
+          - { suite: zintuigen, bestand: zintuigen }
           # De rest draaide tot november 2026 alleen op de eigen machine, en dan
           # bewaakt hij niets: inhoud zaak X houdt nu bij dat elke suite hier staat.
           - { suite: flits, bestand: flits }
