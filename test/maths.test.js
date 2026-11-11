@@ -827,6 +827,38 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     await ctx.close();
   }
 
+  /* ================= De laatste tik is de goede =================
+     Na een tweede misser staat het goede antwoord groen, en gaat alleen díé
+     knop verder (zie toonVerder). Een tik ernaast laat hem oppoppen en houdt
+     de vraag staan. Met echte tikken, want het gaat om waar de vinger landt. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, reducedMotion: 'reduce' });
+    await cacheFonts(ctx);
+    const p3 = await ctx.newPage();
+    p3.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await p3.goto(APP_URL + '&demo&star=p1');
+    await p3.waitForFunction(() => typeof startLevel === 'function');
+    await p3.evaluate(() => { P().settings.mode = 'kies'; startLevel(P().level); });
+    await p3.waitForTimeout(900);
+    const fout = () => p3.evaluate(() => {
+      const q = G.qs[G.idx], b = [...document.querySelectorAll('#answer-area .choice-btn')].find(x => !x.disabled && +x.dataset.v !== q.ans);
+      const r = b.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2];
+    });
+    for (let i = 0; i < 2; i++) { const [x, y] = await fout(); await p3.touchscreen.tap(x, y); await p3.waitForTimeout(500); }
+    await p3.waitForTimeout(400);
+    const voor = await p3.evaluate(() => G.idx);
+    await p3.touchscreen.tap(30, 420);   // naast de knoppen, op haar podium
+    await p3.waitForTimeout(250);
+    const naast = await p3.evaluate(() => ({ idx: G.idx, hier: !!document.querySelector('.choice-btn.good.kijk-hier'), wijst: $('toast').textContent.includes('👉') }));
+    check(naast.idx === voor && naast.hier && naast.wijst, 'na een tweede misser: een tik ernaast gaat niet verder, de goede knop plopt op', JSON.stringify(naast));
+    const [gx, gy] = await p3.evaluate(() => { const r = document.querySelector('.choice-btn.good').getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; });
+    await p3.touchscreen.tap(gx, gy);
+    await p3.waitForTimeout(300);
+    const na = await p3.evaluate(() => G.idx);
+    check(na === voor + 1, 'na een tweede misser: de goede knop aantikken gaat naar de volgende som', `${voor} -> ${na}`);
+    await ctx.close();
+  }
+
   check(pageErrors.length === 0, 'geen javascript-fouten', pageErrors.join(' | '));
 
   await browser.close();
