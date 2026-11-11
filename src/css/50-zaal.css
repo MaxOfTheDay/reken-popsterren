@@ -709,8 +709,16 @@
      oppoppen, "deze" (zie toonVerder) */
   :is(.choice-btn, .count-tile).good.kijk-hier { animation: ja var(--t-ja) var(--ease-plop); }
   @keyframes rustigGroen { from { opacity: .55; } to { opacity: 1; } }
+  /* de 👆 op de hoek van de goede knop na een tweede misser (zie toonVerder):
+     half over de rand, zodat hij bij de knop hoort en het getal vrij laat */
+  .wijs-hand {
+    position: absolute; right: -6px; bottom: -22px; z-index: 3; pointer-events: none;
+    font-size: 46px; line-height: 1; filter: drop-shadow(0 3px 4px rgba(0,0,0,.45));
+    animation: wijsIn var(--t-ja) var(--ease-plop) both;
+  }
+  @keyframes wijsIn { from { opacity: 0; transform: translateY(10px) scale(.7); } }
   @media (prefers-reduced-motion: reduce) {
-    .choice-btn.good, .count-tile.good, :is(.choice-btn, .count-tile).good.kijk-hier { animation: none; }
+    .choice-btn.good, .count-tile.good, :is(.choice-btn, .count-tile).good.kijk-hier, .wijs-hand { animation: none; }
     .choice-btn.good::before, .count-tile.good::before { display: none; }
   }
 

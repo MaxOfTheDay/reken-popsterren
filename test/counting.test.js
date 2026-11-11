@@ -437,7 +437,7 @@ function check(ok, label, detail) {
     check(mee.log.some(e => e.zegt === 'één'), 'stem: daarna wordt er meegeteld', JSON.stringify(mee.log));
   }
 
-  // 3 · een tweede misser: eerst uittellen, dan pas het 👉
+  // 3 · een tweede misser: eerst uittellen, dan pas de 👆 op de goede tegel
   const mis = await page.evaluate(async () => {
     const log = __stem(500);
     startLevel(P().level);
@@ -451,15 +451,14 @@ function check(ok, label, detail) {
     let teken = null;
     for (let i = 0; i < 80 && teken == null; i++) {
       await new Promise(r => setTimeout(r, 50));
-      const toast = document.getElementById('toast');
-      if (toast && toast.classList.contains('show') && /👉/.test(toast.textContent)) teken = performance.now() - t;
+      if (document.querySelector('#answer-area .count-tile.good .wijs-hand')) teken = performance.now() - t;
     }
     __stemTerug();
     const gezegd = log.filter(e => e.zegt);
     return { log, teken, ans: q.ans, laatste: gezegd.length ? gezegd[gezegd.length - 1].t : null };
   });
   check(mis.teken != null && mis.laatste != null && mis.teken >= mis.laatste + 500,
-    'stem: na een tweede misser wordt het antwoord uitgeteld vóór het 👉', JSON.stringify(mis));
+    'stem: na een tweede misser wordt het antwoord uitgeteld vóór de 👆', JSON.stringify(mis));
 
   // 4 · het eindscherm praat niet door over de kaart
   const weg = await page.evaluate(async () => {
