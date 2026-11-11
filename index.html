@@ -826,6 +826,11 @@
 
 
 
+    --tik-kind: 44px;
+
+
+
+
 
 
 
@@ -4958,8 +4963,16 @@
 
   :is(.choice-btn, .count-tile).good.kijk-hier { animation: ja var(--t-ja) var(--ease-plop); }
   @keyframes rustigGroen { from { opacity: .55; } to { opacity: 1; } }
+
+
+  .wijs-hand {
+    position: absolute; right: -6px; bottom: -22px; z-index: 3; pointer-events: none;
+    font-size: 46px; line-height: 1; filter: drop-shadow(0 3px 4px rgba(0,0,0,.45));
+    animation: wijsIn var(--t-ja) var(--ease-plop) both;
+  }
+  @keyframes wijsIn { from { opacity: 0; transform: translateY(10px) scale(.7); } }
   @media (prefers-reduced-motion: reduce) {
-    .choice-btn.good, .count-tile.good, :is(.choice-btn, .count-tile).good.kijk-hier { animation: none; }
+    .choice-btn.good, .count-tile.good, :is(.choice-btn, .count-tile).good.kijk-hier, .wijs-hand { animation: none; }
     .choice-btn.good::before, .count-tile.good::before { display: none; }
   }
 
@@ -5343,13 +5356,16 @@
   @media (orientation: portrait) and (min-width: 600px) and (min-height: 900px) {
     .game-arena { flex-direction: column; flex-wrap: nowrap; gap: 18px; }
     .show-stage { width: 300px; height: 252px; }
-    .question-card { font-size: 72px; min-width: min(80vw, 560px); padding: 24px 36px 32px; }
+    .question-card { font-size: 72px; min-width: min(80vw, 560px); max-width: calc(100vw - 24px); padding: 24px 36px 32px; }
     .choices, .count-tiles { width: min(80vw, 560px); gap: 18px; }
     .choice-btn { font-size: 44px; padding: 26px 8px; }
     .numpad { width: min(64vw, 420px); gap: 14px; }
     .num-btn { font-size: 36px; padding: 18px 0; }
 
-    .count-q, .count-tile { --obj: 48px; }
+
+
+
+    .count-q, .count-tile { --obj: min(48px, 7vw); }
     .count-q .cg-obj, .count-tile .cg-obj { font-size: var(--obj); }
     .count-q .cgroup.big .cg-obj { font-size: calc(var(--obj) * 1.35); }
     .count-q .cgroup, .count-tile .cgroup { max-width: calc(var(--obj) * 7.6); }
@@ -9075,7 +9091,7 @@
   .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; width: 100%; margin-top: 4px; }
 
   .end-actions.wacht { pointer-events: none; }
-  .end-actions .btn { width: 100%; }
+  .end-actions .btn { width: 100%; min-height: var(--tik-kind); }
   .end-actions .btn.big { font-size: var(--tx-kop); padding: 15px 20px; }
 
 
@@ -9636,6 +9652,9 @@
     position: relative; min-width: 0; min-height: 50px; padding: 0;
     border-radius: var(--r-md); opacity: .78;
   }
+
+
+  .shop-tabs .tab-btn::after { content: ''; position: absolute; inset: -4px -2px; }
   .shop-tabs .tab-btn.active { opacity: 1; }
   .shop-tabs .tab-btn .tab-ico { font-size: 24px; }
   @media (min-width: 1000px) and (orientation: landscape) and (min-height: 501px) {
@@ -10068,7 +10087,7 @@
   .dress-bar .db-name { font-size: var(--tx-body); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dress-bar .db-sub { flex: 0 1 auto; min-width: 0; font-size: var(--tx-klein); opacity: .92; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dress-bar .db-highlight { color: var(--gold-accent); font-weight: 700; }
-  .dress-bar .btn.small { white-space: nowrap; flex-shrink: 0; }
+  .dress-bar .btn.small { white-space: nowrap; flex-shrink: 0; min-height: var(--tik-kind); }
 
 
 
@@ -10077,7 +10096,7 @@
 
 
   .wens-knop {
-    flex-shrink: 0; width: 37px; height: 37px; border-radius: 50%; cursor: pointer;
+    flex-shrink: 0; width: var(--tik-kind); height: var(--tik-kind); border-radius: 50%; cursor: pointer;
     border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.1);
     font-size: 19px; line-height: 1; padding: 0; font-family: inherit;
   }
@@ -12004,7 +12023,7 @@
         <div class="spiegel" id="shop-spiegel" onclick="tapDance('shop-avatar')">
           <!-- Het podium waar ze op staat (paintShop tekent hem). Een tik erop
                opent Podia: de snelkoppeling naar de lade waar je er een kiest. -->
-          <div class="spiegel-podium" id="shop-podium" onclick="openPodia(event)"></div>
+          <div class="spiegel-podium" id="shop-podium" role="button" tabindex="0" aria-label="Podia" onclick="openPodia(event)"></div>
           <div class="avatar-holder idle levend" id="shop-avatar"></div>
         </div>
         <button class="shuffle-btn" onclick="verrasMe()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
@@ -12104,7 +12123,7 @@
      zodat die zelf nog leesbaar bovenop blijft, maar tikken erop valt gewoon door
      naar deze laag (de toast zelf heeft pointer-events:none) -->
 <div class="tap-veil" id="tap-veil"></div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status"></div>
 
 <script>
 "use strict";
@@ -12789,6 +12808,137 @@ function knopTik(houder, kies, doe) {
     if (el && houder.contains(el)) houder._tik.doe(el, e);
   });
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const KORT_DRUK = 700;
+const ELKE_TIK_NIET = 'input, textarea, select, label, a[href], .knop-tik, #studio';
+const elkeTikOpen = new Map();
+const elkeTikSlik = [];
+const elkeTikAf = new Map();
+function elkeTikKnop(doel) {
+  const knop = doel && doel.closest && doel.closest('button, [onclick], [role="button"], [role="switch"], [role="menuitem"], [role="menuitemcheckbox"]');
+  if (!knop || knop.closest(ELKE_TIK_NIET)) return null;
+  return knop;
+}
+function elkeTikRol(el) {
+  for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+    if (a.scrollHeight > a.clientHeight + 1 || a.scrollWidth > a.clientWidth + 1) {
+      const o = getComputedStyle(a);
+      if (/auto|scroll/.test(o.overflowY + o.overflowX)) return a;
+    }
+  }
+  return null;
+}
+function elkeTikTel(stip, x, y) {
+  const { knop, rol } = stip;
+  if (!knop.isConnected || knop.disabled || knop.closest('[inert]')) return;
+  if (rol && (rol.scrollTop !== stip.top || rol.scrollLeft !== stip.links)) return;
+  const r = knop.getBoundingClientRect();
+  if (x < r.left - TIK_MARGE || x > r.right + TIK_MARGE || y < r.top - TIK_MARGE || y > r.bottom + TIK_MARGE) return;
+  elkeTikSlik.push({ x, y, tot: performance.now() + 800 });
+  const doel = stip.doel.isConnected && knop.contains(stip.doel) ? stip.doel : knop;
+  doel.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, composed: true, view: window, detail: 1, clientX: x, clientY: y }));
+}
+document.addEventListener('pointerdown', e => {
+  if (e.pointerType !== 'touch') return;
+  const knop = elkeTikKnop(e.target);
+  if (!knop) return;
+
+  const rol = elkeTikRol(knop);
+  elkeTikOpen.set(e.pointerId, { knop, doel: e.target, x: e.clientX, y: e.clientY, t: performance.now(),
+    rol, top: rol ? rol.scrollTop : 0, links: rol ? rol.scrollLeft : 0 });
+}, true);
+document.addEventListener('pointermove', e => {
+  const stip = elkeTikOpen.get(e.pointerId);
+  if (stip) { stip.x = e.clientX; stip.y = e.clientY; }
+}, { capture: true, passive: true });
+document.addEventListener('pointerup', e => {
+  const stip = elkeTikOpen.get(e.pointerId);
+  if (!stip) return;
+  elkeTikOpen.delete(e.pointerId);
+  if (performance.now() - stip.t <= KORT_DRUK) elkeTikTel(stip, e.clientX, e.clientY);
+}, true);
+document.addEventListener('pointercancel', e => {
+  const stip = elkeTikOpen.get(e.pointerId);
+  if (!stip) return;
+  elkeTikOpen.delete(e.pointerId);
+  if (!stip.rol) { if (performance.now() - stip.t <= KORT_DRUK) elkeTikTel(stip, stip.x, stip.y); return; }
+
+  if (stip.vinger != null) elkeTikAf.set(stip.vinger, stip);
+}, true);
+
+
+
+document.addEventListener('touchstart', e => {
+  for (const t of e.changedTouches) for (const stip of elkeTikOpen.values())
+    if (stip.vinger == null && Math.abs(stip.x - t.clientX) < 1 && Math.abs(stip.y - t.clientY) < 1) { stip.vinger = t.identifier; break; }
+}, { capture: true, passive: true });
+document.addEventListener('touchend', e => {
+  for (const t of e.changedTouches) {
+    const stip = elkeTikAf.get(t.identifier);
+    if (!stip) continue;
+    elkeTikAf.delete(t.identifier);
+    if (performance.now() - stip.t <= KORT_DRUK) elkeTikTel(stip, t.clientX, t.clientY);
+  }
+}, { capture: true, passive: true });
+document.addEventListener('touchcancel', e => { for (const t of e.changedTouches) elkeTikAf.delete(t.identifier); }, { capture: true, passive: true });
+document.addEventListener('click', e => {
+  if (!e.isTrusted || !e.detail) return;
+  const nu = performance.now();
+  for (let i = elkeTikSlik.length - 1; i >= 0; i--) if (elkeTikSlik[i].tot < nu) elkeTikSlik.splice(i, 1);
+  const i = elkeTikSlik.findIndex(s => Math.abs(s.x - e.clientX) <= TIK_MARGE && Math.abs(s.y - e.clientY) <= TIK_MARGE);
+  if (i < 0) return;
+  elkeTikSlik.splice(i, 1);
+  e.preventDefault();
+  e.stopImmediatePropagation();
+}, true);
+
+
+
+
+function knopRol(el) {
+  el.setAttribute('role', 'button');
+  el.tabIndex = 0;
+}
+document.addEventListener('keydown', e => {
+  if ((e.key !== 'Enter' && e.key !== ' ') || e.defaultPrevented || e.repeat) return;
+  const el = e.target;
+  if (!el || !el.getAttribute || /^(BUTTON|A|INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return;
+  if (!/^(button|switch|menuitem|menuitemcheckbox|checkbox)$/.test(el.getAttribute('role') || '')) return;
+  e.preventDefault();
+  el.click();
+});
 
 
 
@@ -24010,6 +24160,7 @@ function trophyCard(t, p) {
 
 
   card.setAttribute('aria-label', status === 'ready' ? `Open ${t.name}` : `${t.name}: ${t.desc}`);
+  knopRol(card);
   card.onclick = () => tapTrophy(t, card);
   return card;
 }
@@ -24051,6 +24202,7 @@ function ladderCard(ladder, p) {
       + `<div class="tname">${ladder.name}</div>`;
     card.setAttribute('aria-label', niveau ? `${trappen[niveau - 1].name}` : `${ladder.name}: ${trappen[0].desc}`);
   }
+  knopRol(card);
   card.onclick = () => tapLadder(ladder, card);
   return card;
 }
@@ -29454,10 +29606,22 @@ const ONTHUL = 300, VERDER_NA = 600;
 
 
 
+
+
+
+
+
+
 function toonVerder(doel) {
-  showToast('👉', nextStep, null, 'teken');
-  if (!doel) return;
+  if (!doel) { showToast('👉', nextStep, null, 'teken'); return; }
+  const hand = document.createElement('span');
+  hand.className = 'wijs-hand';
+  hand.setAttribute('aria-hidden', 'true');
+  hand.textContent = '👆';
+  doel.appendChild(hand);
+  hideToast();
   const veil = $('tap-veil');
+  veil.style.display = 'block';
   veil.onclick = e => {
     const r = doel.getBoundingClientRect();
     const raak = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
@@ -30547,7 +30711,7 @@ function renderShop() {
 
 
 
-    card.setAttribute('role', 'button');
+    knopRol(card);
     card.setAttribute('aria-label', it.full || it.name);
     card.innerHTML = itemThumb(it) + `<div class="item-status"></div>`;
 

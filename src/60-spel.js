@@ -1372,10 +1372,22 @@ const ONTHUL = 300, VERDER_NA = 600;
    "deze") en de 👉 blijft staan. Gemeten wordt vóór er iets verandert (zie
    test:robuust). Zonder knop (typen, de getallenlijn) kan het overal, zoals
    eerst. */
+/* WIJZEN WAAR HET IS, NIET ERNAAST. Staat er een goede knop, dan komt er geen
+   kaart bovenin maar een 👆 op de hoek van die knop zelf. De kaart met 👉 wees
+   naar rechts, ver van het groene antwoord, en in de telmodus lag hij over haar
+   hoofd. De hand doet niets met een tik (pointer-events: none) en is voor een
+   schermlezer stil: de groene knop is zelf het antwoord. Hij gaat weg met de
+   knop, als de volgende vraag het antwoordvak opnieuw opbouwt. */
 function toonVerder(doel) {
-  showToast('👉', nextStep, null, 'teken');
-  if (!doel) return;
+  if (!doel) { showToast('👉', nextStep, null, 'teken'); return; }
+  const hand = document.createElement('span');
+  hand.className = 'wijs-hand';
+  hand.setAttribute('aria-hidden', 'true');
+  hand.textContent = '👆';
+  doel.appendChild(hand);
+  hideToast();
   const veil = $('tap-veil');
+  veil.style.display = 'block';
   veil.onclick = e => {
     const r = doel.getBoundingClientRect();
     const raak = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;

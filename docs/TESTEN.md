@@ -73,7 +73,7 @@ npm run test:voortgang
 npm run test:reis
 npm run test:vlucht     # de zoom tussen de wereldkaart en Werelden
 npm run test:flits      # niets half zien: beginscherm, somkaart, eerst bouwen dan bewegen
-npm run test:robuust    # de tik komt eerst (en meet niet na), tikstormen, wie vertrekt is inert, offline na het eerste bezoek, geen zware waas, een scherm in rust doet niets
+npm run test:robuust    # de tik komt eerst (en meet niet na), tikstormen, wie vertrekt is inert, offline na het eerste bezoek, geen zware waas, elke tik telt, een scherm in rust doet niets
 npm run test:beloning
 npm run test:studio      # de wereldstudio (?debug&mapedit)
 npm run test:onderrand   # de zwevende bediening onderaan blijft staan
@@ -498,8 +498,13 @@ beloftes:
   86px op; in de telmodus sprong zij tot 83px. Staand vullen kaart en knoppen
   samen één vak (`vakVullen`), en daarom kijkt E ook dat er boven de knoppen geen
   lege band staat (`VAK_LUCHT`). Liggend telt het antwoordvak op zijn midden;
+- **kindermaat buiten de som** (zaak L) — op elk scherm van het kind is elke
+  knop minstens `--tik-kind` (44px) raak, gemeten op het raakvlak met
+  `elementFromPoint`. Ligt er een buurknop direct tegenaan (de laden van de
+  kleedkamer), dan mag de eigen maat tot `BUUR_MIN` zakken: ernaast tikken is
+  dan de buur tikken, niet het niets;
 - **elk antwoord past** (zaak F) — elk thema uit `THEMAS` en de telmodus, elke
-  stap, kiezen en typen, op zes maten: de kaart en elke knop staan in beeld. En
+  stap, kiezen en typen, op acht maten (ook twee staande tablets): de kaart en elke knop staan in beeld. En
   wat je pas ziet als je echt speelt: een som is even hoog met het antwoord erin
   als met het vraagteken ("400 + 500 = 900" brak pas als de 900 erin viel), een
   telsom staat op één regel binnen zijn kaart, en de klokjes bij "zoek de klok"
@@ -644,6 +649,15 @@ Kinderen tikken snel, dubbel en midden in een overgang. De zaken:
   CSS-`blur` van `WAAS_MAX` px of meer op iets dat meer dan een derde van het
   venster beslaat. Zo'n filter wordt bij elk beeldje opnieuw uitgerekend zodra
   de pop erover wiegt; een waas hoort dan in de tekening zelf;
+- **snel tikken telt** (zaak F): de antwoorden, met echte aanrakingen;
+- **elke andere knop telt net zo** (zaak G): op elk scherm van het kind en in
+  Voor ouders krijgt elke zichtbare knop een gewone tik, een tik terwijl er een
+  duim op het glas blijft liggen, en (buiten de lijsten die schuiven) een tik die
+  bij het loslaten 20 px rolt. Elke keer precies één click. Met alleen de click
+  van de browser ging de duim en de rol verloren; zie "= Elke tik telt" in
+  `10-feestjes.js`. En alles met een onclick is een echte knop: een `<button>`,
+  of `knopRol` (Tab komt erop, Enter tikt het aan, een schermlezer noemt het een
+  knop).
 - **een scherm in rust doet niets** (zaak H): op elk scherm, na de aankomst,
   twee seconden kijken. Geteld en niet getimed: hoe vaak er getekend wordt (een
   scherm dat stilstaat of alleen een laag laat wiegen zit op 0 à 2 per seconde,
