@@ -638,7 +638,8 @@ async function commitAll(bericht, res) {
    klik voert het uit. Zo is publiceren nooit één verdwaalde tik, en zie je eerst
    wát je publiceert -- het stuk "diff gezien" dat anders wegvalt.
 
-   De testen draaien vóór het samenvoegen. Falen ze, dan blijft main zoals hij was. */
+   Main gaat éérst de tak in, dan bouwen en testen, en pas dan schuift main
+   vooruit (versie.naarMain). Falen de testen, dan blijft main zoals hij was. */
 async function publish(fase, res) {
   const zeg = (code, tekst) => {
     res.writeHead(code, { 'content-type': 'text/plain; charset=utf-8' });
@@ -668,17 +669,9 @@ async function publish(fase, res) {
         + '\n\nDit gaat naar main en staat daarna op de telefoon.');
     }
 
-    console.log('  wereldstudio: testen draaien vóór het publiceren…');
-    await runTests();
-    await git(['checkout', 'main']);
-    try {
-      await git(['pull', '--ff-only', 'origin', 'main']);
-      await git(['merge', '--no-edit', tak]);
-      await git(['push', 'origin', 'main']);
-    } finally {
-      await git(['checkout', tak]);   // altijd terug, ook als er iets misging
-    }
-    const sha = await git(['rev-parse', '--short', 'origin/main']);
+    // main in de tak, bouwen, testen, en dan pas main vooruit (zie naarMain)
+    const { sha } = await versie.naarMain(tak, { bouw: bouwer.bouw, tests: runTests,
+      stap: t => console.log('  wereldstudio: ' + t) });
     console.log('  wereldstudio: main staat op ' + sha + ' — Pages werkt zichzelf bij');
     zeg(200, 'gepubliceerd: main op ' + sha
       + '\n\nPages is over een minuut of twee bij:\n'
@@ -727,8 +720,8 @@ async function pushVoorPr() {
      2  vastleggen    op een eigen tak (studio/<naam>-<datum>) als je op main
                       staat, na de snelle keuring; het bericht is de naam
      3  pushen        die tak naar GitHub
-     4  naar main     kunnen de browsertests hier draaien (playwright), dan alle
-                      tests, samenvoegen met main, main pushen -- en de studio
+     4  naar main     kunnen de browsertests hier draaien (playwright), dan main
+                      in de tak, bouwen, alle tests, main pushen -- en de studio
                       blijft op de nieuwste main staan, klaar voor de volgende.
                       Kan dat niet, dan blijft het bij de tak en het adres van
                       de PR; dan merget iemand anders hem.
@@ -802,36 +795,28 @@ async function publiceerStappen(body) {
         + 'Zeg "go" tegen Claude, of open de PR' + (adres ? ': ' + adres : '.')
         + '\n(Rechtstreeks naar main kan pas na één keer npm install en npx playwright install chromium.)' };
   }
-  publiceerStap('Alle tests draaien (een paar minuten)…');
-  try { await runTests(); }
-  catch (e) {
-    return { ok: false, opgeslagen, stap: 'tests', tak, url: adres,
-      tekst: naam + ' staat op GitHub (' + tak + '), maar niet op main: een test faalt.\n\n'
-        + String(e.message).replace(/^de testen falen — er is niets vastgelegd\n\n/, '') };
-  }
-  publiceerStap('Naar main…');
+  let sha;
   try {
-    await git(['fetch', 'origin', 'main']);
-    await git(['checkout', 'main']);
-    await git(['merge', '--ff-only', 'origin/main']);
-    await git(['merge', '--no-edit', tak]);
-    await git(['push', 'origin', 'main']);
+    ({ sha } = await versie.naarMain(tak, { bouw: bouwer.bouw, tests: runTests, stap: publiceerStap }));
   } catch (e) {
-    // terug naar de tak, zodat er niets half achterblijft op main
-    try { await git(['merge', '--abort']); } catch (_) {}
-    try {
-      /* Alleen op main zelf: daar staat hooguit een samenvoeging die niet
-         gepusht is, en alles ervan staat ook op de tak. */
-      if (await git(['rev-parse', '--abbrev-ref', 'HEAD']) === 'main') {
-        await git(['reset', '--hard', 'origin/main']);
-      }
-      await git(['checkout', tak]);
-    } catch (_) {}
+    if (e.stap === 'tests') {
+      return { ok: false, opgeslagen, stap: 'tests', tak, url: adres,
+        tekst: naam + ' staat op GitHub (' + tak + '), maar niet op main: een test faalt.\n\n'
+          + String(e.message).replace(/^de testen falen — er is niets vastgelegd\n\n/, '') };
+    }
     return { ok: false, opgeslagen, stap: 'main', tak, url: adres,
-      tekst: naam + ' staat op GitHub (' + tak + '), maar samenvoegen met main lukte niet.\n'
+      tekst: naam + ' staat op GitHub (' + tak + '), maar niet op main.\n'
         + String(e.message).split('\n').slice(0, 4).join('\n') + '\nVraag Claude om hem te mergen.' };
   }
-  const sha = await git(['rev-parse', '--short', 'HEAD']);
+  /* De studio blijft op de nieuwste main staan, klaar voor de volgende wereld.
+     origin/main is nu precies de tak, dus dit is altijd een fast-forward -- tenzij
+     main hier zelf iets had wat GitHub niet heeft; dan blijven we op de tak. */
+  try {
+    await git(['checkout', 'main']);
+    await git(['merge', '--ff-only', 'origin/main']);
+  } catch (e) {
+    try { await git(['checkout', tak]); } catch (_) {}
+  }
   console.log('  publiceren: main staat op ' + sha);
   return { ok: true, opgeslagen, live: true, tak,
     tekst: naam + ' is live (main ' + sha + '). Over een paar minuten staat hij op de telefoons.\n'
