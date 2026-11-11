@@ -31,7 +31,7 @@ Eén suite draaien gaat met `npm run test:<naam>`, bijvoorbeeld
 `npm run test:reis`; de hele lijst staat in `docs/TESTEN.md`.
 
 Op GitHub draait bij elke PR en elke push naar main dezelfde keuring, plus `hub`,
-`test:sterren`, `test:schuiven`, `test:robuust`, `test:vlucht`, `test:tellen` en `test:toestel` naast elkaar (`.github/workflows/keuring.yml`; bij het
+`test:sterren`, `test:schuiven`, `test:robuust`, `test:vlucht`, `test:tellen`, `test:toestel` en `test:zintuigen` naast elkaar (`.github/workflows/keuring.yml`; bij het
 binnenhalen van een PR op main alleen de snelle helft, want de browser zag die
 samenvoeging al in de PR). Dat is het vangnet voor
 wat níét via de studio gaat; het vervangt `npm test` op je eigen machine niet.

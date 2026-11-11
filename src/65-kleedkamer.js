@@ -377,7 +377,7 @@ function rekTik(it) {
   if (bezit(p2, it)) {
     if (p2.equipped[it.cat] === it.id) {
       if (OPTIONELE_SPULLEN.includes(it.cat) || it.cat === PODIA_CAT) return unequipShopItem(it.cat);
-      sndClick(); tapDance('shop-avatar'); return;
+      tapDance('shop-avatar'); return;   // haar noot is het antwoord; een tik erbij zou er twee tegelijk zijn
     }
     naamBordje(it);
     return equipShopItem(it.id);
@@ -848,11 +848,11 @@ function renderPodiumBar(bar, st, p) {
     zetTag(k.querySelector('.item-status'), stand, it.price);
     k.onclick = () => {
       const q = P();
-      if (tagStand(it, q) === 'slot') { sndClick(); return slotBel(k, WORLDS[wereldIdx], wereldIdx); }
+      if (tagStand(it, q) === 'slot') { nogNiet(k); return slotBel(k, WORLDS[wereldIdx], wereldIdx); }
       if (bezit(q, it)) {
         if (q.equipped[it.cat] !== it.id) return equipShopItem(it.id, st.id);
         if (OPTIONELE_SPULLEN.includes(it.cat)) return unequipShopItem(it.cat, st.id);
-        sndClick(); tapDance('shop-avatar'); return;
+        tapDance('shop-avatar'); return;   // haar noot is het antwoord; een tik erbij zou er twee tegelijk zijn
       }
       sndClick();
       podiumStuk = podiumStuk === it.id ? null : it.id;
@@ -1113,7 +1113,9 @@ function confirmShopBuy(id, blijf) {
   // welke podia er vóór deze aankoop al van haar waren (zie nieuwPodium hieronder)
   const podiaVoor = ITEMS.filter(st => st.cat === PODIA_CAT && podiumVanJou(p, st)).map(st => st.id);
   if (p.diamonds < prijs) {
-    sndWrong();
+    /* Nog niet genoeg: dat is "later", geen fout. Hier klonk de misser van een
+       som. Nu het tokje van elk slot, en de koopknop wiebelt mee. */
+    nogNiet($('db-buy'));
     showToast(`Nog ${prijs - p.diamonds} 💎`, null, null, null, 1800);
     return;
   }

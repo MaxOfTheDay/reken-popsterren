@@ -66,6 +66,7 @@ npm run test:onderrand   # de zwevende bediening onderaan blijft staan
 npm run test:schuiven    # geen scherm schuift verder dan er iets te zien valt
 npm run test:kop         # de kop van de kaart: niets overlapt, op geen enkele maat
 npm run test:toestel     # wat het toestel stil laat mislukken geeft een teken of een briefje
+npm run test:zintuigen   # elke tik één klankje, een slot zegt "nog niet", geen tikring op antwoorden
 npm run test:hub         # de Dev Studio (npm run studio) — kaal Node
 npm run test:overzetten  # de ontvanger van Overzetten (worker/overzetten.js) — kaal Node
 npm run test:tekeningen  # een vervangen tekening liet ART_CACHE omhoog gaan — kaal Node, tegen origin/main
@@ -604,6 +605,18 @@ lang iets laten zien wat er niet hoort:
   staat de som er al en beweegt er nog niets (`naOpbouw`). Headless bouwt te snel
   om het halve-overgang-beeldje van een tablet zelf te zien, dus dit meet de vorm:
   wie weer in dezelfde taak bouwt als hij beweegt, valt hier om.
+
+### `test/zintuigen.test.js` — één klankje per tik, één betekenis per klankje
+
+De klankjestabel zegt wat er bij een gebeurtenis klinkt (kern zaak O kijkt de
+tabel na); deze suite kijkt of de schermen zich eraan houden, met echte tikken:
+
+- **elke tik wordt gehoord, en maar één keer**: elke zichtbare knop op zes
+  schermen geeft een klankje, en er beginnen nooit twee tegelijk;
+- **"nog niet" klinkt overal hetzelfde**: een halte op slot en te weinig 💎
+  geven `nog.niet`, nooit de misser van een som;
+- **geen tikring op een antwoordknop**: de ring zegt "hier kwam het aan";
+- **een tik op haar midden in een dans krijgt haar noot.**
 
 ### `test/robuust.test.js` — wat een kind van zes met de app doet
 

@@ -187,7 +187,8 @@ function noot(freq, dur, delay, type, vol) {
    kleuren van één tik en geen twee dingen. Daarmee is de woordenschat vol.
    (Erbij in oktober 2026: de kast, omdat Max hem speelser wilde -- een behaalde
    trofee hoort anders te klinken dan een knop. Dat is één gebeurtenis in vier
-   metalen, plus het "tok" van een trofee die nog moet komen.) Dit is een spel voor
+   metalen. Het "tok" van een trofee die nog moet komen is sindsdien 'nog.niet',
+   het ene antwoord op elk slot in de app.) Dit is een spel voor
    vijfjarigen op één tablet in een woonkamer, geen instrument: wat er nog stil is
    -- een schermwissel, een vraag die verschijnt, elk deeltjesfeestje, de
    zaalgloed bij een goed antwoord -- is stil gehouden en niet vergeten. Zie
@@ -219,25 +220,38 @@ const SFX = {
        diamant   een loopje van drie, met een glinster erachteraan
      De boventonen staan in `boven`: [veelvoud van de toon, duur, uitstel,
      golfvorm, versterking]. Zo liggen ze altijd boven de grondtoon, en dus
-     boven de ondergrens van een tabletluidspreker. */
-  'kast.klink':     { noten: [[0, 0.55, 0, 'sine', 0.17]],
-                      boven: [[2.76, 0.14, 0, 'sine', 0.045], [4, 0.035, 0, 'triangle', 0.03]],
+     boven de ondergrens van een tabletluidspreker.
+     ZE STAAN ZACHT, en met reden: dit is speelgoed waar een kind tien keer achter
+     elkaar op tikt. Op een tabletluidspreker gemeten klonken ze eerst harder dan
+     een goed antwoord en dan einde show -- de zeldzaamste beloningen van het spel
+     verloren het van een plankje. De helft van de versterking (-6 dB) zet ze
+     onder 'answer.correct', en een metaal klinkt nog altijd anders dan het andere. */
+  'kast.klink':     { noten: [[0, 0.55, 0, 'sine', .085]],
+                      boven: [[2.76, 0.14, 0, 'sine', .0225], [4, 0.035, 0, 'triangle', .015]],
                       ladder: KAST_LADDER, tril: 12 },
-  'kast.brons':     { noten: [[0, 0.3, 0, 'sine', 0.2]],
-                      boven: [[2, 0.12, 0, 'sine', 0.04], [4, 0.05, 0, 'triangle', 0.05]],
+  'kast.brons':     { noten: [[0, 0.3, 0, 'sine', .1]],
+                      boven: [[2, 0.12, 0, 'sine', .02], [4, 0.05, 0, 'triangle', .025]],
                       ladder: KAST_LADDER, tril: 12 },
-  'kast.goud':      { noten: [[0, 0.55, 0, 'sine', 0.16]],
-                      boven: [[2.76, 0.14, 0, 'sine', 0.04], [4, 0.035, 0, 'triangle', 0.03],
-                              [1.5, 0.55, 0.07, 'sine', 0.14], [4.14, 0.12, 0.07, 'sine', 0.035]],
+  'kast.goud':      { noten: [[0, 0.55, 0, 'sine', .08]],
+                      boven: [[2.76, 0.14, 0, 'sine', .02], [4, 0.035, 0, 'triangle', .015],
+                              [1.5, 0.55, 0.07, 'sine', .07], [4.14, 0.12, 0.07, 'sine', .0175]],
                       ladder: KAST_LADDER, tril: 12 },
-  'kast.diamant':   { noten: [[0, 0.5, 0, 'sine', 0.15]],
-                      boven: [[2.76, 0.12, 0, 'sine', 0.04], [1.25, 0.5, 0.06, 'sine', 0.14],
-                              [1.5, 0.55, 0.12, 'sine', 0.14], [4, 0.3, 0.18, 'sine', 0.03]],
+  'kast.diamant':   { noten: [[0, 0.5, 0, 'sine', .075]],
+                      boven: [[2.76, 0.12, 0, 'sine', .02], [1.25, 0.5, 0.06, 'sine', .07],
+                              [1.5, 0.55, 0.12, 'sine', .07], [4, 0.3, 0.18, 'sine', .015]],
                       ladder: KAST_LADDER, tril: 12 },
-  /* En een die je nog niet hebt: een zacht houten "tok" in plaats van de gewone
-     tik. Nog steeds leuk om op te tikken, maar hij zingt niet -- dat doet hij
-     pas als hij van jou is. */
-  'kast.tok':       { noten: [[440, 0.12, 0, 'sine', 0.16], [880, 0.03, 0, 'triangle', 0.035]], tril: 8 },
+  /* NOG NIET. Een zacht houten "tok" in plaats van de gewone tik: dit ding is er
+     nog niet voor jou, maar het komt. Hij begon in de kast (een trofee die je nog
+     moet halen zingt niet -- dat doet hij pas als hij van jou is) en is nu het ene
+     antwoord op élk slot: een halte of wereld op slot, een podiumstuk van een
+     wereld die nog moet komen, en te weinig 💎 in de kleedkamer. Vijf plekken
+     zeiden het eerst elk anders, en die laatste speelde zelfs de misser van een
+     som: "fout" voor iets wat alleen "later" is. Hoort altijd bij het gebaar
+     nogNiet (zie nogNiet() in 10-feestjes.js en "Gebaren" in de afspraak).
+
+     Hij ligt met 440 Hz het laagst van alle tikken, zodat hij leest als hout en
+     niet als knop, en hij is kort: een slot is geen gebeurtenis. */
+  'nog.niet':       { noten: [[440, 0.12, 0, 'sine', 0.16], [880, 0.03, 0, 'triangle', 0.035]], tril: 8 },
   /* Iets aandoen. Dit stond hier als 'reward.claim' op de lijst, maar de drie
      plekken die overbleven doen alle drie hetzelfde en het is geen beloning: je
      zet iets op. Het cadeau-moment zelf -- een trofee die openknalt -- heeft zijn
@@ -260,13 +274,16 @@ const SFX = {
      Ze staan sinds deze ronde wél hoger. De onderste was 311 Hz, en een
      tabletluidspreker begint ruim daarboven; op het toestel waar dit voor gemaakt
      is bleef er van de zachtste helft van dit klankje dus niets over.
+     En hij staat ietsje luider (+4 dB): gemeten op een kleine luidspreker was hij
+     het zachtste klankje van de app, zachter nog dan een gewone tik. Vriendelijk
+     is zacht, maar niet onhoorbaar.
 
      GEEN tril, en dat is de buzzer van hierboven, maar dan voor de hand. Hier
      stond 35ms, en een goed antwoord trilt 30ms: wie de tablet vasthoudt voelde
      goed en "probeer nog eens" als dezelfde zoem. Nu voel je drie dingen: een
      tik bij goed, niets bij de vriendelijke misser, een dubbele tik bij de
      gemiste vraag. */
-  'answer.retry':   { noten: [[494, 0.15, 0, 'triangle', 0.09], [392, 0.22, 0.12, 'triangle', 0.08]] },
+  'answer.retry':   { noten: [[494, 0.15, 0, 'triangle', 0.14], [392, 0.22, 0.12, 'triangle', 0.13]] },
   /* En dít is de twééde misser: de vraag is gemist en het antwoord komt in beeld.
      Tot nu toe klonk dat precies hetzelfde als "probeer nog eens", en daarmee had
      het enige echte gevolg in het spel geen enkel gewicht. Drie dalende noten in
@@ -388,6 +405,7 @@ function sndClick() { playSfx('tap'); }
 function sndTap() { playSfx('tap.blij'); }
 function sndGood() { playSfx('answer.correct'); }
 function sndWrong() { playSfx('answer.retry'); }
+function sndNogNiet() { playSfx('nog.niet'); }
 function sndMis() { playSfx('answer.miss'); }
 function sndStreak() { playSfx('streak'); }
 function sndCoin() { playSfx('diamond'); }

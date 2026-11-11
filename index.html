@@ -10142,6 +10142,9 @@
   .mini-kaart.op-slot .item-thumb svg,
   .mini-kaart.op-slot .item-thumb .thumb-emo { filter: brightness(0) opacity(.45); }
 
+
+
+  .mini-kaart.nee, #db-buy.nee { animation: nogNiet .5s ease; }
   .slot-bel {
     position: fixed; z-index: 60; transform: translate(-50%, -100%);
     padding: 8px 14px; border: 0; border-radius: var(--r-md); cursor: pointer;
@@ -11714,7 +11717,7 @@
          eindscherm, op het moment dat de ster-status omhooggaat). -->
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="map-id-btn header-left" onclick="naTik(goProfiles)" aria-label="Wie speelt er" title="Wie speelt er">
+        <button class="map-id-btn header-left" onclick="sndClick(); naTik(goProfiles)" aria-label="Wie speelt er" title="Wie speelt er">
           <span class="map-portrait" id="map-portrait"></span>
         </button>
         <button class="header-title world-pick" id="map-tournee-label" onpointerdown="reisBurenAlvast()" onclick="pilTik(this)"
@@ -11739,7 +11742,7 @@
   <div class="screen lijst hub" id="screen-journey">
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="naTik(reisSluit)" aria-label="Terug naar de kaart" title="Terug naar de kaart"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
+        <button class="btn icon-btn header-left" onclick="sndClick(); naTik(reisSluit)" aria-label="Terug naar de kaart" title="Terug naar de kaart"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
         <!-- Alleen de globe, geen woord erbij: het scherm zégt al wat het is (gestapelde
              werelden, de route ertussen, Kaart onderaan geselecteerd) en "Werelden"
              eroverheen is dat nog een keer. Wat overblijft is het ene teken dat óók op
@@ -11896,7 +11899,7 @@
   <div class="screen lijst hub gebruik app-sfeer kast" id="screen-trophies">
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="naTik(goMap)" aria-label="Terug naar de kaart" title="Terug naar de kaart"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
+        <button class="btn icon-btn header-left" onclick="sndClick(); naTik(goMap)" aria-label="Terug naar de kaart" title="Terug naar de kaart"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
         <!-- Geen schermnaam meer maar de stand, in de pil van het saldo ernaast: de
              kleedkamer noemt zichzelf ook niet, het tabblad onderin zegt al waar je
              bent. Wat een kind hier komt vragen is "hoeveel heb ik er", en dat is
@@ -11978,7 +11981,7 @@
       <!-- de kamer achter de kop, zodat het rek er niet doorheen schemert (zie .kop-kamer) -->
       <div class="kop-kamer" aria-hidden="true"></div>
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="naTik(dressBack)" aria-label="Terug" title="Terug"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
+        <button class="btn icon-btn header-left" onclick="sndClick(); naTik(dressBack)" aria-label="Terug" title="Terug"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
         <!-- Geen naam en geen schakelaar: de tabbladbalk zegt al "Kleedkamer", en
              de laden (Podia ook) staan in de balk onder de spiegel. De lege cel
              houdt de terugknop en het saldo op hun plek, gelijk met de kast. -->
@@ -12014,7 +12017,7 @@
   <div class="screen lijst gebruik app-sfeer" id="screen-settings">
     <div class="hub-sticky sub">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="naTik(ouderTerug)" aria-label="Terug" title="Terug"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
+        <button class="btn icon-btn header-left" onclick="sndClick(); naTik(ouderTerug)" aria-label="Terug" title="Terug"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
         <!-- FASE 5D.1 -- het gezins-emoji stond hier vóór de titel en werd door
              de meeste toestellen zwart-wit getekend: over een donkerpaarse balk
              een grijs blokje, het enige ruwe ding in een verder gepoetst scherm.
@@ -12031,7 +12034,7 @@
         <!-- ▶ = meteen spelen als de ster die links gekozen is (speelAlsGekozen):
              het spiegelbeeld van ←. Zonder naam erin, die staat er pal naast al.
              📊 ervoor = haar cijfers (openCijfers): kijken, niet aanpassen. -->
-        <div class="header-right"><button class="icon-btn cijfers-knop" id="cijfers-knop" type="button" aria-label="Cijfers" title="Cijfers" onclick="sndClick(); naTik(openCijfers)" hidden><svg class="ico" aria-hidden="true"><use href="#ico-cijfers"/></svg></button><button class="btn small speel-als" id="speel-als" onclick="naTik(speelAlsGekozen)" hidden><svg class="ico" aria-hidden="true"><use href="#ico-speel"/></svg></button></div>
+        <div class="header-right"><button class="icon-btn cijfers-knop" id="cijfers-knop" type="button" aria-label="Cijfers" title="Cijfers" onclick="sndClick(); naTik(openCijfers)" hidden><svg class="ico" aria-hidden="true"><use href="#ico-cijfers"/></svg></button><button class="btn small speel-als" id="speel-als" onclick="sndClick(); naTik(speelAlsGekozen)" hidden><svg class="ico" aria-hidden="true"><use href="#ico-speel"/></svg></button></div>
       </div>
     </div>
     <div class="settings-sheet">
@@ -12628,14 +12631,36 @@ function buiging(elId) {
 
 function tapDance(elId, stil) {
   const el = $(elId);
-  if (!el || el.classList.contains('dancing')) return;
+  if (!el) return;
+
 
 
   if (!stil) sndTap();
+  if (el.classList.contains('dancing')) return;
   const r = el.getBoundingClientRect();
   if (!zetPas(el, pick(MOVES))) return;
   sparkleAt(r);
   pasUit(el);
+}
+
+
+
+
+
+
+
+
+
+const NEE_DUUR = 600;
+function nogNiet(el) {
+  sndNogNiet();
+  if (!el) return;
+  el.classList.remove('nee');
+  clearTimeout(el._neeKlok);
+  requestAnimationFrame(() => {
+    el.classList.add('nee');
+    el._neeKlok = setTimeout(() => el.classList.remove('nee'), NEE_DUUR);
+  });
 }
 
 
@@ -17029,6 +17054,7 @@ function noot(freq, dur, delay, type, vol) {
 
 
 
+
 const HERHAALREM = 60;
 
 const KAST_LADDER = [523, 587, 659, 784, 880, 1047, 1175, 1319, 1568, 1760, 2093];
@@ -17057,24 +17083,37 @@ const SFX = {
 
 
 
-  'kast.klink':     { noten: [[0, 0.55, 0, 'sine', 0.17]],
-                      boven: [[2.76, 0.14, 0, 'sine', 0.045], [4, 0.035, 0, 'triangle', 0.03]],
+
+
+
+
+
+  'kast.klink':     { noten: [[0, 0.55, 0, 'sine', .085]],
+                      boven: [[2.76, 0.14, 0, 'sine', .0225], [4, 0.035, 0, 'triangle', .015]],
                       ladder: KAST_LADDER, tril: 12 },
-  'kast.brons':     { noten: [[0, 0.3, 0, 'sine', 0.2]],
-                      boven: [[2, 0.12, 0, 'sine', 0.04], [4, 0.05, 0, 'triangle', 0.05]],
+  'kast.brons':     { noten: [[0, 0.3, 0, 'sine', .1]],
+                      boven: [[2, 0.12, 0, 'sine', .02], [4, 0.05, 0, 'triangle', .025]],
                       ladder: KAST_LADDER, tril: 12 },
-  'kast.goud':      { noten: [[0, 0.55, 0, 'sine', 0.16]],
-                      boven: [[2.76, 0.14, 0, 'sine', 0.04], [4, 0.035, 0, 'triangle', 0.03],
-                              [1.5, 0.55, 0.07, 'sine', 0.14], [4.14, 0.12, 0.07, 'sine', 0.035]],
+  'kast.goud':      { noten: [[0, 0.55, 0, 'sine', .08]],
+                      boven: [[2.76, 0.14, 0, 'sine', .02], [4, 0.035, 0, 'triangle', .015],
+                              [1.5, 0.55, 0.07, 'sine', .07], [4.14, 0.12, 0.07, 'sine', .0175]],
                       ladder: KAST_LADDER, tril: 12 },
-  'kast.diamant':   { noten: [[0, 0.5, 0, 'sine', 0.15]],
-                      boven: [[2.76, 0.12, 0, 'sine', 0.04], [1.25, 0.5, 0.06, 'sine', 0.14],
-                              [1.5, 0.55, 0.12, 'sine', 0.14], [4, 0.3, 0.18, 'sine', 0.03]],
+  'kast.diamant':   { noten: [[0, 0.5, 0, 'sine', .075]],
+                      boven: [[2.76, 0.12, 0, 'sine', .02], [1.25, 0.5, 0.06, 'sine', .07],
+                              [1.5, 0.55, 0.12, 'sine', .07], [4, 0.3, 0.18, 'sine', .015]],
                       ladder: KAST_LADDER, tril: 12 },
 
 
 
-  'kast.tok':       { noten: [[440, 0.12, 0, 'sine', 0.16], [880, 0.03, 0, 'triangle', 0.035]], tril: 8 },
+
+
+
+
+
+
+
+
+  'nog.niet':       { noten: [[440, 0.12, 0, 'sine', 0.16], [880, 0.03, 0, 'triangle', 0.035]], tril: 8 },
 
 
 
@@ -17103,7 +17142,10 @@ const SFX = {
 
 
 
-  'answer.retry':   { noten: [[494, 0.15, 0, 'triangle', 0.09], [392, 0.22, 0.12, 'triangle', 0.08]] },
+
+
+
+  'answer.retry':   { noten: [[494, 0.15, 0, 'triangle', 0.14], [392, 0.22, 0.12, 'triangle', 0.13]] },
 
 
 
@@ -17225,6 +17267,7 @@ function sndClick() { playSfx('tap'); }
 function sndTap() { playSfx('tap.blij'); }
 function sndGood() { playSfx('answer.correct'); }
 function sndWrong() { playSfx('answer.retry'); }
+function sndNogNiet() { playSfx('nog.niet'); }
 function sndMis() { playSfx('answer.miss'); }
 function sndStreak() { playSfx('streak'); }
 function sndCoin() { playSfx('diamond'); }
@@ -21827,14 +21870,7 @@ function reisGlansSVG() {
 
 
 function slotWereld(knop, doel) {
-  sndClick();
-  const slot = knop && knop.querySelector('.reis-zegel.slot');
-  if (slot) {
-    slot.classList.remove('nee');
-    void slot.offsetWidth;
-    slot.classList.add('nee');
-    setTimeout(() => slot.classList.remove('nee'), 800);
-  }
+  nogNiet(knop && knop.querySelector('.reis-zegel.slot'));
   slotToast(doel);
 }
 
@@ -22975,14 +23011,7 @@ function haltKnop(shown, nodes, i, stand) {
 
 function slotHalte(b) {
   if (overgangBezig || vluchtOp || wereldReisOp) return;
-  const dot = b.querySelector('.dot');
-  if (dot) {
-    dot.classList.remove('nee');
-    void dot.offsetWidth;
-    dot.classList.add('nee');
-    setTimeout(() => dot.classList.remove('nee'), 600);
-  }
-  sndTap();
+  nogNiet(b.querySelector('.dot'));
   const map = $('tour-map');
   const el = map && map.querySelector('.tour-stop.next .tour-hero .avatar-holder');
   if (!el || el.classList.contains('dancing')) return;
@@ -24545,7 +24574,7 @@ function kastNoot(card, trap) {
   setTimeout(() => n.remove(), 850);
 }
 function kastDof(card) {
-  playSfx('kast.tok');
+  sndNogNiet();
   if (motionOff()) return;
   opnieuw(card, 'dof');
 
@@ -29152,10 +29181,11 @@ function somVluchtWeg() { if (somVlucht) { somVlucht.remove(); somVlucht = null;
 function submitAnswer(val, btnEl) {
   if (!G || G.lock) return;
   kijkStraks();
-  if (btnEl && btnEl.getBoundingClientRect) {
-    const r = btnEl.getBoundingClientRect();
-    tapRipple(r.left + r.width / 2, r.top + r.height / 2);
-  }
+
+
+
+
+
   const q = G.qs[G.idx];
   const p = P();
   if (val === q.ans) antwoordGoed(q, p, btnEl);
@@ -30599,7 +30629,7 @@ function rekTik(it) {
   if (bezit(p2, it)) {
     if (p2.equipped[it.cat] === it.id) {
       if (OPTIONELE_SPULLEN.includes(it.cat) || it.cat === PODIA_CAT) return unequipShopItem(it.cat);
-      sndClick(); tapDance('shop-avatar'); return;
+      tapDance('shop-avatar'); return;
     }
     naamBordje(it);
     return equipShopItem(it.id);
@@ -31070,11 +31100,11 @@ function renderPodiumBar(bar, st, p) {
     zetTag(k.querySelector('.item-status'), stand, it.price);
     k.onclick = () => {
       const q = P();
-      if (tagStand(it, q) === 'slot') { sndClick(); return slotBel(k, WORLDS[wereldIdx], wereldIdx); }
+      if (tagStand(it, q) === 'slot') { nogNiet(k); return slotBel(k, WORLDS[wereldIdx], wereldIdx); }
       if (bezit(q, it)) {
         if (q.equipped[it.cat] !== it.id) return equipShopItem(it.id, st.id);
         if (OPTIONELE_SPULLEN.includes(it.cat)) return unequipShopItem(it.cat, st.id);
-        sndClick(); tapDance('shop-avatar'); return;
+        tapDance('shop-avatar'); return;
       }
       sndClick();
       podiumStuk = podiumStuk === it.id ? null : it.id;
@@ -31335,7 +31365,9 @@ function confirmShopBuy(id, blijf) {
 
   const podiaVoor = ITEMS.filter(st => st.cat === PODIA_CAT && podiumVanJou(p, st)).map(st => st.id);
   if (p.diamonds < prijs) {
-    sndWrong();
+
+
+    nogNiet($('db-buy'));
     showToast(`Nog ${prijs - p.diamonds} 💎`, null, null, null, 1800);
     return;
   }
@@ -33598,6 +33630,7 @@ function bindOefenChips(s, p, pfx, done) {
   const bind = (id, fn) => {
     const el = $((pfx || '') + id);
     if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+      sndClick();
       if (el.classList.contains('naad')) lijnGlij = { id: el.id, plek: lijnPlekken(el) };
       if (fn(c) !== false) done(id);
     });

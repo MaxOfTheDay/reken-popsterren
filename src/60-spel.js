@@ -1088,10 +1088,11 @@ function somVluchtWeg() { if (somVlucht) { somVlucht.remove(); somVlucht = null;
 function submitAnswer(val, btnEl) {
   if (!G || G.lock) return;
   kijkStraks();
-  if (btnEl && btnEl.getBoundingClientRect) {   // tactiel: ripple vanaf de aangetikte tegel
-    const r = btnEl.getBoundingClientRect();
-    tapRipple(r.left + r.width / 2, r.top + r.height / 2);
-  }
+  /* Geen tikring hier. Een antwoordknop zakt al op zijn lip (dat is "ik hoor
+     je"), en de ring betekent in de afspraak één ding: "hier kwam het aan". Op
+     een goed antwoord lag de gouden tikring dubbel over de groene ring van de
+     knop, en op een fout antwoord zei een gouden ring "geland" terwijl de som
+     "niet deze" zei. inhoud.test.js zaak R houdt tapRipple hier weg. */
   const q = G.qs[G.idx];
   const p = P();
   if (val === q.ans) antwoordGoed(q, p, btnEl);

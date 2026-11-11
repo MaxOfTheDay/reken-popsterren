@@ -2077,6 +2077,7 @@ function bindOefenChips(s, p, pfx, done) {
   const bind = (id, fn) => {
     const el = $((pfx || '') + id);
     if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+      sndClick();   // elke knop die iets doet tikt, ook een chip die nee zegt ("Minstens 1")
       if (el.classList.contains('naad')) lijnGlij = { id: el.id, plek: lijnPlekken(el) };
       if (fn(c) !== false) done(id);
     });

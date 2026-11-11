@@ -197,14 +197,7 @@ function reisGlansSVG() {
    (.reis-halte:active), dus dit hoeft alleen te zeggen wélk ding hier "nee" zegt.
    Geen venster, geen uitleg, geen aftelling. */
 function slotWereld(knop, doel) {
-  sndClick();
-  const slot = knop && knop.querySelector('.reis-zegel.slot');
-  if (slot) {
-    slot.classList.remove('nee');
-    void slot.offsetWidth;
-    slot.classList.add('nee');
-    setTimeout(() => slot.classList.remove('nee'), 800);
-  }
+  nogNiet(knop && knop.querySelector('.reis-zegel.slot'));
   slotToast(doel);
 }
 // De ene zin van een slot: de wereld waar ze nu staat moet eerst uit. Ook in Podia.
@@ -1345,14 +1338,7 @@ function haltKnop(shown, nodes, i, stand) {
    dan beweegt de kaart al. */
 function slotHalte(b) {
   if (overgangBezig || vluchtOp || wereldReisOp) return;
-  const dot = b.querySelector('.dot');
-  if (dot) {
-    dot.classList.remove('nee');
-    void dot.offsetWidth;
-    dot.classList.add('nee');
-    setTimeout(() => dot.classList.remove('nee'), 600);
-  }
-  sndTap();
+  nogNiet(b.querySelector('.dot'));   // het tokje en de wiebel van elk slot
   const map = $('tour-map');
   const el = map && map.querySelector('.tour-stop.next .tour-hero .avatar-holder');
   if (!el || el.classList.contains('dancing')) return;

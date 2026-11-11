@@ -84,6 +84,9 @@ jobs:
           # elke weigering geeft een teken in beeld of een briefje, en elke
           # toestelfunctie in src/ heeft een rij (test/toestel.test.js)
           - { suite: toestel, bestand: toestel }
+          # elke tik één klankje en nooit twee tegelijk, een slot zegt "nog niet",
+          # een antwoordknop geeft geen tikring (test/zintuigen.test.js)
+          - { suite: zintuigen, bestand: zintuigen }
     name: browser (${{ matrix.suite }})
     runs-on: ubuntu-latest
     steps:

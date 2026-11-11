@@ -1058,6 +1058,9 @@
   .mini-kaart.op-slot .item-thumb svg,
   .mini-kaart.op-slot .item-thumb .thumb-emo { filter: brightness(0) opacity(.45); }
   /* Het bubbeltje bij een 🔒: wit, boven het slotje, twee tellen. */
+  /* Nog niet: een podiumstuk op slot, of te weinig 💎 voor de koopknop. Het
+     gebaar nogNiet uit de afspraak, gestart door nogNiet() in het script. */
+  .mini-kaart.nee, #db-buy.nee { animation: nogNiet .5s ease; }
   .slot-bel {
     position: fixed; z-index: 60; transform: translate(-50%, -100%);
     padding: 8px 14px; border: 0; border-radius: var(--r-md); cursor: pointer;
