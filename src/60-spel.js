@@ -175,6 +175,7 @@ function renderQuestion() {
   if (!G.qs[G.idx]) {
     let built;
     if (G.count) { built = genCount(p); }             // telmodus: elke vraag lees-vrij
+    else if (G.idx === G.terugIdx) built = terugVraag(G.terugVan);   // de gemiste som, nog één keer (zie planTerug)
     else {
       const plan = G.plan[G.idx];
       if (plan && plan.type === 'miss') { built = genMissing(G.inst, G.lvl, p.perf, plan.op); G.missShown++; }
@@ -1100,18 +1101,22 @@ function antwoordGoed(q, p, btnEl) {
   stopSpot();
   hideToast();   // een hint van een vorige misser mag het "Goed zo!"-moment niet overschaduwen
   const firstTry = !G.retried;                 // in één keer goed?
+  // een som die terugkomt (q.terug) leert de motor niets: ze zag hem net
+  // voorbijkomen, en goed zou de misser van daarnet meteen weer uitvegen
+  if (!q.terug) {
   updatePerf(p, true, firstTry && G.spot > 0);
   // per-bewerking-beheersing (voor klaarheid extra uitdagingen) + drie-getallen-tempo
   // G.spot staat nog op de stand van het moment van antwoorden (stopSpot laat 'm staan)
   if (q.kind === 'classic') updateOpAcc(p, q.op, true, firstTry, fastEnough(G.mode, G.spot));
   else if (q.kind === 'chain') updateChainAcc(p, true, firstTry);
   else if (q.count) updateCountAcc(p, true, firstTry);
-  p.stats.correct++;
   telThema(p, true);
   telLeer(p, q);   // over het tiental, zoek het getal, drie getallen (zie de plank Nieuw geleerd)
+  }
+  p.stats.correct++;
   // enkel een directe treffer telt als "beheerst" -- en zet het onderhoudsinterval
   // van een al geleerde som verder vooruit (zie toLearned/bumpLearned)
-  if (firstTry) { decWeak(p, q); bumpLearned(p, q); }
+  if (firstTry && !q.terug) { decWeak(p, q); bumpLearned(p, q); }
   let gain = 2;
   if (firstTry && G.spot > 0) gain += 1;       // spotlight-bonus enkel bij directe treffer
   G.streak++;
@@ -1197,6 +1202,7 @@ function antwoordGoed(q, p, btnEl) {
     else if (q.gold) { confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain, false, lofDuur); }
     else if (streakBonus) showPraise('🔥 3 op een rij!', '💎 +' + gain, false, lofDuur);
     else if (!firstTry) showPraise('Goed zo!', '💎 +' + gain, false, lofDuur);
+    else if (q.terug) showPraise('💪 Nu wel!', '💎 +' + gain, false, lofDuur);
     else showPraise(pick(PRAISE), '💎 +' + gain, false, lofDuur);
     if (encore) buiging('game-avatar-inner');
     else dance('game-avatar-inner');
@@ -1230,11 +1236,13 @@ function telThema(p, goed) {
    hier; daarna splitst het in de eerste (een hint, nog een kans) en de tweede
    (de vraag is gemist, en het antwoord komt). */
 function antwoordFout(q, p, val, btnEl) {
-  updatePerf(p, false, false);
   p.stats.wrong++;
-  telThema(p, false);
-  incWeak(p, q);                                  // deze som vaker laten terugkomen
-  demoteLearned(p, q);                            // stond hij in onderhoud? dan is hij weer zwak
+  if (!q.terug) {   // de misser van de eerste keer telt al (zie planTerug)
+    updatePerf(p, false, false);
+    telThema(p, false);
+    incWeak(p, q);                                // deze som vaker laten terugkomen
+    demoteLearned(p, q);                          // stond hij in onderhoud? dan is hij weer zwak
+  }
   G.streak = 0;
   /* Twee missers, twee klankjes. De eerste levert een hint op: dat is "niet die,
      probeer nog eens". De tweede maakt de vraag gemist en onthult het antwoord. Tot nu toe klonken ze precies hetzelfde, en daarmee had
@@ -1256,7 +1264,8 @@ function antwoordFout(q, p, val, btnEl) {
 // eerste misser: nog niet gemist, wél een tweede kans met een hint
 function eersteMisser(q, val, btnEl) {
   G.retried = true;
-  G.misses++;
+  if (!q.terug) G.misses++;   // een extra kans kost geen ster
+  planTerug(q);
   stopSpot(); G.spot = 0; zetSpot(0, true);   // de balk zakt zichtbaar weg
   save();
   if (btnEl) { btnEl.classList.add('bad'); btnEl.disabled = true; }  // deze keuze uitschakelen
@@ -1264,14 +1273,37 @@ function eersteMisser(q, val, btnEl) {
   if (G.count) { countMissSpeak(q, val); showToast('🤔', null, null, 'teken'); }   // lees-vrij: gesproken hint, geen tekst
   else toonHint(q, val, btnEl);
 }
+/* NOG ÉÉN KEER. Een som die niet in één keer goed ging, komt in dezelfde show
+   nog één keer terug, twee vragen later -- als het goede antwoord nog vers is.
+   Dat is het moment waarop hij blijft hangen; de zwakke sommen (incWeak) halen
+   hem pas in een volgende show terug.
+   Hoogstens één per show, nooit op de plek van de gouden vraag of van een
+   speciale vraag (zoek het getal, drie getallen), en niet in de telmodus (daar
+   telt de stem het antwoord al voor). De show blijft even lang: de som neemt de
+   plek in van een gewone vraag. Hij kost niets: geen ster (G.misses), geen
+   "Bijna!" (G.errors), en de motor en de themaladders tellen hem niet mee --
+   themaPlan krijgt op die plek 'terug', dus geen enkel thema ziet hem. */
+function planTerug(q) {
+  if (G.count || q.terug || q.tik || G.terugIdx != null) return;
+  for (let i = G.idx + 2; i < G.total; i++) {
+    if (G.qs[i] || i === G.goldIdx || (G.plan[i] && G.plan[i].type)) continue;
+    G.terugIdx = i; G.terugVan = q;
+    if (G.themaPlan) G.themaPlan[i] = 'terug';
+    return;
+  }
+}
+function terugVraag(q) {
+  return { ...q, terug: true, gold: false, nieuw: false, choices: q.choices ? shuffle(q.choices.slice()) : q.choices };
+}
 // tweede misser: de vraag is gemist, antwoord tonen en door
 function tweedeMisser(q, p, btnEl) {
   G.lock = true;
   stopSpot();
-  G.errors++;
+  if (!q.terug) G.errors++;
   G.uitslag[G.idx] = 'mis';
   // definitief fout telt mee in de per-bewerking-beheersing / drie-getallen-tempo
-  if (q.kind === 'classic') updateOpAcc(p, q.op, false, false);
+  if (q.terug) { /* telde de eerste keer al */ }
+  else if (q.kind === 'classic') updateOpAcc(p, q.op, false, false);
   else if (q.kind === 'chain') updateChainAcc(p, false, false);
   else if (q.count) updateCountAcc(p, false, false);
   save();
