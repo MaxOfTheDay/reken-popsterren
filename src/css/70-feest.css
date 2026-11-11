@@ -406,7 +406,7 @@
   .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; width: 100%; margin-top: 4px; }
   /* tot ze opkomen tellen tikken niet mee (zie eindWacht) */
   .end-actions.wacht { pointer-events: none; }
-  .end-actions .btn { width: 100%; }
+  .end-actions .btn { width: 100%; min-height: var(--tik-kind); }
   .end-actions .btn.big { font-size: var(--tx-kop); padding: 15px 20px; }
   /* Een telefoon op zijn kant: de arena van de show zet de kaart en de
      antwoorden daar naast elkaar (zie 50-zaal), dus de knoppen staan hier waar de

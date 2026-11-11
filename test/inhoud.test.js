@@ -40,6 +40,11 @@
  *   P  vensters dicht     -- een venster (.modal-bg) gaat alleen dicht via
  *                           modalDicht, zodat de tweede tik van een dubbeltik
  *                           niet op het scherm eronder landt
+ *   X  wat GitHub draait  -- elke suite in test/ draait ook in de CI, en de
+ *                           testbrowser staat op een vaste versie
+ *   Y  wachten op rust    -- na het laden van een pagina wacht een test op
+ *                           rust(page), niet op een vaste tel; wat er nog zo
+ *                           wacht mag alleen minder worden
  *
  * Draaien:
  *   npm run test:inhoud      (of: npm test voor alle suites)
@@ -1400,6 +1405,67 @@ zaak('W', () => {
     }
   }
   check(!fout.length, 'W · geen :has() op body, html of :root (zet een klasse op body vanuit de JavaScript)', fout.join(' | '));
+});
+
+/* X · WAT GITHUB DRAAIT. Een suite die alleen op de eigen machine draait, bewaakt
+   niets: een PR gaat naar main zodra npm run check en de CI groen zijn, en tot
+   november 2026 draaiden tien van de zestien browsersuites nergens op GitHub
+   (flits, kop, ouder, reis, rondgang ... ). Dus: elk test/*.test.js staat in
+   .github/workflows/keuring.yml, als stap of in de matrix van "browser".
+   En de testbrowser staat op een vaste versie. Met "^1.55.0" haalde elke CI-ronde
+   de nieuwste Playwright, en dus een andere Chromium dan op de eigen machine: de
+   suites meten op enkele beeldjes en pixels, en een nieuwe browser kan dan een PR
+   rood maken waar niemand iets aan veranderde. Een nieuwe versie is een eigen PR,
+   waar de beelden-job laat zien wat er verschoof. */
+zaak('X', () => {
+  const yml = fs.readFileSync(path.join(WORTEL, '.github', 'workflows', 'keuring.yml'), 'utf8');
+  const pkg = JSON.parse(fs.readFileSync(path.join(WORTEL, 'package.json'), 'utf8'));
+  const { KEURING, suites } = require('./suites');
+  const inCi = new Set();
+  if (/npm run check\b/.test(yml)) KEURING.forEach(n => inCi.add(n));
+  for (const m of yml.matchAll(/bestand:\s*([\w-]+)/g)) inCi.add(m[1]);
+  for (const m of yml.matchAll(/node test\/([\w-]+)\.test\.js/g)) inCi.add(m[1]);
+  for (const m of yml.matchAll(/npm run (test:[\w-]+)/g)) {
+    const b = /test\/([\w-]+)\.test\.js/.exec(pkg.scripts[m[1]] || '');
+    if (b) inCi.add(b[1]);
+  }
+  const mist = suites(WORTEL).filter(n => !inCi.has(n));
+  check(!mist.length, 'X · elke suite draait ook op GitHub (zet hem in de matrix van keuring.yml)', mist.join(', '));
+  const pw = (pkg.devDependencies || {}).playwright || '';
+  check(/^\d+\.\d+\.\d+$/.test(pw), 'X · Playwright staat op een vaste versie, zonder ^ of ~', pw);
+});
+
+/* Y · WACHTEN OP RUST, NIET OP DE KLOK. Na een goto of reload komt het scherm
+   binnen met een overgang, en hoe lang die duurt hangt af van de machine. Een
+   vaste waitForTimeout daarna is op een snelle machine ruim en op een drukke
+   GitHub-machine soms net te kort: dan meet de test een scherm dat nog schuift.
+   Zo werd main in november 2026 drie keer rood op de wereldpil (43px in plaats
+   van 47, de kop stond nog boven de rand), en viel "het formulier verspringt" om
+   zodra alle suites tegelijk draaiden. rust(page) uit test/browser.js wacht tot
+   er geen animatie meer loopt.
+   Wie met opzet midden in een opkomst meet, mag een vaste tel houden, met
+   "// vast:" en de reden op dezelfde regel. Wat er nog zonder reden staat, is
+   van vóór deze regel: dat mag minder worden, niet meer. Lager getal na een
+   opruiming? Zet het hieronder mee omlaag. */
+const VASTE_WACHT_NOG = {
+  beloning: 5, counting: 2, flits: 2, kop: 5, maths: 2, onderrand: 8, ouder: 7,
+  profiles: 28, reis: 1, robuust: 7, rondgang: 3, studio: 4, toestel: 1, vlucht: 1, voortgang: 2,
+};
+zaak('Y', () => {
+  const { suites } = require('./suites');
+  const te = [];
+  for (const naam of suites(WORTEL)) {
+    const r = fs.readFileSync(path.join(WORTEL, 'test', naam + '.test.js'), 'utf8').split('\n');
+    let n = 0;
+    for (let i = 0; i < r.length; i++) {
+      if (!/\.(goto|reload)\(/.test(r[i])) continue;
+      let j = i + 1;
+      while (j < r.length && !r[j].trim()) j++;
+      if (j < r.length && /waitForTimeout\(/.test(r[j]) && !/\/\/\s*vast:/.test(r[j])) n++;
+    }
+    if (n > (VASTE_WACHT_NOG[naam] || 0)) te.push(`${naam}: ${n} (mag ${VASTE_WACHT_NOG[naam] || 0})`);
+  }
+  check(!te.length, 'Y · na het laden wacht een test op rust(page), niet op een vaste tel', te.join(' | '));
 });
 
 klaar();

@@ -651,10 +651,10 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     knop(fout[0]).click();
     await wacht(500);
     knop(fout[1]).click();
-    await wacht(700);                                     // het 👉 komt pas na de onthulling (VERDER_NA)
+    await wacht(700);                                     // de 👆 komt pas na de onthulling (VERDER_NA)
     out.mis = { tekst: vak().textContent, ans: String(q.ans), klas: vak().className,
-                toast: document.querySelector('#toast .toast-main').textContent,
-                woorden: !!document.querySelector('#toast .toast-sub') };
+                hand: !!document.querySelector('.choice-btn.good .wijs-hand'),
+                kaart: document.getElementById('toast').classList.contains('show') };
     hideToast();
     return out;
   });
@@ -666,8 +666,8 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     'de volgende som begint weer open, zonder iets dat nog rondvliegt', JSON.stringify(dicht.volgende));
   check(dicht.mis.tekst === dicht.mis.ans && /\brustig\b/.test(dicht.mis.klas) && !/\bklikt\b/.test(dicht.mis.klas),
     'na een tweede misser gaat de som rustig dicht', JSON.stringify(dicht.mis));
-  check(dicht.mis.toast === '👉' && !dicht.mis.woorden,
-    'en de kaart zegt alleen nog hoe je verder komt, zonder een zin te lezen', JSON.stringify(dicht.mis));
+  check(dicht.mis.hand && !dicht.mis.kaart,
+    'en een 👆 op de goede knop zegt hoe je verder komt, zonder kaart en zonder een zin', JSON.stringify(dicht.mis));
 
   /* en zonder schok: "?" is smaller dan "16", en de som staat gecentreerd. Sprong
      het vakje in één keer naar zijn nieuwe breedte, dan schoot de hele som bijna
@@ -849,7 +849,7 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     const voor = await p3.evaluate(() => G.idx);
     await p3.touchscreen.tap(30, 420);   // naast de knoppen, op haar podium
     await p3.waitForTimeout(250);
-    const naast = await p3.evaluate(() => ({ idx: G.idx, hier: !!document.querySelector('.choice-btn.good.kijk-hier'), wijst: $('toast').textContent.includes('👉') }));
+    const naast = await p3.evaluate(() => ({ idx: G.idx, hier: !!document.querySelector('.choice-btn.good.kijk-hier'), wijst: !!document.querySelector('.choice-btn.good .wijs-hand') }));
     check(naast.idx === voor && naast.hier && naast.wijst, 'na een tweede misser: een tik ernaast gaat niet verder, de goede knop plopt op', JSON.stringify(naast));
     const [gx, gy] = await p3.evaluate(() => { const r = document.querySelector('.choice-btn.good').getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; });
     await p3.touchscreen.tap(gx, gy);

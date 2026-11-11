@@ -30,10 +30,12 @@ draaien ook op kaal Node. De studio (Publiceren) draait precies dezelfde ronde.
 Eén suite draaien gaat met `npm run test:<naam>`, bijvoorbeeld
 `npm run test:reis`; de hele lijst staat in `docs/TESTEN.md`.
 
-Op GitHub draait bij elke PR en elke push naar main dezelfde keuring, plus `hub`,
-`test:sterren`, `test:schuiven`, `test:robuust`, `test:vlucht`, `test:tellen` en `test:toestel` naast elkaar (`.github/workflows/keuring.yml`; bij het
-binnenhalen van een PR op main alleen de snelle helft, want de browser zag die
-samenvoeging al in de PR). Dat is het vangnet voor
+Op GitHub draait bij elke PR en elke push naar main dezelfde keuring, plus
+élke browsersuite in een eigen job, naast elkaar (`.github/workflows/keuring.yml`;
+bij het binnenhalen van een PR op main alleen de snelle helft, want de browser
+zag die samenvoeging al in de PR). Een nieuwe suite zet je daar in de matrix;
+vergeet je dat, dan valt `inhoud` zaak X om. De testbrowser staat op een vaste
+Playwright-versie in `package.json`: een nieuwe is een eigen PR. Dat is het vangnet voor
 wat níét via de studio gaat; het vervangt `npm test` op je eigen machine niet.
 
 Main mergen in je tak, en dan `npm run bouw`: dat is altijd de volgorde.
@@ -240,6 +242,11 @@ verjaart niet.
   scherm midden in de tik op te maken. Meet eerst en schrijf daarna, meet na de
   verf (`naOpbouw`), of laat een ResizeObserver het zeggen. Dezelfde ronde van
   `test:robuust` vangt het (met `MEET_MAG` voor wie het met reden doet).
+  En een vijfde: **wat je kunt aantikken, is een knop** -- een `<button>`, of
+  `knopRol(el)` op een kaartje. Dan vangt "= Elke tik telt" (`10-feestjes.js`)
+  de tik ook als er een duim op het glas ligt of de vinger rolt, komt Tab
+  erop, en is hij minstens `--tik-kind` raak. `test:robuust` zaak G en
+  `test:schuiven` zaak L kijken het na.
 * **Geen grote waas onder wat beweegt.** Een CSS-`filter: blur()` op een laag
   zo groot als het venster rekent de browser bij elk beeldje opnieuw uit zodra
   er iets overheen beweegt. Wil je een kamer uit focus, zet de waas dan in de

@@ -489,6 +489,137 @@ function knopTik(houder, kies, doe) {
     if (el && houder.contains(el)) houder._tik.doe(el, e);
   });
 }
+/* ================= Elke tik telt ===========================================
+   Wat de Antwoordtik hierboven doet voor de antwoorden, voor élke andere knop:
+   de halte op de kaart, de tabbalk, ✕, 🎲, Verder op tournee, de kleedkamer,
+   de kast, Voor ouders. Ook die luisterden naar click, en de browser gooit die
+   weg zodra
+     * er nog een andere vinger op het glas ligt -- de duim van de hand die de
+       tablet vasthoudt is genoeg; of
+     * de vinger bij het loslaten een stukje rolt.
+   Nagemeten met echte aanrakingen: de antwoorden telden, al het andere niet.
+
+   Hoe: één luisteraar op het document (in de vangfase, dus vóór alles). Komt
+   een vinger neer op een knop, dan onthouden we die knop. Laat hij binnen
+   TIK_MARGE weer los, binnen KORT_DRUK ms, en is de lijst eronder niet
+   geschoven, dan sturen we zelf de click naar de plek waar hij neerkwam --
+   gewoon door, dus elke onclick, elke delegatie en elk vasthouden() werkt zoals
+   altijd. De click die de browser daarna eventueel nog stuurt, slikken we in:
+   anders telde een gewone tik dubbel. Herkend aan de plek en niet aan de knop:
+   opent onze click iets bovenop (een trofee die opengaat), dan landt de click
+   van de browser op dát, en zou hij daar meteen de volgende stap zetten.
+
+   Wat er níét onder valt:
+     * muis, pen en toetsenbord: daar komt de click altijd en klopt hij;
+     * de antwoorden (.knop-tik): die hebben hun eigen, strengere tik;
+     * invulvakken en echte links: daar hoort de browser zelf het laatste woord;
+     * wie lang drukt (KORT_DRUK): een duim die blijft liggen is geen tik, en
+       lang drukken heeft zijn eigen gebaar (vasthouden);
+     * wie de lijst laat schuiven: dat was vegen, geen tik.
+   Breekt de browser het gebaar af (pointercancel) op een plek die niet schuift,
+   dan telt het als loslaten op die plek; in een lijst is afbreken het begin van
+   vegen en telt het niet.
+
+   test:robuust zaak G tikt elke knop van het kind zo na: met een duim die
+   blijft liggen en met een vinger die rolt. */
+const KORT_DRUK = 700;
+const ELKE_TIK_NIET = 'input, textarea, select, label, a[href], .knop-tik, #studio';
+const elkeTikOpen = new Map();   // pointerId -> { knop, doel, x, y, t, rol, top, links, vinger }
+const elkeTikSlik = [];          // [{ x, y, tot }] -- de click die de browser nog achterna stuurt
+const elkeTikAf = new Map();     // touch.identifier -> stip, afgebroken in een lijst
+function elkeTikKnop(doel) {
+  const knop = doel && doel.closest && doel.closest('button, [onclick], [role="button"], [role="switch"], [role="menuitem"], [role="menuitemcheckbox"]');
+  if (!knop || knop.closest(ELKE_TIK_NIET)) return null;
+  return knop;
+}
+function elkeTikRol(el) {
+  for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+    if (a.scrollHeight > a.clientHeight + 1 || a.scrollWidth > a.clientWidth + 1) {
+      const o = getComputedStyle(a);
+      if (/auto|scroll/.test(o.overflowY + o.overflowX)) return a;
+    }
+  }
+  return null;
+}
+function elkeTikTel(stip, x, y) {
+  const { knop, rol } = stip;
+  if (!knop.isConnected || knop.disabled || knop.closest('[inert]')) return;
+  if (rol && (rol.scrollTop !== stip.top || rol.scrollLeft !== stip.links)) return;
+  const r = knop.getBoundingClientRect();
+  if (x < r.left - TIK_MARGE || x > r.right + TIK_MARGE || y < r.top - TIK_MARGE || y > r.bottom + TIK_MARGE) return;
+  elkeTikSlik.push({ x, y, tot: performance.now() + 800 });
+  const doel = stip.doel.isConnected && knop.contains(stip.doel) ? stip.doel : knop;
+  doel.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, composed: true, view: window, detail: 1, clientX: x, clientY: y }));
+}
+document.addEventListener('pointerdown', e => {
+  if (e.pointerType !== 'touch') return;
+  const knop = elkeTikKnop(e.target);
+  if (!knop) return;
+  // alleen meten, niets schrijven (zie robuust zaak A)
+  const rol = elkeTikRol(knop);
+  elkeTikOpen.set(e.pointerId, { knop, doel: e.target, x: e.clientX, y: e.clientY, t: performance.now(),
+    rol, top: rol ? rol.scrollTop : 0, links: rol ? rol.scrollLeft : 0 });
+}, true);
+document.addEventListener('pointermove', e => {
+  const stip = elkeTikOpen.get(e.pointerId);
+  if (stip) { stip.x = e.clientX; stip.y = e.clientY; }
+}, { capture: true, passive: true });
+document.addEventListener('pointerup', e => {
+  const stip = elkeTikOpen.get(e.pointerId);
+  if (!stip) return;
+  elkeTikOpen.delete(e.pointerId);
+  if (performance.now() - stip.t <= KORT_DRUK) elkeTikTel(stip, e.clientX, e.clientY);
+}, true);
+document.addEventListener('pointercancel', e => {
+  const stip = elkeTikOpen.get(e.pointerId);
+  if (!stip) return;
+  elkeTikOpen.delete(e.pointerId);
+  if (!stip.rol) { if (performance.now() - stip.t <= KORT_DRUK) elkeTikTel(stip, stip.x, stip.y); return; }
+  // in een lijst: wachten op het echte loslaten (touchend), en dan kijken of er geschoven is
+  if (stip.vinger != null) elkeTikAf.set(stip.vinger, stip);
+}, true);
+/* Na een pointercancel komt er geen pointerup meer, maar touchend wél. Welke
+   aanraking bij welke vinger hoort, zie je aan de plek: touchstart komt meteen
+   na pointerdown, op hetzelfde punt. */
+document.addEventListener('touchstart', e => {
+  for (const t of e.changedTouches) for (const stip of elkeTikOpen.values())
+    if (stip.vinger == null && Math.abs(stip.x - t.clientX) < 1 && Math.abs(stip.y - t.clientY) < 1) { stip.vinger = t.identifier; break; }
+}, { capture: true, passive: true });
+document.addEventListener('touchend', e => {
+  for (const t of e.changedTouches) {
+    const stip = elkeTikAf.get(t.identifier);
+    if (!stip) continue;
+    elkeTikAf.delete(t.identifier);
+    if (performance.now() - stip.t <= KORT_DRUK) elkeTikTel(stip, t.clientX, t.clientY);
+  }
+}, { capture: true, passive: true });
+document.addEventListener('touchcancel', e => { for (const t of e.changedTouches) elkeTikAf.delete(t.identifier); }, { capture: true, passive: true });
+document.addEventListener('click', e => {
+  if (!e.isTrusted || !e.detail) return;   // onze eigen click, of het toetsenbord
+  const nu = performance.now();
+  for (let i = elkeTikSlik.length - 1; i >= 0; i--) if (elkeTikSlik[i].tot < nu) elkeTikSlik.splice(i, 1);
+  const i = elkeTikSlik.findIndex(s => Math.abs(s.x - e.clientX) <= TIK_MARGE && Math.abs(s.y - e.clientY) <= TIK_MARGE);
+  if (i < 0) return;
+  elkeTikSlik.splice(i, 1);
+  e.preventDefault();
+  e.stopImmediatePropagation();
+}, true);
+/* Een kaartje dat een knop is maar geen <button> (een kleedkamerkaartje, een
+   trofee): zeg dat tegen een schermlezer, en laat het toetsenbord erbij. Tab
+   komt erop, Enter en spatie tikken het aan -- net als bij een echte knop.
+   test:robuust zaak G kijkt na dat alles met een onclick zo'n knop is. */
+function knopRol(el) {
+  el.setAttribute('role', 'button');
+  el.tabIndex = 0;
+}
+document.addEventListener('keydown', e => {
+  if ((e.key !== 'Enter' && e.key !== ' ') || e.defaultPrevented || e.repeat) return;
+  const el = e.target;
+  if (!el || !el.getAttribute || /^(BUTTON|A|INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return;
+  if (!/^(button|switch|menuitem|menuitemcheckbox|checkbox)$/.test(el.getAttribute('role') || '')) return;
+  e.preventDefault();
+  el.click();
+});
 /* Het systeemmenu bij lang drukken (Android) en de rechtermuisknop: in een spel
    voor kinderen is daar niets te halen. Behalve in een invulvak -- daar plakt
    een ouder de overzetcode of typt hij een naam, en dat menu is het plakken. */

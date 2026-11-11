@@ -709,8 +709,16 @@
      oppoppen, "deze" (zie toonVerder) */
   :is(.choice-btn, .count-tile).good.kijk-hier { animation: ja var(--t-ja) var(--ease-plop); }
   @keyframes rustigGroen { from { opacity: .55; } to { opacity: 1; } }
+  /* de 👆 op de hoek van de goede knop na een tweede misser (zie toonVerder):
+     half over de rand, zodat hij bij de knop hoort en het getal vrij laat */
+  .wijs-hand {
+    position: absolute; right: -6px; bottom: -22px; z-index: 3; pointer-events: none;
+    font-size: 46px; line-height: 1; filter: drop-shadow(0 3px 4px rgba(0,0,0,.45));
+    animation: wijsIn var(--t-ja) var(--ease-plop) both;
+  }
+  @keyframes wijsIn { from { opacity: 0; transform: translateY(10px) scale(.7); } }
   @media (prefers-reduced-motion: reduce) {
-    .choice-btn.good, .count-tile.good, :is(.choice-btn, .count-tile).good.kijk-hier { animation: none; }
+    .choice-btn.good, .count-tile.good, :is(.choice-btn, .count-tile).good.kijk-hier, .wijs-hand { animation: none; }
     .choice-btn.good::before, .count-tile.good::before { display: none; }
   }
 
@@ -1094,13 +1102,16 @@
   @media (orientation: portrait) and (min-width: 600px) and (min-height: 900px) {
     .game-arena { flex-direction: column; flex-wrap: nowrap; gap: 18px; }
     .show-stage { width: 300px; height: 252px; }
-    .question-card { font-size: 72px; min-width: min(80vw, 560px); padding: 24px 36px 32px; }
+    .question-card { font-size: 72px; min-width: min(80vw, 560px); max-width: calc(100vw - 24px); padding: 24px 36px 32px; }
     .choices, .count-tiles { width: min(80vw, 560px); gap: 18px; }
     .choice-btn { font-size: 44px; padding: 26px 8px; }
     .numpad { width: min(64vw, 420px); gap: 14px; }
     .num-btn { font-size: 36px; padding: 18px 0; }
-    /* de voorwerpen groeien mee (zie het brede scherm hierboven) */
-    .count-q, .count-tile { --obj: 48px; }
+    /* de voorwerpen groeien mee (zie het brede scherm hierboven), maar niet
+       breder dan het scherm: op een klein tablet (600 breed) werd een telsom met
+       twee stippenramen 611px, breder dan het scherm zelf. Op 7vw is hij daar
+       zo breed als de antwoorden; vanaf 686px breed is het weer de volle 48. */
+    .count-q, .count-tile { --obj: min(48px, 7vw); }
     .count-q .cg-obj, .count-tile .cg-obj { font-size: var(--obj); }
     .count-q .cgroup.big .cg-obj { font-size: calc(var(--obj) * 1.35); }
     .count-q .cgroup, .count-tile .cgroup { max-width: calc(var(--obj) * 7.6); }

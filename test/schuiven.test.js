@@ -65,6 +65,20 @@
  *      minstens OBJ_MIN hoog en elk vakje van een raampje VAK_MIN. Passen is
  *      niet genoeg: tot november 2026 paste alles op een telefoon liggend, met
  *      teltegels van 29px en voorwerpen van 9px.
+ *   L  kindermaat buiten de som: op elk scherm van het kind (de sterrenkeuze,
+ *      de kaart, Werelden, de show, het eindscherm, de kleedkamer met en zonder
+ *      koopbalk, de kast) is elke knop op de maten van F minstens TIK_MIN raak
+ *      in beide richtingen. Gemeten op het raakvlak, met elementFromPoint vanuit
+ *      het midden: een onzichtbare ::after die verder reikt telt mee, een buur
+ *      die eroverheen ligt niet. Tot november 2026 mat K alleen het antwoordvak,
+ *      en waren Koop, het 🤍 en de tweede knop van het eindscherm 37 tot 40px.
+ *      Waar een andere knop direct tegen de rand ligt (de negen laden van de
+ *      kleedkamer naast elkaar op een smalle telefoon), mag de eigen maat tot
+ *      BUUR_MIN zakken, zolang er
+ *      samen met de buur TIK_MIN raak is: wie ernaast tikt, tikt dan de buur
+ *      en niet in het niets. Een dode strook (iets wat geen knop is) telt niet.
+ *      De haltes op de kaart doen niet mee: hun raakvlak is zo groot als past
+ *      zonder de buren te raken, en dat bewaakt test:sterren.
  *   Z  haar gezicht blijft vrij: op een gewone hoge telefoon valt de hint (de
  *      🤔, "half 3 ↷") niet op haar hoofd, ook niet als zij hoog staat (de
  *      telmodus, een show met de klok of de kalender). Zie zaalPast.
@@ -309,7 +323,7 @@ const KLOK_ZOEK_MIN = 84;
 // K: kindermaat. Een knop minstens zo groot als een kindervingertop; een ding om
 // te tellen en een vakje van een raampje groot genoeg om er één aan te wijzen.
 const TIK_MIN = Number(process.env.TIK_MIN || 44), OBJ_MIN = Number(process.env.OBJ_MIN || 16), VAK_MIN = Number(process.env.VAK_MIN || 12);
-const PAS_MATEN = [[320, 568], [390, 844], [568, 320], [667, 375], [844, 390], [1024, 768]];
+const PAS_MATEN = [[320, 568], [390, 844], [568, 320], [667, 375], [844, 390], [1024, 768], [768, 1024], [600, 960]];
 async function zaakF(browser, [w, h]) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true });
   await cacheFonts(ctx);
@@ -510,10 +524,64 @@ async function zaakZ(browser, [w, h]) {
   await ctx.close();
 }
 
+/* L: kindermaat buiten de som (zie bovenaan) */
+const BUUR_MIN = 26;   // WCAG 2.5.8 zegt 24 als er een buur tegenaan ligt; de laden liggend op een kleine telefoon zijn 28
+const KNOP = 'button, [role="button"], .tour-stop, a[href]';
+async function zaakL(browser, [w, h]) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true });
+  await cacheFonts(ctx);
+  const page = await ctx.newPage();
+  const klein = [];
+  const SCHERMEN = [['profile', '&star=p1&screen=profile'], ['map', '&star=p1&screen=map'], ['reis', '&star=p1&screen=reis'],
+    ['show', '&star=p1&screen=game'], ['telshow', '&star=p2&screen=game'], ['end', '&star=p1&screen=end'],
+    ['dress', '&star=p1&screen=dress'], ['koopbalk', '&star=p1&screen=dress&diamanten=20', true], ['tro', '&star=p1&screen=tro']];
+  for (const [naam, url, koop] of SCHERMEN) {
+    await page.goto(APP_URL + '&demo' + url);
+    await rust(page);
+    await page.waitForTimeout(1200);
+    if (koop) {
+      await page.evaluate(() => { const k = document.querySelector('#item-grid .item-card:not(.owned):not(.equipped)'); k.scrollIntoView({ block: 'center' }); k.click(); });
+      await page.waitForTimeout(700);
+    }
+    const uit = await page.evaluate(([TIK_MIN, BUUR_MIN, KNOP]) => {
+      const uit = [];
+      // de haltes niet: hun raakvlak is zo groot als past zonder de buren te raken
+      // (13,3cqw, op 320 breed 43px), en dat bewaakt test:sterren
+      for (const b of document.querySelectorAll('button:not(.tour-stop)')) {
+        if (b.closest('[inert], [hidden], #answer-area')) continue;
+        if (b.closest('.screen') && !b.closest('.screen.active')) continue;
+        const r = b.getBoundingClientRect();
+        if (r.width < 4 || r.top < 0 || r.bottom > innerHeight || r.left < 0 || r.right > innerWidth) continue;
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        const raak = (x, y) => { const t = document.elementFromPoint(x, y); return t && (t === b || b.contains(t)); };
+        if (!raak(cx, cy)) continue;
+        const buur = (x, y) => { const t = document.elementFromPoint(x, y); const k = t && t.closest(KNOP); return !!k && k !== b; };
+        // [eigen, eigen + een buurknop die er meteen tegenaan ligt]
+        const reik = (dx, dy) => {
+          let n = 0, m;
+          while (n < TIK_MIN && raak(cx + dx * (n + 1), cy + dy * (n + 1))) n++;
+          for (m = n; m < TIK_MIN && buur(cx + dx * (m + 1), cy + dy * (m + 1)); m++);
+          return [n, m];
+        };
+        const [l, r2, o, n2] = [reik(-1, 0), reik(1, 0), reik(0, -1), reik(0, 1)];
+        const breed = l[0] + r2[0] + 1, hoog = o[0] + n2[0] + 1;
+        const breedSamen = l[1] + r2[1] + 1, hoogSamen = o[1] + n2[1] + 1;
+        const goed = (eigen, samen) => eigen >= TIK_MIN || (eigen >= BUUR_MIN && samen >= TIK_MIN);
+        if (!goed(breed, breedSamen) || !goed(hoog, hoogSamen)) uit.push(`${b.id || b.getAttribute('aria-label') || b.className.split(' ')[0]} ${breed}x${hoog}`);
+      }
+      return uit;
+    }, [TIK_MIN, BUUR_MIN, KNOP]);
+    klein.push(...uit.map(u => `${naam}: ${u}`));
+  }
+  check(!klein.length, 'L · kindermaat buiten de som', `${w}x${h}: ${[...new Set(klein)].slice(0, 8).join(' | ')}`);
+  await ctx.close();
+}
+
 (async () => {
   const browser = await launch();
   await Promise.all([[390, 844], [414, 896], [430, 932]].map(m => zaakZ(browser, m)));
   await Promise.all(PAS_MATEN.map(m => zaakF(browser, m)));
+  await Promise.all(PAS_MATEN.map(m => zaakL(browser, m)));
   await Promise.all([[390, 844], [320, 568], [430, 932], [844, 390], [1024, 768], [820, 1180]].map(m => zaakE(browser, m)));
   const rij = [...MATEN];
   await Promise.all([zaakC(browser), ...Array.from({ length: TEGELIJK }, async () => {

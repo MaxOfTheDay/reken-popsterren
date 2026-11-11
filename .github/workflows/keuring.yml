@@ -9,8 +9,9 @@
 #             plus de ontvanger van Overzetten (worker/overzetten.js, kaal Node)
 #             en bij een PR: is er een bestaande tekening vervangen zonder dat
 #             ART_CACHE in sw.js omhoog ging (test/tekeningen.js)
-#   browser   de browsersuites, elk in een eigen job zodat ze naast elkaar
-#             lopen: sterren (de kortste die het beginscherm echt opbouwt; die
+#   browser   alle browsersuites, elk in een eigen job zodat ze naast elkaar
+#             lopen (inhoud zaak X kijkt na dat er geen ontbreekt). Een paar:
+#             sterren (de kortste die het beginscherm echt opbouwt; die
 #             ziet een const die te vroeg gelezen wordt en een lege pagina geeft,
 #             CLAUDE.md regel 0) en schuiven (geen scherm schuift verder dan er
 #             iets te zien valt, en wat geen lijst is past op elke maat), en
@@ -84,6 +85,18 @@ jobs:
           # elke weigering geeft een teken in beeld of een briefje, en elke
           # toestelfunctie in src/ heeft een rij (test/toestel.test.js)
           - { suite: toestel, bestand: toestel }
+          # De rest draaide tot november 2026 alleen op de eigen machine, en dan
+          # bewaakt hij niets: inhoud zaak X houdt nu bij dat elke suite hier staat.
+          - { suite: flits, bestand: flits }
+          - { suite: kop, bestand: kop }
+          - { suite: onderrand, bestand: onderrand }
+          - { suite: rekenen, bestand: maths }
+          - { suite: reis, bestand: reis }
+          - { suite: ouder, bestand: ouder }
+          - { suite: rondgang, bestand: rondgang }
+          - { suite: voortgang, bestand: voortgang }
+          - { suite: beloning, bestand: beloning }
+          - { suite: studio, bestand: studio }
     name: browser (${{ matrix.suite }})
     runs-on: ubuntu-latest
     steps:
@@ -92,7 +105,22 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-audit --no-fund
-      - run: npx playwright install --with-deps chromium
+      # Chromium één keer per Playwright-versie ophalen en daarna uit de voorraad
+      # van GitHub: elke job haalde hem anders opnieuw van Playwrights eigen
+      # server, en toen die op 11 november 2026 haperde, kon geen enkele PR meer
+      # groen worden. De versie staat vast in package.json (inhoud zaak X).
+      - id: pw
+        run: echo "versie=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+      - id: pwvoorraad
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.versie }}
+      - if: steps.pwvoorraad.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      # de browser lag er al; alleen de systeembibliotheken nog (uit Ubuntu, niet van Playwright)
+      - if: steps.pwvoorraad.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
       - run: node test/alles.js ${{ matrix.bestand }}
 
   beelden:
@@ -106,7 +134,22 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-audit --no-fund
-      - run: npx playwright install --with-deps chromium
+      # Chromium één keer per Playwright-versie ophalen en daarna uit de voorraad
+      # van GitHub: elke job haalde hem anders opnieuw van Playwrights eigen
+      # server, en toen die op 11 november 2026 haperde, kon geen enkele PR meer
+      # groen worden. De versie staat vast in package.json (inhoud zaak X).
+      - id: pw
+        run: echo "versie=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+      - id: pwvoorraad
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.versie }}
+      - if: steps.pwvoorraad.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      # de browser lag er al; alleen de systeembibliotheken nog (uit Ubuntu, niet van Playwright)
+      - if: steps.pwvoorraad.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
       # main ernaast, in een eigen map: de opnames van allebei met de lijst schermen van deze PR
       - run: git worktree add ../basis origin/${{ github.base_ref }}
       - run: node test/shots.js voor --vast --app=../basis
