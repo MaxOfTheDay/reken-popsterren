@@ -572,7 +572,7 @@ function check(ok, label, detail) {
         else if (g === 'weiger') setTimeout(() => u.onerror({ error: 'not-allowed' }), 20);
         else if (g === 'goed') setTimeout(() => { u.onstart(); u.onend(); }, 20);
       };
-      stemKaal = false; _voices = [];
+      stemOpnieuwKiezen(); _voices = [];
       let klaar = 0;
       speak('Hoeveel zie je?', { onEnd: () => klaar++ });
       await new Promise(t => setTimeout(t, wacht));
@@ -587,13 +587,19 @@ function check(ok, label, detail) {
     r.terug = { knop: knop.textContent, stuk: knop.classList.contains('stuk'), log: r2.log };
     r.weiger = await ronde(() => 'weiger', 200);
     r.goed = await ronde(() => 'goed', 200);
+    // twee Nederlandse stemmen: weigert de Vlaamse, dan de stem voor Nederland -- niet meteen kaal
+    speechSynthesis.getVoices = () => [{ lang: 'nl_BE', name: 'Vlaams' }, { lang: 'nl_NL', name: 'Nederlands' }];
+    r.ander = await ronde(u => u.voice && u.voice.lang === 'nl_BE' ? 'fout' : 'goed', 200);
     Object.assign(speechSynthesis, { speak: echt.speak, getVoices: echt.getVoices });
     window.SpeechSynthesisUtterance = echt.U;
-    stemKaal = false; _voices = []; refreshVoices();
+    stemOpnieuwKiezen(); _voices = []; refreshVoices();
     return r;
   });
   const tweeKeer = x => x.log.length === 2 && x.log[0].stem === 'nl-BE' && x.log[1].stem === null
     && x.log[1].t === x.log[0].t && x.klaar === 1 && x.kaal;
+  check(kaal.ander.log.length === 2 && kaal.ander.log[0].stem === 'nl_BE' && kaal.ander.log[1].stem === 'nl_NL'
+    && kaal.ander.klaar === 1 && !kaal.ander.kaal,
+    'stem: weigert de Vlaamse stem, dan eerst de stem voor Nederland (Android met kapotte nl-BE-stemdata)', JSON.stringify(kaal.ander));
   check(tweeKeer(kaal.fout), 'stem: een fout van de gekozen stem = dezelfde zin nog eens zonder keuze', JSON.stringify(kaal.fout));
   check(kaal.alles.log.length === 2 && kaal.alles.knop === '🔇' && kaal.alles.stuk
     && kaal.terug.knop === '🔊' && !kaal.terug.stuk,

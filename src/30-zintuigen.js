@@ -486,7 +486,7 @@ function speak(text, opts) {
     // Chrome op Android laat de spraak soms op pauze staan na een tijd op de
     // achtergrond; dan blijft elke nieuwe zin stil in de rij hangen.
     if (speechSynthesis.paused) speechSynthesis.resume();
-    zegNu(text, opts, stemKaal ? null : nlVoice());
+    zegNu(text, opts, stemKaal ? null : stemKeuze());
   } catch (e) { if (opts.onEnd) opts.onEnd(); }
 }
 /* DE STEM DIE NIET KOMT. Een gekozen stem kan op het toestel staan en toch niet
@@ -502,6 +502,28 @@ function speak(text, opts) {
    De foutmelder krijgt één briefje "stem: ..." -- dit soort fout gooit niets
    en zou anders nooit in de zondagrapportage staan. */
 let stemKaal = false;
+/* EN ALS DIE OOK NIET WIL: DE ANDERE NEDERLANDSE STEMMEN. Op Android weigerde
+   bij Max zowel "Nederlands (België)" als de standaardstem (die voor dezelfde
+   taal dezelfde Vlaamse stem van de spraakdienst pakt) -- ook met alle andere
+   apps dicht en zonder Bluetooth. Dan is het de stemdata van die ene taal die
+   stuk is of ontbreekt, en kan een stem voor Nederland het vaak nog wel. Dus
+   onthouden we per bezoek welke stemmen een fout gaven (stemMis), en probeert
+   elke volgende poging de eerstvolgende Nederlandse stem die nog niet faalde --
+   Vlaams eerst, dan Nederlands, dan de rest. Pas als ze allemaal faalden, gaat
+   het zonder keuze verder (stemKaal) en daarna de 🔇. */
+const stemMis = new Set();
+function stemSleutel(v) { return v ? (v.voiceURI || v.name || '') + '|' + v.lang : ''; }
+function stemKeuze() {
+  if (!_voices.length) refreshVoices();
+  for (const re of STEM_VOORKEUR) {
+    const v = _voices.find(x => re.test(x.lang) && !stemMis.has(stemSleutel(x)));
+    if (v) return v;
+  }
+  return null;
+}
+// Opnieuw van voren af aan kiezen: de ouder tikte "Probeer opnieuw" (zie replayPrompt),
+// misschien is de stemdata intussen binnen of de andere app weg.
+function stemOpnieuwKiezen() { stemMis.clear(); stemKaal = false; }
 let stemNr = 0;           // de hoeveelste zin die de vorige mocht afbreken
 function zegNu(text, opts, v) {
   if (!opts.wacht) stemNr++;
@@ -526,8 +548,15 @@ function zegNu(text, opts, v) {
     // een latere zin heeft deze afgebroken of ingehaald: niets terug te halen
     if (mijn !== stemNr) { einde(); return; }
     af = true;
-    meldFout('stem: ' + waarom + (v ? ' (' + v.lang + ')' : ''));
-    if (v && !stemKaal) { stemKaal = true; try { zegNu(text, opts, null); return; } catch (e) { /* door */ } }
+    // in het briefje: welke stem, en hoeveel Nederlandse er nog over zijn -- zo
+    // zegt de zondagrapportage of het aan één taal ligt of aan de hele spraakdienst
+    meldFout('stem: ' + waarom + (v ? ' (' + v.lang + (v.localService === false ? ', net' : '') + ')' : ''));
+    if (v) {
+      stemMis.add(stemSleutel(v));
+      const volgende = stemKeuze();
+      if (!volgende) stemKaal = true;
+      try { zegNu(text, opts, volgende); return; } catch (e) { /* door */ }
+    }
     stemZegtHet(false);
     if (opts.onEnd) opts.onEnd();
   };

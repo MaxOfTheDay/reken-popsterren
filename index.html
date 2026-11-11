@@ -17616,7 +17616,7 @@ function speak(text, opts) {
 
 
     if (speechSynthesis.paused) speechSynthesis.resume();
-    zegNu(text, opts, stemKaal ? null : nlVoice());
+    zegNu(text, opts, stemKaal ? null : stemKeuze());
   } catch (e) { if (opts.onEnd) opts.onEnd(); }
 }
 
@@ -17632,6 +17632,28 @@ function speak(text, opts) {
 
 
 let stemKaal = false;
+
+
+
+
+
+
+
+
+
+const stemMis = new Set();
+function stemSleutel(v) { return v ? (v.voiceURI || v.name || '') + '|' + v.lang : ''; }
+function stemKeuze() {
+  if (!_voices.length) refreshVoices();
+  for (const re of STEM_VOORKEUR) {
+    const v = _voices.find(x => re.test(x.lang) && !stemMis.has(stemSleutel(x)));
+    if (v) return v;
+  }
+  return null;
+}
+
+
+function stemOpnieuwKiezen() { stemMis.clear(); stemKaal = false; }
 let stemNr = 0;
 function zegNu(text, opts, v) {
   if (!opts.wacht) stemNr++;
@@ -17656,8 +17678,15 @@ function zegNu(text, opts, v) {
 
     if (mijn !== stemNr) { einde(); return; }
     af = true;
-    meldFout('stem: ' + waarom + (v ? ' (' + v.lang + ')' : ''));
-    if (v && !stemKaal) { stemKaal = true; try { zegNu(text, opts, null); return; } catch (e) { } }
+
+
+    meldFout('stem: ' + waarom + (v ? ' (' + v.lang + (v.localService === false ? ', net' : '') + ')' : ''));
+    if (v) {
+      stemMis.add(stemSleutel(v));
+      const volgende = stemKeuze();
+      if (!volgende) stemKaal = true;
+      try { zegNu(text, opts, volgende); return; } catch (e) { }
+    }
     stemZegtHet(false);
     if (opts.onEnd) opts.onEnd();
   };
@@ -27505,7 +27534,7 @@ function replayPrompt() {
 
 
   if (!hasSpeech()) { showNotice('🔇 Geen stem', 'Deze browser kan niet voorlezen. Open Rekensterren in Chrome of Safari.'); return; }
-  if (stemStuk) { showNotice('🔇 Geen stem', STEM_STUK_ZIN, '🔊 Probeer opnieuw', leesVraagOpnieuw); return; }
+  if (stemStuk) { showNotice('🔇 Geen stem', STEM_STUK_ZIN, '🔊 Probeer opnieuw', () => { stemOpnieuwKiezen(); leesVraagOpnieuw(); }); return; }
   leesVraagOpnieuw();
 }
 function leesVraagOpnieuw() {

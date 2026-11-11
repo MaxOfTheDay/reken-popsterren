@@ -2295,7 +2295,7 @@ function replayPrompt() {
      stem zelf de 🔊 terug; zo niet, dan blijft de 🔇 staan. */
   // Een browser zonder spraak: opnieuw proberen heeft geen zin, de uitweg is een andere browser.
   if (!hasSpeech()) { showNotice('🔇 Geen stem', 'Deze browser kan niet voorlezen. Open Rekensterren in Chrome of Safari.'); return; }
-  if (stemStuk) { showNotice('🔇 Geen stem', STEM_STUK_ZIN, '🔊 Probeer opnieuw', leesVraagOpnieuw); return; }
+  if (stemStuk) { showNotice('🔇 Geen stem', STEM_STUK_ZIN, '🔊 Probeer opnieuw', () => { stemOpnieuwKiezen(); leesVraagOpnieuw(); }); return; }
   leesVraagOpnieuw();
 }
 function leesVraagOpnieuw() {
