@@ -820,11 +820,13 @@
     18%     { transform: scale(1.04, .94); }
     40%,75% { transform: translateY(-6px) scale(.97, 1.05); }
   }
+  /* Zacht indeuken: 82% hoogte drukte haar hoofd en kroon plat, en dan leest
+     het als rubber en niet als een meisje dat stuitert. */
   @keyframes mvBounce {
-    0%,100% { transform: translateY(0) scaleY(1); }
-    20% { transform: translateY(0) scaleY(.82) scaleX(1.1); }
-    45% { transform: translateY(-30px) scaleY(1.12) scaleX(.92); }
-    70% { transform: translateY(0) scaleY(.9) scaleX(1.06); }
+    0%,100% { transform: none; }
+    20% { transform: scale(1.05, .91); }
+    45% { transform: translateY(-30px) scale(.97, 1.05); }
+    70% { transform: scale(1.04, .94); }
   }
   /* ---- Wat er ín haar beweegt ----------------------------------------------
      Alleen op een .levend pop: de show, het eindscherm, de spiegel, de
@@ -851,20 +853,38 @@
   @keyframes slinger { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
   .avatar-holder.levend.dancing .av-staart { animation: zwier .3s ease-in-out 3 alternate; }
   @keyframes zwier { from { transform: rotate(-14deg); } to { transform: rotate(14deg); } }
-  /* De arm zwaait: in één zwaai omhoog, twee keer heen en weer vanuit de
-     schouder, en weer neer. Onderweg krijgt hij een andere bocht (de SMIL-
-     animatie av-arm-vorm in avatarSVG): die is klaar op 22% en gaat terug vanaf
-     78%, precies de stukken waarin de arm hier omhoog en omlaag gaat. Verschuif
-     je die twee, verschuif ze daar dan ook.
+  /* ELK PASJE ZIJN EIGEN ARM. Toen alle pasjes dezelfde zwaai hadden, was "Golf!"
+     geen golf meer maar wat ze altijd deed, en liepen de zeven pasjes in elkaar
+     over. Nu zwaait ze alleen bij de golf; bij de sprong schiet de arm één keer
+     omhoog en zakt hij op de landing, bij de stuiter stoot hij op het hoogste
+     punt, in de pirouette steekt hij opzij als bij een ballerina, bij het
+     heupwiegen slingert hij mee, bij het zijpasje houdt hij haar in evenwicht en
+     bij de hoge noot gaat hij wijd open. Een pasje zonder eigen regel (de huppel)
+     houdt de arm stil.
 
-     De mouw van het shirt (.av-mouw-l, alleen bij de jongen) draait mee, maar
-     22 graden minder ver: de opgeheven bocht vertrekt rechter uit de schouder dan
-     de hangende, en de mouw hoort bij dat eerste stukje arm. Dat verschil groeit
-     in hetzelfde tempo als de vorm, dus de mouw blijft om de arm zitten.
+     Boven de schouder (golf, sprong, stuiter) krijgt de arm onderweg een andere
+     bocht: de SMIL-animatie av-arm-vorm, die armVorm per pasje aanzet (ARM_VORM
+     in 10-feestjes.js). Daar staat ook wanneer die bocht omdraait; dat valt
+     samen met de stukken hieronder waarin de arm omhoog en omlaag gaat.
+     Verschuif je die, verschuif ze daar dan ook. Hoger dan 116 graden gaat hij
+     niet: daarboven ligt het linkerstaartje.
 
-     Niet bij de buiging: wie buigt, zwaait niet. */
-  .avatar-holder.levend.dancing:not(.move-buig) .av-arm-l { animation: armOp var(--t-pas, .9s) ease-in-out; }
-  .avatar-holder.levend.dancing:not(.move-buig) .av-mouw-l { animation: mouwOp var(--t-pas, .9s) ease-in-out; }
+     De mouw van het shirt (.av-mouw-l, alleen bij de jongen) draait mee. In de
+     opgeheven bocht 22 graden minder ver: die vertrekt rechter uit de schouder
+     dan de hangende, en de mouw hoort bij dat eerste stukje arm. In de gewone
+     bocht draait hij gewoon even ver mee.
+
+     Niet bij de buiging: die heeft hieronder zijn eigen arm. */
+  .avatar-holder.levend.move-wave .av-arm-l { animation: armOp var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-wave .av-mouw-l { animation: mouwOp var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-jump .av-arm-l { animation: armSprong var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-jump .av-mouw-l { animation: mouwSprong var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-bounce .av-arm-l { animation: armStuiter var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-bounce .av-mouw-l { animation: mouwStuiter var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-spin :is(.av-arm-l, .av-mouw-l) { animation: armOpzij var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-sway :is(.av-arm-l, .av-mouw-l) { animation: armSlinger var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-kick :is(.av-arm-l, .av-mouw-l) { animation: armEvenwicht var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-noot :is(.av-arm-l, .av-mouw-l) { animation: armWijd var(--t-pas, .9s) ease-in-out; }
   @keyframes armOp {
     0%,100% { transform: none; }
     22% { transform: rotate(110deg); }
@@ -880,6 +900,78 @@
     50% { transform: rotate(90deg); }
     64% { transform: rotate(64deg); }
     78% { transform: rotate(78deg); }
+  }
+  /* omhoog op het hoogste punt van de sprong (mvJump 30%), neer op de landing (55%) */
+  @keyframes armSprong {
+    0%,100% { transform: none; }
+    14% { transform: rotate(46deg); }
+    30% { transform: rotate(114deg); }
+    42% { transform: rotate(108deg); }
+    55% { transform: rotate(28deg); }
+    75% { transform: rotate(60deg); }
+  }
+  @keyframes mouwSprong {
+    0%,100% { transform: none; }
+    14% { transform: rotate(38deg); }
+    30% { transform: rotate(92deg); }
+    42% { transform: rotate(86deg); }
+    55% { transform: rotate(28deg); }
+    75% { transform: rotate(60deg); }
+  }
+  /* de stoot valt op het hoogste punt van mvBounce (45%) */
+  @keyframes armStuiter {
+    0%,100% { transform: none; }
+    20% { transform: rotate(14deg); }
+    45% { transform: rotate(116deg); }
+    70% { transform: rotate(22deg); }
+  }
+  @keyframes mouwStuiter {
+    0%,100% { transform: none; }
+    20% { transform: rotate(14deg); }
+    45% { transform: rotate(94deg); }
+    70% { transform: rotate(22deg); }
+  }
+  @keyframes armOpzij { 0%,100% { transform: none; } 22%,78% { transform: rotate(74deg); } }
+  /* tegen haar helling in (mvSway): ze leunt links, de arm zwaait naar buiten */
+  @keyframes armSlinger {
+    0%,100% { transform: none; }
+    20% { transform: rotate(40deg); }
+    50% { transform: rotate(8deg); }
+    80% { transform: rotate(28deg); }
+  }
+  /* uit als het rechterbeen schopt (schopR 25%), terug bij het linker (50%) */
+  @keyframes armEvenwicht {
+    0%,100% { transform: none; }
+    25% { transform: rotate(64deg); }
+    50% { transform: rotate(14deg); }
+    70% { transform: rotate(42deg); }
+  }
+  /* op dezelfde tellen als nootHoofd: wijd open terwijl ze de noot houdt */
+  @keyframes armWijd { 0%,100% { transform: none; } 18% { transform: rotate(10deg); } 40%,75% { transform: rotate(72deg); } }
+  /* DE MICRO DOET MEE (.av-mic: de micro-arm en wat hij vasthoudt, en bij de
+     jongen zijn mouw). Bij de hoge noot gaat de micro naar haar mond -- alleen
+     als het iets is om in te zingen (.zingt, zie avatarSVG); een pintje of een
+     toverstaf gaat even omhoog. Bij de sprong, de stuiter en de pirouette gaat
+     hij mee op de maat. Het draaipunt is de schouder. */
+  .av-mic, .av-mouw-r { transform-box: view-box; transform-origin: 116px 112px; }
+  .avatar-holder.levend.move-noot :is(.av-mic, .av-mouw-r) { animation: micOp var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-noot:has(.av-mic.zingt) :is(.av-mic, .av-mouw-r) { animation-name: micMond; }
+  .avatar-holder.levend.move-jump :is(.av-mic, .av-mouw-r) { animation: micSprong var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-bounce :is(.av-mic, .av-mouw-r) { animation: micStuiter var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-spin :is(.av-mic, .av-mouw-r) { animation: micOp var(--t-pas, .9s) ease-in-out; }
+  @keyframes micMond { 0%,100% { transform: none; } 18% { transform: rotate(4deg); } 40%,75% { transform: rotate(-26deg); } }
+  @keyframes micOp { 0%,100% { transform: none; } 22%,78% { transform: rotate(-10deg); } }
+  @keyframes micSprong {
+    0%,100% { transform: none; }
+    30% { transform: rotate(-14deg); }
+    55% { transform: rotate(5deg); }
+    75% { transform: rotate(-7deg); }
+  }
+  @keyframes micStuiter {
+    0%,100% { transform: none; }
+    20% { transform: rotate(6deg); }
+    45% { transform: rotate(-14deg); }
+    70% { transform: rotate(5deg); }
   }
   /* De reverence (.move-buig): het hoofd helt opzij, de ogen gaan dicht, en de
      vrije arm gaat opzij -- met zijn mouw, en in zijn gewone vorm, want hij gaat
@@ -930,6 +1022,7 @@
     .avatar-holder.levend .av-hoofd,
     .avatar-holder.levend .av-staart, .avatar-holder.levend .av-arm-l,
     .avatar-holder.levend .av-mouw-l, .avatar-holder .av-been,
+    .avatar-holder.levend .av-mic, .avatar-holder.levend .av-mouw-r,
     .avatar-holder .av-blik, .avatar-holder .av-oog,
     .avatar-holder.levend.idle { animation: none; }
     .avatar-holder.move-noot::before, .avatar-holder.move-noot::after { content: none; }

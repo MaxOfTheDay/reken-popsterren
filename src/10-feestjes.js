@@ -227,26 +227,50 @@ function zetPas(el, move) {
   const pop = el.firstElementChild;
   if (pop) void pop.offsetWidth;
   el.classList.add('dancing', move.cls);
-  armVorm(el, move !== BUIGING);
+  armVorm(el, move);
   return true;
 }
 /* De vrije arm vervormt als hij de lucht in gaat (zie ARM_OP in avatarSVG). Dat
    is een SMIL-animatie, en die start niet vanzelf mee met een klasse: hier gaat
-   ze aan, op hetzelfde moment als het pasje. Alleen waar de arm ook echt omhoog
-   gaat -- een .levend pop, en niet bij de buiging, die de arm opzij steekt en
-   dus zijn gewone vorm houdt. Bij stilstaan gaat ze uit, zodat een afgebroken
-   pasje geen arm met de verkeerde bocht laat hangen. */
-function armVorm(el, aan) {
+   ze aan, op hetzelfde moment als het pasje. Alleen op een .levend pop, en
+   alleen bij de pasjes waarin de arm boven de schouder komt.
+
+   ELK PASJE ZIJN EIGEN ARM (zie "Wat er ín haar beweegt" in het stijlblad). Bij
+   de golf zwaait hij twee keer boven haar hoofd, bij de sprong schiet hij één
+   keer omhoog, bij de stuiter stoot hij op het hoogste punt. Daar hoort per
+   pasje een eigen stuk "omhoog", dus staat hier per pasje wanneer de bocht
+   omdraait: elke letter is een sleutelmoment, r = rust (hangen), o = omhoog.
+   De tijden moeten samenvallen met de @keyframes van dat pasje (armOp, armSprong,
+   armStuiter) -- verschuif je daar een tel, verschuif hem hier mee. Een pasje
+   dat er niet in staat (pirouette, zijpasje, ...) houdt de arm onder schouder-
+   hoogte, dus in zijn gewone bocht. Bij stilstaan gaat ze uit, zodat een
+   afgebroken pasje geen arm met de verkeerde bocht laat hangen. */
+const ARM_VORM = {
+  'move-wave':   { vorm: 'room', keyTimes: '0;.22;.78;1' },
+  'move-jump':   { vorm: 'roorr', keyTimes: '0;.24;.42;.55;1' },
+  'move-bounce': { vorm: 'rrorr', keyTimes: '0;.22;.45;.66;1' },
+};
+function armVorm(el, move) {
   const v = el.querySelector && el.querySelector('.av-arm-vorm');
   if (!v || !v.beginElement) return;
-  try { if (aan && el.classList.contains('levend')) v.beginElement(); else v.endElement(); } catch (e) { /* niet actief: niets te stoppen */ }
+  const plan = move && ARM_VORM[move.cls];
+  try {
+    v.endElement();
+    if (!plan || !el.classList.contains('levend')) return;
+    // de twee bochten staan in de tekening zelf; de eerste twee waarden zijn rust en omhoog
+    if (!v.bochten) { const w = v.getAttribute('values').split(';'); v.bochten = { r: w[0], o: w[1] }; }
+    v.setAttribute('values', [...plan.vorm].map(k => v.bochten[k]).join(';'));
+    v.setAttribute('keyTimes', plan.keyTimes);
+    v.setAttribute('keySplines', Array(plan.vorm.length - 1).fill('.42 0 .58 1').join(';'));
+    v.beginElement();
+  } catch (e) { /* niet actief: niets te stoppen */ }
 }
 /* En weer uit: alleen het pasje eraf. Het wiegen loopt door en stond ook nooit
    stil, dus dat hoeft hier niet meer aangezet te worden -- 'idle' stond er al en
    zetPas haalt hem niet meer weg. Dat scheelt niet alleen een regel: de poppen op
    de sterrenkeuze hébben geen 'idle' (zes wiegende poppen naast elkaar is precies
    wat dit scherm niet wil), en die zouden er hier eentje cadeau krijgen. */
-function stilStaan(el) { if (el) { pasLos(el); el.classList.remove('dancing', ...MOVE_CLASSES); armVorm(el, false); } }
+function stilStaan(el) { if (el) { pasLos(el); el.classList.remove('dancing', ...MOVE_CLASSES); armVorm(el, null); } }
 /* Hoe lang één pasje duurt: de .9s van de danspasjes in 30-onderdelen.css.
 
    AF ALS HIJ UIT IS, NIET ALS DE KLOK HET ZEGT. Het pasje ging er eerst af op
@@ -296,7 +320,7 @@ function dance(elId) {
   if (!el || el.classList.contains('dancing')) return;
   // kies het volgende danspasje van de show (afwisselend, met een verrassing)
   const move = Math.random() < 0.4 ? pick(MOVES) : MOVES[G ? G.moveIdx % MOVES.length : 0];
-  if (G) { G.moveIdx++; }   // volgend danspasje uit de reeks
+  if (G) { G.moveIdx++; if (G.pasjes) G.pasjes.push(move); }   // volgend danspasje uit de reeks; de finale danst ze na (finaleReeks)
   if (!zetPas(el, move)) return;
   pasUit(el);
 }
@@ -649,8 +673,10 @@ function sparkleAt(r, emojis) {
 // Grote finale-choreografie op het eindscherm: alle pasjes achter elkaar.
 /* buig: het laatste pasje is de buiging. Een show eindigt zoals een show
    eindigt -- ze danst, en buigt dan voor de zaal. Het blijft één ding (zie
-   BUIGING): de buiging komt alleen na een show, nooit na een gewoon antwoord. */
-function finaleDance(elId, count, buig) {
+   BUIGING): de buiging komt alleen na een show, nooit na een gewoon antwoord.
+   reeks: welke pasjes vóór de buiging (zie finaleReeks); zonder reeks de
+   pasjes in de volgorde van MOVES. */
+function finaleDance(elId, count, buig, reeks) {
   const el = $(elId);
   if (!el) return;
   // Bijna vier seconden dansen is precies het soort beweging dat je niet wilt
@@ -665,12 +691,30 @@ function finaleDance(elId, count, buig) {
   let i = 0;
   const step = () => {
     if (i >= count) { stilStaan(el); return; }
-    const pas = buig && i === count - 1 ? BUIGING : MOVES[i % MOVES.length];
+    const pas = buig && i === count - 1 ? BUIGING : (reeks && reeks[i]) || MOVES[i % MOVES.length];
     if (!zetPas(el, pas)) return;
     i++;
     pasUit(el, step);
   };
   step();
+}
+/* De finale danst de show na. Hij was altijd dezelfde vier (sprong, pirouette,
+   heupwiegen, buiging), na één ster en na drie, honderden keren. Nu zijn het de
+   laatste pasjes die ze in déze show danste, elk één keer, in de volgorde
+   waarin ze kwamen -- en aangevuld uit MOVES als de show er minder had. Drie
+   sterren: dan is het laatste pasje vóór de buiging de hoge noot, het mooiste
+   wat ze heeft. gedanst is G.pasjes (zie dance). */
+function finaleReeks(gedanst, n, drie) {
+  const noot = MOVES.find(m => m.cls === 'move-noot');
+  const uniek = [];
+  for (let i = (gedanst || []).length - 1; i >= 0 && uniek.length < n; i--) {
+    if (!uniek.includes(gedanst[i]) && !(drie && gedanst[i] === noot)) uniek.unshift(gedanst[i]);
+  }
+  const ruimte = drie ? n - 1 : n;
+  const reeks = uniek.slice(-ruimte);
+  for (const m of MOVES) if (reeks.length < ruimte && !reeks.includes(m) && !(drie && m === noot)) reeks.push(m);
+  if (drie) reeks.push(noot);
+  return reeks;
 }
 // reward (optioneel): apart pilletje onder de tekst, zelfde stijl als de
 // opbrengst-badges op het eindscherm (.earn-chip.dia) -- zo staat "wat er

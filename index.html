@@ -2994,11 +2994,13 @@
     18%     { transform: scale(1.04, .94); }
     40%,75% { transform: translateY(-6px) scale(.97, 1.05); }
   }
+
+
   @keyframes mvBounce {
-    0%,100% { transform: translateY(0) scaleY(1); }
-    20% { transform: translateY(0) scaleY(.82) scaleX(1.1); }
-    45% { transform: translateY(-30px) scaleY(1.12) scaleX(.92); }
-    70% { transform: translateY(0) scaleY(.9) scaleX(1.06); }
+    0%,100% { transform: none; }
+    20% { transform: scale(1.05, .91); }
+    45% { transform: translateY(-30px) scale(.97, 1.05); }
+    70% { transform: scale(1.04, .94); }
   }
 
 
@@ -3037,8 +3039,26 @@
 
 
 
-  .avatar-holder.levend.dancing:not(.move-buig) .av-arm-l { animation: armOp var(--t-pas, .9s) ease-in-out; }
-  .avatar-holder.levend.dancing:not(.move-buig) .av-mouw-l { animation: mouwOp var(--t-pas, .9s) ease-in-out; }
+
+
+
+
+
+
+
+
+
+
+  .avatar-holder.levend.move-wave .av-arm-l { animation: armOp var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-wave .av-mouw-l { animation: mouwOp var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-jump .av-arm-l { animation: armSprong var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-jump .av-mouw-l { animation: mouwSprong var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-bounce .av-arm-l { animation: armStuiter var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-bounce .av-mouw-l { animation: mouwStuiter var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-spin :is(.av-arm-l, .av-mouw-l) { animation: armOpzij var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-sway :is(.av-arm-l, .av-mouw-l) { animation: armSlinger var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-kick :is(.av-arm-l, .av-mouw-l) { animation: armEvenwicht var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-noot :is(.av-arm-l, .av-mouw-l) { animation: armWijd var(--t-pas, .9s) ease-in-out; }
   @keyframes armOp {
     0%,100% { transform: none; }
     22% { transform: rotate(110deg); }
@@ -3054,6 +3074,78 @@
     50% { transform: rotate(90deg); }
     64% { transform: rotate(64deg); }
     78% { transform: rotate(78deg); }
+  }
+
+  @keyframes armSprong {
+    0%,100% { transform: none; }
+    14% { transform: rotate(46deg); }
+    30% { transform: rotate(114deg); }
+    42% { transform: rotate(108deg); }
+    55% { transform: rotate(28deg); }
+    75% { transform: rotate(60deg); }
+  }
+  @keyframes mouwSprong {
+    0%,100% { transform: none; }
+    14% { transform: rotate(38deg); }
+    30% { transform: rotate(92deg); }
+    42% { transform: rotate(86deg); }
+    55% { transform: rotate(28deg); }
+    75% { transform: rotate(60deg); }
+  }
+
+  @keyframes armStuiter {
+    0%,100% { transform: none; }
+    20% { transform: rotate(14deg); }
+    45% { transform: rotate(116deg); }
+    70% { transform: rotate(22deg); }
+  }
+  @keyframes mouwStuiter {
+    0%,100% { transform: none; }
+    20% { transform: rotate(14deg); }
+    45% { transform: rotate(94deg); }
+    70% { transform: rotate(22deg); }
+  }
+  @keyframes armOpzij { 0%,100% { transform: none; } 22%,78% { transform: rotate(74deg); } }
+
+  @keyframes armSlinger {
+    0%,100% { transform: none; }
+    20% { transform: rotate(40deg); }
+    50% { transform: rotate(8deg); }
+    80% { transform: rotate(28deg); }
+  }
+
+  @keyframes armEvenwicht {
+    0%,100% { transform: none; }
+    25% { transform: rotate(64deg); }
+    50% { transform: rotate(14deg); }
+    70% { transform: rotate(42deg); }
+  }
+
+  @keyframes armWijd { 0%,100% { transform: none; } 18% { transform: rotate(10deg); } 40%,75% { transform: rotate(72deg); } }
+
+
+
+
+
+  .av-mic, .av-mouw-r { transform-box: view-box; transform-origin: 116px 112px; }
+  .avatar-holder.levend.move-noot :is(.av-mic, .av-mouw-r) { animation: micOp var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-noot:has(.av-mic.zingt) :is(.av-mic, .av-mouw-r) { animation-name: micMond; }
+  .avatar-holder.levend.move-jump :is(.av-mic, .av-mouw-r) { animation: micSprong var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-bounce :is(.av-mic, .av-mouw-r) { animation: micStuiter var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.levend.move-spin :is(.av-mic, .av-mouw-r) { animation: micOp var(--t-pas, .9s) ease-in-out; }
+  @keyframes micMond { 0%,100% { transform: none; } 18% { transform: rotate(4deg); } 40%,75% { transform: rotate(-26deg); } }
+  @keyframes micOp { 0%,100% { transform: none; } 22%,78% { transform: rotate(-10deg); } }
+  @keyframes micSprong {
+    0%,100% { transform: none; }
+    30% { transform: rotate(-14deg); }
+    55% { transform: rotate(5deg); }
+    75% { transform: rotate(-7deg); }
+  }
+  @keyframes micStuiter {
+    0%,100% { transform: none; }
+    20% { transform: rotate(6deg); }
+    45% { transform: rotate(-14deg); }
+    70% { transform: rotate(5deg); }
   }
 
 
@@ -3104,6 +3196,7 @@
     .avatar-holder.levend .av-hoofd,
     .avatar-holder.levend .av-staart, .avatar-holder.levend .av-arm-l,
     .avatar-holder.levend .av-mouw-l, .avatar-holder .av-been,
+    .avatar-holder.levend .av-mic, .avatar-holder.levend .av-mouw-r,
     .avatar-holder .av-blik, .avatar-holder .av-oog,
     .avatar-holder.levend.idle { animation: none; }
     .avatar-holder.move-noot::before, .avatar-holder.move-noot::after { content: none; }
@@ -12573,7 +12666,7 @@ function zetPas(el, move) {
   const pop = el.firstElementChild;
   if (pop) void pop.offsetWidth;
   el.classList.add('dancing', move.cls);
-  armVorm(el, move !== BUIGING);
+  armVorm(el, move);
   return true;
 }
 
@@ -12582,17 +12675,41 @@ function zetPas(el, move) {
 
 
 
-function armVorm(el, aan) {
+
+
+
+
+
+
+
+
+
+const ARM_VORM = {
+  'move-wave':   { vorm: 'room', keyTimes: '0;.22;.78;1' },
+  'move-jump':   { vorm: 'roorr', keyTimes: '0;.24;.42;.55;1' },
+  'move-bounce': { vorm: 'rrorr', keyTimes: '0;.22;.45;.66;1' },
+};
+function armVorm(el, move) {
   const v = el.querySelector && el.querySelector('.av-arm-vorm');
   if (!v || !v.beginElement) return;
-  try { if (aan && el.classList.contains('levend')) v.beginElement(); else v.endElement(); } catch (e) { }
+  const plan = move && ARM_VORM[move.cls];
+  try {
+    v.endElement();
+    if (!plan || !el.classList.contains('levend')) return;
+
+    if (!v.bochten) { const w = v.getAttribute('values').split(';'); v.bochten = { r: w[0], o: w[1] }; }
+    v.setAttribute('values', [...plan.vorm].map(k => v.bochten[k]).join(';'));
+    v.setAttribute('keyTimes', plan.keyTimes);
+    v.setAttribute('keySplines', Array(plan.vorm.length - 1).fill('.42 0 .58 1').join(';'));
+    v.beginElement();
+  } catch (e) { }
 }
 
 
 
 
 
-function stilStaan(el) { if (el) { pasLos(el); el.classList.remove('dancing', ...MOVE_CLASSES); armVorm(el, false); } }
+function stilStaan(el) { if (el) { pasLos(el); el.classList.remove('dancing', ...MOVE_CLASSES); armVorm(el, null); } }
 
 
 
@@ -12642,7 +12759,7 @@ function dance(elId) {
   if (!el || el.classList.contains('dancing')) return;
 
   const move = Math.random() < 0.4 ? pick(MOVES) : MOVES[G ? G.moveIdx % MOVES.length : 0];
-  if (G) { G.moveIdx++; }
+  if (G) { G.moveIdx++; if (G.pasjes) G.pasjes.push(move); }
   if (!zetPas(el, move)) return;
   pasUit(el);
 }
@@ -12996,7 +13113,9 @@ function sparkleAt(r, emojis) {
 
 
 
-function finaleDance(elId, count, buig) {
+
+
+function finaleDance(elId, count, buig, reeks) {
   const el = $(elId);
   if (!el) return;
 
@@ -13011,12 +13130,30 @@ function finaleDance(elId, count, buig) {
   let i = 0;
   const step = () => {
     if (i >= count) { stilStaan(el); return; }
-    const pas = buig && i === count - 1 ? BUIGING : MOVES[i % MOVES.length];
+    const pas = buig && i === count - 1 ? BUIGING : (reeks && reeks[i]) || MOVES[i % MOVES.length];
     if (!zetPas(el, pas)) return;
     i++;
     pasUit(el, step);
   };
   step();
+}
+
+
+
+
+
+
+function finaleReeks(gedanst, n, drie) {
+  const noot = MOVES.find(m => m.cls === 'move-noot');
+  const uniek = [];
+  for (let i = (gedanst || []).length - 1; i >= 0 && uniek.length < n; i--) {
+    if (!uniek.includes(gedanst[i]) && !(drie && gedanst[i] === noot)) uniek.unshift(gedanst[i]);
+  }
+  const ruimte = drie ? n - 1 : n;
+  const reeks = uniek.slice(-ruimte);
+  for (const m of MOVES) if (reeks.length < ruimte && !reeks.includes(m) && !(drie && m === noot)) reeks.push(m);
+  if (drie) reeks.push(noot);
+  return reeks;
 }
 
 
@@ -17861,7 +17998,8 @@ function torsoShirt(dc, mic) {
     + `<path d="${zoom}" stroke="rgba(0,0,0,.16)" stroke-width="2" fill="none" stroke-linecap="round"/>`;
   return `<path d="M86 103 Q78 105 82 110 L78 165 Q100 171 122 165 L118 110 Q122 105 114 103 Q100 110 86 103 Z" fill="${dc}"/>`
     + `<g class="av-mouw-l">${mouw('M84 110 Q77 116 75 124', 'M69 121 L81 127')}</g>`
-    + (mic ? mouw('M116 110 Q123 104 128 100', 'M124 95 L132 105')
+
+    + (mic ? `<g class="av-mouw-r">${mouw('M116 110 Q123 104 128 100', 'M124 95 L132 105')}</g>`
            : mouw('M116 110 Q123 116 125 124', 'M119 127 L131 121'))
 
     + `<path d="M89 105 Q100 116 111 105" stroke="rgba(0,0,0,.16)" stroke-width="3" fill="none" stroke-linecap="round"/>`
@@ -18133,13 +18271,19 @@ function avatarSVG(p, width, propMaat) {
 
 
 
+
   const hand = (x, y) => `<circle cx="${x}" cy="${y}" r="5.6" fill="${SKIN}"/>`;
   const ARM = 'M84 112 Q68 132 64 157', ARM_OP = 'M84 112 Q77 136 64 157';
   s += `<g class="av-arm-l"><path d="${ARM}" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round">`
     + `<animate class="av-arm-vorm" attributeName="d" dur="${PAS}ms" begin="indefinite" values="${ARM};${ARM_OP};${ARM_OP};${ARM}" keyTimes="0;.22;.78;1" calcMode="spline" keySplines=".42 0 .58 1;0 0 1 1;.42 0 .58 1"/>`
     + `</path>${hand(64, 158)}</g>`;
+
+
+
+
+
   s += mic
-    ? `<path d="M116 112 Q134 98 145 80" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`
+    ? `<g class="av-mic"><path d="M116 112 Q134 98 145 80" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/></g>`
     : `<path d="M116 112 Q132 132 136 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>${hand(136, 158)}`;
 
   s += B.legs(dc);
@@ -18160,6 +18304,11 @@ function avatarSVG(p, width, propMaat) {
 
 
   if (mic) {
+
+
+
+    const zingt = mic.id !== 'mic_pintje' && mic.id !== 'mic_toverstaf';
+    s += `<g class="av-mic${zingt ? ' zingt' : ''}">`;
     if (mic.id === 'mic_pintje') {
 
       s += hand(145, 81) + `<text x="135" y="82" font-size="26">🍺</text>`;
@@ -18174,8 +18323,12 @@ function avatarSVG(p, width, propMaat) {
     } else {
       s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>` + hand(145, 81);
       s += `<circle cx="156" cy="63" r="9" fill="${mic.color === 'RAINBOW' ? `url(#rb${uid})` : mic.color}" stroke="#666" stroke-width="1.5"/>`;
-      if (!kaart) s += `<text x="163" y="47" font-size="15">🎵</text>`;
+
+
+
+      if (!kaart) s += `<path transform="translate(158 34) scale(.82)" d="M8 4v10.3A3.2 3.2 0 1 0 10 17.3V9l9-2v5.3A3.2 3.2 0 1 0 21 15.3V2z" fill="#ffd740" stroke="#7a4a00" stroke-opacity=".5" stroke-width="1.6" paint-order="stroke" stroke-linejoin="round"/>`;
     }
+    s += `</g>`;
   }
   s += `</svg>`;
   return s;
@@ -28334,7 +28487,7 @@ function startLevel(lvl, eigenOvergang) {
 
 
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
-  G = { lvl, inst, insts, themaPlan: vragenPlan, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
+  G = { lvl, inst, insts, themaPlan: vragenPlan, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, pasjes: [], herhaald: new Set(),
         klaarBijStart: (p.readyTrophies || []).slice(),
         missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0,
         nieuwRij: nieuwTeTonen[cur] || null,
@@ -30177,7 +30330,7 @@ function endLevel(success) {
 
 
     sndWin();
-    finaleDance('end-avatar', 4, true);
+    finaleDance('end-avatar', 4, true, finaleReeks(G && G.pasjes, 3, stars === 3));
   } else {
 
 

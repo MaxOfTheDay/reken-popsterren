@@ -71,7 +71,7 @@ function startLevel(lvl, eigenOvergang) {
   // maar er staat geen balk meer op het scherm. G.fan/G.fanStep zijn daarmee interne
   // staat geworden -- bewust blijven staan i.p.v. de beloningen eruit te slopen.
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
-  G = { lvl, inst, insts, themaPlan: vragenPlan, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
+  G = { lvl, inst, insts, themaPlan: vragenPlan, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, pasjes: [], herhaald: new Set(),
         klaarBijStart: (p.readyTrophies || []).slice(),
         missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0,
         nieuwRij: nieuwTeTonen[cur] || null,   // wat er nieuw is sinds de vorige show (zie vraagIsNieuw)
@@ -1914,7 +1914,7 @@ function endLevel(success) {
        handje sterretjes (zie renderEndStars): oorzaak eerst, dan het feest, en
        een betere show ziet er vanzelf groter uit. */
     sndWin();
-    finaleDance('end-avatar', 4, true);   // grote slotchoreografie: drie hele pasjes en de buiging, ruim 3.6s
+    finaleDance('end-avatar', 4, true, finaleReeks(G && G.pasjes, 3, stars === 3));   // drie pasjes uit deze show en de buiging, ruim 3.6s
   } else {
     // Mislukt: er komt geen ster bij en er schuift niets op. Alleen de 💎 van de
     // publieksteller hierboven zijn al bijgeschreven, en die horen bewaard.
