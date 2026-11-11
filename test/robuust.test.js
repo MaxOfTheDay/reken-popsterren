@@ -46,6 +46,14 @@
  *      die elkaar overlappen (allebei tellen, in de volgorde van neerkomen), een
  *      tik in de kier, lang vasthouden -- en wie ver wegschuift, breekt af. Met
  *      click ging de rol en de overlap verloren (de overlap zelfs voor allebei).
+ *   G  elke andere knop telt net zo (= Elke tik telt). Op elk scherm van het
+ *      kind, en in Voor ouders, krijgt elke zichtbare knop drie tikken met
+ *      echte aanrakingen: een gewone, een terwijl er een duim op de rand van het
+ *      glas blijft liggen, en -- buiten de lijsten die schuiven -- een die bij
+ *      het loslaten 20 px rolt. Elke keer precies één click: nul is een
+ *      verloren tik, twee is een dubbele. En alles met een onclick is een knop
+ *      (een <button>, of knopRol): bereikbaar met Tab, een knop voor een
+ *      schermlezer, en dus ook gedekt door Elke tik telt.
  *
  * Draaien:
  *   npm run test:robuust      (of: npm test voor alle suites)
@@ -379,6 +387,94 @@ const NIET = /set-reset|set-delete|delete|wis|import|export|backup|deel|kopieer|
       await page.evaluate(() => { __tel.length = 0; });
       await page.evaluate(sel => document.querySelector(sel).click(), sel);
       check(JSON.stringify(await page.evaluate(() => __tel.slice())) === JSON.stringify([a.t]), `F · een click zonder aanraking (toetsenbord) telt één keer (${mode})`, '');
+    }
+    await ctx.close();
+  }
+
+  /* ---- G · elke andere knop telt net zo ---- */
+  {
+    const { ctx, page } = await nieuw();
+    const cdp = await ctx.newCDPSession(page);
+    const T = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map(([x, y, id]) => ({ x, y, id })) });
+    const W = ms => page.waitForTimeout(ms);
+    const SCHERMEN = [['profile', ''], ['map', '&screen=map'], ['reis', '&screen=reis'], ['game', '&screen=game'],
+      ['end', '&screen=end'], ['dress', '&screen=dress'], ['tro', '&screen=tro'], ['ouders', '&screen=ouders']];
+    for (const [naam, scherm] of SCHERMEN) {
+      await page.goto(APP_URL + '&demo' + (scherm ? '&star=p1' + scherm : ''));
+      await page.waitForTimeout(2200);
+      // elke zichtbare knop, met een teller die de click opvangt vóór hij iets doet
+      const knoppen = await page.evaluate(([sel, niet]) => {
+        const re = new RegExp(niet, 'i');
+        window.__klik = [];
+        const uit = [];
+        [...document.querySelectorAll(sel)].forEach(b => {
+          if (b.closest('.knop-tik, [inert], input, a[href]')) return;
+          // een kaartje zonder iets erachter (de wolk "Nog meer werelden") is geen knop
+          if (!b.matches('button, [role]') && !b.onclick && !b.hasAttribute('onclick')) return;
+          const r = b.getBoundingClientRect();
+          if (r.width < 8 || r.height < 8 || r.top < 0 || r.bottom > innerHeight || r.left < 0 || r.right > innerWidth) return;
+          if (re.test((b.id || '') + ' ' + (typeof b.className === 'string' ? b.className : '') + ' ' + (b.getAttribute('onclick') || ''))) return;
+          const x = r.left + r.width / 2, y = r.top + r.height / 2;
+          const top = document.elementFromPoint(x, y);
+          if (!top || !(b === top || b.contains(top))) return;
+          const i = uit.length;
+          b.addEventListener('click', e => { __klik.push(i); e.preventDefault(); e.stopImmediatePropagation(); }, true);
+          uit.push({ i, x, y, naam: b.id || (b.getAttribute('aria-label') || b.textContent || b.className).trim().slice(0, 24), lijst: !!elkeTikRol(b) });
+        });
+        return uit;
+      }, [KNOPPEN, NIET.source]);
+      // een plek voor de duim: links op halve hoogte, op niets tikbaars
+      const duim = await page.evaluate(sel => {
+        for (const x of [4, 10, 20]) for (const y of [0.5, 0.4, 0.6, 0.3]) {
+          const el = document.elementFromPoint(x, innerHeight * y);
+          if (el && !el.closest(sel)) return [x, Math.round(innerHeight * y)];
+        }
+        return null;
+      }, KNOPPEN);
+      const mis = [];
+      for (const k of knoppen) {
+        const zaken = [
+          ['gewoon', async () => { await T('touchStart', [[k.x, k.y, 1]]); await W(40); await T('touchEnd', []); }],
+        ];
+        if (duim) zaken.push(['duim op het glas', async () => {
+          // de duim ligt er al een tijdje: langer dan een tik (KORT_DRUK)
+          await T('touchStart', [[duim[0], duim[1], 1]]); await W(800);
+          await T('touchStart', [[duim[0], duim[1], 1], [k.x, k.y, 2]]); await W(40);
+          await T('touchEnd', [[duim[0], duim[1], 1]]); await W(40);
+          await T('touchEnd', []);
+        }]);
+        if (!k.lijst) zaken.push(['rolt 20 px', async () => {
+          await T('touchStart', [[k.x, k.y, 1]]);
+          for (let i = 1; i <= 4; i++) await T('touchMove', [[k.x + 5 * i, k.y + i, 1]]);
+          await T('touchEnd', []);
+        }]);
+        for (const [hoe, doe] of zaken) {
+          await page.evaluate(() => { __klik.length = 0; });
+          await doe();
+          await W(250);
+          const n = await page.evaluate(i => __klik.filter(x => x === i).length, k.i);
+          if (n !== 1) mis.push(`${k.naam} (${hoe}): ${n}x`);
+        }
+      }
+      check(knoppen.length > 0 && !mis.length, `G · elke knop telt één keer (${naam}, ${knoppen.length} knoppen)`, mis.slice(0, 8).join(' | '));
+      /* En wat je kunt aantikken, is een knop: een <button>, of iets met een
+         knoprol dat het toetsenbord kan bereiken (knopRol). Anders slaat Elke tik
+         telt het over, komt Tab er niet op en noemt een schermlezer het tekst.
+         Uitgezonderd, met reden: de achtergrond van een venster (tik ernaast =
+         sluiten, Escape doet hetzelfde), en zij zelf (tik = een dansje; een
+         speeltje, geen opdracht). */
+      const geenKnop = await page.evaluate(() => {
+        const MAG = '.modal-bg, .tappable, .spiegel, #trophy-shelves';
+        return [...document.querySelectorAll('body *')].filter(el => {
+          if (!(el.onclick || el.hasAttribute('onclick'))) return false;
+          if (/^(BUTTON|A|INPUT|LABEL|SELECT|TEXTAREA)$/.test(el.tagName) || el.matches(MAG)) return false;
+          const r = el.getBoundingClientRect();
+          if (!r.width || !r.height || el.closest('[inert], [hidden]')) return false;
+          if (el.closest('.screen') && !el.closest('.screen.active')) return false;
+          return !(/^(button|switch|menuitem|menuitemcheckbox|checkbox|tab)$/.test(el.getAttribute('role') || '') && el.tabIndex >= 0);
+        }).map(el => el.id || (typeof el.className === 'string' ? el.className : el.tagName)).slice(0, 8);
+      });
+      check(!geenKnop.length, `G · wat je kunt aantikken is een knop (${naam})`, geenKnop.join(' | '));
     }
     await ctx.close();
   }
