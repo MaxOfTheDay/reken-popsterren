@@ -921,6 +921,46 @@
        tegels niet: drie onder elkaar worden dan te hoog voor een kleine telefoon. */
     #screen-game.telt .math-panel { --kaart-w: min(37vw, 320px); }
     #screen-game.telt .show-stage { width: min(16vw, 130px); height: min(13.4vw, 109px); }
+    /* DE TEGELS NEMEN DE HOOGTE. Hier is de hoogte op, maar onder de rij stond
+       40% van het scherm leeg, en drie tegels onder elkaar waren strookjes van
+       29px met voorwerpen van 9px: de maten hierboven rekenen in vh, en een
+       tegel die alleen zo hoog is als wat erin staat, maakt dat nooit groter.
+       Nu krijgt elke tegel een vaste hoogte uit het scherm (drie onder elkaar
+       passen nog op 568x320), en rekenen de voorwerpen erin in die hoogte:
+       één rij voorwerpen is zo'n derde van de tegel, een raampje van twee rijen
+       de helft. Kindermaat (schuiven zaak K) kijkt na dat het groot genoeg is. */
+    #screen-game.telt :is(.count-tiles.two, .count-tiles.three) { row-gap: 2.4vh; }
+    #screen-game.telt .count-tile, #screen-game.telt .count-tiles.vergelijk .count-tile { min-height: min(19vh, 88px); }
+    #screen-game.telt :is(.count-tiles.two, .count-tiles.three) .count-tile { min-height: min(21vh, 88px); padding: 1.6vh 8px; }
+    /* losse voorwerpen alleen groter als de tegels onder elkaar staan (twee of
+       drie): in een blok van vier zijn ze smal, en dan breekt een groepje van
+       vijf op drie regels en loopt het blok onder het scherm uit */
+    #screen-game.telt :is(.count-tiles.two, .count-tiles.three) .count-tile .cg-obj { font-size: min(36px, 8.4vh); }
+    #screen-game.telt :is(.count-tiles.two, .count-tiles.three) .count-tile .cg-dot { width: min(28px, 6.4vh); height: min(28px, 6.4vh); }
+    #screen-game.telt :is(.count-tiles.two, .count-tiles.three) .count-tile .cframe .tf-cell { width: min(52px, 17cqw, 8vh); height: min(52px, 17cqw, 8vh); }
+    #screen-game.telt :is(.count-tiles.two, .count-tiles.three) .count-tile .dframe:not(.mini) .df-cell { width: min(52px, 18cqw, 8vh); height: min(52px, 18cqw, 8vh); }
+    #screen-game.telt :is(.count-tiles.two, .count-tiles.three) .count-tile .cframe .cg-obj { font-size: min(38px, 12.5cqw, 5.8vh); }
+    #screen-game.telt :is(.count-tiles.two, .count-tiles.three) .count-tile .cframe .cg-dot { width: min(26px, 10cqw, 4.8vh); height: min(26px, 10cqw, 4.8vh); }
+    /* Vier tegels in een blok: dan beslist de breedte (een raampje rekent in
+       cqw), en die was 30vw voor twee tegels -- vakjes van 13px. Waar de kaart
+       geen telsom draagt (die moet op één regel, zie hierboven), krijgen de
+       tegels wat breedte van de kaart. */
+    #screen-game.telt .math-panel:not(:has(.sum-eq, .count-tiles.vergelijk)) { --kaart-w: min(30vw, 270px); }
+    #screen-game.telt .math-panel:not(:has(.sum-eq, .count-tiles.vergelijk)) #answer-area { width: min(36vw, 330px); }
+    #screen-game.telt .count-tile .cframe .tf-cell { width: min(52px, 17cqw, 6.5vh); height: min(52px, 17cqw, 6.5vh); }
+    #screen-game.telt .count-tile .dframe:not(.mini) .df-cell { width: min(52px, 18cqw, 6.5vh); height: min(52px, 18cqw, 6.5vh); }
+    #screen-game.telt .count-tile .cframe .cg-obj { font-size: min(38px, 12.5cqw, 4.7vh); }
+    /* "De meeste": de kaart draagt alleen de opdracht, dus de groepen krijgen de
+       breedte -- een rij van acht op 30vw had voorwerpen van 9px */
+    #screen-game.telt .math-panel:has(.count-tiles.vergelijk) { --kaart-w: min(24vw, 230px); }
+    #screen-game.telt .math-panel:has(.count-tiles.vergelijk) #answer-area { width: min(43vw, 420px); }
+    #screen-game.telt .count-tiles.vergelijk .count-tile .cg-obj { font-size: min(44px, 8.6cqw, 8.4vh); }
+    #screen-game.telt .count-tiles.vergelijk .count-tile .cg-dot { width: min(36px, 7cqw, 6.4vh); height: min(36px, 7cqw, 6.4vh); }
+    #screen-game.telt .count-tiles.vergelijk .count-tile .dframe:not(.mini) .df-cell,
+    #screen-game.telt .count-tiles.vergelijk .count-tile .cframe .tf-cell { width: min(44px, 11cqw, 7.4vh); height: min(44px, 11cqw, 7.4vh); }
+    #screen-game.telt .count-tiles.vergelijk .count-tile .cframe .cg-obj { font-size: min(31px, 7.7cqw, 5.2vh); }
+    #screen-game.telt .count-tiles.vergelijk .count-tile .cgroup.groot .cg-obj { font-size: min(60px, 10.5cqw, 11vh); }
+    #screen-game.telt .count-tiles.vergelijk .count-tile .cgroup.klein .cg-obj { font-size: min(30px, 6cqw, 5.6vh); }
     .sum-eq { flex-wrap: nowrap; gap: 4px 6px; }
     .sum-eq > * { flex-shrink: 0; }   /* anders worden vier bloemen een kolom */
     .dframe.mini, .sum-operand { --df-mini: 10px; }
