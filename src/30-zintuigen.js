@@ -825,7 +825,8 @@ function torsoShirt(dc, mic) {
     + `<path d="${zoom}" stroke="rgba(0,0,0,.16)" stroke-width="2" fill="none" stroke-linecap="round"/>`;
   return `<path d="M86 103 Q78 105 82 110 L78 165 Q100 171 122 165 L118 110 Q122 105 114 103 Q100 110 86 103 Z" fill="${dc}"/>`
     + `<g class="av-mouw-l">${mouw('M84 110 Q77 116 75 124', 'M69 121 L81 127')}</g>`
-    + (mic ? mouw('M116 110 Q123 104 128 100', 'M124 95 L132 105')
+    // de mouw van de micro-arm draait met de micro mee (.av-mouw-r, zie .av-mic)
+    + (mic ? `<g class="av-mouw-r">${mouw('M116 110 Q123 104 128 100', 'M124 95 L132 105')}</g>`
            : mouw('M116 110 Q123 116 125 124', 'M119 127 L131 121'))
     // ronde halslijn: een V leest als een overhemd, dit als een T-shirt
     + `<path d="M89 105 Q100 116 111 105" stroke="rgba(0,0,0,.16)" stroke-width="3" fill="none" stroke-linecap="round"/>`
@@ -1093,8 +1094,9 @@ function avatarSVG(p, width, propMaat) {
   // naar dezelfde arm met de bocht de andere kant op -- zelfde schouder, zelfde
   // hand, zelfde lengte. Een SMIL-animatie op d, en niet in het stijlblad: CSS
   // kan een pad niet vervormen in Safari. Ze staat op begin="indefinite" en
-  // zetPas start haar, dus deze tekening doet uit zichzelf niets. De duur en de
-  // drie stukken (omhoog, boven, omlaag) lopen gelijk met armOp; zie daar.
+  // zetPas start haar, dus deze tekening doet uit zichzelf niets. De waarden
+  // hieronder zijn die van de golf (armOp); armVorm zet per pasje zijn eigen
+  // stukken omhoog en omlaag (ARM_VORM) en leest de twee bochten hieruit.
   // Geen elleboog: een knik in een stokje van negen pixels dik las als een
   // gebroken arm.
   const hand = (x, y) => `<circle cx="${x}" cy="${y}" r="5.6" fill="${SKIN}"/>`;
@@ -1102,8 +1104,13 @@ function avatarSVG(p, width, propMaat) {
   s += `<g class="av-arm-l"><path d="${ARM}" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round">`
     + `<animate class="av-arm-vorm" attributeName="d" dur="${PAS}ms" begin="indefinite" values="${ARM};${ARM_OP};${ARM_OP};${ARM}" keyTimes="0;.22;.78;1" calcMode="spline" keySplines=".42 0 .58 1;0 0 1 1;.42 0 .58 1"/>`
     + `</path>${hand(64, 158)}</g>`;
+  /* De micro-arm is ook een groep (.av-mic), net als wat hij vasthoudt verderop:
+     bij een pasje doet hij mee, en bij de hoge noot brengt ze de micro naar haar
+     mond. Twee groepen met dezelfde klasse en hetzelfde draaipunt (de schouder,
+     116|112): de arm moet vóór de kleren, de micro erna, en dan draaien ze toch
+     als één stuk. */
   s += mic
-    ? `<path d="M116 112 Q134 98 145 80" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`
+    ? `<g class="av-mic"><path d="M116 112 Q134 98 145 80" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/></g>`
     : `<path d="M116 112 Q132 132 136 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>${hand(136, 158)}`;
   // benen: blote benen onder een zoom, of de broekspijpen zelf
   s += B.legs(dc);
@@ -1124,6 +1131,11 @@ function avatarSVG(p, width, propMaat) {
   // hierboven), zodat de decoratie nooit onder een schouder verdwijnt. De hand
   // komt over de steel en onder de kop: zo houdt ze hem echt vast.
   if (mic) {
+    /* Zingen doet ze alleen in iets waar je in kunt zingen: een micro, ook een
+       emoji-micro. Een pintje of een toverstaf gaat bij de hoge noot niet naar
+       haar mond (.zingt, zie het stijlblad). */
+    const zingt = mic.id !== 'mic_pintje' && mic.id !== 'mic_toverstaf';
+    s += `<g class="av-mic${zingt ? ' zingt' : ''}">`;
     if (mic.id === 'mic_pintje') {
       // proost! een pintje in de opgeheven hand
       s += hand(145, 81) + `<text x="135" y="82" font-size="26">🍺</text>`;
@@ -1138,8 +1150,12 @@ function avatarSVG(p, width, propMaat) {
     } else {
       s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>` + hand(145, 81);
       s += `<circle cx="156" cy="63" r="9" fill="${mic.color === 'RAINBOW' ? `url(#rb${uid})` : mic.color}" stroke="#666" stroke-width="1.5"/>`;
-      if (!kaart) s += `<text x="163" y="47" font-size="15">🎵</text>`;
+      /* Een gouden noot, getekend: de 🎵-emoji is op de meeste toestellen zwart
+         en op het donkere podium een vlek, en ♫ staat niet in de letter van het
+         spel. Dezelfde gebalkte noot als het klinken in de kast (KAST_NOOT). */
+      if (!kaart) s += `<path transform="translate(158 34) scale(.82)" d="M8 4v10.3A3.2 3.2 0 1 0 10 17.3V9l9-2v5.3A3.2 3.2 0 1 0 21 15.3V2z" fill="#ffd740" stroke="#7a4a00" stroke-opacity=".5" stroke-width="1.6" paint-order="stroke" stroke-linejoin="round"/>`;
     }
+    s += `</g>`;
   }
   s += `</svg>`;
   return s;

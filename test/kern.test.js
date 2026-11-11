@@ -597,6 +597,7 @@ function metBeweging(aan) {
   return app;
 }
 
+function MOVES_EERSTE3(app) { return app.run("MOVES.slice(0, 3).map(m => m.cls).join(' ')"); }
 zaak('N', () => {
   for (const aan of [true, false]) {
     const app = metBeweging(aan);
@@ -629,6 +630,22 @@ zaak('N', () => {
       const k = app.klassen();
       if (aan) check(/\bdancing\b/.test(k) && /\bmove-/.test(k), `N · ${wat} · ${code} danst`, k);
       else check(k === 'idle', `N · ${wat} · ${code} laat haar rechtop staan`, k);
+    }
+
+    /* De finale danst de show na (finaleReeks): de laatste pasjes uit deze show,
+       elk één keer, aangevuld uit MOVES -- en bij drie sterren eindigt de reeks
+       op de hoge noot, vóór de buiging. */
+    if (aan) {
+      const reeks = code => app.run(`finaleReeks(${code}).map(m => m.cls).join(' ')`);
+      const M = cls => `MOVES.find(m => m.cls === '${cls}')`;
+      const gedanst = `[${M('move-jump')}, ${M('move-wave')}, ${M('move-jump')}, ${M('move-kick')}]`;
+      check(reeks(`${gedanst}, 3, false`) === 'move-wave move-jump move-kick',
+        'N · de finale danst de laatste drie verschillende pasjes van de show na', reeks(`${gedanst}, 3, false`));
+      check(reeks(`[], 3, false`) === MOVES_EERSTE3(app),
+        'N · een show zonder pasjes krijgt de eerste drie uit MOVES', reeks(`[], 3, false`));
+      const drie = reeks(`[${M('move-noot')}, ${M('move-spin')}, ${M('move-noot')}], 3, true`).split(' ');
+      check(drie.length === 3 && drie[2] === 'move-noot' && new Set(drie).size === 3,
+        'N · bij drie sterren is het laatste pasje vóór de buiging de hoge noot, zonder dubbel', drie.join(' '));
     }
 
     /* De sterrenceremonie van het eindscherm is een tijdstip geworden en geen
