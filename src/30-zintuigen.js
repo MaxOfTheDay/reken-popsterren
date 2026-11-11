@@ -63,12 +63,38 @@ function audioBus() {
     bus = actx.createGain();
     bus.gain.value = BUS_OPEN;
     bus.connect(actx.destination);
+    // onthouden dat hij ooit liep: alleen zo'n context kan stuk zijn (audioHerstel)
+    const ctx = actx;
+    if (ctx.state === 'running') ctx._liep = true;
+    ctx.onstatechange = () => { if (ctx.state === 'running') ctx._liep = true; };
   } catch (e) { actx = null; bus = null; audioStuk = true; }
   return bus;
 }
 // Zie punt 3 hierboven. Kost niets als hij al loopt, en mag stil mislukken.
 function audioWakker() {
   try { if (actx && actx.state !== 'running' && actx.resume) actx.resume(); } catch (e) { /* mag niet */ }
+}
+/* EEN CONTEXT DIE NIET MEER WAKKER WORDT. Op een iPhone gaat de context na een
+   telefoontje, Siri of een wekker naar 'interrupted', en soms komt hij daar met
+   resume() niet meer uit: de klankjes blijven weg tot iemand de app herstart,
+   terwijl de schakelaar "Aan" zegt. Dus bij terugkomst: eerst wekken, en loopt
+   hij een halve seconde later nog altijd niet terwijl hij al eens liep, dan een
+   nieuwe. Die nieuwe komt stilgelegd binnen en wordt bij de eerste tik gewekt,
+   zoals elke context (audioWakker op pointerdown). Een context die nog nooit liep
+   (geen tik gehad) is niet stuk maar wacht, en blijft dus staan. */
+const AUDIO_HERSTEL = 500;
+function audioHerstel() {
+  if (!actx || !db.sound) return;
+  audioWakker();
+  setTimeout(() => {
+    try {
+      if (!actx || actx.state === 'running' || document.hidden || !actx._liep) return;
+      const oud = actx;
+      actx = null; bus = null;
+      try { oud.close(); } catch (e) { /* weg is weg */ }
+      audioBus();
+    } catch (e) { /* dan maar stil */ }
+  }, AUDIO_HERSTEL);
 }
 document.addEventListener('pointerdown', audioWakker, { passive: true });
 /* De context alvast maken, in een rustig moment na het opstarten -- niet pas bij
@@ -83,7 +109,7 @@ document.addEventListener('pointerdown', audioWakker, { passive: true });
    playSfx vraagt het in de tik zelf nog eens (iOS telt alleen een tik of klik als
    toestemming). Met het geluid uit wordt er niets gemaakt, net als voorheen. */
 naDeRust(() => { if (db.sound) audioBus(); });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') audioWakker(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') audioHerstel(); });
 /* De kraan naar v draaien in `tijd` seconden. Een helling en geen sprong: een
    kraan die in één sample dichtgaat knipt lopende noten af met een plof. */
 function busNaar(v, tijd) {
@@ -491,6 +517,8 @@ function zegNu(text, opts, v) {
    Alleen na een echte weigering van het toestel; nooit omdat het geluid uit
    staat of omdat er nog niet getikt is. */
 let stemStuk = false;
+// wat de ouder te doen heeft, op twee plekken: de 🔇 en Voor ouders
+const STEM_STUK_ZIN = 'Speelt er muziek via een andere app of box? Zet die even op pauze.';
 function stemZegtHet(ja) {
   if (stemStuk === !ja) return;
   stemStuk = !ja;
@@ -498,7 +526,7 @@ function stemZegtHet(ja) {
   if (!b) return;
   b.textContent = ja ? '🔊' : '🔇';
   b.classList.toggle('stuk', !ja);
-  const lab = ja ? 'Nog eens voorlezen' : 'De stem van dit toestel doet het niet';
+  const lab = ja ? 'Nog eens voorlezen' : 'Geen stem';
   b.setAttribute('aria-label', lab);
   b.title = lab;
 }
