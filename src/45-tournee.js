@@ -1012,10 +1012,9 @@ function renderTourMap(travelFrom) {
   // een uitstapje: zij speelt in een andere wereld (zie kaartHierDoel)
   if (!travelling && shown.index !== worldFor(hereLevel(p)).index) map.dataset.uitstap = '1';
   else delete map.dataset.uitstap;
-  /* Op <html> en niet op het kaartvak: de liggende stand rekent er op
-     #screen-map mee uit hoeveel lucht er boven en onder het podium overblijft
-     (--podium-lucht in het stijlblad), en die kan niet bij een variabele die
-     ónder hem staat. .tour-map erft hem gewoon mee. */
+  /* Op <html> en niet op het kaartvak: dan leest élke laag dezelfde bron (de
+     weg-SVG gebruikt hem als viewBox, zie VB_W), ook wat niet ónder het kaartvak
+     staat. .tour-map erft hem gewoon mee. */
   document.documentElement.style.setProperty('--art-w', ART_W);
   document.documentElement.style.setProperty('--art-h', ART_H);
   const frame = document.createElement('div');
@@ -1044,16 +1043,6 @@ function renderTourMap(travelFrom) {
   // Past de kaart niet in de vensterverhouding, dan schuift hij: zet de halte waar
   // ze nu staat in beeld. Op een staande telefoon valt er niets te schuiven en doet
   // dit niets.
-  //
-  // "Valt er iets te schuiven" is sinds --podium-groei niet meer hetzelfde als
-  // "steekt er iets buiten het vak uit". In liggende stand steekt het kader met
-  // opzet een paar procent boven en onder het vak uit (zie --podium-groei in het
-  // stijlblad), en dat is een snede en geen schuifruimte: álle haltes staan al in
-  // beeld. Dat merk je aan de opmaak -- het kaartvak staat daar op
-  // overflow-y: hidden -- en dus vraagt deze regel het daar ook. Zonder die vraag
-  // schoof de kaart hier 35px omhoog zodra het kind op een lage halte stond, puur
-  // omdat scrollHeight een paar pixels groter was: dezelfde kaart die per halte
-  // net iets anders aangesneden staat, zonder dat er iets zichtbaar werd.
   /* Dit stond hier altijd als requestAnimationFrame, met als reden: goMap()
      roept show() pas ná deze render aan, en zolang het scherm nog niet .active
      is levert elke meting hier (scrollHeight, offsetHeight, getBoundingClientRect)
@@ -1467,8 +1456,7 @@ function kaartHierDoel(map) {
     || (map.dataset.uitstap ? map.querySelector('.tour-stop.done:not(.perfect)') || map.querySelector('.tour-stop')
       : map.querySelector('.tour-stop.done:last-of-type'));
   const f = map.querySelector('.world-frame');
-  const schuift = here && f && map.scrollHeight > map.clientHeight + 4
-    && getComputedStyle(map).overflowY !== 'hidden';
+  const schuift = here && f && map.scrollHeight > map.clientHeight + 4;
   if (!schuift) return null;
   return Math.max(0, Math.min(map.scrollHeight - map.clientHeight,
     here.getBoundingClientRect().top - f.getBoundingClientRect().top - map.clientHeight / 2));

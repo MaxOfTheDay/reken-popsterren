@@ -975,54 +975,8 @@
 
 
 
-
-
-
-
-
-
-
-
-    --stage-spel: calc(var(--art-w) * 1px);
+    --stage-spel: calc(var(--art-w) * 2px);
     --stage-breed: 820px;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    --podium-rand: 10px;
-    --podium-groei: 1.08;
 
 
 
@@ -3721,8 +3675,8 @@
   .main-nav::before, .main-nav::after {
     content: ''; position: absolute; z-index: -1; pointer-events: none;
     left: 50%; width: 100vw; margin-left: -50vw;
-    bottom: calc(0px - var(--balk-rand) - var(--veilig-onder) - var(--vh-drift, 0px) - var(--balk-op, 0px));
-    height: calc(var(--balk-ruimte) + 44px + var(--vh-drift, 0px) + var(--balk-op, 0px));
+    bottom: calc(0px - var(--balk-rand) - var(--veilig-onder) - var(--vh-drift, 0px));
+    height: calc(var(--balk-ruimte) + 44px + var(--vh-drift, 0px));
     transition: opacity .18s ease;
   }
   .main-nav::before {
@@ -3733,7 +3687,7 @@
         rgba(var(--nacht-1-rgb),.44) 70%,
         rgba(var(--nacht-1-rgb),.62) 100%) top / 100% calc(var(--balk-ruimte) + 44px) no-repeat,
       linear-gradient(rgba(var(--nacht-1-rgb),.62), rgba(var(--nacht-1-rgb),.62))
-        bottom / 100% calc(var(--vh-drift, 0px) + var(--balk-op, 0px)) no-repeat;
+        bottom / 100% calc(var(--vh-drift, 0px)) no-repeat;
   }
 
 
@@ -3758,7 +3712,7 @@
         rgba(var(--nacht-1-rgb),.86) 62%,
         rgba(var(--nacht-1-rgb),.92) 100%) top / 100% calc(var(--balk-ruimte) + 44px) no-repeat,
       linear-gradient(rgba(var(--nacht-1-rgb),.92), rgba(var(--nacht-1-rgb),.92))
-        bottom / 100% calc(var(--vh-drift, 0px) + var(--balk-op, 0px)) no-repeat;
+        bottom / 100% calc(var(--vh-drift, 0px)) no-repeat;
   }
 
 
@@ -3793,10 +3747,7 @@
 
 
 
-
-
-
-  .main-nav, .dress-bar, .reis-terug { margin-bottom: calc(var(--vh-drift, 0px) + var(--balk-op, 0px)); }
+  .main-nav, .dress-bar, .reis-terug { margin-bottom: calc(var(--vh-drift, 0px)); }
 
 
 
@@ -5618,8 +5569,6 @@
 
 
 
-
-
   .world-frame {
     position: relative; flex: none;
 
@@ -5774,27 +5723,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   @media (min-aspect-ratio: 1/1) and (min-height: 600px) {
 
 
@@ -5870,35 +5798,9 @@
 
 
 
-
-
-
-    .tour-map { align-items: center; padding: var(--podium-rand) 0; overflow-y: hidden; }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     .world-frame { min-width: 0; min-height: 0;
-      width: clamp(min(340px, 100cqw),
-                   min(100cqh * var(--podium-groei) * var(--art-w) / var(--art-h), var(--stage-spel)),
-                   100cqw);
-      border-radius: var(--r-md); box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 20px 70px rgba(0,0,0,.6); }
+      width: min(100cqw, var(--stage-spel));
+      box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 20px 70px rgba(0,0,0,.6); }
   }
 
 
@@ -11553,52 +11455,7 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    :root {
-      --podium-h: calc(var(--vh-lock, 100svh) - var(--podium-rand) * 2);
-      --podium-w: clamp(min(340px, 100vw),
-                        min(calc(var(--podium-h) * var(--podium-groei) * var(--art-w) / var(--art-h)), var(--stage-spel)),
-                        100vw);
-      --podium-lucht: max(0px, calc((var(--podium-h) - var(--podium-w) * var(--art-h) / var(--art-w)) / 2));
-      --balk-op: var(--podium-lucht);
-    }
-
-
-    #screen-map .hub-sticky { margin-top: calc(var(--rand, 12px) * -1 + var(--podium-lucht)); }
-
-
-
-
-
-
-
-
-
-
-
+    :root { --podium-w: min(100vw, var(--stage-spel)); }
 
 
 
@@ -22514,7 +22371,6 @@ function renderTourMap(travelFrom) {
 
 
 
-
   document.documentElement.style.setProperty('--art-w', ART_W);
   document.documentElement.style.setProperty('--art-h', ART_H);
   const frame = document.createElement('div');
@@ -22539,16 +22395,6 @@ function renderTourMap(travelFrom) {
   map.appendChild(frame);
 
   meetChroom();
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -22966,8 +22812,7 @@ function kaartHierDoel(map) {
     || (map.dataset.uitstap ? map.querySelector('.tour-stop.done:not(.perfect)') || map.querySelector('.tour-stop')
       : map.querySelector('.tour-stop.done:last-of-type'));
   const f = map.querySelector('.world-frame');
-  const schuift = here && f && map.scrollHeight > map.clientHeight + 4
-    && getComputedStyle(map).overflowY !== 'hidden';
+  const schuift = here && f && map.scrollHeight > map.clientHeight + 4;
   if (!schuift) return null;
   return Math.max(0, Math.min(map.scrollHeight - map.clientHeight,
     here.getBoundingClientRect().top - f.getBoundingClientRect().top - map.clientHeight / 2));

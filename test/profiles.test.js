@@ -2291,10 +2291,10 @@ function check(ok, label, detail) {
           [0, map.scrollHeight].forEach(y => {
             map.scrollTop = y;
             const f = document.querySelector('.world-frame').getBoundingClientRect();
-            /* In liggende stand is het kader met opzet een podium mét rand -- daar
-               ligt de onscherpe wereld eronder (#screen-map::before/::after) en is
-               "dekt het scherm" een andere vraag. Die stand slaan we hier over. */
-            if (matchMedia('(min-aspect-ratio: 1/1) and (min-height: 600px)').matches) return;
+            /* Breder dan --stage-spel staat de kaart als een baan in het midden,
+               met de onscherpe wereld ernaast; daar is "dekt het scherm" een
+               andere vraag. */
+            if (innerWidth > 2 * 1215) return;
             if (f.top > 0.5 || f.bottom < innerHeight - 0.5 || f.left > 0.5 || f.right < innerWidth - 0.5) {
               gaten.push(WORLDS[i].id + ' bij scroll ' + map.scrollTop + ': kader '
                 + Math.round(f.top) + '-' + Math.round(f.bottom) + ' in ' + innerHeight);
