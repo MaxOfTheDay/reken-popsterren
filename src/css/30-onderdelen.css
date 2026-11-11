@@ -514,7 +514,9 @@
      daarin opengaat (#app is zijn eigen stapel; z-index 100 binnenin wint het niet
      van 50 erbuiten). Op een telefoon van 320 lagen ze zo over de kop van het
      blad. Zolang er een venster open is, horen ze er niet. Zonder :has (oude
-     browsers) blijven ze gewoon staan, zoals vroeger. */
+     browsers) blijven ze gewoon staan, zoals vroeger.
+     uitzondering op inhoud zaak W (geen :has() op body): een venster gaat zelden
+     open, en dit kwam bij het meten van de schermwissels niet boven. */
   body:has(.modal-bg.open) .app-knop,
   body:has(.modal-bg.open) #corner-btns { visibility: hidden; }
   /* Het blad zelf staat in het gewone bevestigingsvenster (#confirm-modal); dit

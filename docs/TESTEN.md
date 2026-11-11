@@ -59,7 +59,7 @@ npm run test:voortgang
 npm run test:reis
 npm run test:vlucht     # de zoom tussen de wereldkaart en Werelden
 npm run test:flits      # niets half zien: beginscherm, somkaart, eerst bouwen dan bewegen
-npm run test:robuust    # de tik komt eerst (en meet niet na), tikstormen, wie vertrekt is inert, offline na het eerste bezoek, geen zware waas
+npm run test:robuust    # de tik komt eerst (en meet niet na), tikstormen, wie vertrekt is inert, offline na het eerste bezoek, geen zware waas, een scherm in rust doet niets
 npm run test:beloning
 npm run test:studio      # de wereldstudio (?debug&mapedit)
 npm run test:onderrand   # de zwevende bediening onderaan blijft staan
@@ -607,7 +607,7 @@ lang iets laten zien wat er niet hoort:
 
 ### `test/robuust.test.js` — wat een kind van zes met de app doet
 
-Kinderen tikken snel, dubbel en midden in een overgang. Vijf zaken:
+Kinderen tikken snel, dubbel en midden in een overgang. De zaken:
 
 - **de tik komt eerst**: elke zichtbare knop op elk scherm (en op het
   Stoppen?-venster) wordt aangetikt, en `show()` mag nooit lopen terwijl die tik
@@ -629,7 +629,13 @@ Kinderen tikken snel, dubbel en midden in een overgang. Vijf zaken:
 - **geen zware waas onder wat beweegt**: op elk scherm, staand en liggend, geen
   CSS-`blur` van `WAAS_MAX` px of meer op iets dat meer dan een derde van het
   venster beslaat. Zo'n filter wordt bij elk beeldje opnieuw uitgerekend zodra
-  de pop erover wiegt; een waas hoort dan in de tekening zelf.
+  de pop erover wiegt; een waas hoort dan in de tekening zelf;
+- **een scherm in rust doet niets** (zaak H): op elk scherm, na de aankomst,
+  twee seconden kijken. Geteld en niet getimed: hoe vaak er getekend wordt (een
+  scherm dat stilstaat of alleen een laag laat wiegen zit op 0 à 2 per seconde,
+  een scherm dat elk beeldje hertekent op 120), geen animatie op iets dat je niet
+  ziet, geen `setInterval` dat doortikt. Een scherm waar het met reden mag (haar
+  knikkende hoofd in de SVG) staat in `RUST_MAG`, met de reden erbij.
 
 ### `test/toestel.test.js` — wat het toestel stil laat mislukken
 

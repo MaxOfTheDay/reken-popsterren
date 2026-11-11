@@ -448,9 +448,13 @@
      naar vensterbreed) knipt, legde een harde donkere band dwars over de kaart
      die nog in beeld was -- aan de balk was dat "een sprong". Nu liggen ze
      allebei klaar en vloeien ze over in dezelfde tijd als screenIn (zie
-     .screen.active), zodat de veeg meeloopt met het scherm waar hij bij hoort. */
-  body:has(#screen-dress.active, #screen-trophies.active) .main-nav::before { opacity: 0; }
-  body:has(#screen-dress.active, #screen-trophies.active) .main-nav::after { opacity: 1; }
+     .screen.active), zodat de veeg meeloopt met het scherm waar hij bij hoort.
+     body.op-kamer zet show() (35-schermen.js), op hetzelfde moment als .active.
+     Dit was een body:has(#screen-dress.active, ...): zo'n :has() op body kijkt de
+     browser bij élke schermwissel over de hele pagina na, en dat was een derde
+     van al het selectorwerk van een wissel. Zie inhoud zaak W. */
+  body.op-kamer .main-nav::before { opacity: 0; }
+  body.op-kamer .main-nav::after { opacity: 1; }
   @media (prefers-reduced-motion: reduce) { .main-nav::before, .main-nav::after { transition: none; } }
   /* ---- De balk hangt aan hetzelfde slot als de rest van de app -------------
      --vh-lock (zie het scriptje vóór de INHOUD-index) legde de hoogte van de app
