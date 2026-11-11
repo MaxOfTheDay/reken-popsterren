@@ -1286,7 +1286,7 @@ function tweedeMisser(q, p, btnEl) {
     // juiste hoeveelheid hardop meetellen, geen tekst -- en het 👉 pas als de stem
     // klaar is: een snelle tik brak het tellen anders halverwege af
     const show = G;
-    countReveal(q, () => { if (G === show) toonVerder(); });
+    countReveal(q, () => { if (G === show) toonVerder(goedeKnop(q, '.count-tile')); });
     return;
   }
   /* DE VOLGORDE na een tweede misser: eerst wat er fout ging (de rode knop, het
@@ -1316,7 +1316,11 @@ function tweedeMisser(q, p, btnEl) {
     // losse kaart ernaast. Die kaart zegt dan alleen nog hoe je verder komt.
     somVult(q, null, true);
   }, motionOff() ? 0 : ONTHUL);
-  setTimeout(() => { if (G === g) toonVerder(); }, motionOff() ? 0 : VERDER_NA);
+  setTimeout(() => { if (G === g) toonVerder(G.mode === 'kies' ? goedeKnop(q, '.choice-btn') : null); }, motionOff() ? 0 : VERDER_NA);
+}
+// de knop met het goede antwoord, als die er staat (kiezen, of een teltegel)
+function goedeKnop(q, soort) {
+  return [...document.querySelectorAll('#answer-area ' + soort)].find(b => parseInt(b.dataset.v, 10) === q.ans) || null;
 }
 const ONTHUL = 300, VERDER_NA = 600;
 /* "Verder", zonder één woord. Na een tweede misser wacht de show op een tik
@@ -1324,7 +1328,28 @@ const ONTHUL = 300, VERDER_NA = 600;
    dát: een wijzende hand, groot. In de rekenmodus stond er "tik om verder te
    gaan" onder, en dat is precies het stuk dat een kind van zes niet leest --
    de telmodus deed het al zonder, en nu doen ze het allebei zo. */
-function toonVerder() { showToast('👉', nextStep, null, 'teken'); }
+/* DE LAATSTE TIK IS DE GOEDE. Staat het goede antwoord er als knop (kiezen, of
+   een teltegel), dan gaat alleen díé knop verder: het laatste wat een kind na
+   een misser doet, is het goede antwoord aantikken -- niet "ergens". Zo blijft
+   juist dat antwoord hangen. Geen diamanten, geen feest: de knop staat er rustig
+   groen (zie tweedeMisser), en de misser telt gewoon als misser.
+   Een tik ernaast doet niets fout: de goede knop plopt even op (het gebaar ja,
+   "deze") en de 👉 blijft staan. Gemeten wordt vóór er iets verandert (zie
+   test:robuust). Zonder knop (typen, de getallenlijn) kan het overal, zoals
+   eerst. */
+function toonVerder(doel) {
+  showToast('👉', nextStep, null, 'teken');
+  if (!doel) return;
+  const veil = $('tap-veil');
+  veil.onclick = e => {
+    const r = doel.getBoundingClientRect();
+    const raak = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    if (raak) { hideToast(); nextStep(); return; }
+    // een beeldje ertussen, zodat hij bij elke tik ernaast opnieuw plopt
+    doel.classList.remove('kijk-hier');
+    requestAnimationFrame(() => doel.classList.add('kijk-hier'));
+  };
+}
 /* De pop schrikt: even een rond "oh!"-mondje en grote ogen (zie avatarSVG en
    .oeps in het stijlblad). Dit kwam in de plaats van een grijs nootje van 52px
    dat over haar lijf naar beneden viel -- op telefoonmaat las dat als een vlek
