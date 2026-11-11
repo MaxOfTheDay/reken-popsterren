@@ -859,6 +859,42 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     await ctx.close();
   }
 
+  /* ================= Nog één keer =================
+     Een som die niet in één keer goed ging, komt twee vragen later terug (zie
+     planTerug). Hij kost geen ster, geen "Bijna!", en de motor telt hem niet. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+    await cacheFonts(ctx);
+    const p4 = await ctx.newPage();
+    p4.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await p4.goto(APP_URL + '&demo&star=p1');
+    await p4.waitForFunction(() => typeof startLevel === 'function');
+    const r = await p4.evaluate(async () => {
+      const wacht = ms => new Promise(res => setTimeout(res, ms));
+      const p = P(); p.settings.mode = 'kies'; p.settings.perLevel = 8;
+      startLevel(P().level); await wacht(300);
+      const verder = async () => { for (let i = 0; i < 100 && G.lock; i++) await wacht(30); };
+      // de eerste vraag twee keer fout: gemist
+      while (G.goldIdx === 0 || (G.plan[0] && G.plan[0].type)) { startLevel(P().level); await wacht(300); }
+      const keuzes = () => [...document.querySelectorAll('#answer-area .choice-btn')].map(b => +b.dataset.v);
+      const q0 = G.qs[0], fout = keuzes().find(v => v !== q0.ans), fout2 = keuzes().find(v => v !== q0.ans && v !== fout);
+      submitAnswer(fout); submitAnswer(fout2); await wacht(50);
+      const zwakVoor = JSON.stringify(p.weak), misVoor = G.misses, foutVoor = G.errors;
+      nextStep(); await wacht(50);
+      submitAnswer(G.qs[1].ans); await wacht(1600); await verder();
+      const doel = G.terugIdx, nu = G.idx, q = G.qs[G.idx];
+      const zelfde = q && q.terug && (q.tmpl || q.html) === (q0.tmpl || q0.html) && q.ans === q0.ans;
+      // ook de terugkerende som eerst fout: geen extra ster of "Bijna!"
+      submitAnswer(keuzes().find(v => v !== q.ans)); await wacht(50);
+      submitAnswer(q.ans); await wacht(50);
+      return { doel, nu, zelfde, gold: !!q.gold, mis: [misVoor, G.misses], fout: [foutVoor, G.errors], zwak: zwakVoor === JSON.stringify(p.weak), plan: G.themaPlan ? G.themaPlan[doel] : 'terug' };
+    });
+    check(r.doel === 2 && r.nu === 2 && r.zelfde && !r.gold, 'een gemiste som komt twee vragen later nog één keer terug', JSON.stringify(r));
+    check(r.mis[0] === r.mis[1] && r.fout[0] === r.fout[1], 'de som die terugkomt kost geen ster en geen Bijna!', JSON.stringify(r));
+    check(r.zwak && r.plan === 'terug', 'de som die terugkomt telt niet in de motor of een themaladder', JSON.stringify(r));
+    await ctx.close();
+  }
+
   check(pageErrors.length === 0, 'geen javascript-fouten', pageErrors.join(' | '));
 
   await browser.close();

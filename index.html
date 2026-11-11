@@ -28105,6 +28105,7 @@ function renderQuestion() {
   if (!G.qs[G.idx]) {
     let built;
     if (G.count) { built = genCount(p); }
+    else if (G.idx === G.terugIdx) built = terugVraag(G.terugVan);
     else {
       const plan = G.plan[G.idx];
       if (plan && plan.type === 'miss') { built = genMissing(G.inst, G.lvl, p.perf, plan.op); G.missShown++; }
@@ -29030,18 +29031,22 @@ function antwoordGoed(q, p, btnEl) {
   stopSpot();
   hideToast();
   const firstTry = !G.retried;
+
+
+  if (!q.terug) {
   updatePerf(p, true, firstTry && G.spot > 0);
 
 
   if (q.kind === 'classic') updateOpAcc(p, q.op, true, firstTry, fastEnough(G.mode, G.spot));
   else if (q.kind === 'chain') updateChainAcc(p, true, firstTry);
   else if (q.count) updateCountAcc(p, true, firstTry);
-  p.stats.correct++;
   telThema(p, true);
   telLeer(p, q);
+  }
+  p.stats.correct++;
 
 
-  if (firstTry) { decWeak(p, q); bumpLearned(p, q); }
+  if (firstTry && !q.terug) { decWeak(p, q); bumpLearned(p, q); }
   let gain = 2;
   if (firstTry && G.spot > 0) gain += 1;
   G.streak++;
@@ -29127,6 +29132,7 @@ function antwoordGoed(q, p, btnEl) {
     else if (q.gold) { confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain, false, lofDuur); }
     else if (streakBonus) showPraise('🔥 3 op een rij!', '💎 +' + gain, false, lofDuur);
     else if (!firstTry) showPraise('Goed zo!', '💎 +' + gain, false, lofDuur);
+    else if (q.terug) showPraise('💪 Nu wel!', '💎 +' + gain, false, lofDuur);
     else showPraise(pick(PRAISE), '💎 +' + gain, false, lofDuur);
     if (encore) buiging('game-avatar-inner');
     else dance('game-avatar-inner');
@@ -29160,11 +29166,13 @@ function telThema(p, goed) {
 
 
 function antwoordFout(q, p, val, btnEl) {
-  updatePerf(p, false, false);
   p.stats.wrong++;
-  telThema(p, false);
-  incWeak(p, q);
-  demoteLearned(p, q);
+  if (!q.terug) {
+    updatePerf(p, false, false);
+    telThema(p, false);
+    incWeak(p, q);
+    demoteLearned(p, q);
+  }
   G.streak = 0;
 
 
@@ -29186,7 +29194,8 @@ function antwoordFout(q, p, val, btnEl) {
 
 function eersteMisser(q, val, btnEl) {
   G.retried = true;
-  G.misses++;
+  if (!q.terug) G.misses++;
+  planTerug(q);
   stopSpot(); G.spot = 0; zetSpot(0, true);
   save();
   if (btnEl) { btnEl.classList.add('bad'); btnEl.disabled = true; }
@@ -29195,13 +29204,36 @@ function eersteMisser(q, val, btnEl) {
   else toonHint(q, val, btnEl);
 }
 
+
+
+
+
+
+
+
+
+
+function planTerug(q) {
+  if (G.count || q.terug || q.tik || G.terugIdx != null) return;
+  for (let i = G.idx + 2; i < G.total; i++) {
+    if (G.qs[i] || i === G.goldIdx || (G.plan[i] && G.plan[i].type)) continue;
+    G.terugIdx = i; G.terugVan = q;
+    if (G.themaPlan) G.themaPlan[i] = 'terug';
+    return;
+  }
+}
+function terugVraag(q) {
+  return { ...q, terug: true, gold: false, nieuw: false, choices: q.choices ? shuffle(q.choices.slice()) : q.choices };
+}
+
 function tweedeMisser(q, p, btnEl) {
   G.lock = true;
   stopSpot();
-  G.errors++;
+  if (!q.terug) G.errors++;
   G.uitslag[G.idx] = 'mis';
 
-  if (q.kind === 'classic') updateOpAcc(p, q.op, false, false);
+  if (q.terug) { }
+  else if (q.kind === 'classic') updateOpAcc(p, q.op, false, false);
   else if (q.kind === 'chain') updateChainAcc(p, false, false);
   else if (q.count) updateCountAcc(p, false, false);
   save();
