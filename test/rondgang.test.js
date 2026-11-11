@@ -472,6 +472,13 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       await wacht(380);
       quitGame(); await wacht(380);
     }
+    /* "Blijven staan" is wat er nog staat als alles uitgelopen is. Direct na de
+       laatste quitGame kan de laatste overgang op een drukke machine nog lopen
+       (een .wegvallend die over 380 ms nog niet weg was), dus eerst wachten tot
+       hij klaar is -- hoogstens drie tellen; wat er dan nog staat, blijft staan. */
+    const t0 = performance.now();
+    while (performance.now() - t0 < 3000
+      && (overgangBezig || terugBezig || document.querySelector('.wegvallend'))) await wacht(50);
     return { heen: overgangBezig, terug: terugBezig,
              kaart: document.getElementById('screen-map').classList.contains('active'),
              zalen: document.querySelectorAll('.venue').length,
@@ -605,8 +612,25 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     const knoppen = () => [...document.querySelectorAll('#shop-tabs .tab-btn')];
     for (let i = 0; i < knoppen().length; i++) {
       knoppen()[i].click();
-      await new Promise(res => setTimeout(res, 320));   // het licht schuift in --t-snel
-      const k = knoppen(), b = k[i].getBoundingClientRect(), l = document.querySelector('#shop-tabs .rij-licht').getBoundingClientRect();
+      /* Wachten tot de lade aan is en het licht eronder stilstaat, hoogstens twee
+         tellen. Een vaste 320 ms was op een drukke machine te kort: de wissel
+         start een beeldje na de tik (naTik), en dan stonden er twee laden aan of
+         schoof het licht nog. Komt het er nooit, dan zegt de controle hieronder het. */
+      const licht = () => document.querySelector('#shop-tabs .rij-licht');
+      await new Promise(klaar => {
+        const t0 = performance.now();
+        let vorige = null, stil = 0;
+        const kijk = () => {
+          const k = knoppen(), l = licht().getBoundingClientRect();
+          const nu = k[i].classList.contains('active') && k.filter(x => x.classList.contains('active')).length === 1
+            ? Math.round(l.left * 10) + ',' + Math.round(l.width * 10) : null;
+          stil = nu && nu === vorige ? stil + 1 : 0;
+          vorige = nu;
+          if (stil >= 3 || performance.now() - t0 > 2000) klaar(); else requestAnimationFrame(kijk);
+        };
+        requestAnimationFrame(kijk);
+      });
+      const k = knoppen(), b = k[i].getBoundingClientRect(), l = licht().getBoundingClientRect();
       uit.push({ naam: k[i].getAttribute('aria-label'), cat: shopCat,
         aan: k.filter(x => x.classList.contains('active')).length === 1 && k[i].classList.contains('active'),
         heel: k.every(x => { const r = x.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth; }),

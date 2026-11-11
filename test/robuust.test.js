@@ -74,7 +74,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { launch, cacheFonts, APP_URL } = require('./browser');
+const { launch, cacheFonts, rust, APP_URL } = require('./browser');
 const { check, klaar } = require('./meld')('robuust');
 
 const TELEFOON = { width: 390, height: 844 };
@@ -432,7 +432,7 @@ const NIET = /set-reset|set-delete|delete|wis|import|export|backup|deel|kopieer|
       ['end', '&screen=end'], ['dress', '&screen=dress'], ['tro', '&screen=tro'], ['ouders', '&screen=ouders']];
     for (const [naam, scherm] of SCHERMEN) {
       await page.goto(APP_URL + '&demo' + (scherm ? '&star=p1' + scherm : ''));
-      await page.waitForTimeout(2200);
+      await rust(page, { minstens: 2200 });   // de aankomst, en wat het eindscherm in stappen opbouwt
       // elke zichtbare knop, met een teller die de click opvangt vóór hij iets doet
       const knoppen = await page.evaluate(([sel, niet]) => {
         const re = new RegExp(niet, 'i');
