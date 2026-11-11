@@ -20,6 +20,8 @@ const SAMPLES = Number(process.env.SAMPLES || 40);   // vragen per fase/rung-com
 
 const NUM_NL = ['nul', 'één', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien'];
 const numWordNode = n => NUM_NL[n];
+// grof: zonder emoji en dubbele spaties, genoeg om een gezegde zin terug te kennen
+const spreekbaarNode = t => String(t).replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, '').replace(/\s+/g, ' ').trim();
 const fails = [];
 const counts = {};
 function check(ok, label, detail) {
@@ -552,6 +554,103 @@ function check(ok, label, detail) {
   });
   check(!open.uit.open && open.uit.n === 0 && open.open && open.log.length === 1 && open.log[0].t === '' && open.log[0].v === 0,
     'stem: de eerste tik met geluid aan ontgrendelt de stem met één stille zin', JSON.stringify(open));
+
+  /* ---- een gekozen stem die niet komt (Android) ----
+     De Vlaamse stem staat in de lijst maar spreekt niet: een fout, of helemaal
+     niets. Dan dezelfde zin meteen nog eens zonder gekozen stem, en de rest van
+     het bezoek niet meer zelf kiezen. Een weigering (nog geen tik) is iets
+     anders: dan blijft de keuze staan. */
+  const kaal = await page.evaluate(async () => {
+    const echt = { speak: speechSynthesis.speak, getVoices: speechSynthesis.getVoices, U: window.SpeechSynthesisUtterance };
+    window.SpeechSynthesisUtterance = function (t) { this.text = t; };
+    speechSynthesis.getVoices = () => [{ lang: 'nl-BE', name: 'Vlaams' }];
+    const r = {};
+    const ronde = async (gedrag, wacht) => {
+      const log = [];
+      speechSynthesis.speak = u => {
+        log.push({ t: u.text, stem: u.voice ? u.voice.lang : null });
+        const g = gedrag(u);
+        if (g === 'fout') setTimeout(() => u.onerror({ error: 'synthesis-failed' }), 20);
+        else if (g === 'weiger') setTimeout(() => u.onerror({ error: 'not-allowed' }), 20);
+        else if (g === 'goed') setTimeout(() => { u.onstart(); u.onend(); }, 20);
+      };
+      stemKaal = false; _voices = [];
+      let klaar = 0;
+      speak('Hoeveel zie je?', { onEnd: () => klaar++ });
+      await new Promise(t => setTimeout(t, wacht));
+      return { log, klaar, kaal: stemKaal };
+    };
+    r.fout = await ronde(u => u.voice ? 'fout' : 'goed', 200);
+    r.stil = await ronde(u => u.voice ? 'niets' : 'goed', 1900);
+    r.weiger = await ronde(() => 'weiger', 200);
+    r.goed = await ronde(() => 'goed', 200);
+    Object.assign(speechSynthesis, { speak: echt.speak, getVoices: echt.getVoices });
+    window.SpeechSynthesisUtterance = echt.U;
+    stemKaal = false; _voices = []; refreshVoices();
+    return r;
+  });
+  const tweeKeer = x => x.log.length === 2 && x.log[0].stem === 'nl-BE' && x.log[1].stem === null
+    && x.log[1].t === x.log[0].t && x.klaar === 1 && x.kaal;
+  check(tweeKeer(kaal.fout), 'stem: een fout van de gekozen stem = dezelfde zin nog eens zonder keuze', JSON.stringify(kaal.fout));
+  check(tweeKeer(kaal.stil), 'stem: een gekozen stem die niet begint = dezelfde zin nog eens zonder keuze', JSON.stringify(kaal.stil));
+  check(kaal.weiger.log.length === 1 && !kaal.weiger.kaal && kaal.weiger.klaar === 1,
+    'stem: een weigering (nog geen tik) laat de stemkeuze staan', JSON.stringify(kaal.weiger));
+  check(kaal.goed.log.length === 1 && !kaal.goed.kaal && kaal.goed.klaar === 1,
+    'stem: een stem die gewoon spreekt, spreekt één keer', JSON.stringify(kaal.goed));
+
+  /* ---- de stem gaat open op een tik zoals een iPhone die telt ----
+     Safari laat de eerste zin alleen toe als hij begint terwijl een tik
+     LOSGELATEN wordt (touchend, click) of een toets ingedrukt; een zin die
+     bij pointerdown begint, wordt stil geweigerd. Die regel bootsen we hier na
+     met echte aanrakingen, op een verse pagina: één tik op de halte, en de
+     eerste telvraag (die van een timer komt) moet hoorbaar zijn. Stond het
+     ontgrendelen op pointerdown, dan bleef de hele telmodus op een iPhone stil
+     terwijl de klankjes wél klonken -- en elke andere keuring slaagde. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 800 }, hasTouch: true });
+    const ip = await ctx.newPage();
+    await cacheFonts(ip);
+    const ipFout = [];
+    ip.on('pageerror', e => ipFout.push(e.message));
+    await ip.addInitScript(() => {
+      let open = false;
+      window.__ios = [];
+      const TIK = ['touchend', 'click', 'keydown'];
+      const nep = function (u) {
+        const ev = window.event && window.event.type;
+        if (!open && TIK.includes(ev)) open = true;
+        window.__ios.push({ t: u.text, ev: ev || null, klinkt: open });
+      };
+      const zet = () => { if (window.speechSynthesis) speechSynthesis.speak = nep; };
+      zet();
+      document.addEventListener('DOMContentLoaded', zet);
+    });
+    await ip.goto(APP_URL);
+    await ip.waitForTimeout(400);
+    await ip.evaluate(() => {
+      window.hasSpeech = () => true;
+      db.sound = true;
+      db.profiles.t2 = defaultProfile('Iphone', 'dress_roze', { ...COUNT_OPTS, hair: 'hair_blond' });
+      db.profiles.t2.order = 0;
+      const p = db.profiles.t2;
+      p.settings.track = 'count';
+      p.settings.stage = 1; p.settings.stageMax = COUNT_STAGE_MAX; p.settings.qmax = 10;
+      save();
+      renderProfiles();
+      selectProfile('t2');
+    });
+    await ip.waitForTimeout(300);
+    const halte = await ip.locator('.tour-stop.next').boundingBox();
+    await ip.touchscreen.tap(halte.x + halte.width / 2, halte.y + halte.height / 2);
+    await ip.waitForFunction(() => typeof G !== 'undefined' && G && G.count && G.qs[G.idx], null, { timeout: 5000 });
+    await ip.waitForTimeout(1500);
+    const r = await ip.evaluate(() => ({ log: window.__ios, prompt: (G.qs[G.idx] || {}).prompt || '' }));
+    const gehoord = r.log.filter(e => e.klinkt && e.t);
+    check(gehoord.length > 0 && gehoord.some(e => r.prompt && spreekbaarNode(r.prompt).startsWith(e.t.slice(0, 8))),
+      'stem: de stem gaat open op een tik zoals een iPhone die telt (de eerste telvraag klinkt)', JSON.stringify(r));
+    check(ipFout.length === 0, 'geen javascript-fouten', ipFout.join(' | '));
+    await ctx.close();
+  }
 
   check(pageErrors.length === 0, 'geen javascript-fouten', pageErrors.join(' | '));
 

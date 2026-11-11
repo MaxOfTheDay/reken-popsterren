@@ -78,6 +78,8 @@ jobs:
           - { suite: schuiven, bestand: schuiven }
           - { suite: robuust, bestand: robuust }
           - { suite: vlucht, bestand: vlucht }
+          # de telmodus: de enige plek waar de stem nagemeten wordt
+          - { suite: tellen, bestand: counting }
     name: browser (${{ matrix.suite }})
     runs-on: ubuntu-latest
     steps:

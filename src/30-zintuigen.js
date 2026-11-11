@@ -424,20 +424,66 @@ function speak(text, opts) {
        ook als er niets te stoppen viel. Met opts.wacht schuift de zin achteraan in
        de rij in plaats van de vorige af te breken. */
     if (!opts.wacht && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    const v = nlVoice();
-    if (v) u.voice = v;
-    // De taal volgt de gekozen stem: Safari op iOS kijkt soms alleen naar lang. Zonder
-    // stemmenlijst (die komt soms pas later binnen) vragen we gewoon om Vlaams.
-    u.lang = v ? v.lang.replace('_', '-') : 'nl-BE';
-    u.rate = opts.rate || 0.85;   // rustig tempo voor jonge kinderen
-    u.pitch = opts.pitch || 1.15; // iets hoger/vrolijker
-    if (opts.onStart) u.onstart = opts.onStart;
-    // Ook een fout (of een zin die afgebroken wordt) is een einde: wie erop wacht,
-    // mag niet blijven hangen. Eén keer, ook als een browser allebei stuurt.
-    if (opts.onEnd) { let af = false; u.onend = u.onerror = () => { if (!af) { af = true; opts.onEnd(); } }; }
-    speechSynthesis.speak(u);
+    // Chrome op Android laat de spraak soms op pauze staan na een tijd op de
+    // achtergrond; dan blijft elke nieuwe zin stil in de rij hangen.
+    if (speechSynthesis.paused) speechSynthesis.resume();
+    zegNu(text, opts, stemKaal ? null : nlVoice());
   } catch (e) { if (opts.onEnd) opts.onEnd(); }
+}
+/* DE STEM DIE NIET KOMT. Een gekozen stem kan op het toestel staan en toch niet
+   spreken: op Android hoort "Nederlands (België)" bij de spraakdienst van
+   Google, en die werkt zichzelf bij zonder te vragen -- daarna kan juist die
+   stem ontbreken of het net nodig hebben. Dan meldt de browser een fout, of
+   hij zegt helemaal niets: geen begin, geen einde. Zonder iets te kiezen pakt
+   het toestel zijn eigen standaardstem, en die doet het bijna altijd. Dus: gaat
+   een zin met een gekozen stem mis, dan zeggen we hem meteen nog eens zonder
+   keuze (alleen de taal), en kiezen we de rest van het bezoek niet meer zelf.
+   De foutmelder krijgt één briefje "stem: ..." -- dit soort fout gooit niets
+   en zou anders nooit in de zondagrapportage staan. */
+let stemKaal = false;
+let stemNr = 0;           // de hoeveelste zin die de vorige mocht afbreken
+const STEM_STIL = 1500;   // zo lang mag een zin erover doen om te beginnen
+function zegNu(text, opts, v) {
+  if (!opts.wacht) stemNr++;
+  const mijn = stemNr;
+  const u = new SpeechSynthesisUtterance(text);
+  if (v) u.voice = v;
+  // De taal volgt de gekozen stem: Safari op iOS kijkt soms alleen naar lang. Zonder
+  // stemmenlijst (die komt soms pas later binnen) vragen we gewoon om Vlaams.
+  u.lang = v ? v.lang.replace('_', '-') : 'nl-BE';
+  u.rate = opts.rate || 0.85;   // rustig tempo voor jonge kinderen
+  u.pitch = opts.pitch || 1.15; // iets hoger/vrolijker
+  let begon = false, af = false;
+  // Ook een fout (of een zin die afgebroken wordt) is een einde: wie erop wacht,
+  // mag niet blijven hangen. Eén keer, ook als een browser allebei stuurt.
+  const einde = () => { if (!af) { af = true; if (opts.onEnd) opts.onEnd(); } };
+  const opnieuw = (waarom) => {
+    if (af) return;
+    // Nog geen tik gezien, of de browser zegt het zelf: dan is het geen stem die
+    // ontbreekt maar een stem die nog dicht zit. Niets opgeven, en bij de
+    // volgende tik opnieuw ontgrendelen (zie stemOntgrendel).
+    if (waarom === 'not-allowed' || !stemMagAl()) { stemDicht(); einde(); return; }
+    // een latere zin heeft deze afgebroken of ingehaald: niets terug te halen
+    if (mijn !== stemNr) { einde(); return; }
+    af = true;
+    meldFout('stem: ' + waarom + (v ? ' (' + v.lang + ')' : ''));
+    if (v && !stemKaal) { stemKaal = true; try { zegNu(text, opts, null); return; } catch (e) { /* door */ } }
+    if (opts.onEnd) opts.onEnd();
+  };
+  u.onstart = () => { begon = true; if (opts.onStart) opts.onStart(); };
+  u.onend = einde;
+  u.onerror = e => {
+    const fout = e && e.error;
+    if (fout === 'interrupted' || fout === 'canceled') einde();
+    else opnieuw(fout || 'fout');
+  };
+  speechSynthesis.speak(u);
+  setTimeout(() => {
+    if (begon || af || document.hidden) return;
+    let bezig = true;
+    try { bezig = speechSynthesis.speaking || speechSynthesis.pending; } catch (e) { /* weet niet */ }
+    if (!bezig) opnieuw('begint niet');
+  }, STEM_STIL);
 }
 /* Zeg een zin en ga daarna pas verder -- maar nooit eerder dan `rust` en nooit
    later dan STEM_MAX. Elke speak() breekt af wat er nog klonk (cancel), dus wie
@@ -472,12 +518,38 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) cance
    eerste telvraag van een bezoek komt van een timer (de show gaat eerst open),
    en bleef dan stil. Dus zeggen we bij de eerste tik een lege zin, zonder
    volume. Met het geluid uit wacht dit op een tik met het geluid aan -- het
-   aanzetten zelf is er ook een. Andere browsers merken er niets van. */
+   aanzetten zelf is er ook een. Andere browsers merken er niets van.
+
+   WELKE TIK: het LOSLATEN, nooit het neerkomen. Op een iPhone telt alleen
+   touchend (of click, of een toets) als toestemming; pointerdown hoort bij
+   touchstart en telt niet. Hier stond pointerdown: de lege zin werd dan stil
+   geweigerd, stemOpen stond toch op true, en er kwam geen tweede poging. Dat
+   viel niet op zolang de antwoordknoppen onclick hadden -- het eerste antwoord
+   ("Ja, zes!") zei de stem in een click en ontgrendelde hem alsnog. Sinds de
+   antwoordtik (knopTik) al bij pointerup antwoordt, hing de stem van dat ene
+   moment af, en bleef de telmodus op een iPhone stil terwijl de klankjes (Web
+   Audio, die bij elke tik opnieuw gewekt wordt) gewoon klonken. Daarom hier
+   de drie gebeurtenissen die Safari zeker als tik telt. De telmodus-suite
+   bootst die regel van Safari na ("de stem gaat open op een tik zoals een
+   iPhone die telt") en valt om op pointerdown. */
+const STEM_SLEUTELS = ['touchend', 'click', 'keydown'];
 let stemOpen = false;
+// Heeft deze pagina al een echte tik gehad? Zonder userActivation (oud toestel)
+// rekenen we op stemOpen.
+function stemMagAl() {
+  try { if (navigator.userActivation) return navigator.userActivation.hasBeenActive; } catch (e) { /* weet niet */ }
+  return stemOpen;
+}
+// De browser weigerde: bij de volgende tik nog eens ontgrendelen.
+function stemDicht() {
+  if (!stemOpen) return;
+  stemOpen = false;
+  STEM_SLEUTELS.forEach(t => document.addEventListener(t, stemOntgrendel, { capture: true, passive: true }));
+}
 function stemOntgrendel() {
   if (stemOpen || !db.sound || !hasSpeech()) return;
   stemOpen = true;
-  document.removeEventListener('pointerdown', stemOntgrendel, true);
+  STEM_SLEUTELS.forEach(t => document.removeEventListener(t, stemOntgrendel, true));
   try {
     if (speechSynthesis.speaking || speechSynthesis.pending) return;   // er klinkt al iets: open
     const u = new SpeechSynthesisUtterance('');
@@ -485,7 +557,7 @@ function stemOntgrendel() {
     speechSynthesis.speak(u);
   } catch (e) { /* dan maar niet */ }
 }
-document.addEventListener('pointerdown', stemOntgrendel, { capture: true, passive: true });
+STEM_SLEUTELS.forEach(t => document.addEventListener(t, stemOntgrendel, { capture: true, passive: true }));
 
 /* ---- Niet inzoomen ----
    De viewport zegt user-scalable=no, en Android houdt zich daaraan. Safari op iPhone
