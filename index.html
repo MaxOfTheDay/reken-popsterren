@@ -17198,20 +17198,66 @@ function speak(text, opts) {
 
 
     if (!opts.wacht && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    const v = nlVoice();
-    if (v) u.voice = v;
 
 
-    u.lang = v ? v.lang.replace('_', '-') : 'nl-BE';
-    u.rate = opts.rate || 0.85;
-    u.pitch = opts.pitch || 1.15;
-    if (opts.onStart) u.onstart = opts.onStart;
-
-
-    if (opts.onEnd) { let af = false; u.onend = u.onerror = () => { if (!af) { af = true; opts.onEnd(); } }; }
-    speechSynthesis.speak(u);
+    if (speechSynthesis.paused) speechSynthesis.resume();
+    zegNu(text, opts, stemKaal ? null : nlVoice());
   } catch (e) { if (opts.onEnd) opts.onEnd(); }
+}
+
+
+
+
+
+
+
+
+
+
+let stemKaal = false;
+let stemNr = 0;
+const STEM_STIL = 1500;
+function zegNu(text, opts, v) {
+  if (!opts.wacht) stemNr++;
+  const mijn = stemNr;
+  const u = new SpeechSynthesisUtterance(text);
+  if (v) u.voice = v;
+
+
+  u.lang = v ? v.lang.replace('_', '-') : 'nl-BE';
+  u.rate = opts.rate || 0.85;
+  u.pitch = opts.pitch || 1.15;
+  let begon = false, af = false;
+
+
+  const einde = () => { if (!af) { af = true; if (opts.onEnd) opts.onEnd(); } };
+  const opnieuw = (waarom) => {
+    if (af) return;
+
+
+
+    if (waarom === 'not-allowed' || !stemMagAl()) { stemDicht(); einde(); return; }
+
+    if (mijn !== stemNr) { einde(); return; }
+    af = true;
+    meldFout('stem: ' + waarom + (v ? ' (' + v.lang + ')' : ''));
+    if (v && !stemKaal) { stemKaal = true; try { zegNu(text, opts, null); return; } catch (e) { } }
+    if (opts.onEnd) opts.onEnd();
+  };
+  u.onstart = () => { begon = true; if (opts.onStart) opts.onStart(); };
+  u.onend = einde;
+  u.onerror = e => {
+    const fout = e && e.error;
+    if (fout === 'interrupted' || fout === 'canceled') einde();
+    else opnieuw(fout || 'fout');
+  };
+  speechSynthesis.speak(u);
+  setTimeout(() => {
+    if (begon || af || document.hidden) return;
+    let bezig = true;
+    try { bezig = speechSynthesis.speaking || speechSynthesis.pending; } catch (e) { }
+    if (!bezig) opnieuw('begint niet');
+  }, STEM_STIL);
 }
 
 
@@ -17262,6 +17308,18 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) cance
 
 const STEM_SLEUTELS = ['touchend', 'click', 'keydown'];
 let stemOpen = false;
+
+
+function stemMagAl() {
+  try { if (navigator.userActivation) return navigator.userActivation.hasBeenActive; } catch (e) { }
+  return stemOpen;
+}
+
+function stemDicht() {
+  if (!stemOpen) return;
+  stemOpen = false;
+  STEM_SLEUTELS.forEach(t => document.addEventListener(t, stemOntgrendel, { capture: true, passive: true }));
+}
 function stemOntgrendel() {
   if (stemOpen || !db.sound || !hasSpeech()) return;
   stemOpen = true;

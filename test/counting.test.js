@@ -555,6 +555,49 @@ function check(ok, label, detail) {
   check(!open.uit.open && open.uit.n === 0 && open.open && open.log.length === 1 && open.log[0].t === '' && open.log[0].v === 0,
     'stem: de eerste tik met geluid aan ontgrendelt de stem met één stille zin', JSON.stringify(open));
 
+  /* ---- een gekozen stem die niet komt (Android) ----
+     De Vlaamse stem staat in de lijst maar spreekt niet: een fout, of helemaal
+     niets. Dan dezelfde zin meteen nog eens zonder gekozen stem, en de rest van
+     het bezoek niet meer zelf kiezen. Een weigering (nog geen tik) is iets
+     anders: dan blijft de keuze staan. */
+  const kaal = await page.evaluate(async () => {
+    const echt = { speak: speechSynthesis.speak, getVoices: speechSynthesis.getVoices, U: window.SpeechSynthesisUtterance };
+    window.SpeechSynthesisUtterance = function (t) { this.text = t; };
+    speechSynthesis.getVoices = () => [{ lang: 'nl-BE', name: 'Vlaams' }];
+    const r = {};
+    const ronde = async (gedrag, wacht) => {
+      const log = [];
+      speechSynthesis.speak = u => {
+        log.push({ t: u.text, stem: u.voice ? u.voice.lang : null });
+        const g = gedrag(u);
+        if (g === 'fout') setTimeout(() => u.onerror({ error: 'synthesis-failed' }), 20);
+        else if (g === 'weiger') setTimeout(() => u.onerror({ error: 'not-allowed' }), 20);
+        else if (g === 'goed') setTimeout(() => { u.onstart(); u.onend(); }, 20);
+      };
+      stemKaal = false; _voices = [];
+      let klaar = 0;
+      speak('Hoeveel zie je?', { onEnd: () => klaar++ });
+      await new Promise(t => setTimeout(t, wacht));
+      return { log, klaar, kaal: stemKaal };
+    };
+    r.fout = await ronde(u => u.voice ? 'fout' : 'goed', 200);
+    r.stil = await ronde(u => u.voice ? 'niets' : 'goed', 1900);
+    r.weiger = await ronde(() => 'weiger', 200);
+    r.goed = await ronde(() => 'goed', 200);
+    Object.assign(speechSynthesis, { speak: echt.speak, getVoices: echt.getVoices });
+    window.SpeechSynthesisUtterance = echt.U;
+    stemKaal = false; _voices = []; refreshVoices();
+    return r;
+  });
+  const tweeKeer = x => x.log.length === 2 && x.log[0].stem === 'nl-BE' && x.log[1].stem === null
+    && x.log[1].t === x.log[0].t && x.klaar === 1 && x.kaal;
+  check(tweeKeer(kaal.fout), 'stem: een fout van de gekozen stem = dezelfde zin nog eens zonder keuze', JSON.stringify(kaal.fout));
+  check(tweeKeer(kaal.stil), 'stem: een gekozen stem die niet begint = dezelfde zin nog eens zonder keuze', JSON.stringify(kaal.stil));
+  check(kaal.weiger.log.length === 1 && !kaal.weiger.kaal && kaal.weiger.klaar === 1,
+    'stem: een weigering (nog geen tik) laat de stemkeuze staan', JSON.stringify(kaal.weiger));
+  check(kaal.goed.log.length === 1 && !kaal.goed.kaal && kaal.goed.klaar === 1,
+    'stem: een stem die gewoon spreekt, spreekt één keer', JSON.stringify(kaal.goed));
+
   /* ---- de stem gaat open op een tik zoals een iPhone die telt ----
      Safari laat de eerste zin alleen toe als hij begint terwijl een tik
      LOSGELATEN wordt (touchend, click) of een toets ingedrukt; een zin die
