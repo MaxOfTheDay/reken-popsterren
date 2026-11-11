@@ -2281,6 +2281,10 @@ function countAlong(objs, n, lead, drawId) {
 }
 function replayPrompt() {
   sndClick();
+  // 🔇: de spraak van het toestel weigerde (zie stemZegtHet). Eén uitleg voor
+  // de ouder, en toch nog eens proberen -- misschien is de andere app al weg.
+  if (stemStuk) showNotice('🔇 De stem doet het niet',
+    'Dit toestel laat de stem nu niet praten. Speelt er muziek via een andere app, zoals Sonos of een Bluetooth-box? Zet die even op pauze.');
   leesVraagOpnieuw();
 }
 function leesVraagOpnieuw() {
