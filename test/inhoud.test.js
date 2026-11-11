@@ -1375,4 +1375,31 @@ zaak('V', () => {
   check(!kaal.size, 'V · een tekst-of-emoji-teken heeft altijd U+FE0F of U+FE0E erachter', [...kaal].join(' '));
 });
 
+/* ---- W · geen :has() op body, html of :root ----
+   Een :has() waarvan het onderwerp body (of html) is, kijkt de browser na bij
+   élke wijziging ergens in de pagina die erin kan passen. Op body:has(#screen-
+   dress.active ...) was dat bij elke schermwissel een derde van al het
+   selectorwerk (prestatie-audit nov 2026). Zet in de JavaScript een klasse op
+   body op het moment dat het verandert (zoals body.op-kamer in show()). Een
+   regel die het met reden toch doet, zegt het in het commentaar ervoor:
+   "uitzondering op inhoud zaak W". */
+zaak('W', () => {
+  const map = path.join(WORTEL, 'src', 'css');
+  const fout = [];
+  for (const f of fs.readdirSync(map).filter(f => f.endsWith('.css')).sort()) {
+    const tekst = fs.readFileSync(path.join(map, f), 'utf8');
+    const re = /(^|[\s,{}])((?:html|body|:root)(?:[.#\[:][\w\-\]=" ]*?)?:has\()/g;
+    for (const m of tekst.matchAll(re)) {
+      const voor = tekst.slice(0, m.index);
+      const opm = voor.lastIndexOf('/*'), dicht = voor.lastIndexOf('*/');
+      if (opm > dicht) continue;   // staat zelf in commentaar
+      // de uitzondering: het commentaar vlak erboven (hooguit drie regels ertussen) noemt hem
+      const vlakErboven = dicht >= 0 && voor.slice(dicht + 2).split('\n').length <= 4;
+      if (vlakErboven && /uitzondering op inhoud zaak W/.test(voor.slice(opm, dicht))) continue;
+      fout.push(`${f}:${voor.split('\n').length} ${m[2]}`);
+    }
+  }
+  check(!fout.length, 'W · geen :has() op body, html of :root (zet een klasse op body vanuit de JavaScript)', fout.join(' | '));
+});
+
 klaar();
