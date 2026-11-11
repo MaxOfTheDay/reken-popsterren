@@ -27,7 +27,7 @@
  *   C  tikstormen: een paar rondes van willekeurige tikken met af en toe
  *      "terug", met een vast zaadje zodat een fout terug te spelen is. Geen
  *      enkele fout, en na afloop staat er precies één scherm, geen sluier
- *      zonder melding, geen overgang die blijft hangen.
+ *      zonder melding (of 👆), geen overgang die blijft hangen.
  *   D  offline na het allereerste bezoek: de tekeningen die het spel bij dat
  *      bezoek al ophaalde (vóór de service worker meekeek) staan in de voorraad,
  *      dus zonder net staat haar kaart er met tekening. Over een echte lokale
@@ -262,7 +262,10 @@ const NIET = /set-reset|set-delete|delete|wis|import|export|backup|deel|kopieer|
         const veil = document.getElementById('tap-veil'), toast = document.getElementById('toast');
         return {
           schermen: [...document.querySelectorAll('.screen.active')].map(x => x.id),
-          sluier: veil.style.display === 'block' && toast.style.display === 'none',
+          // een sluier wacht op een tik; dan hoort er iets te zeggen wáár: de
+          // melding, of de 👆 op de goede knop na een tweede misser (toonVerder)
+          sluier: veil.style.display === 'block' && toast.style.display === 'none'
+            && !document.querySelector('.screen.active .wijs-hand'),
           blijft: [overgangBezig, !!vluchtOp, !!wereldReisOp].some(Boolean),
           wegvallend: document.querySelectorAll('.screen.wegvallend').length,
           inert: [...document.querySelectorAll('.screen.active')].some(x => x.inert),
