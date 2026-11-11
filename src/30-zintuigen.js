@@ -472,12 +472,26 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) cance
    eerste telvraag van een bezoek komt van een timer (de show gaat eerst open),
    en bleef dan stil. Dus zeggen we bij de eerste tik een lege zin, zonder
    volume. Met het geluid uit wacht dit op een tik met het geluid aan -- het
-   aanzetten zelf is er ook een. Andere browsers merken er niets van. */
+   aanzetten zelf is er ook een. Andere browsers merken er niets van.
+
+   WELKE TIK: het LOSLATEN, nooit het neerkomen. Op een iPhone telt alleen
+   touchend (of click, of een toets) als toestemming; pointerdown hoort bij
+   touchstart en telt niet. Hier stond pointerdown: de lege zin werd dan stil
+   geweigerd, stemOpen stond toch op true, en er kwam geen tweede poging. Dat
+   viel niet op zolang de antwoordknoppen onclick hadden -- het eerste antwoord
+   ("Ja, zes!") zei de stem in een click en ontgrendelde hem alsnog. Sinds de
+   antwoordtik (knopTik) al bij pointerup antwoordt, hing de stem van dat ene
+   moment af, en bleef de telmodus op een iPhone stil terwijl de klankjes (Web
+   Audio, die bij elke tik opnieuw gewekt wordt) gewoon klonken. Daarom hier
+   de drie gebeurtenissen die Safari zeker als tik telt. De telmodus-suite
+   bootst die regel van Safari na ("de stem gaat open op een tik zoals een
+   iPhone die telt") en valt om op pointerdown. */
+const STEM_SLEUTELS = ['touchend', 'click', 'keydown'];
 let stemOpen = false;
 function stemOntgrendel() {
   if (stemOpen || !db.sound || !hasSpeech()) return;
   stemOpen = true;
-  document.removeEventListener('pointerdown', stemOntgrendel, true);
+  STEM_SLEUTELS.forEach(t => document.removeEventListener(t, stemOntgrendel, true));
   try {
     if (speechSynthesis.speaking || speechSynthesis.pending) return;   // er klinkt al iets: open
     const u = new SpeechSynthesisUtterance('');
@@ -485,7 +499,7 @@ function stemOntgrendel() {
     speechSynthesis.speak(u);
   } catch (e) { /* dan maar niet */ }
 }
-document.addEventListener('pointerdown', stemOntgrendel, { capture: true, passive: true });
+STEM_SLEUTELS.forEach(t => document.addEventListener(t, stemOntgrendel, { capture: true, passive: true }));
 
 /* ---- Niet inzoomen ----
    De viewport zegt user-scalable=no, en Android houdt zich daaraan. Safari op iPhone

@@ -17247,11 +17247,25 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) cance
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+const STEM_SLEUTELS = ['touchend', 'click', 'keydown'];
 let stemOpen = false;
 function stemOntgrendel() {
   if (stemOpen || !db.sound || !hasSpeech()) return;
   stemOpen = true;
-  document.removeEventListener('pointerdown', stemOntgrendel, true);
+  STEM_SLEUTELS.forEach(t => document.removeEventListener(t, stemOntgrendel, true));
   try {
     if (speechSynthesis.speaking || speechSynthesis.pending) return;
     const u = new SpeechSynthesisUtterance('');
@@ -17259,7 +17273,7 @@ function stemOntgrendel() {
     speechSynthesis.speak(u);
   } catch (e) { }
 }
-document.addEventListener('pointerdown', stemOntgrendel, { capture: true, passive: true });
+STEM_SLEUTELS.forEach(t => document.addEventListener(t, stemOntgrendel, { capture: true, passive: true }));
 
 
 

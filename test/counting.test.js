@@ -20,6 +20,8 @@ const SAMPLES = Number(process.env.SAMPLES || 40);   // vragen per fase/rung-com
 
 const NUM_NL = ['nul', 'één', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien'];
 const numWordNode = n => NUM_NL[n];
+// grof: zonder emoji en dubbele spaties, genoeg om een gezegde zin terug te kennen
+const spreekbaarNode = t => String(t).replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, '').replace(/\s+/g, ' ').trim();
 const fails = [];
 const counts = {};
 function check(ok, label, detail) {
@@ -552,6 +554,60 @@ function check(ok, label, detail) {
   });
   check(!open.uit.open && open.uit.n === 0 && open.open && open.log.length === 1 && open.log[0].t === '' && open.log[0].v === 0,
     'stem: de eerste tik met geluid aan ontgrendelt de stem met één stille zin', JSON.stringify(open));
+
+  /* ---- de stem gaat open op een tik zoals een iPhone die telt ----
+     Safari laat de eerste zin alleen toe als hij begint terwijl een tik
+     LOSGELATEN wordt (touchend, click) of een toets ingedrukt; een zin die
+     bij pointerdown begint, wordt stil geweigerd. Die regel bootsen we hier na
+     met echte aanrakingen, op een verse pagina: één tik op de halte, en de
+     eerste telvraag (die van een timer komt) moet hoorbaar zijn. Stond het
+     ontgrendelen op pointerdown, dan bleef de hele telmodus op een iPhone stil
+     terwijl de klankjes wél klonken -- en elke andere keuring slaagde. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 800 }, hasTouch: true });
+    const ip = await ctx.newPage();
+    await cacheFonts(ip);
+    const ipFout = [];
+    ip.on('pageerror', e => ipFout.push(e.message));
+    await ip.addInitScript(() => {
+      let open = false;
+      window.__ios = [];
+      const TIK = ['touchend', 'click', 'keydown'];
+      const nep = function (u) {
+        const ev = window.event && window.event.type;
+        if (!open && TIK.includes(ev)) open = true;
+        window.__ios.push({ t: u.text, ev: ev || null, klinkt: open });
+      };
+      const zet = () => { if (window.speechSynthesis) speechSynthesis.speak = nep; };
+      zet();
+      document.addEventListener('DOMContentLoaded', zet);
+    });
+    await ip.goto(APP_URL);
+    await ip.waitForTimeout(400);
+    await ip.evaluate(() => {
+      window.hasSpeech = () => true;
+      db.sound = true;
+      db.profiles.t2 = defaultProfile('Iphone', 'dress_roze', { ...COUNT_OPTS, hair: 'hair_blond' });
+      db.profiles.t2.order = 0;
+      const p = db.profiles.t2;
+      p.settings.track = 'count';
+      p.settings.stage = 1; p.settings.stageMax = COUNT_STAGE_MAX; p.settings.qmax = 10;
+      save();
+      renderProfiles();
+      selectProfile('t2');
+    });
+    await ip.waitForTimeout(300);
+    const halte = await ip.locator('.tour-stop.next').boundingBox();
+    await ip.touchscreen.tap(halte.x + halte.width / 2, halte.y + halte.height / 2);
+    await ip.waitForFunction(() => typeof G !== 'undefined' && G && G.count && G.qs[G.idx], null, { timeout: 5000 });
+    await ip.waitForTimeout(1500);
+    const r = await ip.evaluate(() => ({ log: window.__ios, prompt: (G.qs[G.idx] || {}).prompt || '' }));
+    const gehoord = r.log.filter(e => e.klinkt && e.t);
+    check(gehoord.length > 0 && gehoord.some(e => r.prompt && spreekbaarNode(r.prompt).startsWith(e.t.slice(0, 8))),
+      'stem: de stem gaat open op een tik zoals een iPhone die telt (de eerste telvraag klinkt)', JSON.stringify(r));
+    check(ipFout.length === 0, 'geen javascript-fouten', ipFout.join(' | '));
+    await ctx.close();
+  }
 
   check(pageErrors.length === 0, 'geen javascript-fouten', pageErrors.join(' | '));
 
