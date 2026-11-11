@@ -60,6 +60,11 @@
  *      afgesneden (het lichte randje stak 2px boven de tekening), en vielen
  *      op een kleine telefoon liggend het eerste vijfvak en het ? van een
  *      telsom half van de kaart.
+ *   K  kindermaat: in dezelfde ronde als F is elke antwoordknop minstens
+ *      TIK_MIN in beide richtingen, en in de telmodus elk ding om te tellen
+ *      minstens OBJ_MIN hoog en elk vakje van een raampje VAK_MIN. Passen is
+ *      niet genoeg: tot november 2026 paste alles op een telefoon liggend, met
+ *      teltegels van 29px en voorwerpen van 9px.
  *   Z  haar gezicht blijft vrij: op een gewone hoge telefoon valt de hint (de
  *      🤔, "half 3 ↷") niet op haar hoofd, ook niet als zij hoog staat (de
  *      telmodus, een show met de klok of de kalender). Zie zaalPast.
@@ -301,6 +306,9 @@ async function zaakE(browser, [w, h]) {
 // ---- F · elk antwoord past ----
 // een klokje om te zoeken: kleiner was het 45 à 64px, op een knop onder een lege kaart
 const KLOK_ZOEK_MIN = 84;
+// K: kindermaat. Een knop minstens zo groot als een kindervingertop; een ding om
+// te tellen en een vakje van een raampje groot genoeg om er één aan te wijzen.
+const TIK_MIN = Number(process.env.TIK_MIN || 44), OBJ_MIN = Number(process.env.OBJ_MIN || 16), VAK_MIN = Number(process.env.VAK_MIN || 12);
 const PAS_MATEN = [[320, 568], [390, 844], [568, 320], [667, 375], [844, 390], [1024, 768]];
 async function zaakF(browser, [w, h]) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true });
@@ -310,7 +318,7 @@ async function zaakF(browser, [w, h]) {
   page.on('pageerror', e => fouten.push(e.message));
   await page.goto(APP_URL + '&demo&star=p1&screen=map');
   await rust(page);
-  const rg = await page.evaluate(async KLOK_ZOEK_MIN => {
+  const rg = await page.evaluate(async ([KLOK_ZOEK_MIN, TIK_MIN, OBJ_MIN, VAK_MIN]) => {
     await document.fonts.ready;
     const s = P().settings, uit = [];
     // een thema alleen, met al zijn stappen: dan komt elke vorm in één show langs
@@ -376,6 +384,24 @@ async function zaakF(browser, [w, h]) {
         }
       }
     };
+    /* K: kindermaat. Een knop die een vinger van vijf moet raken, en een ding
+       dat ze moet tellen, hebben een ondergrens -- passen (F) is niet genoeg:
+       tot november 2026 paste alles op een telefoon liggend, met tegels van
+       29px en voorwerpen van 9px. Een steunstipje onder een cijfer (.mini) en
+       het kleine groepje van "groot tegen klein" (.klein) zijn met opzet klein. */
+    const klein = [];
+    const kindermaat = naam => {
+      for (const b of $('answer-area').querySelectorAll('button:not(.gl-raak)')) {
+        const r = b.getBoundingClientRect();
+        if (r.width && Math.min(r.width, r.height) < TIK_MIN) klein.push(`${naam}: knop ${b.className.split(' ')[0]} ${Math.round(r.width)}x${Math.round(r.height)}`);
+      }
+      if (!G.count) return;
+      for (const el of [$('question-card'), $('answer-area')].flatMap(w => [...w.querySelectorAll('.cg-obj, .tf-cell, .df-cell')])) {
+        if (el.closest('.mini, .klein, .sum-eq, .hidden') || !el.offsetParent) continue;
+        const r = el.getBoundingClientRect(), min = el.matches('.cg-obj') ? OBJ_MIN : VAK_MIN;
+        if (r.height && r.height < min) { klein.push(`${naam}: ${el.className.split(' ')[0]} ${Math.round(r.height)}px`); break; }
+      }
+    };
     // een telsom: één regel, en binnen zijn kaart
     const telsomNa = naam => {
       afgeknipt(naam);
@@ -420,6 +446,7 @@ async function zaakF(browser, [w, h]) {
           if (!binnen(b)) uit.push(`${naam}: gold-banner`);
           b.textContent = t; goudPlek();
         }
+        kindermaat(naam);
         // de klok zoeken: echte klokjes
         const klokje = q.kind === 'klok' && q.vorm === 'zoek' && $('answer-area').querySelector('.choice-btn');
         if (klokje && klokje.offsetHeight < KLOK_ZOEK_MIN) uit.push(`${naam}: zoek-klokje ${klokje.offsetHeight}px`);
@@ -439,10 +466,11 @@ async function zaakF(browser, [w, h]) {
         G.idx = 0; renderQuestion();
         telsomNa(`telsom ${style}/${repr} ${a} ${op} ${b}`);
       }
-    return [[...new Set(uit)], [...new Set(geknipt)]];
-  }, KLOK_ZOEK_MIN);
-  const [r, g] = rg;
+    return [[...new Set(uit)], [...new Set(geknipt)], [...new Set(klein)]];
+  }, [KLOK_ZOEK_MIN, TIK_MIN, OBJ_MIN, VAK_MIN]);
+  const [r, g, k] = rg;
   check(!r.length, 'F · elk antwoord past', `${w}x${h}: ${r.slice(0, 8).join(' | ')}${r.length > 8 ? ` (+${r.length - 8})` : ''}`);
+  check(!k.length, 'K · kindermaat', `${w}x${h}: ${k.slice(0, 8).join(' | ')}${k.length > 8 ? ` (+${k.length - 8})` : ''}`);
   check(!g.length, 'G · niets wordt afgeknipt', `${w}x${h}: ${g.slice(0, 8).join(' | ')}${g.length > 8 ? ` (+${g.length - 8})` : ''}`);
   check(!fouten.length, 'F · elk antwoord past', `${w}x${h}: ${fouten.join(' | ')}`);
   await ctx.close();
