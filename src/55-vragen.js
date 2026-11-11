@@ -2264,9 +2264,17 @@ function renderCountAnswers(q, area) {
 // Meetellen: elk object popt op maat op; de getallen worden achter elkaar gezegd.
 function countAlong(objs, n, lead, drawId) {
   let i = 0;
+  /* Tikt het kind een antwoord terwijl er nog meegeteld wordt, dan stopt het
+     tellen: anders telde de stem door over "Bijna!" heen, en na een tweede
+     misser liepen het meetellen en het uittellen van het antwoord (countReveal)
+     door elkaar -- twee keer "één", twee keer "twee". Wat telt is of er sinds
+     het begin geantwoord is, niet óf er ooit gemist werd: "nog eens voorlezen"
+     na een misser telt gewoon helemaal mee. */
+  const g = G, al = g && g.retried, dicht = g && g.lock;
   const step = () => {
     if (!G || !G.count || i >= n) return;
     if (drawId != null && drawId !== countDrawId) return;   // er staat alweer een nieuwe vraag
+    if (G !== g || G.retried !== al || G.lock !== dicht) return;   // er is intussen geantwoord
 
     const o = objs[i];
     if (o) { o.classList.remove('pre'); o.classList.add('pop'); }
@@ -2281,10 +2289,11 @@ function countAlong(objs, n, lead, drawId) {
 }
 function replayPrompt() {
   sndClick();
-  // 🔇: de spraak van het toestel weigerde (zie stemZegtHet). Eén uitleg voor
-  // de ouder, en toch nog eens proberen -- misschien is de andere app al weg.
-  if (stemStuk) showNotice('🔇 De stem doet het niet',
-    'Dit toestel laat de stem nu niet praten. Speelt er muziek via een andere app, zoals Sonos of een Bluetooth-box? Zet die even op pauze.');
+  /* 🔇: de spraak van het toestel weigerde (zie stemZegtHet). Eén regel voor de
+     ouder, en de nieuwe poging pas op de knop: meteen opnieuw proberen terwijl
+     de muziek nog speelt, mislukt gewoon weer. Lukt het daarna, dan zet de
+     stem zelf de 🔊 terug; zo niet, dan blijft de 🔇 staan. */
+  if (stemStuk) { showNotice('🔇 Geen stem', STEM_STUK_ZIN, '🔊 Probeer opnieuw', leesVraagOpnieuw); return; }
   leesVraagOpnieuw();
 }
 function leesVraagOpnieuw() {

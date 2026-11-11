@@ -1130,6 +1130,10 @@ function openCijfers() {
 function stemNotitie(naam) {
   if (!db.sound) return { ico: '🔇', titel: 'Geluid', sub: `${esc(naam || 'Je ster')} hoort de vragen niet` };
   if (!hasSpeech()) return { ico: '🔇', titel: 'Geen voorlezen', sub: 'Alles blijft speelbaar, maar de luisteroefening (fase 5) wordt overgeslagen.' };
+  /* De spraak van het toestel weigerde deze sessie (zie stemZegtHet): dezelfde
+     uitleg als bij de 🔇 onder de telvraag, zodat een ouder hem ook hier vindt. */
+  if (stemStuk) return { ico: '🔇', titel: 'Geen stem',
+    sub: '<details class="stem-hoe"><summary>Hoe?</summary>' + STEM_STUK_ZIN + '</details>' };
   /* Eén regel; de uitleg pas als een ouder erom vraagt. Hier stond een zin van
      vijfendertig woorden, de langste tekst op haar pagina, over een instelling
      van het toestel en niet van het spel. */

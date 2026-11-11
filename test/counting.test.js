@@ -604,6 +604,55 @@ function check(ok, label, detail) {
   check(kaal.goed.log.length === 1 && !kaal.goed.kaal && kaal.goed.klaar === 1,
     'stem: een stem die gewoon spreekt, spreekt één keer', JSON.stringify(kaal.goed));
 
+  /* ---- toestel en instellingen die het spel stil laten breken ----
+     Een donkere modus die de pagina omkleurt (witte vraagkaart wordt zwart), een
+     vertaling die knoppen herschrijft terwijl de stem Nederlands blijft, een
+     geluidscontext die na een telefoontje niet meer wakker wordt, en een stem die
+     weigert zonder dat de ouder het ergens terugvindt. */
+  const toestel = await page.evaluate(async () => {
+    const r = {};
+    const m = document.querySelector('meta[name="color-scheme"]');
+    r.licht = m ? m.content : null;
+    r.vertaal = document.documentElement.getAttribute('translate');
+    const was = stemStuk; stemStuk = true;
+    const n = stemNotitie('Lena'); r.tip = n && n.titel;
+    // de 🔇 aantikken: één regel en één knop; pas die knop probeert opnieuw
+    const gezegd = [];
+    const echtSpreek = speechSynthesis.speak;
+    speechSynthesis.speak = u => gezegd.push(u.text);
+    replayPrompt();
+    r.dialoog = { titel: $('confirm-title').textContent, knop: $('confirm-ok').textContent, voorKnop: gezegd.length };
+    $('confirm-ok').click();
+    r.dialoog.naKnop = gezegd.length;
+    r.dialoog.dicht = !$('confirm-modal').classList.contains('open');
+    speechSynthesis.speak = echtSpreek;
+    stemStuk = was;
+    // een context die liep en nu vastzit: na terugkomst een nieuwe
+    const echt = { actx, bus };
+    const vast = { state: 'interrupted', _liep: true, resume() {}, close() { this.dicht = true; } };
+    actx = vast; bus = {};
+    audioHerstel();
+    await new Promise(t => setTimeout(t, 650));
+    r.nieuw = actx !== vast && !!actx; r.dicht = !!vast.dicht;
+    // een context die nog nooit liep (geen tik gehad) blijft staan
+    const wacht = { state: 'suspended', resume() {}, close() { this.dicht = true; } };
+    actx = wacht; bus = {};
+    audioHerstel();
+    await new Promise(t => setTimeout(t, 650));
+    r.wachtBlijft = actx === wacht && !wacht.dicht;
+    try { if (actx && actx !== echt.actx && actx.close) actx.close(); } catch (e) {}
+    actx = echt.actx; bus = echt.bus;
+    return r;
+  });
+  check(toestel.licht === 'only light', 'toestel: de pagina zegt "alleen licht" (geen omgekleurde donkere modus)', JSON.stringify(toestel));
+  check(toestel.vertaal === 'no', 'toestel: het spel wordt niet automatisch vertaald', JSON.stringify(toestel));
+  check(toestel.tip === 'Geen stem', 'toestel: een stem die weigert staat ook bij Voor ouders', JSON.stringify(toestel));
+  check(toestel.dialoog.titel === '🔇 Geen stem' && toestel.dialoog.knop === '🔊 Probeer opnieuw'
+    && toestel.dialoog.voorKnop === 0 && toestel.dialoog.naKnop > 0 && toestel.dialoog.dicht,
+    'toestel: de 🔇 aantikken geeft één regel, en pas "Probeer opnieuw" leest de vraag opnieuw', JSON.stringify(toestel.dialoog));
+  check(toestel.nieuw && toestel.dicht && toestel.wachtBlijft,
+    'toestel: een geluidscontext die na een onderbreking vastzit, wordt vervangen (een die wacht op een tik niet)', JSON.stringify(toestel));
+
   /* ---- de stem gaat open op een tik zoals een iPhone die telt ----
      Safari laat de eerste zin alleen toe als hij begint terwijl een tik
      LOSGELATEN wordt (touchend, click) of een toets ingedrukt; een zin die

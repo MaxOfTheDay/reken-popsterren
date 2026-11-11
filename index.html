@@ -1,7 +1,11 @@
 <!DOCTYPE html>
-<html lang="nl" class="opbouw">
+<html lang="nl" translate="no" class="opbouw">
 <head>
 <meta charset="UTF-8">
+<!-- Alleen licht. Samsung Internet volgt de donkere modus van het toestel en Chrome
+     kent "automatisch donker": allebei kleuren een pagina zonder deze regel om, en
+     dan werd de witte vraagkaart zwart. Het spel heeft zijn eigen nachtsfeer. -->
+<meta name="color-scheme" content="only light">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <title>Rekensterren</title>
 <link rel="manifest" href="manifest.json">
@@ -12377,11 +12381,13 @@ function showConfirm(title, body, confirmLabel, onConfirm) {
   $('confirm-modal').classList.add('open');
   syncBackGuard();
 }
-function showNotice(title, body) {
+
+function showNotice(title, body, knop, doe) {
   $('confirm-title').textContent = title;
   $('confirm-body').textContent = body;
-  $('confirm-actions').innerHTML = `<button class="btn" id="confirm-ok">Oké</button>`;
-  $('confirm-ok').onclick = closeConfirmModal;
+  $('confirm-actions').innerHTML = `<button class="btn" id="confirm-ok"></button>`;
+  $('confirm-ok').textContent = knop || 'Oké';
+  $('confirm-ok').onclick = () => { closeConfirmModal(); if (doe) doe(); };
   $('confirm-modal').classList.add('open');
   syncBackGuard();
 }
@@ -16863,12 +16869,38 @@ function audioBus() {
     bus = actx.createGain();
     bus.gain.value = BUS_OPEN;
     bus.connect(actx.destination);
+
+    const ctx = actx;
+    if (ctx.state === 'running') ctx._liep = true;
+    ctx.onstatechange = () => { if (ctx.state === 'running') ctx._liep = true; };
   } catch (e) { actx = null; bus = null; audioStuk = true; }
   return bus;
 }
 
 function audioWakker() {
   try { if (actx && actx.state !== 'running' && actx.resume) actx.resume(); } catch (e) { }
+}
+
+
+
+
+
+
+
+
+const AUDIO_HERSTEL = 500;
+function audioHerstel() {
+  if (!actx || !db.sound) return;
+  audioWakker();
+  setTimeout(() => {
+    try {
+      if (!actx || actx.state === 'running' || document.hidden || !actx._liep) return;
+      const oud = actx;
+      actx = null; bus = null;
+      try { oud.close(); } catch (e) { }
+      audioBus();
+    } catch (e) { }
+  }, AUDIO_HERSTEL);
 }
 document.addEventListener('pointerdown', audioWakker, { passive: true });
 
@@ -16883,7 +16915,7 @@ document.addEventListener('pointerdown', audioWakker, { passive: true });
 
 
 naDeRust(() => { if (db.sound) audioBus(); });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') audioWakker(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') audioHerstel(); });
 
 
 function busNaar(v, tijd) {
@@ -17291,6 +17323,8 @@ function zegNu(text, opts, v) {
 
 
 let stemStuk = false;
+
+const STEM_STUK_ZIN = 'Speelt er muziek via een andere app of box? Zet die even op pauze.';
 function stemZegtHet(ja) {
   if (stemStuk === !ja) return;
   stemStuk = !ja;
@@ -17298,7 +17332,7 @@ function stemZegtHet(ja) {
   if (!b) return;
   b.textContent = ja ? '🔊' : '🔇';
   b.classList.toggle('stuk', !ja);
-  const lab = ja ? 'Nog eens voorlezen' : 'De stem van dit toestel doet het niet';
+  const lab = ja ? 'Nog eens voorlezen' : 'Geen stem';
   b.setAttribute('aria-label', lab);
   b.title = lab;
 }
@@ -27027,9 +27061,17 @@ function renderCountAnswers(q, area) {
 
 function countAlong(objs, n, lead, drawId) {
   let i = 0;
+
+
+
+
+
+
+  const g = G, al = g && g.retried, dicht = g && g.lock;
   const step = () => {
     if (!G || !G.count || i >= n) return;
     if (drawId != null && drawId !== countDrawId) return;
+    if (G !== g || G.retried !== al || G.lock !== dicht) return;
 
     const o = objs[i];
     if (o) { o.classList.remove('pre'); o.classList.add('pop'); }
@@ -27046,8 +27088,9 @@ function replayPrompt() {
   sndClick();
 
 
-  if (stemStuk) showNotice('🔇 De stem doet het niet',
-    'Dit toestel laat de stem nu niet praten. Speelt er muziek via een andere app, zoals Sonos of een Bluetooth-box? Zet die even op pauze.');
+
+
+  if (stemStuk) { showNotice('🔇 Geen stem', STEM_STUK_ZIN, '🔊 Probeer opnieuw', leesVraagOpnieuw); return; }
   leesVraagOpnieuw();
 }
 function leesVraagOpnieuw() {
@@ -32513,6 +32556,10 @@ function openCijfers() {
 function stemNotitie(naam) {
   if (!db.sound) return { ico: '🔇', titel: 'Geluid', sub: `${esc(naam || 'Je ster')} hoort de vragen niet` };
   if (!hasSpeech()) return { ico: '🔇', titel: 'Geen voorlezen', sub: 'Alles blijft speelbaar, maar de luisteroefening (fase 5) wordt overgeslagen.' };
+
+
+  if (stemStuk) return { ico: '🔇', titel: 'Geen stem',
+    sub: '<details class="stem-hoe"><summary>Hoe?</summary>' + STEM_STUK_ZIN + '</details>' };
 
 
 

@@ -68,11 +68,13 @@ function showConfirm(title, body, confirmLabel, onConfirm) {
   $('confirm-modal').classList.add('open');
   syncBackGuard();
 }
-function showNotice(title, body) {
+// knop en doe: een eigen knop in plaats van "Oké", die eerst sluit en dan doe() doet
+function showNotice(title, body, knop, doe) {
   $('confirm-title').textContent = title;
   $('confirm-body').textContent = body;
-  $('confirm-actions').innerHTML = `<button class="btn" id="confirm-ok">Oké</button>`;
-  $('confirm-ok').onclick = closeConfirmModal;
+  $('confirm-actions').innerHTML = `<button class="btn" id="confirm-ok"></button>`;
+  $('confirm-ok').textContent = knop || 'Oké';
+  $('confirm-ok').onclick = () => { closeConfirmModal(); if (doe) doe(); };
   $('confirm-modal').classList.add('open');
   syncBackGuard();
 }
