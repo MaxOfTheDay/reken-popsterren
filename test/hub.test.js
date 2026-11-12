@@ -21,6 +21,8 @@
  *   L  de prompts om te kopiëren vragen wat de studio en het spel aannemen
  *   M  de tekeningenvoorraad gaat alleen omhoog voor een tekening die al
  *      vastgelegd was -- niet voor een nieuwe die je twee keer sleept
+ *   N  Publiceren zet op main precies wat getest is: main eerst in de tak,
+ *      bouwen, testen, dan pas main vooruit (versie.naarMain)
  *
  * De reden voor A: een knop met een vlag die index.html niet kent doet niets, en
  * dat merk je pas als je staat te kijken naar een scherm dat er anders uitziet
@@ -753,6 +755,95 @@ zaak('F · de snelkoppeling', () => {
       && /los\.txt/.test(g(hier, 'stash', 'show', '--include-untracked', '--name-only', 'stash@{0}')),
       'C · gelijkzetten: open werk staat in de stash', JSON.stringify(r));
     check(!v2.uitDePas(v2.feiten()), 'C · gelijkzetten: daarna niet meer uit de pas', JSON.stringify(v2.feiten().vanMain));
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+
+  /* N · Publiceren zet op main wat getest is. Vroeger testte de studio de tak,
+     voegde dan pas een intussen verdere main samen en duwde dat ongebouwd door:
+     versie.txt hield de eigen kant en klopte niet meer bij wat er live stond.
+     versie.naarMain doet het nu andersom; hier in een wegwerprepo met een eigen
+     "GitHub", een nep-bouw (versie.txt = alle bestanden achter elkaar) en
+     nep-tests die opschrijven wát ze zagen. */
+  {
+    const { execFileSync } = require('child_process');
+    const os = require('os');
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'rp-naarmain-'));
+    const g = (cwd, ...a) => execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a],
+      { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    const daar = path.join(tmp, 'daar.git'), hier = path.join(tmp, 'hier'), ander = path.join(tmp, 'ander');
+    g(tmp, 'init', '-q', '--bare', '-b', 'main', daar);
+    g(tmp, 'clone', '-q', daar, hier);
+    g(hier, 'checkout', '-q', '-b', 'main');
+    g(hier, 'config', 'user.name', 't'); g(hier, 'config', 'user.email', 't@t');
+    const bouwIn = map => () => {
+      const namen = fs.readdirSync(map).filter(n => n.endsWith('.src')).sort();
+      fs.writeFileSync(path.join(map, 'versie.txt'),
+        namen.map(n => fs.readFileSync(path.join(map, n), 'utf8')).join('') );
+    };
+    fs.copyFileSync(path.join(__dirname, '..', '.gitattributes'), path.join(hier, '.gitattributes'));
+    fs.writeFileSync(path.join(hier, 'a.src'), 'a\n');
+    bouwIn(hier)();
+    g(hier, 'add', '.'); g(hier, 'commit', '-q', '-m', 'begin');
+    g(hier, 'push', '-q', 'origin', 'main');
+    g(tmp, 'clone', '-q', daar, ander);
+    const anderVerder = (bestand) => {
+      g(ander, 'pull', '-q', 'origin', 'main');
+      fs.writeFileSync(path.join(ander, bestand), bestand.replace('.src', '') + '\n');
+      bouwIn(ander)();
+      g(ander, 'add', '.'); g(ander, 'commit', '-q', '-m', bestand);
+      g(ander, 'push', '-q', 'origin', 'main');
+    };
+    // de studio maakt een wereld op een tak; intussen merget een andere sessie
+    g(hier, 'checkout', '-q', '-b', 'studio/wereld');
+    fs.writeFileSync(path.join(hier, 'w.src'), 'wereld\n');
+    bouwIn(hier)();
+    g(hier, 'add', '.'); g(hier, 'commit', '-q', '-m', 'wereld');
+    anderVerder('b.src');
+    fs.mkdirSync(path.join(hier, 'test'));
+    for (const f of ['versie.js', 'samenvoegen.js']) fs.copyFileSync(path.join(__dirname, f), path.join(hier, 'test', f));
+    fs.writeFileSync(path.join(hier, '.git', 'info', 'exclude'), 'test/\n');
+    const v3 = require(path.join(hier, 'test', 'versie.js'));
+    const gezien = [];
+    const r = await v3.naarMain('studio/wereld', { bouw: bouwIn(hier),
+      tests: () => { gezien.push(g(hier, 'rev-parse', 'HEAD')); } });
+    const live = g(hier, 'rev-parse', 'origin/main');
+    check(gezien.length === 1 && gezien[0] === live,
+      'N · wat op main landt is precies wat getest is', JSON.stringify({ gezien, live }));
+    check(g(hier, 'show', 'origin/main:versie.txt') === 'a\nb\nwereld',
+      'N · versie.txt op main is gebouwd na het samenvoegen', JSON.stringify(g(hier, 'show', 'origin/main:versie.txt')));
+    check(r.rondes === 1, 'N · één ronde als main stil bleef staan', JSON.stringify(r));
+    // main beweegt terwijl de tests lopen: GitHub weigert de duw, dus een tweede ronde
+    fs.writeFileSync(path.join(hier, 'x.src'), 'x\n'); bouwIn(hier)();
+    g(hier, 'add', '.'); g(hier, 'commit', '-q', '-m', 'x');
+    const gezien2 = [];
+    const r2 = await v3.naarMain('studio/wereld', { bouw: bouwIn(hier),
+      tests: () => { gezien2.push(g(hier, 'rev-parse', 'HEAD')); if (gezien2.length === 1) anderVerder('c.src'); } });
+    check(r2.rondes === 2 && gezien2[1] === g(hier, 'rev-parse', 'origin/main')
+      && g(hier, 'show', 'origin/main:versie.txt') === 'a\nb\nc\nwereld\nx',
+      'N · main bewoog tijdens de tests: opnieuw samengevoegd, gebouwd en getest', JSON.stringify(r2));
+    // blijft hij bewegen, dan stopt het met een zin en is main van de ander
+    fs.writeFileSync(path.join(hier, 'y.src'), 'y\n'); bouwIn(hier)();
+    g(hier, 'add', '.'); g(hier, 'commit', '-q', '-m', 'y');
+    let fout = null;
+    let n = 0;
+    try { await v3.naarMain('studio/wereld', { bouw: bouwIn(hier), tests: () => anderVerder('d' + (++n) + '.src') }); }
+    catch (e) { fout = e; }
+    check(fout && fout.stap === 'main' && /twee keer/.test(fout.message)
+      && g(hier, 'show', 'origin/main:versie.txt').indexOf('y') < 0,
+      'N · main bleef bewegen: niets gezet, een nette zin', fout ? fout.message : 'geen fout');
+    // en een falende test laat main staan
+    g(hier, 'fetch', '-q', 'origin');
+    const voor = g(hier, 'rev-parse', 'origin/main');
+    let tfout = null;
+    try { await v3.naarMain('studio/wereld', { bouw: bouwIn(hier), tests: () => { throw new Error('rood'); } }); }
+    catch (e) { tfout = e; }
+    g(hier, 'fetch', '-q', 'origin');
+    check(tfout && tfout.stap === 'tests' && g(hier, 'rev-parse', 'origin/main') === voor,
+      'N · een falende test laat main staan', tfout ? tfout.message : 'geen fout');
+    // en beide knoppen in de studio gaan erlangs, zonder eigen duw naar main
+    const pv = fs.readFileSync(path.resolve(__dirname, 'preview.js'), 'utf8');
+    check((pv.match(/versie\.naarMain\(/g) || []).length === 2 && !/'push',\s*'origin',\s*'main'/.test(pv),
+      'N · publish en Publiceren gaan allebei via naarMain', 'preview.js duwt main zelf of mist naarMain');
     fs.rmSync(tmp, { recursive: true, force: true });
   }
   klaar();

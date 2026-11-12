@@ -540,6 +540,76 @@ async function terugdraaien(fase, paden) {
   }
 }
 
+/* ---- Naar main --------------------------------------------------------------
+   Wat Publiceren doet als de tests hier kunnen draaien: een tak op main zetten.
+   De volgorde is het hele punt, en ze staat hier één keer voor allebei de knoppen
+   (publish en publiceerAlles in test/preview.js):
+
+     1  main IN de tak voegen, op de tak zelf
+     2  bouwen, en dat vastleggen als er iets veranderde
+     3  alle tests, op precies dat
+     4  main vooruitschuiven naar de tak: alleen een fast-forward
+
+   Vroeger stond 1 ná 3, op main zelf, en zonder bouw. Stond main intussen verder
+   (een andere sessie merget elke dag wel iets), dan landde er een samenvoeging die
+   niemand gebouwd en niemand getest had: index.html voegt vanzelf goed samen, maar
+   versie.txt houdt bij een merge de eigen kant (.gitattributes), dus het getal
+   klopte niet bij wat er live stond en zaak H werd rood op main. Nagebootst in de
+   audit van november; hub zaak N doet het na.
+
+   Stap 4 duwt `tak:main`. Dat kan alleen als het een fast-forward is, dus heeft
+   iemand main bewogen terwijl de tests liepen, dan weigert GitHub het zelf en
+   hoeft niemand te raden. Dan nog één ronde (main er weer in, bouwen, testen);
+   beweegt hij nóg eens, dan stoppen we met een zin in plaats van eindeloos door
+   te gaan. Main verandert nooit voordat de tests geslaagd zijn op wat er landt.
+
+   bouw, tests en stap komen van de aanroeper: de studio geeft de echte bouw en
+   alle suites, hub zaak N geeft nep-versies in een wegwerprepo. */
+async function naarMain(tak, { bouw, tests, stap } = {}) {
+  const meld = stap || (() => {});
+  // versie.txt houdt bij het samenvoegen de eigen kant; de bouw zet hem goed
+  require('./samenvoegen.js').zetRegel(ROOT);
+  for (let ronde = 1; ronde <= 2; ronde++) {
+    meld('Main ophalen…');
+    await git(['fetch', 'origin', 'main']);
+    const basis = gitStil(['rev-parse', 'origin/main']);
+    try { await git(['merge', '--no-edit', 'origin/main']); }
+    catch (e) {
+      try { await git(['merge', '--abort']); } catch (_) {}
+      const fout = new Error('Main samenvoegen in ' + tak + ' botst. Main is niet veranderd.\n'
+        + String(e.message).split('\n').slice(0, 4).join('\n'));
+      fout.stap = 'main';
+      throw fout;
+    }
+    meld('Bouwen…');
+    if (bouw) await bouw();
+    if (gitStil(['status', '--porcelain'])) {
+      await git(['add', '-A']);
+      await git(['commit', '-m', 'bouw na samenvoegen met main']);
+    }
+    meld('Alle tests draaien (een paar minuten)…');
+    try { if (tests) await tests(); }
+    catch (e) { e.stap = 'tests'; throw e; }
+    meld('Naar main…');
+    try {
+      await git(['push', 'origin', tak + ':main']);
+    } catch (e) {
+      // Alleen een geweigerde fast-forward is een reden voor een tweede ronde.
+      await git(['fetch', 'origin', 'main']);
+      if (gitStil(['rev-parse', 'origin/main']) !== basis) continue;
+      e.stap = 'main';
+      throw e;
+    }
+    try { await git(['push', '-u', 'origin', tak]); } catch (_) { /* main staat er al; de tak is bijzaak */ }
+    await git(['fetch', 'origin', 'main']);
+    return { sha: gitStil(['rev-parse', '--short', 'origin/main']), rondes: ronde };
+  }
+  const fout = new Error('Main bewoog twee keer terwijl de tests liepen. Er is niets op main gezet; '
+    + 'druk over een paar minuten nog eens op Publiceren.');
+  fout.stap = 'main';
+  throw fout;
+}
+
 module.exports = { feiten, samenvatting, bronnen, haalOp, wissel, bijwerken, nieuwste, uitDePas, gelijkZetten,
-                   opengewerk, opzij, haalTerug, vastleggen, terugdraaien, takNaam,
+                   opengewerk, opzij, haalTerug, vastleggen, terugdraaien, takNaam, naarMain,
                    prVoorSha, prLijst, ROOT };

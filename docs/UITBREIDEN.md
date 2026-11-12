@@ -94,7 +94,8 @@ npm run studio      -> Werelden -> + Nieuwe wereld
 6. **Publiceren**: stap 4 zegt wat er nog mis is, met een link naar de stap die
    het oplost, en laat de kaart zien zoals een kind hem ziet. *🚀 Publiceer* zet
    de wereld op uitgebracht, slaat hem op in `src/`, keurt, legt vast op een eigen
-   tak, pusht, draait alle tests, voegt samen met main en pusht main. Daarna
+   tak, pusht, voegt main in die tak, bouwt, draait alle tests en schuift dan pas
+   main naar de tak. Bewoog main intussen, dan doet hij dat één keer opnieuw. Daarna
    staat de studio op de nieuwste main. Zonder playwright (`npm install` +
    `npx playwright install chromium`) stopt hij na het pushen en wacht de wereld
    op een merge. De oude losse stappen (*Opslaan in het project*, *Vastleggen*,

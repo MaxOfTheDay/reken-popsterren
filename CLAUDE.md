@@ -26,7 +26,9 @@ Node-suites: `inhoud`, `kern`, `saves`, `kleedkamer`, op kaal Node; hoeveel
 controles het zijn zegt hij zelf). `npm test` doet die vier en daarna elk ander
 `test/*.test.js`, een paar tegelijk en wat omvalt nog één keer alleen (zie
 `test/suites.js`); de meeste starten een echte Chromium — `hub` en `overzetten`
-draaien ook op kaal Node. De studio (Publiceren) draait precies dezelfde ronde.
+draaien ook op kaal Node. De studio (Publiceren) draait precies dezelfde ronde,
+op de tak mét main er al in en opnieuw gebouwd, en schuift main pas daarna
+vooruit (`naarMain` in `test/versie.js`, hub zaak N).
 Eén suite draaien gaat met `npm run test:<naam>`, bijvoorbeeld
 `npm run test:reis`; de hele lijst staat in `docs/TESTEN.md`.
 
