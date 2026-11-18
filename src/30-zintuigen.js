@@ -70,9 +70,19 @@ function audioBus() {
   } catch (e) { actx = null; bus = null; audioStuk = true; }
   return bus;
 }
-// Zie punt 3 hierboven. Kost niets als hij al loopt, en mag stil mislukken.
+/* Zie punt 3 hierboven. Kost niets als hij al loopt, en mag stil mislukken.
+   resume() en close() geven een belofte terug, en die faalt buiten de try om:
+   een wekker die nog onderweg is als audioNieuw de oude context dichtdoet, eindigt
+   in "AudioContext is closed" -- onschuldig (de nieuwe neemt het over), maar
+   zonder .catch een "belofte:"-briefje in de foutenrapportage. */
+const audioStil = () => {};
 function audioWakker() {
-  try { if (actx && actx.state !== 'running' && actx.resume) actx.resume(); } catch (e) { /* mag niet */ }
+  try {
+    if (actx && actx.state !== 'running' && actx.resume) {
+      const b = actx.resume();
+      if (b && b.catch) b.catch(audioStil);
+    }
+  } catch (e) { /* mag niet */ }
 }
 /* EEN CONTEXT DIE NIET MEER WAKKER WORDT. Op een iPhone gaat de context na een
    telefoontje, Siri of een wekker naar 'interrupted', en soms komt hij daar met
@@ -97,7 +107,10 @@ function audioHerstel() {
 function audioNieuw() {
   const oud = actx;
   actx = null; bus = null;
-  try { if (oud) oud.close(); } catch (e) { /* weg is weg */ }
+  try {
+    const b = oud && oud.state !== 'closed' && oud.close();
+    if (b && b.catch) b.catch(audioStil);
+  } catch (e) { /* weg is weg */ }
   audioBus();
   /* De kraan van de nieuwe staat open; stond het geluid net uit, dan dicht. */
   if (!db.sound) busNaar(0, 0.01);

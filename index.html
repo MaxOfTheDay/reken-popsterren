@@ -17201,8 +17201,18 @@ function audioBus() {
   return bus;
 }
 
+
+
+
+
+const audioStil = () => {};
 function audioWakker() {
-  try { if (actx && actx.state !== 'running' && actx.resume) actx.resume(); } catch (e) { }
+  try {
+    if (actx && actx.state !== 'running' && actx.resume) {
+      const b = actx.resume();
+      if (b && b.catch) b.catch(audioStil);
+    }
+  } catch (e) { }
 }
 
 
@@ -17227,7 +17237,10 @@ function audioHerstel() {
 function audioNieuw() {
   const oud = actx;
   actx = null; bus = null;
-  try { if (oud) oud.close(); } catch (e) { }
+  try {
+    const b = oud && oud.state !== 'closed' && oud.close();
+    if (b && b.catch) b.catch(audioStil);
+  } catch (e) { }
   audioBus();
 
   if (!db.sound) busNaar(0, 0.01);
