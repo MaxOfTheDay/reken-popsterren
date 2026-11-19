@@ -71,6 +71,12 @@
     margin: 0; font-family: 'Fredoka', system-ui, sans-serif; color: var(--tekst); line-height: 1.5;
     background: var(--nacht) radial-gradient(120% 80% at 50% 0%, #4b1580 0%, var(--nacht) 55%, var(--vloer) 100%) fixed;
     overflow-x: hidden;
+    /* zoals in het spel: niets op deze pagina is om te kopiëren, en de pilletjes
+       en tegeltjes zien eruit als iets om op te tikken. Zonder dit begint een
+       telefoon bij een tik-en-vasthouden een tekstselectie (of een menu op een
+       scherm), en dat voelt als een knop die stuk is. */
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
   }
   main { max-width: var(--kolom); margin: 0 auto; padding: 0 16px 40px; }
   h2 { font-size: clamp(20px, 5vw, 24px); margin: 0 0 14px; color: var(--goud); text-align: center; text-wrap: balance; }
@@ -121,16 +127,19 @@
   .filmkaart .speel { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; font-weight: 700; }
   .filmkaart .rond { width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; font-size: 28px; padding-left: 5px;
     color: var(--inkt); background: linear-gradient(var(--goud-top), var(--goud-onder)); box-shadow: 0 5px 0 var(--goud-schaduw); }
-  .filmkaart:focus-visible { outline: 3px solid var(--goud); outline-offset: 3px; }
+  /* een gouden ring voor wie met het toetsenbord loopt: de standaardring van de
+     browser is blauw en valt weg op dit paars */
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--goud); outline-offset: 3px; }
   /* het filmpje zelf: pas zichtbaar als het speelt, en dan schermvullend */
   #film { display: none; }
   #film.speelt { display: block; position: fixed; inset: 0; width: 100%; height: 100%; z-index: 20; background: #000; }
 
   /* waar je bent in de rij: stipjes (tik om te springen), met ‹ › als je een muis hebt */
   .bedien { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 2px; }
-  .stipjes { display: flex; gap: 2px; }
-  .stipjes button { width: 22px; height: 22px; border: 0; padding: 0; background: none; cursor: pointer; display: grid; place-items: center; }
-  .stipjes button::after { content: ''; width: 8px; height: 8px; border-radius: 4px; background: rgba(255,255,255,.3); transition: width .2s, background .2s; }
+  .stipjes { display: flex; gap: 0; }
+  /* het stipje is klein, de plek om te tikken niet: 30 × 36, en acht passen nog op 320 breed */
+  .stipjes button { width: 30px; height: 36px; border: 0; padding: 0; background: none; cursor: pointer; display: grid; place-items: center; }
+  .stipjes button::after { content: ''; width: 8px; height: 8px; border-radius: 4px; background: rgba(255,255,255,.45); transition: width .2s, background .2s; }
   .stipjes button[aria-current="true"]::after { width: 20px; background: var(--goud); }
   .pijl { display: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--vlak-rand);
     background: var(--vlak); color: var(--tekst); font: inherit; font-size: 20px; cursor: pointer; }
@@ -158,7 +167,7 @@
      en het niet nog een rij pilletjes lijkt naast de thema's */
   .chips.weten { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 480px; }
   .chips.weten li { border-radius: 18px; padding: 12px 4px 10px; display: flex; flex-direction: column; align-items: center;
-    gap: 6px; text-align: center; font-size: 14px; line-height: 1.2; }
+    gap: 6px; text-align: center; font-size: 15px; line-height: 1.2; }
   .chips.weten li span { margin: 0; font-size: 26px; line-height: 1; }
 
   .eind { text-align: center; }
@@ -169,7 +178,7 @@
   .voet img { width: 60px; height: 60px; border-radius: 6px; opacity: .85; display: block; }
   /* op een telefoon scan je geen QR-code van je eigen scherm */
   @media (max-width: 640px) { .voet img { display: none; } }
-  #deel-uit { text-align: center; color: var(--zacht); font-size: 14px; min-height: 1.5em; margin: 8px 0 0; }
+  #deel-uit { text-align: center; color: var(--zacht); font-size: 15px; min-height: 1.5em; margin: 8px 0 0; }
 </style>
 </head>
 <body>
@@ -277,7 +286,8 @@
     var s = document.getElementById('strip'), kaarten = s.children, bak = document.getElementById('stipjes');
     for (var i = 0; i < kaarten.length; i++) {
       var b = document.createElement('button');
-      b.type = 'button'; b.setAttribute('aria-label', 'Kaart ' + (i + 1));
+      // de kop van de kaart als naam, zodat een schermlezer zegt waar je heen springt
+      b.type = 'button'; b.setAttribute('aria-label', kaarten[i].querySelector('.kop').textContent);
       b.setAttribute('aria-current', i ? 'false' : 'true');
       b.onclick = (function (j) { return function () { naar(j); }; })(i);
       bak.appendChild(b);
